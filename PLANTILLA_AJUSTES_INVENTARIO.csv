@@ -1,0 +1,6 @@
+sku,nombre_producto,cantidad_ajuste,tipo_ajuste,almacen,observacion
+PRD001,Producto A,10,ENTRADA,Almacén 1,Recuento físico - auditoría
+PRD002,Producto B,5,SALIDA,Almacén 1,Merma por vencimiento
+PRD003,Producto C,2,ENTRADA,Almacén 2,Devolución de cliente
+PRD004,Producto D,-3,SALIDA,Almacén 1,Ajuste por faltante
+PRD005,Producto E,15,ENTRADA,Almacén 3,Compra no registrada

@@ -1,0 +1,31 @@
+/* ✅ CSS defensivo para asegurar responsividad en mobile */
+html {
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+#app {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Prevenir zoom accidental en inputs (evita zoom de 16px+) */
+input,
+textarea,
+select {
+    font-size: 16px;
+}
+
+/* Media query para asegurar que funciona correctamente en mobile */
+@media (max-width: 767px) {
+    html {
+        font-size: clamp(14px, 2.5vw, 16px);
+    }
+}

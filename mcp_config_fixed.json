@@ -1,0 +1,38 @@
+{
+    "servers": {
+        "github": {
+            "url": "https://api.githubcopilot.com/mcp/",
+            "type": "http"
+        },
+        "markitdown": {
+            "command": "uvx",
+            "args": [
+                "markitdown-mcp"
+            ],
+            "type": "stdio"
+        },
+        "microsoft-docs": {
+            "url": "https://learn.microsoft.com/api/mcp",
+            "type": "http"
+        },
+        "my-mcp-server-6acb4001": {
+            "type": "stdio",
+            "command": "D:\\server\\xampp\\php\\php.exe",
+            "args": [
+                "D:\\paucara\\distribuidora-paucara\\artisan",
+                "boost:mcp"
+            ]
+        },
+        "TestSprite": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "@testsprite/testsprite-mcp@latest"
+            ],
+            "env": {
+                "API_KEY": "sk-user-3e3QUIWfgu0Shdaq38C6PLBqppLiiJlDEABqSdB9AUit_z7Z-bo8colsCH2ifmQ1i7S8GNlaWaC_IF0u7K92x43QHjbA_uhuwDS9euQ73ZfXklPr1TYApULBH44PtKMSiE8"
+            }
+        }
+    },
+    "inputs": []
+}

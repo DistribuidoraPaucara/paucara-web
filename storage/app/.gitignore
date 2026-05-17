@@ -1,0 +1,12 @@
+# ✅ Ignorar TODA carpeta por defecto
+*
+
+# ✅ EXCEPCIONES: Permitir public/ y private/
+!public/
+!private/
+!.gitignore
+
+# ✅ IMPORTANTE: Permitir TODO dentro de public/
+# Cualquier archivo antiguo, nuevo, o directorio nuevo se subirá a Git automáticamente
+!/public/**
+!/public/

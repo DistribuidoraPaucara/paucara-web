@@ -1,0 +1,12 @@
+{
+  "status": "init",
+  "executionArgs": {
+    "projectName": "distribuidora-paucara",
+    "projectPath": "D:\\paucara\\distribuidora-paucara",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-3e3QUIWfgu0Shdaq38C6PLBqppLiiJlDEABqSdB9AUit_z7Z-bo8colsCH2ifmQ1i7S8GNlaWaC_IF0u7K92x43QHjbA_uhuwDS9euQ73ZfXklPr1TYApULBH44PtKMSiE8"
+    }
+  }
+}

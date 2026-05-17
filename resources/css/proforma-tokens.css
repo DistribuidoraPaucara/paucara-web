@@ -1,0 +1,62 @@
+/*
+ * Proforma Design Tokens - Sistema de Diseño Corporativo
+ * Defines color, spacing, and typography tokens for proforma screens
+ * Used across Show.tsx and related components
+ */
+
+:root {
+  /* Colores de Marca Corporativa */
+  --brand-primary: hsl(142, 76%, 36%);        /* Verde corporativo #059669 */
+  --brand-primary-hover: hsl(142, 77%, 32%); /* Verde hover #047857 */
+  --brand-secondary: hsl(262, 83%, 58%);      /* Púrpura #8b5cf6 */
+  --brand-secondary-hover: hsl(262, 83%, 52%); /* Púrpura hover #7c3aed */
+  --brand-accent: hsl(217, 91%, 60%);         /* Azul corporativo #3b82f6 */
+
+  /* Estados Semánticos */
+  --status-success: hsl(142, 76%, 36%);       /* Verde éxito */
+  --status-warning: hsl(45, 93%, 47%);        /* Ámbar #f59e0b */
+  --status-danger: hsl(0, 84%, 60%);          /* Rojo #ef4444 */
+  --status-info: hsl(199, 89%, 48%);          /* Azul info #0ea5e9 */
+
+  /* Superficies (Cards) */
+  --surface-default: hsl(0, 0%, 100%);        /* Blanco */
+  --surface-highlighted: hsl(142, 45%, 96%);  /* Verde muy claro */
+  --surface-info: hsl(217, 91%, 98%);         /* Azul muy claro */
+  --surface-warning: hsl(45, 100%, 96%);      /* Ámbar muy claro */
+
+  /* Bordes de Cards */
+  --border-default: hsl(0, 0%, 89%);          /* Gris claro */
+  --border-highlighted: hsl(142, 76%, 36%);   /* Verde */
+  --border-info: hsl(217, 91%, 60%);          /* Azul */
+  --border-warning: hsl(45, 93%, 47%);        /* Ámbar */
+
+  /* Espaciado (sistema 4px base) */
+  --space-xs: 0.5rem;   /* 8px */
+  --space-sm: 0.75rem;  /* 12px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.5rem;   /* 24px */
+  --space-xl: 2rem;     /* 32px */
+  --space-2xl: 3rem;    /* 48px */
+
+  /* Tipografía */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-base: 1rem;    /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Modo Oscuro */
+.dark {
+  --surface-default: hsl(0, 0%, 9%);
+  --surface-highlighted: hsl(142, 20%, 12%);
+  --surface-info: hsl(217, 30%, 12%);
+  --surface-warning: hsl(45, 30%, 12%);
+}

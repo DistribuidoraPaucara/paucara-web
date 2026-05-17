@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Laravel
+vendor
+.env.local
+.env.*.local
+bootstrap/cache/*
+storage/logs/*
+storage/app/private/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/cache/*
+# ✅ MANTENER: storage/app/public/ (imágenes de productos, empresas, clientes)
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.env.testing
+
+# Documentation
+docs
+README.md
+CONTRIBUTING.md
+
+# Build artifacts
+public/build
+public/hot
+
+# Logs
+logs
+*.log
+storage/logs
+
+# Flutter (if building both)
+android
+ios
+build
+.dart_tool
+pubspec.lock
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Claude Code
+.claude

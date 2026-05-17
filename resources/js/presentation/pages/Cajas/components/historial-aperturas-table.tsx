@@ -1,0 +1,617 @@
+/**
+ * Component: HistorialAperturasTable
+ *
+ * Responsabilidades:
+ * ✅ Mostrar historial de cajas abiertas y cerradas
+ * ✅ Filtrar por rango de fechas
+ * ✅ Mostrar estado de cada caja (Abierta/Cerrada)
+ * ✅ Mostrar diferencia entre monto esperado y real
+ * ✅ Indicadores visuales de discrepancias
+ * ✅ Acordeón expandible para ver movimientos de cada período
+ */
+
+import React, { useState, useMemo } from 'react';
+import { formatCurrency, toNumber, formatDateTime } from '@/lib/cajas.utils';
+import { Calendar, ChevronDown, ChevronRight, Loader, Printer } from 'lucide-react';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import type { AperturaHistorico, MovimientoCaja } from '@/domain/entities/cajas';
+
+interface Props {
+    historicoAperturas: AperturaHistorico[];
+}
+
+interface MovimientosData {
+    movimientos: MovimientoCaja[];
+    total: number;
+    count: number;
+}
+
+export function HistorialAperturasTable({ historicoAperturas }: Props) {
+
+    console.log('Historico Aperturas:', historicoAperturas);
+    const [filtroFechaInicio, setFiltroFechaInicio] = useState<string>('');
+    const [filtroFechaFin, setFiltroFechaFin] = useState<string>('');
+    const [filtroCaja, setFiltroCaja] = useState<string>('');
+    const [filtroVentas, setFiltroVentas] = useState<string>(''); // ✅ NUEVO: Filtro por estado de ventas
+    const [filtroMovimientosVentas, setFiltroMovimientosVentas] = useState<Record<number, string>>({}); // ✅ NUEVO: Filtro de ventas en movimientos por apertura
+    const [expandedAperturaId, setExpandedAperturaId] = useState<number | null>(null);
+    const [movimientosLoading, setMovimientosLoading] = useState<number | null>(null);
+    const [movimientosCached, setMovimientosCached] = useState<Record<number, MovimientosData>>({});
+    const [outputModal, setOutputModal] = useState<{ isOpen: boolean; aperturaId?: number; printType?: 'cierre' | 'movimientos' }>({ isOpen: false });
+
+    // Obtener cajas únicas para el filtro
+    const cajasUnicas = useMemo(() => {
+        return Array.from(new Set(historicoAperturas.map(a => a.caja_nombre)));
+    }, [historicoAperturas]);
+
+    // ✅ NUEVO: Función para filtrar movimientos por estado de venta
+    const getMovimientosFiltrados = (aperturaId: number, movimientos: MovimientoCaja[]) => {
+        const filtro = filtroMovimientosVentas[aperturaId] || '';
+
+        if (!filtro) return movimientos;
+
+        return movimientos.filter(mov => {
+            if (!mov.venta || !mov.venta.estado_documento) return true;
+
+            const codigo = mov.venta.estado_documento.codigo?.toUpperCase();
+
+            if (filtro === 'aprobadas' && (codigo === 'APROBADO' || codigo === 'APROBADA')) {
+                return true;
+            }
+            if (filtro === 'anuladas' && (codigo === 'ANULADO' || codigo === 'ANULADA')) {
+                return true;
+            }
+
+            return !filtro;
+        });
+    };
+
+    // Filtrar aperturas
+    const aperturasFiltradas = useMemo(() => {
+        return historicoAperturas.filter(apertura => {
+            // Filtro por fecha inicio
+            if (filtroFechaInicio) {
+                const fechaApertura = new Date(apertura.fecha_apertura).toISOString().split('T')[0];
+                if (fechaApertura < filtroFechaInicio) return false;
+            }
+
+            // Filtro por fecha fin
+            if (filtroFechaFin) {
+                const fechaApertura = new Date(apertura.fecha_apertura).toISOString().split('T')[0];
+                if (fechaApertura > filtroFechaFin) return false;
+            }
+
+            // Filtro por caja
+            if (filtroCaja && apertura.caja_nombre !== filtroCaja) return false;
+
+            // ✅ NUEVO: Filtro por estado de ventas
+            if (filtroVentas === 'aprobadas' && apertura.vendidas_aprobadas === 0) return false;
+            if (filtroVentas === 'anuladas' && apertura.vendidas_anuladas === 0) return false;
+
+            return true;
+        });
+    }, [historicoAperturas, filtroFechaInicio, filtroFechaFin, filtroCaja, filtroVentas]);
+
+    // Calcular estadísticas del filtro
+    const stats = useMemo(() => {
+        return {
+            total: aperturasFiltradas.length,
+            abiertas: aperturasFiltradas.filter(a => a.estado === 'Abierta').length,
+            cerradas: aperturasFiltradas.filter(a => a.estado === 'Cerrada').length,
+            conDiscrepancia: aperturasFiltradas.filter(a => {
+                const diff = toNumber(a.diferencia);
+                return diff !== 0 && a.estado === 'Cerrada';
+            }).length,
+        };
+    }, [aperturasFiltradas]);
+
+    const getEstadoBadge = (estado: string) => {
+        if (estado === 'Abierta') {
+            return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                🔓 Abierta
+            </span>;
+        }
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+            🔒 Cerrada
+        </span>;
+    };
+
+    const getDiferenciaColor = (diferencia: number | string | null) => {
+        if (diferencia === null) return 'text-gray-500 dark:text-gray-400';
+        const diff = toNumber(diferencia);
+        if (diff === 0) return 'text-green-600 dark:text-green-400 font-bold';
+        return 'text-red-600 dark:text-red-400 font-bold';
+    };
+
+    // ✅ NUEVO: Badge para estado de venta en movimientos
+    const getEstadoVentaBadge = (mov: MovimientoCaja) => {
+        if (!mov.venta || !mov.venta.estado_documento) {
+            return null;
+        }
+
+        const codigo = mov.venta.estado_documento.codigo?.toUpperCase();
+
+        if (codigo === 'APROBADO' || codigo === 'APROBADA') {
+            return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    ✅ {mov.venta.estado_documento.nombre}
+                </span>
+            );
+        } else if (codigo === 'ANULADO' || codigo === 'ANULADA') {
+            return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    ❌ {mov.venta.estado_documento.nombre}
+                </span>
+            );
+        }
+
+        return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
+                ⚪ {mov.venta.estado_documento.nombre}
+            </span>
+        );
+    };
+
+    // ✅ NUEVO: Badge para el estado del cierre
+    const getEstadoCierreBadge = (estadoCierre: string | null) => {
+        if (!estadoCierre) {
+            return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                ⚪ Sin estado
+            </span>;
+        }
+
+        switch (estadoCierre.toUpperCase()) {
+            case 'PENDIENTE':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                    ⏳ Pendiente de Consolidación
+                </span>;
+            case 'CONSOLIDADA':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    ✅ Consolidada
+                </span>;
+            case 'RECHAZADA':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                    ❌ Rechazada
+                </span>;
+            case 'CORREGIDA':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                    🔧 Corregida
+                </span>;
+            default:
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                    {estadoCierre}
+                </span>;
+        }
+    };
+
+    const cargarMovimientos = async (aperturaId: number) => {
+        // Si ya está cargado, solo expandir/contraer
+        if (movimientosCached[aperturaId]) {
+            setExpandedAperturaId(expandedAperturaId === aperturaId ? null : aperturaId);
+            return;
+        }
+
+        setMovimientosLoading(aperturaId);
+        try {
+            const response = await fetch(`/cajas/apertura/${aperturaId}/movimientos`);
+
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            setMovimientosCached({
+                ...movimientosCached,
+                [aperturaId]: data,
+            });
+            setExpandedAperturaId(aperturaId);
+        } catch (error) {
+            console.error('Error cargando movimientos:', error);
+            // Aquí puedes agregar notificación al usuario si lo deseas
+        } finally {
+            setMovimientosLoading(null);
+        }
+    };
+
+    if (!historicoAperturas || historicoAperturas.length === 0) {
+        return (
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div className="p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">
+                        📋 Historial de Cajas Abiertas y Cerradas
+                    </h3>
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="text-5xl mb-4 opacity-50">📦</div>
+                        <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Aún no hay historial de aperturas
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            El historial aparecerá aquí cuando se abran cajas
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div className="p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">
+                    📋 Historial de Cajas Abiertas y Cerradas
+                </h3>
+
+                {/* Filtros */}
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <Calendar className="w-4 h-4 inline mr-2" />
+                            Desde
+                        </label>
+                        <input
+                            type="date"
+                            value={filtroFechaInicio}
+                            onChange={(e) => setFiltroFechaInicio(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <Calendar className="w-4 h-4 inline mr-2" />
+                            Hasta
+                        </label>
+                        <input
+                            type="date"
+                            value={filtroFechaFin}
+                            onChange={(e) => setFiltroFechaFin(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Caja
+                        </label>
+                        <select
+                            value={filtroCaja}
+                            onChange={(e) => setFiltroCaja(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                            <option value="">Todas las cajas</option>
+                            {cajasUnicas.map(caja => (
+                                <option key={caja} value={caja}>{caja}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Ventas
+                        </label>
+                        <select
+                            value={filtroVentas}
+                            onChange={(e) => setFiltroVentas(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                            <option value="">Todas</option>
+                            <option value="aprobadas">Solo Aprobadas</option>
+                            <option value="anuladas">Solo Anuladas</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            &nbsp;
+                        </label>
+                        <button
+                            onClick={() => {
+                                setFiltroFechaInicio('');
+                                setFiltroFechaFin('');
+                                setFiltroCaja('');
+                                setFiltroVentas('');
+                            }}
+                            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                        >
+                            Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+
+                {/* Resumen de filtros */}
+                <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Total</p>
+                        <p className="text-lg font-bold text-blue-900 dark:text-blue-100">{stats.total}</p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                        <p className="text-xs text-green-600 dark:text-green-400 mb-1">Abiertas</p>
+                        <p className="text-lg font-bold text-green-900 dark:text-green-100">{stats.abiertas}</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700/20 rounded-lg p-3">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Cerradas</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.cerradas}</p>
+                    </div>
+                    <div className={`rounded-lg p-3 ${stats.conDiscrepancia > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
+                        <p className={`text-xs mb-1 ${stats.conDiscrepancia > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            Con discrepancia
+                        </p>
+                        <p className={`text-lg font-bold ${stats.conDiscrepancia > 0 ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'}`}>
+                            {stats.conDiscrepancia}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Tabla */}
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th className="w-10"></th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Caja
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Fechas
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Monto Apertura
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Ventas
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Estado
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {aperturasFiltradas.map((apertura) => (
+                                <React.Fragment key={apertura.id}>
+                                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                        <td
+                                            className="w-10 px-3 py-4 text-right cursor-pointer"
+                                            onClick={() => cargarMovimientos(apertura.id)}
+                                        >
+                                            {movimientosLoading === apertura.id ? (
+                                                <Loader className="w-4 h-4 inline animate-spin text-indigo-600" />
+                                            ) : (
+                                                expandedAperturaId === apertura.id ? (
+                                                    <ChevronDown className="w-4 h-4 text-indigo-600 hover:text-indigo-700" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                                                )
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            #{apertura.id} | {apertura.caja_nombre}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            Apertura: {formatDateTime(apertura.fecha_apertura)}
+                                            <br />
+                                            Cierre: {apertura.fecha_cierre != null ? formatDateTime(apertura.fecha_cierre) : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-700 dark:text-gray-300">
+                                            <strong>Apertura:</strong> {apertura.monto_apertura != null ? formatCurrency(toNumber(apertura.monto_apertura)) : '-'}
+                                            <br />
+                                            <strong>Esperado:</strong> {apertura.monto_esperado != null ? formatCurrency(toNumber(apertura.monto_esperado)) : '-'}
+                                            <br />
+                                            <strong>Diferencia:</strong> {apertura.diferencia !== null ? formatCurrency(Math.abs(toNumber(apertura.diferencia))) : '-'}
+                                            <br />
+                                            <strong>Monto Real:</strong> {apertura.monto_real != null ? formatCurrency(toNumber(apertura.monto_real)) : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <div className="space-y-1">
+                                                <div className="inline-block bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded text-xs font-medium">
+                                                    ✅ Aprobadas: {apertura.vendidas_aprobadas || 0}
+                                                </div>
+                                                <br />
+                                                <div className="inline-block bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-2 py-1 rounded text-xs font-medium">
+                                                    ❌ Anuladas: {apertura.vendidas_anuladas || 0}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            {getEstadoBadge(apertura.estado)}
+                                            {/* <br />
+                                            {apertura.estado_cierre ? getEstadoCierreBadge(apertura.estado_cierre) : '-'} */}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            {apertura.estado === 'Cerrada' && apertura.id && (
+                                                <button
+                                                    onClick={() => setOutputModal({ isOpen: true, aperturaId: apertura.id, printType: 'cierre' })}
+                                                    className="inline-flex items-center p-2 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                    title="Imprimir cierre de caja"
+                                                >
+                                                    <Printer className="h-4 w-4" /> Imprimir Cierre
+                                                </button>
+                                            )}
+                                            {apertura.estado !== 'Cerrada' && (
+                                                <span className="text-xs text-gray-400 dark:text-gray-500">Sin cierre</span>
+                                            )}
+                                        </td>
+                                    </tr>
+
+                                    {/* Fila expandible con movimientos */}
+                                    {expandedAperturaId === apertura.id && movimientosCached[apertura.id] && (
+                                        <tr className="bg-indigo-50 dark:bg-indigo-900/10 border-l-4 border-l-indigo-600">
+                                            <td colSpan={11} className="px-6 py-4">
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                                                                📊 Movimientos del período ({movimientosCached[apertura.id]?.count || 0})
+                                                            </h4>
+                                                            <button
+                                                                onClick={() => setOutputModal({ isOpen: true, aperturaId: apertura.id, printType: 'movimientos' })}
+                                                                className="inline-flex items-center p-2 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                                title="Imprimir movimientos"
+                                                            >
+                                                                <Printer className="h-4 w-4 mr-2" />
+                                                                <span className="text-sm font-medium">Imprimir Movimientos</span>
+                                                            </button>
+                                                        </div>
+
+                                                        {/* ✅ NUEVO: Filtro de estado de venta en movimientos */}
+                                                        <div className="mb-4 flex gap-2">
+                                                            <button
+                                                                onClick={() => setFiltroMovimientosVentas({ ...filtroMovimientosVentas, [apertura.id]: '' })}
+                                                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                                                    !filtroMovimientosVentas[apertura.id] || filtroMovimientosVentas[apertura.id] === ''
+                                                                        ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300'
+                                                                }`}
+                                                            >
+                                                                📋 Todas
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setFiltroMovimientosVentas({ ...filtroMovimientosVentas, [apertura.id]: 'aprobadas' })}
+                                                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                                                    filtroMovimientosVentas[apertura.id] === 'aprobadas'
+                                                                        ? 'bg-green-600 text-white dark:bg-green-500'
+                                                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300'
+                                                                }`}
+                                                            >
+                                                                ✅ Aprobadas
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setFiltroMovimientosVentas({ ...filtroMovimientosVentas, [apertura.id]: 'anuladas' })}
+                                                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                                                    filtroMovimientosVentas[apertura.id] === 'anuladas'
+                                                                        ? 'bg-red-600 text-white dark:bg-red-500'
+                                                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300'
+                                                                }`}
+                                                            >
+                                                                ❌ Anuladas
+                                                            </button>
+                                                        </div>
+
+                                                        {movimientosCached[apertura.id]?.movimientos.length ? (
+                                                            <div className="overflow-x-auto">
+                                                                <table className="min-w-full text-sm">
+                                                                    <thead className="bg-indigo-100 dark:bg-indigo-900/30">
+                                                                        <tr>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Fecha/Hora</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Tipo</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Documento</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Descripción</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Cliente</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Detalles de Pago</th>
+                                                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Estado Venta</th>
+                                                                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300">Monto</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y divide-indigo-200 dark:divide-indigo-800">
+                                                                        {getMovimientosFiltrados(apertura.id, movimientosCached[apertura.id]?.movimientos || []).map((mov: MovimientoCaja) => (
+                                                                            <tr key={mov.id} className="hover:bg-indigo-100 dark:hover:bg-indigo-800/30">
+                                                                                <td className="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                                                                    {formatDateTime(mov.fecha)}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs">
+                                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                                                        {mov.tipo_operacion.nombre}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                                                                    {mov.numero_documento}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                                                                    {mov.observaciones}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                                                                    {mov.venta?.cliente?.nombre || 'Sin cliente'}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs">
+                                                                                    {mov.venta?.detallesPagoVenta && mov.venta.detallesPagoVenta.length > 0 ? (
+                                                                                        <div className="space-y-1">
+                                                                                            {mov.venta.detallesPagoVenta.map((detalle: any, idx: number) => (
+                                                                                                <div key={idx} className="flex items-center gap-2">
+                                                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                                                                        {detalle.tipoPago?.nombre || 'Sin tipo'}
+                                                                                                    </span>
+                                                                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                                                                                        {formatCurrency(detalle.monto)}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-xs">
+                                                                                    {getEstadoVentaBadge(mov)}
+                                                                                </td>
+                                                                                <td className="px-4 py-2 text-right text-xs font-semibold">
+                                                                                    <span className={toNumber(mov.monto) > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                                        {toNumber(mov.monto) > 0 ? '+' : '-'}{formatCurrency(Math.abs(toNumber(mov.monto)))}
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-gray-500 dark:text-gray-400 text-sm">No hay movimientos en este período</p>
+                                                        )}
+
+                                                        {/* Resumen de movimientos */}
+                                                        <div className="mt-4 pt-4 border-t border-indigo-200 dark:border-indigo-800">
+                                                            {(() => {
+                                                                const movimientosFiltrados = getMovimientosFiltrados(apertura.id, movimientosCached[apertura.id]?.movimientos || []);
+                                                                const totalFiltrado = movimientosFiltrados.reduce((sum, mov) => sum + toNumber(mov.monto), 0);
+                                                                return (
+                                                                    <div className="grid grid-cols-3 gap-4">
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Movimientos Mostrados</p>
+                                                                            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                                                                {movimientosFiltrados.length} / {movimientosCached[apertura.id]?.count || 0}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Suma Total</p>
+                                                                            <p className={`text-lg font-bold ${totalFiltrado > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                                {formatCurrency(totalFiltrado)}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {aperturasFiltradas.length === 0 && (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500 dark:text-gray-400">
+                            No hay registros que coincidan con los filtros seleccionados
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Modal de Exportación/Impresión */}
+            <OutputSelectionModal
+                isOpen={outputModal.isOpen}
+                onClose={() => setOutputModal({ isOpen: false })}
+                documentoId={outputModal.aperturaId?.toString() || ''}
+                tipoDocumento="caja"
+                documentoInfo={{}}
+                printType={outputModal.printType}
+            />
+        </div>
+    );
+}
