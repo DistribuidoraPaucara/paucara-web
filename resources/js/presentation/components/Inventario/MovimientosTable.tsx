@@ -98,14 +98,15 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
             'TRANSFERENCIA_ENTRADA': 'bg-blue-100 text-blue-800',
             'TRANSFERENCIA_SALIDA': 'bg-yellow-100 text-yellow-800',
             'AJUSTE': 'bg-purple-100 text-purple-800',
-            'RESERVA': 'bg-orange-100 text-orange-800',  // ✅ Color para reservas genéricas
-            // ✅ NUEVO (2026-02-12): Colores para tipos de reservas de proforma
-            'RESERVA_PROFORMA': 'bg-indigo-100 text-indigo-800',  // Reserva creada
-            'LIBERACION_RESERVA': 'bg-amber-100 text-amber-800',  // Reserva liberada
-            'CONSUMO_RESERVA': 'bg-pink-100 text-pink-800',  // Reserva consumida al convertir a venta
-            'ENTRADA_AJUSTE': 'bg-emerald-100 text-emerald-800',  // Ajuste entrada
-            'SALIDA_AJUSTE': 'bg-rose-100 text-rose-800',  // Ajuste salida
-            'ENTRADA_COMPRA': 'bg-teal-100 text-teal-800',  // Compra recibida
+            'AJUSTE_COMPRA': 'bg-cyan-100 text-cyan-800',
+            'RESERVA': 'bg-orange-100 text-orange-800',
+            'RESERVA_PROFORMA': 'bg-indigo-100 text-indigo-800',
+            'LIBERACION_RESERVA': 'bg-amber-100 text-amber-800',
+            'CONSUMO_RESERVA': 'bg-pink-100 text-pink-800',
+            'ENTRADA_AJUSTE': 'bg-emerald-100 text-emerald-800',
+            'SALIDA_AJUSTE': 'bg-rose-100 text-rose-800',
+            'ENTRADA_COMPRA': 'bg-teal-100 text-teal-800',
+            'ENTRADA_AJUSTE_COMPRA': 'bg-cyan-100 text-cyan-800',
         };
         return colors[tipo] || 'bg-gray-100 text-gray-800';
     };

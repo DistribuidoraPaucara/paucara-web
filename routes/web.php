@@ -333,6 +333,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ NUEVO: Ruta para anular compras
     Route::post('compras/{compra}/anular', [\App\Http\Controllers\CompraController::class, 'anular'])->name('compras.anular');
 
+    // ✅ NUEVO 2026-05-18: Rutas para asignación de lotes y fechas de vencimiento
+    Route::get('compras/{compra}/editar-lotes', [\App\Http\Controllers\CompraController::class, 'editarAsignarLotes'])->name('compras.editar-lotes');
+    Route::post('compras/{compra}/guardar-lotes', [\App\Http\Controllers\CompraController::class, 'asignarLotes'])->name('compras.guardar-lotes');
+
     Route::resource('compras', \App\Http\Controllers\CompraController::class)->except(['destroy']);
 
     // Keep nested details routes

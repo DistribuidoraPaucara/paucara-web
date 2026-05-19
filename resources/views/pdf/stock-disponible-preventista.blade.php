@@ -132,6 +132,60 @@
             font-style: italic;
         }
 
+        .rangos-row {
+            background-color: #f9f9f9 !important;
+            border-top: 1px solid #ddd !important;
+        }
+
+        .rangos-cell {
+            padding: 4px 6px !important;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .rangos-titulo {
+            font-weight: bold;
+            color: #003366;
+            font-size: 12px;
+            margin-bottom: 3px;
+            display: block;
+        }
+
+        .precio-principal {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .rangos-contenedor {
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .rango-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 1px 2px;
+            line-height: 1.2;
+        }
+
+        .rango-cantidad {
+            color: #666;
+            font-size: 12px;
+            min-width: 40px;
+        }
+
+        .rango-precio {
+            color: #003366;
+            font-weight: 600;
+            text-align: right;
+            min-width: 45px;
+            font-size: 12px;
+        }
+
         .footer {
             margin-top: 15px;
             padding-top: 8px;
@@ -213,33 +267,68 @@
                     <td>{{ $numero }}</td>
                     <td class="nombre">{{ $fila['nombre'] }}</td>
                     {{-- <td class="sku">{{ $fila['sku'] }}</td> --}}
-                    <td class="text-right precio-venta">
+
+                    {{-- CELDA PRECIO VENTA CON RANGOS --}}
+                    <td class="precio-venta">
                         @if($fila['precio_venta'])
-                        Bs {{ number_format($fila['precio_venta'], 2) }}
+                        <span class="precio-principal">Bs {{ number_format($fila['precio_venta'], 2) }}</span>
+                        @php $rangosVenta = $fila['rangos_venta'] ?? []; @endphp
+                        @if(count($rangosVenta) > 0)
+                        <div class="rangos-contenedor">
+                            <span>Rango Prec.: </span>
+                            @foreach($rangosVenta as $rv)
+                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $rv['rango_texto'] }} un</div>
+                            @endforeach
+                        </div>
+                        @endif
                         @else
                         <span class="precio-null">-</span>
                         @endif
                     </td>
-                    <td class="text-right precio-descuento">
+
+                    {{-- CELDA PRECIO DESCUENTO CON RANGOS --}}
+                    <td class="precio-descuento">
                         @if($fila['precio_descuento'])
-                        Bs {{ number_format($fila['precio_descuento'], 2) }}
+                        <span class="precio-principal">Bs {{ number_format($fila['precio_descuento'], 2) }}</span>
+                        @php $rangosDesc = $fila['rangos_descuento'] ?? []; @endphp
+                        @if(count($rangosDesc) > 0)
+                        <div class="rangos-contenedor">
+                            <span>Rango Prec.: </span>
+                            @foreach($rangosDesc as $rd)
+                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $rd['rango_texto'] }} un</div>
+                            @endforeach
+                        </div>
+                        @endif
                         @else
                         <span class="precio-null">-</span>
                         @endif
                     </td>
-                    <td class="text-right precio-especial">
+
+                    {{-- CELDA PRECIO ESPECIAL CON RANGOS --}}
+                    <td class="precio-especial">
                         @if($fila['precio_especial'])
-                        Bs {{ number_format($fila['precio_especial'], 2) }}
+                        <span class="precio-principal">Bs {{ number_format($fila['precio_especial'], 2) }}</span>
+                        @php $rangosEsp = $fila['rangos_especial'] ?? []; @endphp
+                        @if(count($rangosEsp) > 0)
+                        <div class="rangos-contenedor">
+                            <span>Rango Prec.: </span>
+                            @foreach($rangosEsp as $re)
+                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $re['rango_texto'] }} un</div>
+                            @endforeach
+                        </div>
+                        @endif
                         @else
                         <span class="precio-null">-</span>
                         @endif
                     </td>
+
                     @if($incluir_stock ?? false)
                     <td class="stock-disponible">
                         {{ number_format($fila['stock_disponible'], 2) }}
                     </td>
                     @endif
                 </tr>
+
                 @php
                 $numero++;
                 @endphp

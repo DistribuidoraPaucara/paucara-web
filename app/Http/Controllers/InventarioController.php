@@ -884,7 +884,9 @@ class InventarioController extends Controller
         } elseif (str_starts_with($tipo, 'SALIDA_')) {
             return 'SALIDA';
         } elseif (str_starts_with($tipo, 'RESERVA') || str_starts_with($tipo, 'LIBERACION') || str_starts_with($tipo, 'CONSUMO')) {
-            return 'RESERVA';  // ✅ NUEVO: Identificar movimientos de reserva (incluyendo CONSUMO_RESERVA)
+            return 'RESERVA';
+        } elseif ($tipo === 'AJUSTE_ASIGNACION_COMPRA' || $tipo === 'ENTRADA_AJUSTE_COMPRA') {
+            return 'AJUSTE_COMPRA';
         } else {
             return 'AJUSTE';
         }
@@ -898,6 +900,8 @@ class InventarioController extends Controller
         $tipos = [
             'ENTRADA_COMPRA'     => 'Compra',
             'ENTRADA_AJUSTE'     => 'Ajuste de inventario',
+            'ENTRADA_AJUSTE_COMPRA' => 'Ajuste de lotes de compra',
+            'AJUSTE_ASIGNACION_COMPRA' => 'Ajuste de cantidad en asignación de compra',
             'ENTRADA_DEVOLUCION' => 'Devolución de venta',
             'ENTRADA_TRANSFERENCIA' => 'Transferencia recibida',
             'SALIDA_VENTA'       => 'Venta',

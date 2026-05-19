@@ -1,4 +1,5 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { route } from '@/infrastructure/routing/routes';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
@@ -1065,6 +1066,15 @@ export default function CompraForm() {
               >
                 Limpiar Borrador
               </button>
+            )}
+            {/* ✅ NUEVO 2026-05-18: Botón para asignar lotes cuando compra está APROBADA */}
+            {isEditing && estadoActual === 'Aprobado' && (
+              <Link
+                href={route('compras.editar-lotes', props.compra?.id)}
+                className="px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 focus:bg-purple-700 active:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
+              >
+                📦 Asignar Lotes
+              </Link>
             )}
             <Link
               href="/compras"

@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCompraRequest;
 use App\Http\Requests\UpdateCompraRequest;
 use App\Models\Compra;
-use App\Models\CuentaPorPagar;
 use App\Models\DetalleCompra;
+use App\Models\CuentaPorPagar;
 use App\Models\EstadoDocumento;
 use App\Models\Moneda;
 use App\Models\MovimientoInventario;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Models\StockProducto;
 use App\Models\TipoPago;
 use App\Services\Compra\CompraDistribucionService;
 use App\Services\DetectarCambiosPrecioService;
@@ -1044,7 +1045,7 @@ class CompraController extends Controller
                         // Buscar el stock_producto de esta compra
                         $stockProducto = \App\Models\StockProducto::where('producto_id', $detalle->producto_id)
                             ->where('almacen_id', $data['almacen_id'] ?? $compra->almacen_id)
-                            ->orderByDesc('created_at')
+                            ->orderByDesc('id')
                             ->first();
 
                         if ($stockProducto) {
@@ -2070,7 +2071,7 @@ class CompraController extends Controller
             if (!$query) {
                 $resultado = Compra::select('id', 'numero', 'proveedor_id', 'total')
                     ->with(['proveedor:id,nombre,razon_social'])
-                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
                     ->limit(20)
                     ->get()
                     ->map(fn($compra) => [
@@ -2112,7 +2113,7 @@ class CompraController extends Controller
                 ->where(function ($q) use ($query) {
                     $q->where('numero', 'ilike', "%{$query}%");
                 })
-                ->orderByDesc('created_at')
+                ->orderByDesc('id')
                 ->limit(20)
                 ->get()
                 ->map(fn($compra) => [
@@ -2127,6 +2128,317 @@ class CompraController extends Controller
         } catch (\Exception $e) {
             Log::error('❌ Error buscando compras', ['error' => $e->getMessage()]);
             return response()->json([], 200);
+        }
+    }
+
+    /**
+     * ✅ NUEVO 2026-05-18: Mostrar formulario para asignar lotes y fechas de vencimiento
+     * GET /compras/{compra}/asignar-lotes
+     */
+    public function editarAsignarLotes(Compra $compra)
+    {
+        // Verificar permisos
+        $this->authorize('update', $compra);
+
+        // Verificar que la compra esté en estado APROBADO
+        $estadoAprobado = \App\Models\EstadoDocumento::where('codigo', 'APROBADO')->first();
+        if ($compra->estado_documento_id !== $estadoAprobado?->id) {
+            return back()->withErrors([
+                'error' => 'Solo se pueden asignar lotes a compras en estado APROBADO'
+            ]);
+        }
+
+        // Cargar detalles con información de stock y producto
+        $compra->load([
+            'detalles' => function ($query) {
+                $query->with(['producto']);
+            },
+            'estadoDocumento',
+            'proveedor',
+            'almacen',
+            'moneda',
+        ]);
+
+        // Mapear detalles con información del stock existente
+        $detallesConStock = $compra->detalles->map(function ($detalle) use ($compra) {
+            // Buscar todos los registros de stock creados para este detalle
+            $stockProductos = \App\Models\StockProducto::where('producto_id', $detalle->producto_id)
+                ->where('almacen_id', $compra->almacen_id)
+                ->orderByDesc('id')
+                ->get();
+
+            // ✅ NUEVO 2026-05-18: Calcular información de stock actual agregando desde stock_productos
+            $stockTotal = $stockProductos->sum('cantidad');
+            $stockDisponible = $stockProductos->sum('cantidad_disponible');
+            $stockReservado = $stockProductos->sum('cantidad_reservada');
+
+            // ✅ NUEVO 2026-05-19: Cargar movimientos desde la fecha de la compra
+            $movimientos = MovimientoInventario::with('stockProducto')
+                ->whereHas('stockProducto', function ($q) use ($detalle, $compra) {
+                    $q->where('producto_id', $detalle->producto_id)
+                      ->where('almacen_id', $compra->almacen_id);
+                })
+                ->where('fecha', '>=', $compra->fecha)
+                ->orderBy('fecha', 'asc')
+                ->get()
+                ->map(fn($mov) => [
+                    'id' => $mov->id,
+                    'fecha' => $mov->fecha,
+                    'tipo' => $mov->tipo,
+                    'cantidad' => (float)$mov->cantidad,
+                    'cantidad_anterior' => (float)($mov->cantidad_anterior ?? 0),
+                    'cantidad_posterior' => (float)($mov->cantidad_posterior ?? 0),
+                    'lote' => $mov->stockProducto?->lote ?? 'N/A',
+                    'descripcion' => $mov->observacion ?? 'N/A',
+                    'referencia' => $mov->numero_documento ?? 'N/A',
+                ])->toArray();
+
+            return [
+                'id' => $detalle->id,
+                'producto_id' => $detalle->producto_id,
+                'producto_nombre' => $detalle->producto?->nombre ?? 'Desconocido',
+                'producto_sku' => $detalle->producto?->sku ?? 'N/A',
+                'cantidad_original' => (float)$detalle->cantidad,
+                'cantidad_actual' => (float)$detalle->cantidad,
+                'lote_actual' => $detalle->lote,
+                'fecha_vencimiento_actual' => $detalle->fecha_vencimiento,
+                'precio_unitario' => (float)$detalle->precio_unitario,
+                'subtotal' => (float)$detalle->subtotal,
+                // ✅ NUEVO 2026-05-18: Información de stock actual del producto (agregado desde stock_productos)
+                'stock_total' => (float)$stockTotal,
+                'stock_disponible' => (float)$stockDisponible,
+                'stock_reservado' => (float)$stockReservado,
+                'stock_registrados' => $stockProductos->map(fn($sp) => [
+                    'id' => $sp->id,
+                    'cantidad' => (float)$sp->cantidad,
+                    'lote' => $sp->lote,
+                    'fecha_vencimiento' => $sp->fecha_vencimiento,
+                ])->toArray(),
+                // ✅ NUEVO 2026-05-19: Movimientos de inventario desde la fecha de compra
+                'movimientos' => $movimientos,
+            ];
+        })->toArray();
+
+        Log::info('CompraController::asignarLotesForm - Mostrando formulario', [
+            'compra_id' => $compra->id,
+            'compra_numero' => $compra->numero,
+            'detalles_count' => count($detallesConStock),
+        ]);
+
+        return Inertia::render('compras/asignar-lotes', [
+            'compra' => [
+                'id' => $compra->id,
+                'numero' => $compra->numero,
+                'fecha' => $compra->fecha,
+                'proveedor_nombre' => $compra->proveedor?->nombre,
+                'almacen_nombre' => $compra->almacen?->nombre,
+                'almacen_id' => $compra->almacen_id,
+                'estado_nombre' => $compra->estadoDocumento?->nombre,
+            ],
+            'moneda' => [
+                'id' => $compra->moneda?->id,
+                'nombre' => $compra->moneda?->nombre,
+                'simbolo' => $compra->moneda?->simbolo ?? 'Bs',
+            ],
+            'detalles' => $detallesConStock,
+        ]);
+    }
+
+    /**
+     * ✅ NUEVO 2026-05-19: Guardar asignación de lotes y fechas de vencimiento
+     * POST /compras/{compra}/asignar-lotes
+     *
+     * Ahora soporta:
+     * - Actualizar stocks anteriores (asignar lote/fecha)
+     * - Crear nuevos stocks con cantidad específica
+     */
+    public function asignarLotes(Request $request, Compra $compra)
+    {
+        // Verificar permisos
+        $this->authorize('update', $compra);
+
+        // Verificar que la compra esté en estado APROBADO
+        $estadoAprobado = \App\Models\EstadoDocumento::where('codigo', 'APROBADO')->first();
+        if ($compra->estado_documento_id !== $estadoAprobado?->id) {
+            return back()->withErrors([
+                'error' => 'Solo se pueden asignar lotes a compras en estado APROBADO'
+            ]);
+        }
+
+        $validated = $request->validate([
+            'detalles' => 'required|array',
+            'detalles.*.detalle_id' => 'required|integer|exists:detalle_compras,id',
+            'detalles.*.stock_anterior_actualizar' => 'array',
+            'detalles.*.stock_anterior_actualizar.*.stock_id' => 'required|integer|exists:stock_productos,id',
+            'detalles.*.stock_anterior_actualizar.*.cantidad' => 'nullable|numeric|min:0',
+            'detalles.*.stock_anterior_actualizar.*.nuevo_lote' => 'nullable|string|max:100',
+            'detalles.*.stock_anterior_actualizar.*.nueva_fecha_vencimiento' => 'nullable|date',
+            'detalles.*.stock_nuevo' => 'array',
+            'detalles.*.stock_nuevo.*.cantidad' => 'required|numeric|min:0',
+            'detalles.*.stock_nuevo.*.lote' => 'nullable|string|max:100',
+            'detalles.*.stock_nuevo.*.fecha_vencimiento' => 'nullable|date',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Procesar cada detalle
+            foreach ($validated['detalles'] as $detalleData) {
+                $detalle = DetalleCompra::findOrFail($detalleData['detalle_id']);
+                $stocksAActualizar = $detalleData['stock_anterior_actualizar'];
+                $stocksACrear = $detalleData['stock_nuevo'];
+
+                Log::info('CompraController::asignarLotes - Procesando detalle (nuevo flujo)', [
+                    'detalle_id' => $detalle->id,
+                    'producto_id' => $detalle->producto_id,
+                    'stocks_a_actualizar' => count($stocksAActualizar),
+                    'stocks_a_crear' => count($stocksACrear),
+                ]);
+
+                // 1. ACTUALIZAR stocks anteriores
+                foreach ($stocksAActualizar as $stockActual) {
+                    if (empty($stockActual['stock_id'])) {
+                        continue;
+                    }
+
+                    $stock = StockProducto::findOrFail($stockActual['stock_id']);
+
+                    // Capturar valores anteriores para auditoría
+                    $cantidadAnterior = $stock->cantidad;
+                    $cantidadDisponibleAnterior = $stock->cantidad_disponible;
+
+                    // Calcular la diferencia de cantidad
+                    $nuevaCantidad = (float)($stockActual['cantidad'] ?? $stock->cantidad);
+                    $diferencia = $nuevaCantidad - $cantidadAnterior;
+
+                    // Convertir strings vacíos a null
+                    $nuevoLote = !empty($stockActual['nuevo_lote']) ? $stockActual['nuevo_lote'] : null;
+                    $nuevaFecha = !empty($stockActual['nueva_fecha_vencimiento']) ? $stockActual['nueva_fecha_vencimiento'] : null;
+
+                    $stock->update([
+                        'cantidad' => $nuevaCantidad,
+                        'cantidad_disponible' => $cantidadDisponibleAnterior + $diferencia,
+                        'lote' => $nuevoLote,
+                        'fecha_vencimiento' => $nuevaFecha,
+                    ]);
+
+                    // Registrar movimiento si hay cambio de cantidad
+                    if ($diferencia != 0) {
+                        MovimientoInventario::create([
+                            'stock_producto_id' => $stock->id,
+                            'cantidad' => $diferencia,
+                            'cantidad_anterior' => $cantidadAnterior,
+                            'cantidad_posterior' => $nuevaCantidad,
+                            'cantidad_total_anterior' => $cantidadAnterior,
+                            'cantidad_total_posterior' => $nuevaCantidad,
+                            'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
+                            'cantidad_disponible_posterior' => $cantidadDisponibleAnterior + $diferencia,
+                            'cantidad_reservada_anterior' => $stock->cantidad_reservada,
+                            'cantidad_reservada_posterior' => $stock->cantidad_reservada,
+                            'fecha' => now(),
+                            'observacion' => 'Ajuste de cantidad en asignación de compra #' . $compra->numero,
+                            'tipo' => 'AJUSTE_ASIGNACION_COMPRA',
+                            'numero_documento' => $compra->numero,
+                            'user_id' => Auth::id(),
+                            'referencia_tipo' => 'compra',
+                            'referencia_id' => $compra->id,
+                        ]);
+                    }
+
+                    Log::info('Stock anterior actualizado', [
+                        'stock_id' => $stock->id,
+                        'cantidad_anterior' => $cantidadAnterior,
+                        'cantidad_nueva' => $nuevaCantidad,
+                        'nuevo_lote' => $stockActual['nuevo_lote'],
+                        'nueva_fecha' => $stockActual['nueva_fecha_vencimiento'],
+                    ]);
+                }
+
+                // 2. CREAR nuevos stocks
+                foreach ($stocksACrear as $nuevoStockData) {
+                    if ($nuevoStockData['cantidad'] <= 0) {
+                        continue;
+                    }
+
+                    // Convertir strings vacíos a null
+                    $loteNuevo = !empty($nuevoStockData['lote']) ? $nuevoStockData['lote'] : null;
+                    $fechaNueva = !empty($nuevoStockData['fecha_vencimiento']) ? $nuevoStockData['fecha_vencimiento'] : null;
+
+                    $nuevoStock = StockProducto::create([
+                        'producto_id' => $detalle->producto_id,
+                        'almacen_id' => $compra->almacen_id,
+                        'cantidad' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_disponible' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_reservada' => 0,
+                        'lote' => $loteNuevo,
+                        'fecha_vencimiento' => $fechaNueva,
+                        'numero_compra' => $compra->numero,
+                        'tipo_movimiento' => 'ENTRADA',
+                    ]);
+
+                    // Crear movimiento de inventario para el nuevo stock
+                    MovimientoInventario::create([
+                        'stock_producto_id' => $nuevoStock->id,
+                        'cantidad' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_anterior' => 0,
+                        'cantidad_posterior' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_total_anterior' => 0,
+                        'cantidad_total_posterior' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_disponible_anterior' => 0,
+                        'cantidad_disponible_posterior' => (float)$nuevoStockData['cantidad'],
+                        'cantidad_reservada_anterior' => 0,
+                        'cantidad_reservada_posterior' => 0,
+                        'fecha' => now(),
+                        'observacion' => 'Nuevo lote creado en asignación de compra #' . $compra->numero,
+                        'tipo' => 'ENTRADA_AJUSTE_COMPRA',
+                        'numero_documento' => $compra->numero,
+                        'user_id' => Auth::id(),
+                        'referencia_tipo' => 'compra',
+                        'referencia_id' => $compra->id,
+                    ]);
+
+                    Log::info('Nuevo stock creado', [
+                        'stock_id' => $nuevoStock->id,
+                        'cantidad' => $nuevoStockData['cantidad'],
+                        'lote' => $nuevoStockData['lote'],
+                    ]);
+                }
+
+                // 3. Actualizar el detalle de compra SOLO si hay nuevos lotes creados
+                if (count($stocksACrear) > 0) {
+                    $primerNuevoStock = $stocksACrear[0];
+                    $detalle->update([
+                        'lote' => $primerNuevoStock['lote'] ?? null,
+                        'fecha_vencimiento' => $primerNuevoStock['fecha_vencimiento'] ?? null,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            Log::info('CompraController::asignarLotes - Asignación completada exitosamente', [
+                'compra_id' => $compra->id,
+                'compra_numero' => $compra->numero,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lotes y fechas de vencimiento asignados exitosamente',
+                'compra_id' => $compra->id,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            Log::error('CompraController::asignarLotes - Error', [
+                'compra_id' => $compra->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar lotes: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
 export const cargaMasiva = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ cargaMasiva.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ cargaMasiva.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ cargaMasiva.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
     const cargaMasivaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
         cargaMasivaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:113
  * @route '/productos/carga-masiva'
  */
         cargaMasivaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -71,7 +71,7 @@ cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     cargaMasiva.form = cargaMasivaForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
 export const historialCargas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -85,7 +85,7 @@ historialCargas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
 historialCargas.url = (options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ historialCargas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
 historialCargas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +101,7 @@ historialCargas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
 historialCargas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -110,7 +110,7 @@ historialCargas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
     const historialCargasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -119,7 +119,7 @@ historialCargas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
         historialCargasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -127,7 +127,7 @@ historialCargas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:121
  * @route '/productos/historial-cargas'
  */
         historialCargasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

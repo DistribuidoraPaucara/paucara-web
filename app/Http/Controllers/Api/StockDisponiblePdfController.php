@@ -58,10 +58,16 @@ class StockDisponiblePdfController
                 ->get();
 
             // ==========================================
-            // 2️⃣ MAPEO: Extraer datos y precios
+            // 2️⃣ MAPEO: Extraer datos y precios con rangos
             // ==========================================
             $filas = $stocks->map(function ($s) {
                 $p = $s->producto;
+
+                // Obtener rangos para cada tipo de precio
+                $rangosVenta = $this->obtenerRangosPorTipo($p, 'VENTA');
+                $rangosDescuento = $this->obtenerRangosPorTipo($p, 'DESCUENTO');
+                $rangosEspecial = $this->obtenerRangosPorTipo($p, 'ESPECIAL');
+
                 return [
                     'nombre'           => $p->nombre,
                     'sku'              => $p->sku ?? '-',
@@ -69,6 +75,9 @@ class StockDisponiblePdfController
                     'precio_descuento' => $p->obtenerPrecio('DESCUENTO')?->precio,
                     'precio_especial'  => $p->obtenerPrecio('ESPECIAL')?->precio,
                     'stock_disponible' => $s->total_disponible,
+                    'rangos_venta'     => $rangosVenta,
+                    'rangos_descuento' => $rangosDescuento,
+                    'rangos_especial'  => $rangosEspecial,
                 ];
             })->sortBy('nombre')->values();
 
@@ -148,10 +157,16 @@ class StockDisponiblePdfController
                 ->get();
 
             // ==========================================
-            // 2️⃣ MAPEO: Extraer datos y precios
+            // 2️⃣ MAPEO: Extraer datos y precios con rangos
             // ==========================================
             $filas = $stocks->map(function ($s) {
                 $p = $s->producto;
+
+                // Obtener rangos para cada tipo de precio
+                $rangosVenta = $this->obtenerRangosPorTipo($p, 'VENTA');
+                $rangosDescuento = $this->obtenerRangosPorTipo($p, 'DESCUENTO');
+                $rangosEspecial = $this->obtenerRangosPorTipo($p, 'ESPECIAL');
+
                 return [
                     'nombre'           => $p->nombre,
                     'sku'              => $p->sku ?? '-',
@@ -159,6 +174,9 @@ class StockDisponiblePdfController
                     'precio_descuento' => $p->obtenerPrecio('DESCUENTO')?->precio,
                     'precio_especial'  => $p->obtenerPrecio('ESPECIAL')?->precio,
                     'stock_disponible' => $s->total_disponible,
+                    'rangos_venta'     => $rangosVenta,
+                    'rangos_descuento' => $rangosDescuento,
+                    'rangos_especial'  => $rangosEspecial,
                 ];
             })->sortBy('nombre')->values();
 
@@ -255,6 +273,58 @@ class StockDisponiblePdfController
                 'message' => 'Error generando imagen',
                 'error'   => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Obtener rangos de precios para un tipo específico
+     * Retorna array con estructura: [
+     *   ['cantidad_minima' => 1, 'cantidad_maxima' => 10, 'precio' => 100],
+     *   ['cantidad_minima' => 11, 'cantidad_maxima' => 50, 'precio' => 95],
+     *   ...
+     * ]
+     */
+    private function obtenerRangosPorTipo(\App\Models\Producto $producto, string $tipoPrecio): array
+    {
+        try {
+            $empresaId = auth()->user()->empresa_id ?? 1;
+
+            // Obtener el tipo de precio
+            $tipo = \App\Models\TipoPrecio::where('codigo', $tipoPrecio)->first();
+            if (!$tipo) {
+                return [];
+            }
+
+            // Obtener rangos activos y vigentes para este tipo de precio
+            $rangos = \App\Models\PrecioRangoCantidadProducto::activos()
+                ->vigentes()
+                ->where('empresa_id', $empresaId)
+                ->where('producto_id', $producto->id)
+                ->where('tipo_precio_id', $tipo->id)
+                ->orderBy('cantidad_minima', 'asc')
+                ->get();
+
+            if ($rangos->isEmpty()) {
+                return [];
+            }
+
+            // Mapear rangos con sus precios
+            return $rangos->map(function ($rango) use ($producto) {
+                $precio = $producto->obtenerPrecio($rango->tipo_precio_id);
+                return [
+                    'cantidad_minima' => $rango->cantidad_minima,
+                    'cantidad_maxima' => $rango->cantidad_maxima,
+                    'rango_texto' => $rango->cantidad_maxima
+                        ? "{$rango->cantidad_minima}-{$rango->cantidad_maxima}"
+                        : "{$rango->cantidad_minima}+",
+                    'precio' => $precio?->precio,
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            Log::debug('Error obteniendo rangos de precios', [
+                'error' => $e->getMessage(),
+            ]);
+            return [];
         }
     }
 }

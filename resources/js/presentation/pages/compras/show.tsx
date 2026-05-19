@@ -473,14 +473,17 @@ export default function CompraShow() {
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
                                         <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            ID/Nombre
+                                            ID
+                                        </th>
+                                        <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Nombre
                                         </th>
                                         <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             SKU
                                         </th>
-                                        <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {/* <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Códigos de Barra
-                                        </th>
+                                        </th> */}
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Cantidad
                                         </th>
@@ -490,7 +493,7 @@ export default function CompraShow() {
                                         <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Subtotal
                                         </th>
-                                        <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {/* <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Stock Ant.
                                         </th>
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -501,7 +504,7 @@ export default function CompraShow() {
                                         </th>
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Vencimiento
-                                        </th>
+                                        </th> */}
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -509,6 +512,8 @@ export default function CompraShow() {
                                         <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td className="px-3 py-2 text-gray-900 dark:text-white">
                                                 <div className="font-medium">#{detalle.producto.id}</div>
+                                            </td>
+                                            <td >
                                                 <div className="text-gray-500 dark:text-gray-400 text-xs">
                                                     {detalle.producto.nombre}
                                                 </div>
@@ -516,7 +521,7 @@ export default function CompraShow() {
                                             <td className="px-3 py-2 text-gray-900 dark:text-white font-mono text-xs">
                                                 {detalle.producto.sku || '-'}
                                             </td>
-                                            <td className="px-3 py-2 text-gray-900 dark:text-white text-xs">
+                                            {/* <td className="px-3 py-2 text-gray-900 dark:text-white text-xs">
                                                 {detalle.producto.codigosBarra && detalle.producto.codigosBarra.length > 0 ? (
                                                     <div className="space-y-1">
                                                         {detalle.producto.codigosBarra.map((codigo) => (
@@ -533,7 +538,7 @@ export default function CompraShow() {
                                                 ) : (
                                                     <span className="text-gray-400">-</span>
                                                 )}
-                                            </td>
+                                            </td> */}
                                             <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
                                                 {formatDecimal(detalle.cantidad)}
                                             </td>
@@ -543,7 +548,7 @@ export default function CompraShow() {
                                             <td className="px-3 py-2 text-right text-gray-900 dark:text-white font-mono font-semibold">
                                                 {formatCurrencySmartDecimal(detalle.subtotal, compra.moneda?.simbolo || '$')}
                                             </td>
-                                            <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
+                                            {/* <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
                                                 {detalle.cantidad_anterior !== null ? (
                                                     <span>{formatDecimal(detalle.cantidad_anterior)}</span>
                                                 ) : (
@@ -574,7 +579,7 @@ export default function CompraShow() {
                                                 ) : (
                                                     <span className="text-gray-400">-</span>
                                                 )}
-                                            </td>
+                                            </td> */}
                                         </tr>
                                     ))}
                                 </tbody>

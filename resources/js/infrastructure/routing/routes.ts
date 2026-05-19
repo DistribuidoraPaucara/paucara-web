@@ -9,6 +9,16 @@ export const routes = {
     // Dashboard
     dashboard: () => '/dashboard',
 
+    // Compras
+    compras: {
+        index: () => '/compras',
+        create: () => '/compras/create',
+        show: (id: number | string) => `/compras/${id}`,
+        edit: (id: number | string) => `/compras/${id}/edit`,
+        'editar-lotes': (id: number | string) => `/compras/${id}/editar-lotes`,
+        'guardar-lotes': (id: number | string) => `/compras/${id}/guardar-lotes`,
+    },
+
     // Prestamos
     prestamos: {
         dashboard: () => '/prestamos/dashboard',
