@@ -498,13 +498,13 @@ export default function CompraShow() {
                                         </th>
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Stock Post.
-                                        </th>
+                                        </th> */}
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Lote
                                         </th>
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Vencimiento
-                                        </th> */}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -561,7 +561,7 @@ export default function CompraShow() {
                                                 ) : (
                                                     <span className="text-gray-400">-</span>
                                                 )}
-                                            </td>
+                                            </td>*/}
                                             <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
                                                 {detalle.lote ? (
                                                     <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-mono">
@@ -579,7 +579,7 @@ export default function CompraShow() {
                                                 ) : (
                                                     <span className="text-gray-400">-</span>
                                                 )}
-                                            </td> */}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
