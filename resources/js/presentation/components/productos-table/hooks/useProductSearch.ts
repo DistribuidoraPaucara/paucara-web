@@ -12,6 +12,7 @@ interface UseProductSearchProps {
     useFuseSearch?: boolean; // ✅ NIVEL 2: Permitir deshabilitar Fuse.js si es necesario
     isClienteGeneral?: boolean; // ✅ NUEVO: Indicar si es cliente GENERAL para seleccionar tipo de precio
     es_farmacia?: boolean; // ✅ NUEVO (2026-05-08): Indicar si es farmacia para permitir productos sin stock
+    permitirProductosSinStock?: boolean; // ✅ NUEVO (2026-05-26): Permitir productos sin stock en proformas
 }
 
 export function useProductSearch({
@@ -22,7 +23,8 @@ export function useProductSearch({
     onAddProduct,
     useFuseSearch = false, // ✅ DESACTIVADO (2026-05-08): Usar búsqueda por API en lugar de cargar todos los productos al inicio
     isClienteGeneral = false, // ✅ NUEVO: Por defecto NO es cliente general
-    es_farmacia = false // ✅ NUEVO (2026-05-08): Por defecto NO es farmacia
+    es_farmacia = false, // ✅ NUEVO (2026-05-08): Por defecto NO es farmacia
+    permitirProductosSinStock = false // ✅ NUEVO (2026-05-26): Por defecto NO permitir sin stock
 }: UseProductSearchProps) {
     const [productSearch, setProductSearch] = useState('');
     const [productosDisponibles, setProductosDisponibles] = useState<Producto[]>([]);
@@ -205,17 +207,20 @@ export function useProductSearch({
             if (tipo === 'venta') {
                 const esCombo = (p as any).es_combo || false;
                 const tieneComponentes = ((p as any).combo_items?.length || 0) > 0;
-                const permiteSinStock = (p as any).permite_venta_sin_stock || false; // ✅ NUEVO (2026-05-08)
+                const permiteSinStock = (p as any).permite_venta_sin_stock || false;
 
                 if (esCombo) {
                     return tieneComponentes;
                 }
 
-                // ✅ MODIFICADO (2026-05-08): Permitir productos sin stock si es farmacia y el producto lo permite
-                const tieneStockSuficiente = p.stock > 0;
-                const esProductoFarmacia = es_farmacia && permiteSinStock;
+                // ✅ MODIFICADO (2026-05-26): Si permitirProductosSinStock es true, NO filtrar por stock
+                if (permitirProductosSinStock) {
+                    return p.precio_venta > 0; // Solo validar que tenga precio
+                }
 
-                return (tieneStockSuficiente || esProductoFarmacia) && p.precio_venta > 0;
+                // Si NO permitir sin stock, aplicar filtro de stock normal
+                const tieneStockSuficiente = p.stock > 0;
+                return (tieneStockSuficiente || (es_farmacia && permiteSinStock)) && p.precio_venta > 0;
             }
             return true;
         });
@@ -243,6 +248,7 @@ export function useProductSearch({
 
                 if (almacen_id) params.append('almacen_id', almacen_id.toString());
                 if (cliente_id) params.append('cliente_id', cliente_id.toString());
+                if (permitirProductosSinStock) params.append('permitir_sin_stock', 'true'); // ✅ NUEVO (2026-05-26)
 
                 const url = `/api/app/productos/listar?${params.toString()}`;
 
@@ -349,8 +355,8 @@ export function useProductSearch({
             return;
         }
 
-        // 💾 Revisar caché primero
-        const cacheKey = `${term}_${tipo}_${almacen_id}_${cliente_id}`;
+        // 💾 Revisar caché primero - ✅ MODIFICADO (2026-05-26): Incluir permitirProductosSinStock en clave
+        const cacheKey = `${term}_${tipo}_${almacen_id}_${cliente_id}_${permitirProductosSinStock}`;
         if (searchCacheRef.current.has(cacheKey)) {
             console.log('✅ [useProductSearch] Resultado del caché para:', term);
             setProductosDisponibles(searchCacheRef.current.get(cacheKey) || []);
@@ -389,6 +395,7 @@ export function useProductSearch({
                 } else {
                     // ✅ NIVEL 1: Fallback a búsqueda por API
                     console.log('🔍 [useProductSearch] Búsqueda por API para:', term);
+                    console.log('🔐 [useProductSearch] permitirProductosSinStock:', permitirProductosSinStock); // ✅ NUEVO: Debug
                     const params = new URLSearchParams({
                         q: term,
                         limite: '10',
@@ -397,6 +404,7 @@ export function useProductSearch({
 
                     if (almacen_id) params.append('almacen_id', almacen_id.toString());
                     if (cliente_id) params.append('cliente_id', cliente_id.toString());
+                    if (permitirProductosSinStock) params.append('permitir_sin_stock', 'true'); // ✅ NUEVO (2026-05-26)
 
                     const url = `/api/app/productos/buscar?${params.toString()}`;
                     console.log('📡 [useProductSearch] URL:', url);
@@ -405,7 +413,8 @@ export function useProductSearch({
                         limite: '10',
                         tipo: tipo,
                         almacen_id: almacen_id,
-                        cliente_id: cliente_id
+                        cliente_id: cliente_id,
+                        permitir_sin_stock: permitirProductosSinStock // ✅ NUEVO: Debug
                     });
 
                     const response = await fetch(url);
@@ -538,6 +547,7 @@ export function useProductSearch({
 
                 if (almacen_id) params.append('almacen_id', almacen_id.toString());
                 if (cliente_id) params.append('cliente_id', cliente_id.toString());
+                if (permitirProductosSinStock) params.append('permitir_sin_stock', 'true'); // ✅ NUEVO (2026-05-26)
 
                 const url = `/api/productos/buscar?${params.toString()}`;
                 console.log('📡 [Scanner] URL:', url);

@@ -157,6 +157,7 @@ export default function ProformasCreate({
     logistica_envios = false  // ✅ CORREGIDO (2026-04-05): Indicador para mostrar/ocultar logística de envíos
 }: Props) {
     console.log('🚀 ProformasCreate renderizado con props:', { clientes, productosIniciales, almacenes, preventistas, almacen_id_empresa, modo, proforma, detallesProforma, direccionesCliente, logistica_envios });
+    console.log('🔐 [Create.tsx] Pasando permitirProductosSinStock=true a ProductosTable');
 
 
     // ✅ NUEVO: Validaciones defensivas con useMemo para evitar renderizados múltiples
@@ -900,6 +901,7 @@ export default function ProformasCreate({
                                 errors={undefined}
                                 default_tipo_precio_id={default_tipo_precio_id}
                                 carritoCalculado={carritoCalculado}
+                                permitirProductosSinStock={true}
                                 onDetallesActualizados={(nuevosDetalles) => {
                                     console.log('🔄 [proformas/Create.tsx] ProductosTable notificó cambios en detalles por rangos');
                                     setDetalles(nuevosDetalles);

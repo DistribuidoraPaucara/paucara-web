@@ -76,4 +76,5 @@ export interface ProductosTableProps {
     carritoCalculado?: any; // ✅ NUEVO (2026-02-17): Datos de rangos aplicados para actualizar precios automáticamente
     onDetallesActualizados?: (detalles: DetalleProducto[]) => void; // ✅ NUEVO (2026-02-17): Callback cuando se actualizan detalles por cambios de rangos
     es_farmacia?: boolean; // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos en sugerencias
+    permitirProductosSinStock?: boolean; // ✅ NUEVO (2026-05-26): Permitir productos sin stock en proformas
 }

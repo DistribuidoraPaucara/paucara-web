@@ -11,6 +11,7 @@ interface ProductSearchBarProps {
     isClienteGeneral?: boolean;
     readOnly?: boolean;
     es_farmacia?: boolean;
+    permitirProductosSinStock?: boolean; // ✅ NUEVO (2026-05-26): Permitir productos sin stock
     onProductSelected: (producto: Producto) => void;
     onMedicamentoInfo: (producto: Producto) => void;
 }
@@ -22,6 +23,7 @@ export default function ProductSearchBar({
     isClienteGeneral = false,
     readOnly = false,
     es_farmacia = false,
+    permitirProductosSinStock = false,
     onProductSelected,
     onMedicamentoInfo
 }: ProductSearchBarProps) {
@@ -48,6 +50,7 @@ export default function ProductSearchBar({
         isClienteGeneral,
         readOnly,
         es_farmacia, // ✅ NUEVO (2026-05-08): Pasar es_farmacia para permitir productos sin stock
+        permitirProductosSinStock, // ✅ NUEVO (2026-05-26): Pasar permitirProductosSinStock
         onAddProduct: onProductSelected
     });
 

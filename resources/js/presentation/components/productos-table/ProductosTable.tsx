@@ -33,8 +33,12 @@ export default function ProductosTable({
     default_tipo_precio_id,
     carritoCalculado,
     onDetallesActualizados,
-    es_farmacia = false
+    es_farmacia = false,
+    permitirProductosSinStock = false // ✅ NUEVO (2026-05-26): Permitir productos sin stock
 }: ProductosTableProps) {
+    // ✅ DEBUG (2026-05-26): Verificar que permitirProductosSinStock llegue correctamente
+    console.log('📦 [ProductosTable] permitirProductosSinStock recibido:', permitirProductosSinStock);
+
     // ✅ Estados para edición de campos
     const [editingField, setEditingField] = useState<{ index: number; field: string; value: string } | null>(null);
 
@@ -340,6 +344,7 @@ export default function ProductosTable({
                 isClienteGeneral={isClienteGeneral}
                 readOnly={readOnly}
                 es_farmacia={es_farmacia}
+                permitirProductosSinStock={permitirProductosSinStock}
                 onProductSelected={onAddProduct}
                 onMedicamentoInfo={setFarmaciaProdutoSeleccionado}
             />
