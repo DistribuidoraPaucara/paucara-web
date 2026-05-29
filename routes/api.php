@@ -1322,6 +1322,147 @@ Route::middleware(['auth', 'permission:cajas.transacciones'])->prefix('conciliac
         ->name('api.conciliacion.historial');
 });
 
+// ✅ Ruta de DEBUG: Ver logs de Laravel (solo para super-admin)
+Route::middleware(['auth:sanctum,web'])->prefix('debug')->group(function () {
+    Route::get('/logs', function () {
+        $user = auth()->user();
+
+        // Solo super-admin puede acceder
+        if (!$user) {
+            return response()->json([
+                'error' => 'Unauthenticated',
+                'message' => 'Debes estar autenticado'
+            ], 401);
+        }
+
+        if (!$user->hasRole('Super Admin')) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'Solo Super Admin puede acceder a los logs. Tu rol: ' . $user->roles->pluck('name')->join(', ')
+            ], 403);
+        }
+
+        $logFile = storage_path('logs/laravel.log');
+
+        if (!file_exists($logFile)) {
+            return response()->json([
+                'error' => 'Log file not found',
+                'path' => $logFile
+            ], 404);
+        }
+
+        // Leer últimas 500 líneas
+        $lines = 500;
+        $file = new \SplFileObject($logFile, 'r');
+        $file->seek(PHP_INT_MAX);
+        $lastLine = $file->key();
+        $lines = min($lines, $lastLine);
+        $file->seek(max(0, $lastLine - $lines));
+
+        $content = '';
+        while (!$file->eof()) {
+            $content .= $file->fgets();
+        }
+
+        return response()->json([
+            'success' => true,
+            'file' => $logFile,
+            'file_size' => filesize($logFile),
+            'file_size_mb' => round(filesize($logFile) / 1024 / 1024, 2),
+            'lines_shown' => $lines,
+            'content' => $content
+        ]);
+    })->name('api.debug.logs');
+
+    // Limpiar logs (solo super-admin)
+    Route::post('/logs/clear', function () {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'error' => 'Unauthenticated'
+            ], 401);
+        }
+
+        if (!$user->hasRole('Super Admin')) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'Solo Super Admin puede limpiar logs'
+            ], 403);
+        }
+
+        $logFile = storage_path('logs/laravel.log');
+
+        if (file_exists($logFile)) {
+            file_put_contents($logFile, '');
+            return response()->json([
+                'success' => true,
+                'message' => 'Logs cleared successfully'
+            ]);
+        }
+
+        return response()->json([
+            'error' => 'Log file not found'
+        ], 404);
+    })->name('api.debug.logs.clear');
+});
+
+// ✅ Ruta de DEBUG sin autenticación (SOLO EN DESARROLLO)
+if (app()->environment('local')) {
+    Route::prefix('debug')->group(function () {
+        Route::get('/logs/dev', function () {
+            $logFile = storage_path('logs/laravel.log');
+
+            if (!file_exists($logFile)) {
+                return response()->json([
+                    'error' => 'Log file not found',
+                    'path' => $logFile
+                ], 404);
+            }
+
+            // Leer últimas 1000 líneas
+            $lines = 1000;
+            $file = new \SplFileObject($logFile, 'r');
+            $file->seek(PHP_INT_MAX);
+            $lastLine = $file->key();
+            $lines = min($lines, $lastLine);
+            $file->seek(max(0, $lastLine - $lines));
+
+            $content = '';
+            while (!$file->eof()) {
+                $content .= $file->fgets();
+            }
+
+            return response()->json([
+                'success' => true,
+                'environment' => app()->environment(),
+                'file' => $logFile,
+                'file_size' => filesize($logFile),
+                'file_size_mb' => round(filesize($logFile) / 1024 / 1024, 2),
+                'lines_shown' => $lines,
+                'content' => $content
+            ]);
+        })->name('api.debug.logs.dev');
+
+        // Limpiar logs en dev
+        Route::post('/logs/dev/clear', function () {
+            $logFile = storage_path('logs/laravel.log');
+
+            if (file_exists($logFile)) {
+                file_put_contents($logFile, "🧹 Logs cleared at " . now()->toDateTimeString() . "\n");
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Logs cleared successfully'
+                ]);
+            }
+
+            return response()->json([
+                'error' => 'Log file not found'
+            ], 404);
+        })->name('api.debug.logs.dev.clear');
+    });
+}
+
 // ========================================
 // 📊 RUTAS API ESTADOS LOGÍSTICA (Q1 2026)
 // ========================================

@@ -6,6 +6,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
+use Spatie\PdfToImage\Pdf as SpatialPdf;
 
 /**
  * StockDisponiblePdfController - Generar PDF de stock disponible para preventistas
@@ -202,74 +203,70 @@ class StockDisponiblePdfController
                 ->setOption('margin-right', 10);
 
             $pdfContent = $pdf->output();
-
-            // ==========================================
-            // 5️⃣ INTENTAR CONVERTIR A PNG (opcional)
-            // ==========================================
-            // Si wkhtmltoimage está disponible, convertir a PNG
-            // Si no, simplemente retornar PDF
-            $tempHtmlPath  = storage_path('app/temp/stock-' . uniqid() . '.html');
+            $tempPdfPath = storage_path('app/temp/stock-' . uniqid() . '.pdf');
             $tempImagePath = storage_path('app/temp/stock-' . uniqid() . '.png');
-            $pngContent    = null;
+            $pngContent = null;
 
             try {
                 // Crear carpeta temp si no existe
-                if (! is_dir(dirname($tempHtmlPath))) {
-                    mkdir(dirname($tempHtmlPath), 0755, true);
+                if (!is_dir(dirname($tempPdfPath))) {
+                    mkdir(dirname($tempPdfPath), 0755, true);
                 }
 
-                // Guardar HTML temporal
-                $html = view('pdf.stock-disponible-preventista', $data)->render();
-                file_put_contents($tempHtmlPath, $html);
+                // Guardar PDF temporal
+                file_put_contents($tempPdfPath, $pdfContent);
 
-                // Intentar usar wkhtmltoimage
-                $command = sprintf(
-                    'wkhtmltoimage --quiet %s %s 2>&1',
-                    escapeshellarg($tempHtmlPath),
-                    escapeshellarg($tempImagePath)
-                );
+                // ==========================================
+                // 5️⃣ CONVERTIR PDF A PNG con Spatie
+                // ==========================================
+                try {
+                    $originalSize = filesize($tempPdfPath);
 
-                exec($command, $output, $returnCode);
+                    SpatialPdf::load($tempPdfPath)
+                        ->setPage(1)
+                        ->saveImage($tempImagePath);
 
-                if ($returnCode === 0 && file_exists($tempImagePath)) {
-                    $originalSize = filesize($tempImagePath);
+                    if (file_exists($tempImagePath)) {
+                        $beforeOptimization = filesize($tempImagePath);
 
-                    // Optimizar imagen con ImageMagick si está disponible
-                    try {
-                        $this->optimizarImagen($tempImagePath);
-                    } catch (\Exception $e) {
-                        Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
+                        // Optimizar imagen con ImageMagick
+                        try {
+                            $this->optimizarImagen($tempImagePath);
+                        } catch (\Exception $e) {
+                            Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
+                        }
+
+                        $pngContent = file_get_contents($tempImagePath);
+                        $finalSize = filesize($tempImagePath);
+                        Log::info('✅ Imagen PNG generada con Spatie (Imagick)', [
+                            'pdf_size' => $originalSize,
+                            'before_optimization' => $beforeOptimization,
+                            'final_size' => $finalSize,
+                            'reduction' => round(((1 - $finalSize / $beforeOptimization) * 100), 2) . '%',
+                        ]);
                     }
-
-                    $pngContent = file_get_contents($tempImagePath);
-                    $finalSize  = filesize($tempImagePath);
-                    Log::info('✅ Imagen PNG generada y optimizada', [
-                        'original_bytes' => $originalSize,
-                        'final_bytes'    => $finalSize,
-                        'reduction'      => round(((1 - $finalSize / $originalSize) * 100), 2) . '%',
-                    ]);
-
-                    // Limpiar archivos temporales
-                    @unlink($tempHtmlPath);
-                    @unlink($tempImagePath);
+                } catch (\Exception $e) {
+                    Log::debug('ℹ️ Spatie PDF to Image falló: ' . $e->getMessage());
                 }
             } catch (\Exception $e) {
-                Log::debug('ℹ️ wkhtmltoimage no disponible, usando PDF');
+                Log::error('❌ Error generando imagen: ' . $e->getMessage());
+            } finally {
+                // Limpiar archivos temporales
+                @unlink($tempPdfPath);
+                @unlink($tempImagePath);
             }
 
             // ==========================================
             // 6️⃣ RETORNAR PNG si fue generado, sino PDF
             // ==========================================
             if ($pngContent) {
-                // Se generó PNG exitosamente
                 return response($pngContent)
                     ->header('Content-Type', 'image/png')
                     ->header('Content-Disposition', 'attachment; filename=stock-disponible.png')
                     ->header('Cache-Control', 'public, max-age=3600')
                     ->header('X-Image-Optimized', 'true');
             } else {
-                // Fallback: Retornar PDF (compatible con Railway y todos los servidores)
-                Log::info('📄 Retornando stock como PDF (fallback)');
+                Log::warning('⚠️ No se pudo generar imagen PNG, retornando PDF como fallback');
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'attachment; filename=stock-disponible.pdf')
