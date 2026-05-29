@@ -156,8 +156,170 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     imagen.form = imagenForm
 /**
-* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
  * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+const test74f97cd302fe4500bf59fb78548813b5 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: test74f97cd302fe4500bf59fb78548813b5.url(options),
+    method: 'get',
+})
+
+test74f97cd302fe4500bf59fb78548813b5.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/imagen/test',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+test74f97cd302fe4500bf59fb78548813b5.url = (options?: RouteQueryOptions) => {
+    return test74f97cd302fe4500bf59fb78548813b5.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+test74f97cd302fe4500bf59fb78548813b5.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: test74f97cd302fe4500bf59fb78548813b5.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+test74f97cd302fe4500bf59fb78548813b5.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: test74f97cd302fe4500bf59fb78548813b5.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+    const test74f97cd302fe4500bf59fb78548813b5Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: test74f97cd302fe4500bf59fb78548813b5.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+        test74f97cd302fe4500bf59fb78548813b5Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: test74f97cd302fe4500bf59fb78548813b5.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test'
+ */
+        test74f97cd302fe4500bf59fb78548813b5Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: test74f97cd302fe4500bf59fb78548813b5.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    test74f97cd302fe4500bf59fb78548813b5.form = test74f97cd302fe4500bf59fb78548813b5Form
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+const testfb66b5768da98d3512e5d911402471bc = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: testfb66b5768da98d3512e5d911402471bc.url(options),
+    method: 'get',
+})
+
+testfb66b5768da98d3512e5d911402471bc.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/imagen/test-local',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+testfb66b5768da98d3512e5d911402471bc.url = (options?: RouteQueryOptions) => {
+    return testfb66b5768da98d3512e5d911402471bc.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+testfb66b5768da98d3512e5d911402471bc.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: testfb66b5768da98d3512e5d911402471bc.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+testfb66b5768da98d3512e5d911402471bc.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: testfb66b5768da98d3512e5d911402471bc.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+    const testfb66b5768da98d3512e5d911402471bcForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: testfb66b5768da98d3512e5d911402471bc.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+        testfb66b5768da98d3512e5d911402471bcForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: testfb66b5768da98d3512e5d911402471bc.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/test-local'
+ */
+        testfb66b5768da98d3512e5d911402471bcForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: testfb66b5768da98d3512e5d911402471bc.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    testfb66b5768da98d3512e5d911402471bc.form = testfb66b5768da98d3512e5d911402471bcForm
+
+export const test = {
+    '/api/app/stock/imagen/test': test74f97cd302fe4500bf59fb78548813b5,
+    '/api/app/stock/imagen/test-local': testfb66b5768da98d3512e5d911402471bc,
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
 export const debug = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +334,7 @@ debug.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
 debug.url = (options?: RouteQueryOptions) => {
@@ -181,7 +343,7 @@ debug.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
 debug.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +352,7 @@ debug.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
 debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +362,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
     const debugForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +372,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
         debugForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +381,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
  * @route '/api/app/stock/imagen/debug'
  */
         debugForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -233,6 +395,6 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     debug.form = debugForm
-const StockDisponiblePdfController = { generar, imagen, debug }
+const StockDisponiblePdfController = { generar, imagen, test, debug }
 
 export default StockDisponiblePdfController

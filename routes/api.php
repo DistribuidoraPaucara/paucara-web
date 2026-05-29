@@ -357,6 +357,11 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         ->middleware('auth:sanctum')
         ->name('api.app.stock.imagen');
 
+    // ✅ TEST: Probar diferentes calidades (3 productos de prueba)
+    Route::get('/app/stock/imagen/test', [StockDisponiblePdfController::class, 'test'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.imagen.test');
+
     // ✅ DEBUG: Probar generación de imagen (retorna error detallado)
     Route::get('/app/stock/imagen/debug', [StockDisponiblePdfController::class, 'debug'])
         ->middleware('auth:sanctum')
@@ -1449,6 +1454,12 @@ Route::middleware(['auth:sanctum,web'])->get('/logs', function () {
         'content' => $content
     ]);
 })->name('api.logs');
+
+// ✅ TEST LOCAL: Probar calidades sin autenticación (solo en desarrollo)
+if (app()->environment(['local', 'dev'])) {
+    Route::get('/app/stock/imagen/test-local', [StockDisponiblePdfController::class, 'test'])
+        ->name('api.app.stock.imagen.test.local');
+}
 
 // ========================================
 // 📊 RUTAS API ESTADOS LOGÍSTICA (Q1 2026)

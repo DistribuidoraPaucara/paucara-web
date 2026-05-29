@@ -287,7 +287,7 @@ class StockDisponiblePdfController
             $imagemagickCmd = $this->getImageMagickCommand();
 
             $command = sprintf(
-                '%s %s -quality 85 -append %s 2>&1',
+                '%s %s -quality 92 -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)
@@ -417,6 +417,92 @@ class StockDisponiblePdfController
         }
 
         Log::warning('⚠️ No se pudo optimizar imagen - usar sin optimizar');
+    }
+
+    /**
+     * ✅ TEST: Probar diferentes calidades de imagen
+     * GET /api/app/stock/imagen/test?quality=95
+     * Parámetros: quality (75-100, default 85)
+     */
+    public function test(\Illuminate\Http\Request $request)
+    {
+        $quality = (int) $request->query('quality', 85);
+        $quality = max(75, min(100, $quality)); // Limitar entre 75-100
+
+        try {
+            // Datos mínimos
+            $data = [
+                'filas' => [
+                    ['nombre' => 'Producto 1', 'sku' => 'P001', 'precio_venta' => 100, 'precio_descuento' => 90, 'precio_especial' => 80, 'stock_disponible' => 50, 'rangos_venta' => [], 'rangos_descuento' => [], 'rangos_especial' => []],
+                    ['nombre' => 'Producto 2', 'sku' => 'P002', 'precio_venta' => 200, 'precio_descuento' => 180, 'precio_especial' => 160, 'stock_disponible' => 30, 'rangos_venta' => [], 'rangos_descuento' => [], 'rangos_especial' => []],
+                    ['nombre' => 'Producto 3', 'sku' => 'P003', 'precio_venta' => 150, 'precio_descuento' => 135, 'precio_especial' => 120, 'stock_disponible' => 20, 'rangos_venta' => [], 'rangos_descuento' => [], 'rangos_especial' => []],
+                ],
+                'total_productos' => 3,
+                'fecha_generacion' => now()->format('d/m/Y H:i'),
+                'empresa' => config('app.name'),
+                'incluir_stock' => false,
+            ];
+
+            // Generar PDF
+            $pdf = Pdf::loadView('pdf.stock-disponible-preventista', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', 10)
+                ->setOption('margin-bottom', 10)
+                ->setOption('margin-left', 10)
+                ->setOption('margin-right', 10);
+
+            $pdfContent = $pdf->output();
+            $tempPdfPath = storage_path('app/temp/test-' . uniqid() . '.pdf');
+            $tempImagePath = storage_path('app/temp/test-' . uniqid() . '.png');
+
+            if (!is_dir(dirname($tempPdfPath))) {
+                mkdir(dirname($tempPdfPath), 0755, true);
+            }
+
+            file_put_contents($tempPdfPath, $pdfContent);
+
+            // Convertir con la calidad especificada
+            $imagemagickCmd = $this->getImageMagickCommand();
+            $command = sprintf(
+                '%s %s -quality %d -define pdf:use-cropbox=true -alpha remove -append %s 2>&1',
+                $imagemagickCmd,
+                escapeshellarg($tempPdfPath),
+                $quality,
+                escapeshellarg($tempImagePath)
+            );
+
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            @unlink($tempPdfPath);
+
+            if ($returnCode === 0 && file_exists($tempImagePath)) {
+                $imageContent = file_get_contents($tempImagePath);
+                $imageSize = filesize($tempImagePath);
+                @unlink($tempImagePath);
+
+                return response($imageContent)
+                    ->header('Content-Type', 'image/png')
+                    ->header('Content-Disposition', 'attachment; filename=test-quality-' . $quality . '.png')
+                    ->header('X-Test-Quality', $quality)
+                    ->header('X-Test-Size-KB', round($imageSize / 1024, 2))
+                    ->header('Cache-Control', 'no-cache');
+            } else {
+                @unlink($tempImagePath);
+                return response()->json([
+                    'error' => 'Conversion failed',
+                    'command' => $command,
+                    'output' => implode("\n", $output),
+                    'quality_tested' => $quality
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'quality_tested' => $quality
+            ], 500);
+        }
     }
 
     /**
