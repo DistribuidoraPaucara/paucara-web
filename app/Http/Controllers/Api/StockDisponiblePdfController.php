@@ -286,14 +286,15 @@ class StockDisponiblePdfController
             // En Windows, usar 'magick' en lugar de 'convert' para evitar conflicto con comando nativo
             $imagemagickCmd = $this->getImageMagickCommand();
 
-            // Configuración MÁXIMA calidad para PDF → PNG
-            // -quality 100: SIN compresión
+            // Configuración BALANCE: Calidad + Tamaño para WhatsApp
+            // -quality 95: buena calidad sin ser excesivo
+            // -define png:compression-level=9: comprimir PNG sin perder calidad
             // -define pdf:fit-page=A4: renderizado óptimo
             // -colorspace RGB: mejor manejo de colores
             // -alpha remove: fondo blanco sólido
             // -append: unir todas las páginas en una imagen larga
             $command = sprintf(
-                '%s %s -define pdf:fit-page=A4 -colorspace RGB -quality 100 -alpha remove -append %s 2>&1',
+                '%s %s -define pdf:fit-page=A4 -colorspace RGB -quality 95 -define png:compression-level=9 -alpha remove -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)
