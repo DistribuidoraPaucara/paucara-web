@@ -1,7 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import imagen from './imagen'
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 export const pdf = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +17,7 @@ pdf.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 pdf.url = (options?: RouteQueryOptions) => {
@@ -25,7 +26,7 @@ pdf.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 pdf.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +35,7 @@ pdf.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +45,7 @@ pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
     const pdfForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +55,7 @@ pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
         pdfForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +64,7 @@ pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::pdf
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
         pdfForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +80,7 @@ pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     pdf.form = pdfForm
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 export const imagen = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +95,7 @@ imagen.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.url = (options?: RouteQueryOptions) => {
@@ -103,7 +104,7 @@ imagen.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +113,7 @@ imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +123,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
     const imagenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +133,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
         imagenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +142,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
         imagenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

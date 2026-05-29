@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 export const generar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ generar.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 generar.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ generar.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 generar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ generar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
 generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
     const generarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
         generarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::generar
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:41
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:40
  * @route '/api/app/stock/pdf'
  */
         generarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     generar.form = generarForm
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 export const imagen = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ imagen.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ imagen.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
 imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
     const imagenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
         imagenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:140
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
  * @route '/api/app/stock/imagen'
  */
         imagenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -155,6 +155,84 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     imagen.form = imagenForm
-const StockDisponiblePdfController = { generar, imagen }
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+export const debug = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: debug.url(options),
+    method: 'get',
+})
+
+debug.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/imagen/debug',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+debug.url = (options?: RouteQueryOptions) => {
+    return debug.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+debug.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: debug.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: debug.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+    const debugForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: debug.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+        debugForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: debug.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @route '/api/app/stock/imagen/debug'
+ */
+        debugForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: debug.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    debug.form = debugForm
+const StockDisponiblePdfController = { generar, imagen, debug }
 
 export default StockDisponiblePdfController

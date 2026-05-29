@@ -1412,23 +1412,15 @@ Route::middleware(['auth:sanctum,web'])->prefix('debug')->group(function () {
     })->name('api.debug.logs.clear');
 });
 
-// ✅ Ruta de DEBUG: Ver logs (DESARROLLO - sin autenticación)
-Route::get('/dev-logs', function () {
-    // Verificar si está en desarrollo
-    if (!app()->environment(['local', 'dev', 'development'])) {
-        return response()->json([
-            'error' => 'Not available in production',
-            'message' => 'Esta ruta solo está disponible en desarrollo'
-        ], 403);
-    }
-
+// ✅ UN ENDPOINT que funciona en LOCAL y PRODUCTION
+Route::middleware(['auth:sanctum,web'])->get('/logs', function () {
+    $user = auth()->user();
     $logFile = storage_path('logs/laravel.log');
 
     if (!file_exists($logFile)) {
         return response()->json([
             'error' => 'Log file not found',
-            'path' => $logFile,
-            'storage_path' => storage_path('logs')
+            'path' => $logFile
         ], 404);
     }
 
@@ -1448,6 +1440,7 @@ Route::get('/dev-logs', function () {
     return response()->json([
         'success' => true,
         'environment' => app()->environment(),
+        'authenticated_as' => $user?->name ?? 'unauthenticated',
         'file' => $logFile,
         'file_size' => filesize($logFile),
         'file_size_mb' => round(filesize($logFile) / 1024 / 1024, 2),
@@ -1455,30 +1448,7 @@ Route::get('/dev-logs', function () {
         'total_lines' => $lastLine,
         'content' => $content
     ]);
-})->name('api.dev-logs');
-
-// ✅ Limpiar logs en DESARROLLO
-Route::post('/dev-logs/clear', function () {
-    if (!app()->environment(['local', 'dev', 'development'])) {
-        return response()->json([
-            'error' => 'Not available in production'
-        ], 403);
-    }
-
-    $logFile = storage_path('logs/laravel.log');
-
-    if (file_exists($logFile)) {
-        file_put_contents($logFile, "🧹 Logs cleared at " . now()->toDateTimeString() . "\n");
-        return response()->json([
-            'success' => true,
-            'message' => 'Logs cleared successfully'
-        ]);
-    }
-
-    return response()->json([
-        'error' => 'Log file not found'
-    ], 404);
-})->name('api.dev-logs.clear');
+})->name('api.logs');
 
 // ========================================
 // 📊 RUTAS API ESTADOS LOGÍSTICA (Q1 2026)

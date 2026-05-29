@@ -248,7 +248,13 @@ class StockDisponiblePdfController
                     ->header('Cache-Control', 'public, max-age=3600')
                     ->header('X-Image-Optimized', 'true');
             } else {
-                Log::warning('⚠️ No se pudo generar imagen PNG, retornando PDF como fallback');
+                // Fallback: Retornar PDF si no se pudo generar imagen
+                // (Nota: En local sin ImageMagick, siempre retorna PDF)
+                // (En production con ImageMagick, retorna PNG)
+                Log::warning('⚠️ No se pudo generar imagen PNG, retornando PDF como fallback', [
+                    'environment' => app()->environment(),
+                    'hint' => app()->environment('local') ? 'Instala ImageMagick para obtener PNG en local' : 'Verifica ImageMagick en production'
+                ]);
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'attachment; filename=stock-disponible.pdf')
@@ -276,9 +282,13 @@ class StockDisponiblePdfController
     private function convertirPdfAImagen(string $pdfPath, string $outputPath): ?string
     {
         try {
-            // Comando: convert PDF (primera página) a PNG con compresión
+            // Convertir TODAS las páginas a una sola imagen PNG larga
+            // En Windows, usar 'magick' en lugar de 'convert' para evitar conflicto con comando nativo
+            $imagemagickCmd = $this->getImageMagickCommand();
+
             $command = sprintf(
-                'convert -density 150 -quality 85 %s[0] %s 2>&1',
+                '%s %s -quality 85 -append %s 2>&1',
+                $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)
             );
@@ -299,14 +309,15 @@ class StockDisponiblePdfController
                 }
 
                 Log::info('✅ PDF convertido a PNG con ImageMagick', [
-                    'command' => 'convert -density 150 -quality 85'
+                    'command' => 'convert [pdf] -quality 85 [png]'
                 ]);
 
                 return $imageContent;
             } else {
                 Log::warning('⚠️ ImageMagick convert falló', [
                     'return_code' => $returnCode,
-                    'output' => implode("\n", $output)
+                    'output' => implode("\n", $output),
+                    'command' => $command
                 ]);
                 return null;
             }
@@ -317,26 +328,63 @@ class StockDisponiblePdfController
     }
 
     /**
+     * Detectar qué comando usar para ImageMagick
+     * En Windows: busca magick.exe en rutas comunes
+     * En Linux/Mac: usa 'convert'
+     */
+    private function getImageMagickCommand(): string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            // Rutas típicas de instalación en Windows (actualizar según tu versión)
+            $possiblePaths = [
+                'C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe',  // Tu instalación
+                'C:\\Program Files\\ImageMagick-7.1.1-Q16\\magick.exe',
+                'C:\\Program Files\\ImageMagick-7.1.0-Q16\\magick.exe',
+                'C:\\Program Files\\ImageMagick-7.1.2-Q16\\magick.exe',
+                'C:\\Program Files (x86)\\ImageMagick-7.1.1-Q16\\magick.exe',
+                'C:\\Program Files (x86)\\ImageMagick-7.1.0-Q16\\magick.exe',
+                'C:\\Program Files\\ImageMagick\\magick.exe',
+            ];
+
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path)) {
+                    Log::debug('✅ ImageMagick encontrado en: ' . $path);
+                    return '"' . $path . '"'; // Comillas para rutas con espacios
+                }
+            }
+
+            // Si no se encuentra, intenta el comando directo (podría estar en PATH)
+            Log::debug('⚠️ ImageMagick no encontrado en rutas típicas, intentando comando directo');
+            return 'magick';
+        }
+
+        // En Linux/Mac, usar 'convert'
+        return 'convert';
+    }
+
+    /**
      * Optimizar imagen PNG para reducir tamaño sin perder mucha calidad
      * Usa ImageMagick (disponible vía shell) o Imagick PHP
      */
     private function optimizarImagen(string $imagePath): void
     {
-        // Método 1: Intentar usar ImageMagick via shell (convert)
+        // Método 1: Intentar usar ImageMagick via shell
         try {
+            $imagemagickCmd = $this->getImageMagickCommand();
             $command = sprintf(
-                'convert %s -strip -quality 85 -interlace Plane %s',
+                '%s %s -strip -quality 85 -interlace Plane %s',
+                $imagemagickCmd,
                 escapeshellarg($imagePath),
                 escapeshellarg($imagePath)
             );
             exec($command, $output, $returnCode);
 
             if ($returnCode === 0) {
-                Log::debug('✅ Imagen optimizada con ImageMagick convert');
+                Log::debug('✅ Imagen optimizada con ImageMagick (' . $imagemagickCmd . ')');
                 return;
             }
         } catch (\Exception $e) {
-            Log::debug('ℹ️ ImageMagick convert no disponible');
+            Log::debug('ℹ️ ImageMagick no disponible');
         }
 
         // Método 2: Intentar usar PHP Imagick extension
