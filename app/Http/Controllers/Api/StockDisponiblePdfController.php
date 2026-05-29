@@ -290,7 +290,7 @@ class StockDisponiblePdfController
             // -quality 95: balance entre calidad y tamaño (perfecto para WhatsApp)
             // -append: unir todas las páginas en una imagen larga
             $command = sprintf(
-                '%s %s -quality 95 -append %s 2>&1',
+                '%s %s -quality 98 -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)
