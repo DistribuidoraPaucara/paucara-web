@@ -291,7 +291,7 @@ class StockDisponiblePdfController
             // -quality 95: menor compresión, mejor calidad
             // -colorspace RGB: mejor manejo de colores
             $command = sprintf(
-                '%s %s -define pdf:fit-page=A4 -colorspace RGB -quality 95 -append %s 2>&1',
+                '%s %s -quality 95 -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)
