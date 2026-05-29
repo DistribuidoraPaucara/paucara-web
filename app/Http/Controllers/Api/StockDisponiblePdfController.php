@@ -232,10 +232,21 @@ class StockDisponiblePdfController
                 exec($command, $output, $returnCode);
 
                 if ($returnCode === 0 && file_exists($tempImagePath)) {
+                    $originalSize = filesize($tempImagePath);
+
+                    // Optimizar imagen con ImageMagick si está disponible
+                    try {
+                        $this->optimizarImagen($tempImagePath);
+                    } catch (\Exception $e) {
+                        Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
+                    }
+
                     $pngContent = file_get_contents($tempImagePath);
-                    $fileSize   = filesize($tempImagePath);
-                    Log::info('✅ Imagen PNG generada con wkhtmltoimage', [
-                        'size_bytes' => $fileSize,
+                    $finalSize  = filesize($tempImagePath);
+                    Log::info('✅ Imagen PNG generada y optimizada', [
+                        'original_bytes' => $originalSize,
+                        'final_bytes'    => $finalSize,
+                        'reduction'      => round(((1 - $finalSize / $originalSize) * 100), 2) . '%',
                     ]);
 
                     // Limpiar archivos temporales
@@ -253,13 +264,16 @@ class StockDisponiblePdfController
                 // Se generó PNG exitosamente
                 return response($pngContent)
                     ->header('Content-Type', 'image/png')
-                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.png');
+                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.png')
+                    ->header('Cache-Control', 'public, max-age=3600')
+                    ->header('X-Image-Optimized', 'true');
             } else {
                 // Fallback: Retornar PDF (compatible con Railway y todos los servidores)
                 Log::info('📄 Retornando stock como PDF (fallback)');
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.pdf');
+                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.pdf')
+                    ->header('Cache-Control', 'public, max-age=3600');
             }
 
         } catch (\Exception $e) {
@@ -274,6 +288,61 @@ class StockDisponiblePdfController
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Optimizar imagen PNG para reducir tamaño sin perder mucha calidad
+     * Usa ImageMagick (disponible vía shell) o Imagick PHP
+     */
+    private function optimizarImagen(string $imagePath): void
+    {
+        // Método 1: Intentar usar ImageMagick via shell (convert)
+        try {
+            $command = sprintf(
+                'convert %s -strip -quality 85 -interlace Plane %s',
+                escapeshellarg($imagePath),
+                escapeshellarg($imagePath)
+            );
+            exec($command, $output, $returnCode);
+
+            if ($returnCode === 0) {
+                Log::debug('✅ Imagen optimizada con ImageMagick convert');
+                return;
+            }
+        } catch (\Exception $e) {
+            Log::debug('ℹ️ ImageMagick convert no disponible');
+        }
+
+        // Método 2: Intentar usar PHP Imagick extension
+        if (extension_loaded('imagick')) {
+            try {
+                $image = new \Imagick($imagePath);
+                $image->setImageFormat('png');
+                $image->setImageCompressionQuality(85);
+                $image->stripImage();
+                $image->writeImage($imagePath);
+                $image->destroy();
+                Log::debug('✅ Imagen optimizada con Imagick extension');
+                return;
+            } catch (\Exception $e) {
+                Log::debug('ℹ️ Imagick extension error: ' . $e->getMessage());
+            }
+        }
+
+        // Método 3: Intentar usar optipng para comprimir PNG
+        try {
+            $command = sprintf('optipng -o2 %s 2>&1', escapeshellarg($imagePath));
+            exec($command, $output, $returnCode);
+
+            if ($returnCode === 0) {
+                Log::debug('✅ Imagen optimizada con optipng');
+                return;
+            }
+        } catch (\Exception $e) {
+            Log::debug('ℹ️ optipng no disponible');
+        }
+
+        Log::warning('⚠️ No se pudo optimizar imagen - usar sin optimizar');
     }
 
     /**

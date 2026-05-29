@@ -348,10 +348,14 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     Route::post('/productos/stock/multiples', [ProductoController::class, 'obtenerStockMultiples'])->name('api.productos.stock.multiples');
 
     // ✅ NUEVO: PDF de stock disponible para preventistas
-    Route::get('/app/stock/pdf', [StockDisponiblePdfController::class, 'generar'])->name('api.app.stock.pdf');
+    Route::get('/app/stock/pdf', [StockDisponiblePdfController::class, 'generar'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.pdf');
 
     // ✅ NUEVO: Imagen PNG de stock disponible para preventistas
-    Route::get('/app/stock/imagen', [StockDisponiblePdfController::class, 'imagen'])->name('api.app.stock.imagen');
+    Route::get('/app/stock/imagen', [StockDisponiblePdfController::class, 'imagen'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.imagen');
 
     // ✅ NUEVO: Preventistas para selector en ventas
     Route::get('/preventistas', function () {

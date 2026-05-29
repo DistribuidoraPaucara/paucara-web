@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
 export const page = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ page.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
 page.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ page.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
 page.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ page.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
 page.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ page.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
     const pageForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ page.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
         pageForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ page.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/roles.php:13
+ * @see [serialized-closure]:2
  * @route '/roles/templates'
  */
         pageForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
