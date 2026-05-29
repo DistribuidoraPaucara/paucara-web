@@ -357,6 +357,11 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         ->middleware('auth:sanctum')
         ->name('api.app.stock.imagen');
 
+    // ✅ DEBUG: Probar generación de imagen (retorna error detallado)
+    Route::get('/app/stock/imagen/debug', [StockDisponiblePdfController::class, 'debug'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.imagen.debug');
+
     // ✅ NUEVO: Preventistas para selector en ventas
     Route::get('/preventistas', function () {
         try {
@@ -1407,61 +1412,73 @@ Route::middleware(['auth:sanctum,web'])->prefix('debug')->group(function () {
     })->name('api.debug.logs.clear');
 });
 
-// ✅ Ruta de DEBUG sin autenticación (SOLO EN DESARROLLO)
-if (app()->environment('local')) {
-    Route::prefix('debug')->group(function () {
-        Route::get('/logs/dev', function () {
-            $logFile = storage_path('logs/laravel.log');
+// ✅ Ruta de DEBUG: Ver logs (DESARROLLO - sin autenticación)
+Route::get('/dev-logs', function () {
+    // Verificar si está en desarrollo
+    if (!app()->environment(['local', 'dev', 'development'])) {
+        return response()->json([
+            'error' => 'Not available in production',
+            'message' => 'Esta ruta solo está disponible en desarrollo'
+        ], 403);
+    }
 
-            if (!file_exists($logFile)) {
-                return response()->json([
-                    'error' => 'Log file not found',
-                    'path' => $logFile
-                ], 404);
-            }
+    $logFile = storage_path('logs/laravel.log');
 
-            // Leer últimas 1000 líneas
-            $lines = 1000;
-            $file = new \SplFileObject($logFile, 'r');
-            $file->seek(PHP_INT_MAX);
-            $lastLine = $file->key();
-            $lines = min($lines, $lastLine);
-            $file->seek(max(0, $lastLine - $lines));
+    if (!file_exists($logFile)) {
+        return response()->json([
+            'error' => 'Log file not found',
+            'path' => $logFile,
+            'storage_path' => storage_path('logs')
+        ], 404);
+    }
 
-            $content = '';
-            while (!$file->eof()) {
-                $content .= $file->fgets();
-            }
+    // Leer últimas 1000 líneas
+    $lines = 1000;
+    $file = new \SplFileObject($logFile, 'r');
+    $file->seek(PHP_INT_MAX);
+    $lastLine = $file->key();
+    $lines = min($lines, $lastLine);
+    $file->seek(max(0, $lastLine - $lines));
 
-            return response()->json([
-                'success' => true,
-                'environment' => app()->environment(),
-                'file' => $logFile,
-                'file_size' => filesize($logFile),
-                'file_size_mb' => round(filesize($logFile) / 1024 / 1024, 2),
-                'lines_shown' => $lines,
-                'content' => $content
-            ]);
-        })->name('api.debug.logs.dev');
+    $content = '';
+    while (!$file->eof()) {
+        $content .= $file->fgets();
+    }
 
-        // Limpiar logs en dev
-        Route::post('/logs/dev/clear', function () {
-            $logFile = storage_path('logs/laravel.log');
+    return response()->json([
+        'success' => true,
+        'environment' => app()->environment(),
+        'file' => $logFile,
+        'file_size' => filesize($logFile),
+        'file_size_mb' => round(filesize($logFile) / 1024 / 1024, 2),
+        'lines_shown' => $lines,
+        'total_lines' => $lastLine,
+        'content' => $content
+    ]);
+})->name('api.dev-logs');
 
-            if (file_exists($logFile)) {
-                file_put_contents($logFile, "🧹 Logs cleared at " . now()->toDateTimeString() . "\n");
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Logs cleared successfully'
-                ]);
-            }
+// ✅ Limpiar logs en DESARROLLO
+Route::post('/dev-logs/clear', function () {
+    if (!app()->environment(['local', 'dev', 'development'])) {
+        return response()->json([
+            'error' => 'Not available in production'
+        ], 403);
+    }
 
-            return response()->json([
-                'error' => 'Log file not found'
-            ], 404);
-        })->name('api.debug.logs.dev.clear');
-    });
-}
+    $logFile = storage_path('logs/laravel.log');
+
+    if (file_exists($logFile)) {
+        file_put_contents($logFile, "🧹 Logs cleared at " . now()->toDateTimeString() . "\n");
+        return response()->json([
+            'success' => true,
+            'message' => 'Logs cleared successfully'
+        ]);
+    }
+
+    return response()->json([
+        'error' => 'Log file not found'
+    ], 404);
+})->name('api.dev-logs.clear');
 
 // ========================================
 // 📊 RUTAS API ESTADOS LOGÍSTICA (Q1 2026)

@@ -6,7 +6,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
-use Spatie\PdfToImage\Pdf as SpatialPdf;
 
 /**
  * StockDisponiblePdfController - Generar PDF de stock disponible para preventistas
@@ -215,41 +214,24 @@ class StockDisponiblePdfController
 
                 // Guardar PDF temporal
                 file_put_contents($tempPdfPath, $pdfContent);
+                $pdfSize = filesize($tempPdfPath);
 
                 // ==========================================
-                // 5️⃣ CONVERTIR PDF A PNG con Spatie
+                // 5️⃣ CONVERTIR PDF A PNG con ImageMagick
                 // ==========================================
-                try {
-                    $originalSize = filesize($tempPdfPath);
+                $pngContent = $this->convertirPdfAImagen($tempPdfPath, $tempImagePath);
 
-                    SpatialPdf::load($tempPdfPath)
-                        ->setPage(1)
-                        ->saveImage($tempImagePath);
-
-                    if (file_exists($tempImagePath)) {
-                        $beforeOptimization = filesize($tempImagePath);
-
-                        // Optimizar imagen con ImageMagick
-                        try {
-                            $this->optimizarImagen($tempImagePath);
-                        } catch (\Exception $e) {
-                            Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
-                        }
-
-                        $pngContent = file_get_contents($tempImagePath);
-                        $finalSize = filesize($tempImagePath);
-                        Log::info('✅ Imagen PNG generada con Spatie (Imagick)', [
-                            'pdf_size' => $originalSize,
-                            'before_optimization' => $beforeOptimization,
-                            'final_size' => $finalSize,
-                            'reduction' => round(((1 - $finalSize / $beforeOptimization) * 100), 2) . '%',
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::debug('ℹ️ Spatie PDF to Image falló: ' . $e->getMessage());
+                if ($pngContent) {
+                    Log::info('✅ Imagen PNG generada exitosamente', [
+                        'pdf_size' => $pdfSize,
+                        'png_size' => strlen($pngContent),
+                        'reduction' => round(((1 - strlen($pngContent) / $pdfSize) * 100), 2) . '%',
+                    ]);
                 }
             } catch (\Exception $e) {
-                Log::error('❌ Error generando imagen: ' . $e->getMessage());
+                Log::error('❌ Error generando imagen: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString()
+                ]);
             } finally {
                 // Limpiar archivos temporales
                 @unlink($tempPdfPath);
@@ -284,6 +266,53 @@ class StockDisponiblePdfController
                 'message' => 'Error generando imagen',
                 'error'   => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Convertir PDF a PNG usando ImageMagick
+     * Retorna el contenido binario de la imagen o null si falla
+     */
+    private function convertirPdfAImagen(string $pdfPath, string $outputPath): ?string
+    {
+        try {
+            // Comando: convert PDF (primera página) a PNG con compresión
+            $command = sprintf(
+                'convert -density 150 -quality 85 %s[0] %s 2>&1',
+                escapeshellarg($pdfPath),
+                escapeshellarg($outputPath)
+            );
+
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            if ($returnCode === 0 && file_exists($outputPath)) {
+                $imageContent = file_get_contents($outputPath);
+
+                // Intentar optimizar más
+                try {
+                    $this->optimizarImagen($outputPath);
+                    $imageContent = file_get_contents($outputPath);
+                } catch (\Exception $e) {
+                    Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
+                }
+
+                Log::info('✅ PDF convertido a PNG con ImageMagick', [
+                    'command' => 'convert -density 150 -quality 85'
+                ]);
+
+                return $imageContent;
+            } else {
+                Log::warning('⚠️ ImageMagick convert falló', [
+                    'return_code' => $returnCode,
+                    'output' => implode("\n", $output)
+                ]);
+                return null;
+            }
+        } catch (\Exception $e) {
+            Log::error('❌ Error en convertirPdfAImagen: ' . $e->getMessage());
+            return null;
         }
     }
 
@@ -340,6 +369,113 @@ class StockDisponiblePdfController
         }
 
         Log::warning('⚠️ No se pudo optimizar imagen - usar sin optimizar');
+    }
+
+    /**
+     * ✅ DEBUG: Probar generación de imagen (retorna error detallado si falla)
+     * GET /api/app/stock/imagen/debug
+     * Solo Super Admin
+     */
+    public function debug()
+    {
+        try {
+            // Datos mínimos para probar
+            $data = [
+                'filas' => [
+                    [
+                        'nombre' => 'Producto Test',
+                        'sku' => 'TEST-001',
+                        'precio_venta' => 100,
+                        'precio_descuento' => 90,
+                        'precio_especial' => 80,
+                        'stock_disponible' => 50,
+                        'rangos_venta' => [],
+                        'rangos_descuento' => [],
+                        'rangos_especial' => [],
+                    ]
+                ],
+                'total_productos' => 1,
+                'fecha_generacion' => now()->format('d/m/Y H:i'),
+                'empresa' => config('app.name', 'Test'),
+                'incluir_stock' => false,
+            ];
+
+            // Generar PDF
+            $pdf = Pdf::loadView('pdf.stock-disponible-preventista', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', 10)
+                ->setOption('margin-bottom', 10)
+                ->setOption('margin-left', 10)
+                ->setOption('margin-right', 10);
+
+            $pdfContent = $pdf->output();
+            $pdfSize = strlen($pdfContent);
+
+            // Intentar convertir a imagen
+            $tempPdfPath = storage_path('app/temp/test-' . uniqid() . '.pdf');
+            $tempImagePath = storage_path('app/temp/test-' . uniqid() . '.png');
+
+            if (!is_dir(dirname($tempPdfPath))) {
+                mkdir(dirname($tempPdfPath), 0755, true);
+            }
+
+            file_put_contents($tempPdfPath, $pdfContent);
+
+            $imageContent = $this->convertirPdfAImagen($tempPdfPath, $tempImagePath);
+
+            @unlink($tempPdfPath);
+            @unlink($tempImagePath);
+
+            if ($imageContent) {
+                return response()->json([
+                    'success' => true,
+                    'message' => '✅ Generación de imagen funcionando correctamente',
+                    'pdf_size' => $pdfSize,
+                    'image_size' => strlen($imageContent),
+                    'image_size_kb' => round(strlen($imageContent) / 1024, 2),
+                    'reduction' => round(((1 - strlen($imageContent) / $pdfSize) * 100), 2) . '%',
+                    'system_info' => [
+                        'environment' => app()->environment(),
+                        'php_version' => phpversion(),
+                        'extensions' => [
+                            'imagick' => extension_loaded('imagick') ? 'YES' : 'NO',
+                            'gd' => extension_loaded('gd') ? 'YES' : 'NO',
+                        ],
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => '❌ No se pudo generar imagen - revisa logs',
+                    'error' => 'convertirPdfAImagen retornó null',
+                    'system_info' => [
+                        'environment' => app()->environment(),
+                        'php_version' => phpversion(),
+                        'extensions' => [
+                            'imagick' => extension_loaded('imagick') ? 'YES' : 'NO',
+                            'gd' => extension_loaded('gd') ? 'YES' : 'NO',
+                        ],
+                    ]
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Error en debug',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'system_info' => [
+                    'environment' => app()->environment(),
+                    'php_version' => phpversion(),
+                    'extensions' => [
+                        'imagick' => extension_loaded('imagick') ? 'YES' : 'NO',
+                        'gd' => extension_loaded('gd') ? 'YES' : 'NO',
+                    ],
+                ]
+            ], 500);
+        }
     }
 
     /**
