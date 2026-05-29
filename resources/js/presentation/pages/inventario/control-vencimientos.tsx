@@ -324,9 +324,9 @@ export default function ControlVencimientos() {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Codigo
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoría
-                                        </th>
+                                        </th> */}
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Almacén
                                         </th>
@@ -379,11 +379,11 @@ export default function ControlVencimientos() {
                                                     {producto.producto.sku}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            {/* <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                                     {producto.producto.categoria.nombre}
                                                 </div>
-                                            </td>
+                                            </td> */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                                     {producto.almacen.nombre}

@@ -48,7 +48,7 @@
             <th style="width: 2%;">ID</th>
             <th style="width: 20%;">Producto</th>
             <th style="width: 7%;">SKU</th>
-            <th style="width: 10%;">Categoría</th>
+            {{-- <th style="width: 10%;">Categoría</th> --}}
             <th style="width: 8%;">Almacén</th>
             <th style="width: 6%;">Lote</th>
             <th style="width: 6%;">Stock</th>
@@ -65,7 +65,7 @@
             <td>{{ $index + 1 }}</td>
             <td><strong>{{ $item['producto']['nombre'] }}</strong></td>
             <td style="font-family: monospace; font-size: 10px;">{{ $item['producto']['sku'] }}</td>
-            <td>{{ $item['producto']['categoria']['nombre'] }}</td>
+            {{-- <td>{{ $item['producto']['categoria']['nombre'] }}</td> --}}
             <td>{{ $item['almacen']['nombre'] }}</td>
             <td style="text-align: center;">{{ $item['lote'] ?? '-' }}</td>
             <td style="text-align: right;"><strong>{{ number_format($item['stock_actual'], 2) }}</strong></td>
