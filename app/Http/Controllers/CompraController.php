@@ -2277,6 +2277,10 @@ class CompraController extends Controller
             'detalles.*.stock_nuevo.*.cantidad' => 'required|numeric|min:0',
             'detalles.*.stock_nuevo.*.lote' => 'nullable|string|max:100',
             'detalles.*.stock_nuevo.*.fecha_vencimiento' => 'nullable|date',
+            'detalles.*.transferencias' => 'array',
+            'detalles.*.transferencias.*.origen_stock_id' => 'required|integer|exists:stock_productos,id',
+            'detalles.*.transferencias.*.destino_stock_id' => 'required|integer|exists:stock_productos,id',
+            'detalles.*.transferencias.*.cantidad' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -2287,12 +2291,14 @@ class CompraController extends Controller
                 $detalle = DetalleCompra::findOrFail($detalleData['detalle_id']);
                 $stocksAActualizar = $detalleData['stock_anterior_actualizar'];
                 $stocksACrear = $detalleData['stock_nuevo'];
+                $transferencias = $detalleData['transferencias'] ?? [];
 
                 Log::info('CompraController::asignarLotes - Procesando detalle (nuevo flujo)', [
                     'detalle_id' => $detalle->id,
                     'producto_id' => $detalle->producto_id,
                     'stocks_a_actualizar' => count($stocksAActualizar),
                     'stocks_a_crear' => count($stocksACrear),
+                    'transferencias' => count($transferencias),
                 ]);
 
                 // 1. ACTUALIZAR stocks anteriores
@@ -2404,12 +2410,137 @@ class CompraController extends Controller
                     ]);
                 }
 
-                // 3. Actualizar el detalle de compra SOLO si hay nuevos lotes creados
+                // 3. PROCESAR transferencias entre lotes
+                foreach ($transferencias as $transferencia) {
+                    if ($transferencia['cantidad'] <= 0) {
+                        continue;
+                    }
+
+                    $stockOrigen = StockProducto::findOrFail($transferencia['origen_stock_id']);
+                    $stockDestino = StockProducto::findOrFail($transferencia['destino_stock_id']);
+
+                    // Validar que hay suficiente cantidad en el origen
+                    if ($stockOrigen->cantidad < $transferencia['cantidad']) {
+                        throw new \Exception("No hay suficiente cantidad en el lote origen ({$stockOrigen->lote}) para transferir {$transferencia['cantidad']} unidades");
+                    }
+
+                    $cantidadATransferir = (float)$transferencia['cantidad'];
+
+                    // ORIGEN: Restar cantidad, disponible y reservada
+                    $cantidadOrigenAnterior = $stockOrigen->cantidad;
+                    $cantidadDisponibleOrigenAnterior = $stockOrigen->cantidad_disponible;
+                    $cantidadReservadaOrigenAnterior = $stockOrigen->cantidad_reservada;
+
+                    $nuevaCantidadOrigen = $cantidadOrigenAnterior - $cantidadATransferir;
+                    $nuevaCantidadDisponibleOrigen = max(0, $cantidadDisponibleOrigenAnterior - $cantidadATransferir);
+                    // Transferir también la cantidad reservada proporcionalmente
+                    $proporcionReservada = $cantidadOrigenAnterior > 0 ? ($cantidadReservadaOrigenAnterior / $cantidadOrigenAnterior) : 0;
+                    $cantidadReservadaATransferir = min($cantidadReservadaOrigenAnterior, $cantidadATransferir * $proporcionReservada);
+                    $nuevaCantidadReservadaOrigen = max(0, $cantidadReservadaOrigenAnterior - $cantidadReservadaATransferir);
+
+                    $stockOrigen->update([
+                        'cantidad' => $nuevaCantidadOrigen,
+                        'cantidad_disponible' => $nuevaCantidadDisponibleOrigen,
+                        'cantidad_reservada' => $nuevaCantidadReservadaOrigen,
+                    ]);
+
+                    // Registrar movimiento en origen
+                    MovimientoInventario::create([
+                        'stock_producto_id' => $stockOrigen->id,
+                        'cantidad' => -$cantidadATransferir,
+                        'cantidad_anterior' => $cantidadOrigenAnterior,
+                        'cantidad_posterior' => $nuevaCantidadOrigen,
+                        'cantidad_total_anterior' => $cantidadOrigenAnterior,
+                        'cantidad_total_posterior' => $nuevaCantidadOrigen,
+                        'cantidad_disponible_anterior' => $cantidadDisponibleOrigenAnterior,
+                        'cantidad_disponible_posterior' => $nuevaCantidadDisponibleOrigen,
+                        'cantidad_reservada_anterior' => $cantidadReservadaOrigenAnterior,
+                        'cantidad_reservada_posterior' => $nuevaCantidadReservadaOrigen,
+                        'fecha' => now(),
+                        'observacion' => 'Transferencia entre lotes en asignación de compra #' . $compra->numero,
+                        'tipo' => 'SALIDA_TRANSFERENCIA_LOTES',
+                        'numero_documento' => $compra->numero,
+                        'user_id' => Auth::id(),
+                        'referencia_tipo' => 'compra',
+                        'referencia_id' => $compra->id,
+                    ]);
+
+                    // DESTINO: Sumar cantidad, disponible y reservada
+                    $cantidadDestinoAnterior = $stockDestino->cantidad;
+                    $cantidadDisponibleDestinoAnterior = $stockDestino->cantidad_disponible;
+                    $cantidadReservadaDestinoAnterior = $stockDestino->cantidad_reservada;
+
+                    $nuevaCantidadDestino = $cantidadDestinoAnterior + $cantidadATransferir;
+                    $nuevaCantidadDisponibleDestino = $cantidadDisponibleDestinoAnterior + $cantidadATransferir;
+                    $nuevaCantidadReservadaDestino = $cantidadReservadaDestinoAnterior + $cantidadReservadaATransferir;
+
+                    $stockDestino->update([
+                        'cantidad' => $nuevaCantidadDestino,
+                        'cantidad_disponible' => $nuevaCantidadDisponibleDestino,
+                        'cantidad_reservada' => $nuevaCantidadReservadaDestino,
+                    ]);
+
+                    // Registrar movimiento en destino
+                    MovimientoInventario::create([
+                        'stock_producto_id' => $stockDestino->id,
+                        'cantidad' => $cantidadATransferir,
+                        'cantidad_anterior' => $cantidadDestinoAnterior,
+                        'cantidad_posterior' => $nuevaCantidadDestino,
+                        'cantidad_total_anterior' => $cantidadDestinoAnterior,
+                        'cantidad_total_posterior' => $nuevaCantidadDestino,
+                        'cantidad_disponible_anterior' => $cantidadDisponibleDestinoAnterior,
+                        'cantidad_disponible_posterior' => $nuevaCantidadDisponibleDestino,
+                        'cantidad_reservada_anterior' => $cantidadReservadaDestinoAnterior,
+                        'cantidad_reservada_posterior' => $nuevaCantidadReservadaDestino,
+                        'fecha' => now(),
+                        'observacion' => 'Transferencia entre lotes en asignación de compra #' . $compra->numero,
+                        'tipo' => 'ENTRADA_TRANSFERENCIA_LOTES',
+                        'numero_documento' => $compra->numero,
+                        'user_id' => Auth::id(),
+                        'referencia_tipo' => 'compra',
+                        'referencia_id' => $compra->id,
+                    ]);
+
+                    Log::info('Transferencia entre lotes realizada', [
+                        'stock_origen_id' => $stockOrigen->id,
+                        'stock_destino_id' => $stockDestino->id,
+                        'cantidad_transferida' => $cantidadATransferir,
+                        'origen_cantidad_anterior' => $cantidadOrigenAnterior,
+                        'origen_cantidad_nueva' => $nuevaCantidadOrigen,
+                        'destino_cantidad_anterior' => $cantidadDestinoAnterior,
+                        'destino_cantidad_nueva' => $nuevaCantidadDestino,
+                    ]);
+                }
+
+                // 4. Actualizar el detalle de compra con el lote apropiado
+                $loteAAsignar = null;
+                $fechaVencimientoAAsignar = null;
+
+                // Prioridad 1: Si hay nuevo lote creado, usarlo
                 if (count($stocksACrear) > 0) {
                     $primerNuevoStock = $stocksACrear[0];
+                    $loteAAsignar = $primerNuevoStock['lote'] ?? null;
+                    $fechaVencimientoAAsignar = $primerNuevoStock['fecha_vencimiento'] ?? null;
+                }
+                // Prioridad 2: Si hay transferencias, usar el destino de la primera
+                elseif (count($transferencias) > 0) {
+                    $primerTransferencia = $transferencias[0];
+                    $stockDestino = StockProducto::findOrFail($primerTransferencia['destino_stock_id']);
+                    $loteAAsignar = $stockDestino->lote;
+                    $fechaVencimientoAAsignar = $stockDestino->fecha_vencimiento;
+                }
+
+                // Actualizar el detalle si hay lote a asignar
+                if ($loteAAsignar !== null || $fechaVencimientoAAsignar !== null) {
                     $detalle->update([
-                        'lote' => $primerNuevoStock['lote'] ?? null,
-                        'fecha_vencimiento' => $primerNuevoStock['fecha_vencimiento'] ?? null,
+                        'lote' => $loteAAsignar,
+                        'fecha_vencimiento' => $fechaVencimientoAAsignar,
+                    ]);
+
+                    Log::info('Detalle de compra actualizado con lote', [
+                        'detalle_id' => $detalle->id,
+                        'lote_asignado' => $loteAAsignar,
+                        'fecha_vencimiento_asignada' => $fechaVencimientoAAsignar,
                     ]);
                 }
             }

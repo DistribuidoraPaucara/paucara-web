@@ -80,7 +80,7 @@ pdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     pdf.form = pdfForm
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
 export const imagen = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ imagen.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
 imagen.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ imagen.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
 imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ imagen.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
 imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
     const imagenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
         imagenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagen
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:139
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:143
  * @route '/api/app/stock/imagen'
  */
         imagenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -156,9 +156,246 @@ imagen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     imagen.form = imagenForm
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+export const imagenPython = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: imagenPython.url(options),
+    method: 'get',
+})
+
+imagenPython.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/imagen-python',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+imagenPython.url = (options?: RouteQueryOptions) => {
+    return imagenPython.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+imagenPython.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: imagenPython.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+imagenPython.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: imagenPython.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+    const imagenPythonForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imagenPython.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+        imagenPythonForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imagenPython.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::imagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:541
+ * @route '/api/app/stock/imagen-python'
+ */
+        imagenPythonForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imagenPython.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imagenPython.form = imagenPythonForm
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+export const catalogoPdf = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: catalogoPdf.url(options),
+    method: 'get',
+})
+
+catalogoPdf.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/catalogo-pdf',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+catalogoPdf.url = (options?: RouteQueryOptions) => {
+    return catalogoPdf.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+catalogoPdf.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: catalogoPdf.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+catalogoPdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: catalogoPdf.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+    const catalogoPdfForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: catalogoPdf.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+        catalogoPdfForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: catalogoPdf.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoPdf
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:664
+ * @route '/api/app/stock/catalogo-pdf'
+ */
+        catalogoPdfForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: catalogoPdf.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    catalogoPdf.form = catalogoPdfForm
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+export const catalogoImagenPython = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: catalogoImagenPython.url(options),
+    method: 'get',
+})
+
+catalogoImagenPython.definition = {
+    methods: ["get","head"],
+    url: '/api/app/stock/catalogo-imagen-python',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+catalogoImagenPython.url = (options?: RouteQueryOptions) => {
+    return catalogoImagenPython.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+catalogoImagenPython.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: catalogoImagenPython.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+catalogoImagenPython.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: catalogoImagenPython.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+    const catalogoImagenPythonForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: catalogoImagenPython.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+        catalogoImagenPythonForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: catalogoImagenPython.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StockDisponiblePdfController::catalogoImagenPython
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:746
+ * @route '/api/app/stock/catalogo-imagen-python'
+ */
+        catalogoImagenPythonForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: catalogoImagenPython.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    catalogoImagenPython.form = catalogoImagenPythonForm
 const stock = {
     pdf,
 imagen,
+imagenPython,
+catalogoPdf,
+catalogoImagenPython,
 }
 
 export default stock

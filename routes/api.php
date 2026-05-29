@@ -357,6 +357,21 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         ->middleware('auth:sanctum')
         ->name('api.app.stock.imagen');
 
+    // ✅ NUEVO: Imagen JPEG de alta calidad con servicio Python
+    Route::get('/app/stock/imagen-python', [StockDisponiblePdfController::class, 'imagenPython'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.imagen-python');
+
+    // ✅ NUEVO: Catálogo PDF con grilla de productos
+    Route::get('/app/stock/catalogo-pdf', [StockDisponiblePdfController::class, 'catalogoPdf'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.catalogo-pdf');
+
+    // ✅ NUEVO: Catálogo imagen HD con servicio Python
+    Route::get('/app/stock/catalogo-imagen-python', [StockDisponiblePdfController::class, 'catalogoImagenPython'])
+        ->middleware('auth:sanctum')
+        ->name('api.app.stock.catalogo-imagen-python');
+
     // ✅ TEST: Probar diferentes calidades (3 productos de prueba)
     Route::get('/app/stock/imagen/test', [StockDisponiblePdfController::class, 'test'])
         ->middleware('auth:sanctum')

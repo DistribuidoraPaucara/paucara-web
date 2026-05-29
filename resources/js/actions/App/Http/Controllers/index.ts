@@ -75,6 +75,7 @@ import ReservaController from './ReservaController'
 import CajaController from './CajaController'
 import GastoController from './GastoController'
 import CierreDiarioGeneralController from './CierreDiarioGeneralController'
+import ImpresionControlVencimientosController from './ImpresionControlVencimientosController'
 import ImpresionMovimientosController from './ImpresionMovimientosController'
 import ImpresionProductosVendidosController from './ImpresionProductosVendidosController'
 import TipoAjusteInventarioController from './TipoAjusteInventarioController'
@@ -175,6 +176,7 @@ ReservaController,
 CajaController,
 GastoController,
 CierreDiarioGeneralController,
+ImpresionControlVencimientosController,
 ImpresionMovimientosController,
 ImpresionProductosVendidosController,
 TipoAjusteInventarioController,

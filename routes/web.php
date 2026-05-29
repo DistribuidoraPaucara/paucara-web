@@ -702,6 +702,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\InventarioController::class, 'dashboard'])->middleware('permission:inventario.dashboard')->name('dashboard');
         Route::get('stock-bajo', [\App\Http\Controllers\InventarioController::class, 'stockBajo'])->middleware('permission:inventario.stock-bajo')->name('stock-bajo');
         Route::get('proximos-vencer', [\App\Http\Controllers\InventarioController::class, 'proximosVencer'])->middleware('permission:inventario.proximos-vencer')->name('proximos-vencer');
+        Route::get('control-vencimientos', [\App\Http\Controllers\InventarioController::class, 'controlVencimientos'])->middleware('permission:inventario.proximos-vencer')->name('control-vencimientos');
+        Route::get('control-vencimientos/imprimir', [\App\Http\Controllers\ImpresionControlVencimientosController::class, 'imprimir'])->middleware('permission:inventario.proximos-vencer')->name('control-vencimientos.imprimir');
         Route::get('vencidos', [\App\Http\Controllers\InventarioController::class, 'vencidos'])->middleware('permission:inventario.vencidos')->name('vencidos');
         Route::get('movimientos', [\App\Http\Controllers\InventarioController::class, 'movimientos'])->middleware('permission:inventario.movimientos')->name('movimientos');
         Route::get('movimientos/imprimir', [\App\Http\Controllers\ImpresionMovimientosController::class, 'imprimir'])->middleware('permission:inventario.movimientos')->name('movimientos.imprimir');

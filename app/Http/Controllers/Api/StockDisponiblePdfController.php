@@ -93,14 +93,18 @@ class StockDisponiblePdfController
             ];
 
             // ==========================================
-            // 4️⃣ GENERAR PDF
+            // 4️⃣ GENERAR PDF (OPTIMIZADO)
             // ==========================================
             $pdf = Pdf::loadView('pdf.stock-disponible-preventista', $data)
                 ->setPaper('A4', 'portrait')
-                ->setOption('margin-top', 10)
-                ->setOption('margin-bottom', 10)
-                ->setOption('margin-left', 10)
-                ->setOption('margin-right', 10);
+                ->setOption('margin-top', 5)
+                ->setOption('margin-bottom', 5)
+                ->setOption('margin-left', 5)
+                ->setOption('margin-right', 5)
+                ->setOption('dpi', 150)
+                ->setOption('enable_remote', true)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('isPhpEnabled', false);
 
             // ==========================================
             // 5️⃣ RETORNAR como stream binario
@@ -143,8 +147,9 @@ class StockDisponiblePdfController
             // 0️⃣ OBTENER PARÁMETROS
             // ==========================================
             $incluirStock = (bool) $request->query('incluir_stock', false);
-            $quality = (int) $request->query('quality', 90);
+            $quality = (int) $request->query('quality', 85);
             $quality = max(50, min(100, $quality)); // Limitar entre 50-100
+            $usePythonService = (bool) $request->query('use_python', false); // Nuevo: usar servicio Python
 
             // ==========================================
             // 1️⃣ CONSULTA: Stock disponible agrupado
@@ -194,50 +199,54 @@ class StockDisponiblePdfController
             ];
 
             // ==========================================
-            // 4️⃣ GENERAR PDF con DomPDF
+            // 4️⃣ GENERAR PDF con DomPDF (OPTIMIZADO)
             // ==========================================
             $pdf = Pdf::loadView('pdf.stock-disponible-preventista', $data)
                 ->setPaper('A4', 'portrait')
-                ->setOption('margin-top', 10)
-                ->setOption('margin-bottom', 10)
-                ->setOption('margin-left', 10)
-                ->setOption('margin-right', 10);
+                ->setOption('margin-top', 5)
+                ->setOption('margin-bottom', 5)
+                ->setOption('margin-left', 5)
+                ->setOption('margin-right', 5)
+                ->setOption('dpi', 150)  // Renderizar a 150 DPI (mejor que default 96)
+                ->setOption('enable_remote', true)  // Permitir recursos remotos
+                ->setOption('isHtml5ParserEnabled', true)  // Mejor parsing de HTML
+                ->setOption('isPhpEnabled', false);  // Seguridad
 
             $pdfContent = $pdf->output();
-            $tempPdfPath = storage_path('app/temp/stock-' . uniqid() . '.pdf');
-            $tempImagePath = storage_path('app/temp/stock-' . uniqid() . '.jpg');
+            $pdfSize = strlen($pdfContent);
             $imageContent = null;
 
-            try {
-                // Crear carpeta temp si no existe
-                if (!is_dir(dirname($tempPdfPath))) {
-                    mkdir(dirname($tempPdfPath), 0755, true);
-                }
-
-                // Guardar PDF temporal
-                file_put_contents($tempPdfPath, $pdfContent);
-                $pdfSize = filesize($tempPdfPath);
-
-                // ==========================================
-                // 5️⃣ CONVERTIR PDF A JPEG con ImageMagick
-                // ==========================================
-                $imageContent = $this->convertirPdfAImagen($tempPdfPath, $tempImagePath, $quality);
+            // ==========================================
+            // 5️⃣ CONVERTIR PDF A JPEG
+            // ==========================================
+            if ($usePythonService) {
+                // Opción 1: Usar servicio Python remoto (Railway)
+                $pdfImageService = new \App\Services\PdfImageService();
+                $imageContent = $pdfImageService->convertir($pdfContent, [
+                    'dpi' => 150,
+                    'quality' => $quality,
+                    'format' => 'jpeg',
+                    'optimize' => true,
+                ]);
 
                 if ($imageContent) {
-                    Log::info('✅ Imagen JPEG generada exitosamente', [
+                    Log::info('✅ Imagen JPEG generada con servicio Python', [
                         'pdf_size' => $pdfSize,
-                        'jpeg_size' => strlen($imageContent),
+                        'image_size' => strlen($imageContent),
                         'reduction' => round(((1 - strlen($imageContent) / $pdfSize) * 100), 2) . '%',
                     ]);
+                } else {
+                    Log::warning('⚠️ Servicio Python no disponible, usando ImageMagick');
                 }
-            } catch (\Exception $e) {
-                Log::error('❌ Error generando imagen: ' . $e->getMessage(), [
-                    'trace' => $e->getTraceAsString()
+            }
+
+            // Fallback: Si Python no disponible, simplemente retornar PDF
+            // (ImageMagick en Windows requiere Ghostscript - no recomendado)
+            if (!$imageContent) {
+                Log::warning('⚠️ Servicio Python no disponible - retornando PDF', [
+                    'razon' => 'ImageMagick requiere Ghostscript (no instalado en Windows)',
+                    'recomendacion' => 'Desplegar servicio Python en Railway o servidor Linux',
                 ]);
-            } finally {
-                // Limpiar archivos temporales
-                @unlink($tempPdfPath);
-                @unlink($tempImagePath);
             }
 
             // ==========================================
@@ -278,25 +287,23 @@ class StockDisponiblePdfController
     }
 
     /**
-     * Convertir PDF a PNG usando ImageMagick
+     * Convertir PDF a JPEG usando ImageMagick con alta resolución
      * Retorna el contenido binario de la imagen o null si falla
      */
     private function convertirPdfAImagen(string $pdfPath, string $outputPath, int $quality = 90): ?string
     {
         try {
-            // Convertir TODAS las páginas a una sola imagen JPEG larga
-            // En Windows, usar 'magick' en lugar de 'convert' para evitar conflicto con comando nativo
             $imagemagickCmd = $this->getImageMagickCommand();
 
-            // Configuración JPEG dinámica: Máxima compresión + calidad ajustable
-            // -quality: JPEG quality (parámetro dinámico, rango 50-100)
-            //   - 100 = máxima calidad (~150-200KB)
-            //   - 90 = excelente (~80-120KB) ← DEFAULT
-            //   - 80 = muy buena (~50-80KB)
-            //   - 70 = buena (~40-60KB)
-            // -append: unir todas las páginas en una imagen larga
+            // Configuración mejorada con alta resolución (150 DPI)
+            // -density 150: renderiza el PDF a 150 DPI (mejor que default 72)
+            // -define pdf:use-cropbox=true: usa el crop box del PDF
+            // -quality: compresión JPEG (dinámico, rango 50-100)
+            // -strip: elimina metadatos innecesarios
+            // -interlace Plane: entrelazado progresivo (mejor para web)
+            // -append: une todas las páginas en una imagen larga
             $command = sprintf(
-                '%s %s -quality %d -append %s 2>&1',
+                '%s -density 150 -define pdf:use-cropbox=true %s -quality %d -strip -interlace Plane -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 $quality,
@@ -318,8 +325,10 @@ class StockDisponiblePdfController
                     Log::debug('ℹ️ No se pudo optimizar imagen: ' . $e->getMessage());
                 }
 
-                Log::info('✅ PDF convertido a PNG con ImageMagick', [
-                    'command' => 'convert [pdf] -quality 85 [png]'
+                Log::info('✅ PDF convertido a JPEG con ImageMagick (150 DPI)', [
+                    'density' => 150,
+                    'quality' => $quality,
+                    'size_kb' => round(strlen($imageContent) / 1024, 2)
                 ]);
 
                 return $imageContent;
@@ -511,6 +520,326 @@ class StockDisponiblePdfController
             return response()->json([
                 'error' => $e->getMessage(),
                 'quality_tested' => $quality
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Generar imagen con servicio Python de alta calidad
+     *
+     * GET /api/app/stock/imagen-python
+     * GET /api/app/stock/imagen-python?incluir_stock=1
+     *
+     * Usa el servicio Python remoto para mejor calidad y compresión
+     * Fallback automático a ImageMagick si el servicio no está disponible
+     *
+     * Query parameters:
+     * - incluir_stock: boolean (0|1) - Mostrar columna de stock en la imagen
+     *
+     * @return Response JPEG desde servicio Python o fallback ImageMagick
+     */
+    public function imagenPython(\Illuminate\Http\Request $request)
+    {
+        try {
+            // ==========================================
+            // 0️⃣ OBTENER PARÁMETROS
+            // ==========================================
+            $incluirStock = (bool) $request->query('incluir_stock', false);
+
+            // ==========================================
+            // 1️⃣ CONSULTA: Stock disponible agrupado
+            // ==========================================
+            $stocks = StockProducto::disponible()
+                ->with([
+                    'producto:id,nombre,sku',
+                    'producto.precios' => fn($q) => $q->activos()->with('tipoPrecio:id,codigo'),
+                ])
+                ->selectRaw('producto_id, SUM(cantidad_disponible) as total_disponible')
+                ->groupBy('producto_id')
+                ->get();
+
+            // ==========================================
+            // 2️⃣ MAPEO: Extraer datos y precios con rangos
+            // ==========================================
+            $filas = $stocks->map(function ($s) {
+                $p = $s->producto;
+
+                $rangosVenta = $this->obtenerRangosPorTipo($p, 'VENTA');
+                $rangosDescuento = $this->obtenerRangosPorTipo($p, 'DESCUENTO');
+                $rangosEspecial = $this->obtenerRangosPorTipo($p, 'ESPECIAL');
+
+                return [
+                    'nombre'           => $p->nombre,
+                    'sku'              => $p->sku ?? '-',
+                    'precio_venta'     => $p->obtenerPrecio('VENTA')?->precio ?? $p->obtenerPrecio('VENTA_NORMAL')?->precio,
+                    'precio_descuento' => $p->obtenerPrecio('DESCUENTO')?->precio,
+                    'precio_especial'  => $p->obtenerPrecio('ESPECIAL')?->precio,
+                    'stock_disponible' => $s->total_disponible,
+                    'rangos_venta'     => $rangosVenta,
+                    'rangos_descuento' => $rangosDescuento,
+                    'rangos_especial'  => $rangosEspecial,
+                ];
+            })->sortBy('nombre')->values();
+
+            // ==========================================
+            // 3️⃣ PREPARAR DATOS para la vista
+            // ==========================================
+            $data = [
+                'filas'             => $filas,
+                'total_productos'   => count($filas),
+                'fecha_generacion'  => now()->format('d/m/Y H:i'),
+                'empresa'           => config('app.name', 'Distribuidora Paucara'),
+                'incluir_stock'     => $incluirStock,
+            ];
+
+            // ==========================================
+            // 4️⃣ GENERAR PDF (OPTIMIZADO)
+            // ==========================================
+            $pdf = Pdf::loadView('pdf.stock-disponible-preventista', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', 5)
+                ->setOption('margin-bottom', 5)
+                ->setOption('margin-left', 5)
+                ->setOption('margin-right', 5)
+                ->setOption('dpi', 150)
+                ->setOption('enable_remote', true)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('isPhpEnabled', false);
+
+            $pdfContent = $pdf->output();
+
+            // ==========================================
+            // 5️⃣ CONVERTIR PDF A JPEG CON SERVICIO PYTHON
+            // ==========================================
+            $pdfImageService = new \App\Services\PdfImageService();
+            $imageContent = $pdfImageService->convertir($pdfContent, [
+                'dpi' => 250,  // Buena resolución
+                'quality' => 85,  // Buena calidad
+                'format' => 'webp',  // WebP comprime 25% mejor que JPEG
+                'optimize' => true,
+            ]);
+
+            if ($imageContent) {
+                Log::info('✅ Imagen JPEG generada con servicio Python', [
+                    'pdf_size' => strlen($pdfContent),
+                    'image_size' => strlen($imageContent),
+                    'image_size_kb' => round(strlen($imageContent) / 1024, 2),
+                ]);
+
+                return response($imageContent)
+                    ->header('Content-Type', 'image/jpeg')
+                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.jpg')
+                    ->header('Cache-Control', 'public, max-age=3600')
+                    ->header('X-Image-Service', 'python');
+            } else {
+                // Fallback: retornar PDF si no se pudo generar imagen
+                Log::warning('⚠️ Servicio Python no disponible, retornando PDF como fallback');
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename=stock-disponible.pdf')
+                    ->header('X-Image-Service', 'fallback-pdf');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error generando imagen Python stock disponible', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generando imagen',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ CATÁLOGO: Generar PDF con grilla de productos
+     * Reutiliza la lógica de generar() pero con vista de catálogo
+     *
+     * GET /api/app/stock/catalogo-pdf?con_stock=1
+     * Query parameters: con_stock (default: true para mostrar solo con stock)
+     */
+    public function catalogoPdf(\Illuminate\Http\Request $request)
+    {
+        try {
+            // Obtener datos con la misma lógica que generar()
+            // Nota: SIEMPRE mostramos solo productos CON STOCK
+            $mostrarStock = (bool) $request->query('mostrar_stock', false);
+
+            $stocks = StockProducto::disponible()
+                ->with([
+                    'producto:id,nombre,sku',
+                    'producto.imagenes' => fn($q) => $q->orderBy('orden', 'asc')->limit(1),
+                    'producto.precios' => fn($q) => $q->activos()->with('tipoPrecio:id,codigo'),
+                ])
+                ->selectRaw('producto_id, SUM(cantidad_disponible) as total_disponible')
+                ->groupBy('producto_id')
+                ->get();
+
+            // Mapear y agregar datos calculados
+            $filas = $stocks->map(function ($s) {
+                $p = $s->producto;
+
+                return [
+                    'nombre'           => $p->nombre,
+                    'sku'              => $p->sku ?? '-',
+                    'precio_venta'     => $p->obtenerPrecio('VENTA')?->precio ?? $p->obtenerPrecio('VENTA_NORMAL')?->precio,
+                    'precio_descuento' => $p->obtenerPrecio('DESCUENTO')?->precio,
+                    'precio_especial'  => $p->obtenerPrecio('ESPECIAL')?->precio,
+                    'stock_disponible' => $s->total_disponible,
+                    'rangos_venta'     => $this->obtenerRangosPorTipo($p, 'VENTA'),
+                    'rangos_descuento' => $this->obtenerRangosPorTipo($p, 'DESCUENTO'),
+                    'rangos_especial'  => $this->obtenerRangosPorTipo($p, 'ESPECIAL'),
+                    'imagenes'         => $p->imagenes,
+                    'producto'         => $p,
+                ];
+            })->sortBy('nombre')->values();
+
+            Log::info('📊 CATÁLOGO PDF - Datos generados', [
+                'total_productos' => count($filas),
+                'mostrar_stock_badge' => $mostrarStock,
+            ]);
+
+            $data = [
+                'filas' => $filas,
+                'total_productos' => count($filas),
+                'fecha_generacion' => now()->format('d/m/Y H:i'),
+                'empresa' => config('app.name', 'Distribuidora Paucara'),
+                'mostrar_stock' => $mostrarStock,
+            ];
+
+            $pdf = Pdf::loadView('pdf.stock-disponible-catalogo', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', 8)
+                ->setOption('margin-bottom', 8)
+                ->setOption('margin-left', 8)
+                ->setOption('margin-right', 8)
+                ->setOption('dpi', 150)
+                ->setOption('enable_remote', true)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('isPhpEnabled', false);
+
+            return $pdf->stream('catalogo-productos.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('Error generando catálogo PDF', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generando catálogo',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ CATÁLOGO: Generar imagen HD del catálogo con servicio Python
+     * Reutiliza la lógica de imagenPython() pero con vista de catálogo
+     *
+     * GET /api/app/stock/catalogo-imagen-python?con_stock=1
+     */
+    public function catalogoImagenPython(\Illuminate\Http\Request $request)
+    {
+        try {
+            // Nota: SIEMPRE mostramos solo productos CON STOCK
+            $mostrarStock = (bool) $request->query('mostrar_stock', false);
+
+            $stocks = StockProducto::disponible()
+                ->with([
+                    'producto:id,nombre,sku',
+                    'producto.imagenes' => fn($q) => $q->orderBy('orden', 'asc')->limit(1),
+                    'producto.precios' => fn($q) => $q->activos()->with('tipoPrecio:id,codigo'),
+                ])
+                ->selectRaw('producto_id, SUM(cantidad_disponible) as total_disponible')
+                ->groupBy('producto_id')
+                ->get();
+
+            $filas = $stocks->map(function ($s) {
+                $p = $s->producto;
+
+                return [
+                    'nombre'           => $p->nombre,
+                    'sku'              => $p->sku ?? '-',
+                    'precio_venta'     => $p->obtenerPrecio('VENTA')?->precio ?? $p->obtenerPrecio('VENTA_NORMAL')?->precio,
+                    'precio_descuento' => $p->obtenerPrecio('DESCUENTO')?->precio,
+                    'precio_especial'  => $p->obtenerPrecio('ESPECIAL')?->precio,
+                    'stock_disponible' => $s->total_disponible,
+                    'rangos_venta'     => $this->obtenerRangosPorTipo($p, 'VENTA'),
+                    'rangos_descuento' => $this->obtenerRangosPorTipo($p, 'DESCUENTO'),
+                    'rangos_especial'  => $this->obtenerRangosPorTipo($p, 'ESPECIAL'),
+                    'imagenes'         => $p->imagenes,
+                    'producto'         => $p,
+                ];
+            })->sortBy('nombre')->values();
+
+            Log::info('🐍 CATÁLOGO IMAGEN - Datos generados', [
+                'total_productos' => count($filas),
+                'mostrar_stock_badge' => $mostrarStock,
+            ]);
+
+            $data = [
+                'filas' => $filas,
+                'total_productos' => count($filas),
+                'fecha_generacion' => now()->format('d/m/Y H:i'),
+                'empresa' => config('app.name', 'Distribuidora Paucara'),
+                'mostrar_stock' => $mostrarStock,
+            ];
+
+            $pdf = Pdf::loadView('pdf.stock-disponible-catalogo', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', 8)
+                ->setOption('margin-bottom', 8)
+                ->setOption('margin-left', 8)
+                ->setOption('margin-right', 8)
+                ->setOption('dpi', 150)
+                ->setOption('enable_remote', true)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('isPhpEnabled', false);
+
+            $pdfContent = $pdf->output();
+
+            $pdfImageService = new \App\Services\PdfImageService();
+            $imageContent = $pdfImageService->convertir($pdfContent, [
+                'dpi' => 250,
+                'quality' => 85,
+                'format' => 'webp',
+                'optimize' => true,
+            ]);
+
+            if ($imageContent) {
+                Log::info('✅ Catálogo imagen generada con Python', [
+                    'total_productos' => count($filas),
+                    'image_size_kb' => round(strlen($imageContent) / 1024, 2),
+                ]);
+
+                return response($imageContent)
+                    ->header('Content-Type', 'image/webp')
+                    ->header('Content-Disposition', 'attachment; filename=catalogo-productos.webp')
+                    ->header('Cache-Control', 'public, max-age=3600')
+                    ->header('X-Image-Service', 'python');
+            } else {
+                Log::warning('⚠️ Servicio Python no disponible para catálogo, retornando PDF');
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename=catalogo-productos.pdf')
+                    ->header('X-Image-Service', 'fallback-pdf');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error generando catálogo imagen Python', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generando catálogo imagen',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

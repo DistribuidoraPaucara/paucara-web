@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
 export const local = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ local.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
 local.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ local.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
 local.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ local.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
 local.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ local.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
     const localForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ local.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
         localForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ local.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::local
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test-local'
  */
         localForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

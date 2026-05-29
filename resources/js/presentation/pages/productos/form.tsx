@@ -500,11 +500,13 @@ export default function ProductoForm({
   const addAlmacen = (prefill?: any) => {
     const nuevosAlmacenes = [...(data.almacenes || [])];
     nuevosAlmacenes.push(prefill || {
-      almacen_id: '',
+      almacen_id: undefined,
       almacen_nombre: '',
       sector_id: undefined,
       sector_nombre: undefined,
-      stock: 0,
+      cantidad: 0,
+      cantidad_disponible: 0,
+      cantidad_reservada: 0,
       lote: '',
       fecha_vencimiento: ''
     });
@@ -513,7 +515,8 @@ export default function ProductoForm({
 
   const setAlmacen = (i: number, key: string, value: any) => {
     const nuevosAlmacenes = [...(data.almacenes || [])];
-    nuevosAlmacenes[i] = { ...nuevosAlmacenes[i], [key]: value };
+    const finalValue = key === 'almacen_id' && value !== undefined ? Number(value) : value;
+    nuevosAlmacenes[i] = { ...nuevosAlmacenes[i], [key]: finalValue };
     setData('almacenes', nuevosAlmacenes);
   };
 
@@ -742,8 +745,9 @@ export default function ProductoForm({
                 <TabsContent value="almacenes" className="space-y-6">
                   <Step3Almacenes
                     data={{ almacenes: data.almacenes || [] }}
+                    setData={setData}
                     almacenesOptions={almacenes.map(a => ({
-                      value: a.id,
+                      value: String(a.id),
                       label: a.nombre
                     }))}
                     sectores={sectores} // ✨ NUEVO: Pasar sectores pre-cargados

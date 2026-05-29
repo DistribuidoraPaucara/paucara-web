@@ -69,10 +69,17 @@ interface StockNuevo {
   fecha_vencimiento: string;
 }
 
+interface Transferencia {
+  origen_stock_id: number;
+  destino_stock_id: number;
+  cantidad: number;
+}
+
 interface DetalleDistribuido {
   detalle_id: number;
   stock_anterior_actualizar: StockAnteriorActualizar[];
   stock_nuevo: StockNuevo[];
+  transferencias?: Transferencia[];
 }
 
 export default function AsignarLotes() {
@@ -139,6 +146,17 @@ export default function AsignarLotes() {
   const [mostrarResumen, setMostrarResumen] = useState(false);
   const [resumenCambios, setResumenCambios] = useState<any>(null);
 
+  // Estado para transferencias entre lotes
+  const [transferencias, setTransferencias] = useState<Record<number, Transferencia[]>>(
+    detalles.reduce((acc, detalle) => {
+      acc[detalle.id] = [];
+      return acc;
+    }, {} as Record<number, Transferencia[]>)
+  );
+
+  // Estado para controlar dropdown de transferencia abierto
+  const [dropdownTransferencia, setDropdownTransferencia] = useState<string | null>(null);
+
   const { post, processing } = useForm();
 
   // Agregar un nuevo stock a crear
@@ -199,6 +217,46 @@ export default function AsignarLotes() {
     []
   );
 
+  // Agregar una transferencia entre lotes
+  const agregarTransferencia = useCallback(
+    (detalleId: number, origenStockId: number) => {
+      setTransferencias((prev) => {
+        const nuevas = [...(prev[detalleId] || [])];
+        nuevas.push({
+          origen_stock_id: origenStockId,
+          destino_stock_id: 0, // El usuario deberá seleccionar
+          cantidad: 0,
+        });
+        return { ...prev, [detalleId]: nuevas };
+      });
+    },
+    []
+  );
+
+  // Eliminar una transferencia
+  const eliminarTransferencia = useCallback(
+    (detalleId: number, index: number) => {
+      setTransferencias((prev) => {
+        const nuevas = [...(prev[detalleId] || [])];
+        nuevas.splice(index, 1);
+        return { ...prev, [detalleId]: nuevas };
+      });
+    },
+    []
+  );
+
+  // Actualizar transferencia
+  const actualizarTransferencia = useCallback(
+    (detalleId: number, index: number, field: keyof Transferencia, value: number) => {
+      setTransferencias((prev) => {
+        const nuevas = [...(prev[detalleId] || [])];
+        nuevas[index] = { ...nuevas[index], [field]: value };
+        return { ...prev, [detalleId]: nuevas };
+      });
+    },
+    []
+  );
+
   // Validar que haya al menos un lote/fecha asignado
   const validarAsignaciones = (): boolean => {
     let tieneAlgunCambio = false;
@@ -251,6 +309,7 @@ export default function AsignarLotes() {
       .map((detalle) => {
         const anteriores = stockAnteriorActualizar[detalle.id] || {};
         const nuevos = stockNuevo[detalle.id] || [];
+        const trans = transferencias[detalle.id] || [];
         const originalesDetalle = originales[detalle.id] || {};
 
         const actualizacionesConCambios = Object.entries(anteriores)
@@ -268,8 +327,9 @@ export default function AsignarLotes() {
           }));
 
         const creaciones = nuevos.filter(s => s.cantidad > 0);
+        const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
 
-        if (actualizacionesConCambios.length === 0 && creaciones.length === 0) return null;
+        if (actualizacionesConCambios.length === 0 && creaciones.length === 0 && transferenciasValidas.length === 0) return null;
 
         return {
           detalleId: detalle.id,
@@ -281,6 +341,17 @@ export default function AsignarLotes() {
             lote: s.lote,
             fecha: s.fecha_vencimiento,
           })),
+          transferencias: transferenciasValidas.map((t) => {
+            const origenStock = detalle.stock_registrados.find(s => s.id === t.origen_stock_id);
+            const destinoStock = detalle.stock_registrados.find(s => s.id === t.destino_stock_id);
+            return {
+              origen_stock_id: t.origen_stock_id,
+              origen_lote: origenStock?.lote || 'Sin lote',
+              destino_stock_id: t.destino_stock_id,
+              destino_lote: destinoStock?.lote || 'Sin lote',
+              cantidad: t.cantidad,
+            };
+          }),
         };
       })
       .filter(Boolean);
@@ -295,7 +366,9 @@ export default function AsignarLotes() {
       .map((detalle) => {
         const anteriores = stockAnteriorActualizar[detalle.id] || {};
         const nuevos = stockNuevo[detalle.id] || [];
+        const trans = transferencias[detalle.id] || [];
         const stocksNuevosFiltrados = nuevos.filter(s => s.cantidad > 0);
+        const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
 
         // Si hay nuevos stocks, buscar el stock sin lote/sin fecha y restar automáticamente
         let stocksActualizarFiltrados = Object.entries(anteriores)
@@ -338,15 +411,22 @@ export default function AsignarLotes() {
         }
 
         // Solo incluir detalles que tengan cambios
-        if (stocksActualizarFiltrados.length === 0 && stocksNuevosFiltrados.length === 0) {
+        if (stocksActualizarFiltrados.length === 0 && stocksNuevosFiltrados.length === 0 && transferenciasValidas.length === 0) {
           return null;
         }
 
-        return {
+        const payload: DetalleDistribuido = {
           detalle_id: detalle.id,
           stock_anterior_actualizar: stocksActualizarFiltrados,
           stock_nuevo: stocksNuevosFiltrados,
         };
+
+        // Agregar transferencias si las hay
+        if (transferenciasValidas.length > 0) {
+          payload.transferencias = transferenciasValidas;
+        }
+
+        return payload;
       })
       .filter((detalle): detalle is DetalleDistribuido => detalle !== null);
 
@@ -516,7 +596,7 @@ export default function AsignarLotes() {
 
                     {/* Creaciones */}
                     {item.creaciones.length > 0 && (
-                      <div>
+                      <div className="mb-4">
                         <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
                           ✨ Stock Nuevo - Crear ({item.creaciones.length})
                         </p>
@@ -527,6 +607,25 @@ export default function AsignarLotes() {
                               <span> → Cantidad: {nuevo.cantidad}</span>
                               {nuevo.lote && <span> → Lote: {nuevo.lote}</span>}
                               {nuevo.fecha && <span> → Fecha: {nuevo.fecha}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transferencias */}
+                    {item.transferencias && item.transferencias.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+                          🔄 Transferencias entre Lotes ({item.transferencias.length})
+                        </p>
+                        <div className="space-y-2 bg-purple-50 dark:bg-purple-900/20 p-3 rounded">
+                          {item.transferencias.map((trans: any, idx: number) => (
+                            <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                              <span className="font-semibold">Transferencia #{idx + 1}</span>
+                              <span> → De: {trans.origen_lote}</span>
+                              <span> → A: {trans.destino_lote}</span>
+                              <span> → Cantidad: {trans.cantidad}</span>
                             </div>
                           ))}
                         </div>
@@ -737,50 +836,90 @@ export default function AsignarLotes() {
                                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                               />
                             </div>
-                            {/* Botón Transferir */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const cantidadATransferir = stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
-                                if (cantidadATransferir > 0) {
-                                  // Transferir al primer stock nuevo, o crear uno si no existe
-                                  setStockNuevo(prev => {
-                                    const nuevos = [...(prev[detalle.id] || [])];
-                                    if (nuevos.length === 0 || (nuevos.length === 1 && nuevos[0].cantidad === 0)) {
-                                      // Usar el primero si está vacío
-                                      nuevos[0] = {
-                                        cantidad: cantidadATransferir,
-                                        lote: stock.lote || '',
-                                        fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
-                                      };
-                                    } else {
-                                      // Crear uno nuevo
-                                      nuevos.push({
-                                        cantidad: cantidadATransferir,
-                                        lote: stock.lote || '',
-                                        fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
+                            {/* Dropdown Transferir */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                title="Transferir cantidad a otro lote"
+                                onClick={() => {
+                                  const key = `${detalle.id}-${stock.id}`;
+                                  setDropdownTransferencia(dropdownTransferencia === key ? null : key);
+                                }}
+                                className="px-3 py-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 text-white text-sm font-medium rounded-md transition flex items-center gap-1"
+                              >
+                                ⇄ <span className="text-xs">▼</span>
+                              </button>
+                              {dropdownTransferencia === `${detalle.id}-${stock.id}` && (
+                                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
+                                {/* Opción: Crear nuevo lote */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const cantidadATransferir = stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
+                                    if (cantidadATransferir > 0) {
+                                      setStockNuevo(prev => {
+                                        const nuevos = [...(prev[detalle.id] || [])];
+                                        if (nuevos.length === 0 || (nuevos.length === 1 && nuevos[0].cantidad === 0)) {
+                                          nuevos[0] = {
+                                            cantidad: cantidadATransferir,
+                                            lote: stock.lote || '',
+                                            fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
+                                          };
+                                        } else {
+                                          nuevos.push({
+                                            cantidad: cantidadATransferir,
+                                            lote: stock.lote || '',
+                                            fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
+                                          });
+                                        }
+                                        return { ...prev, [detalle.id]: nuevos };
                                       });
+                                      setStockAnteriorActualizar(prev => {
+                                        const updated = { ...prev };
+                                        if (!updated[detalle.id]) updated[detalle.id] = {};
+                                        updated[detalle.id][stock.id] = {
+                                          ...updated[detalle.id][stock.id],
+                                          cantidad: 0,
+                                        };
+                                        return updated;
+                                      });
+                                      setDropdownTransferencia(null);
                                     }
-                                    return { ...prev, [detalle.id]: nuevos };
-                                  });
-
-                                  // Poner cantidad anterior en 0
-                                  setStockAnteriorActualizar(prev => {
-                                    const updated = { ...prev };
-                                    if (!updated[detalle.id]) updated[detalle.id] = {};
-                                    updated[detalle.id][stock.id] = {
-                                      ...updated[detalle.id][stock.id],
-                                      cantidad: 0,
-                                    };
-                                    return updated;
-                                  });
-                                }
-                              }}
-                              title="Transferir cantidad al nuevo stock"
-                              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 text-white text-sm font-medium rounded-md transition"
-                            >
-                              ➜
-                            </button>
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-b border-gray-200 dark:border-gray-600"
+                                >
+                                  ✨ Crear nuevo lote
+                                </button>
+                                {/* Opciones: Transferir a lotes existentes */}
+                                {detalle.stock_registrados.filter(s => s.id !== stock.id).map(otroStock => (
+                                  <button
+                                    key={otroStock.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const cantidadATransferir = stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
+                                      if (cantidadATransferir > 0) {
+                                        agregarTransferencia(detalle.id, stock.id);
+                                        // Pre-establecer el destino
+                                        setTransferencias(prev => {
+                                          const nuevas = [...(prev[detalle.id] || [])];
+                                          const ultima = nuevas[nuevas.length - 1];
+                                          if (ultima) {
+                                            ultima.destino_stock_id = otroStock.id;
+                                            ultima.cantidad = cantidadATransferir;
+                                          }
+                                          return { ...prev, [detalle.id]: nuevas };
+                                        });
+                                        setDropdownTransferencia(null);
+                                      }
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                                  >
+                                    🔄 A: {otroStock.lote || 'Sin lote'} ({otroStock.cantidad} unidades)
+                                  </button>
+                                ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* Lote */}
@@ -819,6 +958,85 @@ export default function AsignarLotes() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Transferencias entre Lotes */}
+              {(transferencias[detalle.id] || []).length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">🔄 TRANSFERENCIAS ENTRE LOTES</h4>
+                  <div className="space-y-3">
+                    {(transferencias[detalle.id] || []).map((trans, index) => {
+                      const origenStock = detalle.stock_registrados.find(s => s.id === trans.origen_stock_id);
+                      const destinoStock = trans.destino_stock_id > 0 ? detalle.stock_registrados.find(s => s.id === trans.destino_stock_id) : null;
+                      return (
+                        <div key={index} className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 p-4 rounded-lg">
+                          <div className="grid grid-cols-4 gap-3 items-end">
+                            {/* Stock Origen */}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                De (Origen)
+                              </label>
+                              <div className="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-sm text-gray-900 dark:text-white font-medium">
+                                {origenStock?.lote || 'Sin lote'} ({origenStock?.cantidad} unidades)
+                              </div>
+                            </div>
+
+                            {/* Cantidad a Transferir */}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Cantidad
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max={origenStock?.cantidad || 0}
+                                value={trans.cantidad}
+                                onChange={(e) =>
+                                  actualizarTransferencia(detalle.id, index, 'cantidad', parseFloat(e.target.value) || 0)
+                                }
+                                placeholder="0.00"
+                                className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                              />
+                            </div>
+
+                            {/* Stock Destino */}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                A (Destino)
+                              </label>
+                              <select
+                                value={trans.destino_stock_id}
+                                onChange={(e) =>
+                                  actualizarTransferencia(detalle.id, index, 'destino_stock_id', parseInt(e.target.value))
+                                }
+                                className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                              >
+                                <option value={0}>-- Selecciona destino --</option>
+                                {detalle.stock_registrados
+                                  .filter(s => s.id !== trans.origen_stock_id)
+                                  .map(stock => (
+                                    <option key={stock.id} value={stock.id}>
+                                      {stock.lote || 'Sin lote'} ({stock.cantidad} unidades)
+                                    </option>
+                                  ))}
+                              </select>
+                            </div>
+
+                            {/* Eliminar */}
+                            <button
+                              type="button"
+                              onClick={() => eliminarTransferencia(detalle.id, index)}
+                              className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition h-10"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

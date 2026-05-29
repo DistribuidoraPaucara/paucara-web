@@ -61,13 +61,11 @@ export default function SearchSelect({
   const filteredOptions = useMemo(() => {
     // Si hay búsqueda en servidor, NO filtrar localmente
     if (onSearch) {
-      console.log('🌐 [SearchSelect] Búsqueda en servidor activa, NO filtrar localmente:', { totalOpciones: options.length });
       return options;
     }
 
     // Filtrado local solo si NO hay búsqueda en servidor
     if (!searchQuery.trim()) {
-      console.log('🔓 [SearchSelect] searchQuery vacío, retornando todas las opciones:', options);
       return options;
     }
 
@@ -76,17 +74,12 @@ export default function SearchSelect({
       (option.label?.toLowerCase() ?? '').includes(query) ||
       (option.description?.toLowerCase() ?? '').includes(query)
     );
-    console.log('🔎 [SearchSelect] Filtrando localmente:', { searchQuery, totalOpciones: options.length, filtradas: filtered.length });
-    console.log('   Opciones originales:', options);
-    console.log('   Opciones filtradas:', filtered);
     return filtered;
   }, [options, searchQuery, onSearch]);
 
   // Encontrar la opción seleccionada
   const selectedOption = useMemo(() => {
-    // console.log('SearchSelect Debug:', { value, options: options.slice(0, 3), valueType: typeof value });
     const found = options.find(option => String(option.value) === String(value));
-    // console.log('Selected option found:', found);
     return found;
   }, [options, value]);
 
@@ -130,7 +123,6 @@ export default function SearchSelect({
 
   const handleToggle = () => {
     if (!disabled) {
-      console.log('🔘 [SearchSelect] Toggle:', { currentIsOpen: isOpen, willBe: !isOpen, totalOpciones: options.length });
       setIsOpen(!isOpen);
       if (!isOpen) {
         setSearchQuery('');
@@ -239,7 +231,6 @@ export default function SearchSelect({
       {/* Dropdown */}
       {isOpen && (
         <>
-          {console.log('📂 [SearchSelect] Renderizando dropdown abierto:', { filteredOptions, loading })}
           <div className="absolute z-50 w-full mt-0.5 bg-popover text-popover-foreground border border-border rounded-md shadow-lg">
             {/* Search Input with Close Button */}
             <div className="p-1.5 border-b border-border flex gap-1.5 items-center">

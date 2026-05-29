@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::index
- * @see app/Http/Controllers/InventarioController.php:1840
+ * @see app/Http/Controllers/InventarioController.php:1943
  * @route '/inventario/mermas'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
 export const registrar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ registrar.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
 registrar.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ registrar.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
 registrar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ registrar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
 registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
     const registrarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
         registrarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::registrar
- * @see app/Http/Controllers/InventarioController.php:1945
+ * @see app/Http/Controllers/InventarioController.php:2048
  * @route '/inventario/mermas/registrar'
  */
         registrarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     registrar.form = registrarForm
 /**
 * @see \App\Http\Controllers\InventarioController::store
- * @see app/Http/Controllers/InventarioController.php:1594
+ * @see app/Http/Controllers/InventarioController.php:1697
  * @route '/inventario/mermas/registrar'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::store
- * @see app/Http/Controllers/InventarioController.php:1594
+ * @see app/Http/Controllers/InventarioController.php:1697
  * @route '/inventario/mermas/registrar'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::store
- * @see app/Http/Controllers/InventarioController.php:1594
+ * @see app/Http/Controllers/InventarioController.php:1697
  * @route '/inventario/mermas/registrar'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -191,7 +191,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::store
- * @see app/Http/Controllers/InventarioController.php:1594
+ * @see app/Http/Controllers/InventarioController.php:1697
  * @route '/inventario/mermas/registrar'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -201,7 +201,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::store
- * @see app/Http/Controllers/InventarioController.php:1594
+ * @see app/Http/Controllers/InventarioController.php:1697
  * @route '/inventario/mermas/registrar'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -212,7 +212,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
 export const show = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
 show.url = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -260,7 +260,7 @@ show.url = (args: { merma: number | { id: number } } | [merma: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
 show.get = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ show.get = (args: { merma: number | { id: number } } | [merma: number | { id: nu
 })
 /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
 show.head = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -279,7 +279,7 @@ show.head = (args: { merma: number | { id: number } } | [merma: number | { id: n
 
     /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
     const showForm = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -289,7 +289,7 @@ show.head = (args: { merma: number | { id: number } } | [merma: number | { id: n
 
             /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
         showForm.get = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -298,7 +298,7 @@ show.head = (args: { merma: number | { id: number } } | [merma: number | { id: n
         })
             /**
 * @see \App\Http\Controllers\InventarioController::show
- * @see app/Http/Controllers/InventarioController.php:2184
+ * @see app/Http/Controllers/InventarioController.php:2287
  * @route '/inventario/mermas/{merma}'
  */
         showForm.head = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -314,7 +314,7 @@ show.head = (args: { merma: number | { id: number } } | [merma: number | { id: n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\InventarioController::aprobar
- * @see app/Http/Controllers/InventarioController.php:2332
+ * @see app/Http/Controllers/InventarioController.php:2435
  * @route '/inventario/mermas/{merma}/aprobar'
  */
 export const aprobar = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -329,7 +329,7 @@ aprobar.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::aprobar
- * @see app/Http/Controllers/InventarioController.php:2332
+ * @see app/Http/Controllers/InventarioController.php:2435
  * @route '/inventario/mermas/{merma}/aprobar'
  */
 aprobar.url = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -357,7 +357,7 @@ aprobar.url = (args: { merma: string | number } | [merma: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\InventarioController::aprobar
- * @see app/Http/Controllers/InventarioController.php:2332
+ * @see app/Http/Controllers/InventarioController.php:2435
  * @route '/inventario/mermas/{merma}/aprobar'
  */
 aprobar.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -367,7 +367,7 @@ aprobar.post = (args: { merma: string | number } | [merma: string | number ] | s
 
     /**
 * @see \App\Http\Controllers\InventarioController::aprobar
- * @see app/Http/Controllers/InventarioController.php:2332
+ * @see app/Http/Controllers/InventarioController.php:2435
  * @route '/inventario/mermas/{merma}/aprobar'
  */
     const aprobarForm = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -377,7 +377,7 @@ aprobar.post = (args: { merma: string | number } | [merma: string | number ] | s
 
             /**
 * @see \App\Http\Controllers\InventarioController::aprobar
- * @see app/Http/Controllers/InventarioController.php:2332
+ * @see app/Http/Controllers/InventarioController.php:2435
  * @route '/inventario/mermas/{merma}/aprobar'
  */
         aprobarForm.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -388,7 +388,7 @@ aprobar.post = (args: { merma: string | number } | [merma: string | number ] | s
     aprobar.form = aprobarForm
 /**
 * @see \App\Http\Controllers\InventarioController::rechazar
- * @see app/Http/Controllers/InventarioController.php:2382
+ * @see app/Http/Controllers/InventarioController.php:2485
  * @route '/inventario/mermas/{merma}/rechazar'
  */
 export const rechazar = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -403,7 +403,7 @@ rechazar.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::rechazar
- * @see app/Http/Controllers/InventarioController.php:2382
+ * @see app/Http/Controllers/InventarioController.php:2485
  * @route '/inventario/mermas/{merma}/rechazar'
  */
 rechazar.url = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -431,7 +431,7 @@ rechazar.url = (args: { merma: string | number } | [merma: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\InventarioController::rechazar
- * @see app/Http/Controllers/InventarioController.php:2382
+ * @see app/Http/Controllers/InventarioController.php:2485
  * @route '/inventario/mermas/{merma}/rechazar'
  */
 rechazar.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -441,7 +441,7 @@ rechazar.post = (args: { merma: string | number } | [merma: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\InventarioController::rechazar
- * @see app/Http/Controllers/InventarioController.php:2382
+ * @see app/Http/Controllers/InventarioController.php:2485
  * @route '/inventario/mermas/{merma}/rechazar'
  */
     const rechazarForm = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -451,7 +451,7 @@ rechazar.post = (args: { merma: string | number } | [merma: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\InventarioController::rechazar
- * @see app/Http/Controllers/InventarioController.php:2382
+ * @see app/Http/Controllers/InventarioController.php:2485
  * @route '/inventario/mermas/{merma}/rechazar'
  */
         rechazarForm.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -462,7 +462,7 @@ rechazar.post = (args: { merma: string | number } | [merma: string | number ] | 
     rechazar.form = rechazarForm
 /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
 export const imprimir = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -477,7 +477,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
 imprimir.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -505,7 +505,7 @@ imprimir.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
 imprimir.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -514,7 +514,7 @@ imprimir.get = (args: { id: string | number } | [id: string | number ] | string 
 })
 /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
 imprimir.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -524,7 +524,7 @@ imprimir.head = (args: { id: string | number } | [id: string | number ] | string
 
     /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
     const imprimirForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -534,7 +534,7 @@ imprimir.head = (args: { id: string | number } | [id: string | number ] | string
 
             /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
         imprimirForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -543,7 +543,7 @@ imprimir.head = (args: { id: string | number } | [id: string | number ] | string
         })
             /**
 * @see \App\Http\Controllers\InventarioController::imprimir
- * @see app/Http/Controllers/InventarioController.php:3962
+ * @see app/Http/Controllers/InventarioController.php:4065
  * @route '/inventario/mermas/{id}/imprimir'
  */
         imprimirForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import controlVencimientos from './control-vencimientos'
 import movimientos from './movimientos'
 import productosVendidos from './productos-vendidos'
 import ajuste from './ajuste'
@@ -325,8 +326,86 @@ proximosVencer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     
     proximosVencer.form = proximosVencerForm
 /**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+export const controlVencimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: controlVencimientos.url(options),
+    method: 'get',
+})
+
+controlVencimientos.definition = {
+    methods: ["get","head"],
+    url: '/inventario/control-vencimientos',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+controlVencimientos.url = (options?: RouteQueryOptions) => {
+    return controlVencimientos.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+controlVencimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: controlVencimientos.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+controlVencimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: controlVencimientos.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+    const controlVencimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: controlVencimientos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+        controlVencimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: controlVencimientos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::controlVencimientos
+ * @see app/Http/Controllers/InventarioController.php:531
+ * @route '/inventario/control-vencimientos'
+ */
+        controlVencimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: controlVencimientos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    controlVencimientos.form = controlVencimientosForm
+/**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
 export const vencidos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -341,7 +420,7 @@ vencidos.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
 vencidos.url = (options?: RouteQueryOptions) => {
@@ -350,7 +429,7 @@ vencidos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
 vencidos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -359,7 +438,7 @@ vencidos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
 vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -369,7 +448,7 @@ vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
     const vencidosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -379,7 +458,7 @@ vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
         vencidosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -388,7 +467,7 @@ vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::vencidos
- * @see app/Http/Controllers/InventarioController.php:476
+ * @see app/Http/Controllers/InventarioController.php:477
  * @route '/inventario/vencidos'
  */
         vencidosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -404,7 +483,7 @@ vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     vencidos.form = vencidosForm
 /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
 export const movimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -419,7 +498,7 @@ movimientos.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
 movimientos.url = (options?: RouteQueryOptions) => {
@@ -428,7 +507,7 @@ movimientos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
 movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -437,7 +516,7 @@ movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
 movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -447,7 +526,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
     const movimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -457,7 +536,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
         movimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -466,7 +545,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::movimientos
- * @see app/Http/Controllers/InventarioController.php:530
+ * @see app/Http/Controllers/InventarioController.php:633
  * @route '/inventario/movimientos'
  */
         movimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -482,7 +561,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     movimientos.form = movimientosForm
 /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
 export const reportes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -497,7 +576,7 @@ reportes.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
 reportes.url = (options?: RouteQueryOptions) => {
@@ -506,7 +585,7 @@ reportes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
 reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -515,7 +594,7 @@ reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
 reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -525,7 +604,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
     const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -535,7 +614,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
         reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -544,7 +623,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::reportes
- * @see app/Http/Controllers/InventarioController.php:1481
+ * @see app/Http/Controllers/InventarioController.php:1584
  * @route '/inventario/reportes'
  */
         reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -564,6 +643,7 @@ index,
 dashboard,
 stockBajo,
 proximosVencer,
+controlVencimientos,
 vencidos,
 movimientos,
 productosVendidos,

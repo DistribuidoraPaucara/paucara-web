@@ -31,7 +31,8 @@ export type TipoDocumento =
     | 'prestamo-proveedor'
     | 'devoluciones-proveedor'
     | 'prestamos-vendidos'
-    | 'compras-prestables';
+    | 'compras-prestables'
+    | 'control-vencimientos';
 
 interface FormatoConfig {
     formato: string;
@@ -143,6 +144,9 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
     ],
     'compras-prestables': [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
+        { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
+    ],
+    'control-vencimientos': [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
 };
@@ -265,6 +269,9 @@ export function OutputSelectionModal({
         } else if (tipoDocumento === 'compras-prestables') {
             // Para compras de prestables
             rutaBase = `/api/compras-prestables/${documentoId}`;
+        } else if (tipoDocumento === 'control-vencimientos') {
+            // Para control de vencimientos - no requiere documentoId
+            rutaBase = '/inventario/control-vencimientos';
         } else {
             rutaBase = `/${tipoDocumento}s/${documentoId}`;
         }
@@ -338,6 +345,11 @@ export function OutputSelectionModal({
             } else if (tipoDocumento === 'compras-prestables') {
                 // Para compras de prestables
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
+            } else if (tipoDocumento === 'control-vencimientos') {
+                // Para control de vencimientos - obtener filtros de la URL actual
+                const params = new URLSearchParams(window.location.search);
+                const queryString = params.toString();
+                url = `/inventario/control-vencimientos/imprimir?${queryString}&formato=${formato}&accion=download`;
             } else {
                 url = `${rutaBase}/exportar-pdf?formato=${formato}`;
             }
@@ -396,6 +408,11 @@ export function OutputSelectionModal({
             } else if (tipoDocumento === 'compras-prestables') {
                 // Para compras de prestables
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
+            } else if (tipoDocumento === 'control-vencimientos') {
+                // Para control de vencimientos - obtener filtros de la URL actual
+                const params = new URLSearchParams(window.location.search);
+                const queryString = params.toString();
+                url = `/inventario/control-vencimientos/imprimir?${queryString}&formato=${formato}&accion=${accionURL}`;
             } else {
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             }

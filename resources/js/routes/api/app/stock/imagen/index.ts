@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import test from './test'
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
 export const test = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ test.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
 test.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ test.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
 test.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ test.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
 test.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ test.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
     const testForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ test.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
         testForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ test.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::test
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:427
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:446
  * @route '/api/app/stock/imagen/test'
  */
         testForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ test.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     test.form = testForm
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
 export const debug = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ debug.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
 debug.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ debug.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
 debug.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ debug.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
 debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
     const debugForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
         debugForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ debug.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\StockDisponiblePdfController::debug
- * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:513
+ * @see app/Http/Controllers/Api/StockDisponiblePdfController.php:852
  * @route '/api/app/stock/imagen/debug'
  */
         debugForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

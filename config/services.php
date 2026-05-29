@@ -67,4 +67,24 @@ return [
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | PDF to Image Service (Python)
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para el servicio de conversión PDF → Imagen
+    | Usa un servicio Python remoto para mejor calidad y compresión
+    | Fallback automático a ImageMagick si el servicio no está disponible
+    |
+    */
+    'pdf_image' => [
+        'enabled' => env('PDF_IMAGE_SERVICE_ENABLED', false),
+        'url' => env('PDF_IMAGE_SERVICE_URL', null),
+        'dpi' => env('PDF_IMAGE_DPI', 150),
+        'quality' => env('PDF_IMAGE_QUALITY', 85),
+        'format' => env('PDF_IMAGE_FORMAT', 'jpeg'),
+        'optimize' => env('PDF_IMAGE_OPTIMIZE', true),
+        'timeout' => env('PDF_IMAGE_TIMEOUT', 60),
+    ],
+
 ];

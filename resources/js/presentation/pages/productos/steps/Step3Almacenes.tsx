@@ -4,12 +4,13 @@ import { Input } from '@/presentation/components/ui/input';
 import { Checkbox } from '@/presentation/components/ui/checkbox';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import type { StockAlmacen } from '@/domain/entities/productos';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Option { value: number | string; label: string }
 
 export interface Step3Props {
   data: { almacenes: StockAlmacen[] };
+  setData: (key: string, value: any) => void; // ✨ NUEVO: Para actualizar estado atomicamente
   almacenesOptions: Option[];
   sectores?: Record<number | string, Option[]>; // ✨ NUEVO: Sectores pre-cargados del backend
   addAlmacen: (prefill?: Partial<StockAlmacen>) => void;
@@ -63,7 +64,7 @@ export function validarYAjustarAlmacenes(almacenes: any[]): { validos: any[], aj
   return { validos: almacenesAjustados, ajustes };
 }
 
-export default function Step3Almacenes({ data, almacenesOptions, sectores, addAlmacen, setAlmacen, removeAlmacen, canEditStockQuantities = false, setSectorConSincronizacion, handleCantidadTotalChange }: Step3Props) {
+export default function Step3Almacenes({ data, setData, almacenesOptions, sectores, addAlmacen, setAlmacen, removeAlmacen, canEditStockQuantities = false, setSectorConSincronizacion, handleCantidadTotalChange }: Step3Props) {
   // console.log('🏢 Almacenes Options:', almacenesOptions);
   // console.log('🏭 Sectores Pre-cargados del backend:', sectores);
   // console.log('📋 Data (almacenes del formulario):', data.almacenes);
@@ -72,22 +73,26 @@ export default function Step3Almacenes({ data, almacenesOptions, sectores, addAl
 
   // ✨ Inicializar con sectores pre-cargados del backend si están disponibles
   const [sectoresOptions, setSectoresOptions] = useState<Record<number | string, Option[]>>(sectores || {});
-  const [loadingSectores, setLoadingSectores] = useState<Record<number | string, boolean>>({});
 
   // Cargar sectores cuando se selecciona un almacén
   const handleAlmacenChange = async (i: number, almacenId: number | string) => {
     console.log(`🔄 Almacén seleccionado en posición ${i}:`, almacenId);
-    setAlmacen(i, 'almacen_id', almacenId);
+
+    // ✨ ACTUALIZADO: Usar newData local en lugar de data.almacenes que puede estar desactualizado
+    const newData = [...(data.almacenes || [])];
+    const finalAlmacenId = almacenId !== '' ? Number(almacenId) : undefined;
+    newData[i] = { ...newData[i], almacen_id: finalAlmacenId };
 
     if (!almacenId) {
       console.log(`❌ Almacén vacío, limpiando sector`);
-      setAlmacen(i, 'sector_id', undefined);
+      newData[i] = { ...newData[i], sector_id: undefined };
+      setData('almacenes', newData);
       return;
     }
 
     // ✨ NUEVO: Auto-completar sector si otros cards del mismo almacén ya tienen uno
-    const almacenesDelMismoAlmacen = (data.almacenes || []).filter(
-      (a: StockAlmacen, idx: number) => idx !== i && a.almacen_id === almacenId && a.sector_id
+    const almacenesDelMismoAlmacen = newData.filter(
+      (a: StockAlmacen, idx: number) => idx !== i && String(a.almacen_id) === String(finalAlmacenId) && a.sector_id
     );
 
     if (almacenesDelMismoAlmacen.length > 0) {
@@ -97,10 +102,12 @@ export default function Step3Almacenes({ data, almacenesOptions, sectores, addAl
       );
 
       if (todosTienenMismoSector && sectorDelPrimero) {
-        // console.log(`✨ Auto-completando sector ${sectorDelPrimero} (otros cards tienen el mismo)`);
-        setAlmacen(i, 'sector_id', sectorDelPrimero);
+        newData[i] = { ...newData[i], sector_id: sectorDelPrimero };
       }
     }
+
+    // ✨ ACTUALIZADO: Actualizar estado de una sola vez
+    setData('almacenes', newData);
 
     // ✨ Si ya tenemos los sectores (pre-cargados o en caché), no cargar de nuevo
     if (sectoresOptions[almacenId]) {
@@ -150,50 +157,30 @@ export default function Step3Almacenes({ data, almacenesOptions, sectores, addAl
         )}
         {(data.almacenes || []).map((a: StockAlmacen, i: number) => (
           <div key={i} className="border rounded bg-card p-3 space-y-3 relative">
-            {/* 🔢 Número de secuencia del almacén */}
-            <div className="absolute top-2 left-3 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-              {i + 1}
+            {/* 🔢 Número de secuencia del almacén + ID */}
+            <div className="absolute top-2 left-3 flex flex-col items-center">
+              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                {i + 1}
+              </div>
+              {a.id && (
+                <div className="text-xs text-muted-foreground mt-1 font-mono bg-muted px-1.5 py-0.5 rounded">
+                  ID: {a.id}
+                </div>
+              )}
             </div>
             {/* Fila 1: Almacén y Sector */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-4">
               <div>
                 <Label className="text-xs font-semibold text-foreground">Almacén *</Label>
                 <SearchSelect
                   id={`almacen-select-${i}`}
                   placeholder="Seleccione un almacén"
-                  value={a.almacen_id ?? ''}
+                  value={a.almacen_id ? String(a.almacen_id) : ''}
                   options={almacenesOptions}
-                  onChange={(value) => handleAlmacenChange(i, value ? Number(value) : '')}
+                  onChange={(value) => handleAlmacenChange(i, value ? Number(value) : undefined)}
                   allowClear={true}
                 />
               </div>
-              <div>
-                <Label className="text-xs font-semibold text-foreground">Sector (Opcional)</Label>
-                <SearchSelect
-                  id={`sector-select-${i}`}
-                  placeholder={loadingSectores[a.almacen_id] ? "Cargando sectores..." : "Seleccione un sector"}
-                  value={a.sector_id ?? ''}
-                  options={sectoresOptions[a.almacen_id] || []}
-                  onChange={(value) => {
-                    const sectorId = value ? Number(value) : undefined;
-                    console.log(`🏢 Sector seleccionado en fila ${i + 1}:`, sectorId);
-
-                    // ✨ NUEVO: Usar función de sincronización desde form.tsx
-                    if (setSectorConSincronizacion) {
-                      setSectorConSincronizacion(i, sectorId);
-                    } else {
-                      // Fallback si la función no existe
-                      setAlmacen(i, 'sector_id', sectorId);
-                    }
-                  }}
-                  allowClear={true}
-                  disabled={!a.almacen_id || loadingSectores[a.almacen_id]}
-                />
-              </div>
-            </div>
-
-            {/* Fila 2: Lote y Fecha de vencimiento */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs font-semibold text-foreground">Lote (Opcional)</Label>
                 <Input
@@ -233,6 +220,29 @@ export default function Step3Almacenes({ data, almacenesOptions, sectores, addAl
                   disabled={!a.fecha_vencimiento}
                 />
               </div>
+              {/* <div>
+                <Label className="text-xs font-semibold text-foreground">Sector (Opcional)</Label>
+                <SearchSelect
+                  id={`sector-select-${i}`}
+                  placeholder={loadingSectores[a.almacen_id] ? "Cargando sectores..." : "Seleccione un sector"}
+                  value={a.sector_id ?? ''}
+                  options={sectoresOptions[a.almacen_id] || []}
+                  onChange={(value) => {
+                    const sectorId = value ? Number(value) : undefined;
+                    console.log(`🏢 Sector seleccionado en fila ${i + 1}:`, sectorId);
+
+                    // ✨ NUEVO: Usar función de sincronización desde form.tsx
+                    if (setSectorConSincronizacion) {
+                      setSectorConSincronizacion(i, sectorId);
+                    } else {
+                      // Fallback si la función no existe
+                      setAlmacen(i, 'sector_id', sectorId);
+                    }
+                  }}
+                  allowClear={true}
+                  disabled={!a.almacen_id || loadingSectores[a.almacen_id]}
+                />
+              </div> */}
             </div>
 
             {/* Fila 3: Información de Stock */}
@@ -347,7 +357,7 @@ export default function Step3Almacenes({ data, almacenesOptions, sectores, addAl
           };
 
           (data.almacenes || []).forEach((a: StockAlmacen) => {
-            totalGeneral.cantidad += Number(a.stock ?? 0);
+            totalGeneral.cantidad += Number(a.cantidad ?? a.stock ?? 0);
             totalGeneral.disponible += Number(a.cantidad_disponible ?? 0);
             totalGeneral.reservada += Number(a.cantidad_reservada ?? 0);
           });

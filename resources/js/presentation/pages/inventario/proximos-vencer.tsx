@@ -9,6 +9,7 @@ interface ProductoProximoVencer {
     producto: {
         id: number;
         nombre: string;
+        sku: string;
         categoria: {
             nombre: string;
         };
@@ -98,6 +99,12 @@ export default function ProximosVencer() {
                             Productos que vencen en los próximos 30 días
                         </p>
                     </div>
+                    <a
+                        href="/inventario/control-vencimientos"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition"
+                    >
+                        Ver Control Completo →
+                    </a>
                 </div>
 
                 {/* Alert */}
@@ -134,12 +141,19 @@ export default function ProximosVencer() {
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
+                        <div className="flex flex-col">
+                            <div className="overflow-x-auto">
+                                <div className="h-2 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+                            <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '600px' }}>
+                                <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Producto
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Codigo
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoría
@@ -163,13 +177,29 @@ export default function ProximosVencer() {
                                 </thead>
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                     {productos.map((stockProducto) => {
-                                        const estado = obtenerEstadoVencimiento(stockProducto.dias_para_vencer);
+                                        const diasRedondeados = Math.round(stockProducto.dias_para_vencer);
+                                        const estado = obtenerEstadoVencimiento(diasRedondeados);
+
+                                        const getRowBgColor = () => {
+                                            if (diasRedondeados <= 7) {
+                                                return 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30';
+                                            } else if (diasRedondeados <= 15) {
+                                                return 'bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30';
+                                            } else {
+                                                return 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30';
+                                            }
+                                        };
 
                                         return (
-                                            <tr key={stockProducto.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <tr key={stockProducto.id} className={getRowBgColor()}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                         {stockProducto.producto.nombre}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-mono text-gray-600 dark:text-gray-400">
+                                                        {stockProducto.producto.sku}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -193,13 +223,13 @@ export default function ProximosVencer() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className={`text-sm font-medium ${stockProducto.dias_para_vencer <= 7
+                                                    <div className={`text-sm font-medium ${diasRedondeados <= 7
                                                         ? 'text-red-600 dark:text-red-400'
-                                                        : stockProducto.dias_para_vencer <= 15
+                                                        : diasRedondeados <= 15
                                                             ? 'text-orange-600 dark:text-orange-400'
                                                             : 'text-yellow-600 dark:text-yellow-400'
                                                         }`}>
-                                                        {stockProducto.dias_para_vencer} día{stockProducto.dias_para_vencer !== 1 ? 's' : ''}
+                                                        {diasRedondeados} día{diasRedondeados !== 1 ? 's' : ''}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -212,6 +242,10 @@ export default function ProximosVencer() {
                                     })}
                                 </tbody>
                             </table>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <div className="h-2 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -229,7 +263,7 @@ export default function ProximosVencer() {
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Crítico (≤ 7 días)</p>
                                     <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                        {productos.filter(p => p.dias_para_vencer <= 7).length}
+                                        {productos.filter(p => Math.round(p.dias_para_vencer) <= 7).length}
                                     </p>
                                 </div>
                             </div>
@@ -245,7 +279,7 @@ export default function ProximosVencer() {
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Urgente (8-15 días)</p>
                                     <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                        {productos.filter(p => p.dias_para_vencer > 7 && p.dias_para_vencer <= 15).length}
+                                        {productos.filter(p => Math.round(p.dias_para_vencer) > 7 && Math.round(p.dias_para_vencer) <= 15).length}
                                     </p>
                                 </div>
                             </div>
@@ -261,7 +295,7 @@ export default function ProximosVencer() {
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Atención (16-30 días)</p>
                                     <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                        {productos.filter(p => p.dias_para_vencer > 15).length}
+                                        {productos.filter(p => Math.round(p.dias_para_vencer) > 15).length}
                                     </p>
                                 </div>
                             </div>

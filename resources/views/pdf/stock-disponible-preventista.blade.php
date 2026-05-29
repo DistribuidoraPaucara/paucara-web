@@ -12,49 +12,53 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 16px;
+            font-family: 'Helvetica', Arial, sans-serif;
+            font-size: 32px;
             color: #333;
-            line-height: 1.3;
+            line-height: 1.1;
         }
 
         .container {
             max-width: 100%;
-            padding: 15px;
+            padding: 5px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #003366;
-            padding-bottom: 10px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #003366;
+            padding-bottom: 4px;
         }
 
         .header h1 {
-            font-size: 16px;
-            margin-bottom: 3px;
+            font-size: 32px;
+            margin-bottom: 1px;
             color: #003366;
             font-weight: bold;
         }
 
         .header p {
-            font-size: 12px;
+            font-size: 32px;
             color: #666;
-            margin: 1px 0;
+            margin: 0;
         }
 
         .info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 16px;
+            font-size: 32px;
             color: #666;
-            margin-top: 2px;
+            margin-top: 1px;
+        }
+
+        .info-row span {
+            display: inline;
+            margin-right: 15px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+            font-size: 32px;
         }
 
         thead {
@@ -64,26 +68,37 @@
         }
 
         th {
-            padding: 6px;
+            padding: 3px 3px;
             text-align: left;
             border: 1px solid #999;
-            font-size: 16px;
+            font-size: 32px;
         }
 
         th.text-right {
             text-align: right;
-            padding-right: 8px;
+            padding-right: 3px;
         }
 
         td {
-            padding: 5px 6px;
-            border: 1px solid #ddd;
-            font-size: 16px;
+            padding: 6px 6px !important;
+            border: 1px solid #999;
+            font-size: 32px;
         }
 
         td.text-right {
             text-align: right;
-            padding-right: 8px;
+            padding-right: 6px !important;
+        }
+
+        /* Override padding para todas las celdas */
+        tbody td {
+            padding: 6px 6px !important;
+        }
+
+        tbody td.precio-venta,
+        tbody td.precio-descuento,
+        tbody td.precio-especial {
+            padding: 6px 6px !important;
         }
 
         tbody tr:nth-child(even) {
@@ -102,7 +117,7 @@
         .sku {
             color: #666;
             font-family: monospace;
-            font-size: 16px;
+            font-size: 32px;
         }
 
         .precio-venta {
@@ -122,9 +137,10 @@
             font-weight: bold;
             color: #2980b9;
             background-color: #f0f8ff;
-            padding: 5px 8px;
-            border-radius: 3px;
+            padding: 2px 4px;
+            border-radius: 2px;
             text-align: center;
+            font-size: 32px;
         }
 
         .precio-null {
@@ -132,85 +148,98 @@
             font-style: italic;
         }
 
+        /* Filas con rango de precios - color diferenciado */
+        tr.con-rangos {
+            background-color: #fff9e6 !important;
+        }
+
+        tr.con-rangos td {
+            background-color: #fff9e6 !important;
+        }
+
         .rangos-row {
-            background-color: #f9f9f9 !important;
+            background-color: #fff9e6 !important;
             border-top: 1px solid #ddd !important;
         }
 
         .rangos-cell {
-            padding: 4px 6px !important;
-            font-size: 13px;
-            color: #555;
+            padding: 2px 3px !important;
+            font-size: 12px;
+            color: #C45E3F;
         }
 
         .rangos-titulo {
             font-weight: bold;
             color: #003366;
             font-size: 12px;
-            margin-bottom: 3px;
+            margin-bottom: 1px;
             display: block;
         }
 
         .precio-principal {
             display: block;
             font-weight: bold;
-            margin-bottom: 4px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 2px;
+            padding-bottom: 1px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .rangos-contenedor {
-            font-size: 12px;
-            margin-top: 3px;
+            font-size: 11px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            padding: 2px 3px;
+            border: 1px solid #eee;
+            border-radius: 3px;
         }
 
         .rango-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            padding: 1px 2px;
-            line-height: 1.2;
+            font-size: 11px;
+            padding: 0px;
+            line-height: 1;
         }
 
         .rango-cantidad {
             color: #666;
-            font-size: 12px;
-            min-width: 40px;
+            font-size: 32px;
+            display: inline-block;
+            min-width: 35px;
         }
 
         .rango-precio {
             color: #003366;
             font-weight: 600;
             text-align: right;
-            min-width: 45px;
-            font-size: 12px;
+            display: inline-block;
+            min-width: 40px;
+            font-size: 32px;
         }
 
         .footer {
-            margin-top: 15px;
-            padding-top: 8px;
+            margin-top: 4px;
+            padding-top: 3px;
             border-top: 1px solid #ddd;
             text-align: center;
-            font-size: 14px;
+            font-size: 32px;
             color: #999;
         }
 
         .summary {
             background-color: #f0f0f0;
-            padding: 8px;
-            margin: 10px 0;
-            border-radius: 3px;
+            padding: 3px;
+            margin: 4px 0;
+            border-radius: 2px;
             text-align: right;
             font-weight: bold;
-            font-size: 14px;
-            border-left: 4px solid #003366;
+            font-size: 32px;
+            border-left: 3px solid #003366;
         }
 
         .empty-state {
             text-align: center;
-            padding: 30px;
+            padding: 20px;
             color: #999;
-            font-size: 14px;
+            font-size: 32px;
         }
 
         .page-break {
@@ -238,7 +267,7 @@
             <p>{{ $empresa }}</p>
             <div class="info-row">
                 <span>Generado: {{ $fecha_generacion }}</span>
-                <span>Total de Productos: <strong>{{ $total_productos }}</strong></span>
+                <span>Total: <strong>{{ $total_productos }}</strong></span>
             </div>
         </div>
 
@@ -247,14 +276,13 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 5%;">N°</th>
-                    <th style="width: @if($incluir_stock ?? false) 25% @else 30% @endif;">Nombre del Producto</th>
-                    {{-- <th style="width: 10%;">SKU</th> --}}
-                    <th style="width: @if($incluir_stock ?? false) 11% @else 13% @endif; text-align: right;">Precio Venta</th>
-                    <th style="width: @if($incluir_stock ?? false) 11% @else 13% @endif; text-align: right;">Precio Descuento</th>
-                    <th style="width: @if($incluir_stock ?? false) 11% @else 13% @endif; text-align: right;">Precio Especial</th>
+                    <th style="width: 4%;">N°</th>
+                    <th style="width: @if($incluir_stock ?? false) 28% @else 28% @endif;">Nombre del Producto</th>
+                    <th style="width: @if($incluir_stock ?? false) 15% @else 20% @endif;">Precio Venta</th>
+                    <th style="width: @if($incluir_stock ?? false) 15% @else 20% @endif;">Precio Descuento</th>
+                    <th style="width: @if($incluir_stock ?? false) 15% @else 20% @endif;">Precio Especial</th>
                     @if($incluir_stock ?? false)
-                    <th style="width: 12%; text-align: center;">Stock</th>
+                    <th style="width: 15%; text-align: center;">Stock</th>
                     @endif
                 </tr>
             </thead>
@@ -263,21 +291,24 @@
                 $numero = 1;
                 @endphp
                 @foreach($filas as $fila)
-                <tr>
+                @php
+                $tieneRangos = (count($fila['rangos_venta'] ?? []) > 0) ||
+                (count($fila['rangos_descuento'] ?? []) > 0) ||
+                (count($fila['rangos_especial'] ?? []) > 0);
+                @endphp
+                <tr @if($tieneRangos) class="con-rangos" @endif>
                     <td>{{ $numero }}</td>
                     <td class="nombre">{{ $fila['nombre'] }}</td>
-                    {{-- <td class="sku">{{ $fila['sku'] }}</td> --}}
 
                     {{-- CELDA PRECIO VENTA CON RANGOS --}}
                     <td class="precio-venta">
                         @if($fila['precio_venta'])
-                        <span class="precio-principal">Bs {{ number_format($fila['precio_venta'], 2) }}</span>
+                        <span class="precio-principal">Bs <strong style="font-size: 36px;">{{ number_format($fila['precio_venta'], 2) }}</strong></span>
                         @php $rangosVenta = $fila['rangos_venta'] ?? []; @endphp
                         @if(count($rangosVenta) > 0)
                         <div class="rangos-contenedor">
-                            <span>Rango Prec.: </span>
                             @foreach($rangosVenta as $rv)
-                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $rv['rango_texto'] }} un</div>
+                            <div style="font-size: 28px;">Rango: <strong style="font-size: 36px;">{{ $rv['rango_texto'] }} </strong> unidad</div>
                             @endforeach
                         </div>
                         @endif
@@ -289,13 +320,12 @@
                     {{-- CELDA PRECIO DESCUENTO CON RANGOS --}}
                     <td class="precio-descuento">
                         @if($fila['precio_descuento'])
-                        <span class="precio-principal">Bs {{ number_format($fila['precio_descuento'], 2) }}</span>
+                        <span class="precio-principal">Bs <strong style="font-size: 36px;">{{ number_format($fila['precio_descuento'], 2) }}</strong></span>
                         @php $rangosDesc = $fila['rangos_descuento'] ?? []; @endphp
                         @if(count($rangosDesc) > 0)
                         <div class="rangos-contenedor">
-                            <span>Rango Prec.: </span>
                             @foreach($rangosDesc as $rd)
-                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $rd['rango_texto'] }} un</div>
+                            <div style="font-size: 28px;">Rango: <strong style="font-size: 36px;">{{ $rd['rango_texto'] }} </strong> unidad</div>
                             @endforeach
                         </div>
                         @endif
@@ -307,13 +337,12 @@
                     {{-- CELDA PRECIO ESPECIAL CON RANGOS --}}
                     <td class="precio-especial">
                         @if($fila['precio_especial'])
-                        <span class="precio-principal">Bs {{ number_format($fila['precio_especial'], 2) }}</span>
+                        <span class="precio-principal">Bs <strong style="font-size: 36px;">{{ number_format($fila['precio_especial'], 2) }}</strong></span>
                         @php $rangosEsp = $fila['rangos_especial'] ?? []; @endphp
                         @if(count($rangosEsp) > 0)
                         <div class="rangos-contenedor">
-                            <span>Rango Prec.: </span>
                             @foreach($rangosEsp as $re)
-                            <div style="font-size: 16px; color: #666; padding: 1px 0;">{{ $re['rango_texto'] }} un</div>
+                            <div style="font-size: 28px;">Rango: <strong style="font-size: 36px;">{{ $re['rango_texto'] }} </strong> unidad</div>
                             @endforeach
                         </div>
                         @endif
@@ -324,7 +353,7 @@
 
                     @if($incluir_stock ?? false)
                     <td class="stock-disponible">
-                        {{ number_format($fila['stock_disponible'], 2) }}
+                        <strong style="font-size: 36px;"></strong>{{ number_format($fila['stock_disponible'], 2) }}</strong>
                     </td>
                     @endif
                 </tr>
@@ -338,19 +367,18 @@
 
         <!-- Resumen -->
         <div class="summary">
-            ✓ Listado de {{ $total_productos }} productos con stock disponible (cantidad > 0)
+            ✓ Listado de {{ $total_productos }} productos
         </div>
 
         @else
         <div class="empty-state">
-            <p>⚠️ No hay productos con stock disponible en este momento.</p>
+            <p>⚠️ No hay productos con stock.</p>
         </div>
         @endif
 
         <!-- Footer -->
         <div class="footer">
-            <p>Este reporte fue generado automáticamente por el sistema.</p>
-            <p>Solo muestra productos con cantidad disponible mayor a 0.</p>
+            <p>Generado automáticamente. Solo muestra productos con cantidad > 0.</p>
         </div>
     </div>
 </body>
