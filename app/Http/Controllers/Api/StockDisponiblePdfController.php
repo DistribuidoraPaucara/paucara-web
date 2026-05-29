@@ -143,6 +143,8 @@ class StockDisponiblePdfController
             // 0️⃣ OBTENER PARÁMETROS
             // ==========================================
             $incluirStock = (bool) $request->query('incluir_stock', false);
+            $quality = (int) $request->query('quality', 90);
+            $quality = max(50, min(100, $quality)); // Limitar entre 50-100
 
             // ==========================================
             // 1️⃣ CONSULTA: Stock disponible agrupado
@@ -219,7 +221,7 @@ class StockDisponiblePdfController
                 // ==========================================
                 // 5️⃣ CONVERTIR PDF A JPEG con ImageMagick
                 // ==========================================
-                $imageContent = $this->convertirPdfAImagen($tempPdfPath, $tempImagePath);
+                $imageContent = $this->convertirPdfAImagen($tempPdfPath, $tempImagePath, $quality);
 
                 if ($imageContent) {
                     Log::info('✅ Imagen JPEG generada exitosamente', [
@@ -279,21 +281,25 @@ class StockDisponiblePdfController
      * Convertir PDF a PNG usando ImageMagick
      * Retorna el contenido binario de la imagen o null si falla
      */
-    private function convertirPdfAImagen(string $pdfPath, string $outputPath): ?string
+    private function convertirPdfAImagen(string $pdfPath, string $outputPath, int $quality = 90): ?string
     {
         try {
-            // Convertir TODAS las páginas a una sola imagen PNG larga
+            // Convertir TODAS las páginas a una sola imagen JPEG larga
             // En Windows, usar 'magick' en lugar de 'convert' para evitar conflicto con comando nativo
             $imagemagickCmd = $this->getImageMagickCommand();
 
-            // Configuración JPEG: Máxima compresión + excelente calidad
-            // -quality 90: JPEG quality (90 = excelente, 5-10x más pequeño que PNG)
+            // Configuración JPEG dinámica: Máxima compresión + calidad ajustable
+            // -quality: JPEG quality (parámetro dinámico, rango 50-100)
+            //   - 100 = máxima calidad (~150-200KB)
+            //   - 90 = excelente (~80-120KB) ← DEFAULT
+            //   - 80 = muy buena (~50-80KB)
+            //   - 70 = buena (~40-60KB)
             // -append: unir todas las páginas en una imagen larga
-            // Resultado: ~80-120KB (perfecto para WhatsApp vs 300KB de PNG)
             $command = sprintf(
-                '%s %s -quality 98 -append %s 2>&1',
+                '%s %s -quality %d -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
+                $quality,
                 escapeshellarg($outputPath)
             );
 
