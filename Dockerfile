@@ -15,7 +15,10 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libpng-dev \
     libjpeg-turbo-dev \
-    freetype-dev
+    freetype-dev \
+    imagemagick \
+    ghostscript \
+    ghostscript-fonts
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
