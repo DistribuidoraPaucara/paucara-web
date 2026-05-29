@@ -286,8 +286,12 @@ class StockDisponiblePdfController
             // En Windows, usar 'magick' en lugar de 'convert' para evitar conflicto con comando nativo
             $imagemagickCmd = $this->getImageMagickCommand();
 
+            // Configuración optimizada para PDF → PNG
+            // -define pdf:fit-page: mejor renderizado del PDF
+            // -quality 95: menor compresión, mejor calidad
+            // -colorspace RGB: mejor manejo de colores
             $command = sprintf(
-                '%s %s -quality 92 -append %s 2>&1',
+                '%s %s -define pdf:fit-page=A4 -colorspace RGB -quality 95 -append %s 2>&1',
                 $imagemagickCmd,
                 escapeshellarg($pdfPath),
                 escapeshellarg($outputPath)

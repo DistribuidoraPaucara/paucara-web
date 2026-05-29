@@ -1455,11 +1455,9 @@ Route::middleware(['auth:sanctum,web'])->get('/logs', function () {
     ]);
 })->name('api.logs');
 
-// ✅ TEST LOCAL: Probar calidades sin autenticación (solo en desarrollo)
-if (app()->environment(['local', 'dev'])) {
-    Route::get('/app/stock/imagen/test-local', [StockDisponiblePdfController::class, 'test'])
-        ->name('api.app.stock.imagen.test.local');
-}
+// ✅ TEST: Probar calidades sin autenticación (funciona en local y production)
+Route::get('/app/stock/imagen/test-local', [StockDisponiblePdfController::class, 'test'])
+    ->name('api.app.stock.imagen.test.local');
 
 // ========================================
 // 📊 RUTAS API ESTADOS LOGÍSTICA (Q1 2026)
