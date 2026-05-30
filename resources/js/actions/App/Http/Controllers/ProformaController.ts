@@ -210,6 +210,108 @@ export const imprimir = {
 }
 
 /**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+export const descargarImagen = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: descargarImagen.url(args, options),
+    method: 'get',
+})
+
+descargarImagen.definition = {
+    methods: ["get","head"],
+    url: '/api/proformas/{proforma}/descargar-imagen',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+descargarImagen.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { proforma: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { proforma: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    proforma: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        proforma: typeof args.proforma === 'object'
+                ? args.proforma.id
+                : args.proforma,
+                }
+
+    return descargarImagen.definition.url
+            .replace('{proforma}', parsedArgs.proforma.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+descargarImagen.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: descargarImagen.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+descargarImagen.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: descargarImagen.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+    const descargarImagenForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: descargarImagen.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+        descargarImagenForm.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargarImagen.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProformaController::descargarImagen
+ * @see app/Http/Controllers/ProformaController.php:1258
+ * @route '/api/proformas/{proforma}/descargar-imagen'
+ */
+        descargarImagenForm.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargarImagen.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    descargarImagen.form = descargarImagenForm
+/**
 * @see \App\Http\Controllers\ProformaController::preview
  * @see app/Http/Controllers/ProformaController.php:1053
  * @route '/api/proformas/{proforma}/preview'
@@ -1355,6 +1457,6 @@ renovarReservas.post = (args: { id: string | number } | [id: string | number ] |
         })
     
     renovarReservas.form = renovarReservasForm
-const ProformaController = { imprimir, preview, index, create, store, formatosDisponibles, edit, imprimirFiltrado, show, aprobar, rechazar, procesarVenta, convertirAVenta, renovarReservas }
+const ProformaController = { imprimir, descargarImagen, preview, index, create, store, formatosDisponibles, edit, imprimirFiltrado, show, aprobar, rechazar, procesarVenta, convertirAVenta, renovarReservas }
 
 export default ProformaController

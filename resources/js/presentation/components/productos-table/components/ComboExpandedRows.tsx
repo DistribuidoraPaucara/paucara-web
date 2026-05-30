@@ -110,9 +110,10 @@ export default function ComboExpandedRows({
                     ? 'bg-green-50 dark:bg-green-900/10 border-green-400'
                     : 'bg-gray-100 dark:bg-gray-800/50 opacity-60 border-gray-300'
                     }`}>
-                    <td className="py-1 whitespace-nowrap">
+                    {/* Selector + Producto */}
+                    <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                            {/* ✅ SIMPLIFICADO: Checkbox para todos los items, editable si proforma es PENDIENTE */}
+                            {/* Checkbox */}
                             {item.es_obligatorio === false ? (
                                 <input
                                     type="checkbox"
@@ -121,7 +122,6 @@ export default function ComboExpandedRows({
                                     onChange={(e) => {
                                         const nuevosItems = [...itemsAMostrar];
                                         nuevosItems[itemIndex]._isChecked = e.target.checked;
-                                        // Notificar al parent component sobre los cambios
                                         if (comboIdDisplay) {
                                             setComboItemsMap(prev => ({
                                                 ...prev,
@@ -131,80 +131,96 @@ export default function ComboExpandedRows({
                                         onComboItemsChange?.(index, nuevosItems);
                                     }}
                                     className="w-4 h-4 rounded border-gray-300 text-green-600 cursor-pointer accent-green-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                    title={readOnly ? (item._isChecked ? "Producto seleccionado (solo lectura)" : "Producto no seleccionado (solo lectura)") : (item._isChecked ? "Click para deseleccionar" : "Click para seleccionar")}
+                                    title={readOnly ? (item._isChecked ? "Seleccionado" : "No seleccionado") : (item._isChecked ? "Deseleccionar" : "Seleccionar")}
                                 />
                             ) : (
-                                <div className="w-4 h-4 flex items-center justify-center">
-                                    <span className="text-green-600 dark:text-green-400 text-lg">✓</span>
-                                </div>
+                                <span className="w-4 h-4 flex items-center justify-center text-green-600 dark:text-green-400 text-sm">✓</span>
                             )}
-                            <div className="w-4 h-4 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                            <div className="text-sm font-medium text-purple-700 dark:text-purple-300">
                                 {item.producto_nombre}
-                                {item.es_obligatorio && <span className="text-purple-600 dark:text-purple-400 ml-1">*</span>}
+                                {item.es_obligatorio && <span className="text-purple-600 dark:text-purple-400 ml-1 text-xs">*</span>}
                             </div>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Cod.: {item.producto_sku}
-                        </div>
-                        {/* Stock del producto */}
-                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 flex items-center gap-1">
-                            <span className="text-purple-600 dark:text-purple-400">📦</span>
-                            <span>
-                                Stock: <span className="font-semibold text-purple-700 dark:text-purple-300">
-                                    {item.stock_disponible ?? '-'} / {item.stock_total ?? '-'}
-                                </span>
+                    </td>
+
+                    {/* SKU */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {item.producto_sku || '-'}
+                        </span>
+                    </td>
+
+                    
+
+                    {/* Cantidad + Stock */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                disabled={readOnly}
+                                value={item.cantidad || 0}
+                                onChange={(e) => {
+                                    const nuevaCantidad = parseFloat(e.target.value) || 0;
+                                    const nuevosItems = [...itemsAMostrar];
+                                    nuevosItems[itemIndex].cantidad = nuevaCantidad;
+                                    if (comboIdDisplay) {
+                                        setComboItemsMap(prev => ({
+                                            ...prev,
+                                            [comboIdDisplay]: nuevosItems
+                                        }));
+                                    }
+                                    onComboItemsChange?.(index, nuevosItems);
+                                }}
+                                className="w-24 px-2 py-1 text-xs font-semibold border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-zinc-800 text-purple-700 dark:text-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                                / {item.stock_disponible ?? 0}
                             </span>
                         </div>
                     </td>
-                    <td className="py-1 whitespace-nowrap">
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            disabled={readOnly}
-                            value={item.cantidad || 0}
-                            onChange={(e) => {
-                                const nuevaCantidad = parseFloat(e.target.value) || 0;
-                                const nuevosItems = [...itemsAMostrar];
-                                nuevosItems[itemIndex].cantidad = nuevaCantidad;
-                                // Usar comboIdDisplay para mantener consistencia
-                                if (comboIdDisplay) {
-                                    setComboItemsMap(prev => ({
-                                        ...prev,
-                                        [comboIdDisplay]: nuevosItems
-                                    }));
-                                }
-                                onComboItemsChange?.(index, nuevosItems);
-                            }}
-                            className="w-16 px-2 py-1 text-xs border border-purple-300 dark:border-purple-600 rounded bg-white dark:bg-zinc-800 text-purple-700 dark:text-purple-300 font-medium focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                        {tipo === 'venta' && (
-                            <div className="whitespace-nowrap text-xs text-purple-700 dark:text-purple-300">
-                                {item.unidad_medida_nombre || 'N/A'}
-                            </div>
-                        )}
+
+                    {/* Precio */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                            {formatCurrencyWith2Decimals(item.precio_unitario || 0)}
+                        </span>
                     </td>
 
                     {tipo === 'compra' && (
                         <>
-                            <td className="whitespace-nowrap text-xs text-purple-700 dark:text-purple-300 font-mono">
-                                {formatCurrencyWith2Decimals(item.precio_unitario || 0)}
-                            </td>
-                            <td colSpan={2}></td>
+                            <td className="px-4 py-3 whitespace-nowrap"></td>
+                            <td className="px-4 py-3 whitespace-nowrap"></td>
                         </>
                     )}
-                    {tipo === 'venta' && (
-                        <td className="whitespace-nowrap text-xs text-purple-700 dark:text-purple-300 font-mono">
-                            {formatCurrencyWith2Decimals(item.precio_unitario || 0)}
-                        </td>
-                    )}
-                    <td className="whitespace-nowrap text-xs font-medium text-purple-700 dark:text-purple-300">
-                        {formatCurrencyWith2Decimals((item.cantidad || 0) * (item.precio_unitario || 0))}
+
+                    {/* Subtotal */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs font-bold text-purple-700 dark:text-purple-300">
+                            {formatCurrencyWith2Decimals((item.cantidad || 0) * (item.precio_unitario || 0))}
+                        </span>
+                    </td>
+
+                    {/* Categoría */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {item.producto_categoria || '-'}
+                        </span>
+                    </td>
+
+                    {/* Unidad */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {item.unidad_medida_nombre || '-'}
+                        </span>
+                    </td>
+
+                    {/* Marca */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {item.producto_marca || '-'}
+                        </span>
                     </td>
                 </tr>
             ))}

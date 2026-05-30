@@ -66,7 +66,7 @@
         <thead>
             <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; font-size: 11px;">
                 <th style="width: 12%; text-align: center; padding: 2px 0;">CANT.</th>
-                <th style="width: 50%; text-align: left; padding: 2px 4px;">NOMBRE</th>
+                <th style="width: 50%; text-align: left; padding: 2px 4px;">PRODUCTO</th>
                 <th style="width: 18%; text-align: right; padding: 2px 0;">P.UNIT.</th>
                 <th style="width: 20%; text-align: right; padding: 2px 2px;">SUB.</th>
             </tr>

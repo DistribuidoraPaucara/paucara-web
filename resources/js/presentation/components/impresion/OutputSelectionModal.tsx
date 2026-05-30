@@ -6,7 +6,8 @@ import {
     Download,
     X,
     ChevronLeft,
-    AlertCircle
+    AlertCircle,
+    Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
 import { NotificationService } from '@/infrastructure/services/notification.service';
@@ -53,7 +54,7 @@ interface OutputSelectionModalProps {
     printType?: 'cierre' | 'movimientos';
 }
 
-type Accion = 'imprimir' | 'excel' | 'pdf' | null;
+type Accion = 'imprimir' | 'excel' | 'pdf' | 'imagen' | null;
 
 // Configuración de formatos por tipo de documento (solo para impresión)
 const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
@@ -219,7 +220,7 @@ export function OutputSelectionModal({
         }
     };
 
-    const construirURL = (formato: string, accionURL: 'download' | 'stream' = 'stream', tipo: 'imprimir' | 'excel' | 'pdf' = 'imprimir') => {
+    const construirURL = (formato: string, accionURL: 'download' | 'stream' = 'stream', tipo: 'imprimir' | 'excel' | 'pdf' | 'imagen' = 'imprimir') => {
         let url: string;
         let rutaBase: string;
 
@@ -353,6 +354,15 @@ export function OutputSelectionModal({
             } else {
                 url = `${rutaBase}/exportar-pdf?formato=${formato}`;
             }
+        } else if (tipo === 'imagen') {
+            // Para descargar como imagen (JPEG/PNG/WEBP)
+            // ✅ Usar endpoint API directamente para cada tipo de documento
+            if (tipoDocumento === 'proforma') {
+                url = `/api/proformas/${documentoId}/descargar-imagen?formato=jpeg&dpi=150&quality=85`;
+            } else {
+                // Otros documentos no soportan descargar como imagen por ahora
+                url = `/api/${tipoDocumento}s/${documentoId}/descargar-imagen?formato=jpeg`;
+            }
         } else {
             // Para imprimir
             if (tipoDocumento === 'entrega') {
@@ -477,6 +487,27 @@ export function OutputSelectionModal({
         }
     };
 
+    const handleImagen = async () => {
+        setLoading(true);
+
+        try {
+            const url = construirURL('', 'download', 'imagen');
+            console.log('🖼️ [OutputSelectionModal] Descargando como imagen:', {
+                documentoId: documentoId,
+                tipoDocumento: tipoDocumento,
+                urlGenerada: url,
+            });
+            window.location.href = url;
+            NotificationService.success('Descargando imagen del documento');
+            handleClose();
+        } catch (error) {
+            NotificationService.error('Error al descargar como imagen');
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleClose = () => {
         setAccion(null);
         setFormatoSeleccionado('');
@@ -535,7 +566,9 @@ export function OutputSelectionModal({
                                                     ? 'Configurar Impresión'
                                                     : accion === 'excel'
                                                         ? 'Descargar Excel'
-                                                        : 'Descargar PDF'
+                                                        : accion === 'imagen'
+                                                            ? 'Descargar como Imagen'
+                                                            : 'Descargar PDF'
                                                 : 'Exportar Documento'}
                                         </Dialog.Title>
                                     </div>
@@ -615,6 +648,26 @@ export function OutputSelectionModal({
                                                 </div>
                                             </div>
                                         </button>
+
+                                        {/* ✅ NUEVO: Botón para descargar como imagen (solo para proforma) */}
+                                        {tipoDocumento === 'proforma' && (
+                                            <button
+                                                onClick={() => setAccion('imagen')}
+                                                className="w-full p-4 text-left border border-gray-200 dark:border-zinc-700 rounded-lg hover:border-purple-400 dark:hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <ImageIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900 dark:text-white">
+                                                            Descargar como Imagen
+                                                        </p>
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                            Exportar en formato JPEG (80mm)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-6">
@@ -650,7 +703,7 @@ export function OutputSelectionModal({
                                         )}
 
                                         {/* Selector de Formato - solo para Imprimir y PDF */}
-                                        {(accion === 'imprimir' || accion === 'pdf') && (
+                                        {(accion === 'imprimir' || accion === 'pdf' || accion === 'imagen') && (
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                     Formato {accion === 'imprimir' ? 'de impresión' : ''}
@@ -688,6 +741,15 @@ export function OutputSelectionModal({
                                             </div>
                                         )}
 
+                                        {/* Confirmación para Imagen */}
+                                        {accion === 'imagen' && (
+                                            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                                <p className="text-sm text-purple-700 dark:text-purple-300">
+                                                    Se descargará la proforma en formato imagen JPEG de 80mm, optimizada para compartir y guardar.
+                                                </p>
+                                            </div>
+                                        )}
+
                                         {/* Footer con botones */}
                                         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-700">
                                             <Button
@@ -704,7 +766,9 @@ export function OutputSelectionModal({
                                                         ? handleImprimir
                                                         : accion === 'excel'
                                                             ? handleExcel
-                                                            : handlePDF
+                                                            : accion === 'imagen'
+                                                                ? handleImagen
+                                                                : handlePDF
                                                 }
                                                 disabled={loading}
                                                 className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"

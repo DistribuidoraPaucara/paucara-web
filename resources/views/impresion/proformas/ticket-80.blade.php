@@ -1,11 +1,11 @@
 @extends('impresion.layouts.base-ticket')
-@section('titulo', 'Proforma #' . $documento->numero)
+@section('titulo', 'Proforma #' . $documento->id)
 
 @section('contenido')
 
 <div class="separador"></div>
 {{-- Encabezado --}}
-<div style="text-align: center; margin-bottom: 10px; font-size: 11px;">
+<div style="text-align: center; margin-bottom: 10px; font-size: 13px;">
     <h3 style="margin: 5px 0;">PROFORMA <br/> {{ $documento->numero }}</h3>
     <p>Folio: {{ $documento->id }}</p>
     <p style="margin: 3px 0;">{{ $documento->created_at->format('d/m/Y H:i') }}</p>
@@ -14,7 +14,7 @@
 <div class="separador"></div>
 
 {{-- CLIENTE --}}
-<div style="margin-bottom: 8px; font-size: 11px;">
+<div style="margin-bottom: 8px; font-size: 13px;">
     <p style="margin: 2px 0;"><strong>{{ $documento->cliente?->nombre ?? 'CLIENTE' }}</strong></p>
     @if($documento->cliente?->nit_ci)
         <p style="margin: 2px 0;">NIT/CI: {{ $documento->cliente->nit_ci }}</p>
@@ -26,7 +26,7 @@
 
 {{-- PREVENTISTA --}}
 @if($documento->usuarioCreador)
-<div style="margin-bottom: 8px; font-size: 11px;">
+<div style="margin-bottom: 8px; font-size: 13px;">
     <p style="margin: 2px 0;"><strong>Preventista:</strong> {{ $documento->usuarioCreador->name }}</p>
 </div>
 @endif
@@ -37,7 +37,7 @@
 @include('impresion.ventas.partials._items', ['formato' => 'ticket-80'])
 
 {{-- TOTALES --}}
-<div style="margin: 10px 0; border-top: 2px solid #333; border-bottom: 1px solid #333; font-size: 11px;">
+<div style="margin: 10px 0; border-top: 2px solid #333; border-bottom: 1px solid #333; font-size: 13px; text-align: right;">
     @php
         $subtotal = $documento->subtotal ?? 0;
         $descuento = $documento->descuento ?? 0;
@@ -63,9 +63,9 @@
 </div>
 
 {{-- INFORMACIÓN IMPORTANTE --}}
-<div style="margin-top: 10px; font-size: 11px;">
+<div style="margin-top: 10px; font-size: 13px;">
     <p style="margin: 3px 0;">
-        <strong>📅 Válida hasta:</strong><br>
+        <strong>Válida hasta:</strong>
         {{ $documento->fecha_vencimiento->format('d/m/Y') }}
         @if($documento->fecha_vencimiento < now())
             <span style="color: red; font-weight: bold;">⚠️ VENCIDA</span>
@@ -73,11 +73,11 @@
     </p>
 
     @if($documento->fecha_entrega_solicitada)
-    <p style="margin: 3px 0; margin-top: 5px; font-size: 11px;">
-        <strong>🚚 Entrega solicitada:</strong><br>
+    <p style="margin: 3px 0; margin-top: 5px; font-size: 13px;">
+        <strong>Entrega solicitada:</strong>
         {{ $documento->fecha_entrega_solicitada->format('d/m/Y') }}
         @if($documento->hora_entrega_solicitada)
-            ⏰ {{ $documento->hora_entrega_solicitada }}
+            {{ $documento->hora_entrega_solicitada }}
         @endif
     </p>
     @endif

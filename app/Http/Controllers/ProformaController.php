@@ -1242,4 +1242,81 @@ class ProformaController extends Controller
 
         return redirect("/proformas/imprimir?formato={$formato}&accion={$accion}");
     }
+
+    /**
+     * ✅ NUEVO: Descargar proforma como imagen
+     *
+     * GET /proformas/{proforma}/descargar-imagen?formato=jpeg&dpi=150&quality=85
+     *
+     * Convierte el PDF de la proforma a una imagen de alta calidad
+     * usando el servicio Python (con fallback a ImageMagick)
+     *
+     * @param \App\Models\Proforma $proforma
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function descargarImagen(\App\Models\Proforma $proforma, Request $request)
+    {
+        try {
+            $formato = $request->input('formato', 'jpeg');
+            $dpi = (int) $request->input('dpi', 150);
+            $quality = (int) $request->input('quality', 85);
+
+            Log::info('🖼️  [ProformaController::descargarImagen] Iniciando conversión PDF→Imagen', [
+                'proforma_id' => $proforma->id,
+                'proforma_numero' => $proforma->numero,
+                'formato' => $formato,
+                'dpi' => $dpi,
+                'quality' => $quality,
+            ]);
+
+            // 1. Generar PDF de la proforma en formato TICKET_80 (80mm)
+            $pdfBytes = $this->impresionService->imprimirProforma($proforma, 'TICKET_80')->output();
+
+            if (!$pdfBytes) {
+                throw new \Exception('No se pudo generar el PDF de la proforma');
+            }
+
+            Log::debug('📄 PDF generado', ['tamaño_kb' => round(strlen($pdfBytes) / 1024, 2)]);
+
+            // 2. Convertir PDF a imagen usando PdfImageService
+            $pdfImageService = app(\App\Services\PdfImageService::class);
+            $imageBytes = $pdfImageService->convertir($pdfBytes, [
+                'dpi' => $dpi,
+                'quality' => $quality,
+                'format' => $formato,
+                'optimize' => true,
+            ]);
+
+            if (!$imageBytes) {
+                throw new \Exception('No se pudo convertir el PDF a imagen');
+            }
+
+            $imagenSizeKb = round(strlen($imageBytes) / 1024, 2);
+            Log::info('✅ Imagen generada exitosamente', [
+                'tamaño_kb' => $imagenSizeKb,
+                'formato' => $formato,
+            ]);
+
+            // 3. Retornar imagen como descarga
+            $nombreArchivo = "proforma_{$proforma->numero}_{$formato}.{$formato}";
+
+            return response($imageBytes)
+                ->header('Content-Type', "image/{$formato}")
+                ->header('Content-Disposition', "attachment; filename=\"{$nombreArchivo}\"")
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error al descargar proforma como imagen', [
+                'proforma_id' => $proforma->id,
+                'formato' => $request->input('formato'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->respondError('Error al generar imagen: ' . $e->getMessage(), statusCode: 500);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 import imprimir from './imprimir'
+import descargarImagen from './descargar-imagen'
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
  * @see app/Http/Controllers/Api/ApiProformaController.php:2500
@@ -341,6 +342,7 @@ preview.head = (args: { proforma: number | { id: number } } | [proforma: number 
     preview.form = previewForm
 const proformas = {
     imprimir,
+descargarImagen,
 confirmar,
 coordinar,
 actualizarDetalles,

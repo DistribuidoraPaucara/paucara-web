@@ -5,14 +5,6 @@ import AppLayout from '@/layouts/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Separator } from '@/presentation/components/ui/separator'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/presentation/components/ui/table'
 import ProductosTable, { DetalleProducto } from '@/presentation/components/ProductosTable' // ✅ NUEVO: Componente centralizado
 import {
     Dialog,
@@ -26,7 +18,7 @@ import {
 import { Textarea } from '@/presentation/components/ui/textarea'
 import { Label } from '@/presentation/components/ui/label'
 import { Input } from '@/presentation/components/ui/input'
-import { Package, MapPin, Check, X, ChevronUp, ChevronDown, ShoppingCart, MessageCircle, AlertCircle, ChevronRight, Search, RefreshCw, FileText, Pencil } from 'lucide-react'
+import { Package, MapPin, Check, X, ChevronUp, ShoppingCart, MessageCircle, AlertCircle, Search, RefreshCw, FileText, Pencil } from 'lucide-react'
 import MapViewWithFallback from '@/presentation/components/maps/MapViewWithFallback'
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal'
 
@@ -42,7 +34,6 @@ import { useBuscarProductos } from '@/application/hooks/use-buscar-productos'
 import { usePrecioRangoCarrito } from '@/application/hooks/use-precio-rango-carrito'
 
 // PRESENTATION LAYER: Componentes reutilizables
-import { ProformaEstadoBadge } from '@/presentation/components/proforma/ProformaEstadoBadge'
 import { ProformaConvertirModal } from '@/presentation/pages/logistica/components/modals/ProformaConvertirModal'
 import { ApprovalPaymentForm } from './components/ApprovalPaymentForm'
 import { LoadingOverlay } from '@/presentation/components/ui/LoadingOverlay'
@@ -1509,13 +1500,13 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
 
                 {/* Header - Similar a ventas: 1/3 título + 2/3 datos */}
                 <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-3">
-                    <div className="grid grid-cols-3 gap-6 mb-6">
+                    <div className="grid grid-cols-2 gap-2 mb-2">
                         {/* Columna 1: Título (1/3) */}
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                             <h1 className="text-lg font-medium text-gray-900 dark:text-white">
                                 Información de la Proforma
                             </h1>
-                        </div>
+                        </div> */}
 
                         {/* Columnas 2-3: Datos secundarios (2/3) */}
                         <div className="col-span-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-900 rounded-lg p-1 border border-slate-200 dark:border-zinc-700">
@@ -1693,141 +1684,109 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 {/* Información adicional */}
                 {((proforma.fecha_entrega_solicitada || proforma.hora_entrega_solicitada) || proforma.estado === 'CONVERTIDA' || proforma.canal_origen) && (
                     <div className="space-y-4">
-                        {/* Información Adicional */}
-                        <div className="space-y-4">
-                            {/* Row: Información General + Cliente */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Card: Información General */}
-                                <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">📋 Información General</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Origen */}
-                                        {proforma.canal_origen && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Origen</span>
-                                                <span className="text-sm font-medium text-foreground capitalize">{(proforma.canal_origen as string).replace(/_/g, ' ')}</span>
-                                            </div>
-                                        )}
-
-                                        {/* Tipo de Entrega */}
-                                        {proforma.tipo_entrega && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Tipo Entrega</span>
-                                                <span className="text-sm font-medium text-foreground capitalize">{proforma.tipo_entrega}</span>
-                                            </div>
-                                        )}
-
-                                        {/* Política de Pago */}
-                                        {proforma.politica_pago && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Política Pago</span>
-                                                <span className="text-sm font-medium text-foreground capitalize">{(proforma.politica_pago as string).replace(/_/g, ' ')}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                            {/* Card: Información del Cliente */}
+                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                {/* Header */}
+                                <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-4 py-3">
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        <span className="text-lg">👤</span>
+                                        Información del Cliente
+                                    </h3>
                                 </div>
 
-                                {/* Card: Información del Cliente */}
-                                <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">👤 Cliente</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* Nombre del Cliente */}
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-muted-foreground font-medium mb-1">Nombre</span>
-                                            <span className="text-sm font-medium text-foreground">{proforma.cliente.nombre}</span>
+                                {/* Content */}
+                                <div className="p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {/* Nombre del Cliente */}
+                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">📝 Nombre</span>
+                                        <span className="text-sm font-bold text-foreground block">{proforma.cliente.nombre}</span>
+                                    </div>
+
+                                    {/* Razón Social */}
+                                    {(proforma.cliente as any).razon_social && (
+                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">🏢 Razón Social</span>
+                                            <span className="text-sm font-medium text-foreground block">{(proforma.cliente as any).razon_social}</span>
                                         </div>
+                                    )}
 
-                                        {/* Razón Social */}
-                                        {(proforma.cliente as any).razon_social && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Razón Social</span>
-                                                <span className="text-sm font-medium text-foreground">{(proforma.cliente as any).razon_social}</span>
-                                            </div>
-                                        )}
+                                    {/* Email */}
+                                    {proforma.cliente.email && (
+                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">✉️ Email</span>
+                                            <span className="text-sm font-medium text-foreground truncate block">{proforma.cliente.email}</span>
+                                        </div>
+                                    )}
 
-                                        {/* Email */}
-                                        {proforma.cliente.email && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Email</span>
-                                                <span className="text-sm font-medium text-foreground truncate">{proforma.cliente.email}</span>
+                                    {/* Teléfono */}
+                                    {proforma.cliente.telefono && (
+                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-2">📱 Teléfono</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm font-medium text-foreground flex-1">{proforma.cliente.telefono}</span>
+                                                <a
+                                                    href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    title="Abrir en WhatsApp"
+                                                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors flex-shrink-0"
+                                                >
+                                                    <MessageCircle className="h-4 w-4" />
+                                                </a>
                                             </div>
-                                        )}
+                                        </div>
+                                    )}
 
-                                        {/* Teléfono */}
-                                        {proforma.cliente.telefono && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Teléfono</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium text-foreground">{proforma.cliente.telefono}</span>
-                                                    <a
-                                                        href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        title="Abrir en WhatsApp"
-                                                        className="inline-flex items-center justify-center h-6 w-6 rounded bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex-shrink-0"
-                                                    >
-                                                        <MessageCircle className="h-3.5 w-3.5" />
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        )}
+                                    {/* Usuario Creador */}
+                                    {proforma.usuario_creador && (
+                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">👨‍💼 Creado por</span>
+                                            <span className="text-sm font-medium text-foreground block">{proforma.usuario_creador.name}</span>
+                                        </div>
+                                    )}
 
-                                        {/* Usuario Creador */}
-                                        {proforma.usuario_creador && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground font-medium mb-1">Creado por</span>
-                                                <span className="text-sm font-medium text-foreground">{proforma.usuario_creador.name}</span>
-                                            </div>
-                                        )}
-                                        {/* Direccion solicitada */}
-                                        {proforma.direccion_solicitada && (
-                                            <button
-                                                onClick={() => {
-                                                    if (proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud) {
-                                                        setDireccionMapaResumen('solicitada')
-                                                        setShowMapaResumen(true)
-                                                    }
-                                                }}
-                                                className={`flex flex-col text-left hover:opacity-75 transition-all cursor-pointer rounded-lg p-3 border ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700'
-                                                    : 'bg-transparent border-transparent'
-                                                    }`}
-                                                disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`text-xs font-medium mb-1 ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                        ? 'text-amber-700 dark:text-amber-300'
-                                                        : 'text-muted-foreground'
-                                                        }`}>Dirección Solicitada</span>
-                                                    {proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion && (
-                                                        <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
-                                                            ✅ Igual
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className={`text-sm font-medium mb-1 ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                    ? 'text-amber-700 dark:text-amber-400'
-                                                    : 'text-foreground'
-                                                    }`}>
-                                                    📍 {proforma.direccion_solicitada.direccion}
-                                                </span>
-                                                {proforma.direccion_solicitada.observaciones && (
-                                                    <span className={`text-xs italic ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                        ? 'text-amber-600 dark:text-amber-400'
-                                                        : 'text-muted-foreground'
-                                                        }`}>📝 {proforma.direccion_solicitada.observaciones}</span>
-                                                )}
-                                                {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
-                                                    <span className={`text-xs font-medium mt-1 ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                        ? 'text-amber-600 dark:text-amber-400'
-                                                        : 'text-blue-600 dark:text-blue-400'
-                                                        }`}>
-                                                        🗺️ Ver en mapa
+                                    {/* Dirección Solicitada */}
+                                    {proforma.direccion_solicitada && (
+                                        <button
+                                            onClick={() => {
+                                                if (proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud) {
+                                                    setDireccionMapaResumen('solicitada')
+                                                    setShowMapaResumen(true)
+                                                }
+                                            }}
+                                            className={`text-left rounded-lg p-3 border transition-all cursor-pointer ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                                                : 'bg-white dark:bg-slate-950/40 border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                                                }`}
+                                            disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`text-xs font-semibold uppercase tracking-wide ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                    ? 'text-amber-700 dark:text-amber-300'
+                                                    : 'text-blue-600 dark:text-blue-400'
+                                                    }`}>📍 Dirección Solicitada</span>
+                                                {proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion && (
+                                                    <span className="text-xs bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
+                                                        ✅ Igual
                                                     </span>
                                                 )}
-                                            </button>
-                                        )}
-                                    </div>
+                                            </div>
+                                            <span className={`text-sm font-medium block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                ? 'text-amber-800 dark:text-amber-300'
+                                                : 'text-foreground'
+                                                }`}>
+                                                {proforma.direccion_solicitada.observaciones}
+                                            </span>
+                                            {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
+                                                <span className={`text-xs font-semibold mt-2 inline-block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                    ? 'text-amber-700 dark:text-amber-400'
+                                                    : 'text-blue-600 dark:text-blue-400'
+                                                    }`}>
+                                                    🗺️ Ver en mapa
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -1846,7 +1805,6 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                 </div>
                             )}
                         </div>
-                    </div>
                 )}
 
                 <div className="grid gap-[var(--space-lg)]">
@@ -1890,6 +1848,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                     errors={undefined}
                                     carritoCalculado={carritoCalculado}
                                     onDetallesActualizados={handleDetallesActualizadosPorRangos}
+                                    proformaConvertida={proforma.estado === 'CONVERTIDA'}
                                 />
 
                                 {/* Resumen de Totales en Tiempo Real */}

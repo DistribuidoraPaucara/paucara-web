@@ -74,6 +74,10 @@ Route::group(['prefix' => 'proformas'], function () {
     // 🖨️ Descargar proforma como PDF (público cuando accion=compartir)
     Route::get('/{proforma}/imprimir', [\App\Http\Controllers\ProformaController::class, 'imprimir'])
         ->name('api.proformas.imprimir.public');
+
+    // 🖼️ NUEVO: Descargar proforma como imagen (JPEG/PNG/WEBP)
+    Route::get('/{proforma}/descargar-imagen', [\App\Http\Controllers\ProformaController::class, 'descargarImagen'])
+        ->name('api.proformas.descargar-imagen.public');
 });
 
 // Catálogos públicos - GET only (para cargar datos en selects/dropdowns)

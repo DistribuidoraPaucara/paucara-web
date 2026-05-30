@@ -331,9 +331,9 @@ export default function VentaShow() {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Código
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Códigos Barra
-                                        </th>
+                                        </th> */}
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Marca
                                         </th>
@@ -372,11 +372,11 @@ export default function VentaShow() {
                                                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                         {(detalle.producto as any).sku || '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                    {/* <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                         <code className="bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
                                                             {codigosBarraStr}
                                                         </code>
-                                                    </td>
+                                                    </td> */}
                                                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                         {(detalle.producto as any).marca?.nombre || '-'}
                                                     </td>

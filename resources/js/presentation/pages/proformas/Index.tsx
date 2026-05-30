@@ -13,10 +13,17 @@ import {
     TableRow,
 } from '@/presentation/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
-import { Search, Eye, CheckCircle, XCircle, FileText, Filter, Printer, PencilIcon, ChevronDown, X } from 'lucide-react'
+import { Search, Eye, CheckCircle, XCircle, FileText, Filter, Printer, PencilIcon, ChevronDown, X, MoreVertical } from 'lucide-react'
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal'
 import { ImprimirProformasButton } from '@/presentation/components/impresion/ImprimirProformasButton'
 import SearchSelect from '@/presentation/components/ui/search-select'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+} from '@/presentation/components/ui/dropdown-menu'
 
 // DOMAIN LAYER: Importar tipos desde domain
 import type { Proforma } from '@/domain/entities/proformas'
@@ -379,6 +386,23 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
         })
     }
 
+    const getProformaRowClassName = (estado: string) => {
+        switch(estado) {
+            case 'APROBADA':
+                return 'bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-900/30'
+            case 'CONVERTIDA':
+                return 'bg-blue-50 dark:bg-blue-950/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+            case 'RECHAZADA':
+                return 'bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30'
+            case 'PENDIENTE':
+                return 'bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+            case 'BORRADOR':
+                return 'bg-gray-50 dark:bg-gray-950/20 hover:bg-gray-100 dark:hover:bg-gray-900/30'
+            default:
+                return ''
+        }
+    }
+
     return (
         <AppLayout>
             <Head title="Proformas" />
@@ -415,6 +439,22 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                 Nueva Proforma
                             </Link>
                         </Button>
+                        {/* Botón para acceder al reporte con filtros */}
+                        <div className="flex items-end">
+                            <Link
+                                href={(() => {
+                                    const params = new URLSearchParams();
+                                    if (fechaVentaDesde) params.append('fecha_desde', fechaVentaDesde);
+                                    if (fechaVentaHasta) params.append('fecha_hasta', fechaVentaHasta);
+                                    if (filtroUsuario !== 'TODOS') params.append('usuario_creador_id', filtroUsuario);
+                                    const queryString = params.toString();
+                                    return queryString ? `/ventas/reporte-productos-vendidos?${queryString}` : '/ventas/reporte-productos-vendidos';
+                                })()}
+                                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
+                            >
+                                📊 Ver Reporte
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -525,235 +565,159 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                 />
                             </div>
 
-                            {/* Segunda fila de filtros */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                                {/* Fecha desde */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Desde</label>
-                                    <Input
-                                        type="date"
-                                        value={fechaDesde}
-                                        onChange={(e) => setFechaDesde(e.target.value)}
-                                        className="mt-1"
-                                    />
-                                </div>
-
-                                {/* Fecha hasta */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Hasta</label>
-                                    <Input
-                                        type="date"
-                                        value={fechaHasta}
-                                        onChange={(e) => setFechaHasta(e.target.value)}
-                                        className="mt-1"
-                                    />
-                                </div>
-
-                                {/* Total mínimo */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Total Mín. (Bs.)</label>
-                                    <Input
-                                        type="number"
-                                        placeholder="0"
-                                        value={totalMin}
-                                        onChange={(e) => setTotalMin(e.target.value)}
-                                        className="mt-1"
-                                        step="0.01"
-                                    />
-                                </div>
-
-                                {/* Total máximo */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Total Máx. (Bs.)</label>
-                                    <Input
-                                        type="number"
-                                        placeholder="Sin límite"
-                                        value={totalMax}
-                                        onChange={(e) => setTotalMax(e.target.value)}
-                                        className="mt-1"
-                                        step="0.01"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">📅 Vencimiento</label>
-                                    <Select value={filtroVencidas} onValueChange={setFiltroVencidas}>
-                                        <SelectTrigger className="bg-background mt-1">
-                                            <SelectValue placeholder="Vencimiento" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="TODAS">Todas las proformas</SelectItem>
-                                            <SelectItem value="VIGENTES">⏳ Solo Vigentes</SelectItem>
-                                            <SelectItem value="VENCIDAS">⚠️ Solo Vencidas</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* ✅ NUEVA FILA: Filtros de fecha de entrega solicitada */}
-                            <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
-                                {/* Botones rápidos */}
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs font-medium text-muted-foreground self-center">📦 Fechas rápidas Entrega:</span>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaEntregaDesde === getAyerFormato() ? "default" : "outline"}
-                                        onClick={filtrarEntregaPorAyer}
-                                        className="text-xs"
-                                    >
-                                        📅 Ayer
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaEntregaDesde === getHoyFormato() ? "default" : "outline"}
-                                        onClick={filtrarEntregaPorHoy}
-                                        className="text-xs"
-                                    >
-                                        📅 Hoy
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaEntregaDesde === getMananaFormato() ? "default" : "outline"}
-                                        onClick={filtrarEntregaPorManana}
-                                        className="text-xs"
-                                    >
-                                        📅 Mañana
-                                    </Button>
-                                </div>
-
-                                {/* Campos de fecha */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* ✅ GRID 3 COLUMNAS RESPONSIVAS: Filtros de fechas y conversiones */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* ✅ NUEVA FILA: Filtros de fecha de entrega solicitada */}
+                                <div className="h-full p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
+                                    {/* Botones rápidos */}
                                     <div>
-                                        <label className="text-xs font-medium text-muted-foreground">📦 Entrega Desde</label>
+                                        <span className="text-xs font-medium text-muted-foreground self-center">📦 Fechas rápidas Entrega:</span> <br />
+                                        <Button
+                                            size="sm"
+                                            variant={fechaEntregaDesde === getAyerFormato() ? "default" : "outline"}
+                                            onClick={filtrarEntregaPorAyer}
+                                            className="text-xs"
+                                        >
+                                            📅 Ayer
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={fechaEntregaDesde === getHoyFormato() ? "default" : "outline"}
+                                            onClick={filtrarEntregaPorHoy}
+                                            className="text-xs"
+                                        >
+                                            📅 Hoy
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={fechaEntregaDesde === getMananaFormato() ? "default" : "outline"}
+                                            onClick={filtrarEntregaPorManana}
+                                            className="text-xs"
+                                        >
+                                            📅 Mañana
+                                        </Button>
+                                    </div>
+
+                                    {/* Campos de fecha */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-medium text-muted-foreground">📦 Entrega Desde</label>
+                                            <Input
+                                                type="date"
+                                                value={fechaEntregaDesde}
+                                                onChange={(e) => setFechaEntregaDesde(e.target.value)}
+                                                className="mt-1"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-medium text-muted-foreground">📦 Entrega Hasta</label>
+                                            <Input
+                                                type="date"
+                                                value={fechaEntregaHasta}
+                                                onChange={(e) => setFechaEntregaHasta(e.target.value)}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* ✅ NUEVA FILA: Filtros de fecha de vencimiento */}
+                                <div className="h-full p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800 space-y-3">
+                                    {/* Botones rápidos */}
+                                    <div>
+                                        <span className="text-xs font-medium text-muted-foreground self-center">📅 Fechas rápidas Vencimiento:</span> <br />
+                                        <Button
+                                            size="sm"
+                                            variant={fechaVencimientoDesde === getAyerFormato() ? "default" : "outline"}
+                                            onClick={filtrarVencimientoPorAyer}
+                                            className="text-xs"
+                                        >
+                                            📅 Ayer
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={fechaVencimientoDesde === getHoyFormato() ? "default" : "outline"}
+                                            onClick={filtrarVencimientoPorHoy}
+                                            className="text-xs"
+                                        >
+                                            📅 Hoy
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={fechaVencimientoDesde === getMananaFormato() ? "default" : "outline"}
+                                            onClick={filtrarVencimientoPorManana}
+                                            className="text-xs"
+                                        >
+                                            📅 Mañana
+                                        </Button>
+                                    </div>
+
+                                    {/* Campos de fecha */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-medium text-muted-foreground">📅 Vencimiento Desde</label>
+                                            <Input
+                                                type="date"
+                                                value={fechaVencimientoDesde}
+                                                onChange={(e) => setFechaVencimientoDesde(e.target.value)}
+                                                className="mt-1"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-medium text-muted-foreground">📅 Vencimiento Hasta</label>
+                                            <Input
+                                                type="date"
+                                                value={fechaVencimientoHasta}
+                                                onChange={(e) => setFechaVencimientoHasta(e.target.value)}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* ✅ NUEVA FILA: Filtros de proformas convertidas a ventas */}
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    {/* Checkbox: Solo Convertidas */}
+                                    <div className="flex items-center gap-3 col-span-1 md:col-span-2 lg:col-span-1">
+                                        <input
+                                            type="checkbox"
+                                            id="soloConvertidas"
+                                            checked={soloConvertidas}
+                                            onChange={(e) => setSoloConvertidas(e.target.checked)}
+                                            className="w-4 h-4 text-blue-600 rounded"
+                                        />
+                                        <label htmlFor="soloConvertidas" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                            🛍️ Solo Convertidas a Ventas
+                                        </label>
+                                    </div>
+
+                                    {/* Fecha de Venta Desde */}
+                                    <div>
+                                        <label className="text-xs font-medium text-muted-foreground">Venta Desde</label>
                                         <Input
                                             type="date"
-                                            value={fechaEntregaDesde}
-                                            onChange={(e) => setFechaEntregaDesde(e.target.value)}
+                                            value={fechaVentaDesde}
+                                            onChange={(e) => setFechaVentaDesde(e.target.value)}
+                                            disabled={!soloConvertidas}
                                             className="mt-1"
                                         />
                                     </div>
 
+                                    {/* Fecha de Venta Hasta */}
                                     <div>
-                                        <label className="text-xs font-medium text-muted-foreground">📦 Entrega Hasta</label>
+                                        <label className="text-xs font-medium text-muted-foreground">Venta Hasta</label>
                                         <Input
                                             type="date"
-                                            value={fechaEntregaHasta}
-                                            onChange={(e) => setFechaEntregaHasta(e.target.value)}
-                                            className="mt-1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ✅ NUEVA FILA: Filtros de fecha de vencimiento */}
-                            <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800 space-y-3">
-                                {/* Botones rápidos */}
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs font-medium text-muted-foreground self-center">📅 Fechas rápidas Vencimiento:</span>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaVencimientoDesde === getAyerFormato() ? "default" : "outline"}
-                                        onClick={filtrarVencimientoPorAyer}
-                                        className="text-xs"
-                                    >
-                                        📅 Ayer
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaVencimientoDesde === getHoyFormato() ? "default" : "outline"}
-                                        onClick={filtrarVencimientoPorHoy}
-                                        className="text-xs"
-                                    >
-                                        📅 Hoy
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant={fechaVencimientoDesde === getMananaFormato() ? "default" : "outline"}
-                                        onClick={filtrarVencimientoPorManana}
-                                        className="text-xs"
-                                    >
-                                        📅 Mañana
-                                    </Button>
-                                </div>
-
-                                {/* Campos de fecha */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground">📅 Vencimiento Desde</label>
-                                        <Input
-                                            type="date"
-                                            value={fechaVencimientoDesde}
-                                            onChange={(e) => setFechaVencimientoDesde(e.target.value)}
+                                            value={fechaVentaHasta}
+                                            onChange={(e) => setFechaVentaHasta(e.target.value)}
+                                            disabled={!soloConvertidas}
                                             className="mt-1"
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground">📅 Vencimiento Hasta</label>
-                                        <Input
-                                            type="date"
-                                            value={fechaVencimientoHasta}
-                                            onChange={(e) => setFechaVencimientoHasta(e.target.value)}
-                                            className="mt-1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* ✅ NUEVA FILA: Filtros de proformas convertidas a ventas */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                {/* Checkbox: Solo Convertidas */}
-                                <div className="flex items-center gap-3 col-span-1 md:col-span-2 lg:col-span-1">
-                                    <input
-                                        type="checkbox"
-                                        id="soloConvertidas"
-                                        checked={soloConvertidas}
-                                        onChange={(e) => setSoloConvertidas(e.target.checked)}
-                                        className="w-4 h-4 text-blue-600 rounded"
-                                    />
-                                    <label htmlFor="soloConvertidas" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                        🛍️ Solo Convertidas a Ventas
-                                    </label>
-                                </div>
-
-                                {/* Fecha de Venta Desde */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Venta Desde</label>
-                                    <Input
-                                        type="date"
-                                        value={fechaVentaDesde}
-                                        onChange={(e) => setFechaVentaDesde(e.target.value)}
-                                        disabled={!soloConvertidas}
-                                        className="mt-1"
-                                    />
-                                </div>
-
-                                {/* Fecha de Venta Hasta */}
-                                <div>
-                                    <label className="text-xs font-medium text-muted-foreground">Venta Hasta</label>
-                                    <Input
-                                        type="date"
-                                        value={fechaVentaHasta}
-                                        onChange={(e) => setFechaVentaHasta(e.target.value)}
-                                        disabled={!soloConvertidas}
-                                        className="mt-1"
-                                    />
-                                </div>
-
-                                {/* Botón para acceder al reporte con filtros */}
-                                <div className="flex items-end">
-                                    <Link
-                                        href={(() => {
-                                            const params = new URLSearchParams();
-                                            if (fechaVentaDesde) params.append('fecha_desde', fechaVentaDesde);
-                                            if (fechaVentaHasta) params.append('fecha_hasta', fechaVentaHasta);
-                                            if (filtroUsuario !== 'TODOS') params.append('usuario_creador_id', filtroUsuario);
-                                            const queryString = params.toString();
-                                            return queryString ? `/ventas/reporte-productos-vendidos?${queryString}` : '/ventas/reporte-productos-vendidos';
-                                        })()}
-                                        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
-                                    >
-                                        📊 Ver Reporte
-                                    </Link>
                                 </div>
                             </div>
 
@@ -793,7 +757,7 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                     <TableHead>Usuario</TableHead>
                                     <TableHead>📦 Entrega Solicitada</TableHead>
                                     <TableHead>📅 Vencimiento</TableHead>
-                                    <TableHead>🛍️ Venta</TableHead>
+                                    {/* <TableHead>🛍️ Venta</TableHead> */}
                                     <TableHead>📅 Creada</TableHead>
                                     <TableHead>✏️ Actualizada</TableHead>
                                     <TableHead className="text-right">Acciones</TableHead>
@@ -811,9 +775,9 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                     </TableRow>
                                 ) : (
                                     filteredProformas.map((proforma) => (
-                                        <TableRow key={proforma.id}>
+                                        <TableRow key={proforma.id} className={getProformaRowClassName(proforma.estado)}>
                                             <TableCell className="font-medium">
-                                                {proforma.numero}
+                                                {proforma.id}
                                             </TableCell>
                                             <TableCell>
                                                 <div>
@@ -844,7 +808,7 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                             <TableCell className="text-sm text-muted-foreground">
                                                 <div className="whitespace-nowrap">
                                                     {proforma.fecha_entrega_solicitada ? (
-                                                        <div>{new Date(proforma.fecha_entrega_solicitada).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                        <div>{new Date(proforma.fecha_entrega_solicitada).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</div>
                                                     ) : (
                                                         <span className="text-xs text-muted-foreground">-</span>
                                                     )}
@@ -853,13 +817,13 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                             <TableCell className="text-sm text-muted-foreground">
                                                 <div className="whitespace-nowrap">
                                                     {proforma.fecha_vencimiento ? (
-                                                        <div>{new Date(proforma.fecha_vencimiento).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                        <div>{new Date(proforma.fecha_vencimiento).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</div>
                                                     ) : (
                                                         <span className="text-xs text-muted-foreground">-</span>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 {proforma.venta ? (
                                                     <Link href={`/ventas/${proforma.venta.id}`}>
                                                         <div className="flex items-center gap-2 text-blue-600 hover:text-blue-800 cursor-pointer">
@@ -869,78 +833,80 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground">-</span>
                                                 )}
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell className="text-sm text-muted-foreground">
                                                 <div className="whitespace-nowrap">
-                                                    <div>{new Date(proforma.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                    <div>{new Date(proforma.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</div>
                                                     <div className="text-xs">{new Date(proforma.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">
                                                 <div className="whitespace-nowrap">
-                                                    <div>{new Date(proforma.updated_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                    <div>{new Date(proforma.updated_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</div>
                                                     <div className="text-xs">{new Date(proforma.updated_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleView(proforma.id)}
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setSelectedProformaForPrint(proforma)
-                                                            setShowPrintModal(true)
-                                                        }}
-                                                        title="Imprimir proforma"
-                                                    >
-                                                        <Printer className="h-4 w-4" />
-                                                    </Button>
-
-                                                    {['PENDIENTE', 'BORRADOR'].includes(proforma.estado) && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            asChild
-                                                            className="text-blue-600 hover:text-blue-700"
-                                                            title="Editar proforma"
-                                                        >
-                                                            <Link href={`/proformas/${proforma.id}/edit`}>
-                                                                <PencilIcon className="h-4 w-4" />
-                                                            </Link>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm">
+                                                            <MoreVertical className="h-4 w-4" />
                                                         </Button>
-                                                    )}
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        {/* Ver detalles */}
+                                                        <DropdownMenuItem onClick={() => handleView(proforma.id)}>
+                                                            <Eye className="h-4 w-4 mr-2" />
+                                                            <span>Ver detalles</span>
+                                                        </DropdownMenuItem>
 
-                                                    {proforma.estado === 'PENDIENTE' && (
-                                                        <>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleAction('aprobar', proforma.id)}
-                                                                disabled={isLoading}
-                                                                className="text-green-600 hover:text-green-700"
-                                                            >
-                                                                <CheckCircle className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleAction('rechazar', proforma.id)}
-                                                                disabled={isLoading}
-                                                                className="text-red-600 hover:text-red-700"
-                                                            >
-                                                                <XCircle className="h-4 w-4" />
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                        {/* Imprimir */}
+                                                        <DropdownMenuItem
+                                                            onClick={() => {
+                                                                setSelectedProformaForPrint(proforma)
+                                                                setShowPrintModal(true)
+                                                            }}
+                                                        >
+                                                            <Printer className="h-4 w-4 mr-2" />
+                                                            <span>Imprimir</span>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuSeparator />
+
+                                                        {/* Editar (solo si está PENDIENTE o BORRADOR) */}
+                                                        {['PENDIENTE', 'BORRADOR'].includes(proforma.estado) && (
+                                                            <DropdownMenuItem asChild>
+                                                                <Link href={`/proformas/${proforma.id}/edit`}>
+                                                                    <PencilIcon className="h-4 w-4 mr-2" />
+                                                                    <span>Editar</span>
+                                                                </Link>
+                                                            </DropdownMenuItem>
+                                                        )}
+
+                                                        {/* Acciones de aprobación/rechazo (solo si está PENDIENTE) */}
+                                                        {proforma.estado === 'PENDIENTE' && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleAction('aprobar', proforma.id)}
+                                                                    disabled={isLoading}
+                                                                    className="text-green-600"
+                                                                >
+                                                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                                                    <span>Aprobar</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleAction('rechazar', proforma.id)}
+                                                                    disabled={isLoading}
+                                                                    className="text-red-600"
+                                                                >
+                                                                    <XCircle className="h-4 w-4 mr-2" />
+                                                                    <span>Rechazar</span>
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))

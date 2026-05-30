@@ -34,7 +34,8 @@ export default function ProductosTable({
     carritoCalculado,
     onDetallesActualizados,
     es_farmacia = false,
-    permitirProductosSinStock = false // ✅ NUEVO (2026-05-26): Permitir productos sin stock
+    permitirProductosSinStock = false, // ✅ NUEVO (2026-05-26): Permitir productos sin stock
+    proformaConvertida = false // ✅ NUEVO (2026-05-29): Ocultar disponibilidad si está convertida
 }: ProductosTableProps) {
     // ✅ DEBUG (2026-05-26): Verificar que permitirProductosSinStock llegue correctamente
     console.log('📦 [ProductosTable] permitirProductosSinStock recibido:', permitirProductosSinStock);
@@ -362,37 +363,49 @@ export default function ProductosTable({
 
                     {/* Tabla de productos */}
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-                        <thead className="bg-gray-50 dark:bg-zinc-800">
+                        <thead className="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-zinc-700 dark:to-zinc-800 border-b-2 border-gray-300 dark:border-zinc-600">
                             <tr>
-                                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     Producto
                                 </th>
-                                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    SKU
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     Cantidad
                                 </th>
                                 {tipo === 'compra' && (
                                     <>
-                                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                             Precio Compra
                                         </th>
-                                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                             Lote
                                         </th>
-                                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                             Vencimiento
                                         </th>
                                     </>
                                 )}
                                 {tipo === 'venta' && (
-                                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                         Precio Unitario
                                     </th>
                                 )}
-                                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     Subtotal
                                 </th>
-                                <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    -
+                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    Categoría
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    Unidad
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    Marca
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    Acciones
                                 </th>
                             </tr>
                         </thead>
@@ -433,6 +446,7 @@ export default function ProductosTable({
                                         formatearPrecioVenta={formatearPrecioVenta}
                                         normalizeDateForInput={normalizeDateForInput}
                                         onUpdateDetailUnidadConPrecio={onUpdateDetailUnidadConPrecio}
+                                        proformaConvertida={proformaConvertida}
                                     />
                                 );
                             })}
