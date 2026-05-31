@@ -99,21 +99,49 @@ class ProveedorController extends Controller
     }
 
     /**
-     * API: Obtener todos los proveedores con límite
+     * GET /api/proveedores/index-json
+     * API endpoint que retorna proveedores en JSON con búsqueda y paginación
      */
     public function indexApi(Request $request): JsonResponse
     {
-        $limite = $request->integer('limit', 50);
+        try {
+            $query = Proveedor::select(['id', 'nombre', 'razon_social', 'nit', 'telefono', 'email', 'contacto', 'activo'])
+                ->where('activo', true)
+                ->orderBy('nombre', 'asc');
 
-        $proveedores = Proveedor::select(['id', 'nombre', 'razon_social', 'nit', 'telefono', 'email', 'contacto', 'activo'])
-            ->where('activo', true)
-            ->limit($limite)
-            ->get();
+            // Filtro de búsqueda general (q)
+            if ($request->filled('q')) {
+                $searchTerm = $request->string('q');
+                $searchLower = strtolower($searchTerm);
+                $query->where(function ($q) use ($searchLower) {
+                    $q->whereRaw('LOWER(nombre) like ?', ["%$searchLower%"])
+                        ->orWhereRaw('LOWER(razon_social) like ?', ["%$searchLower%"])
+                        ->orWhereRaw('LOWER(nit) like ?', ["%$searchLower%"])
+                        ->orWhereRaw('LOWER(telefono) like ?', ["%$searchLower%"])
+                        ->orWhereRaw('LOWER(email) like ?', ["%$searchLower%"]);
+                });
+            }
 
-        return response()->json([
-            'success' => true,
-            'data'    => $proveedores,
-        ]);
+            // Paginación
+            $perPage = $request->integer('per_page', 20);
+            $proveedores = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $proveedores->items(),
+                'pagination' => [
+                    'current_page' => $proveedores->currentPage(),
+                    'per_page' => $proveedores->perPage(),
+                    'total' => $proveedores->total(),
+                    'last_page' => $proveedores->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function create(): InertiaResponse

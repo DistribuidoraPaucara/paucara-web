@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
 export const historialAjustes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ historialAjustes.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
 historialAjustes.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ historialAjustes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
 historialAjustes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ historialAjustes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => 
 })
 /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
 historialAjustes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ historialAjustes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
     /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
     const historialAjustesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ historialAjustes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
             /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
         historialAjustesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ historialAjustes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
         })
             /**
 * @see \App\Http\Controllers\PrestableController::historialAjustes
- * @see app/Http/Controllers/PrestableController.php:922
+ * @see app/Http/Controllers/PrestableController.php:1052
  * @route '/api/prestables/ajustes/historial'
  */
         historialAjustesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ historialAjustes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     historialAjustes.form = historialAjustesForm
 /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
 export const movimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ movimientos.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
 movimientos.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ movimientos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
 movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
 movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
     const movimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
         movimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PrestableController::movimientos
- * @see app/Http/Controllers/PrestableController.php:1046
+ * @see app/Http/Controllers/PrestableController.php:1176
  * @route '/api/prestables/movimientos'
  */
         movimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -932,7 +932,7 @@ ajustarStock.post = (args: { prestable: number | { id: number } } | [prestable: 
     ajustarStock.form = ajustarStockForm
 /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
 export const ajusteDocumento = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -947,7 +947,7 @@ ajusteDocumento.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
 ajusteDocumento.url = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -980,7 +980,7 @@ ajusteDocumento.url = (args: { prestable: number | { id: number } } | [prestable
 
 /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
 ajusteDocumento.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -989,7 +989,7 @@ ajusteDocumento.get = (args: { prestable: number | { id: number } } | [prestable
 })
 /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
 ajusteDocumento.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -999,7 +999,7 @@ ajusteDocumento.head = (args: { prestable: number | { id: number } } | [prestabl
 
     /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
     const ajusteDocumentoForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1009,7 +1009,7 @@ ajusteDocumento.head = (args: { prestable: number | { id: number } } | [prestabl
 
             /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
         ajusteDocumentoForm.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1018,7 +1018,7 @@ ajusteDocumento.head = (args: { prestable: number | { id: number } } | [prestabl
         })
             /**
 * @see \App\Http\Controllers\PrestableController::ajusteDocumento
- * @see app/Http/Controllers/PrestableController.php:979
+ * @see app/Http/Controllers/PrestableController.php:1109
  * @route '/api/prestables/{prestable}/ajuste-documento'
  */
         ajusteDocumentoForm.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

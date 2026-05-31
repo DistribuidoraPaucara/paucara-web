@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:122
+ * @see app/Http/Controllers/CompraPrestableController.php:128
  * @route '/api/compras-prestables'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:122
+ * @see app/Http/Controllers/CompraPrestableController.php:128
  * @route '/api/compras-prestables'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:122
+ * @see app/Http/Controllers/CompraPrestableController.php:128
  * @route '/api/compras-prestables'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:122
+ * @see app/Http/Controllers/CompraPrestableController.php:128
  * @route '/api/compras-prestables'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:122
+ * @see app/Http/Controllers/CompraPrestableController.php:128
  * @route '/api/compras-prestables'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
 export const showApi = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ showApi.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
 showApi.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ showApi.url = (args: { compra: number | { id: number } } | [compra: number | { i
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
 showApi.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ showApi.get = (args: { compra: number | { id: number } } | [compra: number | { i
 })
 /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
 showApi.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ showApi.head = (args: { compra: number | { id: number } } | [compra: number | { 
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
     const showApiForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ showApi.head = (args: { compra: number | { id: number } } | [compra: number | { 
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
         showApiForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ showApi.head = (args: { compra: number | { id: number } } | [compra: number | { 
         })
             /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:100
+ * @see app/Http/Controllers/CompraPrestableController.php:106
  * @route '/api/compras-prestables/{compra}'
  */
         showApiForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ showApi.head = (args: { compra: number | { id: number } } | [compra: number | { 
     showApi.form = showApiForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:190
+ * @see app/Http/Controllers/CompraPrestableController.php:215
  * @route '/api/compras-prestables/{compra}/agregar-detalle'
  */
 export const agregarDetalle = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -251,7 +251,7 @@ agregarDetalle.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:190
+ * @see app/Http/Controllers/CompraPrestableController.php:215
  * @route '/api/compras-prestables/{compra}/agregar-detalle'
  */
 agregarDetalle.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ agregarDetalle.url = (args: { compra: number | { id: number } } | [compra: numbe
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:190
+ * @see app/Http/Controllers/CompraPrestableController.php:215
  * @route '/api/compras-prestables/{compra}/agregar-detalle'
  */
 agregarDetalle.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -294,7 +294,7 @@ agregarDetalle.post = (args: { compra: number | { id: number } } | [compra: numb
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:190
+ * @see app/Http/Controllers/CompraPrestableController.php:215
  * @route '/api/compras-prestables/{compra}/agregar-detalle'
  */
     const agregarDetalleForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +304,7 @@ agregarDetalle.post = (args: { compra: number | { id: number } } | [compra: numb
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:190
+ * @see app/Http/Controllers/CompraPrestableController.php:215
  * @route '/api/compras-prestables/{compra}/agregar-detalle'
  */
         agregarDetalleForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +315,7 @@ agregarDetalle.post = (args: { compra: number | { id: number } } | [compra: numb
     agregarDetalle.form = agregarDetalleForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:257
+ * @see app/Http/Controllers/CompraPrestableController.php:282
  * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
  */
 export const eliminarDetalle = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -330,7 +330,7 @@ eliminarDetalle.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:257
+ * @see app/Http/Controllers/CompraPrestableController.php:282
  * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
  */
 eliminarDetalle.url = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -360,7 +360,7 @@ eliminarDetalle.url = (args: { compra: number | { id: number }, detalle: number 
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:257
+ * @see app/Http/Controllers/CompraPrestableController.php:282
  * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
  */
 eliminarDetalle.delete = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -370,7 +370,7 @@ eliminarDetalle.delete = (args: { compra: number | { id: number }, detalle: numb
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:257
+ * @see app/Http/Controllers/CompraPrestableController.php:282
  * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
  */
     const eliminarDetalleForm = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -385,7 +385,7 @@ eliminarDetalle.delete = (args: { compra: number | { id: number }, detalle: numb
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:257
+ * @see app/Http/Controllers/CompraPrestableController.php:282
  * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
  */
         eliminarDetalleForm.delete = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -401,7 +401,7 @@ eliminarDetalle.delete = (args: { compra: number | { id: number }, detalle: numb
     eliminarDetalle.form = eliminarDetalleForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:292
+ * @see app/Http/Controllers/CompraPrestableController.php:317
  * @route '/api/compras-prestables/{compra}/confirmar'
  */
 export const confirmar = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -416,7 +416,7 @@ confirmar.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:292
+ * @see app/Http/Controllers/CompraPrestableController.php:317
  * @route '/api/compras-prestables/{compra}/confirmar'
  */
 confirmar.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -449,7 +449,7 @@ confirmar.url = (args: { compra: number | { id: number } } | [compra: number | {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:292
+ * @see app/Http/Controllers/CompraPrestableController.php:317
  * @route '/api/compras-prestables/{compra}/confirmar'
  */
 confirmar.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -459,7 +459,7 @@ confirmar.post = (args: { compra: number | { id: number } } | [compra: number | 
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:292
+ * @see app/Http/Controllers/CompraPrestableController.php:317
  * @route '/api/compras-prestables/{compra}/confirmar'
  */
     const confirmarForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -469,7 +469,7 @@ confirmar.post = (args: { compra: number | { id: number } } | [compra: number | 
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:292
+ * @see app/Http/Controllers/CompraPrestableController.php:317
  * @route '/api/compras-prestables/{compra}/confirmar'
  */
         confirmarForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -480,7 +480,7 @@ confirmar.post = (args: { compra: number | { id: number } } | [compra: number | 
     confirmar.form = confirmarForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:320
+ * @see app/Http/Controllers/CompraPrestableController.php:345
  * @route '/api/compras-prestables/{compra}/cancelar'
  */
 export const cancelar = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -495,7 +495,7 @@ cancelar.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:320
+ * @see app/Http/Controllers/CompraPrestableController.php:345
  * @route '/api/compras-prestables/{compra}/cancelar'
  */
 cancelar.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -528,7 +528,7 @@ cancelar.url = (args: { compra: number | { id: number } } | [compra: number | { 
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:320
+ * @see app/Http/Controllers/CompraPrestableController.php:345
  * @route '/api/compras-prestables/{compra}/cancelar'
  */
 cancelar.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -538,7 +538,7 @@ cancelar.post = (args: { compra: number | { id: number } } | [compra: number | {
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:320
+ * @see app/Http/Controllers/CompraPrestableController.php:345
  * @route '/api/compras-prestables/{compra}/cancelar'
  */
     const cancelarForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -548,7 +548,7 @@ cancelar.post = (args: { compra: number | { id: number } } | [compra: number | {
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:320
+ * @see app/Http/Controllers/CompraPrestableController.php:345
  * @route '/api/compras-prestables/{compra}/cancelar'
  */
         cancelarForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -559,7 +559,7 @@ cancelar.post = (args: { compra: number | { id: number } } | [compra: number | {
     cancelar.form = cancelarForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
 export const imprimir = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -574,7 +574,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
 imprimir.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -607,7 +607,7 @@ imprimir.url = (args: { compra: number | { id: number } } | [compra: number | { 
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
 imprimir.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -616,7 +616,7 @@ imprimir.get = (args: { compra: number | { id: number } } | [compra: number | { 
 })
 /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
 imprimir.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -626,7 +626,7 @@ imprimir.head = (args: { compra: number | { id: number } } | [compra: number | {
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
     const imprimirForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -636,7 +636,7 @@ imprimir.head = (args: { compra: number | { id: number } } | [compra: number | {
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
         imprimirForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -645,7 +645,7 @@ imprimir.head = (args: { compra: number | { id: number } } | [compra: number | {
         })
             /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:354
+ * @see app/Http/Controllers/CompraPrestableController.php:379
  * @route '/api/compras-prestables/{compra}/imprimir'
  */
         imprimirForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -661,7 +661,7 @@ imprimir.head = (args: { compra: number | { id: number } } | [compra: number | {
     imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
 export const show = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -676,7 +676,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
 show.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -709,7 +709,7 @@ show.url = (args: { compra: number | { id: number } } | [compra: number | { id: 
 
 /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
 show.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -718,7 +718,7 @@ show.get = (args: { compra: number | { id: number } } | [compra: number | { id: 
 })
 /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
 show.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -728,7 +728,7 @@ show.head = (args: { compra: number | { id: number } } | [compra: number | { id:
 
     /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
     const showForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -738,7 +738,7 @@ show.head = (args: { compra: number | { id: number } } | [compra: number | { id:
 
             /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
         showForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -747,7 +747,7 @@ show.head = (args: { compra: number | { id: number } } | [compra: number | { id:
         })
             /**
 * @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:79
+ * @see app/Http/Controllers/CompraPrestableController.php:85
  * @route '/prestamos/compras/{compra}'
  */
         showForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

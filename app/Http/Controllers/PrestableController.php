@@ -784,45 +784,70 @@ class PrestableController extends Controller
             ]);
 
             $validated = $request->validate([
-                'almacenes_prestables_id' => 'required|exists:almacenes_prestables,id',
+                'almacen_id' => 'required|exists:almacenes_prestables,id',
                 'cantidad_disponible' => 'required|integer|min:0',
-                'cantidad_cliente_deudor' => 'required|integer|min:0',
-                'cantidad_proveedor_acreedor' => 'required|integer|min:0',
-                'cantidad_vendida' => 'required|integer|min:0',
+                'cantidad_cliente_deudor' => 'nullable|integer|min:0',
+                'cantidad_cliente_devuelto' => 'nullable|integer|min:0',
+                'cantidad_evento_deudor' => 'nullable|integer|min:0',
+                'cantidad_evento_devuelto' => 'nullable|integer|min:0',
+                'cantidad_proveedor_acreedor' => 'nullable|integer|min:0',
+                'cantidad_proveedor_devuelto' => 'nullable|integer|min:0',
                 'motivo' => 'nullable|string|max:255',
                 'comentarios' => 'nullable|string|max:500',
+                'actualizar_embase' => 'nullable|boolean',
+                'embase_prestable_id' => 'nullable|integer|exists:prestables,id',
+                // Valores editados del embase (manual)
+                'embase_cantidad_disponible' => 'nullable|integer|min:0',
+                'embase_cantidad_cliente_deudor' => 'nullable|integer|min:0',
+                'embase_cantidad_cliente_devuelto' => 'nullable|integer|min:0',
+                'embase_cantidad_evento_deudor' => 'nullable|integer|min:0',
+                'embase_cantidad_evento_devuelto' => 'nullable|integer|min:0',
+                'embase_cantidad_proveedor_acreedor' => 'nullable|integer|min:0',
+                'embase_cantidad_proveedor_devuelto' => 'nullable|integer|min:0',
             ]);
 
             $stock = PrestableStock::where('prestable_id', $prestable->id)
-                ->where('almacenes_prestables_id', $validated['almacenes_prestables_id'])
+                ->where('almacenes_prestables_id', $validated['almacen_id'])
                 ->firstOrFail();
 
             // Valores anteriores para auditoría
             $valoresAnteriores = [
                 'disponible' => $stock->cantidad_disponible,
-                'prestamo_cliente' => $stock->cantidad_cliente_deudor,
-                'prestamo_proveedor' => $stock->cantidad_proveedor_acreedor,
-                'vendida' => 0, // No existe campo vendida en prestable_stock
+                'cliente_deudor' => $stock->cantidad_cliente_deudor,
+                'cliente_devuelto' => $stock->cantidad_cliente_devuelto,
+                'evento_deudor' => $stock->cantidad_evento_deudor,
+                'evento_devuelto' => $stock->cantidad_evento_devuelto,
+                'proveedor_acreedor' => $stock->cantidad_proveedor_acreedor,
+                'proveedor_devuelto' => $stock->cantidad_proveedor_devuelto,
             ];
 
-            Log::info('📊 ANTES DE ACTUALIZAR STOCK', [
-                'prestable_id' => $prestable->id,
-                'stock_id' => $stock->id,
-                'valores_anteriores' => $valoresAnteriores,
-                'valores_a_guardar' => [
-                    'disponible' => $validated['cantidad_disponible'],
-                    'cliente' => $validated['cantidad_cliente_deudor'],
-                    'proveedor' => $validated['cantidad_proveedor_acreedor'],
-                ],
-            ]);
+            // Construir array de actualización
+            $updateData = [
+                'cantidad_disponible' => $validated['cantidad_disponible'],
+            ];
 
-            DB::transaction(function () use ($stock, $validated, $prestable, $valoresAnteriores) {
-                // Actualizar stock con los nombres correctos
-                $stock->update([
-                    'cantidad_disponible' => $validated['cantidad_disponible'],
-                    'cantidad_cliente_deudor' => $validated['cantidad_cliente_deudor'],
-                    'cantidad_proveedor_acreedor' => $validated['cantidad_proveedor_acreedor'],
-                ]);
+            if (isset($validated['cantidad_cliente_deudor'])) {
+                $updateData['cantidad_cliente_deudor'] = $validated['cantidad_cliente_deudor'];
+            }
+            if (isset($validated['cantidad_cliente_devuelto'])) {
+                $updateData['cantidad_cliente_devuelto'] = $validated['cantidad_cliente_devuelto'];
+            }
+            if (isset($validated['cantidad_evento_deudor'])) {
+                $updateData['cantidad_evento_deudor'] = $validated['cantidad_evento_deudor'];
+            }
+            if (isset($validated['cantidad_evento_devuelto'])) {
+                $updateData['cantidad_evento_devuelto'] = $validated['cantidad_evento_devuelto'];
+            }
+            if (isset($validated['cantidad_proveedor_acreedor'])) {
+                $updateData['cantidad_proveedor_acreedor'] = $validated['cantidad_proveedor_acreedor'];
+            }
+            if (isset($validated['cantidad_proveedor_devuelto'])) {
+                $updateData['cantidad_proveedor_devuelto'] = $validated['cantidad_proveedor_devuelto'];
+            }
+
+            DB::transaction(function () use ($stock, $updateData, $validated, $prestable, $valoresAnteriores) {
+                // Actualizar stock con todos los campos
+                $stock->update($updateData);
 
                 Log::info('✅ STOCK ACTUALIZADO CORRECTAMENTE', [
                     'prestable_id' => $prestable->id,
@@ -830,45 +855,156 @@ class PrestableController extends Controller
                     'nuevos_valores' => $stock->fresh()->toArray(),
                 ]);
 
-                // 📊 Guardar ajuste en auditoría (con nombres de columnas reales de la tabla)
+                // Si se solicitó actualizar embase relacionado
+                if ($validated['actualizar_embase'] && $validated['embase_prestable_id']) {
+                    $embaseStock = PrestableStock::where('prestable_id', $validated['embase_prestable_id'])
+                        ->where('almacenes_prestables_id', $validated['almacen_id'])
+                        ->first();
+
+                    if ($embaseStock) {
+                        $embaseUpdateData = [];
+
+                        // Verificar si hay valores editados del embase (Opción B - Manual)
+                        $tieneValoresEmbase = isset($validated['embase_cantidad_disponible']) ||
+                                             isset($validated['embase_cantidad_cliente_deudor']) ||
+                                             isset($validated['embase_cantidad_cliente_devuelto']) ||
+                                             isset($validated['embase_cantidad_evento_deudor']) ||
+                                             isset($validated['embase_cantidad_evento_devuelto']) ||
+                                             isset($validated['embase_cantidad_proveedor_acreedor']) ||
+                                             isset($validated['embase_cantidad_proveedor_devuelto']);
+
+                        if ($tieneValoresEmbase) {
+                            // OPCIÓN B: Usar valores editados directamente del frontend
+                            if (isset($validated['embase_cantidad_disponible'])) {
+                                $embaseUpdateData['cantidad_disponible'] = $validated['embase_cantidad_disponible'];
+                            }
+                            if (isset($validated['embase_cantidad_cliente_deudor'])) {
+                                $embaseUpdateData['cantidad_cliente_deudor'] = $validated['embase_cantidad_cliente_deudor'];
+                            }
+                            if (isset($validated['embase_cantidad_cliente_devuelto'])) {
+                                $embaseUpdateData['cantidad_cliente_devuelto'] = $validated['embase_cantidad_cliente_devuelto'];
+                            }
+                            if (isset($validated['embase_cantidad_evento_deudor'])) {
+                                $embaseUpdateData['cantidad_evento_deudor'] = $validated['embase_cantidad_evento_deudor'];
+                            }
+                            if (isset($validated['embase_cantidad_evento_devuelto'])) {
+                                $embaseUpdateData['cantidad_evento_devuelto'] = $validated['embase_cantidad_evento_devuelto'];
+                            }
+                            if (isset($validated['embase_cantidad_proveedor_acreedor'])) {
+                                $embaseUpdateData['cantidad_proveedor_acreedor'] = $validated['embase_cantidad_proveedor_acreedor'];
+                            }
+                            if (isset($validated['embase_cantidad_proveedor_devuelto'])) {
+                                $embaseUpdateData['cantidad_proveedor_devuelto'] = $validated['embase_cantidad_proveedor_devuelto'];
+                            }
+
+                            $embaseStock->update($embaseUpdateData);
+                            Log::info('✅ EMBASE RELACIONADO ACTUALIZADO (VALORES MANUALES DEL FRONTEND)', [
+                                'embase_prestable_id' => $validated['embase_prestable_id'],
+                                'embase_stock_id' => $embaseStock->id,
+                                'cambios_aplicados' => $embaseUpdateData,
+                                'nuevos_valores' => $embaseStock->fresh()->toArray(),
+                            ]);
+                        } elseif ($stock->prestable->capacidad) {
+                            // OPCIÓN A: Calcular automáticamente por capacidad (compatibilidad)
+                            $capacidad = $stock->prestable->capacidad;
+                            $embaseUpdateData = [];
+
+                            // Disponible
+                            $diferencia_disponible = $updateData['cantidad_disponible'] - $valoresAnteriores['disponible'];
+                            $embaseUpdateData['cantidad_disponible'] = $embaseStock->cantidad_disponible + ($diferencia_disponible * $capacidad);
+
+                            // Cliente Deudor
+                            if (isset($updateData['cantidad_cliente_deudor'])) {
+                                $diferencia_cliente_deudor = $updateData['cantidad_cliente_deudor'] - $valoresAnteriores['cliente_deudor'];
+                                $embaseUpdateData['cantidad_cliente_deudor'] = $embaseStock->cantidad_cliente_deudor + ($diferencia_cliente_deudor * $capacidad);
+                            }
+
+                            // Cliente Devuelto
+                            if (isset($updateData['cantidad_cliente_devuelto'])) {
+                                $diferencia_cliente_devuelto = $updateData['cantidad_cliente_devuelto'] - $valoresAnteriores['cliente_devuelto'];
+                                $embaseUpdateData['cantidad_cliente_devuelto'] = $embaseStock->cantidad_cliente_devuelto + ($diferencia_cliente_devuelto * $capacidad);
+                            }
+
+                            // Evento Deudor
+                            if (isset($updateData['cantidad_evento_deudor'])) {
+                                $diferencia_evento_deudor = $updateData['cantidad_evento_deudor'] - $valoresAnteriores['evento_deudor'];
+                                $embaseUpdateData['cantidad_evento_deudor'] = $embaseStock->cantidad_evento_deudor + ($diferencia_evento_deudor * $capacidad);
+                            }
+
+                            // Evento Devuelto
+                            if (isset($updateData['cantidad_evento_devuelto'])) {
+                                $diferencia_evento_devuelto = $updateData['cantidad_evento_devuelto'] - $valoresAnteriores['evento_devuelto'];
+                                $embaseUpdateData['cantidad_evento_devuelto'] = $embaseStock->cantidad_evento_devuelto + ($diferencia_evento_devuelto * $capacidad);
+                            }
+
+                            // Proveedor Acreedor
+                            if (isset($updateData['cantidad_proveedor_acreedor'])) {
+                                $diferencia_proveedor_acreedor = $updateData['cantidad_proveedor_acreedor'] - $valoresAnteriores['proveedor_acreedor'];
+                                $embaseUpdateData['cantidad_proveedor_acreedor'] = $embaseStock->cantidad_proveedor_acreedor + ($diferencia_proveedor_acreedor * $capacidad);
+                            }
+
+                            // Proveedor Devuelto
+                            if (isset($updateData['cantidad_proveedor_devuelto'])) {
+                                $diferencia_proveedor_devuelto = $updateData['cantidad_proveedor_devuelto'] - $valoresAnteriores['proveedor_devuelto'];
+                                $embaseUpdateData['cantidad_proveedor_devuelto'] = $embaseStock->cantidad_proveedor_devuelto + ($diferencia_proveedor_devuelto * $capacidad);
+                            }
+
+                            // Asegurar que no haya valores negativos
+                            foreach ($embaseUpdateData as $key => $value) {
+                                $embaseUpdateData[$key] = max(0, $value);
+                            }
+
+                            $embaseStock->update($embaseUpdateData);
+                            Log::info('✅ EMBASE RELACIONADO ACTUALIZADO (CON CONVERSIÓN POR CAPACIDAD)', [
+                                'capacidad_canastilla' => $capacidad,
+                                'embase_prestable_id' => $validated['embase_prestable_id'],
+                                'embase_stock_id' => $embaseStock->id,
+                                'cambios_aplicados' => $embaseUpdateData,
+                                'nuevos_valores' => $embaseStock->fresh()->toArray(),
+                            ]);
+                        }
+                    }
+                }
+
+                // 📊 Guardar ajuste en auditoría
                 $ajuste = AjusteStockPrestable::create([
                     'prestable_id' => $prestable->id,
                     'prestable_stock_id' => $stock->id,
-                    'almacenes_prestables_id' => $validated['almacenes_prestables_id'],
+                    'almacenes_prestables_id' => $validated['almacen_id'],
                     'usuario_id' => auth()->id(),
                     'cantidad_disponible_antes' => $valoresAnteriores['disponible'],
-                    'cantidad_en_prestamo_cliente_antes' => $valoresAnteriores['prestamo_cliente'],
-                    'cantidad_en_prestamo_proveedor_antes' => $valoresAnteriores['prestamo_proveedor'],
-                    'cantidad_vendida_antes' => $valoresAnteriores['vendida'],
-                    'cantidad_disponible_despues' => $validated['cantidad_disponible'],
-                    'cantidad_en_prestamo_cliente_despues' => $validated['cantidad_cliente_deudor'],
-                    'cantidad_en_prestamo_proveedor_despues' => $validated['cantidad_proveedor_acreedor'],
-                    'cantidad_vendida_despues' => 0, // No hay campo vendida en prestable_stock
+                    'cantidad_en_prestamo_cliente_antes' => $valoresAnteriores['cliente_deudor'],
+                    'cantidad_en_prestamo_proveedor_antes' => $valoresAnteriores['proveedor_acreedor'],
+                    'cantidad_vendida_antes' => 0,
+                    'cantidad_disponible_despues' => $updateData['cantidad_disponible'],
+                    'cantidad_en_prestamo_cliente_despues' => $updateData['cantidad_cliente_deudor'] ?? $valoresAnteriores['cliente_deudor'],
+                    'cantidad_en_prestamo_proveedor_despues' => $updateData['cantidad_proveedor_acreedor'] ?? $valoresAnteriores['proveedor_acreedor'],
+                    'cantidad_vendida_despues' => 0,
                     'motivo' => $validated['motivo'] ?? null,
                     'comentarios' => $validated['comentarios'] ?? null,
-                    'tipo_ajuste' => 'ajuste_relativo',
+                    'tipo_ajuste' => 'edicion_directa',
                     'ip_usuario' => request()->ip(),
                     'user_agent' => request()->userAgent(),
                 ]);
 
-                // 📈 Registrar movimiento en tabla movimientos_prestables
+                // 📈 Registrar movimiento
                 MovimientoPrestable::create([
                     'prestable_stock_id' => $stock->id,
-                    'almacenes_prestables_id' => $validated['almacenes_prestables_id'],
+                    'almacenes_prestables_id' => $validated['almacen_id'],
                     'usuario_id' => auth()->id(),
                     'tipo' => 'AJUSTE_DIRECTO',
                     'cantidad' => abs(
-                        ($validated['cantidad_disponible'] - $valoresAnteriores['disponible']) +
-                        ($validated['cantidad_cliente_deudor'] - $valoresAnteriores['prestamo_cliente']) +
-                        ($validated['cantidad_proveedor_acreedor'] - $valoresAnteriores['prestamo_proveedor'])
+                        ($updateData['cantidad_disponible'] - $valoresAnteriores['disponible']) +
+                        (($updateData['cantidad_cliente_deudor'] ?? $valoresAnteriores['cliente_deudor']) - $valoresAnteriores['cliente_deudor']) +
+                        (($updateData['cantidad_proveedor_acreedor'] ?? $valoresAnteriores['proveedor_acreedor']) - $valoresAnteriores['proveedor_acreedor'])
                     ),
                     'disponible_anterior' => $valoresAnteriores['disponible'],
-                    'prestamo_cliente_anterior' => $valoresAnteriores['prestamo_cliente'],
-                    'prestamo_proveedor_anterior' => $valoresAnteriores['prestamo_proveedor'],
+                    'prestamo_cliente_anterior' => $valoresAnteriores['cliente_deudor'],
+                    'prestamo_proveedor_anterior' => $valoresAnteriores['proveedor_acreedor'],
                     'vendida_anterior' => 0,
-                    'disponible_posterior' => $validated['cantidad_disponible'],
-                    'prestamo_cliente_posterior' => $validated['cantidad_cliente_deudor'],
-                    'prestamo_proveedor_posterior' => $validated['cantidad_proveedor_acreedor'],
+                    'disponible_posterior' => $updateData['cantidad_disponible'],
+                    'prestamo_cliente_posterior' => $updateData['cantidad_cliente_deudor'] ?? $valoresAnteriores['cliente_deudor'],
+                    'prestamo_proveedor_posterior' => $updateData['cantidad_proveedor_acreedor'] ?? $valoresAnteriores['proveedor_acreedor'],
                     'vendida_posterior' => 0,
                     'categoria_afectada' => null,
                     'motivo' => $validated['motivo'] ?? null,
@@ -880,22 +1016,16 @@ class PrestableController extends Controller
                     'user_agent' => request()->userAgent(),
                 ]);
 
-                Log::info('📊 AJUSTE DE STOCK PRESTABLE (TABLA) - GUARDADO EN AUDITORÍA', [
+                Log::info('📊 AJUSTE DE STOCK PRESTABLE - GUARDADO EN AUDITORÍA', [
                     'prestable_id' => $prestable->id,
-                    'almacenes_prestables_id' => $validated['almacenes_prestables_id'],
+                    'almacen_id' => $validated['almacen_id'],
                     'usuario_id' => auth()->id(),
                     'valores_anteriores' => $valoresAnteriores,
-                    'valores_nuevos' => [
-                        'disponible' => $validated['cantidad_disponible'],
-                        'prestamo_cliente' => $validated['cantidad_cliente_deudor'],
-                        'prestamo_proveedor' => $validated['cantidad_proveedor_acreedor'],
-                    ],
+                    'valores_nuevos' => $updateData,
                     'motivo' => $validated['motivo'] ?? 'Sin especificar',
-                    'comentarios' => $validated['comentarios'] ?? 'Sin comentarios',
                 ]);
             });
 
-            // Recargar stock actualizado
             $stock->refresh();
 
             return response()->json([

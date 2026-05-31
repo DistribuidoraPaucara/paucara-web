@@ -53,7 +53,13 @@ class CompraPrestableController extends Controller
             if ($request->filled('buscar')) {
                 $buscar = $request->string('buscar');
                 $query->where(function ($q) use ($buscar) {
-                    $q->where('numero_compra', 'ilike', "%{$buscar}%")
+                    // Buscar por ID si es un número
+                    if (is_numeric($buscar)) {
+                        $q->orWhere('id', intval($buscar));
+                    }
+                    // Buscar por numero_compra
+                    $q->orWhere('numero_compra', 'ilike', "%{$buscar}%")
+                        // Buscar por nombre del proveedor
                         ->orWhereHas('proveedor', function ($q2) use ($buscar) {
                             $q2->where('nombre', 'ilike', "%{$buscar}%");
                         });
@@ -123,7 +129,9 @@ class CompraPrestableController extends Controller
     {
         try {
             $validated = $request->validate([
+                'compra_id' => 'nullable|exists:compras,id',
                 'proveedor_id' => 'nullable|exists:proveedores,id',
+                'almacenes_prestables_id' => 'nullable|exists:almacenes_prestables,id',
                 'observaciones' => 'nullable|string|max:1000',
                 'detalles' => 'nullable|array',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
@@ -134,16 +142,31 @@ class CompraPrestableController extends Controller
                 'detalles.*.observaciones' => 'nullable|string|max:500',
             ]);
 
-            // Crear compra
-            $compra = $this->service->crearCompra([
-                'proveedor_id' => $validated['proveedor_id'] ?? null,
-                'usuario_id' => auth()->id(),
-                'observaciones' => $validated['observaciones'] ?? null,
-                'ip_usuario' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
+            // Obtener o crear compra de prestables
+            if ($validated['compra_id']) {
+                // Asignar a una compra general existente: crear CompraPrestable con referencia
+                $compra = $this->service->crearCompra([
+                    'compra_id' => $validated['compra_id'],
+                    'proveedor_id' => $validated['proveedor_id'] ?? null,
+                    'almacenes_prestables_id' => $validated['almacenes_prestables_id'] ?? null,
+                    'usuario_id' => auth()->id(),
+                    'observaciones' => $validated['observaciones'] ?? null,
+                    'ip_usuario' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+            } else {
+                // Crear nueva compra sin referencia a compra general
+                $compra = $this->service->crearCompra([
+                    'proveedor_id' => $validated['proveedor_id'] ?? null,
+                    'almacenes_prestables_id' => $validated['almacenes_prestables_id'] ?? null,
+                    'usuario_id' => auth()->id(),
+                    'observaciones' => $validated['observaciones'] ?? null,
+                    'ip_usuario' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+            }
 
-            // Si hay detalles, agregarlos y confirmar compra inmediatamente
+            // Si hay detalles, agregarlos
             if (!empty($validated['detalles'])) {
                 foreach ($validated['detalles'] as $detalle) {
                     $almacenId = $detalle['almacen_id'] ?? $detalle['almacenes_prestables_id'] ?? null;
@@ -165,8 +188,10 @@ class CompraPrestableController extends Controller
                     );
                 }
 
-                // Confirmar la compra directamente
-                $compra = $this->service->confirmarCompra($compra);
+                // Confirmar la compra solo si se creó nueva (sin compra_id)
+                if (!$validated['compra_id']) {
+                    $compra = $this->service->confirmarCompra($compra);
+                }
             }
 
             // Cargar relaciones para la respuesta

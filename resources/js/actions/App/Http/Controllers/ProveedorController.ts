@@ -1,73 +1,73 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-export const indexApi = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: indexApi.url(options),
+const indexApi60dd109988b129c0ceb1fb268b6e77d1 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi60dd109988b129c0ceb1fb268b6e77d1.url(options),
     method: 'get',
 })
 
-indexApi.definition = {
+indexApi60dd109988b129c0ceb1fb268b6e77d1.definition = {
     methods: ["get","head"],
-    url: '/api/proveedores',
+    url: '/api/proveedores/index-json',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-indexApi.url = (options?: RouteQueryOptions) => {
-    return indexApi.definition.url + queryParams(options)
+indexApi60dd109988b129c0ceb1fb268b6e77d1.url = (options?: RouteQueryOptions) => {
+    return indexApi60dd109988b129c0ceb1fb268b6e77d1.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-indexApi.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: indexApi.url(options),
+indexApi60dd109988b129c0ceb1fb268b6e77d1.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi60dd109988b129c0ceb1fb268b6e77d1.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: indexApi.url(options),
+indexApi60dd109988b129c0ceb1fb268b6e77d1.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: indexApi60dd109988b129c0ceb1fb268b6e77d1.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexApi.url(options),
+    const indexApi60dd109988b129c0ceb1fb268b6e77d1Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi60dd109988b129c0ceb1fb268b6e77d1.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexApi.url(options),
+        indexApi60dd109988b129c0ceb1fb268b6e77d1Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi60dd109988b129c0ceb1fb268b6e77d1.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\ProveedorController::indexApi
- * @see app/Http/Controllers/ProveedorController.php:104
- * @route '/api/proveedores'
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores/index-json'
  */
-        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexApi.url({
+        indexApi60dd109988b129c0ceb1fb268b6e77d1Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi60dd109988b129c0ceb1fb268b6e77d1.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -76,10 +76,94 @@ indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
     
-    indexApi.form = indexApiForm
+    indexApi60dd109988b129c0ceb1fb268b6e77d1.form = indexApi60dd109988b129c0ceb1fb268b6e77d1Form
+    /**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+const indexApi27dfcb840df31e5788247b36733b6e8d = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi27dfcb840df31e5788247b36733b6e8d.url(options),
+    method: 'get',
+})
+
+indexApi27dfcb840df31e5788247b36733b6e8d.definition = {
+    methods: ["get","head"],
+    url: '/api/proveedores',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+indexApi27dfcb840df31e5788247b36733b6e8d.url = (options?: RouteQueryOptions) => {
+    return indexApi27dfcb840df31e5788247b36733b6e8d.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+indexApi27dfcb840df31e5788247b36733b6e8d.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi27dfcb840df31e5788247b36733b6e8d.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+indexApi27dfcb840df31e5788247b36733b6e8d.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: indexApi27dfcb840df31e5788247b36733b6e8d.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+    const indexApi27dfcb840df31e5788247b36733b6e8dForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi27dfcb840df31e5788247b36733b6e8d.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+        indexApi27dfcb840df31e5788247b36733b6e8dForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi27dfcb840df31e5788247b36733b6e8d.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProveedorController::indexApi
+ * @see app/Http/Controllers/ProveedorController.php:105
+ * @route '/api/proveedores'
+ */
+        indexApi27dfcb840df31e5788247b36733b6e8dForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi27dfcb840df31e5788247b36733b6e8d.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi27dfcb840df31e5788247b36733b6e8d.form = indexApi27dfcb840df31e5788247b36733b6e8dForm
+
+export const indexApi = {
+    '/api/proveedores/index-json': indexApi60dd109988b129c0ceb1fb268b6e77d1,
+    '/api/proveedores': indexApi27dfcb840df31e5788247b36733b6e8d,
+}
+
 /**
 * @see \App\Http\Controllers\ProveedorController::storeApi
- * @see app/Http/Controllers/ProveedorController.php:185
+ * @see app/Http/Controllers/ProveedorController.php:213
  * @route '/api/proveedores'
  */
 export const storeApi = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +178,7 @@ storeApi.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::storeApi
- * @see app/Http/Controllers/ProveedorController.php:185
+ * @see app/Http/Controllers/ProveedorController.php:213
  * @route '/api/proveedores'
  */
 storeApi.url = (options?: RouteQueryOptions) => {
@@ -103,7 +187,7 @@ storeApi.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::storeApi
- * @see app/Http/Controllers/ProveedorController.php:185
+ * @see app/Http/Controllers/ProveedorController.php:213
  * @route '/api/proveedores'
  */
 storeApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +197,7 @@ storeApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\ProveedorController::storeApi
- * @see app/Http/Controllers/ProveedorController.php:185
+ * @see app/Http/Controllers/ProveedorController.php:213
  * @route '/api/proveedores'
  */
     const storeApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +207,7 @@ storeApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\ProveedorController::storeApi
- * @see app/Http/Controllers/ProveedorController.php:185
+ * @see app/Http/Controllers/ProveedorController.php:213
  * @route '/api/proveedores'
  */
         storeApiForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -374,7 +458,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -389,7 +473,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
 create.url = (options?: RouteQueryOptions) => {
@@ -398,7 +482,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -407,7 +491,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -417,7 +501,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
     const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -427,7 +511,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
         createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -436,7 +520,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\ProveedorController::create
- * @see app/Http/Controllers/ProveedorController.php:119
+ * @see app/Http/Controllers/ProveedorController.php:147
  * @route '/proveedores/create'
  */
         createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -452,7 +536,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     create.form = createForm
 /**
 * @see \App\Http\Controllers\ProveedorController::store
- * @see app/Http/Controllers/ProveedorController.php:126
+ * @see app/Http/Controllers/ProveedorController.php:154
  * @route '/proveedores'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -467,7 +551,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::store
- * @see app/Http/Controllers/ProveedorController.php:126
+ * @see app/Http/Controllers/ProveedorController.php:154
  * @route '/proveedores'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -476,7 +560,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::store
- * @see app/Http/Controllers/ProveedorController.php:126
+ * @see app/Http/Controllers/ProveedorController.php:154
  * @route '/proveedores'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -486,7 +570,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\ProveedorController::store
- * @see app/Http/Controllers/ProveedorController.php:126
+ * @see app/Http/Controllers/ProveedorController.php:154
  * @route '/proveedores'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -496,7 +580,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\ProveedorController::store
- * @see app/Http/Controllers/ProveedorController.php:126
+ * @see app/Http/Controllers/ProveedorController.php:154
  * @route '/proveedores'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -604,7 +688,7 @@ show.head = (args: { proveedore: string | number } | [proveedore: string | numbe
     show.form = showForm
 /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
 export const edit = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -619,7 +703,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
 edit.url = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -652,7 +736,7 @@ edit.url = (args: { proveedore: number | { id: number } } | [proveedore: number 
 
 /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
 edit.get = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -661,7 +745,7 @@ edit.get = (args: { proveedore: number | { id: number } } | [proveedore: number 
 })
 /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
 edit.head = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -671,7 +755,7 @@ edit.head = (args: { proveedore: number | { id: number } } | [proveedore: number
 
     /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
     const editForm = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -681,7 +765,7 @@ edit.head = (args: { proveedore: number | { id: number } } | [proveedore: number
 
             /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
         editForm.get = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -690,7 +774,7 @@ edit.head = (args: { proveedore: number | { id: number } } | [proveedore: number
         })
             /**
 * @see \App\Http\Controllers\ProveedorController::edit
- * @see app/Http/Controllers/ProveedorController.php:209
+ * @see app/Http/Controllers/ProveedorController.php:237
  * @route '/proveedores/{proveedore}/edit'
  */
         editForm.head = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -706,7 +790,7 @@ edit.head = (args: { proveedore: number | { id: number } } | [proveedore: number
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
 export const update = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -721,7 +805,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
 update.url = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -754,7 +838,7 @@ update.url = (args: { proveedore: number | { id: number } } | [proveedore: numbe
 
 /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
 update.put = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -763,7 +847,7 @@ update.put = (args: { proveedore: number | { id: number } } | [proveedore: numbe
 })
 /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
 update.patch = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -773,7 +857,7 @@ update.patch = (args: { proveedore: number | { id: number } } | [proveedore: num
 
     /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
     const updateForm = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -788,7 +872,7 @@ update.patch = (args: { proveedore: number | { id: number } } | [proveedore: num
 
             /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
         updateForm.put = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -802,7 +886,7 @@ update.patch = (args: { proveedore: number | { id: number } } | [proveedore: num
         })
             /**
 * @see \App\Http\Controllers\ProveedorController::update
- * @see app/Http/Controllers/ProveedorController.php:216
+ * @see app/Http/Controllers/ProveedorController.php:244
  * @route '/proveedores/{proveedore}'
  */
         updateForm.patch = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -818,7 +902,7 @@ update.patch = (args: { proveedore: number | { id: number } } | [proveedore: num
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\ProveedorController::destroy
- * @see app/Http/Controllers/ProveedorController.php:260
+ * @see app/Http/Controllers/ProveedorController.php:288
  * @route '/proveedores/{proveedore}'
  */
 export const destroy = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -833,7 +917,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\ProveedorController::destroy
- * @see app/Http/Controllers/ProveedorController.php:260
+ * @see app/Http/Controllers/ProveedorController.php:288
  * @route '/proveedores/{proveedore}'
  */
 destroy.url = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -866,7 +950,7 @@ destroy.url = (args: { proveedore: number | { id: number } } | [proveedore: numb
 
 /**
 * @see \App\Http\Controllers\ProveedorController::destroy
- * @see app/Http/Controllers/ProveedorController.php:260
+ * @see app/Http/Controllers/ProveedorController.php:288
  * @route '/proveedores/{proveedore}'
  */
 destroy.delete = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -876,7 +960,7 @@ destroy.delete = (args: { proveedore: number | { id: number } } | [proveedore: n
 
     /**
 * @see \App\Http\Controllers\ProveedorController::destroy
- * @see app/Http/Controllers/ProveedorController.php:260
+ * @see app/Http/Controllers/ProveedorController.php:288
  * @route '/proveedores/{proveedore}'
  */
     const destroyForm = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -891,7 +975,7 @@ destroy.delete = (args: { proveedore: number | { id: number } } | [proveedore: n
 
             /**
 * @see \App\Http\Controllers\ProveedorController::destroy
- * @see app/Http/Controllers/ProveedorController.php:260
+ * @see app/Http/Controllers/ProveedorController.php:288
  * @route '/proveedores/{proveedore}'
  */
         destroyForm.delete = (args: { proveedore: number | { id: number } } | [proveedore: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -214,7 +214,10 @@ class StockController extends Controller
             'prestable_id' => $stock->prestable_id,
             'prestable_nombre' => $stock->prestable->nombre,
             'prestable_codigo' => $stock->prestable->codigo,
+            'prestable_tipo' => $stock->prestable->tipo,
+            'prestable_capacidad' => $stock->prestable->capacidad ?? null,
             'almacen_nombre' => $stock->almacenPrestable->nombre,
+            'almacen_tipo' => $stock->almacenPrestable->es_proveedor ? 'Proveedor' : 'Cliente',
             'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
         ];
 
@@ -228,11 +231,48 @@ class StockController extends Controller
             $item['cantidad_proveedor_devuelto'] = $stock->cantidad_proveedor_devuelto ?? 0;
         }
 
+        // Si es CANASTILLA, cargar embase relacionado
+        $embaseRelacionado = null;
+        if ($stock->prestable->tipo === 'CANASTILLA' && $stock->prestable->prestable_relacionado_id) {
+            $embaseStock = PrestableStock::where('prestable_id', $stock->prestable->prestable_relacionado_id)
+                ->where('almacenes_prestables_id', $almacen_id)
+                ->with('prestable')
+                ->first();
+
+            if ($embaseStock) {
+                $embaseRelacionado = [
+                    'id' => $embaseStock->id,
+                    'prestable_id' => $embaseStock->prestable_id,
+                    'prestable_nombre' => $embaseStock->prestable->nombre,
+                    'prestable_codigo' => $embaseStock->prestable->codigo,
+                    'cantidad_disponible' => $embaseStock->cantidad_disponible ?? 0,
+                    'cantidad_cliente_deudor' => $embaseStock->cantidad_cliente_deudor ?? 0,
+                    'cantidad_cliente_devuelto' => $embaseStock->cantidad_cliente_devuelto ?? 0,
+                    'cantidad_evento_deudor' => $embaseStock->cantidad_evento_deudor ?? 0,
+                    'cantidad_evento_devuelto' => $embaseStock->cantidad_evento_devuelto ?? 0,
+                    'cantidad_proveedor_acreedor' => $embaseStock->cantidad_proveedor_acreedor ?? 0,
+                    'cantidad_proveedor_devuelto' => $embaseStock->cantidad_proveedor_devuelto ?? 0,
+                ];
+            }
+        }
+
+        // Opciones de motivos predefinidos
+        $motivosOptions = [
+            'Discrepancia de inventario',
+            'Daño o deterioro',
+            'Pérdida',
+            'Devolución incompleta',
+            'Ajuste administrativo',
+            'Otro',
+        ];
+
         return Inertia::render('prestamos/stock/ajuste', [
             'prestable_id' => $prestable_id,
             'almacen_id' => $almacen_id,
             'tipo' => $tipo,
             'item' => $item,
+            'embaseRelacionado' => $embaseRelacionado,
+            'motivosOptions' => $motivosOptions,
         ]);
     }
 }

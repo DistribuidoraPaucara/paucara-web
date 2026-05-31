@@ -12,7 +12,9 @@ class CompraPrestable extends Model
 
     protected $fillable = [
         'numero_compra',
+        'compra_id',
         'proveedor_id',
+        'almacenes_prestables_id',
         'usuario_id',
         'estado',
         'subtotal',
@@ -41,11 +43,27 @@ class CompraPrestable extends Model
     // ==================== RELACIONES ====================
 
     /**
+     * Compra general a la que pertenece esta compra de prestables
+     */
+    public function compra(): BelongsTo
+    {
+        return $this->belongsTo(Compra::class);
+    }
+
+    /**
      * Proveedor de donde se compran los prestables
      */
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class);
+    }
+
+    /**
+     * Almacén de prestables donde se guardan los prestables comprados
+     */
+    public function almacenPrestable(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\AlmacenPrestable::class, 'almacenes_prestables_id');
     }
 
     /**

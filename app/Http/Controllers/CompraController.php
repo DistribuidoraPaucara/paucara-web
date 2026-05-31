@@ -2062,6 +2062,57 @@ class CompraController extends Controller
      * Buscar compras para AsyncSearchSelect
      * Prioriza búsqueda por ID para mejor rendimiento
      */
+    /**
+     * GET /api/compras/index-json
+     * API endpoint que retorna compras en JSON con búsqueda y paginación
+     * Usado por prestamos/compras/crear para buscar compras generales
+     */
+    public function indexApi(Request $request): JsonResponse
+    {
+        try {
+            $query = Compra::with(['proveedor:id,nombre,razon_social'])
+                ->orderBy('created_at', 'desc');
+
+            // Filtro de búsqueda general (q)
+            if ($request->filled('q')) {
+                $searchTerm = $request->string('q');
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('numero', 'ilike', "%{$searchTerm}%")
+                        ->orWhere('numero_factura', 'ilike', "%{$searchTerm}%")
+                        ->orWhereHas('proveedor', function ($qq) use ($searchTerm) {
+                            $qq->where('nombre', 'ilike', "%{$searchTerm}%");
+                        });
+                });
+            }
+
+            // Filtro por ID de compra
+            if ($request->filled('id')) {
+                $query->where('id', $request->integer('id'));
+            }
+
+            // Paginación
+            $perPage = $request->integer('per_page', 20);
+            $compras = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $compras->items(),
+                'pagination' => [
+                    'current_page' => $compras->currentPage(),
+                    'per_page' => $compras->perPage(),
+                    'total' => $compras->total(),
+                    'last_page' => $compras->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en indexApi', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function search(Request $request): JsonResponse
     {
         try {

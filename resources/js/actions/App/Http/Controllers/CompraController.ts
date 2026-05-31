@@ -1,7 +1,85 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+export const indexApi = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi.url(options),
+    method: 'get',
+})
+
+indexApi.definition = {
+    methods: ["get","head"],
+    url: '/api/compras/index-json',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexApi.url = (options?: RouteQueryOptions) => {
+    return indexApi.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexApi.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexApi.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: indexApi.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CompraController::indexApi
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi.form = indexApiForm
+/**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
 export const search = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +94,7 @@ search.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
 search.url = (options?: RouteQueryOptions) => {
@@ -25,7 +103,7 @@ search.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
 search.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +112,7 @@ search.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
 search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +122,7 @@ search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
     const searchForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +132,7 @@ search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
         searchForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +141,7 @@ search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CompraController::search
- * @see app/Http/Controllers/CompraController.php:2065
+ * @see app/Http/Controllers/CompraController.php:2116
  * @route '/api/compras/search'
  */
         searchForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1111,7 +1189,7 @@ anular.post = (args: { compra: string | number } | [compra: string | number ] | 
     anular.form = anularForm
 /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
 export const editarAsignarLotes = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1126,7 +1204,7 @@ editarAsignarLotes.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
 editarAsignarLotes.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -1159,7 +1237,7 @@ editarAsignarLotes.url = (args: { compra: number | { id: number } } | [compra: n
 
 /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
 editarAsignarLotes.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1168,7 +1246,7 @@ editarAsignarLotes.get = (args: { compra: number | { id: number } } | [compra: n
 })
 /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
 editarAsignarLotes.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1178,7 +1256,7 @@ editarAsignarLotes.head = (args: { compra: number | { id: number } } | [compra: 
 
     /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
     const editarAsignarLotesForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1188,7 +1266,7 @@ editarAsignarLotes.head = (args: { compra: number | { id: number } } | [compra: 
 
             /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
         editarAsignarLotesForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1197,7 +1275,7 @@ editarAsignarLotes.head = (args: { compra: number | { id: number } } | [compra: 
         })
             /**
 * @see \App\Http\Controllers\CompraController::editarAsignarLotes
- * @see app/Http/Controllers/CompraController.php:2138
+ * @see app/Http/Controllers/CompraController.php:2189
  * @route '/compras/{compra}/editar-lotes'
  */
         editarAsignarLotesForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1213,7 +1291,7 @@ editarAsignarLotes.head = (args: { compra: number | { id: number } } | [compra: 
     editarAsignarLotes.form = editarAsignarLotesForm
 /**
 * @see \App\Http\Controllers\CompraController::asignarLotes
- * @see app/Http/Controllers/CompraController.php:2255
+ * @see app/Http/Controllers/CompraController.php:2306
  * @route '/compras/{compra}/guardar-lotes'
  */
 export const asignarLotes = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1228,7 +1306,7 @@ asignarLotes.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraController::asignarLotes
- * @see app/Http/Controllers/CompraController.php:2255
+ * @see app/Http/Controllers/CompraController.php:2306
  * @route '/compras/{compra}/guardar-lotes'
  */
 asignarLotes.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -1261,7 +1339,7 @@ asignarLotes.url = (args: { compra: number | { id: number } } | [compra: number 
 
 /**
 * @see \App\Http\Controllers\CompraController::asignarLotes
- * @see app/Http/Controllers/CompraController.php:2255
+ * @see app/Http/Controllers/CompraController.php:2306
  * @route '/compras/{compra}/guardar-lotes'
  */
 asignarLotes.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1271,7 +1349,7 @@ asignarLotes.post = (args: { compra: number | { id: number } } | [compra: number
 
     /**
 * @see \App\Http\Controllers\CompraController::asignarLotes
- * @see app/Http/Controllers/CompraController.php:2255
+ * @see app/Http/Controllers/CompraController.php:2306
  * @route '/compras/{compra}/guardar-lotes'
  */
     const asignarLotesForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1281,7 +1359,7 @@ asignarLotes.post = (args: { compra: number | { id: number } } | [compra: number
 
             /**
 * @see \App\Http\Controllers\CompraController::asignarLotes
- * @see app/Http/Controllers/CompraController.php:2255
+ * @see app/Http/Controllers/CompraController.php:2306
  * @route '/compras/{compra}/guardar-lotes'
  */
         asignarLotesForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1771,6 +1849,6 @@ exportarPdf.head = (args: { compra: number | { id: number } } | [compra: number 
         })
     
     exportarPdf.form = exportarPdfForm
-const CompraController = { search, show, comprasParaImpresion, index, store, update, destroy, anular, editarAsignarLotes, asignarLotes, create, edit, previewCompra, exportarExcel, exportarPdf }
+const CompraController = { indexApi, search, show, comprasParaImpresion, index, store, update, destroy, anular, editarAsignarLotes, asignarLotes, create, edit, previewCompra, exportarExcel, exportarPdf }
 
 export default CompraController

@@ -1,5 +1,83 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+export const indexJson = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexJson.url(options),
+    method: 'get',
+})
+
+indexJson.definition = {
+    methods: ["get","head"],
+    url: '/api/compras/index-json',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexJson.url = (options?: RouteQueryOptions) => {
+    return indexJson.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexJson.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexJson.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+indexJson.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: indexJson.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+    const indexJsonForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexJson.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+        indexJsonForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexJson.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CompraController::indexJson
+ * @see app/Http/Controllers/CompraController.php:2070
+ * @route '/api/compras/index-json'
+ */
+        indexJsonForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexJson.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexJson.form = indexJsonForm
+/**
 * @see \App\Http\Controllers\CompraController::index
  * @see app/Http/Controllers/CompraController.php:53
  * @route '/api/compras'
@@ -421,7 +499,8 @@ destroy.delete = (args: { compra: string | number } | [compra: string | number ]
     
     destroy.form = destroyForm
 const compras = {
-    index,
+    indexJson,
+index,
 store,
 show,
 update,

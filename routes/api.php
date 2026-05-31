@@ -504,6 +504,8 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
 Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     // ⚠️ IMPORTANTE: Rutas customizadas ANTES de apiResource para evitar conflictos con {id}
     Route::group(['prefix' => 'compras'], function () {
+        // 🔍 API endpoint que retorna compras en JSON con búsqueda y paginación
+        Route::get('index-json', [CompraController::class, 'indexApi'])->name('api.compras.index-json');
         // 🔍 Búsqueda para AsyncSearchSelect
         Route::get('search', [CompraController::class, 'search']);
         // 📦 Obtener detalles de una compra (para prestamos)
@@ -1207,10 +1209,20 @@ Route::middleware(['auth:sanctum,web'])->get('/entregas/{id}', [EntregaControlle
 
 // Rutas API para proveedores
 Route::group(['prefix' => 'proveedores'], function () {
+    // API endpoint que retorna proveedores en JSON con búsqueda y paginación
+    Route::get('index-json', [ProveedorController::class, 'indexApi'])->name('api.proveedores.index-json');
     Route::get('/', [ProveedorController::class, 'indexApi']);
     Route::post('/', [ProveedorController::class, 'storeApi']);
     Route::get('search', [ProveedorController::class, 'buscarApi']);
     Route::get('buscar', [ProveedorController::class, 'buscarApi']);
+});
+
+// Rutas API para almacenes de prestables
+Route::group(['prefix' => 'almacenes-prestables'], function () {
+    // API endpoint que retorna almacenes de prestables con búsqueda y paginación
+    Route::get('index-json', [\App\Http\Controllers\Api\AlmacenPrestableController::class, 'indexApi'])->name('api.almacenes-prestables.index-json');
+    // API endpoint que retorna prestables por almacén con stock disponible
+    Route::get('{almacen}/prestables', [\App\Http\Controllers\Api\AlmacenPrestableController::class, 'prestablesPorAlmacen'])->name('api.almacenes-prestables.prestables');
 });
 
 // ==========================================

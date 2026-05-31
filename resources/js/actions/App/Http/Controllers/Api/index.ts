@@ -27,6 +27,7 @@ import EntregaBatchController from './EntregaBatchController'
 import VentaLogisticaController from './VentaLogisticaController'
 import ReporteCargoController from './ReporteCargoController'
 import ReporteProductoDañadoController from './ReporteProductoDañadoController'
+import AlmacenPrestableController from './AlmacenPrestableController'
 import ChoferGastoController from './ChoferGastoController'
 import AdminCajaApiController from './AdminCajaApiController'
 import EstadoLogisticoController from './EstadoLogisticoController'
@@ -65,6 +66,7 @@ EntregaBatchController,
 VentaLogisticaController,
 ReporteCargoController,
 ReporteProductoDañadoController,
+AlmacenPrestableController,
 ChoferGastoController,
 AdminCajaApiController,
 EstadoLogisticoController,

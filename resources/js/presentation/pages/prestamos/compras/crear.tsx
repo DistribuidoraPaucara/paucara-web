@@ -3,8 +3,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { Search, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
-import ProveedorSelector from '@/presentation/components/form-sections/ProveedorSelector';
+import { CheckCircle } from 'lucide-react';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import SearchAndItemsTable from '@/presentation/components/form-sections/SearchAndItemsTable';
 
 interface DetalleLocal {
     id: string; // ID temporal único
@@ -65,7 +66,20 @@ export default function CrearCompraPrestable() {
     const [prestables, setPrestables] = useState<Prestable[]>([]);
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [buscandoProveedores, setBuscandoProveedores] = useState(false);
+    const [busquedaProveedor, setBusquedaProveedor] = useState('');
     const [proveedorSeleccionado, setProveedorSeleccionado] = useState<Proveedor | null>(null);
+
+    // Estados para seleccionar almacén de prestables
+    const [almacenes, setAlmacenes] = useState<any[]>([]);
+    const [buscandoAlmacenes, setBuscandoAlmacenes] = useState(false);
+    const [busquedaAlmacen, setBusquedaAlmacen] = useState('');
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState<any | null>(null);
+
+    // Estados para seleccionar compra existente
+    const [compras, setCompras] = useState<any[]>([]);
+    const [compraSeleccionada, setCompraSeleccionada] = useState<any | null>(null);
+    const [buscandoCompras, setBuscandoCompras] = useState(false);
+    const [busquedaCompra, setBusquedaCompra] = useState('');
 
     // Modal de impresión
     const [showOutputModal, setShowOutputModal] = useState(false);
@@ -79,10 +93,22 @@ export default function CrearCompraPrestable() {
     const busquedaRef = useRef<HTMLInputElement>(null);
     const sugerenciasRef = useRef<HTMLDivElement>(null);
 
+    const cargarAlmacenes = useCallback(async () => {
+        try {
+            const response = await fetch('/api/almacenes-prestables/index-json?per_page=100');
+            const data = await response.json();
+            const almacenesData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            setAlmacenes(almacenesData);
+        } catch (error) {
+            console.error('Error cargando almacenes:', error);
+        }
+    }, []);
+
     useEffect(() => {
         cargarPrestables();
         cargarProveedores();
-    }, []);
+        cargarAlmacenes();
+    }, [cargarAlmacenes]);
 
     // Cerrar sugerencias al hacer click fuera
     useEffect(() => {
@@ -140,23 +166,65 @@ export default function CrearCompraPrestable() {
 
     const buscarProveedores = useCallback(async (query: string) => {
         if (query.trim().length === 0) {
-            cargarProveedores();
+            setProveedores([]);
             return;
         }
 
         try {
             setBuscandoProveedores(true);
-            const response = await fetch(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/proveedores/index-json?q=${encodeURIComponent(query)}&per_page=20`);
             const data = await response.json();
-            const proveedoresData = Array.isArray(data) ? data : (data.data || []);
+            const proveedoresData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
             setProveedores(proveedoresData);
         } catch (error) {
             console.error('Error buscando proveedores:', error);
-            cargarProveedores();
+            setProveedores([]);
         } finally {
             setBuscandoProveedores(false);
         }
-    }, [cargarProveedores]);
+    }, []);
+
+    const buscarAlmacenes = useCallback(async (query: string) => {
+        if (query.trim().length === 0) {
+            // Si no hay búsqueda, mantener almacenes pre-cargados
+            await cargarAlmacenes();
+            return;
+        }
+
+        try {
+            setBuscandoAlmacenes(true);
+            const response = await fetch(`/api/almacenes-prestables/index-json?q=${encodeURIComponent(query)}&per_page=20`);
+            const data = await response.json();
+            const almacenesData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            setAlmacenes(almacenesData);
+        } catch (error) {
+            console.error('Error buscando almacenes:', error);
+            setAlmacenes([]);
+        } finally {
+            setBuscandoAlmacenes(false);
+        }
+    }, [cargarAlmacenes]);
+
+    const buscarCompras = useCallback(async (query: string) => {
+        if (query.trim().length === 0) {
+            setCompras([]);
+            return;
+        }
+
+        try {
+            setBuscandoCompras(true);
+            // API endpoint que retorna compras en JSON con búsqueda y paginación
+            const response = await fetch(`/api/compras/index-json?q=${encodeURIComponent(query)}&per_page=20`);
+            const data = await response.json();
+            const comprasData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            setCompras(comprasData);
+        } catch (error) {
+            console.error('Error buscando compras:', error);
+            setCompras([]);
+        } finally {
+            setBuscandoCompras(false);
+        }
+    }, []);
 
     const getAlmacenesDePrestable = useCallback((prestable?: Prestable): Almacen[] => {
         const almacenesMap = new Map<number, Almacen>();
@@ -323,6 +391,11 @@ export default function CrearCompraPrestable() {
             return;
         }
 
+        if (!almacenSeleccionado) {
+            alert('Debe seleccionar un almacén de prestables');
+            return;
+        }
+
         try {
             setLoading(true);
 
@@ -330,7 +403,7 @@ export default function CrearCompraPrestable() {
             const detallesParaEnviar = detalles.map((d) => ({
                 prestable_id: d.prestable_id,
                 almacen_id: d.almacen_id,
-                almacenes_prestables_id: d.almacen_id,
+                almacenes_prestables_id: almacenSeleccionado.id,
                 cantidad: d.cantidad,
                 precio_unitario: d.precio_unitario,
             }));
@@ -343,6 +416,8 @@ export default function CrearCompraPrestable() {
                 },
                 body: JSON.stringify({
                     proveedor_id: proveedorSeleccionado?.id || null,
+                    almacenes_prestables_id: almacenSeleccionado?.id || null,
+                    compra_id: compraSeleccionada?.id || null,
                     detalles: detallesParaEnviar,
                 }),
             });
@@ -355,6 +430,7 @@ export default function CrearCompraPrestable() {
                 // Limpiar detalles
                 setDetalles([]);
                 setProveedorSeleccionado(null);
+                setAlmacenSeleccionado(null);
             } else {
                 alert('Error: ' + result.message);
             }
@@ -371,7 +447,7 @@ export default function CrearCompraPrestable() {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'Préstamos', href: '/prestamos' }, { label: 'Nueva Compra de Prestables' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Nueva Compra de Prestables' }]}>
             <Head title="Crear Compra de Prestables" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-6">
@@ -387,190 +463,214 @@ export default function CrearCompraPrestable() {
                     </div>
                 </div>
 
-                {/* Contenedor con 2 columnas responsivas */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {/* Selector de Proveedor */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                        <ProveedorSelector
-                            value={proveedorSeleccionado?.id || null}
-                            onSelect={(proveedor) => setProveedorSeleccionado(proveedor)}
-                            proveedoresDisponibles={proveedores}
-                            onSearchChange={buscarProveedores}
-                            isSearching={buscandoProveedores}
-                            label="🏭 Proveedor (Opcional)"
-                        />
-                    </div>
-
-                    {/* Buscador de Prestables */}
-                    <div className="relative">
-                        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            🔍 Buscar Prestable para Agregar
-                        </label>
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                            <input
-                                ref={busquedaRef}
-                                type="text"
-                                placeholder="Buscar por nombre o código..."
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
-                                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
-                            />
-                        </div>
-
-                        {/* Sugerencias */}
-                        {showSugerencias && sugerencias.length > 0 && (
-                            <div
-                                ref={sugerenciasRef}
-                                className="absolute top-full z-50 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
-                            >
-                                {sugerencias.map((prestable) => (
-                                    <button
-                                        key={prestable.id}
-                                        onClick={() => seleccionarPrestable(prestable)}
-                                        className="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition hover:bg-blue-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                    >
-                                        <div>
-                                            <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                                {prestable.nombre}
-                                            </p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                Código: {prestable.codigo}
-                                            </p>
-                                        </div>
-                                        <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                            +
-                                        </span>
-                                    </button>
-                                ))}
+                {/* Contenedor con 3 columnas responsivas */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {/* Buscador de Compra Existente - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="📋 Asignar a Compra Existente (Opcional)"
+                        placeholder="Buscar por ID o número de compra..."
+                        selectedItem={compraSeleccionada}
+                        items={compras}
+                        isLoading={buscandoCompras}
+                        searchValue={busquedaCompra}
+                        onSearch={(query) => {
+                            setBusquedaCompra(query);
+                            buscarCompras(query);
+                        }}
+                        onSelect={(compra) => {
+                            setCompraSeleccionada(compra);
+                            setBusquedaCompra('');
+                            setCompras([]);
+                            // Auto-cargar proveedor si la compra tiene proveedor_id
+                            if (compra.proveedor_id && compra.proveedor) {
+                                setProveedorSeleccionado(compra.proveedor);
+                            }
+                        }}
+                        onClear={() => {
+                            setCompraSeleccionada(null);
+                            setBusquedaCompra('');
+                            setCompras([]);
+                        }}
+                        getItemId={(compra) => compra.id}
+                        getDisplayValue={(compra) => `Compra #${compra.id}`}
+                        renderItem={(compra) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    Compra #{compra.id}
+                                </div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400">
+                                    {compra.numero_compra} - {compra.proveedor?.nombre || 'Sin proveedor'}
+                                </div>
                             </div>
                         )}
-                    </div>
+                    />
+
+                    {/* Selector de Proveedor - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="🏭 Proveedor (Opcional)"
+                        placeholder="Buscar por nombre o NIT..."
+                        selectedItem={proveedorSeleccionado}
+                        items={proveedores}
+                        isLoading={buscandoProveedores}
+                        searchValue={busquedaProveedor}
+                        onSearch={(query) => {
+                            setBusquedaProveedor(query);
+                            buscarProveedores(query);
+                        }}
+                        onSelect={(proveedor) => {
+                            setProveedorSeleccionado(proveedor);
+                            setBusquedaProveedor('');
+                            setProveedores([]);
+                        }}
+                        onClear={() => {
+                            setProveedorSeleccionado(null);
+                            setBusquedaProveedor('');
+                            setProveedores([]);
+                        }}
+                        getItemId={(proveedor) => proveedor.id}
+                        getDisplayValue={(proveedor) => proveedor.nombre}
+                        renderItem={(proveedor) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {proveedor.nombre}
+                                </div>
+                                {proveedor.razon_social && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        {proveedor.razon_social}
+                                    </div>
+                                )}
+                                {proveedor.nit && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        NIT: {proveedor.nit}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />
+
+                    {/* Selector de Almacén de Prestables - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="📦 Almacén de Prestables (Requerido)"
+                        placeholder="Buscar almacén..."
+                        selectedItem={almacenSeleccionado}
+                        items={almacenes}
+                        isLoading={buscandoAlmacenes}
+                        searchValue={busquedaAlmacen}
+                        onSearch={(query) => {
+                            setBusquedaAlmacen(query);
+                            buscarAlmacenes(query);
+                        }}
+                        onSelect={(almacen) => {
+                            setAlmacenSeleccionado(almacen);
+                            setBusquedaAlmacen('');
+                            setAlmacenes([]);
+                        }}
+                        onClear={() => {
+                            setAlmacenSeleccionado(null);
+                            setBusquedaAlmacen('');
+                            setAlmacenes([]);
+                        }}
+                        getItemId={(almacen) => almacen.id}
+                        getDisplayValue={(almacen) => almacen.nombre}
+                        renderItem={(almacen) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {almacen.nombre}
+                                </div>
+                                {almacen.es_proveedor && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        (Proveedor)
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />
                 </div>
 
-                {/* Tabla de detalles */}
-                <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                    <table className="w-full">
-                        <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Prestable
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Almacén
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Cantidad
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Precio Unitario
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Subtotal
-                                </th>
-                                <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Acción
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                            {detalles.length > 0 ? (
-                                detalles.map((detalle) => (
-                                    <tr
-                                        key={detalle.id}
-                                        className="bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
-                                    >
-                                        <td className="px-4 py-3">
-                                            <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                                {detalle.prestable?.nombre}
-                                            </p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                {detalle.prestable?.codigo}
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                            <select
-                                                value={detalle.almacen_id}
-                                                onChange={(e) =>
-                                                    actualizarAlmacenDetalle(
-                                                        detalle.id,
-                                                        Number(e.target.value)
-                                                    )
-                                                }
-                                                className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            >
-                                                {getAlmacenesDetalle(detalle.prestable_id).map((almacen) => (
-                                                    <option key={`${detalle.id}-${almacen.id}`} value={almacen.id}>
-                                                        {almacen.nombre}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={detalle.cantidad}
-                                                onChange={(e) =>
-                                                    actualizarDetalle(detalle.id, 'cantidad', e.target.value)
-                                                }
-                                                className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-center text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={detalle.precio_unitario}
-                                                onChange={(e) =>
-                                                    actualizarDetalle(detalle.id, 'precio_unitario', e.target.value)
-                                                }
-                                                className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-right text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
-                                            {(parseFloat(detalle.subtotal ?? 0)).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => eliminarDetalle(detalle.id)}
-                                                className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={6} className="py-12 text-center">
-                                        <div className="flex flex-col items-center gap-2 text-slate-400">
-                                            <AlertCircle size={24} />
-                                            <p>Busca arriba para agregar prestables</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                        {detalles.length > 0 && (
-                            <tfoot>
-                                <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                                    <td colSpan={4} className="px-4 py-4 text-right" />
-                                    <td className="px-4 py-4">
-                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                            TOTAL
-                                        </p>
-                                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                            {(parseFloat(calcularTotal() ?? 0)).toFixed(2)}
-                                        </p>
-                                    </td>
-                                    <td />
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
-                </div>
+                {/* Búsqueda y Tabla de Prestables - Componente Genérico */}
+                <SearchAndItemsTable
+                    label="🔍 Buscar Prestable para Agregar"
+                    placeholder="Buscar por nombre o código..."
+                    searchValue={busqueda}
+                    onSearchChange={setBusqueda}
+                    isSearching={false}
+                    searchResults={sugerencias}
+                    onSelectItem={seleccionarPrestable}
+                    items={detalles}
+                    columns={[
+                        {
+                            key: 'prestable',
+                            label: 'Prestable',
+                            render: (item) => (
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                        {item.prestable?.nombre}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        ID: {item.prestable?.id} | Código: {item.prestable?.codigo}
+                                    </p>
+                                </div>
+                            ),
+                        },
+                        {
+                            key: 'cantidad',
+                            label: 'Cantidad',
+                            render: (item) => (
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={item.cantidad}
+                                    onChange={(e) =>
+                                        actualizarDetalle(item.id, 'cantidad', e.target.value)
+                                    }
+                                    className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-center text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                />
+                            ),
+                        },
+                        {
+                            key: 'precio_unitario',
+                            label: 'Precio Unitario',
+                            align: 'right',
+                            render: (item) => (
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={item.precio_unitario}
+                                    onChange={(e) =>
+                                        actualizarDetalle(item.id, 'precio_unitario', e.target.value)
+                                    }
+                                    className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-right text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                />
+                            ),
+                        },
+                        {
+                            key: 'subtotal',
+                            label: 'Subtotal',
+                            align: 'right',
+                            render: (item) => (
+                                <span className="font-bold text-slate-900 dark:text-slate-100">
+                                    {(parseFloat(item.subtotal ?? 0)).toFixed(2)}
+                                </span>
+                            ),
+                        },
+                    ]}
+                    onDeleteItem={eliminarDetalle}
+                    getItemId={(item) => item.id}
+                    renderSearchItem={(prestable) => (
+                        <div>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                {prestable.nombre}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Código: {prestable.codigo}
+                            </p>
+                        </div>
+                    )}
+                    emptyMessage="Busca arriba para agregar prestables"
+                    totalLabel="TOTAL"
+                    totalValue={(parseFloat(calcularTotal() ?? 0)).toFixed(2)}
+                />
 
                 {/* Botón confirmar */}
                 {detalles.length > 0 && (

@@ -57,6 +57,17 @@ const getEstadoBadgeStyle = (estado: string) => {
     return styles[estado] || { bg: 'bg-gray-100', text: 'text-gray-700' };
 };
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Préstamos',
+        href: '/prestamos',
+    },
+    {
+        title: 'Compras Canastillas/Embase',
+        href: '#',
+    },
+];
+
 export default function ListadoCompras() {
     const [compras, setCompras] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(false);
@@ -182,7 +193,7 @@ export default function ListadoCompras() {
     const filtrosActivos = [buscar, estadoFiltro, filtroProveedor, filtroFechaDesde, filtroFechaHasta].filter(Boolean).length;
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'Préstamos', href: '/prestamos' }, { label: 'Compras de Prestables' }]}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Listado de Compras de Prestables" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
@@ -194,7 +205,7 @@ export default function ListadoCompras() {
                             Listado de todas las compras registradas
                         </p>
                     </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => (window.location.href = '/prestamos/compras/crear')}>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => (window.location.href = '/prestamos/compras/crear')}>
                         ➕ Nueva Compra
                     </Button>
                 </div>

@@ -24,7 +24,7 @@ class CompraPrestableService
             // Generar número de compra único
             $numeroCompra = $this->generarNumeroCompra();
 
-            $compra = CompraPrestable::create([
+            $createData = [
                 'numero_compra' => $numeroCompra,
                 'proveedor_id' => $data['proveedor_id'] ?? null,
                 'usuario_id' => $data['usuario_id'] ?? auth()->id(),
@@ -32,11 +32,19 @@ class CompraPrestableService
                 'observaciones' => $data['observaciones'] ?? null,
                 'ip_usuario' => $data['ip_usuario'] ?? request()?->ip(),
                 'user_agent' => $data['user_agent'] ?? request()?->userAgent(),
-            ]);
+            ];
+
+            // Si se proporciona compra_id, asociarlo a una compra general existente
+            if (!empty($data['compra_id'])) {
+                $createData['compra_id'] = $data['compra_id'];
+            }
+
+            $compra = CompraPrestable::create($createData);
 
             Log::info('✅ Compra de prestables creada', [
                 'compra_id' => $compra->id,
                 'numero_compra' => $numeroCompra,
+                'compra_general_id' => $data['compra_id'] ?? null,
             ]);
 
             return $compra;

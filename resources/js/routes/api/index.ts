@@ -16,6 +16,7 @@ import creditos from './creditos'
 import geocoding from './geocoding'
 import entregas from './entregas'
 import proveedores from './proveedores'
+import almacenesPrestables from './almacenes-prestables'
 import cajas from './cajas'
 import gastos from './gastos'
 import admin from './admin'
@@ -253,7 +254,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     preventistas.form = preventistasForm
 /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -267,7 +268,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -275,7 +276,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -283,7 +284,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -292,7 +293,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
     const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -301,7 +302,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
         logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -309,7 +310,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/api.php:1440
+ * @see routes/api.php:1452
  * @route '/api/logs'
  */
         logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -343,6 +344,7 @@ creditos,
 geocoding,
 entregas,
 proveedores,
+almacenesPrestables,
 cajas,
 gastos,
 admin,

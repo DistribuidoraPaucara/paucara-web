@@ -596,12 +596,10 @@ export default function StockProveedoresPage({
                     <div className="lg:col-span-2">
                         <DistributionChart
                             disponible={resumen.total_disponible}
-                            enPrestamo={
-                                resumen.total_en_prestamo_cliente + resumen.total_en_prestamo_proveedor
-                            }
-                            vendido={resumen.total_vendido}
-                            deuda={resumen.total_en_prestamo_proveedor}
-                            title="Distribución General de Stock"
+                            enPrestamo={resumen.total_proveedor}
+                            vendido={0}
+                            deuda={resumen.total_proveedor_acreedor}
+                            title="Distribución General de Stock - Proveedores"
                             size="lg"
                         />
                     </div>
@@ -617,13 +615,21 @@ export default function StockProveedoresPage({
                             </p>
                         </div>
 
-                        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">
-                                En Préstamo
+                        <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                            <p className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase">
+                                🟠 Por Devolver (Proveedor)
                             </p>
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-1">
-                                {resumen.total_en_prestamo_cliente +
-                                    resumen.total_en_prestamo_proveedor}
+                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-200 mt-1">
+                                {resumen.total_proveedor_acreedor}
+                            </p>
+                        </div>
+
+                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                            <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase">
+                                ✅ Devuelto (Proveedor)
+                            </p>
+                            <p className="text-2xl font-bold text-green-900 dark:text-green-200 mt-1">
+                                {resumen.total_proveedor_devuelto}
                             </p>
                         </div>
 
@@ -683,7 +689,7 @@ export default function StockProveedoresPage({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todos</SelectItem>
-                                <SelectItem value="EMBASE">🔵 Embase</SelectItem>
+                                <SelectItem value="EMBASES">🔵 Embase</SelectItem>
                                 <SelectItem value="CANASTILLA">🟡 Canastilla</SelectItem>
                             </SelectContent>
                         </Select>
@@ -725,10 +731,10 @@ export default function StockProveedoresPage({
                                         Disponible
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Cliente
+                                        🟠 Por Devolver
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Proveedor
+                                        ✅ Devuelto
                                     </th>
                                     {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Vendido
@@ -772,13 +778,13 @@ export default function StockProveedoresPage({
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold">
-                                                    {item.cantidad_en_prestamo_cliente}
+                                                <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
+                                                    {item.cantidad_proveedor_acreedor}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
-                                                    {item.cantidad_en_prestamo_proveedor}
+                                                <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
+                                                    {item.cantidad_proveedor_devuelto}
                                                 </span>
                                             </td>
                                             {/* <td className="px-4 py-3 text-right">
