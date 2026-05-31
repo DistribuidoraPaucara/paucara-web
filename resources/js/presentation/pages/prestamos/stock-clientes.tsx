@@ -35,9 +35,6 @@ interface StockItem {
     cantidad_prestamo_evento_activo: number;
     cantidad_prestamo_evento_devuelto: number;
     cantidad_prestamo_evento_total: number;
-    cantidad_prestamo_proveedor_activo: number;
-    cantidad_prestamo_proveedor_devuelto: number;
-    cantidad_prestamo_proveedor_total: number;
     cantidad_total: number;
 }
 
@@ -51,9 +48,6 @@ interface StockPageProps {
         total_prestamo_evento_activo: number;
         total_prestamo_evento_devuelto: number;
         total_prestamo_evento: number;
-        total_prestamo_proveedor_activo: number;
-        total_prestamo_proveedor_devuelto: number;
-        total_prestamo_proveedor: number;
         total_general: number;
     };
     almacenes: Array<{ id: number; nombre: string }>;
@@ -94,15 +88,13 @@ export default function StockClientesPage({
         cantidad_prestamo_cliente_devuelto: 0,
         cantidad_prestamo_evento_activo: 0,
         cantidad_prestamo_evento_devuelto: 0,
-        cantidad_prestamo_proveedor_activo: 0,
-        cantidad_prestamo_proveedor_devuelto: 0,
         motivo: '',
         comentarios: '',
     });
 
     // Estado para ajuste relativo (+/-)
     const [adjustData, setAdjustData] = useState({
-        tipo_ajuste: 'disponible' as 'disponible' | 'prestamo_cliente_activo' | 'prestamo_evento_activo' | 'prestamo_proveedor_activo' | 'total',
+        tipo_ajuste: 'disponible' as 'disponible' | 'prestamo_cliente_activo' | 'prestamo_evento_activo' | 'total',
         es_incremento: true, // true = incremento, false = decremento
         cantidad: 0,
         motivo: '',
@@ -138,8 +130,8 @@ export default function StockClientesPage({
                 case 'disponible':
                     return b.cantidad_disponible - a.cantidad_disponible;
                 case 'prestamo':
-                    return (b.cantidad_prestamo_cliente_total + b.cantidad_prestamo_evento_total + b.cantidad_prestamo_proveedor_total) -
-                        (a.cantidad_prestamo_cliente_total + a.cantidad_prestamo_evento_total + a.cantidad_prestamo_proveedor_total);
+                    return (b.cantidad_prestamo_cliente_total + b.cantidad_prestamo_evento_total) -
+                        (a.cantidad_prestamo_cliente_total + a.cantidad_prestamo_evento_total);
                 default:
                     return 0;
             }
@@ -643,11 +635,9 @@ export default function StockClientesPage({
                         <DistributionChart
                             disponible={resumen.total_disponible}
                             enPrestamo={
-                                resumen.total_en_prestamo_cliente + resumen.total_en_prestamo_proveedor
+                                resumen.total_prestamo_cliente + resumen.total_prestamo_evento
                             }
-                            vendido={resumen.total_vendido}
-                            deuda={resumen.total_en_prestamo_proveedor}
-                            title="Distribución General de Stock"
+                            title="Distribución General de Stock - Clientes"
                             size="lg"
                         />
                     </div>
@@ -665,11 +655,10 @@ export default function StockClientesPage({
 
                         <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                             <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">
-                                En Préstamo
+                                En Préstamo a Clientes
                             </p>
                             <p className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-1">
-                                {resumen.total_en_prestamo_cliente +
-                                    resumen.total_en_prestamo_proveedor}
+                                {resumen.total_prestamo_cliente}
                             </p>
                         </div>
 
@@ -757,11 +746,8 @@ export default function StockClientesPage({
                                         Cliente
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Proveedor
+                                        Evento
                                     </th>
-                                    {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Vendido
-                                    </th> */}
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Total
                                     </th>
@@ -805,12 +791,12 @@ export default function StockClientesPage({
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold">
-                                                    {item.cantidad_en_prestamo_cliente}
+                                                    {item.cantidad_prestamo_cliente_total}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
-                                                    {item.cantidad_en_prestamo_proveedor}
+                                                <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
+                                                    {item.cantidad_prestamo_evento_total}
                                                 </span>
                                             </td>
                                             {/* <td className="px-4 py-3 text-right">
