@@ -29,12 +29,12 @@ class PrestableStockService
             ],
             [
                 'cantidad_disponible' => 0,
-                'cantidad_prestamo_cliente_activo' => 0,
-                'cantidad_prestamo_cliente_devuelto' => 0,
-                'cantidad_prestamo_evento_activo' => 0,
-                'cantidad_prestamo_evento_devuelto' => 0,
-                'cantidad_prestamo_proveedor_activo' => 0,
-                'cantidad_prestamo_proveedor_devuelto' => 0,
+                'cantidad_cliente_deudor' => 0,
+                'cantidad_cliente_devuelto' => 0,
+                'cantidad_evento_deudor' => 0,
+                'cantidad_evento_devuelto' => 0,
+                'cantidad_proveedor_acreedor' => 0,
+                'cantidad_proveedor_devuelto' => 0,
             ]
         );
     }
@@ -48,19 +48,19 @@ class PrestableStockService
         $stock = $this->obtenerStock($prestableId, $almacenId);
 
         return $stock->cantidad_disponible +
-               $stock->cantidad_prestamo_cliente_activo +
-               $stock->cantidad_prestamo_cliente_devuelto +
-               $stock->cantidad_prestamo_evento_activo +
-               $stock->cantidad_prestamo_evento_devuelto +
-               $stock->cantidad_prestamo_proveedor_activo +
-               $stock->cantidad_prestamo_proveedor_devuelto;
+               $stock->cantidad_cliente_deudor +
+               $stock->cantidad_cliente_devuelto +
+               $stock->cantidad_evento_deudor +
+               $stock->cantidad_evento_devuelto +
+               $stock->cantidad_proveedor_acreedor +
+               $stock->cantidad_proveedor_devuelto;
     }
 
     /**
      * Prestar canastillas a cliente
      *
      * Reduce: cantidad_disponible
-     * Incrementa: cantidad_prestamo_cliente_activo
+     * Incrementa: cantidad_cliente_deudor
      */
     public function prestarAlCliente(int $prestableId, int $almacenId, int $cantidad): bool
     {
@@ -80,7 +80,7 @@ class PrestableStockService
         DB::transaction(function () use ($stock, $cantidad) {
             $stock->update([
                 'cantidad_disponible' => $stock->cantidad_disponible - $cantidad,
-                'cantidad_prestamo_cliente_activo' => $stock->cantidad_prestamo_cliente_activo + $cantidad,
+                'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
             ]);
 
             Log::info('✅ Canastillas prestadas al cliente', [
@@ -112,11 +112,11 @@ class PrestableStockService
         $cantidadTotal = $cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal;
 
         // Validar que no devuelve más de lo que pidió prestado
-        if ($stock->cantidad_prestamo_cliente_activo < $cantidadTotal) {
+        if ($stock->cantidad_cliente_deudor < $cantidadTotal) {
             Log::warning('❌ Intento de devolución inválida', [
                 'prestable_id' => $prestableId,
                 'almacenes_prestables_id' => $almacenId,
-                'en_prestamo' => $stock->cantidad_prestamo_cliente_activo,
+                'en_prestamo' => $stock->cantidad_cliente_deudor,
                 'intenta_devolver' => $cantidadTotal,
             ]);
             return false;
@@ -134,9 +134,9 @@ class PrestableStockService
 
             $stock->update([
                 'cantidad_disponible' => $nuevoDisponible,
-                'cantidad_prestamo_cliente_activo' => $stock->cantidad_prestamo_cliente_activo -
+                'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor -
                                                      ($cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal),
-                'cantidad_prestamo_cliente_devuelto' => $stock->cantidad_prestamo_cliente_devuelto +
+                'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto +
                                                        ($cantidadDevuelta + $cantidadDañadaParcial),
             ]);
 
@@ -197,7 +197,7 @@ class PrestableStockService
      *
      * Incrementa:
      * - cantidad_disponible
-     * - cantidad_prestamo_proveedor_activo
+     * - cantidad_proveedor_acreedor
      */
     public function recibirPrestamoProveedor(int $prestableId, int $almacenId, int $cantidad): bool
     {
@@ -206,7 +206,7 @@ class PrestableStockService
         DB::transaction(function () use ($stock, $cantidad) {
             $stock->update([
                 'cantidad_disponible' => $stock->cantidad_disponible + $cantidad,
-                'cantidad_prestamo_proveedor_activo' => $stock->cantidad_prestamo_proveedor_activo + $cantidad,
+                'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidad,
             ]);
 
             Log::info('✅ Préstamo de proveedor registrado', [
@@ -226,7 +226,7 @@ class PrestableStockService
         * - disponibilidad operativa
         * - deuda activa con proveedor
         *
-        * Incrementamos cantidad_prestamo_proveedor_devuelto solo para unidades
+        * Incrementamos cantidad_proveedor_devuelto solo para unidades
         * efectivamente devueltas (buen estado + daño parcial).
      *
      * $cantidadDevuelta: En buen estado (se devuelven al proveedor)
@@ -249,11 +249,11 @@ class PrestableStockService
         }
 
         // Validar que tenemos para devolver en préstamo al proveedor
-        if ($stock->cantidad_prestamo_proveedor_activo < $cantidadDevuelta) {
+        if ($stock->cantidad_proveedor_acreedor < $cantidadDevuelta) {
             Log::warning('❌ Intento de devolución a proveedor inválida', [
                 'prestable_id' => $prestableId,
                 'almacenes_prestables_id' => $almacenId,
-                'en_prestamo' => $stock->cantidad_prestamo_proveedor_activo,
+                'en_prestamo' => $stock->cantidad_proveedor_acreedor,
                 'intenta_devolver' => $cantidadDevuelta,
             ]);
             return false;
@@ -273,9 +273,9 @@ class PrestableStockService
             $stock->update([
                 // ✅ Restar la cantidad TOTAL devuelta
                 'cantidad_disponible' => $stock->cantidad_disponible - $cantidadDevuelta,
-                'cantidad_prestamo_proveedor_activo' => $stock->cantidad_prestamo_proveedor_activo - $cantidadDevuelta,
+                'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor - $cantidadDevuelta,
                 // Registrar devueltas (sin separar dañadas)
-                'cantidad_prestamo_proveedor_devuelto' => $stock->cantidad_prestamo_proveedor_devuelto + $cantidadDevuelta,
+                'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto + $cantidadDevuelta,
             ]);
 
             Log::info('✅ Devolución a proveedor registrada en stock', [
@@ -317,14 +317,6 @@ class PrestableStockService
     public function obtenerResumen(int $prestableId, int $almacenId): array
     {
         $stock = $this->obtenerStock($prestableId, $almacenId);
-        $total = $this->obtenerCantidadTotal($prestableId, $almacenId);
-
-        return [
-            'cantidad_disponible' => $stock->cantidad_disponible,
-            'cantidad_en_prestamo_cliente' => $stock->cantidad_en_prestamo_cliente,
-            'cantidad_que_debo_devolver' => $stock->cantidad_que_debo_devolver,
-            'cantidad_vendida' => $stock->cantidad_vendida,
-            'cantidad_total' => $total,
-        ];
+        return $stock->resumen;
     }
 }

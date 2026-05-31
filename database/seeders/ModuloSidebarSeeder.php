@@ -192,8 +192,13 @@ class ModuloSidebarSeeder extends Seeder
                     'permisos'    => ['prestamos.index'],
                 ],
                 'submenu' => [
-                    ['titulo' => 'Gestion de Préstamos', 'ruta' => '/prestamos', 'icono' => 'HandCoins', 'orden' => 1, 'permisos' => ['prestamos.index']],
-                    // ['titulo' => 'Nuevo Préstamo', 'ruta' => '/prestamos/create', 'icono' => 'Plus', 'orden' => 2, 'permisos' => ['prestamos.create']],
+                    // ['titulo' => 'Gestion de Préstamos', 'ruta' => '/prestamos', 'icono' => 'HandCoins', 'orden' => 1, 'permisos' => ['prestamos.index']],
+                    ['titulo' => 'Embases y canastillas', 'ruta' => '/prestamos/prestables', 'icono' => 'Package2', 'orden' => 1, 'permisos' => ['prestamos.index']],
+                    ['titulo' => 'Stock Clientes', 'ruta' => '/prestamos/stock/clientes', 'icono' => 'Users', 'orden' => 2, 'permisos' => ['prestamos.index']],
+                    ['titulo' => 'Stock Proveedores', 'ruta' => '/prestamos/stock/proveedores', 'icono' => 'Truck', 'orden' => 3, 'permisos' => ['prestamos.index']],
+                    // reportes
+                    ['titulo' => 'Reportes de Préstamos', 'ruta' => '/prestamos/reportes', 'icono' => 'BarChart4', 'orden' => 4, 'permisos' => ['prestamos.reportes.index']],
+                    // ['titulo' => 'Nuevo Préstamo', 'ruta' => '/prestamos/create', 'icono' => 'Plus', 'orden' => 3, 'permisos' => ['prestamos.create']],
                 ],
             ],
 

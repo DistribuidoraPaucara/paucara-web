@@ -131,8 +131,8 @@ class PrestamoClienteService
 
                         $cantidadMovida = (int) $detalleAlmacen['cantidad'];
                         $disponiblePosterior = $stock->cantidad_disponible;
-                        $prestamoClientePosterior = $stock->cantidad_prestamo_cliente_activo;
-                        $prestamoProveedorPosterior = $stock->cantidad_prestamo_proveedor_activo;
+                        $prestamoClientePosterior = $stock->cantidad_cliente_deudor;
+                        $prestamoProveedorPosterior = $stock->cantidad_proveedor_acreedor;
 
                         $this->movimientoService->registrarMovimiento([
                             'prestable_stock_id' => $stock->id,
@@ -211,7 +211,7 @@ class PrestamoClienteService
                     } else {
                         $stock->update([
                             'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomar,
-                            'cantidad_prestamo_cliente_activo' => $stock->cantidad_prestamo_cliente_activo + $cantidadATomar,
+                            'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidadATomar,
                         ]);
                     }
 
@@ -356,9 +356,9 @@ class PrestamoClienteService
                     // Obtener stock ANTES de devolver
                     $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
                     $disponibleAntes = $stock->cantidad_disponible;
-                    $prestamoClienteActivoAntes = $stock->cantidad_prestamo_cliente_activo;
-                    $prestamoProveedorActivoAntes = $stock->cantidad_prestamo_proveedor_activo;
-                    $prestamoEventoActivoAntes = $stock->cantidad_prestamo_evento_activo;
+                    $prestamoClienteActivoAntes = $stock->cantidad_cliente_deudor;
+                    $prestamoProveedorActivoAntes = $stock->cantidad_proveedor_acreedor;
+                    $prestamoEventoActivoAntes = $stock->cantidad_evento_deudor;
 
                     // Actualizar stock
                     if ($cantidadParaStock > 0) {
@@ -386,8 +386,8 @@ class PrestamoClienteService
                             'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorActivoAntes,
                             'disponible_posterior' => $stock->cantidad_disponible,
-                            'prestamo_cliente_posterior' => $stock->cantidad_prestamo_cliente_activo,
-                            'prestamo_proveedor_posterior' => $stock->cantidad_prestamo_proveedor_activo,
+                            'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                            'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             'categoria_afectada' => 'prestamo_cliente',
                             'motivo' => 'Devolución de préstamo a cliente',
                             'numero_referencia' => $prestamo->id,
@@ -447,9 +447,9 @@ class PrestamoClienteService
                             $almacenIdEmbase = $this->resolverAlmacenIdParaPrestable($embase->id);
                             $stockEmbase = $this->stockService->obtenerStock($embase->id, $almacenIdEmbase);
                             $disponibleEmbaseAntes = $stockEmbase->cantidad_disponible;
-                            $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_prestamo_cliente_activo;
-                            $prestamoProveedorEmbaseAntes = $stockEmbase->cantidad_prestamo_proveedor_activo;
-                            $prestamoEventoEmbaseAntes = $stockEmbase->cantidad_prestamo_evento_activo;
+                            $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_cliente_deudor;
+                            $prestamoProveedorEmbaseAntes = $stockEmbase->cantidad_proveedor_acreedor;
+                            $prestamoEventoEmbaseAntes = $stockEmbase->cantidad_evento_deudor;
 
                             // Actualizar stock del embase (devolver solo los no dañados)
                             if ($embasesADevolver > 0) {
@@ -477,8 +477,8 @@ class PrestamoClienteService
                                     'prestamo_cliente_anterior' => $prestamoClienteEmbaseAntes,
                                     'prestamo_proveedor_anterior' => $prestamoProveedorEmbaseAntes,
                                     'disponible_posterior' => $stockEmbase->cantidad_disponible,
-                                    'prestamo_cliente_posterior' => $stockEmbase->cantidad_prestamo_cliente_activo,
-                                    'prestamo_proveedor_posterior' => $stockEmbase->cantidad_prestamo_proveedor_activo,
+                                    'prestamo_cliente_posterior' => $stockEmbase->cantidad_cliente_deudor,
+                                    'prestamo_proveedor_posterior' => $stockEmbase->cantidad_proveedor_acreedor,
                                     'categoria_afectada' => 'prestamo_cliente',
                                     'motivo' => 'Devolución de embase (asociado a canastilla)',
                                     'numero_referencia' => $prestamo->id,
@@ -500,8 +500,8 @@ class PrestamoClienteService
                                     'prestamo_cliente_anterior' => $prestamoClienteEmbaseAntes,
                                     'prestamo_proveedor_anterior' => $prestamoProveedorEmbaseAntes,
                                     'disponible_posterior' => $stockEmbase->cantidad_disponible,
-                                    'prestamo_cliente_posterior' => $stockEmbase->cantidad_prestamo_cliente_activo,
-                                    'prestamo_proveedor_posterior' => $stockEmbase->cantidad_prestamo_proveedor_activo,
+                                    'prestamo_cliente_posterior' => $stockEmbase->cantidad_cliente_deudor,
+                                    'prestamo_proveedor_posterior' => $stockEmbase->cantidad_proveedor_acreedor,
                                     'categoria_afectada' => 'prestamo_cliente',
                                     'motivo' => 'Pérdida de embases en devolución',
                                     'numero_referencia' => $prestamo->id,
@@ -699,9 +699,9 @@ class PrestamoClienteService
                             // Obtener stock ANTES de devolver
                             $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
                             $disponibleAntes = $stock->cantidad_disponible;
-                            $prestamoClienteActivoAntes = $stock->cantidad_prestamo_cliente_activo;
-                            $prestamoProveedorActivoAntes = $stock->cantidad_prestamo_proveedor_activo;
-                            $prestamoEventoActivoAntes = $stock->cantidad_prestamo_evento_activo;
+                            $prestamoClienteActivoAntes = $stock->cantidad_cliente_deudor;
+                            $prestamoProveedorActivoAntes = $stock->cantidad_proveedor_acreedor;
+                            $prestamoEventoActivoAntes = $stock->cantidad_evento_deudor;
 
                             // Devolver como cantidad en buen estado
                             $this->stockService->devolverDelCliente(
@@ -726,8 +726,8 @@ class PrestamoClienteService
                                 'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
                                 'prestamo_proveedor_anterior' => $prestamoProveedorActivoAntes,
                                 'disponible_posterior' => $stock->cantidad_disponible,
-                                'prestamo_cliente_posterior' => $stock->cantidad_prestamo_cliente_activo,
-                                'prestamo_proveedor_posterior' => $stock->cantidad_prestamo_proveedor_activo,
+                                'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                                'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'categoria_afectada' => 'prestamo_cliente',
                                 'motivo' => 'Devolución por anulación de préstamo',
                                 'numero_referencia' => $prestamo->id,
@@ -747,9 +747,9 @@ class PrestamoClienteService
                                     $almacenIdEmbase = $this->resolverAlmacenIdParaPrestable($embase->id);
                                     $stockEmbase = $this->stockService->obtenerStock($embase->id, $almacenIdEmbase);
                                     $disponibleEmbaseAntes = $stockEmbase->cantidad_disponible;
-                                    $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_prestamo_cliente_activo;
-                                    $prestamoProveedorEmbaseAntes = $stockEmbase->cantidad_prestamo_proveedor_activo;
-                                    $prestamoEventoEmbaseAntes = $stockEmbase->cantidad_prestamo_evento_activo;
+                                    $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_cliente_deudor;
+                                    $prestamoProveedorEmbaseAntes = $stockEmbase->cantidad_proveedor_acreedor;
+                                    $prestamoEventoEmbaseAntes = $stockEmbase->cantidad_evento_deudor;
 
                                     // Actualizar stock del embase (devolver)
                                     $this->stockService->devolverDelCliente(
@@ -774,8 +774,8 @@ class PrestamoClienteService
                                         'prestamo_cliente_anterior' => $prestamoClienteEmbaseAntes,
                                         'prestamo_proveedor_anterior' => $prestamoProveedorEmbaseAntes,
                                         'disponible_posterior' => $stockEmbase->cantidad_disponible,
-                                        'prestamo_cliente_posterior' => $stockEmbase->cantidad_prestamo_cliente_activo,
-                                        'prestamo_proveedor_posterior' => $stockEmbase->cantidad_prestamo_proveedor_activo,
+                                        'prestamo_cliente_posterior' => $stockEmbase->cantidad_cliente_deudor,
+                                        'prestamo_proveedor_posterior' => $stockEmbase->cantidad_proveedor_acreedor,
                                         'categoria_afectada' => 'prestamo_cliente',
                                         'motivo' => 'Devolución de embase por anulación de préstamo',
                                         'numero_referencia' => $prestamo->id,
@@ -840,8 +840,8 @@ class PrestamoClienteService
     private function resolverAlmacenIdParaPrestable(int $prestableId): int
     {
         $stockConPrestamoActivo = PrestableStock::where('prestable_id', $prestableId)
-            ->where('cantidad_prestamo_cliente_activo', '>', 0)
-            ->orderByDesc('cantidad_prestamo_cliente_activo')
+            ->where('cantidad_cliente_deudor', '>', 0)
+            ->orderByDesc('cantidad_cliente_deudor')
             ->first();
 
         if ($stockConPrestamoActivo) {

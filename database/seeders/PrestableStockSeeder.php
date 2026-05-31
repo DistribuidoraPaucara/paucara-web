@@ -22,12 +22,12 @@ class PrestableStockSeeder extends Seeder
                 'prestable_id' => $prestable->id,
                 'almacenes_prestables_id' => 1, // Almacén default
                 'cantidad_disponible' => $this->cantidadInicial($prestable->codigo),
-                'cantidad_prestamo_cliente_activo' => 0,
-                'cantidad_prestamo_cliente_devuelto' => 0,
-                'cantidad_prestamo_evento_activo' => 0,
-                'cantidad_prestamo_evento_devuelto' => 0,
-                'cantidad_prestamo_proveedor_activo' => 0,
-                'cantidad_prestamo_proveedor_devuelto' => 0,
+                'cantidad_cliente_deudor' => 0,
+                'cantidad_cliente_devuelto' => 0,
+                'cantidad_evento_deudor' => 0,
+                'cantidad_evento_devuelto' => 0,
+                'cantidad_proveedor_acreedor' => 0,
+                'cantidad_proveedor_devuelto' => 0,
             ]);
 
             // Crear también para almacén 2 si existe
@@ -35,12 +35,12 @@ class PrestableStockSeeder extends Seeder
                 'prestable_id' => $prestable->id,
                 'almacenes_prestables_id' => 2,
                 'cantidad_disponible' => intval($this->cantidadInicial($prestable->codigo) / 2),
-                'cantidad_prestamo_cliente_activo' => 0,
-                'cantidad_prestamo_cliente_devuelto' => 0,
-                'cantidad_prestamo_evento_activo' => 0,
-                'cantidad_prestamo_evento_devuelto' => 0,
-                'cantidad_prestamo_proveedor_activo' => 0,
-                'cantidad_prestamo_proveedor_devuelto' => 0,
+                'cantidad_cliente_deudor' => 0,
+                'cantidad_cliente_devuelto' => 0,
+                'cantidad_evento_deudor' => 0,
+                'cantidad_evento_devuelto' => 0,
+                'cantidad_proveedor_acreedor' => 0,
+                'cantidad_proveedor_devuelto' => 0,
             ]);
         }
     }

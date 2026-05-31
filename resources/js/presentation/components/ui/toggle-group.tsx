@@ -1,71 +1,67 @@
-import * as React from "react"
-import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
-import { type VariantProps } from "class-variance-authority"
+import React from 'react';
 
-import { cn } from "@/lib/utils"
-import { toggleVariants } from "@/presentation/components/ui/toggle"
-
-const ToggleGroupContext = React.createContext<
-  VariantProps<typeof toggleVariants>
->({
-  size: "default",
-  variant: "default",
-})
-
-function ToggleGroup({
-  className,
-  variant,
-  size,
-  children,
-  ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
-  VariantProps<typeof toggleVariants>) {
-  return (
-    <ToggleGroupPrimitive.Root
-      data-slot="toggle-group"
-      data-variant={variant}
-      data-size={size}
-      className={cn(
-        "group/toggle-group flex items-center rounded-md data-[variant=outline]:shadow-xs",
-        className
-      )}
-      {...props}
-    >
-      <ToggleGroupContext.Provider value={{ variant, size }}>
-        {children}
-      </ToggleGroupContext.Provider>
-    </ToggleGroupPrimitive.Root>
-  )
+interface ToggleOption {
+    value: string;
+    label: string;
+    icon?: string;
 }
 
-function ToggleGroupItem({
-  className,
-  children,
-  variant,
-  size,
-  ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
-  VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext)
-
-  return (
-    <ToggleGroupPrimitive.Item
-      data-slot="toggle-group-item"
-      data-variant={context.variant || variant}
-      data-size={context.size || size}
-      className={cn(
-        toggleVariants({
-          variant: context.variant || variant,
-          size: context.size || size,
-        }),
-        "min-w-0 shrink-0 rounded-none shadow-none first:rounded-l-md last:rounded-r-md focus:z-10 focus-visible:z-10 data-[variant=outline]:border-l-0 data-[variant=outline]:first:border-l",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </ToggleGroupPrimitive.Item>
-  )
+interface ToggleGroupProps {
+    options: ToggleOption[];
+    value: string;
+    onChange: (value: string) => void;
+    disabled?: boolean;
+    label?: string;
+    required?: boolean;
+    description?: string;
 }
 
-export { ToggleGroup, ToggleGroupItem }
+export default function ToggleGroup({
+    options,
+    value,
+    onChange,
+    disabled = false,
+    label,
+    required = false,
+    description,
+}: ToggleGroupProps) {
+    return (
+        <div className="space-y-1">
+            {label && (
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
+            )}
+
+            <div className="flex gap-2 flex-wrap">
+                {options.map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => !disabled && onChange(option.value)}
+                        disabled={disabled}
+                        className={`
+                            px-2 py-1 rounded-lg font-medium text-sm
+                            transition-all duration-200 ease-in-out
+                            border-2 flex items-center gap-2 whitespace-nowrap
+                            ${
+                                value === option.value
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30'
+                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
+                            }
+                            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                        `}
+                    >
+                        {option.icon && <span className="text-lg">{option.icon}</span>}
+                        {option.label}
+                    </button>
+                ))}
+            </div>
+
+            {description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic">{description}</p>
+            )}
+        </div>
+    );
+}

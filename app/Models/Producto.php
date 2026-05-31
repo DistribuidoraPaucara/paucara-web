@@ -1242,7 +1242,24 @@ class Producto extends Model
     }
 
     /**
-     * Prestables que están relacionados con este producto
+     * Prestables relacionados con este producto (N:N)
+     * Ej: Un producto puede estar en botella, canastilla, etc.
+     */
+    public function prestables()
+    {
+        return $this->belongsToMany(
+            Prestable::class,
+            'productos_relacionado_prestables',
+            'producto_id',
+            'prestable_id'
+        )
+        ->withPivot('descripcion', 'es_principal', 'orden')
+        ->withTimestamps()
+        ->orderByPivot('orden');
+    }
+
+    /**
+     * Relación antigua (mantener para compatibilidad)
      */
     public function prestablesRelacionados()
     {

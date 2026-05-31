@@ -89,13 +89,13 @@ class PrestamoEventoService
                         ->first();
 
                     if ($stock) {
-                        $eventoActivoAntes = $stock->cantidad_prestamo_evento_activo;
+                        $eventoActivoAntes = $stock->cantidad_evento_deudor;
                         $disponibleAntes = $stock->cantidad_disponible;
 
                         // Actualizar stock: move from disponible to evento_activo
                         $stock->update([
                             'cantidad_disponible' => max(0, $stock->cantidad_disponible - $detalle['cantidad']),
-                            'cantidad_prestamo_evento_activo' => $stock->cantidad_prestamo_evento_activo + $detalle['cantidad'],
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $detalle['cantidad'],
                         ]);
 
                         // Registrar movimiento
@@ -200,11 +200,11 @@ class PrestamoEventoService
                         ->first();
 
                     if ($stock) {
-                        $eventoActivoAntes = $stock->cantidad_prestamo_evento_activo;
+                        $eventoActivoAntes = $stock->cantidad_evento_deudor;
 
                         $stock->update([
-                            'cantidad_prestamo_evento_activo' => max(0, $stock->cantidad_prestamo_evento_activo - $detalle['cantidad_devuelta']),
-                            'cantidad_prestamo_evento_devuelto' => $stock->cantidad_prestamo_evento_devuelto + $detalle['cantidad_devuelta'],
+                            'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $detalle['cantidad_devuelta']),
+                            'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto + $detalle['cantidad_devuelta'],
                             // Las dañadas no retornan a disponible
                             'cantidad_disponible' => $stock->cantidad_disponible + $detalle['cantidad_devuelta'],
                         ]);
@@ -215,7 +215,7 @@ class PrestamoEventoService
                             'almacen_id' => $almacenId,
                             'tipo' => 'DEVOLUCION_EVENTO',
                             'cantidad_antes' => $eventoActivoAntes,
-                            'cantidad_despues' => $stock->cantidad_prestamo_evento_activo,
+                            'cantidad_despues' => $stock->cantidad_evento_deudor,
                             'referencia_id' => $devolucion->id,
                             'observaciones' => "Devolución evento: {$detalle['cantidad_devuelta']} devuelto(s), {$detalle['cantidad_dañada_total']} dañado(s)",
                         ]);

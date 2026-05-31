@@ -105,7 +105,24 @@ class Prestable extends Model
     }
 
     /**
-     * Productos relacionados a este prestable
+     * Productos que pueden estar en este prestable (N:N)
+     * Ej: Una canastilla puede contener diferentes productos
+     */
+    public function productos()
+    {
+        return $this->belongsToMany(
+            Producto::class,
+            'productos_relacionado_prestables',
+            'prestable_id',
+            'producto_id'
+        )
+        ->withPivot('descripcion', 'es_principal', 'orden')
+        ->withTimestamps()
+        ->orderByPivot('orden');
+    }
+
+    /**
+     * Productos relacionados a este prestable (relación antigua)
      */
     public function productosRelacionados(): HasMany
     {

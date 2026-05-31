@@ -13,25 +13,25 @@ class PrestableStock extends Model
         'prestable_id',
         'almacenes_prestables_id',
         'cantidad_disponible',
-        // Préstamos a Clientes
-        'cantidad_prestamo_cliente_activo',
-        'cantidad_prestamo_cliente_devuelto',
-        // Préstamos a Eventos
-        'cantidad_prestamo_evento_activo',
-        'cantidad_prestamo_evento_devuelto',
-        // Préstamos a Proveedores
-        'cantidad_prestamo_proveedor_activo',
-        'cantidad_prestamo_proveedor_devuelto',
+        // Préstamos a Clientes (salientes)
+        'cantidad_cliente_deudor',           // Clientes que me deben devoluciones
+        'cantidad_cliente_devuelto',         // Historial de devoluciones
+        // Préstamos a Eventos (salientes)
+        'cantidad_evento_deudor',            // Eventos que me deben devoluciones
+        'cantidad_evento_devuelto',          // Historial de devoluciones
+        // Préstamos a Proveedores (entrantes)
+        'cantidad_proveedor_acreedor',       // Yo le debo al proveedor
+        'cantidad_proveedor_devuelto',       // Historial de devoluciones
     ];
 
     protected $casts = [
         'cantidad_disponible' => 'integer',
-        'cantidad_prestamo_cliente_activo' => 'integer',
-        'cantidad_prestamo_cliente_devuelto' => 'integer',
-        'cantidad_prestamo_evento_activo' => 'integer',
-        'cantidad_prestamo_evento_devuelto' => 'integer',
-        'cantidad_prestamo_proveedor_activo' => 'integer',
-        'cantidad_prestamo_proveedor_devuelto' => 'integer',
+        'cantidad_cliente_deudor' => 'integer',
+        'cantidad_cliente_devuelto' => 'integer',
+        'cantidad_evento_deudor' => 'integer',
+        'cantidad_evento_devuelto' => 'integer',
+        'cantidad_proveedor_acreedor' => 'integer',
+        'cantidad_proveedor_devuelto' => 'integer',
     ];
 
     public function prestable(): BelongsTo
@@ -47,52 +47,55 @@ class PrestableStock extends Model
     // ==================== MÉTODOS HELPER ====================
 
     /**
-     * Total prestado a clientes (activo + devuelto)
+     * Total unidades prestadas a clientes (deudor + devuelto)
+     * Incluye lo que aún deben + historial
      */
     public function getTotalPrestadoClientesAttribute(): int
     {
-        return $this->cantidad_prestamo_cliente_activo + $this->cantidad_prestamo_cliente_devuelto;
+        return $this->cantidad_cliente_deudor + $this->cantidad_cliente_devuelto;
     }
 
     /**
-     * Total prestado a eventos (activo + devuelto)
+     * Total unidades prestadas a eventos (deudor + devuelto)
      */
     public function getTotalPrestadoEventosAttribute(): int
     {
-        return $this->cantidad_prestamo_evento_activo + $this->cantidad_prestamo_evento_devuelto;
+        return $this->cantidad_evento_deudor + $this->cantidad_evento_devuelto;
     }
 
     /**
-     * Total prestado a proveedores (activo + devuelto)
+     * Total unidades recibidas de proveedores (acreedor + devuelto)
      */
-    public function getTotalPrestadoProveedoresAttribute(): int
+    public function getTotalRecibidoProveedoresAttribute(): int
     {
-        return $this->cantidad_prestamo_proveedor_activo + $this->cantidad_prestamo_proveedor_devuelto;
+        return $this->cantidad_proveedor_acreedor + $this->cantidad_proveedor_devuelto;
     }
 
     /**
-     * Total en campo (activos de clientes + eventos)
+     * Total unidades en campo (sin devolver)
+     * Clientes + eventos que aún no devuelven + deuda con proveedores
      */
     public function getTotalEnCampoAttribute(): int
     {
-        return $this->cantidad_prestamo_cliente_activo + $this->cantidad_prestamo_evento_activo;
+        return $this->cantidad_cliente_deudor + $this->cantidad_evento_deudor;
     }
 
     /**
-     * Total deuda con proveedores
+     * Deuda actual con proveedores (lo que debo devolver)
      */
-    public function getTotalDeudaProveedoresAttribute(): int
+    public function getDeudaProveedorAttribute(): int
     {
-        return $this->cantidad_prestamo_proveedor_activo;
+        return $this->cantidad_proveedor_acreedor;
     }
 
     /**
      * % devolución de clientes
+     * Qué porcentaje de lo que pedí ya me lo devolvieron
      */
     public function getPorcentajeDevolucionClientesAttribute(): float
     {
         $total = $this->getTotalPrestadoClientesAttribute();
-        return $total > 0 ? round(($this->cantidad_prestamo_cliente_devuelto / $total) * 100, 2) : 0;
+        return $total > 0 ? round(($this->cantidad_cliente_devuelto / $total) * 100, 2) : 0;
     }
 
     /**
@@ -101,27 +104,60 @@ class PrestableStock extends Model
     public function getPorcentajeDevolucionEventosAttribute(): float
     {
         $total = $this->getTotalPrestadoEventosAttribute();
-        return $total > 0 ? round(($this->cantidad_prestamo_evento_devuelto / $total) * 100, 2) : 0;
+        return $total > 0 ? round(($this->cantidad_evento_devuelto / $total) * 100, 2) : 0;
     }
 
     /**
-     * % devolución de proveedores
+     * % devolución a proveedores
+     * Qué porcentaje de lo que me prestó ya le devolví
      */
     public function getPorcentajeDevolucionProveedoresAttribute(): float
     {
-        $total = $this->getTotalPrestadoProveedoresAttribute();
-        return $total > 0 ? round(($this->cantidad_prestamo_proveedor_devuelto / $total) * 100, 2) : 0;
+        $total = $this->getTotalRecibidoProveedoresAttribute();
+        return $total > 0 ? round(($this->cantidad_proveedor_devuelto / $total) * 100, 2) : 0;
     }
 
     /**
-     * Total general en sistema (disponible + todos los préstamos)
+     * Total general de unidades en el sistema
      */
     public function getTotalGeneralAttribute(): int
     {
         return $this->cantidad_disponible
             + $this->getTotalPrestadoClientesAttribute()
             + $this->getTotalPrestadoEventosAttribute()
-            + $this->getTotalPrestadoProveedoresAttribute();
+            + $this->getTotalRecibidoProveedoresAttribute();
+    }
+
+    /**
+     * Total unidades disponibles para prestar o vender
+     */
+    public function getDisponibleParaPrestamosAttribute(): int
+    {
+        return $this->cantidad_disponible;
+    }
+
+    /**
+     * Total unidades que clientes aún deben devolver
+     */
+    public function getClientesDeudoresAttribute(): int
+    {
+        return $this->cantidad_cliente_deudor;
+    }
+
+    /**
+     * Total unidades que eventos aún deben devolver
+     */
+    public function getEventosDeudoresAttribute(): int
+    {
+        return $this->cantidad_evento_deudor;
+    }
+
+    /**
+     * Cantidad de unidades pendientes de devolución en total (clientes + eventos)
+     */
+    public function getTotalPendientesDevolucionAttribute(): int
+    {
+        return $this->cantidad_cliente_deudor + $this->cantidad_evento_deudor;
     }
 
     /**
@@ -132,24 +168,24 @@ class PrestableStock extends Model
         return [
             'total_disponible' => $this->cantidad_disponible,
             'total_en_campo' => $this->getTotalEnCampoAttribute(),
-            'total_deuda_proveedores' => $this->getTotalDeudaProveedoresAttribute(),
+            'total_deuda_proveedores' => $this->getDeudaProveedorAttribute(),
             'total_general' => $this->getTotalGeneralAttribute(),
             'clientes' => [
                 'total_prestado' => $this->getTotalPrestadoClientesAttribute(),
-                'activo' => $this->cantidad_prestamo_cliente_activo,
-                'devuelto' => $this->cantidad_prestamo_cliente_devuelto,
+                'deudor' => $this->cantidad_cliente_deudor,
+                'devuelto' => $this->cantidad_cliente_devuelto,
                 'porcentaje_devolucion' => $this->getPorcentajeDevolucionClientesAttribute(),
             ],
             'eventos' => [
                 'total_prestado' => $this->getTotalPrestadoEventosAttribute(),
-                'activo' => $this->cantidad_prestamo_evento_activo,
-                'devuelto' => $this->cantidad_prestamo_evento_devuelto,
+                'deudor' => $this->cantidad_evento_deudor,
+                'devuelto' => $this->cantidad_evento_devuelto,
                 'porcentaje_devolucion' => $this->getPorcentajeDevolucionEventosAttribute(),
             ],
             'proveedores' => [
-                'total_prestado' => $this->getTotalPrestadoProveedoresAttribute(),
-                'activo' => $this->cantidad_prestamo_proveedor_activo,
-                'devuelto' => $this->cantidad_prestamo_proveedor_devuelto,
+                'total_recibido' => $this->getTotalRecibidoProveedoresAttribute(),
+                'acreedor' => $this->cantidad_proveedor_acreedor,
+                'devuelto' => $this->cantidad_proveedor_devuelto,
                 'porcentaje_devolucion' => $this->getPorcentajeDevolucionProveedoresAttribute(),
             ],
         ];

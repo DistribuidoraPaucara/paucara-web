@@ -44,6 +44,7 @@ import RoleController from './RoleController'
 import CategoriaController from './CategoriaController'
 import MarcaController from './MarcaController'
 import AlmacenController from './AlmacenController'
+import AlmacenPrestableController from './AlmacenPrestableController'
 import SectorController from './SectorController'
 import ConfiguracionGlobalController from './ConfiguracionGlobalController'
 import EmpresaController from './EmpresaController'
@@ -82,6 +83,7 @@ import TipoAjusteInventarioController from './TipoAjusteInventarioController'
 import InventarioInicialController from './InventarioInicialController'
 import ReservaStockController from './ReservaStockController'
 import Inventario from './Inventario'
+import Presentacion from './Presentacion'
 import PrestamosInertiaController from './PrestamosInertiaController'
 import Web from './Web'
 import VendedorController from './VendedorController'
@@ -145,6 +147,7 @@ RoleController,
 CategoriaController,
 MarcaController,
 AlmacenController,
+AlmacenPrestableController,
 SectorController,
 ConfiguracionGlobalController,
 EmpresaController,
@@ -183,6 +186,7 @@ TipoAjusteInventarioController,
 InventarioInicialController,
 ReservaStockController,
 Inventario,
+Presentacion,
 PrestamosInertiaController,
 Web,
 VendedorController,

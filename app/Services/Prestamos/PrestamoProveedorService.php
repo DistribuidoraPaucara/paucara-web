@@ -93,8 +93,8 @@ class PrestamoProveedorService
                     // Obtener stock ANTES de actualizar
                     $stock = $this->stockService->obtenerStock($detalle['prestable_id'], $almacenId);
                     $disponibleAntes = $stock->cantidad_disponible;
-                    $prestamoClienteAntes = $stock->cantidad_prestamo_cliente_activo;
-                    $prestamoProveedorAntes = $stock->cantidad_prestamo_proveedor_activo;
+                    $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
                     $vendidaAntes = 0;
 
                     // Actualizar stock según tipo de operación
@@ -129,8 +129,8 @@ class PrestamoProveedorService
                         'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                         'vendida_anterior' => $vendidaAntes,
                         'disponible_posterior' => $stock->cantidad_disponible,
-                        'prestamo_cliente_posterior' => $stock->cantidad_prestamo_cliente_activo,
-                        'prestamo_proveedor_posterior' => $stock->cantidad_prestamo_proveedor_activo,
+                        'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                        'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                         'vendida_posterior' => 0,
                         'categoria_afectada' => 'prestamo_proveedor',
                         'motivo' => $datos['es_compra'] ? 'Compra de prestable' : 'Préstamo de proveedor',
@@ -243,8 +243,8 @@ class PrestamoProveedorService
                     if ($cantidadDevuelta > 0) {
                         $stockAntes = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
                         $disponibleAntes = $stockAntes->cantidad_disponible;
-                        $prestamoClienteAntes = $stockAntes->cantidad_prestamo_cliente_activo;
-                        $prestamoProveedorAntes = $stockAntes->cantidad_prestamo_proveedor_activo;
+                        $prestamoClienteAntes = $stockAntes->cantidad_cliente_deudor;
+                        $prestamoProveedorAntes = $stockAntes->cantidad_proveedor_acreedor;
                         $vendidaAntes = 0;
 
                         // Procesar devolución en stock
@@ -270,8 +270,8 @@ class PrestamoProveedorService
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
                             'disponible_posterior' => $stockAntes->cantidad_disponible,
-                            'prestamo_cliente_posterior' => $stockAntes->cantidad_prestamo_cliente_activo,
-                            'prestamo_proveedor_posterior' => $stockAntes->cantidad_prestamo_proveedor_activo,
+                            'prestamo_cliente_posterior' => $stockAntes->cantidad_cliente_deudor,
+                            'prestamo_proveedor_posterior' => $stockAntes->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
                             'categoria_afectada' => 'prestamo_proveedor',
                             'motivo' => 'Devolución a proveedor',
@@ -460,11 +460,11 @@ class PrestamoProveedorService
                             // Obtener stock ANTES de devolver
                             $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
                             $disponibleAntes = $stock->cantidad_disponible;
-                            $prestamoClienteAntes = $stock->cantidad_prestamo_cliente_activo;
-                            $prestamoProveedorAntes = $stock->cantidad_prestamo_proveedor_activo;
+                            $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                            $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
                             $vendidaAntes = 0;
 
-                            // Devolver al proveedor (reduce cantidad_disponible y cantidad_prestamo_proveedor_activo)
+                            // Devolver al proveedor (reduce cantidad_disponible y cantidad_proveedor_acreedor)
                             $this->stockService->devolverAlProveedor(
                                 $detalle->prestable_id,
                                 $almacenId,
@@ -488,8 +488,8 @@ class PrestamoProveedorService
                                 'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                                 'vendida_anterior' => $vendidaAntes,
                                 'disponible_posterior' => $stock->cantidad_disponible,
-                                'prestamo_cliente_posterior' => $stock->cantidad_prestamo_cliente_activo,
-                                'prestamo_proveedor_posterior' => $stock->cantidad_prestamo_proveedor_activo,
+                                'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                                'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'vendida_posterior' => 0,
                                 'categoria_afectada' => 'prestamo_proveedor',
                                 'motivo' => 'Devolución por anulación de préstamo',

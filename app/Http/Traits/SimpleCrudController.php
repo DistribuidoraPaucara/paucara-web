@@ -301,6 +301,7 @@ trait SimpleCrudController
         // Mapa de plurales a singulares en español
         $singularMap = [
             'almacenes' => 'almacen',
+            'almacenes_prestables' => 'almacen_prestable',
             'categorias' => 'categoria',
             'marcas' => 'marca',
             'unidades' => 'unidad',

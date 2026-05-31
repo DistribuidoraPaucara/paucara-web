@@ -60,6 +60,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::resource('categorias', CategoriaController::class)->middleware('permission:categorias.manage');
     Route::resource('marcas', \App\Http\Controllers\MarcaController::class)->middleware('permission:marcas.manage');
     Route::resource('almacenes', \App\Http\Controllers\AlmacenController::class)->middleware('permission:almacenes.manage');
+    Route::resource('almacenes-prestables', \App\Http\Controllers\AlmacenPrestableController::class)->middleware('permission:almacenes.manage');
     Route::resource('sectores', \App\Http\Controllers\SectorController::class)->middleware('permission:sectores.manage');
     Route::resource('localidades', \App\Http\Controllers\LocalidadController::class)->middleware('permission:localidades.manage');
     Route::get('localidades/api/active', [\App\Http\Controllers\LocalidadController::class, 'getActiveLocalidades'])->name('localidades.api.active');
@@ -796,7 +797,11 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ PRÉSTAMOS DE CANASTILLAS Y EMBASES
     Route::prefix('prestamos')->name('prestamos.')->middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [\App\Http\Controllers\PrestamosInertiaController::class, 'index'])->name('index');
-        Route::get('prestables', [\App\Http\Controllers\PrestamosInertiaController::class, 'prestables'])->name('prestables');
+        // Prestables CRUD routes
+        Route::get('prestables', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'index'])->name('prestables.index');
+        Route::get('prestables/create', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'create'])->name('prestables.create');
+        Route::get('prestables/{prestable}', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'show'])->name('prestables.show');
+        Route::get('prestables/{prestable}/edit', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'edit'])->name('prestables.edit');
 
         // Stock routes
         Route::get('stock', [\App\Http\Controllers\Prestamos\StockController::class, 'stock'])->name('stock');

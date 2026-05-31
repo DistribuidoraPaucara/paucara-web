@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import prestables from './prestables'
 import stock from './stock'
 import ajustes from './ajustes'
 import ventas from './ventas'
@@ -83,84 +84,6 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     dashboard.form = dashboardForm
-/**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-export const prestables = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: prestables.url(options),
-    method: 'get',
-})
-
-prestables.definition = {
-    methods: ["get","head"],
-    url: '/prestamos/prestables',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-prestables.url = (options?: RouteQueryOptions) => {
-    return prestables.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-prestables.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: prestables.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-prestables.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: prestables.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-    const prestablesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: prestables.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-        prestablesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: prestables.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::prestables
- * @see app/Http/Controllers/PrestamosInertiaController.php:27
- * @route '/prestamos/prestables'
- */
-        prestablesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: prestables.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    prestables.form = prestablesForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stock
  * @see app/Http/Controllers/Prestamos/StockController.php:16

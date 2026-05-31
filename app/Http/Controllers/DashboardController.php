@@ -52,6 +52,9 @@ class DashboardController extends Controller
         $alertasStock = $datosGenerales['alertas_stock'] ?? $this->dashboardService->getAlertasStock();
         $ventasPorCanal = $datosGenerales['ventas_por_canal'] ?? $this->dashboardService->getVentasPorCanal($periodo);
 
+        // Obtener cuentas por cobrar vencidas
+        $cuentasVencidasData = $this->dashboardService->getCuentasVencidas(10);
+
         return Inertia::render('dashboard', [
             // Datos por módulo (nuevo sistema)
             'datosModulos' => $datosModulos,
@@ -66,6 +69,13 @@ class DashboardController extends Controller
             'alertasStock' => $alertasStock,
             'ventasPorCanal' => $ventasPorCanal,
             'periodo' => $periodo,
+
+            // Cuentas por cobrar vencidas
+            'cuentasVencidas' => $cuentasVencidasData['cuentas'],
+            'totalCuentasVencidas' => $cuentasVencidasData['total_cuentas'],
+            'totalMontoVencido' => $cuentasVencidasData['total_monto'],
+            'titulo' => 'Dashboard',
+            'descripcion' => 'Resumen general de tu empresa',
         ]);
     }
 

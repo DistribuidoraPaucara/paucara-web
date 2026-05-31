@@ -136,18 +136,67 @@ export default function PrestamosProveedoresIndex() {
         });
     };
 
+    // Filtros
+    const [filtroEstado, setFiltroEstado] = useState<string>('');
+    const [busquedaProveedor, setBusquedaProveedor] = useState('');
+    const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+    const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+
     useEffect(() => {
         fetchPrestamos();
-    }, []);
+    }, [filtroEstado, filtroFechaDesde, filtroFechaHasta]);
 
     const fetchPrestamos = async () => {
+        setLoading(true);
         try {
-            const response = await prestamoProveedorService.getAll({ per_page: 50 });
+            const params: any = { per_page: 100 };
+            if (filtroEstado) params.estado = filtroEstado;
+            if (filtroFechaDesde) params.fecha_desde = filtroFechaDesde;
+            if (filtroFechaHasta) params.fecha_hasta = filtroFechaHasta;
+            const response = await prestamoProveedorService.getAll(params);
             setPrestamos((response as any).data || []);
         } finally {
             setLoading(false);
         }
     };
+
+    const limpiarFiltros = () => {
+        setFiltroEstado('');
+        setBusquedaProveedor('');
+        setFiltroFechaDesde('');
+        setFiltroFechaHasta('');
+    };
+
+    // Calcular totales para cards
+    const calcularTotales = () => {
+        const activos = prestamos.filter(p => p.estado === 'ACTIVO').length;
+        const unidadesPendientes = prestamos.reduce((sum, p) => {
+            const totalPrestado = (p.detalles || []).reduce((s, d) => s + (Number(d.cantidad) || 0), 0);
+            const totalDevuelto = (p.devoluciones || []).reduce((s, d) => s + (Number(d.cantidad_devuelta) || 0), 0);
+            return sum + Math.max(0, totalPrestado - totalDevuelto);
+        }, 0);
+        const deuda = prestamos.reduce((sum, p) => {
+            if (p.estado === 'CANCELADO' || p.estado === 'COMPLETAMENTE_DEVUELTO') return sum;
+            return sum + (Number(p.precio_unitario || 0) * (prestamos.indexOf(p)));
+        }, 0);
+        const totalDevuelto = prestamos.filter(p => p.estado === 'COMPLETAMENTE_DEVUELTO').length;
+
+        return { activos, unidadesPendientes, deuda, totalDevuelto };
+    };
+
+    const totales = calcularTotales();
+    const filtrosActivos = [filtroEstado, busquedaProveedor, filtroFechaDesde, filtroFechaHasta].filter(Boolean).length;
+
+    // Filtrar prestamos por búsqueda local
+    const prestamosFiltrados = prestamos.filter(p => {
+        if (busquedaProveedor) {
+            const proveedor = (p.proveedor as any);
+            const nombreProveedor = (proveedor?.nombre || proveedor?.razon_social || '').toLowerCase();
+            if (!nombreProveedor.includes(busquedaProveedor.toLowerCase())) return false;
+        }
+        return true;
+    });
 
     const handleRegistrarDevolucion = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -284,6 +333,103 @@ export default function PrestamosProveedoresIndex() {
                             </Button>
                         </a> */}
                     </div>
+                </div>
+
+                {/* Cards de Resumen */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Préstamos Activos</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.activos}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Unidades Pendientes</p>
+                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-1">{totales.unidadesPendientes}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Devoluciones</p>
+                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-1">{totales.totalDevuelto}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Estado Filtrado</p>
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{prestamosFiltrados.length}</p>
+                    </Card>
+                </div>
+
+                {/* Panel de Filtros */}
+                <div className="mb-6">
+                    <div className="flex gap-2 mb-3">
+                        <Button
+                            variant={mostrarFiltros ? 'default' : 'outline'}
+                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                            className="gap-2"
+                        >
+                            <span>🔍 Filtros{filtrosActivos > 0 ? ` · ${filtrosActivos}` : ''}</span>
+                        </Button>
+                        {filtrosActivos > 0 && (
+                            <Button variant="ghost" onClick={limpiarFiltros} className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                ✕ Limpiar
+                            </Button>
+                        )}
+                    </div>
+
+                    {mostrarFiltros && (
+                        <Card className="p-6 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            🔍 Buscar Proveedor
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Nombre o razón social..."
+                                            value={busquedaProveedor}
+                                            onChange={(e) => setBusquedaProveedor(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Estado
+                                        </label>
+                                        <select
+                                            value={filtroEstado}
+                                            onChange={(e) => setFiltroEstado(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Todos</option>
+                                            <option value="ACTIVO">Activo</option>
+                                            <option value="PARCIALMENTE_DEVUELTO">Parcialmente Devuelto</option>
+                                            <option value="COMPLETAMENTE_DEVUELTO">Completamente Devuelto</option>
+                                            <option value="CANCELADO">Cancelado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Desde
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={filtroFechaDesde}
+                                            onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Hasta
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={filtroFechaHasta}
+                                            onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Modal de Devolución Flotante - Tabla Editable */}
@@ -597,7 +743,7 @@ export default function PrestamosProveedoresIndex() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {prestamos.map((p) => {
+                                    {prestamosFiltrados.map((p) => {
                                         const cantidadTotal = p.detalles?.reduce((sum: number, d: unknown) => {
                                             const detalle = d as Record<string, unknown>;
                                             const cantidadPrestada = Number(detalle.cantidad_prestada || 0);

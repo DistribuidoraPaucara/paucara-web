@@ -85,7 +85,7 @@ class PrestableStockAdvancedService
                         // Actualizar stock
                         $stock->update([
                             'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomarAhora,
-                            'cantidad_prestamo_cliente_activo' => $stock->cantidad_prestamo_cliente_activo + $cantidadATomarAhora,
+                            'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidadATomarAhora,
                         ]);
 
                         $detallesPorAlmacen[] = [
@@ -259,12 +259,12 @@ class PrestableStockAdvancedService
                 $cantidadRestante = $cantidadADevolver;
 
                 // Paso 1: Devolver del almacén deudor
-                if ($stockDeudor->cantidad_prestamo_proveedor_activo > 0) {
-                    $cantidadDelDeudor = min($cantidadRestante, $stockDeudor->cantidad_prestamo_proveedor_activo);
+                if ($stockDeudor->cantidad_proveedor_acreedor > 0) {
+                    $cantidadDelDeudor = min($cantidadRestante, $stockDeudor->cantidad_proveedor_acreedor);
 
                     $stockDeudor->update([
-                        'cantidad_prestamo_proveedor_activo' => $stockDeudor->cantidad_prestamo_proveedor_activo - $cantidadDelDeudor,
-                        'cantidad_prestamo_proveedor_devuelto' => $stockDeudor->cantidad_prestamo_proveedor_devuelto + $cantidadDelDeudor,
+                        'cantidad_proveedor_acreedor' => $stockDeudor->cantidad_proveedor_acreedor - $cantidadDelDeudor,
+                        'cantidad_proveedor_devuelto' => $stockDeudor->cantidad_proveedor_devuelto + $cantidadDelDeudor,
                     ]);
 
                     $detallesMovimiento[] = [
@@ -305,7 +305,7 @@ class PrestableStockAdvancedService
                         if ($cantidadDelAlterno > 0) {
                             $stockAlterno->update([
                                 'cantidad_disponible' => $stockAlterno->cantidad_disponible - $cantidadDelAlterno,
-                                'cantidad_prestamo_proveedor_activo' => $stockAlterno->cantidad_prestamo_proveedor_activo + $cantidadDelAlterno,
+                                'cantidad_proveedor_acreedor' => $stockAlterno->cantidad_proveedor_acreedor + $cantidadDelAlterno,
                             ]);
 
                             $detallesMovimiento[] = [
@@ -366,12 +366,12 @@ class PrestableStockAdvancedService
         $porAlmacen = [];
         $totales = [
             'cantidad_disponible' => 0,
-            'cantidad_prestamo_cliente_activo' => 0,
-            'cantidad_prestamo_cliente_devuelto' => 0,
-            'cantidad_prestamo_evento_activo' => 0,
-            'cantidad_prestamo_evento_devuelto' => 0,
-            'cantidad_prestamo_proveedor_activo' => 0,
-            'cantidad_prestamo_proveedor_devuelto' => 0,
+            'cantidad_cliente_deudor' => 0,
+            'cantidad_cliente_devuelto' => 0,
+            'cantidad_evento_deudor' => 0,
+            'cantidad_evento_devuelto' => 0,
+            'cantidad_proveedor_acreedor' => 0,
+            'cantidad_proveedor_devuelto' => 0,
             'cantidad_total' => 0,
         ];
 
@@ -383,30 +383,30 @@ class PrestableStockAdvancedService
                 'almacen_nombre' => $stock->almacenPrestable->nombre ?? 'Desconocido',
                 'cantidad_disponible' => $stock->cantidad_disponible,
                 'prestamos_clientes' => [
-                    'activo' => $stock->cantidad_prestamo_cliente_activo,
-                    'devuelto' => $stock->cantidad_prestamo_cliente_devuelto,
+                    'activo' => $stock->cantidad_cliente_deudor,
+                    'devuelto' => $stock->cantidad_cliente_devuelto,
                     'total_prestado' => $stock->getTotalPrestadoClientesAttribute(),
                 ],
                 'prestamos_eventos' => [
-                    'activo' => $stock->cantidad_prestamo_evento_activo,
-                    'devuelto' => $stock->cantidad_prestamo_evento_devuelto,
+                    'activo' => $stock->cantidad_evento_deudor,
+                    'devuelto' => $stock->cantidad_evento_devuelto,
                     'total_prestado' => $stock->getTotalPrestadoEventosAttribute(),
                 ],
                 'prestamos_proveedores' => [
-                    'activo' => $stock->cantidad_prestamo_proveedor_activo,
-                    'devuelto' => $stock->cantidad_prestamo_proveedor_devuelto,
+                    'activo' => $stock->cantidad_proveedor_acreedor,
+                    'devuelto' => $stock->cantidad_proveedor_devuelto,
                     'total_prestado' => $stock->getTotalPrestadoProveedoresAttribute(),
                 ],
                 'cantidad_total' => $total,
             ];
 
             $totales['cantidad_disponible'] += $stock->cantidad_disponible;
-            $totales['cantidad_prestamo_cliente_activo'] += $stock->cantidad_prestamo_cliente_activo;
-            $totales['cantidad_prestamo_cliente_devuelto'] += $stock->cantidad_prestamo_cliente_devuelto;
-            $totales['cantidad_prestamo_evento_activo'] += $stock->cantidad_prestamo_evento_activo;
-            $totales['cantidad_prestamo_evento_devuelto'] += $stock->cantidad_prestamo_evento_devuelto;
-            $totales['cantidad_prestamo_proveedor_activo'] += $stock->cantidad_prestamo_proveedor_activo;
-            $totales['cantidad_prestamo_proveedor_devuelto'] += $stock->cantidad_prestamo_proveedor_devuelto;
+            $totales['cantidad_cliente_deudor'] += $stock->cantidad_cliente_deudor;
+            $totales['cantidad_cliente_devuelto'] += $stock->cantidad_cliente_devuelto;
+            $totales['cantidad_evento_deudor'] += $stock->cantidad_evento_deudor;
+            $totales['cantidad_evento_devuelto'] += $stock->cantidad_evento_devuelto;
+            $totales['cantidad_proveedor_acreedor'] += $stock->cantidad_proveedor_acreedor;
+            $totales['cantidad_proveedor_devuelto'] += $stock->cantidad_proveedor_devuelto;
             $totales['cantidad_total'] += $total;
         }
 

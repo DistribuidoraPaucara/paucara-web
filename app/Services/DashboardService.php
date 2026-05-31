@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cliente;
 use App\Models\Compra;
+use App\Models\CuentaPorCobrar;
 use App\Models\MovimientoCaja;
 use App\Models\Producto;
 use App\Models\Proforma;
@@ -197,6 +198,37 @@ class DashboardService
                 ]];
             })
             ->toArray();
+    }
+
+    /**
+     * Obtener cuentas por cobrar vencidas
+     */
+    public function getCuentasVencidas(int $limite = 10): array
+    {
+        $cuentasVencidas = CuentaPorCobrar::vencidas()
+            ->pendientes()
+            ->with('cliente')
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->get();
+
+        $totalCuentas = $cuentasVencidas->count();
+        $totalMonto = $cuentasVencidas->sum('saldo_pendiente');
+
+        return [
+            'cuentas' => $cuentasVencidas->take($limite)->map(function ($cuenta) {
+                return [
+                    'id' => $cuenta->id,
+                    'cliente_nombre' => $cuenta->cliente->nombre ?? 'N/A',
+                    'saldo_pendiente' => round($cuenta->saldo_pendiente, 2),
+                    'dias_vencido' => $cuenta->dias_vencido ?? 0,
+                    'fecha_vencimiento' => $cuenta->fecha_vencimiento?->format('d/m/Y') ?? 'N/A',
+                    'referencia_documento' => $cuenta->referencia_documento ?? 'N/A',
+                    'estado' => $cuenta->estado ?? 'pendiente',
+                ];
+            })->toArray(),
+            'total_cuentas' => $totalCuentas,
+            'total_monto' => round($totalMonto, 2),
+        ];
     }
 
     /**

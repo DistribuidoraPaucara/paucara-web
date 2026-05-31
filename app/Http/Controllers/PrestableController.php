@@ -42,7 +42,7 @@ class PrestableController extends Controller
                 'embasesRelacionados.stocks',  // Siempre cargar embases
                 'embasesRelacionados.precios',
                 'embasesRelacionados.ultimoDetalleCompra',
-                'productosRelacionados.producto:id,nombre,sku',  // Cargar productos relacionados
+                'productos:id,nombre,sku',  // Cargar productos relacionados desde tabla pivote
             ];
 
             // Si se solicita dinamicamente via parámetro with, agregar esas relaciones
@@ -124,7 +124,11 @@ class PrestableController extends Controller
                     'total_embases' => $totalEmbases,
                     'embasesRelacionados' => $prestable->embasesRelacionados->toArray(), // Explícitamente incluir embases
                     'prestablePadre' => $prestable->prestablePadre ? $prestable->prestablePadre->toArray() : null, // Explícitamente incluir canastilla relacionada
-                    'productosRelacionados' => $prestable->productosRelacionados->toArray(), // Incluir productos relacionados
+                    'productos' => $prestable->productos->map(function ($p) {
+                        return array_merge($p->toArray(), [
+                            'pivot' => $p->pivot ? $p->pivot->toArray() : null,
+                        ]);
+                    })->toArray(), // Incluir productos relacionados con pivot
                     'stocks' => $prestable->stocks->toArray(),
                     'precio_compra_referencial' => $precioCompraReferencial,
                     'fuente_precio_compra' => $fuentePrecioCompra,
@@ -300,8 +304,8 @@ class PrestableController extends Controller
                     $prestable->stocks()->create([
                         'almacenes_prestables_id' => $almacen->id,
                         'cantidad_disponible' => 0,
-                        'cantidad_prestamo_cliente_activo' => 0,
-                        'cantidad_prestamo_proveedor_activo' => 0,
+                        'cantidad_cliente_deudor' => 0,
+                        'cantidad_proveedor_acreedor' => 0,
                         'cantidad_vendida' => 0,
                     ]);
                 }
@@ -336,8 +340,8 @@ class PrestableController extends Controller
                         $embase->stocks()->create([
                             'almacenes_prestables_id' => $almacen->id,
                             'cantidad_disponible' => 0,
-                            'cantidad_prestamo_cliente_activo' => 0,
-                            'cantidad_prestamo_proveedor_activo' => 0,
+                            'cantidad_cliente_deudor' => 0,
+                            'cantidad_proveedor_acreedor' => 0,
                             'cantidad_vendida' => 0,
                         ]);
                     }
@@ -427,7 +431,7 @@ class PrestableController extends Controller
                 'stocks.almacenPrestable',
                 'prestablePadre:id,nombre,codigo,capacidad',
                 'embasesRelacionados',
-                'productosRelacionados.producto:id,nombre,sku',
+                'productos:id,nombre,sku',
             ]);
 
             // Calcular totales de stock
@@ -436,8 +440,8 @@ class PrestableController extends Controller
 
             foreach ($prestable->stocks as $stock) {
                 $cantidadTotal = $stock->cantidad_disponible
-                    + $stock->cantidad_prestamo_cliente_activo
-                    + $stock->cantidad_prestamo_proveedor_activo
+                    + $stock->cantidad_cliente_deudor
+                    + $stock->cantidad_proveedor_acreedor
                     + $stock->cantidad_vendida;
 
                 $totalCanastillas += $cantidadTotal;
@@ -454,7 +458,11 @@ class PrestableController extends Controller
             $data = $prestable->toArray();
             $data['embases_relacionados'] = $prestable->embasesRelacionados->toArray();
             $data['prestable_padre'] = $prestable->prestablePadre ? $prestable->prestablePadre->toArray() : null;
-            $data['productos_relacionados'] = $prestable->productosRelacionados->toArray();
+            $data['productos'] = $prestable->productos->map(function ($p) {
+                return array_merge($p->toArray(), [
+                    'pivot' => $p->pivot ? $p->pivot->toArray() : null,
+                ]);
+            })->toArray();
 
             // Calcular stock resumido
             $almacenId = auth()->user()->empresa->almacenes_prestables_id ?? 1;
@@ -683,8 +691,8 @@ class PrestableController extends Controller
 
             foreach ($prestable->stocks as $stock) {
                 $totalDisponible += $stock->cantidad_disponible;
-                $totalEnPrestamocliente += $stock->cantidad_prestamo_cliente_activo;
-                $totalEnPrestamoproveedor += $stock->cantidad_prestamo_proveedor_activo;
+                $totalEnPrestamocliente += $stock->cantidad_cliente_deudor;
+                $totalEnPrestamoproveedor += $stock->cantidad_proveedor_acreedor;
                 $totalVendida += $stock->cantidad_vendida;
             }
 
@@ -778,8 +786,8 @@ class PrestableController extends Controller
             $validated = $request->validate([
                 'almacenes_prestables_id' => 'required|exists:almacenes_prestables,id',
                 'cantidad_disponible' => 'required|integer|min:0',
-                'cantidad_prestamo_cliente_activo' => 'required|integer|min:0',
-                'cantidad_prestamo_proveedor_activo' => 'required|integer|min:0',
+                'cantidad_cliente_deudor' => 'required|integer|min:0',
+                'cantidad_proveedor_acreedor' => 'required|integer|min:0',
                 'cantidad_vendida' => 'required|integer|min:0',
                 'motivo' => 'nullable|string|max:255',
                 'comentarios' => 'nullable|string|max:500',
@@ -792,8 +800,8 @@ class PrestableController extends Controller
             // Valores anteriores para auditoría
             $valoresAnteriores = [
                 'disponible' => $stock->cantidad_disponible,
-                'prestamo_cliente' => $stock->cantidad_prestamo_cliente_activo,
-                'prestamo_proveedor' => $stock->cantidad_prestamo_proveedor_activo,
+                'prestamo_cliente' => $stock->cantidad_cliente_deudor,
+                'prestamo_proveedor' => $stock->cantidad_proveedor_acreedor,
                 'vendida' => 0, // No existe campo vendida en prestable_stock
             ];
 
@@ -803,8 +811,8 @@ class PrestableController extends Controller
                 'valores_anteriores' => $valoresAnteriores,
                 'valores_a_guardar' => [
                     'disponible' => $validated['cantidad_disponible'],
-                    'cliente' => $validated['cantidad_prestamo_cliente_activo'],
-                    'proveedor' => $validated['cantidad_prestamo_proveedor_activo'],
+                    'cliente' => $validated['cantidad_cliente_deudor'],
+                    'proveedor' => $validated['cantidad_proveedor_acreedor'],
                 ],
             ]);
 
@@ -812,8 +820,8 @@ class PrestableController extends Controller
                 // Actualizar stock con los nombres correctos
                 $stock->update([
                     'cantidad_disponible' => $validated['cantidad_disponible'],
-                    'cantidad_prestamo_cliente_activo' => $validated['cantidad_prestamo_cliente_activo'],
-                    'cantidad_prestamo_proveedor_activo' => $validated['cantidad_prestamo_proveedor_activo'],
+                    'cantidad_cliente_deudor' => $validated['cantidad_cliente_deudor'],
+                    'cantidad_proveedor_acreedor' => $validated['cantidad_proveedor_acreedor'],
                 ]);
 
                 Log::info('✅ STOCK ACTUALIZADO CORRECTAMENTE', [
@@ -833,8 +841,8 @@ class PrestableController extends Controller
                     'cantidad_en_prestamo_proveedor_antes' => $valoresAnteriores['prestamo_proveedor'],
                     'cantidad_vendida_antes' => $valoresAnteriores['vendida'],
                     'cantidad_disponible_despues' => $validated['cantidad_disponible'],
-                    'cantidad_en_prestamo_cliente_despues' => $validated['cantidad_prestamo_cliente_activo'],
-                    'cantidad_en_prestamo_proveedor_despues' => $validated['cantidad_prestamo_proveedor_activo'],
+                    'cantidad_en_prestamo_cliente_despues' => $validated['cantidad_cliente_deudor'],
+                    'cantidad_en_prestamo_proveedor_despues' => $validated['cantidad_proveedor_acreedor'],
                     'cantidad_vendida_despues' => 0, // No hay campo vendida en prestable_stock
                     'motivo' => $validated['motivo'] ?? null,
                     'comentarios' => $validated['comentarios'] ?? null,
@@ -851,16 +859,16 @@ class PrestableController extends Controller
                     'tipo' => 'AJUSTE_DIRECTO',
                     'cantidad' => abs(
                         ($validated['cantidad_disponible'] - $valoresAnteriores['disponible']) +
-                        ($validated['cantidad_prestamo_cliente_activo'] - $valoresAnteriores['prestamo_cliente']) +
-                        ($validated['cantidad_prestamo_proveedor_activo'] - $valoresAnteriores['prestamo_proveedor'])
+                        ($validated['cantidad_cliente_deudor'] - $valoresAnteriores['prestamo_cliente']) +
+                        ($validated['cantidad_proveedor_acreedor'] - $valoresAnteriores['prestamo_proveedor'])
                     ),
                     'disponible_anterior' => $valoresAnteriores['disponible'],
                     'prestamo_cliente_anterior' => $valoresAnteriores['prestamo_cliente'],
                     'prestamo_proveedor_anterior' => $valoresAnteriores['prestamo_proveedor'],
                     'vendida_anterior' => 0,
                     'disponible_posterior' => $validated['cantidad_disponible'],
-                    'prestamo_cliente_posterior' => $validated['cantidad_prestamo_cliente_activo'],
-                    'prestamo_proveedor_posterior' => $validated['cantidad_prestamo_proveedor_activo'],
+                    'prestamo_cliente_posterior' => $validated['cantidad_cliente_deudor'],
+                    'prestamo_proveedor_posterior' => $validated['cantidad_proveedor_acreedor'],
                     'vendida_posterior' => 0,
                     'categoria_afectada' => null,
                     'motivo' => $validated['motivo'] ?? null,
@@ -879,8 +887,8 @@ class PrestableController extends Controller
                     'valores_anteriores' => $valoresAnteriores,
                     'valores_nuevos' => [
                         'disponible' => $validated['cantidad_disponible'],
-                        'prestamo_cliente' => $validated['cantidad_prestamo_cliente_activo'],
-                        'prestamo_proveedor' => $validated['cantidad_prestamo_proveedor_activo'],
+                        'prestamo_cliente' => $validated['cantidad_cliente_deudor'],
+                        'prestamo_proveedor' => $validated['cantidad_proveedor_acreedor'],
                     ],
                     'motivo' => $validated['motivo'] ?? 'Sin especificar',
                     'comentarios' => $validated['comentarios'] ?? 'Sin comentarios',

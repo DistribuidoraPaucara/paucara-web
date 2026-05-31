@@ -122,8 +122,8 @@ class MovimientoPrestableService
 
         // Valores antes
         $disponibleAntes = $stock->cantidad_disponible;
-        $prestamoClienteAntes = $stock->cantidad_prestamo_cliente_activo;
-        $prestamoProveedorAntes = $stock->cantidad_prestamo_proveedor_activo;
+        $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
         $vendidaAntes = 0;
 
         // Valores después (con el ajuste aplicado)

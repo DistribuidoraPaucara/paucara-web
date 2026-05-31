@@ -347,6 +347,33 @@ export default function PrestamosClientesIndex() {
         setShowAnularModal(true);
     };
 
+    // Calcular totales para cards
+    const calcularTotales = () => {
+        const activos = prestamos.filter(p => p.estado === 'ACTIVO').length;
+        const garantiasEnJuego = prestamos
+            .filter(p => p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO')
+            .reduce((sum, p) => sum + (Number(p.monto_garantia) || 0), 0);
+
+        const pendienteDevolución = prestamos.reduce((sum, p) => {
+            const totalPrestado = (p.detalles || []).reduce((s, d) => s + (Number(d.cantidad_prestada) || 0), 0);
+            const totalDevuelto = (p.devoluciones || []).reduce((s, d) => {
+                const detalles = d.detalles || [];
+                return s + detalles.reduce((sd, dd) => sd + (Number(dd.cantidad_devuelta) || 0), 0);
+            }, 0);
+            return sum + Math.max(0, totalPrestado - totalDevuelto);
+        }, 0);
+
+        const vencidos = prestamos.filter(p => {
+            if (p.estado === 'COMPLETAMENTE_DEVUELTO' || p.estado === 'CANCELADO') return false;
+            if (!p.fecha_esperada_devolucion) return false;
+            return new Date(p.fecha_esperada_devolucion) < new Date();
+        }).length;
+
+        return { activos, garantiasEnJuego, pendienteDevolución, vencidos };
+    };
+
+    const totales = calcularTotales();
+
     const getEstadoBadge = (estado: EstadoPrestamo | string) => {
         const styles: Record<string, string> = {
             ACTIVO: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
@@ -432,6 +459,26 @@ export default function PrestamosClientesIndex() {
                             Nuevo Préstamo
                         </Button>
                     </a>
+                </div>
+
+                {/* Cards de Resumen */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Préstamos Activos</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.activos}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Garantías en Juego</p>
+                        <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.garantiasEnJuego.toFixed(2)}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Pendiente Devolución</p>
+                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-1">{totales.pendienteDevolución}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">🔴 Vencidos</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.vencidos}</p>
+                    </Card>
                 </div>
 
                 {/* Panel de Filtros */}

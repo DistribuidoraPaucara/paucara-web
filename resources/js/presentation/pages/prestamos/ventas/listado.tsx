@@ -4,7 +4,16 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Badge } from '@/presentation/components/ui/badge';
+import { Card } from '@/presentation/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/presentation/components/ui/dialog';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import toast from 'react-hot-toast';
 
 interface Cliente {
     id: number;
@@ -59,6 +68,11 @@ export default function ListadoVentas() {
     const [showOutputModal, setShowOutputModal] = useState(false);
     const [ventaSeleccionada, setVentaSeleccionada] = useState<Venta | null>(null);
 
+    // Modal de cancelación
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [ventaCancelar, setVentaCancelar] = useState<Venta | null>(null);
+    const [motivoCancelacion, setMotivoCancelacion] = useState('');
+
     React.useEffect(() => {
         cargarVentas();
     }, [page, buscar, estadoFiltro]);
@@ -97,31 +111,57 @@ export default function ListadoVentas() {
         window.location.href = `/prestamos/ventas/${ventaId}`;
     };
 
-    const cancelarVenta = async (ventaId: number) => {
-        const motivo = prompt('¿Cuál es el motivo de la cancelación?');
-        if (!motivo) return;
+    const abrirModalCancelacion = (venta: Venta) => {
+        setVentaCancelar(venta);
+        setMotivoCancelacion('');
+        setShowCancelModal(true);
+    };
+
+    const cancelarVenta = async () => {
+        if (!ventaCancelar || !motivoCancelacion.trim()) {
+            toast.error('Por favor ingresa un motivo de cancelación');
+            return;
+        }
 
         try {
-            const response = await fetch(`/api/prestamos-vendidos/${ventaId}/cancelar`, {
+            const response = await fetch(`/api/prestamos-vendidos/${ventaCancelar.id}/cancelar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
-                body: JSON.stringify({ motivo }),
+                body: JSON.stringify({ motivo: motivoCancelacion }),
             });
 
             const result = await response.json();
             if (result.success) {
-                alert('✅ Venta cancelada exitosamente');
+                toast.success('✅ Venta cancelada exitosamente');
+                setShowCancelModal(false);
+                setVentaCancelar(null);
+                setMotivoCancelacion('');
                 cargarVentas();
             } else {
-                alert('Error: ' + result.message);
+                toast.error('Error: ' + result.message);
             }
         } catch (error) {
             console.error('Error cancelando venta:', error);
+            toast.error('Error cancelando la venta');
         }
     };
+
+    // Calcular totales para cards
+    const calcularTotales = () => {
+        if (!ventas) return { total: 0, confirmadas: 0, borrador: 0, canceladas: 0 };
+        const data = ventas.data;
+        return {
+            total: data.length,
+            confirmadas: data.filter(v => v.estado === 'CONFIRMADA').reduce((sum, v) => sum + v.total, 0),
+            borrador: data.filter(v => v.estado === 'BORRADOR').reduce((sum, v) => sum + v.total, 0),
+            canceladas: data.filter(v => v.estado === 'CANCELADA').length,
+        };
+    };
+
+    const totales = calcularTotales();
 
     return (
         <AppLayout breadcrumbs={[{ label: 'Préstamos', href: '/prestamos' }, { label: 'Ventas de Prestables' }]}>
@@ -139,6 +179,26 @@ export default function ListadoVentas() {
                     <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => (window.location.href = '/prestamos/ventas/crear')}>
                         ➕ Nueva Venta
                     </Button>
+                </div>
+
+                {/* Cards de Resumen */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Ventas</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.total}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Confirmadas</p>
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">Bs {totales.confirmadas.toFixed(2)}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">En Borrador</p>
+                        <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.borrador.toFixed(2)}</p>
+                    </Card>
+                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Canceladas</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.canceladas}</p>
+                    </Card>
                 </div>
 
                 {/* Filtros */}
@@ -275,7 +335,7 @@ export default function ListadoVentas() {
                                                         <Button
                                                             size="sm"
                                                             variant="destructive"
-                                                            onClick={() => cancelarVenta(venta.id)}
+                                                            onClick={() => abrirModalCancelacion(venta)}
                                                             title="Cancelar venta"
                                                         >
                                                             ⛔
@@ -340,6 +400,44 @@ export default function ListadoVentas() {
                         }}
                     />
                 )}
+
+                {/* Modal de Cancelación */}
+                <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+                    <DialogContent className="bg-white dark:bg-gray-900">
+                        <DialogHeader>
+                            <DialogTitle>Cancelar Venta</DialogTitle>
+                        </DialogHeader>
+                        {ventaCancelar && (
+                            <div className="space-y-4">
+                                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                    <p className="text-sm text-red-900 dark:text-red-100">
+                                        <span className="font-semibold">Venta #{ventaCancelar.numero_venta}</span> - {ventaCancelar.cliente?.nombre || '(Sin cliente)'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Motivo de cancelación *
+                                    </label>
+                                    <textarea
+                                        value={motivoCancelacion}
+                                        onChange={(e) => setMotivoCancelacion(e.target.value)}
+                                        placeholder="Describe el motivo de la cancelación..."
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+                                Cancelar
+                            </Button>
+                            <Button variant="destructive" onClick={cancelarVenta}>
+                                Confirmar Cancelación
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

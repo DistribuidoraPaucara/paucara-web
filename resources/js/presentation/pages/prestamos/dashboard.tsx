@@ -2,7 +2,16 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { ArrowRight, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
+import {
+    ArrowRight,
+    TrendingUp,
+    AlertCircle,
+    RefreshCw,
+    Users,
+    ShoppingCart,
+    Boxes,
+    PackageSearch,
+} from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
 import {
     KPICard,
@@ -98,29 +107,29 @@ export default function DashboardPrestamos({
                 <div className="flex flex-wrap gap-3">
                     <Link href="/prestamos/clientes">
                         <Button size="lg" className="gap-2">
+                            <Users className="h-4 w-4" />
                             Préstamos a Clientes
-                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
 
                     <Link href="/prestamos/proveedores">
                         <Button size="lg" variant="outline" className="gap-2">
+                            <ShoppingCart className="h-4 w-4" />
                             Préstamos en Compras
-                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
 
                     <Link href="/prestamos/stock">
                         <Button size="lg" variant="outline" className="gap-2">
+                            <Boxes className="h-4 w-4" />
                             Ver Stock
-                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
                     {/* enlace a prestamos/prestables */}
                     <Link href="/prestamos/prestables">
                         <Button size="lg" variant="outline" className="gap-2">
+                            <PackageSearch className="h-4 w-4" />
                             Gestionar Productos de Prestamos
-                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
                 </div>
@@ -326,7 +335,7 @@ export default function DashboardPrestamos({
                     </div>
                 </div>
 
-                
+
             </div>
         </AppLayout>
     );

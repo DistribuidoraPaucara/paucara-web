@@ -90,12 +90,12 @@ class ReportesConsolidadosController extends Controller
 
                 foreach ($stocksPorAlmacen as $stock) {
                     $totalDisponible += $stock->cantidad_disponible;
-                    $totalClienteActivo += $stock->cantidad_prestamo_cliente_activo;
-                    $totalClienteDevuelto += $stock->cantidad_prestamo_cliente_devuelto;
-                    $totalEventoActivo += $stock->cantidad_prestamo_evento_activo;
-                    $totalEventoDevuelto += $stock->cantidad_prestamo_evento_devuelto;
-                    $totalProveedorActivo += $stock->cantidad_prestamo_proveedor_activo;
-                    $totalProveedorDevuelto += $stock->cantidad_prestamo_proveedor_devuelto;
+                    $totalClienteActivo += $stock->cantidad_cliente_deudor;
+                    $totalClienteDevuelto += $stock->cantidad_cliente_devuelto;
+                    $totalEventoActivo += $stock->cantidad_evento_deudor;
+                    $totalEventoDevuelto += $stock->cantidad_evento_devuelto;
+                    $totalProveedorActivo += $stock->cantidad_proveedor_acreedor;
+                    $totalProveedorDevuelto += $stock->cantidad_proveedor_devuelto;
 
                     $items[] = [
                         'prestable_id' => $stock->prestable_id,
@@ -104,18 +104,18 @@ class ReportesConsolidadosController extends Controller
                         'prestable_tipo' => $stock->prestable->tipo,
                         'cantidad_disponible' => $stock->cantidad_disponible,
                         'prestamos_clientes' => [
-                            'activo' => $stock->cantidad_prestamo_cliente_activo,
-                            'devuelto' => $stock->cantidad_prestamo_cliente_devuelto,
+                            'activo' => $stock->cantidad_cliente_deudor,
+                            'devuelto' => $stock->cantidad_cliente_devuelto,
                             'total_prestado' => $stock->getTotalPrestadoClientesAttribute(),
                         ],
                         'prestamos_eventos' => [
-                            'activo' => $stock->cantidad_prestamo_evento_activo,
-                            'devuelto' => $stock->cantidad_prestamo_evento_devuelto,
+                            'activo' => $stock->cantidad_evento_deudor,
+                            'devuelto' => $stock->cantidad_evento_devuelto,
                             'total_prestado' => $stock->getTotalPrestadoEventosAttribute(),
                         ],
                         'prestamos_proveedores' => [
-                            'activo' => $stock->cantidad_prestamo_proveedor_activo,
-                            'devuelto' => $stock->cantidad_prestamo_proveedor_devuelto,
+                            'activo' => $stock->cantidad_proveedor_acreedor,
+                            'devuelto' => $stock->cantidad_proveedor_devuelto,
                             'total_prestado' => $stock->getTotalPrestadoProveedoresAttribute(),
                         ],
                         'cantidad_total' => $stock->getTotalGeneralAttribute(),
@@ -188,7 +188,7 @@ class ReportesConsolidadosController extends Controller
 
             foreach ($almacenesProveedores as $almacen) {
                 $deudas = PrestableStock::where('almacenes_prestables_id', $almacen->id)
-                    ->where('cantidad_prestamo_proveedor_activo', '>', 0)
+                    ->where('cantidad_proveedor_acreedor', '>', 0)
                     ->with('prestable')
                     ->get();
 
@@ -199,16 +199,16 @@ class ReportesConsolidadosController extends Controller
                 $items = [];
 
                 foreach ($deudas as $deuda) {
-                    $totalDeudaActiva += $deuda->cantidad_prestamo_proveedor_activo;
-                    $totalDevuelto += $deuda->cantidad_prestamo_proveedor_devuelto;
+                    $totalDeudaActiva += $deuda->cantidad_proveedor_acreedor;
+                    $totalDevuelto += $deuda->cantidad_proveedor_devuelto;
 
                     $items[] = [
                         'prestable_id' => $deuda->prestable_id,
                         'prestable_nombre' => $deuda->prestable->nombre,
                         'prestable_codigo' => $deuda->prestable->codigo,
                         'cantidad_prestado' => $deuda->getTotalPrestadoProveedoresAttribute(),
-                        'cantidad_activo' => $deuda->cantidad_prestamo_proveedor_activo,
-                        'cantidad_devuelto' => $deuda->cantidad_prestamo_proveedor_devuelto,
+                        'cantidad_activo' => $deuda->cantidad_proveedor_acreedor,
+                        'cantidad_devuelto' => $deuda->cantidad_proveedor_devuelto,
                     ];
                 }
 
@@ -277,9 +277,9 @@ class ReportesConsolidadosController extends Controller
 
                 // Acumular totales
                 $totales['cantidad_disponible'] += $stock->cantidad_disponible;
-                $totales['cantidad_en_prestamo_cliente'] += $stock->cantidad_prestamo_cliente_activo;
-                $totales['cantidad_en_prestamo_evento'] += $stock->cantidad_prestamo_evento_activo;
-                $totales['cantidad_que_debo_devolver'] += $stock->cantidad_prestamo_proveedor_activo;
+                $totales['cantidad_en_prestamo_cliente'] += $stock->cantidad_cliente_deudor;
+                $totales['cantidad_en_prestamo_evento'] += $stock->cantidad_evento_deudor;
+                $totales['cantidad_que_debo_devolver'] += $stock->cantidad_proveedor_acreedor;
 
                 // Agrupar por almacén
                 if (!isset($porAlmacen[$almacen->id])) {
@@ -294,9 +294,9 @@ class ReportesConsolidadosController extends Controller
                 }
 
                 $porAlmacen[$almacen->id]['cantidad_disponible'] += $stock->cantidad_disponible;
-                $porAlmacen[$almacen->id]['cantidad_en_prestamo_cliente'] += $stock->cantidad_prestamo_cliente_activo;
-                $porAlmacen[$almacen->id]['cantidad_en_prestamo_evento'] += $stock->cantidad_prestamo_evento_activo;
-                $porAlmacen[$almacen->id]['cantidad_que_debo_devolver'] += $stock->cantidad_prestamo_proveedor_activo;
+                $porAlmacen[$almacen->id]['cantidad_en_prestamo_cliente'] += $stock->cantidad_cliente_deudor;
+                $porAlmacen[$almacen->id]['cantidad_en_prestamo_evento'] += $stock->cantidad_evento_deudor;
+                $porAlmacen[$almacen->id]['cantidad_que_debo_devolver'] += $stock->cantidad_proveedor_acreedor;
 
                 // Clasificar por tipo
                 $tipo = $this->determinarTipoAlmacen($almacen);
