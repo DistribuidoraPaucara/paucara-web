@@ -29,25 +29,26 @@ interface StockItem {
     prestable_tipo: string;
     almacen_nombre: string;
     cantidad_disponible: number;
-    cantidad_prestamo_cliente_activo: number;
-    cantidad_prestamo_cliente_devuelto: number;
-    cantidad_prestamo_cliente_total: number;
-    cantidad_prestamo_evento_activo: number;
-    cantidad_prestamo_evento_devuelto: number;
-    cantidad_prestamo_evento_total: number;
+    cantidad_cliente_deudor: number;
+    cantidad_cliente_devuelto: number;
+    cantidad_cliente_total: number;
+    cantidad_evento_deudor: number;
+    cantidad_evento_devuelto: number;
+    cantidad_evento_total: number;
     cantidad_total: number;
+    almacenes_prestables_id: number;
 }
 
 interface StockPageProps {
     items: StockItem[];
     resumen: {
         total_disponible: number;
-        total_prestamo_cliente_activo: number;
-        total_prestamo_cliente_devuelto: number;
-        total_prestamo_cliente: number;
-        total_prestamo_evento_activo: number;
-        total_prestamo_evento_devuelto: number;
-        total_prestamo_evento: number;
+        total_cliente_deudor: number;
+        total_cliente_devuelto: number;
+        total_cliente: number;
+        total_evento_deudor: number;
+        total_evento_devuelto: number;
+        total_evento: number;
         total_general: number;
     };
     almacenes: Array<{ id: number; nombre: string }>;
@@ -84,12 +85,11 @@ export default function StockClientesPage({
     // Estado para editar valores absolutos (tabla)
     const [editData, setEditData] = useState({
         cantidad_disponible: 0,
-        cantidad_prestamo_cliente_activo: 0,
-        cantidad_prestamo_cliente_devuelto: 0,
-        cantidad_prestamo_evento_activo: 0,
-        cantidad_prestamo_evento_devuelto: 0,
+        cantidad_cliente_deudor: 0,
+        cantidad_cliente_devuelto: 0,
+        cantidad_evento_deudor: 0,
+        cantidad_evento_devuelto: 0,
         motivo: '',
-        comentarios: '',
     });
 
     // Estado para ajuste relativo (+/-)
@@ -130,8 +130,8 @@ export default function StockClientesPage({
                 case 'disponible':
                     return b.cantidad_disponible - a.cantidad_disponible;
                 case 'prestamo':
-                    return (b.cantidad_prestamo_cliente_total + b.cantidad_prestamo_evento_total) -
-                        (a.cantidad_prestamo_cliente_total + a.cantidad_prestamo_evento_total);
+                    return (b.cantidad_cliente_total + b.cantidad_evento_total) -
+                        (a.cantidad_cliente_total + a.cantidad_evento_total);
                 default:
                     return 0;
             }
@@ -149,15 +149,14 @@ export default function StockClientesPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Cliente', 'Préstamo Evento', 'Préstamo Proveedor', 'Total'];
+        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Cliente', 'Préstamo Evento', 'Total'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
-            item.cantidad_prestamo_cliente_total,
-            item.cantidad_prestamo_evento_total,
-            item.cantidad_prestamo_proveedor_total,
+            item.cantidad_cliente_total,
+            item.cantidad_evento_total,
             item.cantidad_total,
         ]);
 
@@ -178,14 +177,11 @@ export default function StockClientesPage({
         setSelectedItem(item);
         setEditData({
             cantidad_disponible: item.cantidad_disponible,
-            cantidad_prestamo_cliente_activo: item.cantidad_prestamo_cliente_activo,
-            cantidad_prestamo_cliente_devuelto: item.cantidad_prestamo_cliente_devuelto,
-            cantidad_prestamo_evento_activo: item.cantidad_prestamo_evento_activo,
-            cantidad_prestamo_evento_devuelto: item.cantidad_prestamo_evento_devuelto,
-            cantidad_prestamo_proveedor_activo: item.cantidad_prestamo_proveedor_activo,
-            cantidad_prestamo_proveedor_devuelto: item.cantidad_prestamo_proveedor_devuelto,
+            cantidad_cliente_deudor: item.cantidad_cliente_deudor,
+            cantidad_cliente_devuelto: item.cantidad_cliente_devuelto,
+            cantidad_evento_deudor: item.cantidad_evento_deudor,
+            cantidad_evento_devuelto: item.cantidad_evento_devuelto,
             motivo: '',
-            comentarios: '',
         });
 
         // Cargar detalles del prestable incluyendo embases relacionados
@@ -635,7 +631,7 @@ export default function StockClientesPage({
                         <DistributionChart
                             disponible={resumen.total_disponible}
                             enPrestamo={
-                                resumen.total_prestamo_cliente + resumen.total_prestamo_evento
+                                resumen.total_cliente + resumen.total_evento
                             }
                             title="Distribución General de Stock - Clientes"
                             size="lg"
@@ -658,7 +654,7 @@ export default function StockClientesPage({
                                 En Préstamo a Clientes
                             </p>
                             <p className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-1">
-                                {resumen.total_prestamo_cliente}
+                                {resumen.total_cliente}
                             </p>
                         </div>
 
@@ -791,12 +787,12 @@ export default function StockClientesPage({
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold">
-                                                    {item.cantidad_prestamo_cliente_total}
+                                                    {item.cantidad_cliente_total}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
-                                                    {item.cantidad_prestamo_evento_total}
+                                                    {item.cantidad_evento_total}
                                                 </span>
                                             </td>
                                             {/* <td className="px-4 py-3 text-right">

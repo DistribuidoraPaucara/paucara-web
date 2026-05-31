@@ -34,13 +34,13 @@ class StockController extends Controller
                     'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
                     'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor ?? 0,
                     'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto ?? 0,
-                    'cantidad_prestamo_cliente_total' => $cantidadClienteTotal,
+                    'cantidad_cliente_total' => $cantidadClienteTotal,
                     'cantidad_evento_deudor' => $stock->cantidad_evento_deudor ?? 0,
                     'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto ?? 0,
-                    'cantidad_prestamo_evento_total' => $cantidadEventoTotal,
+                    'cantidad_evento_total' => $cantidadEventoTotal,
                     'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor ?? 0,
                     'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto ?? 0,
-                    'cantidad_prestamo_proveedor_total' => $cantidadProveedorTotal,
+                    'cantidad_proveedor_total' => $cantidadProveedorTotal,
                     'cantidad_total' => ($stock->cantidad_disponible ?? 0) +
                         $cantidadClienteTotal +
                         $cantidadEventoTotal +
@@ -51,15 +51,15 @@ class StockController extends Controller
         // Calcular resumen
         $resumen = [
             'total_disponible' => $items->sum('cantidad_disponible'),
-            'total_prestamo_cliente_activo' => $items->sum('cantidad_cliente_deudor'),
-            'total_prestamo_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
-            'total_prestamo_cliente' => $items->sum('cantidad_prestamo_cliente_total'),
-            'total_prestamo_evento_activo' => $items->sum('cantidad_evento_deudor'),
-            'total_prestamo_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
-            'total_prestamo_evento' => $items->sum('cantidad_prestamo_evento_total'),
-            'total_prestamo_proveedor_activo' => $items->sum('cantidad_proveedor_acreedor'),
-            'total_prestamo_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
-            'total_prestamo_proveedor' => $items->sum('cantidad_prestamo_proveedor_total'),
+            'total_cliente_deudor' => $items->sum('cantidad_cliente_deudor'),
+            'total_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
+            'total_cliente' => $items->sum('cantidad_cliente_total'),
+            'total_evento_deudor' => $items->sum('cantidad_evento_deudor'),
+            'total_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
+            'total_evento' => $items->sum('cantidad_evento_total'),
+            'total_proveedor_acreedor' => $items->sum('cantidad_proveedor_acreedor'),
+            'total_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
+            'total_proveedor' => $items->sum('cantidad_proveedor_total'),
             'total_general' => $items->sum('cantidad_total'),
         ];
 
@@ -97,7 +97,6 @@ class StockController extends Controller
             ->map(function ($stock) {
                 $cantidadClienteTotal = ($stock->cantidad_cliente_deudor ?? 0) + ($stock->cantidad_cliente_devuelto ?? 0);
                 $cantidadEventoTotal = ($stock->cantidad_evento_deudor ?? 0) + ($stock->cantidad_evento_devuelto ?? 0);
-                $cantidadProveedorTotal = ($stock->cantidad_proveedor_acreedor ?? 0) + ($stock->cantidad_proveedor_devuelto ?? 0);
 
                 return [
                     'id' => $stock->id,
@@ -110,32 +109,25 @@ class StockController extends Controller
                     'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
                     'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor ?? 0,
                     'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto ?? 0,
-                    'cantidad_prestamo_cliente_total' => $cantidadClienteTotal,
+                    'cantidad_cliente_total' => $cantidadClienteTotal,
                     'cantidad_evento_deudor' => $stock->cantidad_evento_deudor ?? 0,
                     'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto ?? 0,
-                    'cantidad_prestamo_evento_total' => $cantidadEventoTotal,
-                    'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor ?? 0,
-                    'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto ?? 0,
-                    'cantidad_prestamo_proveedor_total' => $cantidadProveedorTotal,
+                    'cantidad_evento_total' => $cantidadEventoTotal,
                     'cantidad_total' => ($stock->cantidad_disponible ?? 0) +
                         $cantidadClienteTotal +
-                        $cantidadEventoTotal +
-                        $cantidadProveedorTotal,
+                        $cantidadEventoTotal,
                 ];
             });
 
-        // Calcular resumen
+        // Calcular resumen (solo clientes, sin proveedor)
         $resumen = [
             'total_disponible' => $items->sum('cantidad_disponible'),
-            'total_prestamo_cliente_activo' => $items->sum('cantidad_cliente_deudor'),
-            'total_prestamo_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
-            'total_prestamo_cliente' => $items->sum('cantidad_prestamo_cliente_total'),
-            'total_prestamo_evento_activo' => $items->sum('cantidad_evento_deudor'),
-            'total_prestamo_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
-            'total_prestamo_evento' => $items->sum('cantidad_prestamo_evento_total'),
-            'total_prestamo_proveedor_activo' => $items->sum('cantidad_proveedor_acreedor'),
-            'total_prestamo_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
-            'total_prestamo_proveedor' => $items->sum('cantidad_prestamo_proveedor_total'),
+            'total_cliente_deudor' => $items->sum('cantidad_cliente_deudor'),
+            'total_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
+            'total_cliente' => $items->sum('cantidad_prestamo_cliente_total'),
+            'total_evento_deudor' => $items->sum('cantidad_evento_deudor'),
+            'total_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
+            'total_evento' => $items->sum('cantidad_prestamo_evento_total'),
             'total_general' => $items->sum('cantidad_total'),
         ];
 
@@ -165,8 +157,6 @@ class StockController extends Controller
             ->with(['prestable', 'almacenPrestable'])
             ->get()
             ->map(function ($stock) {
-                $cantidadClienteTotal = ($stock->cantidad_cliente_deudor ?? 0) + ($stock->cantidad_cliente_devuelto ?? 0);
-                $cantidadEventoTotal = ($stock->cantidad_evento_deudor ?? 0) + ($stock->cantidad_evento_devuelto ?? 0);
                 $cantidadProveedorTotal = ($stock->cantidad_proveedor_acreedor ?? 0) + ($stock->cantidad_proveedor_devuelto ?? 0);
 
                 return [
@@ -178,34 +168,19 @@ class StockController extends Controller
                     'almacen_nombre' => $stock->almacenPrestable->nombre,
                     'almacenes_prestables_id' => $stock->almacenes_prestables_id,
                     'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
-                    'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor ?? 0,
-                    'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto ?? 0,
-                    'cantidad_prestamo_cliente_total' => $cantidadClienteTotal,
-                    'cantidad_evento_deudor' => $stock->cantidad_evento_deudor ?? 0,
-                    'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto ?? 0,
-                    'cantidad_prestamo_evento_total' => $cantidadEventoTotal,
                     'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor ?? 0,
                     'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto ?? 0,
-                    'cantidad_prestamo_proveedor_total' => $cantidadProveedorTotal,
-                    'cantidad_total' => ($stock->cantidad_disponible ?? 0) +
-                        $cantidadClienteTotal +
-                        $cantidadEventoTotal +
-                        $cantidadProveedorTotal,
+                    'cantidad_proveedor_total' => $cantidadProveedorTotal,
+                    'cantidad_total' => ($stock->cantidad_disponible ?? 0) + $cantidadProveedorTotal,
                 ];
             });
 
-        // Calcular resumen
+        // Calcular resumen (solo proveedores, sin clientes/eventos)
         $resumen = [
             'total_disponible' => $items->sum('cantidad_disponible'),
-            'total_prestamo_cliente_activo' => $items->sum('cantidad_cliente_deudor'),
-            'total_prestamo_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
-            'total_prestamo_cliente' => $items->sum('cantidad_prestamo_cliente_total'),
-            'total_prestamo_evento_activo' => $items->sum('cantidad_evento_deudor'),
-            'total_prestamo_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
-            'total_prestamo_evento' => $items->sum('cantidad_prestamo_evento_total'),
-            'total_prestamo_proveedor_activo' => $items->sum('cantidad_proveedor_acreedor'),
-            'total_prestamo_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
-            'total_prestamo_proveedor' => $items->sum('cantidad_prestamo_proveedor_total'),
+            'total_proveedor_acreedor' => $items->sum('cantidad_proveedor_acreedor'),
+            'total_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
+            'total_proveedor' => $items->sum('cantidad_prestamo_proveedor_total'),
             'total_general' => $items->sum('cantidad_total'),
         ];
 

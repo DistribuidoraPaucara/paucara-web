@@ -30,15 +30,15 @@ interface StockItem {
     almacen_nombre: string;
     almacenes_prestables_id: number;
     cantidad_disponible: number;
-    cantidad_prestamo_cliente_activo: number;
-    cantidad_prestamo_cliente_devuelto: number;
-    cantidad_prestamo_cliente_total: number;
-    cantidad_prestamo_evento_activo: number;
-    cantidad_prestamo_evento_devuelto: number;
-    cantidad_prestamo_evento_total: number;
-    cantidad_prestamo_proveedor_activo: number;
-    cantidad_prestamo_proveedor_devuelto: number;
-    cantidad_prestamo_proveedor_total: number;
+    cantidad_cliente_deudor: number;
+    cantidad_cliente_devuelto: number;
+    cantidad_cliente_total: number;
+    cantidad_evento_deudor: number;
+    cantidad_evento_devuelto: number;
+    cantidad_evento_total: number;
+    cantidad_proveedor_acreedor: number;
+    cantidad_proveedor_devuelto: number;
+    cantidad_proveedor_total: number;
     cantidad_total: number;
 }
 
@@ -46,15 +46,15 @@ interface StockPageProps {
     items: StockItem[];
     resumen: {
         total_disponible: number;
-        total_prestamo_cliente_activo: number;
-        total_prestamo_cliente_devuelto: number;
-        total_prestamo_cliente: number;
-        total_prestamo_evento_activo: number;
-        total_prestamo_evento_devuelto: number;
-        total_prestamo_evento: number;
-        total_prestamo_proveedor_activo: number;
-        total_prestamo_proveedor_devuelto: number;
-        total_prestamo_proveedor: number;
+        total_cliente_deudor: number;
+        total_cliente_devuelto: number;
+        total_cliente: number;
+        total_evento_deudor: number;
+        total_evento_devuelto: number;
+        total_evento: number;
+        total_proveedor_acreedor: number;
+        total_proveedor_devuelto: number;
+        total_proveedor: number;
         total_general: number;
     };
     almacenes: Array<{ id: number; nombre: string }>;
@@ -91,12 +91,12 @@ export default function StockPage({
     // Estado para editar valores absolutos (tabla)
     const [editData, setEditData] = useState({
         cantidad_disponible: 0,
-        cantidad_prestamo_cliente_activo: 0,
-        cantidad_prestamo_cliente_devuelto: 0,
-        cantidad_prestamo_evento_activo: 0,
-        cantidad_prestamo_evento_devuelto: 0,
-        cantidad_prestamo_proveedor_activo: 0,
-        cantidad_prestamo_proveedor_devuelto: 0,
+        cantidad_cliente_deudor: 0,
+        cantidad_cliente_devuelto: 0,
+        cantidad_evento_deudor: 0,
+        cantidad_evento_devuelto: 0,
+        cantidad_proveedor_acreedor: 0,
+        cantidad_proveedor_devuelto: 0,
         motivo: '',
         comentarios: '',
     });
@@ -119,15 +119,15 @@ export default function StockPage({
     // El préstamo a proveedor activo representa deuda, no stock adicional.
     // No debe sumarse al total físico para evitar doble conteo.
     const getPrestamoActivoTotalPorItem = (item: StockItem) =>
-        item.cantidad_prestamo_cliente_activo +
-        item.cantidad_prestamo_evento_activo;
+        item.cantidad_cliente_deudor +
+        item.cantidad_evento_deudor;
 
     const getTotalVisiblePorItem = (item: StockItem) =>
         item.cantidad_disponible + getPrestamoActivoTotalPorItem(item);
 
     const totalPrestamoActivoResumen =
-        resumen.total_prestamo_cliente_activo +
-        resumen.total_prestamo_evento_activo;
+        resumen.total_cliente_deudor +
+        resumen.total_evento_deudor;
 
     const totalGeneralVisibleResumen = resumen.total_disponible + totalPrestamoActivoResumen;
 
@@ -183,9 +183,9 @@ export default function StockPage({
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
-            item.cantidad_prestamo_cliente_activo,
-            item.cantidad_prestamo_evento_activo,
-            item.cantidad_prestamo_proveedor_activo,
+            item.cantidad_cliente_deudor,
+            item.cantidad_evento_deudor,
+            item.cantidad_proveedor_acreedor,
             getTotalVisiblePorItem(item),
         ]);
 
@@ -206,12 +206,12 @@ export default function StockPage({
         setSelectedItem(item);
         setEditData({
             cantidad_disponible: item.cantidad_disponible,
-            cantidad_prestamo_cliente_activo: item.cantidad_prestamo_cliente_activo,
-            cantidad_prestamo_cliente_devuelto: item.cantidad_prestamo_cliente_devuelto,
-            cantidad_prestamo_evento_activo: item.cantidad_prestamo_evento_activo,
-            cantidad_prestamo_evento_devuelto: item.cantidad_prestamo_evento_devuelto,
-            cantidad_prestamo_proveedor_activo: item.cantidad_prestamo_proveedor_activo,
-            cantidad_prestamo_proveedor_devuelto: item.cantidad_prestamo_proveedor_devuelto,
+            cantidad_cliente_deudor: item.cantidad_cliente_deudor,
+            cantidad_cliente_devuelto: item.cantidad_cliente_devuelto,
+            cantidad_evento_deudor: item.cantidad_evento_deudor,
+            cantidad_evento_devuelto: item.cantidad_evento_devuelto,
+            cantidad_proveedor_acreedor: item.cantidad_proveedor_acreedor,
+            cantidad_proveedor_devuelto: item.cantidad_proveedor_devuelto,
             motivo: '',
             comentarios: '',
         });
@@ -390,8 +390,8 @@ export default function StockPage({
                         // Aplicar los mismos cambios al embase
                         const embaseNewValues = {
                             cantidad_disponible: Math.max(0, (embaseItem.cantidad_disponible || 0) + diffDisponible),
-                            cantidad_en_prestamo_cliente: Math.max(0, (embaseItem.cantidad_prestamo_cliente_activo || 0) + diffClienteLoans),
-                            cantidad_en_prestamo_proveedor: Math.max(0, (embaseItem.cantidad_prestamo_proveedor_activo || 0) + diffProveedorLoans),
+                            cantidad_en_prestamo_cliente: Math.max(0, (embaseItem.cantidad_cliente_deudor || 0) + diffClienteLoans),
+                            cantidad_en_prestamo_proveedor: Math.max(0, (embaseItem.cantidad_proveedor_acreedor || 0) + diffProveedorLoans),
                         };
 
                         console.log(`Nuevos valores para embase ${embase.nombre}:`, embaseNewValues);
@@ -408,8 +408,8 @@ export default function StockPage({
                                 body: JSON.stringify({
                                     almacenes_prestables_id: almacenId,
                                     cantidad_disponible: embaseNewValues.cantidad_disponible,
-                                    cantidad_prestamo_cliente_activo: embaseNewValues.cantidad_en_prestamo_cliente,
-                                    cantidad_prestamo_proveedor_activo: embaseNewValues.cantidad_en_prestamo_proveedor,
+                                    cantidad_cliente_deudor: embaseNewValues.cantidad_en_prestamo_cliente,
+                                    cantidad_proveedor_acreedor: embaseNewValues.cantidad_en_prestamo_proveedor,
                                     cantidad_vendida: 0,
                                     motivo: `Sincronización automática con canastilla ${prestable.nombre}`,
                                     comentarios: 'Ajuste automático',
@@ -466,8 +466,8 @@ export default function StockPage({
 
             // 📊 Valores FINALES = Anterior + Cambio
             const cantidadDisponible = (selectedItem?.cantidad_disponible || 0) + changeDisponible;
-            const cantidadClienteLoans = (selectedItem?.cantidad_prestamo_cliente_activo || 0) + changeClienteLoans;
-            const cantidadProveedorLoans = (selectedItem?.cantidad_prestamo_proveedor_activo || 0) + changeProveedorLoans;
+            const cantidadClienteLoans = (selectedItem?.cantidad_cliente_deudor || 0) + changeClienteLoans;
+            const cantidadProveedorLoans = (selectedItem?.cantidad_proveedor_acreedor || 0) + changeProveedorLoans;
 
             // Validar que al menos algo cambió
             const noCambios =
@@ -487,14 +487,14 @@ export default function StockPage({
 
             // 📊 Calcular diferencias ANTES de enviar
             const diffDisponible = cantidadDisponible - (selectedItem?.cantidad_disponible || 0);
-            const diffClienteLoans = cantidadClienteLoans - (selectedItem?.cantidad_prestamo_cliente_activo || 0);
-            const diffProveedorLoans = cantidadProveedorLoans - (selectedItem?.cantidad_prestamo_proveedor_activo || 0);
+            const diffClienteLoans = cantidadClienteLoans - (selectedItem?.cantidad_cliente_deudor || 0);
+            const diffProveedorLoans = cantidadProveedorLoans - (selectedItem?.cantidad_proveedor_acreedor || 0);
 
             const payloadAEnviar = {
                 almacenes_prestables_id: selectedItem.almacenes_prestables_id,
                 cantidad_disponible: cantidadDisponible,
-                cantidad_prestamo_cliente_activo: cantidadClienteLoans,
-                cantidad_prestamo_proveedor_activo: cantidadProveedorLoans,
+                cantidad_cliente_deudor: cantidadClienteLoans,
+                cantidad_proveedor_acreedor: cantidadProveedorLoans,
                 cantidad_vendida: 0,
                 motivo: adjustData.motivo,
                 comentarios: adjustData.comentarios,
@@ -504,8 +504,8 @@ export default function StockPage({
                 prestable_id: selectedItem.prestable_id,
                 valores_anteriores: {
                     disponible: selectedItem?.cantidad_disponible || 0,
-                    cliente: selectedItem?.cantidad_prestamo_cliente_activo || 0,
-                    proveedor: selectedItem?.cantidad_prestamo_proveedor_activo || 0,
+                    cliente: selectedItem?.cantidad_cliente_deudor || 0,
+                    proveedor: selectedItem?.cantidad_proveedor_acreedor || 0,
                 },
                 valores_nuevos: {
                     disponible: cantidadDisponible,
@@ -611,8 +611,8 @@ export default function StockPage({
 
                 // Valores antes
                 documentoUrl.searchParams.append('disponible_antes', selectedItem?.cantidad_disponible || 0);
-                documentoUrl.searchParams.append('prestamo_cliente_antes', selectedItem?.cantidad_prestamo_cliente_activo || 0);
-                documentoUrl.searchParams.append('prestamo_proveedor_antes', selectedItem?.cantidad_prestamo_proveedor_activo || 0);
+                documentoUrl.searchParams.append('prestamo_cliente_antes', selectedItem?.cantidad_cliente_deudor || 0);
+                documentoUrl.searchParams.append('prestamo_proveedor_antes', selectedItem?.cantidad_proveedor_acreedor || 0);
 
                 // Valores después (usando los valores editables)
                 documentoUrl.searchParams.append('disponible_despues', cantidadDisponible);
@@ -649,8 +649,8 @@ export default function StockPage({
 
                         // Valores del embase antes
                         documentoUrl.searchParams.append('embase_disponible_antes', embaseStock.cantidad_disponible);
-                        documentoUrl.searchParams.append('embase_prestamo_cliente_antes', embaseStock.cantidad_prestamo_cliente_activo);
-                        documentoUrl.searchParams.append('embase_prestamo_proveedor_antes', embaseStock.cantidad_prestamo_proveedor_activo);
+                        documentoUrl.searchParams.append('embase_prestamo_cliente_antes', embaseStock.cantidad_cliente_deudor);
+                        documentoUrl.searchParams.append('embase_prestamo_proveedor_antes', embaseStock.cantidad_proveedor_acreedor);
 
                         // Valores del embase después
                         documentoUrl.searchParams.append('embase_disponible_despues', embaseDisponibleDespues);
@@ -739,7 +739,7 @@ export default function StockPage({
                             disponible={resumen.total_disponible}
                             enPrestamo={totalPrestamoActivoResumen}
                             vendido={0}
-                            deuda={resumen.total_prestamo_proveedor_activo}
+                            deuda={resumen.total_proveedor_acreedor}
                             title="Distribución General de Stock"
                             size="lg"
                         />
@@ -903,22 +903,22 @@ export default function StockPage({
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold">
-                                                    {item.cantidad_prestamo_cliente_activo}
+                                                    {item.cantidad_cliente_deudor}
                                                 </span>
                                             </td>
                                             {/* <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-cyan-100 dark:bg-cyan-900/30 text-cyan-900 dark:text-cyan-200 font-semibold">
-                                                    {item.cantidad_prestamo_cliente_devuelto}
+                                                    {item.cantidad_cliente_devuelto}
                                                 </span>
                                             </td> */}
                                             <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
-                                                    {item.cantidad_prestamo_proveedor_activo}
+                                                    {item.cantidad_proveedor_acreedor}
                                                 </span>
                                             </td>
                                             {/* <td className="px-4 py-3 text-right">
                                                 <span className="inline-block px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200 font-semibold">
-                                                    {item.cantidad_prestamo_proveedor_devuelto}
+                                                    {item.cantidad_proveedor_devuelto}
                                                 </span>
                                             </td> */}
                                             {/* <td className="px-4 py-3 text-right">
@@ -1560,7 +1560,7 @@ export default function StockPage({
                                                 <tr key="canastilla-cliente" className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{selectedItem.prestable_nombre}</td>
                                                     <td className="px-3 py-2 text-center text-blue-600 dark:text-blue-400">🔵 P. Cliente</td>
-                                                    <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{selectedItem.cantidad_prestamo_cliente_activo || 0}</td>
+                                                    <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{selectedItem.cantidad_cliente_deudor || 0}</td>
                                                     <td className="px-3 py-2 text-right">
                                                         <input
                                                             type="number"
@@ -1572,7 +1572,7 @@ export default function StockPage({
                                                     <td className="px-3 py-2 text-right">
                                                         <input
                                                             type="number"
-                                                            value={manualAdjustments[`canastilla-cliente-posterior`] !== undefined ? manualAdjustments[`canastilla-cliente-posterior`] : ((selectedItem.cantidad_prestamo_cliente_activo || 0) + (manualAdjustments[`canastilla-cliente`] !== undefined ? manualAdjustments[`canastilla-cliente`] : (adjustData.tipo_ajuste === 'prestamo_cliente' ? (adjustData.es_incremento ? adjustData.cantidad : -adjustData.cantidad) : 0)))}
+                                                            value={manualAdjustments[`canastilla-cliente-posterior`] !== undefined ? manualAdjustments[`canastilla-cliente-posterior`] : ((selectedItem.cantidad_cliente_deudor || 0) + (manualAdjustments[`canastilla-cliente`] !== undefined ? manualAdjustments[`canastilla-cliente`] : (adjustData.tipo_ajuste === 'prestamo_cliente' ? (adjustData.es_incremento ? adjustData.cantidad : -adjustData.cantidad) : 0)))}
                                                             onChange={(e) => setManualAdjustments({...manualAdjustments, [`canastilla-cliente-posterior`]: parseInt(e.target.value) || 0})}
                                                             className="w-full px-2 py-1 text-xs font-bold text-gray-900 dark:text-white bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-600 rounded"
                                                         />
@@ -1583,7 +1583,7 @@ export default function StockPage({
                                                 <tr key="canastilla-proveedor" className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                                                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{selectedItem.prestable_nombre}</td>
                                                     <td className="px-3 py-2 text-center text-orange-600 dark:text-orange-400">🟠 P. Prov.</td>
-                                                    <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{selectedItem.cantidad_prestamo_proveedor_activo || 0}</td>
+                                                    <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{selectedItem.cantidad_proveedor_acreedor || 0}</td>
                                                     <td className="px-3 py-2 text-right">
                                                         <input
                                                             type="number"
@@ -1595,7 +1595,7 @@ export default function StockPage({
                                                     <td className="px-3 py-2 text-right">
                                                         <input
                                                             type="number"
-                                                            value={manualAdjustments[`canastilla-proveedor-posterior`] !== undefined ? manualAdjustments[`canastilla-proveedor-posterior`] : ((selectedItem.cantidad_prestamo_proveedor_activo || 0) + (manualAdjustments[`canastilla-proveedor`] !== undefined ? manualAdjustments[`canastilla-proveedor`] : (adjustData.tipo_ajuste === 'prestamo_proveedor' ? (adjustData.es_incremento ? adjustData.cantidad : -adjustData.cantidad) : 0)))}
+                                                            value={manualAdjustments[`canastilla-proveedor-posterior`] !== undefined ? manualAdjustments[`canastilla-proveedor-posterior`] : ((selectedItem.cantidad_proveedor_acreedor || 0) + (manualAdjustments[`canastilla-proveedor`] !== undefined ? manualAdjustments[`canastilla-proveedor`] : (adjustData.tipo_ajuste === 'prestamo_proveedor' ? (adjustData.es_incremento ? adjustData.cantidad : -adjustData.cantidad) : 0)))}
                                                             onChange={(e) => setManualAdjustments({...manualAdjustments, [`canastilla-proveedor-posterior`]: parseInt(e.target.value) || 0})}
                                                             className="w-full px-2 py-1 text-xs font-bold text-gray-900 dark:text-white bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-600 rounded"
                                                         />
@@ -1653,7 +1653,7 @@ export default function StockPage({
                                                     <tr key={`${embase.id}-cliente`} className="border-b border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/10">
                                                             <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs italic">{embase.nombre}</td>
                                                             <td className="px-3 py-2 text-center text-blue-600 dark:text-blue-400">🔵 P. Cliente</td>
-                                                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{embaseStock.cantidad_prestamo_cliente_activo || 0}</td>
+                                                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{embaseStock.cantidad_cliente_deudor || 0}</td>
                                                             <td className="px-3 py-2 text-right">
                                                                 <input
                                                                     type="number"
@@ -1665,7 +1665,7 @@ export default function StockPage({
                                                             <td className="px-3 py-2 text-right">
                                                                 <input
                                                                     type="number"
-                                                                    value={manualAdjustments[`embase-${embase.id}-cliente-posterior`] !== undefined ? manualAdjustments[`embase-${embase.id}-cliente-posterior`] : ((embaseStock.cantidad_prestamo_cliente_activo || 0) + (manualAdjustments[`embase-${embase.id}-cliente`] !== undefined ? manualAdjustments[`embase-${embase.id}-cliente`] : diffClienteLoans))}
+                                                                    value={manualAdjustments[`embase-${embase.id}-cliente-posterior`] !== undefined ? manualAdjustments[`embase-${embase.id}-cliente-posterior`] : ((embaseStock.cantidad_cliente_deudor || 0) + (manualAdjustments[`embase-${embase.id}-cliente`] !== undefined ? manualAdjustments[`embase-${embase.id}-cliente`] : diffClienteLoans))}
                                                                     onChange={(e) => setManualAdjustments({...manualAdjustments, [`embase-${embase.id}-cliente-posterior`]: parseInt(e.target.value) || 0})}
                                                                     className="w-full px-2 py-1 text-xs font-bold text-gray-900 dark:text-white bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-600 rounded"
                                                                 />
@@ -1675,7 +1675,7 @@ export default function StockPage({
                                                     <tr key={`${embase.id}-proveedor`} className="border-b border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/10">
                                                             <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs italic">{embase.nombre}</td>
                                                             <td className="px-3 py-2 text-center text-orange-600 dark:text-orange-400">🟠 P. Prov.</td>
-                                                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{embaseStock.cantidad_prestamo_proveedor_activo || 0}</td>
+                                                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{embaseStock.cantidad_proveedor_acreedor || 0}</td>
                                                             <td className="px-3 py-2 text-right">
                                                                 <input
                                                                     type="number"
@@ -1687,7 +1687,7 @@ export default function StockPage({
                                                             <td className="px-3 py-2 text-right">
                                                                 <input
                                                                     type="number"
-                                                                    value={manualAdjustments[`embase-${embase.id}-proveedor-posterior`] !== undefined ? manualAdjustments[`embase-${embase.id}-proveedor-posterior`] : ((embaseStock.cantidad_prestamo_proveedor_activo || 0) + (manualAdjustments[`embase-${embase.id}-proveedor`] !== undefined ? manualAdjustments[`embase-${embase.id}-proveedor`] : diffProveedorLoans))}
+                                                                    value={manualAdjustments[`embase-${embase.id}-proveedor-posterior`] !== undefined ? manualAdjustments[`embase-${embase.id}-proveedor-posterior`] : ((embaseStock.cantidad_proveedor_acreedor || 0) + (manualAdjustments[`embase-${embase.id}-proveedor`] !== undefined ? manualAdjustments[`embase-${embase.id}-proveedor`] : diffProveedorLoans))}
                                                                     onChange={(e) => setManualAdjustments({...manualAdjustments, [`embase-${embase.id}-proveedor-posterior`]: parseInt(e.target.value) || 0})}
                                                                     className="w-full px-2 py-1 text-xs font-bold text-gray-900 dark:text-white bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-600 rounded"
                                                                 />

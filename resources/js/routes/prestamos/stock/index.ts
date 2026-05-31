@@ -79,7 +79,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     clientes.form = clientesForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
 export const proveedores = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ proveedores.definition = {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
 proveedores.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ proveedores.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
 proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
 proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
     const proveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
         proveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:153
+ * @see app/Http/Controllers/Prestamos/StockController.php:145
  * @route '/prestamos/stock/proveedores'
  */
         proveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

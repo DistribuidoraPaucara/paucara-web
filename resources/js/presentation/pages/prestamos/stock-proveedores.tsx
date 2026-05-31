@@ -29,31 +29,20 @@ interface StockItem {
     prestable_tipo: string;
     almacen_nombre: string;
     cantidad_disponible: number;
-    cantidad_prestamo_cliente_activo: number;
-    cantidad_prestamo_cliente_devuelto: number;
-    cantidad_prestamo_cliente_total: number;
-    cantidad_prestamo_evento_activo: number;
-    cantidad_prestamo_evento_devuelto: number;
-    cantidad_prestamo_evento_total: number;
-    cantidad_prestamo_proveedor_activo: number;
-    cantidad_prestamo_proveedor_devuelto: number;
-    cantidad_prestamo_proveedor_total: number;
+    cantidad_proveedor_acreedor: number;
+    cantidad_proveedor_devuelto: number;
+    cantidad_proveedor_total: number;
     cantidad_total: number;
+    almacenes_prestables_id: number;
 }
 
 interface StockPageProps {
     items: StockItem[];
     resumen: {
         total_disponible: number;
-        total_prestamo_cliente_activo: number;
-        total_prestamo_cliente_devuelto: number;
-        total_prestamo_cliente: number;
-        total_prestamo_evento_activo: number;
-        total_prestamo_evento_devuelto: number;
-        total_prestamo_evento: number;
-        total_prestamo_proveedor_activo: number;
-        total_prestamo_proveedor_devuelto: number;
-        total_prestamo_proveedor: number;
+        total_proveedor_acreedor: number;
+        total_proveedor_devuelto: number;
+        total_proveedor: number;
         total_general: number;
     };
     almacenes: Array<{ id: number; nombre: string }>;
@@ -90,14 +79,9 @@ export default function StockProveedoresPage({
     // Estado para editar valores absolutos (tabla)
     const [editData, setEditData] = useState({
         cantidad_disponible: 0,
-        cantidad_prestamo_cliente_activo: 0,
-        cantidad_prestamo_cliente_devuelto: 0,
-        cantidad_prestamo_evento_activo: 0,
-        cantidad_prestamo_evento_devuelto: 0,
-        cantidad_prestamo_proveedor_activo: 0,
-        cantidad_prestamo_proveedor_devuelto: 0,
+        cantidad_proveedor_acreedor: 0,
+        cantidad_proveedor_devuelto: 0,
         motivo: '',
-        comentarios: '',
     });
 
     // Estado para ajuste relativo (+/-)
@@ -138,8 +122,7 @@ export default function StockProveedoresPage({
                 case 'disponible':
                     return b.cantidad_disponible - a.cantidad_disponible;
                 case 'prestamo':
-                    return (b.cantidad_prestamo_cliente_total + b.cantidad_prestamo_evento_total + b.cantidad_prestamo_proveedor_total) -
-                        (a.cantidad_prestamo_cliente_total + a.cantidad_prestamo_evento_total + a.cantidad_prestamo_proveedor_total);
+                    return b.cantidad_proveedor_total - a.cantidad_proveedor_total;
                 default:
                     return 0;
             }
@@ -157,15 +140,13 @@ export default function StockProveedoresPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Cliente', 'Préstamo Evento', 'Préstamo Proveedor', 'Total'];
+        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Proveedor', 'Total'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
-            item.cantidad_prestamo_cliente_total,
-            item.cantidad_prestamo_evento_total,
-            item.cantidad_prestamo_proveedor_total,
+            item.cantidad_proveedor_total,
             item.cantidad_total,
         ]);
 
@@ -186,14 +167,9 @@ export default function StockProveedoresPage({
         setSelectedItem(item);
         setEditData({
             cantidad_disponible: item.cantidad_disponible,
-            cantidad_prestamo_cliente_activo: item.cantidad_prestamo_cliente_activo,
-            cantidad_prestamo_cliente_devuelto: item.cantidad_prestamo_cliente_devuelto,
-            cantidad_prestamo_evento_activo: item.cantidad_prestamo_evento_activo,
-            cantidad_prestamo_evento_devuelto: item.cantidad_prestamo_evento_devuelto,
-            cantidad_prestamo_proveedor_activo: item.cantidad_prestamo_proveedor_activo,
-            cantidad_prestamo_proveedor_devuelto: item.cantidad_prestamo_proveedor_devuelto,
+            cantidad_proveedor_acreedor: item.cantidad_proveedor_acreedor,
+            cantidad_proveedor_devuelto: item.cantidad_proveedor_devuelto,
             motivo: '',
-            comentarios: '',
         });
 
         // Cargar detalles del prestable incluyendo embases relacionados
