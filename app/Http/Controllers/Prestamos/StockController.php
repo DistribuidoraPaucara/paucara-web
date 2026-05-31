@@ -190,4 +190,49 @@ class StockController extends Controller
             'almacenes' => $almacenesProveedores->toArray(),
         ]);
     }
+
+    /**
+     * GET /prestamos/stock/{tipo}/ajuste
+     * Página dedicada para ajustar stock
+     */
+    public function ajuste($tipo, $prestable_id, $almacen_id)
+    {
+        // Validar tipo
+        if (!in_array($tipo, ['clientes', 'proveedores'])) {
+            abort(404);
+        }
+
+        // Obtener el item de stock
+        $stock = PrestableStock::where('prestable_id', $prestable_id)
+            ->where('almacenes_prestables_id', $almacen_id)
+            ->with(['prestable', 'almacenPrestable'])
+            ->firstOrFail();
+
+        // Construir el item según el tipo
+        $item = [
+            'id' => $stock->id,
+            'prestable_id' => $stock->prestable_id,
+            'prestable_nombre' => $stock->prestable->nombre,
+            'prestable_codigo' => $stock->prestable->codigo,
+            'almacen_nombre' => $stock->almacenPrestable->nombre,
+            'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
+        ];
+
+        if ($tipo === 'clientes') {
+            $item['cantidad_cliente_deudor'] = $stock->cantidad_cliente_deudor ?? 0;
+            $item['cantidad_cliente_devuelto'] = $stock->cantidad_cliente_devuelto ?? 0;
+            $item['cantidad_evento_deudor'] = $stock->cantidad_evento_deudor ?? 0;
+            $item['cantidad_evento_devuelto'] = $stock->cantidad_evento_devuelto ?? 0;
+        } else {
+            $item['cantidad_proveedor_acreedor'] = $stock->cantidad_proveedor_acreedor ?? 0;
+            $item['cantidad_proveedor_devuelto'] = $stock->cantidad_proveedor_devuelto ?? 0;
+        }
+
+        return Inertia::render('prestamos/stock/ajuste', [
+            'prestable_id' => $prestable_id,
+            'almacen_id' => $almacen_id,
+            'tipo' => $tipo,
+            'item' => $item,
+        ]);
+    }
 }
