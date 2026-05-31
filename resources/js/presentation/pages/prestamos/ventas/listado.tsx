@@ -62,6 +62,10 @@ export default function ListadoVentas() {
     const [loading, setLoading] = useState(false);
     const [buscar, setBuscar] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('');
+    const [filtroCliente, setFiltroCliente] = useState('');
+    const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+    const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [page, setPage] = useState(1);
 
     // Modal de impresión
@@ -75,7 +79,7 @@ export default function ListadoVentas() {
 
     React.useEffect(() => {
         cargarVentas();
-    }, [page, buscar, estadoFiltro]);
+    }, [page, buscar, estadoFiltro, filtroCliente, filtroFechaDesde, filtroFechaHasta]);
 
     const cargarVentas = async () => {
         setLoading(true);
@@ -83,6 +87,9 @@ export default function ListadoVentas() {
             const params = new URLSearchParams();
             if (buscar) params.append('buscar', buscar);
             if (estadoFiltro) params.append('estado', estadoFiltro);
+            if (filtroCliente) params.append('cliente', filtroCliente);
+            if (filtroFechaDesde) params.append('fecha_desde', filtroFechaDesde);
+            if (filtroFechaHasta) params.append('fecha_hasta', filtroFechaHasta);
             params.append('page', page.toString());
 
             const response = await fetch(`/api/prestamos-vendidos?${params}`, {
@@ -163,6 +170,17 @@ export default function ListadoVentas() {
 
     const totales = calcularTotales();
 
+    const limpiarFiltros = () => {
+        setBuscar('');
+        setEstadoFiltro('');
+        setFiltroCliente('');
+        setFiltroFechaDesde('');
+        setFiltroFechaHasta('');
+        setPage(1);
+    };
+
+    const filtrosActivos = [buscar, estadoFiltro, filtroCliente, filtroFechaDesde, filtroFechaHasta].filter(Boolean).length;
+
     return (
         <AppLayout breadcrumbs={[{ label: 'Préstamos', href: '/prestamos' }, { label: 'Ventas de Prestables' }]}>
             <Head title="Listado de Ventas de Prestables" />
@@ -201,43 +219,119 @@ export default function ListadoVentas() {
                     </Card>
                 </div>
 
-                {/* Filtros */}
-                <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                Buscar
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="Número venta o cliente..."
-                                value={buscar}
-                                onChange={(e) => {
-                                    setBuscar(e.target.value);
-                                    setPage(1);
-                                }}
-                                className="w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                Estado
-                            </label>
-                            <select
-                                value={estadoFiltro}
-                                onChange={(e) => {
-                                    setEstadoFiltro(e.target.value);
-                                    setPage(1);
-                                }}
-                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                            >
-                                <option value="">Todos los estados</option>
-                                <option value="BORRADOR">Borrador</option>
-                                <option value="CONFIRMADA">Confirmada</option>
-                                <option value="CANCELADA">Cancelada</option>
-                            </select>
-                        </div>
+                {/* Panel de Filtros */}
+                <div className="mb-6">
+                    <div className="flex gap-2 mb-3">
+                        <Button
+                            variant={mostrarFiltros ? 'default' : 'outline'}
+                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                            className="gap-2"
+                        >
+                            <span>🔍 Filtros{filtrosActivos > 0 ? ` · ${filtrosActivos}` : ''}</span>
+                        </Button>
+                        {filtrosActivos > 0 && (
+                            <Button variant="ghost" onClick={limpiarFiltros} className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                ✕ Limpiar
+                            </Button>
+                        )}
                     </div>
+
+                    {mostrarFiltros && (
+                        <Card className="p-6 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                            <div className="space-y-4">
+                                {/* Fila 1: Búsqueda, Estado, Cliente */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            🔍 Búsqueda
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="Número venta..."
+                                            value={buscar}
+                                            onChange={(e) => {
+                                                setBuscar(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Estado
+                                        </label>
+                                        <select
+                                            value={estadoFiltro}
+                                            onChange={(e) => {
+                                                setEstadoFiltro(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Todos</option>
+                                            <option value="BORRADOR">Borrador</option>
+                                            <option value="CONFIRMADA">Confirmada</option>
+                                            <option value="CANCELADA">Cancelada</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            👤 Cliente
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="Nombre cliente..."
+                                            value={filtroCliente}
+                                            onChange={(e) => {
+                                                setFiltroCliente(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Fila 2: Fechas */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            📅 Fecha Desde
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={filtroFechaDesde}
+                                            onChange={(e) => {
+                                                setFiltroFechaDesde(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            📅 Fecha Hasta
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={filtroFechaHasta}
+                                            onChange={(e) => {
+                                                setFiltroFechaHasta(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Resultados */}
+                                <div className="pt-3 border-t border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        📊 Filtros activos: <strong>{filtrosActivos}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Tabla de Ventas */}
