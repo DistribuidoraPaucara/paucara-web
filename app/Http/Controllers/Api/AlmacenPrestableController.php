@@ -71,7 +71,7 @@ class AlmacenPrestableController extends Controller
                 ->with(['stocks' => function ($q) use ($almacen) {
                     $q->where('almacenes_prestables_id', $almacen->id)
                         ->select('prestable_id', 'almacenes_prestables_id', 'cantidad_disponible');
-                }])
+                }, 'ultimoDetalleCompra'])
                 ->orderBy('nombre', 'asc');
 
             // Filtro de búsqueda
@@ -97,7 +97,7 @@ class AlmacenPrestableController extends Controller
                     'codigo' => $prestable->codigo,
                     'tipo' => $prestable->tipo ?? null,
                     'capacidad' => $prestable->capacidad ?? null,
-                    'precio_compra_referencial' => $prestable->precio_compra_referencial ?? null,
+                    'precio_compra_referencial' => $prestable->ultimoDetalleCompra?->precio_unitario ?? 0,
                     'stock_disponible' => $stock?->cantidad_disponible ?? 0,
                 ];
             }, $data);

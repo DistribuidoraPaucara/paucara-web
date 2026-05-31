@@ -14,8 +14,10 @@ interface DetalleLocal {
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
-    prestable?: { id: number; nombre: string; codigo: string };
+    prestable?: { id: number; nombre: string; codigo: string; tipo?: string };
     almacen?: { id: number; nombre: string };
+    tipo?: string;
+    precio_compra_referencial?: number;
 }
 
 interface Prestable {
@@ -260,6 +262,16 @@ export default function CrearCompraPrestable() {
         [prestables, getAlmacenesDePrestable]
     );
 
+    const getRowClassName = (item: DetalleLocal): string => {
+        const baseClass = 'transition ';
+        if (item.tipo === 'CANASTILLA') {
+            return baseClass + 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500';
+        } else if (item.tipo === 'EMBASES') {
+            return baseClass + 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 border-l-4 border-amber-500';
+        }
+        return baseClass + 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800';
+    };
+
     const actualizarAlmacenDetalle = (detalleId: string, nuevoAlmacenId: number) => {
         setDetalles((prev) =>
             prev.map((d) => {
@@ -298,10 +310,13 @@ export default function CrearCompraPrestable() {
             cantidad: 1,
             precio_unitario: precioCompraPrestable,
             subtotal: precioCompraPrestable,
+            tipo: prestable.tipo,
+            precio_compra_referencial: prestable.precio_compra_referencial,
             prestable: {
                 id: prestable.id,
                 nombre: prestable.nombre,
                 codigo: prestable.codigo,
+                tipo: prestable.tipo,
             },
             almacen: {
                 id: almacenDefault.id,
@@ -324,10 +339,13 @@ export default function CrearCompraPrestable() {
                     cantidad: 1, // 1 embase por canastilla
                     precio_unitario: precioCompraEmbase,
                     subtotal: precioCompraEmbase,
+                    tipo: embase.tipo,
+                    precio_compra_referencial: embase.precio_compra_referencial,
                     prestable: {
                         id: embase.id,
                         nombre: embase.nombre,
                         codigo: embase.codigo,
+                        tipo: embase.tipo,
                     },
                     almacen: {
                         id: almacenEmbaseDefault.id,
@@ -628,6 +646,16 @@ export default function CrearCompraPrestable() {
                             ),
                         },
                         {
+                            key: 'precio_compra_referencial',
+                            label: 'Precio Ref.',
+                            align: 'right',
+                            render: (item) => (
+                                <span className="text-sm text-slate-600 dark:text-slate-400">
+                                    {item.precio_compra_referencial ? parseFloat(item.precio_compra_referencial.toString()).toFixed(2) : '—'}
+                                </span>
+                            ),
+                        },
+                        {
                             key: 'precio_unitario',
                             label: 'Precio Unitario',
                             align: 'right',
@@ -655,6 +683,7 @@ export default function CrearCompraPrestable() {
                             ),
                         },
                     ]}
+                    getRowClassName={getRowClassName}
                     onDeleteItem={eliminarDetalle}
                     getItemId={(item) => item.id}
                     renderSearchItem={(prestable) => (

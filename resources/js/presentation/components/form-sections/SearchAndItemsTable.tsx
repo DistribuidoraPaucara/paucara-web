@@ -24,6 +24,7 @@ interface SearchAndItemsTableProps<T> {
     emptyMessage?: string;
     totalLabel?: string;
     totalValue?: string | number;
+    getRowClassName?: (item: any) => string;
 }
 
 export default function SearchAndItemsTable<T>({
@@ -43,6 +44,7 @@ export default function SearchAndItemsTable<T>({
     emptyMessage = 'Busca arriba para agregar items',
     totalLabel,
     totalValue,
+    getRowClassName,
 }: SearchAndItemsTableProps<T>) {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -149,7 +151,9 @@ export default function SearchAndItemsTable<T>({
                             items.map((item) => (
                                 <tr
                                     key={item.id}
-                                    className="bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
+                                    className={`transition ${
+                                        getRowClassName ? getRowClassName(item) : 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800'
+                                    }`}
                                 >
                                     {columns.map((column) => (
                                         <td
