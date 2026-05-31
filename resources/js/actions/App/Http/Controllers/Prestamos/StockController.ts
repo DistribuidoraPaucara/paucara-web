@@ -236,32 +236,29 @@ stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-export const ajuste = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const ajuste = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: ajuste.url(args, options),
     method: 'get',
 })
 
 ajuste.definition = {
     methods: ["get","head"],
-    url: '/prestamos/stock/{tipo}/ajuste',
+    url: '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-ajuste.url = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions) => {
-    if (typeof args === 'string' || typeof args === 'number') {
-        args = { tipo: args }
-    }
-
-    
+ajuste.url = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions) => {
     if (Array.isArray(args)) {
         args = {
                     tipo: args[0],
+                    prestable_id: args[1],
+                    almacen_id: args[2],
                 }
     }
 
@@ -269,28 +266,32 @@ ajuste.url = (args: { tipo: string | number } | [tipo: string | number ] | strin
 
     const parsedArgs = {
                         tipo: args.tipo,
+                                prestable_id: args.prestable_id,
+                                almacen_id: args.almacen_id,
                 }
 
     return ajuste.definition.url
             .replace('{tipo}', parsedArgs.tipo.toString())
+            .replace('{prestable_id}', parsedArgs.prestable_id.toString())
+            .replace('{almacen_id}', parsedArgs.almacen_id.toString())
             .replace(/\/+$/, '') + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-ajuste.get = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+ajuste.get = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: ajuste.url(args, options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-ajuste.head = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+ajuste.head = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: ajuste.url(args, options),
     method: 'head',
 })
@@ -298,9 +299,9 @@ ajuste.head = (args: { tipo: string | number } | [tipo: string | number ] | stri
     /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-    const ajusteForm = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    const ajusteForm = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: ajuste.url(args, options),
         method: 'get',
     })
@@ -308,18 +309,18 @@ ajuste.head = (args: { tipo: string | number } | [tipo: string | number ] | stri
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-        ajusteForm.get = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        ajusteForm.get = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: ajuste.url(args, options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:198
- * @route '/prestamos/stock/{tipo}/ajuste'
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
-        ajusteForm.head = (args: { tipo: string | number } | [tipo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        ajusteForm.head = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: ajuste.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',

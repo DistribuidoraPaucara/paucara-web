@@ -767,7 +767,7 @@ export default function StockProveedoresPage({
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => router.visit(`/prestamos/stock/proveedores/ajuste?prestable_id=${item.prestable_id}&almacen_id=${item.almacenes_prestables_id}`)}
+                                                    onClick={() => router.visit(`/prestamos/stock/proveedores/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
                                                     className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                                                 >
                                                     ➕➖ Ajustar
