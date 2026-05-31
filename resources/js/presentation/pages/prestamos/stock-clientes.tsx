@@ -72,6 +72,7 @@ export default function StockClientesPage({
 }: StockPageProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [almacenFilter, setAlmacenFilter] = useState('');
+    const [tipoFilter, setTipoFilter] = useState('');
     const [loading, setLoading] = useState(false);
     const [sortBy, setSortBy] = useState<'nombre' | 'disponible' | 'prestamo'>('nombre');
     const [resumen, setResumen] = useState(initialResumen);
@@ -91,6 +92,18 @@ export default function StockClientesPage({
         motivo: '',
     });
 
+    // Función para obtener color según tipo de prestable
+    const getRowColor = (tipo: string) => {
+        switch (tipo) {
+            case 'EMBASE':
+                return 'bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20';
+            case 'CANASTILLA':
+                return 'bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20';
+            default:
+                return 'hover:bg-gray-50 dark:hover:bg-gray-800';
+        }
+    };
+
     // Filtrado y búsqueda
     const filteredItems = useMemo(() => {
         let filtered = initialItems;
@@ -99,6 +112,13 @@ export default function StockClientesPage({
         if (almacenFilter && almacenFilter !== 'all') {
             filtered = filtered.filter((item) =>
                 item.almacen_nombre === almacenFilter
+            );
+        }
+
+        // Filtro por tipo de prestable
+        if (tipoFilter && tipoFilter !== 'all') {
+            filtered = filtered.filter((item) =>
+                item.prestable_tipo === tipoFilter
             );
         }
 
@@ -127,7 +147,7 @@ export default function StockClientesPage({
         });
 
         return filtered;
-    }, [initialItems, searchTerm, almacenFilter, sortBy]);
+    }, [initialItems, searchTerm, almacenFilter, tipoFilter, sortBy]);
 
     const handleRefresh = () => {
         setLoading(true);
@@ -663,6 +683,23 @@ export default function StockClientesPage({
 
                     <div className="w-full sm:w-48">
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <Filter className="h-4 w-4 inline mr-2" />
+                            Tipo
+                        </label>
+                        <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                <SelectItem value="EMBASE">🔵 Embase</SelectItem>
+                                <SelectItem value="CANASTILLA">🟡 Canastilla</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="w-full sm:w-48">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Ordenar por
                         </label>
                         <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
@@ -721,13 +758,10 @@ export default function StockClientesPage({
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredItems.map((item, idx) => (
+                                    filteredItems.map((item) => (
                                         <tr
                                             key={`${item.prestable_id}-${item.almacen_nombre}`}
-                                            className={`border-b border-slate-200 dark:border-slate-700 ${idx % 2 === 0
-                                                    ? 'bg-white dark:bg-slate-900'
-                                                    : 'bg-slate-50 dark:bg-slate-800'
-                                                } hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors`}
+                                            className={`border-b border-slate-200 dark:border-slate-700 ${getRowColor(item.prestable_tipo)} transition-colors`}
                                         >
                                             <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
                                                 {item.prestable_codigo}
