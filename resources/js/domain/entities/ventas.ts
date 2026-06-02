@@ -165,8 +165,9 @@ export interface Venta extends BaseEntity {
     pagos?: Pago[];
     cuenta_por_cobrar?: CuentaPorCobrar;
     direccionCliente?: DireccionCliente;  // ✅ NUEVO: Relación con DireccionCliente
-    entregaConfirmacion?: {  // ✅ NUEVO: Confirmación de entrega
+    entregaConfirmacion?: {  // ✅ NUEVO: Confirmación de entrega (EXPANDIDO)
         id: Id;
+        entrega_id?: Id;
         venta_id: Id;
         tipo_entrega?: 'COMPLETA' | 'NOVEDAD';
         tipo_novedad?: string;
@@ -175,9 +176,40 @@ export interface Venta extends BaseEntity {
         cliente_presente?: boolean;
         motivo_rechazo?: string;
         observaciones_logistica?: string;
-        estado_pago?: 'PAGADO' | 'PARCIAL' | 'NO_PAGADO';
+        // ✅ IMÁGENES Y FIRMA
+        fotos?: string[];
+        firma_digital_url?: string;
+        foto_comprobante?: string;
+        // ✅ INFORMACIÓN DE PAGO
+        estado_pago?: 'PAGADO' | 'PARCIAL' | 'CREDITO' | 'NO_PAGADO';
         total_dinero_recibido?: number;
         monto_pendiente?: number;
+        monto_recibido?: number;
+        desglose_pagos?: Array<{
+            tipo_pago_id?: Id;
+            tipo_pago_nombre?: string;
+            monto?: number;
+            referencia?: string;
+        }>;
+        tipo_pago?: {
+            id: Id;
+            nombre: string;
+        };
+        // ✅ DEVOLUCIONES PARCIALES
+        productos_devueltos?: Array<{
+            producto_id?: Id;
+            producto_nombre?: string;
+            cantidad?: number;
+            precio_unitario?: number;
+            subtotal?: number;
+        }>;
+        monto_devuelto?: number;
+        monto_aceptado?: number;
+        // ✅ INFORMACIÓN DE CONFIRMACIÓN
+        confirmado_por?: {
+            id: Id;
+            name: string;
+        };
         confirmado_en?: string;
         created_at?: string;
     };

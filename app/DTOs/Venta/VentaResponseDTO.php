@@ -123,7 +123,7 @@ class VentaResponseDTO extends BaseDTO
             $venta->load('estadoLogistica');  // ✅ NUEVO: Cargar estado logístico
         }
         if (!isset($venta->confirmaciones)) {
-            $venta->load('confirmaciones');  // ✅ NUEVO: Cargar confirmaciones de entrega
+            $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');  // ✅ NUEVO: Cargar confirmaciones con relaciones
         }
         if (!isset($venta->preventista)) {
             $venta->load('preventista');  // ✅ NUEVO (2026-03-01): Cargar preventista
@@ -249,7 +249,7 @@ class VentaResponseDTO extends BaseDTO
                 'es_principal' => $venta->direccionCliente->es_principal ?? false,
                 'activa' => $venta->direccionCliente->activa ?? true,
             ] : null,
-            // ✅ NUEVO: Confirmación de entrega
+            // ✅ NUEVO: Confirmación de entrega (EXPANDIDO con todas las imágenes y detalles)
             entregaConfirmacion: (function () use ($venta) {
                 $firstConfirmacion = $venta->confirmaciones?->first();
 
@@ -259,6 +259,7 @@ class VentaResponseDTO extends BaseDTO
 
                 return [
                     'id'                      => $firstConfirmacion->id,
+                    'entrega_id'              => $firstConfirmacion->entrega_id ?? null,
                     'venta_id'                => $firstConfirmacion->venta_id,
                     'tipo_entrega'            => $firstConfirmacion->tipo_entrega ?? null,
                     'tipo_novedad'            => $firstConfirmacion->tipo_novedad ?? null,
@@ -267,9 +268,29 @@ class VentaResponseDTO extends BaseDTO
                     'cliente_presente'        => $firstConfirmacion->cliente_presente,
                     'motivo_rechazo'          => $firstConfirmacion->motivo_rechazo ?? null,
                     'observaciones_logistica' => $firstConfirmacion->observaciones_logistica ?? null,
+                    // ✅ IMÁGENES Y FIRMA
+                    'fotos'                   => $firstConfirmacion->fotos ?? [],
+                    'firma_digital_url'       => $firstConfirmacion->firma_digital_url ?? null,
+                    'foto_comprobante'        => $firstConfirmacion->foto_comprobante ?? null,
+                    // ✅ INFORMACIÓN DE PAGO
                     'estado_pago'             => $firstConfirmacion->estado_pago ?? null,
                     'total_dinero_recibido'   => (float) ($firstConfirmacion->total_dinero_recibido ?? 0),
                     'monto_pendiente'         => (float) ($firstConfirmacion->monto_pendiente ?? 0),
+                    'monto_recibido'          => (float) ($firstConfirmacion->monto_recibido ?? 0),
+                    'desglose_pagos'          => $firstConfirmacion->desglose_pagos ?? [],
+                    'tipo_pago'               => $firstConfirmacion->tipoPago ? [
+                        'id'    => $firstConfirmacion->tipoPago->id,
+                        'nombre' => $firstConfirmacion->tipoPago->nombre,
+                    ] : null,
+                    // ✅ DEVOLUCIONES PARCIALES
+                    'productos_devueltos'     => $firstConfirmacion->productos_devueltos ?? [],
+                    'monto_devuelto'          => (float) ($firstConfirmacion->monto_devuelto ?? 0),
+                    'monto_aceptado'          => (float) ($firstConfirmacion->monto_aceptado ?? 0),
+                    // ✅ INFORMACIÓN DE CONFIRMACIÓN
+                    'confirmado_por'          => $firstConfirmacion->confirmadobPor ? [
+                        'id'   => $firstConfirmacion->confirmadobPor->id,
+                        'name' => $firstConfirmacion->confirmadobPor->name,
+                    ] : null,
                     'confirmado_en'           => $firstConfirmacion->confirmado_en ?? null,
                     'created_at'              => $firstConfirmacion->created_at ?? null,
                 ];

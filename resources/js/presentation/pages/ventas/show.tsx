@@ -679,7 +679,246 @@ export default function VentaShow() {
                 }}
             />
 
-            {/* ✅ NUEVO: Modal de Confirmación de Entrega */}
+            {/* ✅ NUEVO: Sección de Confirmación de Entrega EXPANDIDA */}
+            {venta.entregaConfirmacion && (
+                <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                        📦 Confirmación de Entrega
+                    </h2>
+
+                    <div className="space-y-6">
+                        {/* Estado General */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-200 uppercase mb-1">Tipo Entrega</p>
+                                <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                                    {venta.entregaConfirmacion.tipo_entrega === 'COMPLETA' ? '✅ Completa' : '⚠️ Con Novedad'}
+                                </p>
+                            </div>
+
+                            <div className={`rounded-lg p-3 border ${venta.entregaConfirmacion.tuvo_problema
+                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                }`}>
+                                <p className={`text-xs font-semibold uppercase mb-1 ${venta.entregaConfirmacion.tuvo_problema
+                                    ? 'text-red-900 dark:text-red-200'
+                                    : 'text-green-900 dark:text-green-200'
+                                    }`}>Problemas</p>
+                                <p className={`text-sm font-bold ${venta.entregaConfirmacion.tuvo_problema
+                                    ? 'text-red-700 dark:text-red-300'
+                                    : 'text-green-700 dark:text-green-300'
+                                    }`}>
+                                    {venta.entregaConfirmacion.tuvo_problema ? '❌ Sí' : '✅ No'}
+                                </p>
+                            </div>
+
+                            <div className={`rounded-lg p-3 border ${venta.entregaConfirmacion.tienda_abierta
+                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                                }`}>
+                                <p className={`text-xs font-semibold uppercase mb-1 ${venta.entregaConfirmacion.tienda_abierta
+                                    ? 'text-green-900 dark:text-green-200'
+                                    : 'text-orange-900 dark:text-orange-200'
+                                    }`}>Tienda</p>
+                                <p className={`text-sm font-bold ${venta.entregaConfirmacion.tienda_abierta
+                                    ? 'text-green-700 dark:text-green-300'
+                                    : 'text-orange-700 dark:text-orange-300'
+                                    }`}>
+                                    {venta.entregaConfirmacion.tienda_abierta ? '🟢 Abierta' : '🔴 Cerrada'}
+                                </p>
+                            </div>
+
+                            <div className={`rounded-lg p-3 border ${venta.entregaConfirmacion.cliente_presente
+                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                }`}>
+                                <p className={`text-xs font-semibold uppercase mb-1 ${venta.entregaConfirmacion.cliente_presente
+                                    ? 'text-green-900 dark:text-green-200'
+                                    : 'text-red-900 dark:text-red-200'
+                                    }`}>Cliente</p>
+                                <p className={`text-sm font-bold ${venta.entregaConfirmacion.cliente_presente
+                                    ? 'text-green-700 dark:text-green-300'
+                                    : 'text-red-700 dark:text-red-300'
+                                    }`}>
+                                    {venta.entregaConfirmacion.cliente_presente ? '👤 Presente' : '👻 Ausente'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Información de Pago */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                            <h3 className="font-semibold text-green-900 dark:text-green-200 mb-3">💰 Información de Pago</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                    <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Estado</p>
+                                    <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                        {venta.entregaConfirmacion.estado_pago === 'PAGADO' && '✅ Pagado'}
+                                        {venta.entregaConfirmacion.estado_pago === 'PARCIAL' && '⚠️ Parcial'}
+                                        {venta.entregaConfirmacion.estado_pago === 'CREDITO' && '💳 Crédito'}
+                                        {venta.entregaConfirmacion.estado_pago === 'NO_PAGADO' && '❌ No Pagado'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Recibido</p>
+                                    <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                        {formatCurrencyWith2Decimals(venta.entregaConfirmacion.total_dinero_recibido || 0, venta.moneda.codigo)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Pendiente</p>
+                                    <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                        {formatCurrencyWith2Decimals(venta.entregaConfirmacion.monto_pendiente || 0, venta.moneda.codigo)}
+                                    </p>
+                                </div>
+                                {venta.entregaConfirmacion.tipo_pago && (
+                                    <div>
+                                        <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Tipo</p>
+                                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                            {venta.entregaConfirmacion.tipo_pago.nombre}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Desglose de Pagos */}
+                        {venta.entregaConfirmacion.desglose_pagos && venta.entregaConfirmacion.desglose_pagos.length > 0 && (
+                            <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+                                <h3 className="font-semibold text-purple-900 dark:text-purple-200 mb-3">📊 Desglose de Pagos</h3>
+                                <div className="space-y-2">
+                                    {venta.entregaConfirmacion.desglose_pagos.map((pago: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-2 rounded">
+                                            <span className="text-sm text-purple-700 dark:text-purple-300">
+                                                {pago.tipo_pago_nombre || 'Desconocido'}
+                                            </span>
+                                            <span className="font-bold text-purple-900 dark:text-purple-100">
+                                                {formatCurrencyWith2Decimals(pago.monto || 0, venta.moneda.codigo)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Devoluciones Parciales */}
+                        {venta.entregaConfirmacion.productos_devueltos && venta.entregaConfirmacion.productos_devueltos.length > 0 && (
+                            <div className="border border-orange-200 dark:border-orange-800 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20">
+                                <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-3">
+                                    🔄 Productos Devueltos ({venta.entregaConfirmacion.productos_devueltos.length})
+                                </h3>
+                                <div className="space-y-2">
+                                    {venta.entregaConfirmacion.productos_devueltos.map((prod: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded">
+                                            <div>
+                                                <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                                                    {prod.producto_nombre || 'Producto desconocido'}
+                                                </p>
+                                                <p className="text-xs text-orange-700 dark:text-orange-300">
+                                                    Cantidad: {prod.cantidad}
+                                                </p>
+                                            </div>
+                                            <span className="font-bold text-orange-900 dark:text-orange-100">
+                                                {formatCurrencyWith2Decimals(prod.subtotal || 0, venta.moneda.codigo)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Imágenes */}
+                        {(venta.entregaConfirmacion.fotos?.length > 0 || venta.entregaConfirmacion.firma_digital_url || venta.entregaConfirmacion.foto_comprobante) && (
+                            <div className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">📸 Evidencia Fotográfica</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {/* Fotos de entrega */}
+                                    {venta.entregaConfirmacion.fotos?.map((foto: string, idx: number) => (
+                                        <div key={`foto-${idx}`} className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                            <img
+                                                src={foto}
+                                                alt={`Foto entrega ${idx + 1}`}
+                                                className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                onClick={() => window.open(foto, '_blank')}
+                                            />
+                                            <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                📷 {idx + 1}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Firma digital */}
+                                    {venta.entregaConfirmacion.firma_digital_url && (
+                                        <div className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                            <img
+                                                src={venta.entregaConfirmacion.firma_digital_url}
+                                                alt="Firma digital"
+                                                className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                onClick={() => window.open(venta.entregaConfirmacion.firma_digital_url, '_blank')}
+                                            />
+                                            <div className="absolute top-2 left-2 bg-blue-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                ✍️ Firma
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Comprobante de pago */}
+                                    {venta.entregaConfirmacion.foto_comprobante && (
+                                        <div className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                            <img
+                                                src={venta.entregaConfirmacion.foto_comprobante}
+                                                alt="Comprobante de pago"
+                                                className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                onClick={() => window.open(venta.entregaConfirmacion.foto_comprobante, '_blank')}
+                                            />
+                                            <div className="absolute top-2 left-2 bg-green-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                🧾 Comprobante
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Observaciones */}
+                        {venta.entregaConfirmacion.observaciones_logistica && (
+                            <div className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📝 Observaciones</h3>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                    {venta.entregaConfirmacion.observaciones_logistica}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Información de Confirmación */}
+                        <div className="grid grid-cols-2 gap-4 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700">
+                            {venta.entregaConfirmacion.confirmado_por && (
+                                <>
+                                    <div>
+                                        <p className="font-medium uppercase">Confirmado por</p>
+                                        <p className="text-gray-900 dark:text-gray-100">{venta.entregaConfirmacion.confirmado_por.name}</p>
+                                    </div>
+                                </>
+                            )}
+                            {venta.entregaConfirmacion.confirmado_en && (
+                                <div>
+                                    <p className="font-medium uppercase">Fecha</p>
+                                    <p className="text-gray-900 dark:text-gray-100">
+                                        {new Date(venta.entregaConfirmacion.confirmado_en).toLocaleDateString('es-ES', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ Modal de Confirmación de Entrega DEPRECADO */}
             <ConfirmacionEntregaModal
                 isOpen={confirmacionEntregaModal.isOpen}
                 entrega={venta.entregaConfirmacion}
