@@ -153,6 +153,8 @@
             </div>
         @endif
 
+        
+
         {{-- Información de Confirmación --}}
         <div style="border: 1px solid #ccc; padding: 12px; background-color: #fafafa; font-size: 11px;">
             <h3 style="margin: 0 0 8px 0; color: #424242; font-size: 12px;">ℹ️ INFORMACIÓN DE CONFIRMACIÓN</h3>

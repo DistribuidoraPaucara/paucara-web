@@ -678,6 +678,9 @@ class ImpresionService
             'usuario_creador'    => $venta->proforma?->usuarioCreador?->name ?? 'NO EXISTE',
             'preventista_name'   => $venta->preventista?->name ?? 'NO EXISTE',
             'tipoReporte'        => $tipoReporte,
+            'observaciones'      => $venta->observaciones ?? 'VACÍO',
+            'observaciones_logistica' => $venta->observaciones_logistica ?? 'VACÍO',
+            'direccion_cliente'  => $venta->direccionCliente?->observaciones ?? 'SIN DIRECCIÓN',
         ]);
 
         // ✅ NUEVO (2026-06-02): Agregar tipoReporte a las opciones

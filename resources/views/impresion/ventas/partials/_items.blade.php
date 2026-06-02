@@ -106,13 +106,21 @@
                 @foreach($detalle->producto->comboItems as $comboItem)
                     @php
                         $cantidadComponente = $detalle->cantidad * $comboItem->cantidad;
+                        $precioUnitarioComponente = $comboItem->precio_unitario ?? $comboItem->producto->precio_venta ?? 0;
+                        $subtotalComponente = $cantidadComponente * $precioUnitarioComponente;
                     @endphp
-                    <tr>
+                    <tr style="background-color: #f9f9f9;">
                         <td style="width: 12%; text-align: center; padding: 2px 0; font-size: 11px;">
                             {{ number_format($cantidadComponente, 0) }}
                         </td>
                         <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 11px;">
-                                {{ $comboItem->producto->nombre }}
+                            └─ {{ $comboItem->producto->nombre }}
+                        </td>
+                        <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 11px;">
+                            {{ number_format($precioUnitarioComponente, 2) }}
+                        </td>
+                        <td style="width: 20%; text-align: right; padding: 2px 2px; font-size: 11px;">
+                            {{ number_format($subtotalComponente, 2) }}
                         </td>
                     </tr>
                 @endforeach

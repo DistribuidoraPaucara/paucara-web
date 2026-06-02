@@ -108,6 +108,6 @@
 @endif
 
 {{-- ==================== TÉRMINOS Y CONDICIONES ==================== --}}
-@include('impresion.ventas.partials._terminos-condiciones')
+{{-- @include('impresion.ventas.partials._terminos-condiciones') --}}
 
 @endsection
