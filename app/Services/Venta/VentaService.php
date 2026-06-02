@@ -607,24 +607,24 @@ class VentaService
                     // ✅ PRIORIDAD 1: Si es numérico, buscar por ID exacto
                     is_numeric($clienteId) && (int)$clienteId > 0
                         ? $q->where('cliente_id', (int)$clienteId)
-                        // ✅ PRIORIDAD 2: Si no es numérico, buscar por campos textuales (evitar error de tipo bigint)
+                        // ✅ PRIORIDAD 2: Si no es numérico, buscar por campos textuales (case insensitive)
                         : $q->whereHas('cliente', fn($qCli) =>
-                            $qCli->where('codigo_cliente', 'like', '%' . $clienteId . '%')
-                                ->orWhere('nombre', 'like', '%' . $clienteId . '%')
-                                ->orWhere('nit', 'like', '%' . $clienteId . '%')
-                                ->orWhere('telefono', 'like', '%' . $clienteId . '%')
+                            $qCli->whereRaw('LOWER(codigo_cliente) like ?', ['%' . strtolower($clienteId) . '%'])
+                                ->orWhereRaw('LOWER(nombre) like ?', ['%' . strtolower($clienteId) . '%'])
+                                ->orWhereRaw('LOWER(nit) like ?', ['%' . strtolower($clienteId) . '%'])
+                                ->orWhereRaw('LOWER(telefono) like ?', ['%' . strtolower($clienteId) . '%'])
                         )
                 )
                 ->when($filtros['busqueda_cliente'] ?? null, fn($q, $busqueda) =>
                     // ✅ PRIORIDAD 1: Si es numérico, buscar por ID exacto
                     is_numeric($busqueda) && (int)$busqueda > 0
                         ? $q->where('cliente_id', (int)$busqueda)
-                        // ✅ PRIORIDAD 2: Si no es numérico, buscar por campos textuales
+                        // ✅ PRIORIDAD 2: Si no es numérico, buscar por campos textuales (case insensitive)
                         : $q->whereHas('cliente', fn($qCli) =>
-                            $qCli->where('codigo_cliente', 'like', '%' . $busqueda . '%')
-                                ->orWhere('nombre', 'like', '%' . $busqueda . '%')
-                                ->orWhere('nit', 'like', '%' . $busqueda . '%')
-                                ->orWhere('telefono', 'like', '%' . $busqueda . '%')
+                            $qCli->whereRaw('LOWER(codigo_cliente) like ?', ['%' . strtolower($busqueda) . '%'])
+                                ->orWhereRaw('LOWER(nombre) like ?', ['%' . strtolower($busqueda) . '%'])
+                                ->orWhereRaw('LOWER(nit) like ?', ['%' . strtolower($busqueda) . '%'])
+                                ->orWhereRaw('LOWER(telefono) like ?', ['%' . strtolower($busqueda) . '%'])
                         )
                 )
                 ->when($filtros['usuario_id'] ?? null, fn($q, $usuarioId) =>
@@ -653,9 +653,9 @@ class VentaService
                                 ->orWhere('numero', '=', $search); // Búsqueda exacta por número
                         } else {
                             // Para términos no numéricos, buscar al inicio del número (más exacto que parcial)
-                            $subQuery->where('numero', 'like', $search . '%')
+                            $subQuery->whereRaw('LOWER(numero) like ?', [strtolower($search) . '%'])
                                 ->orWhereHas('cliente', fn($qCli) =>
-                                    $qCli->where('nombre', 'like', '%' . $search . '%')
+                                    $qCli->whereRaw('LOWER(nombre) like ?', ['%' . strtolower($search) . '%'])
                                 );
                         }
                     })
