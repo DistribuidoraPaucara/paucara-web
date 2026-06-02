@@ -12,8 +12,10 @@ class PrestamoCliente extends Model
 
     protected $fillable = [
         'cliente_id',
+        'almacenes_prestables_id',
         'venta_id',
         'chofer_id',
+        'vehiculo_id',
         'telefono_cliente_1',
         'telefono_cliente_2',
         'tipo_prestamo',
@@ -39,6 +41,11 @@ class PrestamoCliente extends Model
         return $this->belongsTo(Cliente::class);
     }
 
+    public function almacen(): BelongsTo
+    {
+        return $this->belongsTo(AlmacenPrestable::class, 'almacenes_prestables_id');
+    }
+
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);
@@ -47,6 +54,11 @@ class PrestamoCliente extends Model
     public function chofer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'chofer_id');
+    }
+
+    public function vehiculo(): BelongsTo
+    {
+        return $this->belongsTo(Vehiculo::class);
     }
 
     public function detalles(): HasMany

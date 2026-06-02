@@ -16,7 +16,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/presentation/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, AlertTriangle } from 'lucide-react';
 import MovimientoDetallesModal from './MovimientoDetallesModal';
 
 interface MovimientoInventario {
@@ -63,6 +63,17 @@ interface MovimientoInventario {
     referencia_id?: number;
     anulado?: boolean;
     motivo_anulacion?: string;
+    // ✅ NUEVO (2026-06-02): Detección de inconsistencias
+    tiene_inconsistencia?: boolean;
+    inconsistencias?: string[];
+    // ✅ NUEVO (2026-06-02): Stock esperado correcto
+    tiene_error_stock?: boolean;
+    total_esperado_anterior?: number;
+    total_esperado_posterior?: number;
+    disponible_esperado_anterior?: number;
+    disponible_esperado_posterior?: number;
+    reserva_esperada_anterior?: number;
+    reserva_esperada_posterior?: number;
 }
 
 interface PaginationInfo {
@@ -91,6 +102,10 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
 }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMovimiento, setSelectedMovimiento] = useState<MovimientoInventario | null>(null);
+    const [mostrarStockEsperado, setMostrarStockEsperado] = useState(false); // ✅ NUEVO (2026-06-02): Toggle para stock esperado
+
+    // ✅ NUEVO: Verificar si hay movimientos con error
+    const hayErrorStock = movimientos.some(m => m.tiene_error_stock);
     const getTipoColor = (tipo: string) => {
         const colors: Record<string, string> = {
             'ENTRADA': 'bg-green-100 text-green-800',
@@ -147,6 +162,10 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                             <TableHead className="text-center">Cant. Anterior</TableHead>
                             <TableHead className="text-center">Cambio</TableHead>
                             <TableHead className="text-center">Cant. Posterior</TableHead>
+                            {/* ✅ NUEVO (2026-06-02): Columna de stock esperado (solo si hay error) */}
+                            {hayErrorStock && mostrarStockEsperado && (
+                                <TableHead className="text-center bg-yellow-50 dark:bg-yellow-900/20">Stock Esperado</TableHead>
+                            )}
                             {/* ✅ NUEVO (2026-02-18): Columna de conversiones de unidades */}
                             {/* <TableHead className="text-center">📐 Conversión</TableHead> */}
                             {/* ✅ NUEVO: Columna de documento relacionado (venta/proforma) */}
@@ -166,10 +185,32 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                             </TableRow>
                         ) : (
                             movimientos.map((movimiento) => (
-                                <TableRow key={movimiento.id}>
+                                <TableRow
+                                    key={movimiento.id}
+                                    className={movimiento.tiene_inconsistencia ? 'bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500' : ''}
+                                    title={movimiento.inconsistencias?.length ? 'Inconsistencias: ' + movimiento.inconsistencias.join(', ') : ''}
+                                >
                                     <TableCell className="font-medium">
                                         <div>
-                                            <div className="font-semibold">#{movimiento.id}</div>
+                                            <div className="font-semibold flex items-center gap-2">
+                                                {movimiento.tiene_inconsistencia && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-xs">
+                                                                <div className="text-sm space-y-1">
+                                                                    {movimiento.inconsistencias?.map((inc, idx) => (
+                                                                        <div key={idx}>• {inc}</div>
+                                                                    ))}
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                                #{movimiento.id}
+                                            </div>
                                             <div className="text-sm">{movimiento.referencia}</div>
                                             <div className="text-xs text-muted-foreground mt-1">
                                                 <div>{new Date(movimiento.created_at).toLocaleDateString('es-ES')}</div>
@@ -286,6 +327,39 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                                             </div>
                                         </div>
                                     </TableCell>
+                                    {/* ✅ NUEVO (2026-06-02): Columna de Stock Esperado (solo si hay error y está habilitada) */}
+                                    {hayErrorStock && mostrarStockEsperado && (
+                                        <TableCell className="text-center text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20">
+                                            {movimiento.tiene_error_stock ? (
+                                                <div className="space-y-1">
+                                                    <div className="bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                                        <p className="text-gray-600 dark:text-gray-400 text-xs">Total</p>
+                                                        <p className="text-blue-700 dark:text-blue-400 font-bold">
+                                                            Ant: {movimiento.total_esperado_anterior}<br/>
+                                                            Pos: {movimiento.total_esperado_posterior}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
+                                                        <p className="text-gray-600 dark:text-gray-400 text-xs">Disponible</p>
+                                                        <p className="text-green-700 dark:text-green-400 font-bold">
+                                                            Ant: {movimiento.disponible_esperado_anterior}<br/>
+                                                            Pos: {movimiento.disponible_esperado_posterior}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded">
+                                                        <p className="text-gray-600 dark:text-gray-400 text-xs">Reservada</p>
+                                                        <p className="text-orange-700 dark:text-orange-400 font-bold">
+                                                            Ant: {movimiento.reserva_esperada_anterior}<br/>
+                                                            Pos: {movimiento.reserva_esperada_posterior}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-400 dark:text-gray-600 text-xs">Sin error</p>
+                                            )}
+                                        </TableCell>
+                                    )}
+
                                     {/* ✅ NUEVO (2026-03-26): Botón simple para ver detalles */}
                                     <TableCell className="text-center">
                                         <Button
@@ -308,6 +382,19 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                 {pagination && pagination.last_page > 1 && (
                     <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-4">
+                            {/* ✅ NUEVO (2026-06-02): Toggle para mostrar stock esperado */}
+                            {hayErrorStock && (
+                                <button
+                                    onClick={() => setMostrarStockEsperado(!mostrarStockEsperado)}
+                                    className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${
+                                        mostrarStockEsperado
+                                            ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    {mostrarStockEsperado ? '✓ Stock Esperado' : 'Stock Esperado'}
+                                </button>
+                            )}
                             <div className="text-sm text-muted-foreground">
                                 Mostrando <strong>{pagination.from}</strong> a <strong>{pagination.to}</strong> de <strong>{pagination.total}</strong> resultados
                             </div>
@@ -317,8 +404,11 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                                 <label htmlFor="per_page" className="text-sm text-muted-foreground">Items por página:</label>
                                 <select
                                     id="per_page"
-                                    value={pagination.per_page}
-                                    onChange={(e) => onPerPageChange?.(parseInt(e.target.value))}
+                                    value={pagination.per_page === 999999 ? 'todos' : pagination.per_page}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        onPerPageChange?.(val === 'todos' ? 999999 : parseInt(val));
+                                    }}
                                     className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="10">10</option>
@@ -327,6 +417,7 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                                     <option value="25">25</option>
                                     <option value="50">50</option>
                                     <option value="100">100</option>
+                                    <option value="todos">Mostrar todos</option>
                                 </select>
                             </div>
                         </div>

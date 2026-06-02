@@ -35,7 +35,9 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable.precios',
                 'detalles.devolucionDetalles',
                 'cliente',
+                'almacen',
                 'chofer',
+                'vehiculo',
                 'devoluciones.detalles.detallePrestamoCliente.prestable'
             ]);
 
@@ -92,37 +94,40 @@ class PrestamoClienteController extends Controller
                 ], 422);
             }
 
+            // Validar que se especifique un almacén
+            $almacenId = $request->integer('almacenes_prestables_id');
+            if (!$almacenId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debes seleccionar un almacén',
+                ], 422);
+            }
+
             $detalles = $request->input('detalles', []);
 
-            Log::info('🏭 Validando stock consolidado para detalles', [
+            Log::info('🏭 Validando stock en almacén específico', [
+                'almacen_id' => $almacenId,
                 'cantidad_detalles' => count($detalles),
             ]);
 
             foreach ($detalles as $i => $detalle) {
-                $almacenesIds = array_values(array_filter(array_map('intval', (array) ($detalle['almacenes_ids'] ?? []))));
-                if (count($almacenesIds) === 0) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Detalle {$i}: Debes seleccionar al menos un almacén",
-                    ], 422);
-                }
-
                 $cantidadDisponible = (int) PrestableStock::where('prestable_id', (int) $detalle['prestable_id'])
-                    ->whereIn('almacenes_prestables_id', $almacenesIds)
-                    ->sum('cantidad_disponible');
+                    ->where('almacenes_prestables_id', $almacenId)
+                    ->value('cantidad_disponible') ?? 0;
 
                 $stockValido = [
                     'valido' => $cantidadDisponible >= (int) $detalle['cantidad'],
                     'mensaje' => $cantidadDisponible >= (int) $detalle['cantidad']
                         ? 'OK'
-                        : "Stock insuficiente en almacenes seleccionados. Disponible: {$cantidadDisponible}, solicitado: {$detalle['cantidad']}",
+                        : "Stock insuficiente. Disponible: {$cantidadDisponible}, solicitado: {$detalle['cantidad']}",
                 ];
 
                 if (!$stockValido['valido']) {
                     Log::warning('⚠️ Stock insuficiente en detalle ' . $i, [
                         'mensaje' => $stockValido['mensaje'],
                         'prestable_id' => $detalle['prestable_id'],
-                        'cantidad_disponible_consolidada' => $cantidadDisponible,
+                        'almacen_id' => $almacenId,
+                        'cantidad_disponible' => $cantidadDisponible,
                     ]);
                     return response()->json([
                         'success' => false,
@@ -146,7 +151,7 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'detalles.prestable.condiciones', 'detalles.prestable.precios', 'cliente', 'chofer']),
+                'data' => $prestamo->load(['detalles.prestable', 'detalles.prestable.condiciones', 'detalles.prestable.precios', 'cliente', 'almacen', 'chofer', 'vehiculo']),
                 'message' => 'Préstamo creado exitosamente',
             ], 201);
         } catch (\Exception $e) {
@@ -168,7 +173,9 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable.precios',
                 'detalles.devolucionDetalles',
                 'cliente',
+                'almacen',
                 'chofer',
+                'vehiculo',
                 'venta',
                 'devoluciones.detalles.detallePrestamoCliente.prestable'
             ]);

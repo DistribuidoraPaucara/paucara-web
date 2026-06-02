@@ -644,6 +644,7 @@ class InventarioController extends Controller
         $esReversión = $request->filled('es_reversión') ? $request->boolean('es_reversión') : null;  // ✅ NUEVO: Filtro de reversiones
         $referenciaTipo = $request->filled('referencia_tipo') ? $request->string('referencia_tipo') : null;  // ✅ NUEVO (2026-03-27): Filtro por tipo de referencia (proforma, venta, etc)
         $perPage     = $request->integer('per_page', 15); // ✅ Dinámico: permite cambiar items por página
+        $mostrarTodos = $perPage >= 999999; // ✅ NUEVO: Flag para mostrar todos sin paginación
 
         // Construir query con filtros
         // ✅ MEJORADO (2026-02-18): Incluir información de conversiones de unidades
@@ -704,8 +705,20 @@ class InventarioController extends Controller
 
         // ✅ Paginar resultados - Laravel obtiene automáticamente la página del request
         // ✅ ORDENAMIENTO (2026-02-11): Ordenar por created_at DESC (más recientes primero)
+        // ✅ NUEVO: Si mostrarTodos=true, paginar con el total de registros (1 sola página)
+        $pageSize = $mostrarTodos ? max($totalMovimientos, 1) : $perPage;
         $movimientosPaginados = $query->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->paginate($pageSize);
+
+        // ✅ NUEVO (2026-06-02): Obtener movimientos sin paginar para comparación de inconsistencias
+        $movimientosParaComparacion = null;
+        if ($mostrarTodos) {
+            // Si mostramos todos, ya tenemos todos los movimientos
+            $movimientosParaComparacion = $movimientosPaginados;
+        } else {
+            // Si no, obtener todos los movimientos del filtro actual para detección de inconsistencias
+            $movimientosParaComparacion = $query->orderByDesc('created_at')->get();
+        }
 
         // Mapear datos de movimientos
         $movimientos = $movimientosPaginados->map(function ($movimiento) {
@@ -825,6 +838,9 @@ class InventarioController extends Controller
                 'unidad_base_nombre'     => $movimiento->unidadBase?->nombre,
             ];
         });
+
+        // ✅ NUEVO (2026-06-02): Detectar inconsistencias en los movimientos
+        $movimientos = $this->detectarInconsistenciasMovimientos($movimientos, $movimientosParaComparacion);
 
         // Estadísticas
         $stats = [
@@ -4226,5 +4242,304 @@ class InventarioController extends Controller
 
             abort(500, 'Error al generar documento de impresión');
         }
+    }
+
+    /**
+     * ✅ NUEVO (2026-06-02): Detectar inconsistencias en movimientos de inventario - VALIDACIÓN DETALLADA
+     *
+     * Validaciones:
+     * 1. Valores negativos
+     * 2. Coherencia interna: anterior + cambio = posterior (para cada métrica)
+     * 3. Validación según tipo de movimiento:
+     *    - SALIDA_VENTA: Descuenta Total y Disponible (Reserva no cambia)
+     *    - CONSUMO_RESERVA: Descuenta Total y Reserva (Disponible no cambia)
+     *    - RESERVA_PROFORMA: Incrementa Reserva, Disponible disminuye (Total no cambia)
+     *    - ENTRADA_COMPRA: Incrementa Total y Disponible (Reserva no cambia)
+     *    - AJUSTES: Pueden cambiar cualquier métrica
+     *    - TRANSFERENCIA: Solo cambios en disponible/reserva
+     * 4. Continuidad entre filas (posterior anterior = anterior actual)
+     * 5. Anulaciones: Verifica coherencia pero considera que invierte movimientos
+     */
+    private function detectarInconsistenciasMovimientos($movimientosMapeos, $movimientosModelo)
+    {
+        // Procesar cada movimiento para detectar inconsistencias
+        $movimientosProcesados = $movimientosMapeos->map(function ($movimiento, $index) use ($movimientosMapeos) {
+            $inconsistencias = [];
+            $tieneInconsistencia = false;
+            $tipo = $movimiento['tipo'] ?? '';
+            $esAnulado = $movimiento['anulado'] ?? false;
+            $cambio = $movimiento['cantidad'] ?? 0;
+
+            $totAnt = $movimiento['cantidad_total_anterior'] ?? 0;
+            $totPos = $movimiento['cantidad_total_posterior'] ?? 0;
+            $disAnt = $movimiento['cantidad_disponible_anterior'] ?? 0;
+            $disPos = $movimiento['cantidad_disponible_posterior'] ?? 0;
+            $resAnt = $movimiento['cantidad_reservada_anterior'] ?? 0;
+            $resPos = $movimiento['cantidad_reservada_posterior'] ?? 0;
+
+            // ✅ Validación 1: Valores negativos (casi nunca permitidos)
+            if ($totAnt < 0 || $totPos < 0) {
+                $inconsistencias[] = "❌ Total negativo (Ant: $totAnt, Pos: $totPos)";
+                $tieneInconsistencia = true;
+            }
+            if ($disAnt < 0 || $disPos < 0) {
+                $inconsistencias[] = "❌ Disponible negativo (Ant: $disAnt, Pos: $disPos)";
+                $tieneInconsistencia = true;
+            }
+            if ($resAnt < 0 || $resPos < 0) {
+                $inconsistencias[] = "❌ Reservada negativa (Ant: $resAnt, Pos: $resPos)";
+                $tieneInconsistencia = true;
+            }
+
+            // ✅ Validación 2: Coherencia matemática básica (anterior + cambio = posterior)
+            $totalEsperado = $totAnt + $cambio;
+            $dispEsperado = $disAnt + $cambio;
+            $resEsperado = $resAnt + $cambio;
+
+            // ✅ Validación 3: Validación según tipo de movimiento
+            switch (true) {
+                // SALIDA_VENTA: descuenta Total y Disponible (Reserva NO cambia)
+                case str_contains($tipo, 'SALIDA_VENTA'):
+                    // Total debe cambiar
+                    if (abs($totalEsperado - $totPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Total: {$totAnt} + {$cambio} ≠ {$totPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Disponible debe cambiar igual que Total
+                    if (abs($dispEsperado - $disPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Disponible: {$disAnt} + {$cambio} ≠ {$disPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Reserva NO debe cambiar en ventas normales
+                    if (abs($resAnt - $resPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Venta: Reserva cambió ({$resAnt} → {$resPos}), debería ser igual";
+                        $tieneInconsistencia = true;
+                    }
+                    break;
+
+                // CONSUMO_RESERVA: descuenta Total y Reserva (Disponible NO cambia, ya estaba reservado)
+                case str_contains($tipo, 'CONSUMO_RESERVA'):
+                    // Total debe cambiar
+                    if (abs($totalEsperado - $totPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Total: {$totAnt} + {$cambio} ≠ {$totPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Disponible NO debe cambiar (ya estaba reservado)
+                    if (abs($disAnt - $disPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Consumo Reserva: Disponible cambió ({$disAnt} → {$disPos}), debería ser igual";
+                        $tieneInconsistencia = true;
+                    }
+                    // Reserva debe cambiar igual que el cambio
+                    if (abs($resEsperado - $resPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Reserva: {$resAnt} + {$cambio} ≠ {$resPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    break;
+
+                // RESERVA_PROFORMA: incrementa Reserva, disminuye Disponible (Total NO cambia)
+                case str_contains($tipo, 'RESERVA_PROFORMA'):
+                    // Total NO debe cambiar
+                    if (abs($totAnt - $totPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Proforma: Total cambió ({$totAnt} → {$totPos}), debería ser igual";
+                        $tieneInconsistencia = true;
+                    }
+                    // Disponible debe disminuir = Total - Reserva Posterior = Total - (Reserva Anterior + cambio)
+                    // Si Disponible Anterior = Total - Reserva Anterior
+                    // Entonces Disponible Posterior debería = Total - (Reserva Anterior + cambio) = Disponible Anterior - cambio
+                    $dispEsperadoProforma = $disAnt - $cambio;
+                    if (abs($dispEsperadoProforma - $disPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Disponible Proforma: {$disAnt} - {$cambio} ≠ {$disPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Reserva debe incrementar
+                    if (abs($resEsperado - $resPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Reserva: {$resAnt} + {$cambio} ≠ {$resPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Total debe = Disponible + Reserva (invariante)
+                    $totalInvariante = $disPos + $resPos;
+                    if (abs($totPos - $totalInvariante) > 0.01) {
+                        $inconsistencias[] = "⚠️ Invariante: Total({$totPos}) ≠ Disponible({$disPos}) + Reserva({$resPos})";
+                        $tieneInconsistencia = true;
+                    }
+                    break;
+
+                // ENTRADA_COMPRA: incrementa Total y Disponible (Reserva NO cambia)
+                case str_contains($tipo, 'ENTRADA_COMPRA') || str_contains($tipo, 'ENTRADA'):
+                    // Total debe cambiar
+                    if (abs($totalEsperado - $totPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Total: {$totAnt} + {$cambio} ≠ {$totPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Disponible debe cambiar igual que Total
+                    if (abs($dispEsperado - $disPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Disponible: {$disAnt} + {$cambio} ≠ {$disPos}";
+                        $tieneInconsistencia = true;
+                    }
+                    // Reserva NO debe cambiar en entradas normales
+                    if (abs($resAnt - $resPos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Entrada: Reserva cambió ({$resAnt} → {$resPos}), debería ser igual";
+                        $tieneInconsistencia = true;
+                    }
+                    break;
+
+                // AJUSTES: pueden cambiar cualquier métrica, pero debe haber coherencia
+                case str_contains($tipo, 'AJUSTE') || str_contains($tipo, 'SALIDA_AJUSTE'):
+                    // Verificar que al menos uno cambió (no todos pueden ser iguales en un ajuste real)
+                    $totalCambio = abs($totPos - $totAnt);
+                    $dispCambio = abs($disPos - $disAnt);
+                    $resCambio = abs($resPos - $resAnt);
+
+                    // Inventante debe mantenerse: Total = Disponible + Reserva
+                    $invarianteAnt = $disAnt + $resAnt;
+                    $invariantePos = $disPos + $resPos;
+                    if (abs($totAnt - $invarianteAnt) > 0.01 || abs($totPos - $invariantePos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Invariante roto: Ant(Tot{$totAnt} ≠ Dis{$disAnt}+Res{$resAnt}), Pos(Tot{$totPos} ≠ Dis{$disPos}+Res{$resPos})";
+                        $tieneInconsistencia = true;
+                    }
+                    break;
+
+                // DEFAULT: Validar invariante (Total = Disponible + Reserva) para todos
+                default:
+                    $invarianteAnt = $disAnt + $resAnt;
+                    $invariantePos = $disPos + $resPos;
+                    if (abs($totAnt - $invarianteAnt) > 0.01) {
+                        $inconsistencias[] = "⚠️ Invariante anterior: Total({$totAnt}) ≠ Disponible({$disAnt}) + Reserva({$resAnt})";
+                        $tieneInconsistencia = true;
+                    }
+                    if (abs($totPos - $invariantePos) > 0.01) {
+                        $inconsistencias[] = "⚠️ Invariante posterior: Total({$totPos}) ≠ Disponible({$disPos}) + Reserva({$resPos})";
+                        $tieneInconsistencia = true;
+                    }
+            }
+
+            // ✅ Validación 4: Continuidad entre filas (posterior anterior = anterior actual)
+            // IMPORTANTE: El array viene en orden DESC (más reciente primero), pero en la tabla se ve en orden ASC (cronológico)
+            // Entonces comparo con el índice ANTERIOR en el array (que es más reciente en tiempo, siguiente cronológico)
+            if ($index > 0) {
+                $movimientoAnterior = $movimientosMapeos[$index - 1]; // Más reciente en tiempo (siguiente cronológico)
+
+                // Solo comparar si es del mismo stock_producto (mismo producto en mismo almacén)
+                if (($movimiento['stock_producto_id'] ?? null) === ($movimientoAnterior['stock_producto_id'] ?? null)) {
+                    $totAntSiguiente = $movimientoAnterior['cantidad_total_anterior'] ?? 0;
+                    $disAntSiguiente = $movimientoAnterior['cantidad_disponible_anterior'] ?? 0;
+                    $resAntSiguiente = $movimientoAnterior['cantidad_reservada_anterior'] ?? 0;
+
+                    if (abs($totPos - $totAntSiguiente) > 0.01) {
+                        $inconsistencias[] = "⚠️ Salto Total: fila posterior({$totPos}) ≠ siguiente anterior({$totAntSiguiente})";
+                        $tieneInconsistencia = true;
+                    }
+
+                    if (abs($disPos - $disAntSiguiente) > 0.01) {
+                        $inconsistencias[] = "⚠️ Salto Disponible: fila posterior({$disPos}) ≠ siguiente anterior({$disAntSiguiente})";
+                        $tieneInconsistencia = true;
+                    }
+
+                    if (abs($resPos - $resAntSiguiente) > 0.01) {
+                        $inconsistencias[] = "⚠️ Salto Reserva: fila posterior({$resPos}) ≠ siguiente anterior({$resAntSiguiente})";
+                        $tieneInconsistencia = true;
+                    }
+                }
+            }
+
+            // Agregar información de inconsistencias
+            $movimiento['tiene_inconsistencia'] = $tieneInconsistencia;
+            $movimiento['inconsistencias'] = $inconsistencias;
+
+            return $movimiento;
+        });
+
+        // ✅ NUEVO (2026-06-02): Detectar duplicados (mismo anterior/posterior en mismo stock_producto)
+        $duplicadosMap = [];
+        $movimientosProcesados->each(function($mov) use (&$duplicadosMap) {
+            $stockId = $mov['stock_producto_id'] ?? 'sin-stock';
+            $clave = "{$stockId}|{$mov['cantidad_total_anterior']}|{$mov['cantidad_total_posterior']}|{$mov['cantidad_disponible_anterior']}|{$mov['cantidad_disponible_posterior']}|{$mov['cantidad_reservada_anterior']}|{$mov['cantidad_reservada_posterior']}";
+
+            if (!isset($duplicadosMap[$clave])) {
+                $duplicadosMap[$clave] = [];
+            }
+            $duplicadosMap[$clave][] = $mov['id'];
+        });
+
+        // Marcar duplicados
+        $movimientosProcesados = $movimientosProcesados->map(function($mov) use ($duplicadosMap) {
+            $stockId = $mov['stock_producto_id'] ?? 'sin-stock';
+            $clave = "{$stockId}|{$mov['cantidad_total_anterior']}|{$mov['cantidad_total_posterior']}|{$mov['cantidad_disponible_anterior']}|{$mov['cantidad_disponible_posterior']}|{$mov['cantidad_reservada_anterior']}|{$mov['cantidad_reservada_posterior']}";
+
+            if (isset($duplicadosMap[$clave]) && count($duplicadosMap[$clave]) > 1) {
+                $mov['tiene_inconsistencia'] = true;
+                $mov['inconsistencias'][] = "🔴 DUPLICADO: Este movimiento es idéntico a otro (mismos anterior/posterior)";
+            }
+
+            return $mov;
+        });
+
+        // ✅ NUEVO (2026-06-02): Calcular stock CORRECTO esperado a partir del primer error
+        // Identifica dónde comienzan valores negativos O saltos de continuidad
+        $primerErrorIndex = null;
+        $movimientosProcesados->each(function($mov, $idx) use (&$primerErrorIndex, $movimientosProcesados) {
+            if ($primerErrorIndex === null) {
+                // Detectar valores negativos
+                if ($mov['cantidad_total_anterior'] < 0 || $mov['cantidad_total_posterior'] < 0 ||
+                    $mov['cantidad_disponible_anterior'] < 0 || $mov['cantidad_disponible_posterior'] < 0 ||
+                    $mov['cantidad_reservada_anterior'] < 0 || $mov['cantidad_reservada_posterior'] < 0) {
+                    $primerErrorIndex = $idx;
+                }
+
+                // Detectar saltos de continuidad (posterior anterior ≠ anterior actual)
+                // El "siguiente" en tiempo es el índice anterior (porque está en orden DESC)
+                if ($primerErrorIndex === null && $idx > 0) {
+                    $movAnterior = $movimientosProcesados[$idx - 1];
+
+                    // Solo verificar si es mismo stock_producto
+                    if (($mov['stock_producto_id'] ?? null) === ($movAnterior['stock_producto_id'] ?? null)) {
+                        if (abs(($mov['cantidad_total_anterior'] ?? 0) - ($movAnterior['cantidad_total_posterior'] ?? 0)) > 0.01 ||
+                            abs(($mov['cantidad_disponible_anterior'] ?? 0) - ($movAnterior['cantidad_disponible_posterior'] ?? 0)) > 0.01 ||
+                            abs(($mov['cantidad_reservada_anterior'] ?? 0) - ($movAnterior['cantidad_reservada_posterior'] ?? 0)) > 0.01) {
+                            $primerErrorIndex = $idx;
+                        }
+                    }
+                }
+            }
+        });
+
+        // Si hay error, calcular valores correctos desde ese punto
+        if ($primerErrorIndex !== null && $primerErrorIndex > 0) {
+            // Convertir a array para poder modificar
+            $movimientosArray = $movimientosProcesados->toArray();
+
+            // Obtener valores CORRECTOS del último movimiento antes del error
+            $movAnteriorAlError = $movimientosArray[$primerErrorIndex - 1];
+            $totCorrecto = $movAnteriorAlError['cantidad_total_posterior'] ?? 0;
+            $disCorrecto = $movAnteriorAlError['cantidad_disponible_posterior'] ?? 0;
+            $resCorrecto = $movAnteriorAlError['cantidad_reservada_posterior'] ?? 0;
+
+            // Aplicar cambios desde el error hacia adelante
+            for ($i = $primerErrorIndex; $i < count($movimientosArray); $i++) {
+                $cambio = $movimientosArray[$i]['cantidad'] ?? 0;
+
+                // Calcular qué DEBERÍA ser (sin actualizar lo actual)
+                $movimientosArray[$i]['total_esperado_anterior'] = $totCorrecto;
+                $movimientosArray[$i]['total_esperado_posterior'] = $totCorrecto + $cambio;
+                $movimientosArray[$i]['disponible_esperado_anterior'] = $disCorrecto;
+                $movimientosArray[$i]['disponible_esperado_posterior'] = $disCorrecto + $cambio;
+                $movimientosArray[$i]['reserva_esperada_anterior'] = $resCorrecto;
+                $movimientosArray[$i]['reserva_esperada_posterior'] = $resCorrecto + $cambio;
+
+                // Actualizar para el siguiente movimiento
+                $totCorrecto = $movimientosArray[$i]['total_esperado_posterior'];
+                $disCorrecto = $movimientosArray[$i]['disponible_esperado_posterior'];
+                $resCorrecto = $movimientosArray[$i]['reserva_esperada_posterior'];
+
+                // Marcar que tiene error
+                $movimientosArray[$i]['tiene_error_stock'] = true;
+                $movimientosArray[$i]['inconsistencias'][] = "⚠️ Stock esperado calculado (ver detalles)";
+            }
+
+            // Convertir de vuelta a Collection
+            $movimientosProcesados = collect($movimientosArray);
+        }
+
+        return $movimientosProcesados;
     }
 }

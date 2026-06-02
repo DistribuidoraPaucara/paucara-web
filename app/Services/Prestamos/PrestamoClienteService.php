@@ -37,13 +37,15 @@ class PrestamoClienteService
     }
 
     /**
-     * Crear préstamo a cliente con múltiples detalles
+     * Crear préstamo a cliente con múltiples detalles desde UN SOLO almacén
      *
      * @param array $datos
      * {
      *   'cliente_id': int,
+     *   'almacenes_prestables_id': int,
      *   'venta_id': ?int,
      *   'chofer_id': ?int,
+     *   'vehiculo_id': ?int,
      *   'tipo_prestamo': 'canastillas'|'embases'|'canastillas_embases',
      *   'es_venta': bool,
      *   'es_evento': ?bool,
@@ -68,12 +70,15 @@ class PrestamoClienteService
             return DB::transaction(function () use ($datos) {
                 // Usar monto de garantía enviado por el usuario
                 $montoGarantia = (float) ($datos['monto_garantia'] ?? 0);
+                $almacenId = (int) $datos['almacenes_prestables_id'];
 
                 // Crear registro encabezado de préstamo
                 $prestamo = PrestamoCliente::create([
                     'cliente_id' => $datos['cliente_id'],
+                    'almacenes_prestables_id' => $almacenId,
                     'venta_id' => $datos['venta_id'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
+                    'vehiculo_id' => $datos['vehiculo_id'] ?? null,
                     'telefono_cliente_1' => $datos['telefono_cliente_1'] ?? null,
                     'telefono_cliente_2' => $datos['telefono_cliente_2'] ?? null,
                     'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
@@ -89,36 +94,22 @@ class PrestamoClienteService
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
-                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
-
                     PrestamoClienteDetalle::create([
                         'prestamo_cliente_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
                         'precio_unitario' => $detalle['precio_unitario'] ?? null,
                         'precio_prestamo' => $detalle['precio_prestamo'] ?? null,
-                        'almacenes_ids' => !empty($almacenesIds) ? $almacenesIds : null,
                         'estado' => 'ACTIVO',
                     ]);
 
-                    if (count($almacenesIds) > 0) {
-                        $resultadoConsumo = $this->consumirStockDesdeAlmacenesSeleccionados(
-                            (int) $detalle['prestable_id'],
-                            (int) $detalle['cantidad'],
-                            $almacenesIds,
-                            (bool) $datos['es_venta']
-                        );
-                    } elseif ($datos['es_venta']) {
-                        $resultadoConsumo = $this->stockAdvancedService->consumirDisponibleInteligente(
-                            (int) $detalle['prestable_id'],
-                            (int) $detalle['cantidad']
-                        );
-                    } else {
-                        $resultadoConsumo = $this->stockAdvancedService->prestarAlClienteInteligente(
-                            (int) $detalle['prestable_id'],
-                            (int) $detalle['cantidad']
-                        );
-                    }
+                    // Consumir stock del almacén específico
+                    $resultadoConsumo = $this->consumirStockDelAlmacen(
+                        (int) $detalle['prestable_id'],
+                        (int) $detalle['cantidad'],
+                        $almacenId,
+                        (bool) $datos['es_venta']
+                    );
 
                     if (!($resultadoConsumo['exito'] ?? false)) {
                         throw new \Exception($resultadoConsumo['mensaje'] ?? 'Error consumiendo stock');
@@ -177,65 +168,48 @@ class PrestamoClienteService
     }
 
     /**
-     * Consumir stock SOLO desde los almacenes seleccionados por el usuario.
+     * Consumir stock de UN SOLO almacén específico.
      */
-    private function consumirStockDesdeAlmacenesSeleccionados(
+    private function consumirStockDelAlmacen(
         int $prestableId,
         int $cantidad,
-        array $almacenesIds,
+        int $almacenId,
         bool $esVenta
     ): array {
         try {
-            return DB::transaction(function () use ($prestableId, $cantidad, $almacenesIds, $esVenta) {
-                $cantidadRestante = $cantidad;
-                $detallesPorAlmacen = [];
+            return DB::transaction(function () use ($prestableId, $cantidad, $almacenId, $esVenta) {
+                $stock = PrestableStock::where('prestable_id', $prestableId)
+                    ->where('almacenes_prestables_id', $almacenId)
+                    ->firstOrFail();
 
-                foreach ($almacenesIds as $almacenId) {
-                    if ($cantidadRestante <= 0) {
-                        break;
-                    }
-
-                    $stock = PrestableStock::where('prestable_id', $prestableId)
-                        ->where('almacenes_prestables_id', $almacenId)
-                        ->first();
-
-                    if (!$stock || (int) $stock->cantidad_disponible <= 0) {
-                        continue;
-                    }
-
-                    $cantidadATomar = min($cantidadRestante, (int) $stock->cantidad_disponible);
-
-                    if ($esVenta) {
-                        $stock->update([
-                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomar,
-                        ]);
-                    } else {
-                        $stock->update([
-                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomar,
-                            'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidadATomar,
-                        ]);
-                    }
-
-                    $almacen = AlmacenPrestable::find($almacenId);
-                    $detallesPorAlmacen[] = [
-                        'almacen_id' => $almacenId,
-                        'almacen_nombre' => $almacen?->nombre ?? ('Almacén #' . $almacenId),
-                        'cantidad' => $cantidadATomar,
-                    ];
-
-                    $cantidadRestante -= $cantidadATomar;
+                if ((int) $stock->cantidad_disponible < $cantidad) {
+                    throw new \Exception("Stock insuficiente en el almacén. Disponible: {$stock->cantidad_disponible}, solicitado: {$cantidad}");
                 }
 
-                if ($cantidadRestante > 0) {
-                    throw new \Exception("Stock insuficiente en almacenes seleccionados. Solicitado: {$cantidad}, disponible: " . ($cantidad - $cantidadRestante));
+                if ($esVenta) {
+                    $stock->update([
+                        'cantidad_disponible' => $stock->cantidad_disponible - $cantidad,
+                    ]);
+                } else {
+                    $stock->update([
+                        'cantidad_disponible' => $stock->cantidad_disponible - $cantidad,
+                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
+                    ]);
                 }
 
+                $almacen = AlmacenPrestable::find($almacenId);
                 return [
                     'exito' => true,
                     'cantidad_consumida' => $cantidad,
-                    'detalles_por_almacen' => $detallesPorAlmacen,
+                    'detalles_por_almacen' => [
+                        [
+                            'almacen_id' => $almacenId,
+                            'almacen_nombre' => $almacen?->nombre ?? ('Almacén #' . $almacenId),
+                            'cantidad' => $cantidad,
+                        ]
+                    ],
                     'advertencias' => [],
-                    'mensaje' => 'Consumo completado desde almacenes seleccionados',
+                    'mensaje' => 'Consumo completado desde almacén específico',
                 ];
             });
         } catch (\Exception $e) {
@@ -321,17 +295,15 @@ class PrestamoClienteService
                         throw new \Exception("Cantidad a devolver ({$cantidadTotal}) excede cantidad restante ({$cantidadRestante}) para detalle {$detalleData['prestamo_cliente_detalle_id']}. Ya devuelto: {$cantidadYaDevuelta}");
                     }
 
-                    // Usar almacenes guardados en el detalle, o resolver dinámicamente si no existen
-                    $almacenesIds = $detalle->almacenes_ids ?? [];
-                    if (is_string($almacenesIds)) {
-                        $almacenesIds = json_decode($almacenesIds, true) ?? [];
+                    // Usar el almacén de la cabecera del préstamo
+                    $almacenId = $prestamo->almacenes_prestables_id;
+
+                    if (!$almacenId) {
+                        throw new \Exception('El préstamo no tiene un almacén asignado (almacenes_prestables_id)');
                     }
 
-                    $almacenId = !empty($almacenesIds) ? $almacenesIds[0] : $this->resolverAlmacenIdParaPrestable($detalle->prestable_id);
-
-                    \Log::info('🔍 Devolución - Almacén usado', [
+                    \Log::info('🔍 Devolución - Almacén usado de cabecera', [
                         'prestable_id' => $detalle->prestable_id,
-                        'almacenes_ids_guardados' => $almacenesIds,
                         'almacen_id_usado' => $almacenId,
                         'cantidad_para_stock' => $cantidadParaStock,
                     ]);
@@ -456,8 +428,8 @@ class PrestamoClienteService
                                 ]);
                             }
 
-                            // Obtener stock del embase ANTES
-                            $almacenIdEmbase = $this->resolverAlmacenIdParaPrestable($embase->id);
+                            // Obtener stock del embase ANTES (usar el mismo almacén de la cabecera)
+                            $almacenIdEmbase = $almacenId;
                             $stockEmbase = $this->stockService->obtenerStock($embase->id, $almacenIdEmbase);
                             $disponibleEmbaseAntes = $stockEmbase->cantidad_disponible;
                             $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_cliente_deudor;
@@ -707,7 +679,11 @@ class PrestamoClienteService
                         $cantidadPendiente = $detalle->cantidad_prestada - $cantidadDevuelta;
 
                         if ($cantidadPendiente > 0) {
-                            $almacenId = $this->resolverAlmacenIdParaPrestable($detalle->prestable_id);
+                            // Usar el almacén de la cabecera del préstamo
+                            $almacenId = $prestamo->almacenes_prestables_id;
+                            if (!$almacenId) {
+                                throw new \Exception('El préstamo no tiene un almacén asignado para anular');
+                            }
 
                             // Obtener stock ANTES de devolver
                             $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
@@ -756,8 +732,8 @@ class PrestamoClienteService
                                     // Calcular cambio en embases: cantidad_pendiente × capacidad
                                     $cambioEmbases = $cantidadPendiente * ($prestable->capacidad ?? 1);
 
-                                    // Obtener stock del embase ANTES
-                                    $almacenIdEmbase = $this->resolverAlmacenIdParaPrestable($embase->id);
+                                    // Obtener stock del embase ANTES (usar el mismo almacén de la cabecera)
+                                    $almacenIdEmbase = $almacenId;
                                     $stockEmbase = $this->stockService->obtenerStock($embase->id, $almacenIdEmbase);
                                     $disponibleEmbaseAntes = $stockEmbase->cantidad_disponible;
                                     $prestamoClienteEmbaseAntes = $stockEmbase->cantidad_cliente_deudor;

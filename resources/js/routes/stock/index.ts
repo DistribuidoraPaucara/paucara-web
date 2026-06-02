@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
 export const exportarExcel = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ exportarExcel.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
 exportarExcel.url = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ exportarExcel.url = (args: { stock: number | { id: number } } | [stock: number |
 
 /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
 exportarExcel.get = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ exportarExcel.get = (args: { stock: number | { id: number } } | [stock: number |
 })
 /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
 exportarExcel.head = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ exportarExcel.head = (args: { stock: number | { id: number } } | [stock: number 
 
     /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
     const exportarExcelForm = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ exportarExcel.head = (args: { stock: number | { id: number } } | [stock: number 
 
             /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
         exportarExcelForm.get = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ exportarExcel.head = (args: { stock: number | { id: number } } | [stock: number 
         })
             /**
 * @see \App\Http\Controllers\InventarioController::exportarExcel
- * @see app/Http/Controllers/InventarioController.php:3011
+ * @see app/Http/Controllers/InventarioController.php:3027
  * @route '/stock/{stock}/exportar-excel'
  */
         exportarExcelForm.head = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ exportarExcel.head = (args: { stock: number | { id: number } } | [stock: number 
     exportarExcel.form = exportarExcelForm
 /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
 export const exportarPdf = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ exportarPdf.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
 exportarPdf.url = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ exportarPdf.url = (args: { stock: number | { id: number } } | [stock: number | {
 
 /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
 exportarPdf.get = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -160,7 +160,7 @@ exportarPdf.get = (args: { stock: number | { id: number } } | [stock: number | {
 })
 /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
 exportarPdf.head = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -170,7 +170,7 @@ exportarPdf.head = (args: { stock: number | { id: number } } | [stock: number | 
 
     /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
     const exportarPdfForm = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -180,7 +180,7 @@ exportarPdf.head = (args: { stock: number | { id: number } } | [stock: number | 
 
             /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
         exportarPdfForm.get = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -189,7 +189,7 @@ exportarPdf.head = (args: { stock: number | { id: number } } | [stock: number | 
         })
             /**
 * @see \App\Http\Controllers\InventarioController::exportarPdf
- * @see app/Http/Controllers/InventarioController.php:3033
+ * @see app/Http/Controllers/InventarioController.php:3049
  * @route '/stock/{stock}/exportar-pdf'
  */
         exportarPdfForm.head = (args: { stock: number | { id: number } } | [stock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

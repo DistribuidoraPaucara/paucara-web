@@ -16,7 +16,6 @@ class PrestamoClienteDetalle extends Model
         'cantidad_prestada',
         'precio_unitario',
         'precio_prestamo',
-        'almacenes_ids',
         'estado',
     ];
 
@@ -24,7 +23,6 @@ class PrestamoClienteDetalle extends Model
         'cantidad_prestada' => 'integer',
         'precio_unitario' => 'decimal:2',
         'precio_prestamo' => 'decimal:2',
-        'almacenes_ids' => 'array',
     ];
 
     public function prestamo(): BelongsTo

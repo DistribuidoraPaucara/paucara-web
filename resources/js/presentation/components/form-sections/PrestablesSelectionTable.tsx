@@ -17,13 +17,9 @@ interface PrestablesSelectionTableProps {
     onSelectItem: (prestable: Prestable) => void;
     onDeleteItem: (prestableId: number) => void;
     onUpdateCantidad?: (prestableId: number, cantidad: number) => void;
-    onToggleAlmacen?: (prestableId: number, almacenId: number, checked: boolean) => void;
     getStockDisponibleTotal: (prestable: Prestable) => number;
-    getAlmacenesConStock: (prestable: Prestable) => Array<{ id: number; nombre: string; stock: number }>;
-    getStockDisponibleEnAlmacenes: (prestable: Prestable, almacenesIds: number[]) => number;
     loading?: boolean;
     emptyMessage?: string;
-    hideAlmacenesSelection?: boolean;
     almacen_prestable_id?: number;
 }
 
@@ -35,18 +31,13 @@ export default function PrestablesSelectionTable({
     onSelectItem,
     onDeleteItem,
     onUpdateCantidad,
-    onToggleAlmacen,
     getStockDisponibleTotal,
-    getAlmacenesConStock,
-    getStockDisponibleEnAlmacenes,
     loading = false,
     emptyMessage = 'Busca arriba para agregar prestables',
-    hideAlmacenesSelection = false,
     almacen_prestable_id,
 }: PrestablesSelectionTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [showAlmacenes, setShowAlmacenes] = useState<Record<number, boolean>>({});
     const searchRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -165,12 +156,9 @@ export default function PrestablesSelectionTable({
                             </th>
                             {almacen_prestable_id && (
                                 <th className="px-2 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    📦 En Almacén
+                                    📦 Stock en Almacén
                                 </th>
                             )}
-                            <th className="px-2 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                Stock Total
-                            </th>
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 Acción
                             </th>
@@ -181,10 +169,6 @@ export default function PrestablesSelectionTable({
                             items.map((item) => {
                                 const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
                                 if (!prestable) return null;
-
-                                const almacenesDisponibles = getAlmacenesConStock(prestable);
-                                const stockSeleccionado = getStockDisponibleEnAlmacenes(prestable, item.almacenes_ids);
-                                const tieneStock = item.cantidad <= stockSeleccionado;
 
                                 const isCanastilla = prestable.tipo === 'CANASTILLA';
                                 const icon = isCanastilla ? '📦' : '🔖';
@@ -205,100 +189,6 @@ export default function PrestablesSelectionTable({
                                                 <p className="font-medium text-slate-900 dark:text-slate-100">{prestable.nombre}</p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{prestable.codigo}</p>
                                             </div>
-                                            {!hideAlmacenesSelection && almacenesDisponibles.length > 0 && (
-                                                <div className="mt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowAlmacenes(prev => ({ ...prev, [prestable.id]: !prev[prestable.id] }))}
-                                                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-2 flex items-center gap-1"
-                                                    >
-                                                        {showAlmacenes[prestable.id] ? '▼' : '▶'} Almacenes ({almacenesDisponibles.length})
-                                                    </button>
-                                                    {showAlmacenes[prestable.id] && (
-                                                        <div className="space-y-1.5">
-                                                    {(() => {
-                                                        const almacenesClientes = almacenesDisponibles.filter(a => !(a as any).es_proveedor);
-                                                        const almacenesProveedor = almacenesDisponibles.filter(a => (a as any).es_proveedor);
-                                                        const stockClientes = almacenesClientes.reduce((sum, a) => sum + a.stock, 0);
-                                                        const necesitaProveedor = item.cantidad > stockClientes;
-
-                                                        return (
-                                                            <>
-                                                                {almacenesClientes.length > 0 && (
-                                                                    <div>
-                                                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">👥 Clientes</p>
-                                                                        <div className="flex flex-wrap gap-1">
-                                                                            {almacenesClientes.map((almacen) => {
-                                                                                const checked = item.almacenes_ids?.includes(almacen.id) || false;
-                                                                                return (
-                                                                                    <label
-                                                                                        key={`${prestable.id}-${almacen.id}`}
-                                                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs cursor-pointer ${
-                                                                                            checked
-                                                                                                ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
-                                                                                                : 'bg-gray-50 border-gray-300 text-gray-700 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-300'
-                                                                                        }`}
-                                                                                    >
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={checked}
-                                                                                            onChange={(e) =>
-                                                                                                onToggleAlmacen?.(Number(prestable.id), almacen.id, e.target.checked)
-                                                                                            }
-                                                                                            className="cursor-pointer"
-                                                                                        />
-                                                                                        <span>{almacen.nombre} • {almacen.stock.toLocaleString('es-BO')}</span>
-                                                                                    </label>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {almacenesProveedor.length > 0 && (
-                                                                    <div>
-                                                                        <div className={`flex items-center gap-2 ${necesitaProveedor ? '' : 'opacity-50'}`}>
-                                                                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">📦 Proveedores</p>
-                                                                            {necesitaProveedor && (
-                                                                                <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                                                                                    Requerido
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                                            {almacenesProveedor.map((almacen) => {
-                                                                                const checked = item.almacenes_ids?.includes(almacen.id) || false;
-                                                                                return (
-                                                                                    <label
-                                                                                        key={`${prestable.id}-${almacen.id}`}
-                                                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs cursor-pointer ${
-                                                                                            checked
-                                                                                                ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300'
-                                                                                                : `${necesitaProveedor ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400' : 'bg-gray-50 border-gray-300 text-gray-700 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-300'}`
-                                                                                        }`}
-                                                                                    >
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={checked}
-                                                                                            onChange={(e) =>
-                                                                                                onToggleAlmacen?.(Number(prestable.id), almacen.id, e.target.checked)
-                                                                                            }
-                                                                                            className="cursor-pointer"
-                                                                                        />
-                                                                                        <span>{almacen.nombre} • {almacen.stock.toLocaleString('es-BO')}</span>
-                                                                                    </label>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
                                         </td>
                                         <td className="px-2 py-2 text-center">
                                             <input
@@ -323,31 +213,27 @@ export default function PrestablesSelectionTable({
                                                             const stockEnAlmacen = prestable.stocks?.find(
                                                                 (s: any) => Number(s.almacenes_prestables_id) === almacen_prestable_id
                                                             )?.cantidad_disponible || 0;
-                                                            return stockEnAlmacen.toLocaleString('es-BO');
+                                                            const disponible = stockEnAlmacen - item.cantidad;
+                                                            const isValido = disponible >= 0;
+                                                            return (
+                                                                <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                    {stockEnAlmacen.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                </span>
+                                                            );
                                                         })()}
                                                     </div>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                        Disp: {(() => {
+                                                        {(() => {
                                                             const stockEnAlmacen = prestable.stocks?.find(
                                                                 (s: any) => Number(s.almacenes_prestables_id) === almacen_prestable_id
                                                             )?.cantidad_disponible || 0;
                                                             const restante = stockEnAlmacen - item.cantidad;
-                                                            return restante.toLocaleString('es-BO');
+                                                            return `Restante: ${restante.toLocaleString('es-BO')}`;
                                                         })()}
                                                     </div>
                                                 </div>
                                             </td>
                                         )}
-                                        <td className="px-2 py-2 text-right">
-                                            <div className="space-y-1">
-                                                <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
-                                                    {getStockDisponibleTotal(prestable).toLocaleString('es-BO')}
-                                                </div>
-                                                <div className={`text-xs ${getStockDisponibleTotal(prestable) >= item.cantidad ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                    {getStockDisponibleTotal(prestable) >= item.cantidad ? '✓' : '✕'}
-                                                </div>
-                                            </div>
-                                        </td>
                                         <td className="px-2 py-2 text-center">
                                             <button
                                                 onClick={() => onDeleteItem(item.prestable_id)}
@@ -361,7 +247,7 @@ export default function PrestablesSelectionTable({
                             })
                         ) : (
                             <tr>
-                                <td colSpan={almacen_prestable_id ? 6 : 5} className="py-12 text-center">
+                                <td colSpan={almacen_prestable_id ? 5 : 4} className="py-12 text-center">
                                     <div className="flex flex-col items-center gap-2 text-slate-400">
                                         <AlertCircle size={24} />
                                         <p>{emptyMessage}</p>

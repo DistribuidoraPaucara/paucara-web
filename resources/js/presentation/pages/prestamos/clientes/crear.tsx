@@ -15,6 +15,8 @@ import PrestablesSelectionTable from '@/presentation/components/form-sections/Pr
 interface Props {
     clientes: Array<{ id: number; nombre: string; razon_social?: string; telefono?: string | null }>;
     choferes: Array<{ id: number; nombre: string }>;
+    almacenes: Array<{ id: number; nombre: string; es_proveedor?: boolean }>;
+    vehiculos: Array<{ id: number; placa: string; marca?: string; modelo?: string }>;
     ventas: Array<{ id: number; numero: string; cliente_id: number; cliente?: { id: number; nombre: string; razon_social?: string } }>;
 }
 
@@ -25,7 +27,7 @@ interface PrestamoItem {
     prestable?: Prestable;
 }
 
-export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Props) {
+export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas }: Props) {
     const { prestables, loading: loadingPrestables, fetchPrestables } = usePrestables();
     const { toasts, removeToast, error: toastError, warning: toastWarning, success: toastSuccess } = useToast();
 
@@ -33,7 +35,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
     // Estado principal del préstamo
     const [formData, setFormData] = useState({
         cliente_id: undefined as number | undefined,
+        almacenes_prestables_id: undefined as number | undefined,
         chofer_id: undefined as number | undefined,
+        vehiculo_id: undefined as number | undefined,
         telefono_cliente_1: '',
         telefono_cliente_2: '',
         tipo_prestamo: 'canastillas_embases' as 'canastillas' | 'embases' | 'canastillas_embases',
@@ -57,6 +61,14 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
     const [clientesSearch, setClientesSearch] = useState('');
     const [clientesFiltered, setClientesFiltered] = useState(clientes);
     const [clienteSeleccionado, setClienteSeleccionado] = useState<any>(null);
+
+    const [almacenesSearch, setAlmacenesSearch] = useState('');
+    const [almacenesFiltered, setAlmacenesFiltered] = useState(almacenes);
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState<any>(null);
+
+    const [vehiculosSearch, setVehiculosSearch] = useState('');
+    const [vehiculosFiltered, setVehiculosFiltered] = useState(vehiculos);
+    const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState<any>(null);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -85,42 +97,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
             (sum, stock) => sum + Number(stock.cantidad_disponible || 0),
             0
         );
-    };
-
-    const getAlmacenesConStock = (prestable: Prestable) => {
-        return (prestable.stocks || [])
-            .filter((stock: any) => Number(stock.cantidad_disponible || 0) > 0)
-            .map((stock: any) => ({
-                id: Number(stock.almacenes_prestables_id || stock.almacen_id),
-                nombre: stock?.almacen_prestable?.nombre || stock?.almacenPrestable?.nombre || `Almacén ${stock.almacenes_prestables_id || stock.almacen_id}`,
-                stock: Number(stock.cantidad_disponible || 0),
-                es_proveedor: stock?.almacen_prestable?.es_proveedor || stock?.almacenPrestable?.es_proveedor || false,
-            }))
-            .filter((item: any) => Number(item.id) > 0);
-    };
-
-    const getStockDisponibleEnAlmacenes = (prestable: Prestable, almacenesIds: number[]) => {
-        const ids = new Set((almacenesIds || []).map(Number));
-        return (prestable.stocks || []).reduce((sum, stock: any) => {
-            const almacenId = Number(stock.almacenes_prestables_id || stock.almacen_id);
-            if (!ids.has(almacenId)) return sum;
-            return sum + Number(stock.cantidad_disponible || 0);
-        }, 0);
-    };
-
-    const handleToggleAlmacen = (prestableId: number, almacenId: number, checked: boolean) => {
-        setPrestablesAgregados(prev => prev.map(item => {
-            if (item.prestable_id !== prestableId) return item;
-
-            const actuales = new Set((item.almacenes_ids || []).map(Number));
-            if (checked) {
-                actuales.add(almacenId);
-            } else {
-                actuales.delete(almacenId);
-            }
-
-            return { ...item, almacenes_ids: Array.from(actuales) };
-        }));
     };
 
     const handleFechaPrestamo = (fecha: string) => {
@@ -213,6 +189,56 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
         });
     };
 
+    // Búsqueda de almacenes
+    const handleSearchAlmacenes = (query: string) => {
+        setAlmacenesSearch(query);
+        if (query.trim().length === 0) {
+            setAlmacenesFiltered(almacenes);
+        } else {
+            setAlmacenesFiltered(
+                almacenes.filter(a =>
+                    a.nombre.toLowerCase().includes(query.toLowerCase())
+                )
+            );
+        }
+    };
+
+    const handleSelectAlmacen = (almacen: any) => {
+        setAlmacenSeleccionado(almacen);
+        setAlmacenesSearch('');
+        setAlmacenesFiltered(almacenes);
+        setFormData({
+            ...formData,
+            almacenes_prestables_id: almacen.id,
+        });
+    };
+
+    // Búsqueda de vehículos
+    const handleSearchVehiculos = (query: string) => {
+        setVehiculosSearch(query);
+        if (query.trim().length === 0) {
+            setVehiculosFiltered(vehiculos);
+        } else {
+            setVehiculosFiltered(
+                vehiculos.filter(v =>
+                    v.placa.toLowerCase().includes(query.toLowerCase()) ||
+                    v.marca?.toLowerCase().includes(query.toLowerCase()) ||
+                    v.modelo?.toLowerCase().includes(query.toLowerCase())
+                )
+            );
+        }
+    };
+
+    const handleSelectVehiculo = (vehiculo: any) => {
+        setVehiculoSeleccionado(vehiculo);
+        setVehiculosSearch('');
+        setVehiculosFiltered(vehiculos);
+        setFormData({
+            ...formData,
+            vehiculo_id: vehiculo.id,
+        });
+    };
+
     const handleEliminarPrestable = (prestable_id: number) => {
         // Si es una canastilla, eliminar también sus embases relacionados
         const prestable = prestables.find(p => Number(p.id) === prestable_id);
@@ -250,16 +276,17 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
     };
 
     const handleAgregarCanastilla = (prestable: Prestable) => {
-        // Función helper para seleccionar solo almacenes CLIENTE por defecto
-        const seleccionarAlmacenesCliente = (prestable: Prestable): number[] => {
-            const almacenesDisponibles = getAlmacenesConStock(prestable);
-            // Filtrar SOLO almacenes donde es_proveedor = false (almacenes CLIENTE)
-            return almacenesDisponibles
-                .filter(a => (a as any).es_proveedor === false)
-                .map(a => a.id);
-        };
+        // Usar el almacén seleccionado en la cabecera
+        const almacenSeleccionadoId = formData.almacenes_prestables_id;
 
-        const almacenesSeleccionados = seleccionarAlmacenesCliente(prestable);
+        if (!almacenSeleccionadoId) {
+            const msg = 'Selecciona un almacén primero';
+            setError(msg);
+            toastError(msg);
+            return;
+        }
+
+        const almacenesSeleccionados = [almacenSeleccionadoId];
 
         const nuevosItems: PrestamoItem[] = [
             {
@@ -281,12 +308,11 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
             embasesRelacionados.forEach(embase => {
                 // Preseleccionar cantidad de embases = cantidad canastillas × capacidad
                 const cantidadEmbasesAutomatica = 1 * (prestable.capacidad || 0);
-                const embaseAlmacenesSeleccionados = seleccionarAlmacenesCliente(embase);
 
                 nuevosItems.push({
                     prestable_id: Number(embase.id),
                     cantidad: cantidadEmbasesAutomatica,
-                    almacenes_ids: embaseAlmacenesSeleccionados,
+                    almacenes_ids: almacenesSeleccionados,
                     prestable: embase,
                 });
             });
@@ -301,6 +327,13 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
 
         if (!formData.cliente_id) {
             const msg = 'Selecciona un cliente';
+            setError(msg);
+            toastError(msg);
+            return;
+        }
+
+        if (!formData.almacenes_prestables_id) {
+            const msg = 'Selecciona un almacén';
             setError(msg);
             toastError(msg);
             return;
@@ -324,16 +357,12 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
             const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
             if (!prestable) continue;
 
-            if (!item.almacenes_ids || item.almacenes_ids.length === 0) {
-                const msg = `Selecciona al menos un almacén para ${prestable.nombre}`;
-                setError(msg);
-                toastError(msg);
-                return;
-            }
+            // Validar stock en el almacén seleccionado
+            const stock = prestable.stocks?.find(s => Number(s.almacenes_prestables_id) === formData.almacenes_prestables_id);
+            const cantidadDisponible = stock ? Number(stock.cantidad_disponible || 0) : 0;
 
-            const stockSeleccionado = getStockDisponibleEnAlmacenes(prestable, item.almacenes_ids);
-            if (item.cantidad > stockSeleccionado) {
-                const msg = `Stock insuficiente en almacenes seleccionados para ${prestable.nombre}. Disponible: ${stockSeleccionado}, solicitado: ${item.cantidad}`;
+            if (item.cantidad > cantidadDisponible) {
+                const msg = `Stock insuficiente en el almacén para ${prestable.nombre}. Disponible: ${cantidadDisponible}, solicitado: ${item.cantidad}`;
                 setError(msg);
                 toastError(msg);
                 return;
@@ -346,7 +375,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
             // Enviar todos los prestables en un único llamado con formato de detalles
             const payload = {
                 cliente_id: formData.cliente_id,
+                almacenes_prestables_id: formData.almacenes_prestables_id,
                 chofer_id: formData.chofer_id,
+                vehiculo_id: formData.vehiculo_id,
                 telefono_cliente_1: formData.telefono_cliente_1.trim() || undefined,
                 telefono_cliente_2: formData.telefono_cliente_2.trim() || undefined,
                 tipo_prestamo: formData.tipo_prestamo,
@@ -487,6 +518,64 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
                                 getDisplayValue={(chofer) => chofer.nombre}
                             />
                         </div>
+
+                        <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
+                            {/* Almacén - Búsqueda */}
+                            <DynamicSearchSelect
+                                label="🏭 Almacén *"
+                                placeholder="Buscar almacén..."
+                                selectedItem={almacenSeleccionado}
+                                items={almacenesFiltered}
+                                isLoading={false}
+                                searchValue={almacenesSearch}
+                                onSearch={handleSearchAlmacenes}
+                                onSelect={handleSelectAlmacen}
+                                onClear={() => {
+                                    setAlmacenSeleccionado(null);
+                                    setAlmacenesSearch('');
+                                    setFormData({ ...formData, almacenes_prestables_id: undefined });
+                                }}
+                                renderItem={(almacen) => (
+                                    <div>
+                                        <p className="font-medium">{almacen.nombre}</p>
+                                        {almacen.es_proveedor && (
+                                            <p className="text-xs text-gray-500">Almacén Proveedor</p>
+                                        )}
+                                    </div>
+                                )}
+                                getItemId={(almacen) => almacen.id}
+                                getDisplayValue={(almacen) => almacen.nombre}
+                            />
+
+                            {/* Vehículo - Búsqueda */}
+                            <DynamicSearchSelect
+                                label="🚗 Vehículo (Opcional)"
+                                placeholder="Buscar vehículo..."
+                                selectedItem={vehiculoSeleccionado}
+                                items={vehiculosFiltered}
+                                isLoading={false}
+                                searchValue={vehiculosSearch}
+                                onSearch={handleSearchVehiculos}
+                                onSelect={handleSelectVehiculo}
+                                onClear={() => {
+                                    setVehiculoSeleccionado(null);
+                                    setVehiculosSearch('');
+                                    setFormData({ ...formData, vehiculo_id: undefined });
+                                }}
+                                renderItem={(vehiculo) => (
+                                    <div>
+                                        <p className="font-medium">{vehiculo.placa}</p>
+                                        {(vehiculo.marca || vehiculo.modelo) && (
+                                            <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
+                                        )}
+                                    </div>
+                                )}
+                                getItemId={(vehiculo) => vehiculo.id}
+                                getDisplayValue={(vehiculo) => `${vehiculo.placa}${vehiculo.marca ? ` - ${vehiculo.marca} ${vehiculo.modelo}` : ''}`}
+                            />
+
+                            <div />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -615,11 +704,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, ventas }: Pro
                             onSelectItem={handleAgregarCanastilla}
                             onDeleteItem={handleEliminarPrestable}
                             onUpdateCantidad={handleCambiarCantidad}
-                            onToggleAlmacen={handleToggleAlmacen}
                             getStockDisponibleTotal={getStockDisponibleTotal}
-                            getAlmacenesConStock={getAlmacenesConStock}
-                            getStockDisponibleEnAlmacenes={getStockDisponibleEnAlmacenes}
                             loading={loadingPrestables}
+                            almacen_prestable_id={formData.almacenes_prestables_id}
                         />
                     </Card>
 

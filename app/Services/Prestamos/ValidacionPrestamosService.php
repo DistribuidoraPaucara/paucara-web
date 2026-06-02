@@ -190,6 +190,16 @@ class ValidacionPrestamosService
             }
         }
 
+        // Validar almacén (requerido, no múltiples)
+        if (!isset($datos['almacenes_prestables_id'])) {
+            $errores[] = 'almacenes_prestables_id requerido';
+        } else {
+            $almacenId = is_string($datos['almacenes_prestables_id']) ? intval($datos['almacenes_prestables_id']) : $datos['almacenes_prestables_id'];
+            if (!is_int($almacenId) || $almacenId <= 0) {
+                $errores[] = 'almacenes_prestables_id debe ser un número entero válido';
+            }
+        }
+
         // Validar detalles (al menos uno)
         if (!isset($datos['detalles']) || !is_array($datos['detalles']) || count($datos['detalles']) === 0) {
             $errores[] = 'detalles requerido (al menos 1)';
@@ -213,17 +223,6 @@ class ValidacionPrestamosService
                     $cantidad = is_string($detalle['cantidad']) ? intval($detalle['cantidad']) : $detalle['cantidad'];
                     if ($cantidad <= 0) {
                         $errores[] = "detalles[{$i}].cantidad debe ser > 0";
-                    }
-                }
-
-                if (!isset($detalle['almacenes_ids']) || !is_array($detalle['almacenes_ids']) || count($detalle['almacenes_ids']) === 0) {
-                    $errores[] = "detalles[{$i}].almacenes_ids requerido (al menos 1 almacén)";
-                } else {
-                    foreach ($detalle['almacenes_ids'] as $j => $almacenId) {
-                        $id = is_string($almacenId) ? intval($almacenId) : $almacenId;
-                        if (!is_int($id) || $id <= 0) {
-                            $errores[] = "detalles[{$i}].almacenes_ids[{$j}] debe ser un id válido";
-                        }
                     }
                 }
             }

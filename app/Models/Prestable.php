@@ -19,6 +19,7 @@ class Prestable extends Model
         'producto_id',
         'proveedor_id',
         'prestable_relacionado_id',
+        'embase_asociado_id',
         'descripcion',
         'activo',
     ];
@@ -62,6 +63,14 @@ class Prestable extends Model
     public function embasesRelacionados(): HasMany
     {
         return $this->hasMany(Prestable::class, 'prestable_relacionado_id');
+    }
+
+    /**
+     * Embase asociado de una canastilla (relación directa)
+     */
+    public function embaseAsociado(): BelongsTo
+    {
+        return $this->belongsTo(Prestable::class, 'embase_asociado_id');
     }
 
     /**

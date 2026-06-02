@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
 export const form = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ form.definition = {
 
 /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
 form.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ form.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
 form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
 form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
     const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
         formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2748
+ * @see app/Http/Controllers/InventarioController.php:2764
  * @route '/inventario/historial-cargas'
  */
         formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

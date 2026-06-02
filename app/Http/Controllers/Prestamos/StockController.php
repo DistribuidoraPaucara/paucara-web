@@ -90,49 +90,131 @@ class StockController extends Controller
 
         $almacenIds = $almacenesClientes->pluck('id')->toArray();
 
-        // Obtener items de stock de almacenes de clientes
-        $items = PrestableStock::whereIn('almacenes_prestables_id', $almacenIds)
+        // Obtener TODOS los prestables
+        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        // Obtener items de stock existentes
+        $stockExistente = PrestableStock::whereIn('almacenes_prestables_id', $almacenIds)
             ->with(['prestable', 'almacenPrestable'])
             ->get()
-            ->map(function ($stock) {
-                $cantidadClienteTotal = ($stock->cantidad_cliente_deudor ?? 0) + ($stock->cantidad_cliente_devuelto ?? 0);
-                $cantidadEventoTotal = ($stock->cantidad_evento_deudor ?? 0) + ($stock->cantidad_evento_devuelto ?? 0);
+            ->keyBy(fn($stock) => "{$stock->prestable_id}_{$stock->almacenes_prestables_id}");
 
-                return [
-                    'id' => $stock->id,
-                    'prestable_id' => $stock->prestable_id,
-                    'prestable_nombre' => $stock->prestable->nombre,
-                    'prestable_codigo' => $stock->prestable->codigo,
-                    'prestable_tipo' => $stock->prestable->tipo,
-                    'almacen_nombre' => $stock->almacenPrestable->nombre,
-                    'almacenes_prestables_id' => $stock->almacenes_prestables_id,
-                    'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
-                    'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor ?? 0,
-                    'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto ?? 0,
+        // Generar todas las combinaciones de prestables + almacenes
+        $items = [];
+        foreach ($prestables as $prestable) {
+            foreach ($almacenesClientes as $almacen) {
+                $key = "{$prestable->id}_{$almacen->id}";
+                $stock = $stockExistente->get($key);
+
+                $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
+                $cantidadClienteDevuelto = $stock?->cantidad_cliente_devuelto ?? 0;
+
+                $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDevuelto;
+
+                $items[] = [
+                    'id' => $stock?->id ?? null,
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'prestable_codigo' => $prestable->codigo,
+                    'prestable_tipo' => $prestable->tipo,
+                    'almacen_nombre' => $almacen->nombre,
+                    'almacenes_prestables_id' => $almacen->id,
+                    'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_cliente_deudor' => $cantidadClienteDeudor,
+                    'cantidad_cliente_devuelto' => $cantidadClienteDevuelto,
                     'cantidad_cliente_total' => $cantidadClienteTotal,
-                    'cantidad_evento_deudor' => $stock->cantidad_evento_deudor ?? 0,
-                    'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto ?? 0,
-                    'cantidad_evento_total' => $cantidadEventoTotal,
-                    'cantidad_total' => ($stock->cantidad_disponible ?? 0) +
-                        $cantidadClienteTotal +
-                        $cantidadEventoTotal,
+                    'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal,
                 ];
-            });
+            }
+        }
 
-        // Calcular resumen (solo clientes, sin proveedor)
+        // Calcular resumen (solo clientes, sin eventos)
+        $itemsCollection = collect($items);
         $resumen = [
-            'total_disponible' => $items->sum('cantidad_disponible'),
-            'total_cliente_deudor' => $items->sum('cantidad_cliente_deudor'),
-            'total_cliente_devuelto' => $items->sum('cantidad_cliente_devuelto'),
-            'total_cliente' => $items->sum('cantidad_prestamo_cliente_total'),
-            'total_evento_deudor' => $items->sum('cantidad_evento_deudor'),
-            'total_evento_devuelto' => $items->sum('cantidad_evento_devuelto'),
-            'total_evento' => $items->sum('cantidad_prestamo_evento_total'),
-            'total_general' => $items->sum('cantidad_total'),
+            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
+            'total_cliente_deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
+            'total_cliente_devuelto' => $itemsCollection->sum('cantidad_cliente_devuelto'),
+            'total_cliente' => $itemsCollection->sum('cantidad_cliente_total'),
+            'total_general' => $itemsCollection->sum('cantidad_total'),
         ];
 
         return Inertia::render('prestamos/stock-clientes', [
-            'items' => $items->values(),
+            'items' => $items,
+            'resumen' => $resumen,
+            'almacenes' => $almacenesClientes->toArray(),
+        ]);
+    }
+
+    /**
+     * GET /prestamos/stock/eventos
+     * Stock de almacenes para eventos
+     */
+    public function stockEventos()
+    {
+        // Obtener almacenes de clientes (es_proveedor = false) para eventos
+        $almacenesClientes = AlmacenPrestable::where('es_proveedor', false)
+            ->select('id', 'nombre')
+            ->orderBy('nombre')
+            ->get();
+
+        $almacenIds = $almacenesClientes->pluck('id')->toArray();
+
+        // Obtener TODOS los prestables
+        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        // Obtener items de stock existentes
+        $stockExistente = PrestableStock::whereIn('almacenes_prestables_id', $almacenIds)
+            ->with(['prestable', 'almacenPrestable'])
+            ->get()
+            ->keyBy(fn($stock) => "{$stock->prestable_id}_{$stock->almacenes_prestables_id}");
+
+        // Generar todas las combinaciones de prestables + almacenes
+        $items = [];
+        foreach ($prestables as $prestable) {
+            foreach ($almacenesClientes as $almacen) {
+                $key = "{$prestable->id}_{$almacen->id}";
+                $stock = $stockExistente->get($key);
+
+                $cantidadEventoDeudor = $stock?->cantidad_evento_deudor ?? 0;
+                $cantidadEventoDevuelto = $stock?->cantidad_evento_devuelto ?? 0;
+
+                $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDevuelto;
+
+                $items[] = [
+                    'id' => $stock?->id ?? null,
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'prestable_codigo' => $prestable->codigo,
+                    'prestable_tipo' => $prestable->tipo,
+                    'almacen_nombre' => $almacen->nombre,
+                    'almacenes_prestables_id' => $almacen->id,
+                    'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_evento_deudor' => $cantidadEventoDeudor,
+                    'cantidad_evento_devuelto' => $cantidadEventoDevuelto,
+                    'cantidad_evento_total' => $cantidadEventoTotal,
+                    'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadEventoTotal,
+                ];
+            }
+        }
+
+        // Calcular resumen (solo eventos)
+        $itemsCollection = collect($items);
+        $resumen = [
+            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
+            'total_evento_deudor' => $itemsCollection->sum('cantidad_evento_deudor'),
+            'total_evento_devuelto' => $itemsCollection->sum('cantidad_evento_devuelto'),
+            'total_evento' => $itemsCollection->sum('cantidad_evento_total'),
+            'total_general' => $itemsCollection->sum('cantidad_total'),
+        ];
+
+        return Inertia::render('prestamos/stock-eventos', [
+            'items' => $items,
             'resumen' => $resumen,
             'almacenes' => $almacenesClientes->toArray(),
         ]);
@@ -152,40 +234,59 @@ class StockController extends Controller
 
         $almacenIds = $almacenesProveedores->pluck('id')->toArray();
 
-        // Obtener items de stock de almacenes de proveedores
-        $items = PrestableStock::whereIn('almacenes_prestables_id', $almacenIds)
+        // Obtener TODOS los prestables
+        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        // Obtener items de stock existentes
+        $stockExistente = PrestableStock::whereIn('almacenes_prestables_id', $almacenIds)
             ->with(['prestable', 'almacenPrestable'])
             ->get()
-            ->map(function ($stock) {
-                $cantidadProveedorTotal = ($stock->cantidad_proveedor_acreedor ?? 0) + ($stock->cantidad_proveedor_devuelto ?? 0);
+            ->keyBy(fn($stock) => "{$stock->prestable_id}_{$stock->almacenes_prestables_id}");
 
-                return [
-                    'id' => $stock->id,
-                    'prestable_id' => $stock->prestable_id,
-                    'prestable_nombre' => $stock->prestable->nombre,
-                    'prestable_codigo' => $stock->prestable->codigo,
-                    'prestable_tipo' => $stock->prestable->tipo,
-                    'almacen_nombre' => $stock->almacenPrestable->nombre,
-                    'almacenes_prestables_id' => $stock->almacenes_prestables_id,
-                    'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
-                    'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor ?? 0,
-                    'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto ?? 0,
+        // Generar todas las combinaciones de prestables + almacenes
+        $items = [];
+        foreach ($prestables as $prestable) {
+            foreach ($almacenesProveedores as $almacen) {
+                $key = "{$prestable->id}_{$almacen->id}";
+                $stock = $stockExistente->get($key);
+
+                $cantidadProveedorAcreedor = $stock?->cantidad_proveedor_acreedor ?? 0;
+                $cantidadProveedorDevuelto = $stock?->cantidad_proveedor_devuelto ?? 0;
+
+                $cantidadProveedorTotal = $cantidadProveedorAcreedor + $cantidadProveedorDevuelto;
+
+                $items[] = [
+                    'id' => $stock?->id ?? null,
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'prestable_codigo' => $prestable->codigo,
+                    'prestable_tipo' => $prestable->tipo,
+                    'almacen_nombre' => $almacen->nombre,
+                    'almacenes_prestables_id' => $almacen->id,
+                    'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_proveedor_acreedor' => $cantidadProveedorAcreedor,
+                    'cantidad_proveedor_devuelto' => $cantidadProveedorDevuelto,
                     'cantidad_proveedor_total' => $cantidadProveedorTotal,
-                    'cantidad_total' => ($stock->cantidad_disponible ?? 0) + $cantidadProveedorTotal,
+                    'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadProveedorTotal,
                 ];
-            });
+            }
+        }
 
         // Calcular resumen (solo proveedores, sin clientes/eventos)
+        $itemsCollection = collect($items);
         $resumen = [
-            'total_disponible' => $items->sum('cantidad_disponible'),
-            'total_proveedor_acreedor' => $items->sum('cantidad_proveedor_acreedor'),
-            'total_proveedor_devuelto' => $items->sum('cantidad_proveedor_devuelto'),
-            'total_proveedor' => $items->sum('cantidad_prestamo_proveedor_total'),
-            'total_general' => $items->sum('cantidad_total'),
+            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
+            'total_proveedor_acreedor' => $itemsCollection->sum('cantidad_proveedor_acreedor'),
+            'total_proveedor_devuelto' => $itemsCollection->sum('cantidad_proveedor_devuelto'),
+            'total_proveedor' => $itemsCollection->sum('cantidad_proveedor_total'),
+            'total_general' => $itemsCollection->sum('cantidad_total'),
         ];
 
         return Inertia::render('prestamos/stock-proveedores', [
-            'items' => $items->values(),
+            'items' => $items,
             'resumen' => $resumen,
             'almacenes' => $almacenesProveedores->toArray(),
         ]);
@@ -202,11 +303,24 @@ class StockController extends Controller
             abort(404);
         }
 
-        // Obtener el item de stock
-        $stock = PrestableStock::where('prestable_id', $prestable_id)
-            ->where('almacenes_prestables_id', $almacen_id)
-            ->with(['prestable', 'almacenPrestable'])
-            ->firstOrFail();
+        // Obtener o crear el item de stock
+        $stock = PrestableStock::firstOrCreate(
+            [
+                'prestable_id' => $prestable_id,
+                'almacenes_prestables_id' => $almacen_id,
+            ],
+            [
+                'cantidad_disponible' => 0,
+                'cantidad_cliente_deudor' => 0,
+                'cantidad_cliente_devuelto' => 0,
+                'cantidad_evento_deudor' => 0,
+                'cantidad_evento_devuelto' => 0,
+                'cantidad_proveedor_acreedor' => 0,
+                'cantidad_proveedor_devuelto' => 0,
+            ]
+        );
+
+        $stock->load(['prestable', 'almacenPrestable']);
 
         // Construir el item según el tipo
         $item = [
@@ -231,15 +345,29 @@ class StockController extends Controller
             $item['cantidad_proveedor_devuelto'] = $stock->cantidad_proveedor_devuelto ?? 0;
         }
 
-        // Si es CANASTILLA, cargar embase relacionado
+        // Si es CANASTILLA, buscar EMBASE que la tiene como relacionada
         $embaseRelacionado = null;
-        if ($stock->prestable->tipo === 'CANASTILLA' && $stock->prestable->prestable_relacionado_id) {
-            $embaseStock = PrestableStock::where('prestable_id', $stock->prestable->prestable_relacionado_id)
+        if ($stock->prestable->tipo === 'CANASTILLA') {
+            \Log::info('🔍 Buscando embase para canastilla', [
+                'canastilla_id' => $stock->prestable_id,
+                'canastilla_nombre' => $stock->prestable->nombre,
+                'almacen_id' => $almacen_id,
+            ]);
+
+            $embaseStock = PrestableStock::whereHas('prestable', function ($q) use ($stock) {
+                $q->where('prestable_relacionado_id', $stock->prestable_id)
+                  ->where('tipo', 'EMBASES');
+            })
                 ->where('almacenes_prestables_id', $almacen_id)
                 ->with('prestable')
                 ->first();
 
             if ($embaseStock) {
+                \Log::info('✅ Embase encontrado', [
+                    'embase_id' => $embaseStock->prestable_id,
+                    'embase_nombre' => $embaseStock->prestable->nombre,
+                ]);
+
                 $embaseRelacionado = [
                     'id' => $embaseStock->id,
                     'prestable_id' => $embaseStock->prestable_id,
@@ -253,6 +381,12 @@ class StockController extends Controller
                     'cantidad_proveedor_acreedor' => $embaseStock->cantidad_proveedor_acreedor ?? 0,
                     'cantidad_proveedor_devuelto' => $embaseStock->cantidad_proveedor_devuelto ?? 0,
                 ];
+            } else {
+                \Log::warning('❌ Embase NO encontrado', [
+                    'canastilla_id' => $stock->prestable_id,
+                    'almacen_id' => $almacen_id,
+                    'query_busca' => "prestable_relacionado_id = {$stock->prestable_id} AND tipo = 'EMBASE'",
+                ]);
             }
         }
 

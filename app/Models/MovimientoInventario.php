@@ -264,12 +264,12 @@ class MovimientoInventario extends Model
 
     /**
      * ✅ NUEVO (2026-03-27): Scope para búsqueda de productos con PRIORIDAD
-     * Busca por ID primero, si no encuentra resultados, busca por SKU
+     * Busca por ID primero, si no encuentra resultados, busca por SKU (exacto)
      *
      * FLUJO:
      * 1. Si es número, intenta buscar por ID de producto
-     * 2. Si no encuentra resultados, intenta buscar por SKU
-     * 3. Si tampoco encuentra, busca en nombre y código de barras
+     * 2. Si no encuentra resultados, intenta buscar por SKU (búsqueda exacta)
+     * 3. Si tampoco encuentra, busca en nombre y código de barras (búsqueda parcial)
      */
     public function scopePorProductoBusquedaConPrioridad($query, string $busqueda)
     {
@@ -292,32 +292,54 @@ class MovimientoInventario extends Model
                 });
             }
 
-            // Si no encontró por ID, buscar por SKU
+            // Si no encontró por ID, buscar por SKU (exacto, case-insensitive)
+            $resultadosPorSKU = (clone $query)->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
+                $q->where('sku', $busqueda)
+                  ->orWhereRaw('LOWER(sku) = ?', [$busquedaNormalizada]);
+            })->count();
+
+            if ($resultadosPorSKU > 0) {
+                return $query->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
+                    $q->where('sku', $busqueda)
+                      ->orWhereRaw('LOWER(sku) = ?', [$busquedaNormalizada]);
+                });
+            }
+
+            // Si no encontró por SKU exacto, buscar en nombre y código de barras (parcial)
             return $query->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
                 $q->where(function ($subQuery) use ($busqueda, $busquedaNormalizada) {
-                    $subQuery->where('sku', 'LIKE', '%' . $busqueda . '%')
-                             ->orWhereRaw('LOWER(sku) LIKE ?', ['%' . $busquedaNormalizada . '%'])
-                             ->orWhere('nombre', 'LIKE', '%' . $busqueda . '%')
+                    $subQuery->where('nombre', 'LIKE', '%' . $busqueda . '%')
                              ->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $busquedaNormalizada . '%']);
                 });
 
-                // Búsqueda por código de barras (case-insensitive)
+                // Búsqueda por código de barras (case-insensitive, parcial)
                 $q->orWhereHas('codigosBarra', function ($barQuery) use ($busqueda, $busquedaNormalizada) {
                     $barQuery->where('codigo', 'LIKE', '%' . $busqueda . '%')
                              ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . $busquedaNormalizada . '%']);
                 });
             });
         } else {
-            // Si no es número, buscar en SKU, nombre y código de barras
+            // Si no es número, buscar por SKU exacto primero (case-insensitive)
+            $resultadosPorSKU = (clone $query)->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
+                $q->where('sku', $busqueda)
+                  ->orWhereRaw('LOWER(sku) = ?', [$busquedaNormalizada]);
+            })->count();
+
+            if ($resultadosPorSKU > 0) {
+                return $query->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
+                    $q->where('sku', $busqueda)
+                      ->orWhereRaw('LOWER(sku) = ?', [$busquedaNormalizada]);
+                });
+            }
+
+            // Si no encontró por SKU exacto, buscar en nombre y código de barras (parcial)
             return $query->whereHas('stockProducto.producto', function ($q) use ($busqueda, $busquedaNormalizada) {
                 $q->where(function ($subQuery) use ($busqueda, $busquedaNormalizada) {
-                    $subQuery->where('sku', 'LIKE', '%' . $busqueda . '%')
-                             ->orWhereRaw('LOWER(sku) LIKE ?', ['%' . $busquedaNormalizada . '%'])
-                             ->orWhere('nombre', 'LIKE', '%' . $busqueda . '%')
+                    $subQuery->where('nombre', 'LIKE', '%' . $busqueda . '%')
                              ->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $busquedaNormalizada . '%']);
                 });
 
-                // Búsqueda por código de barras (case-insensitive)
+                // Búsqueda por código de barras (case-insensitive, parcial)
                 $q->orWhereHas('codigosBarra', function ($barQuery) use ($busqueda, $busquedaNormalizada) {
                     $barQuery->where('codigo', 'LIKE', '%' . $busqueda . '%')
                              ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . $busquedaNormalizada . '%']);

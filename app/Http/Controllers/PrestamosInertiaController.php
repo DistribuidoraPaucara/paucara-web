@@ -61,6 +61,16 @@ class PrestamosInertiaController extends Controller
             ->get()
             ->map(fn($user) => ['id' => $user->id, 'nombre' => $user->name]);
 
+        $almacenes = \App\Models\AlmacenPrestable::where('activo', true)
+            ->select('id', 'nombre', 'es_proveedor')
+            ->orderBy('nombre')
+            ->get();
+
+        $vehiculos = \App\Models\Vehiculo::where('activo', true)
+            ->select('id', 'placa', 'marca', 'modelo')
+            ->orderBy('placa')
+            ->get();
+
         $ventas = \App\Models\Venta::select('id', 'numero', 'cliente_id')
             ->with(['cliente:id,nombre,razon_social'])
             ->orderByDesc('created_at')
@@ -70,6 +80,8 @@ class PrestamosInertiaController extends Controller
         return Inertia::render('prestamos/clientes/crear', [
             'clientes' => $clientes,
             'choferes' => $choferes,
+            'almacenes' => $almacenes,
+            'vehiculos' => $vehiculos,
             'ventas' => $ventas,
         ]);
     }

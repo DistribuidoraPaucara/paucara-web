@@ -39,6 +39,7 @@ class PrestableController extends Controller
                 'stocks.almacenPrestable:id,nombre,es_proveedor',
                 'ultimoDetalleCompra',
                 'prestablePadre:id,nombre,codigo',
+                'embaseAsociado:id,nombre,codigo,capacidad',
                 'embasesRelacionados.stocks',  // Siempre cargar embases
                 'embasesRelacionados.precios',
                 'embasesRelacionados.ultimoDetalleCompra',
@@ -381,6 +382,13 @@ class PrestableController extends Controller
                     }
 
                     Log::info('✅ Embase asociado creado:', ['embase_id' => $embase->id, 'codigo' => $embase->codigo]);
+
+                    // Asignar el embase a la canastilla
+                    $prestable->update(['embase_asociado_id' => $embase->id]);
+                    Log::info('✅ Canastilla actualizada con embase_asociado_id:', [
+                        'prestable_id' => $prestable->id,
+                        'embase_asociado_id' => $embase->id,
+                    ]);
                 }
 
                 return $prestable;
@@ -430,6 +438,7 @@ class PrestableController extends Controller
                 'condiciones',
                 'stocks.almacenPrestable',
                 'prestablePadre:id,nombre,codigo,capacidad',
+                'embaseAsociado:id,nombre,codigo,capacidad',
                 'embasesRelacionados',
                 'productos:id,nombre,sku',
             ]);

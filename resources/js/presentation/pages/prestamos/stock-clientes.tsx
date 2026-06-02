@@ -32,9 +32,6 @@ interface StockItem {
     cantidad_cliente_deudor: number;
     cantidad_cliente_devuelto: number;
     cantidad_cliente_total: number;
-    cantidad_evento_deudor: number;
-    cantidad_evento_devuelto: number;
-    cantidad_evento_total: number;
     cantidad_total: number;
     almacenes_prestables_id: number;
 }
@@ -46,9 +43,6 @@ interface StockPageProps {
         total_cliente_deudor: number;
         total_cliente_devuelto: number;
         total_cliente: number;
-        total_evento_deudor: number;
-        total_evento_devuelto: number;
-        total_evento: number;
         total_general: number;
     };
     almacenes: Array<{ id: number; nombre: string }>;
@@ -87,8 +81,6 @@ export default function StockClientesPage({
         cantidad_disponible: 0,
         cantidad_cliente_deudor: 0,
         cantidad_cliente_devuelto: 0,
-        cantidad_evento_deudor: 0,
-        cantidad_evento_devuelto: 0,
         motivo: '',
     });
 
@@ -139,8 +131,7 @@ export default function StockClientesPage({
                 case 'disponible':
                     return b.cantidad_disponible - a.cantidad_disponible;
                 case 'prestamo':
-                    return (b.cantidad_cliente_total + b.cantidad_evento_total) -
-                        (a.cantidad_cliente_total + a.cantidad_evento_total);
+                    return b.cantidad_cliente_total - a.cantidad_cliente_total;
                 default:
                     return 0;
             }
@@ -158,14 +149,15 @@ export default function StockClientesPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Cliente', 'Préstamo Evento', 'Total'];
+        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Deudor (Activo)', 'Devuelto', 'Total Préstamo Cliente', 'Total General'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
+            item.cantidad_cliente_deudor,
+            item.cantidad_cliente_devuelto,
             item.cantidad_cliente_total,
-            item.cantidad_evento_total,
             item.cantidad_total,
         ]);
 
@@ -188,8 +180,6 @@ export default function StockClientesPage({
             cantidad_disponible: item.cantidad_disponible,
             cantidad_cliente_deudor: item.cantidad_cliente_deudor,
             cantidad_cliente_devuelto: item.cantidad_cliente_devuelto,
-            cantidad_evento_deudor: item.cantidad_evento_deudor,
-            cantidad_evento_devuelto: item.cantidad_evento_devuelto,
             motivo: '',
         });
 
@@ -603,50 +593,6 @@ export default function StockClientesPage({
                     </div>
                 </div>
 
-                {/* Gráfico de Distribución */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                        <DistributionChart
-                            disponible={resumen.total_disponible}
-                            enPrestamo={resumen.total_cliente + resumen.total_evento}
-                            vendido={0}
-                            deuda={0}
-                            title="Distribución General de Stock - Clientes"
-                            size="lg"
-                        />
-                    </div>
-
-                    {/* Cards de Totales */}
-                    <div className="space-y-3">
-                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                            <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase">
-                                Disponible
-                            </p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-200 mt-1">
-                                {resumen.total_disponible}
-                            </p>
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">
-                                En Préstamo a Clientes
-                            </p>
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-1">
-                                {resumen.total_cliente}
-                            </p>
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                            <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase">
-                                Total
-                            </p>
-                            <p className="text-2xl font-bold text-red-900 dark:text-red-200 mt-1">
-                                {resumen.total_general}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Filtros */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                     <div className="flex-1">
@@ -734,14 +680,14 @@ export default function StockClientesPage({
                                         Disponible
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Cliente
+                                        Deudor (Activo)
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Evento
+                                        Devuelto
                                     </th>
-                                    <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
+                                    {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Total
-                                    </th>
+                                    </th> */}
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Acciones
                                     </th>
@@ -751,7 +697,7 @@ export default function StockClientesPage({
                                 {filteredItems.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={9}
+                                            colSpan={8}
                                             className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                                         >
                                             No hay resultados
@@ -778,23 +724,18 @@ export default function StockClientesPage({
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold">
-                                                    {item.cantidad_cliente_total}
+                                                <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
+                                                    {item.cantidad_cliente_deudor}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
-                                                    {item.cantidad_evento_total}
+                                                <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
+                                                    {item.cantidad_cliente_devuelto}
                                                 </span>
                                             </td>
-                                            {/* <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
-                                                    {item.cantidad_vendida}
-                                                </span>
+                                            {/* <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                                                {item.cantidad_cliente_total}
                                             </td> */}
-                                            <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
-                                                {item.cantidad_total}
-                                            </td>
                                             <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
                                                 {/* <Button
                                                     variant="outline"

@@ -198,6 +198,7 @@ class ModuloSidebarSeeder extends Seeder
                     ['titulo' => 'Stock Proveedores', 'ruta' => '/prestamos/stock/proveedores', 'icono' => 'Truck', 'orden' => 3, 'permisos' => ['prestamos.index']],
                     // reportes
                     ['titulo' => 'Reportes de Préstamos', 'ruta' => '/prestamos/reportes', 'icono' => 'BarChart4', 'orden' => 4, 'permisos' => ['prestamos.reportes.index']],
+                    ['titulo' => 'Eventos', 'ruta' => '/prestamos/eventos', 'icono' => 'Calendar', 'orden' => 5, 'permisos' => ['prestamos.index']],
                     // ['titulo' => 'Nuevo Préstamo', 'ruta' => '/prestamos/create', 'icono' => 'Plus', 'orden' => 3, 'permisos' => ['prestamos.create']],
                 ],
             ],
@@ -292,6 +293,7 @@ class ModuloSidebarSeeder extends Seeder
                 'submenu' => [
                     ['titulo' => 'Almacenes', 'ruta' => '/almacenes', 'icono' => 'Building2', 'orden' => 1, 'permisos' => ['almacenes.manage']],
                     ['titulo' => 'Sectores', 'ruta' => '/sectores', 'icono' => 'FolderOpen', 'orden' => 2, 'permisos' => ['sectores.manage']],
+                    ['titulo' => 'Almacenes Prestables', 'ruta' => '/almacenes-prestables', 'icono' => 'Package', 'orden' => 3, 'permisos' => ['almacenes.manage']],
                 ],
             ],
             'proveedores'     => [

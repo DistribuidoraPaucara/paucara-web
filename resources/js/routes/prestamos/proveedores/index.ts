@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import prestamos from './prestamos'
 import compras from './compras'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -48,7 +48,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -56,7 +56,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -65,7 +65,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
     const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -74,7 +74,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:850
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -97,7 +97,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     
     registrarDevolucion.form = registrarDevolucionForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -111,7 +111,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -143,7 +143,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -151,7 +151,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -160,7 +160,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
     const devolucionesForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -169,7 +169,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
         devolucionesForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -177,7 +177,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:855
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
         devolucionesForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -193,7 +193,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     devoluciones.form = devolucionesForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -208,7 +208,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -217,7 +217,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -226,7 +226,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -236,7 +236,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -246,7 +246,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -255,7 +255,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:90
+ * @see app/Http/Controllers/PrestamosInertiaController.php:102
  * @route '/prestamos/proveedores'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -271,7 +271,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:217
+ * @see app/Http/Controllers/PrestamosInertiaController.php:229
  * @route '/prestamos/proveedores'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -286,7 +286,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:217
+ * @see app/Http/Controllers/PrestamosInertiaController.php:229
  * @route '/prestamos/proveedores'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -295,7 +295,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:217
+ * @see app/Http/Controllers/PrestamosInertiaController.php:229
  * @route '/prestamos/proveedores'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -305,7 +305,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:217
+ * @see app/Http/Controllers/PrestamosInertiaController.php:229
  * @route '/prestamos/proveedores'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +315,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:217
+ * @see app/Http/Controllers/PrestamosInertiaController.php:229
  * @route '/prestamos/proveedores'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

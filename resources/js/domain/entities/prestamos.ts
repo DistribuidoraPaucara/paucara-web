@@ -124,6 +124,8 @@ export interface PrestamoCliente extends BaseEntity {
     cliente_id: Id;
     chofer_id?: Id | null;
     venta_id?: Id | null;
+    almacenes_prestables_id?: Id | null;
+    vehiculo_id?: Id | null;
     telefono_cliente_1?: string | null;
     telefono_cliente_2?: string | null;
     es_venta: boolean;
@@ -144,6 +146,16 @@ export interface PrestamoCliente extends BaseEntity {
     chofer?: {
         id: Id;
         nombre: string;
+    } | null;
+    almacen?: {
+        id: Id;
+        nombre: string;
+    } | null;
+    vehiculo?: {
+        id: Id;
+        placa: string;
+        marca?: string;
+        modelo?: string;
     } | null;
 }
 
@@ -226,7 +238,9 @@ export interface NuevoPrestamoClienteDetalle {
 
 export interface NuevoPrestamoCliente extends BaseFormData {
     cliente_id: Id;
+    almacenes_prestables_id: Id;
     chofer_id?: Id;
+    vehiculo_id?: Id;
     venta_id?: Id;
     telefono_cliente_1?: string;
     telefono_cliente_2?: string;

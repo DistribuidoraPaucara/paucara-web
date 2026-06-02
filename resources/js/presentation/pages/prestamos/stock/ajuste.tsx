@@ -68,6 +68,29 @@ export default function AjustePage({
     const [actualizarEmbase, setActualizarEmbase] = useState(false);
     const [embaseValoresCalculados, setEmbaseValoresCalculados] = useState<any>(null);
 
+    // 📡 LOG: Mostrar datos que llegan del backend
+    useEffect(() => {
+        console.log('%c🔵 DATOS DEL BACKEND (ajuste.tsx)', 'color: #3498db; font-weight: bold; font-size: 14px;', {
+            prestable_id,
+            almacen_id,
+            tipo,
+            initialItem: {
+                nombre: initialItem.prestable_nombre,
+                codigo: initialItem.prestable_codigo,
+                tipo: initialItem.prestable_tipo,
+                capacidad: initialItem.prestable_capacidad,
+                disponible: initialItem.cantidad_disponible,
+            },
+            embaseRelacionado: embaseRelacionado ? {
+                id: embaseRelacionado.id,
+                nombre: embaseRelacionado.prestable_nombre,
+                codigo: embaseRelacionado.prestable_codigo,
+                disponible: embaseRelacionado.cantidad_disponible,
+            } : null,
+            motivosOptions,
+        });
+    }, []);
+
     // Estados editable para embase
     const [embaseData, setEmbaseData] = useState(() => {
         if (!embaseRelacionado) return null;
@@ -88,6 +111,16 @@ export default function AjustePage({
         }
     });
 
+    // 📡 LOG: Mostrar embase relacionado detallado
+    useEffect(() => {
+        if (embaseRelacionado) {
+            console.log('%c🔗 EMBASE RELACIONADO DETALLADO', 'color: #f39c12; font-weight: bold; font-size: 14px;', {
+                embaseRelacionado,
+                estadoActual: embaseData,
+            });
+        }
+    }, [embaseRelacionado, embaseData]);
+
     // Estados editable para clientes
     const [clientesData, setClientesData] = useState({
         cantidad_disponible: initialItem.cantidad_disponible,
@@ -106,6 +139,27 @@ export default function AjustePage({
 
     const currentData = tipo === 'clientes' ? clientesData : proveedoresData;
     const setCurrentData = tipo === 'clientes' ? setClientesData : setProveedoresData;
+
+    // 📡 LOG: Verificar si hay embase relacionado al cargar
+    useEffect(() => {
+        if (initialItem.prestable_tipo === 'CANASTILLA') {
+            if (embaseRelacionado) {
+                console.log('%c✅ CANASTILLA DETECTADA CON EMBASE RELACIONADO', 'color: #27ae60; font-weight: bold; font-size: 14px;', {
+                    canastilla: initialItem.prestable_nombre,
+                    embase: embaseRelacionado.prestable_nombre,
+                    capacidad: initialItem.prestable_capacidad,
+                });
+            } else {
+                console.log('%c⚠️ CANASTILLA SIN EMBASE RELACIONADO', 'color: #e74c3c; font-weight: bold; font-size: 14px;', {
+                    canastilla: initialItem.prestable_nombre,
+                });
+            }
+        } else {
+            console.log('%c📦 EMBASE DETECTADO (sin relacionado)', 'color: #3498db; font-weight: bold; font-size: 14px;', {
+                embase: initialItem.prestable_nombre,
+            });
+        }
+    }, [initialItem, embaseRelacionado]);
 
     // Calcular valores del embase cuando está activado
     useEffect(() => {

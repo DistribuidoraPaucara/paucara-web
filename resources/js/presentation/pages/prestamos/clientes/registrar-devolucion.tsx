@@ -176,7 +176,7 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
                 <div className="flex items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Registrar Devolución
+                            Registrar Devoluciónsss
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">
                             {prestamo.cliente?.nombre || prestamo.cliente?.razon_social}
@@ -192,7 +192,7 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
                 )}
 
                 {/* Información del Préstamo */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <Card className="p-1">
                         <CardHeader>
                             <CardTitle className="text-xs">Número de Préstamo</CardTitle>
@@ -214,6 +214,14 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
                             <CardTitle className="text-xs">Garantía</CardTitle>
                             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                                 Bs {Number(prestamo.monto_garantia || 0).toFixed(2)}
+                            </p>
+                        </CardHeader>
+                    </Card>
+                    <Card className="p-1">
+                        <CardHeader>
+                            <CardTitle className="text-xs">🏭 Almacén</CardTitle>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                {prestamo.almacen?.nombre || 'Sin almacén'}
                             </p>
                         </CardHeader>
                     </Card>
