@@ -53,6 +53,8 @@ interface OutputSelectionModalProps {
         monto?: number;
     };
     printType?: 'cierre' | 'movimientos';
+    // ✅ NUEVO (2026-06-02): Formato preseleccionado para abrir modal directo
+    formatoPreseleccionado?: string;
 }
 
 type Accion = 'imprimir' | 'excel' | 'pdf' | 'imagen' | null;
@@ -171,6 +173,7 @@ export function OutputSelectionModal({
     tipoDocumento,
     documentoInfo = {},
     printType = undefined,
+    formatoPreseleccionado = undefined,
 }: OutputSelectionModalProps) {
     const [accion, setAccion] = useState<Accion>(null);
     const [formatoSeleccionado, setFormatoSeleccionado] = useState<string>('');
@@ -181,6 +184,16 @@ export function OutputSelectionModal({
 
     const formatosDisponibles = FORMATO_CONFIG[tipoDocumento];
     const formatoDefault = formatosDisponibles?.[0]?.formato || 'TICKET_80';
+
+    // ✅ NUEVO (2026-06-02): Si hay formato preseleccionado y el modal se abre, usar ese formato
+    // y abrir directamente la pantalla de impresión
+    useEffect(() => {
+        if (isOpen && formatoPreseleccionado) {
+            setFormatoSeleccionado(formatoPreseleccionado);
+            setAccion('imprimir');
+            setCargarImpresoras(true);
+        }
+    }, [isOpen, formatoPreseleccionado]);
 
     // ✅ DEBUG: Log cuando se abre el modal
     useEffect(() => {

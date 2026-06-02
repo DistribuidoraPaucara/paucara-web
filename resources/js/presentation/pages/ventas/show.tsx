@@ -2,7 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrency, formatCurrencyWith2Decimals } from '@/lib/utils';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { User, Edit, AlertCircle, Printer } from 'lucide-react';
+import { User, Edit, AlertCircle, Printer, Package } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/application/hooks/use-auth';
 import { toast } from 'react-toastify';
@@ -24,6 +24,8 @@ export default function VentaShow() {
     const [outputModal, setOutputModal] = useState(false);
     // ✅ NUEVO: Estado para modal de confirmación de entrega
     const [confirmacionEntregaModal, setConfirmacionEntregaModal] = useState<{ isOpen: boolean }>({ isOpen: false });
+    // ✅ NUEVO (2026-06-02): Estado para preseleccionar formato en modal de impresión
+    const [formatoPreseleccionado, setFormatoPreseleccionado] = useState<string>('');
 
     // Verificar si la venta está APROBADA
     const esAprobada = venta.estado_documento?.nombre?.toLowerCase() === 'aprobada' || venta.estado_documento?.codigo === 'APROBADO';
@@ -111,9 +113,27 @@ export default function VentaShow() {
                     Venta {venta.numero}
                 </h1>
                 <div className="flex space-x-3">
+                    {/* Botón Reporte de Entrega - Solo si hay confirmación */}
+                    {venta.entregaConfirmacion && (
+                        <button
+                            onClick={() => {
+                                setFormatoPreseleccionado('REPORTE_ENTREGA');
+                                setOutputModal(true);
+                            }}
+                            className="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
+                            title="Imprimir reporte de entrega con confirmación"
+                        >
+                            <Package className="h-4 w-4 mr-2" />
+                            Reporte Entrega
+                        </button>
+                    )}
+
                     {/* Botón de Impresión/Exportación */}
                     <button
-                        onClick={() => setOutputModal(true)}
+                        onClick={() => {
+                            setFormatoPreseleccionado('');
+                            setOutputModal(true);
+                        }}
                         className="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
                         title="Exportar/Imprimir documento"
                     >
@@ -909,7 +929,10 @@ export default function VentaShow() {
             {/* Modal de exportación/impresión */}
             <OutputSelectionModal
                 isOpen={outputModal}
-                onClose={() => setOutputModal(false)}
+                onClose={() => {
+                    setOutputModal(false);
+                    setFormatoPreseleccionado('');
+                }}
                 documentoId={venta.id}
                 tipoDocumento="venta"
                 documentoInfo={{
@@ -917,6 +940,8 @@ export default function VentaShow() {
                     fecha: venta.fecha ? new Date(venta.fecha).toLocaleDateString('es-ES') : undefined,
                     monto: venta.total,
                 }}
+                // ✅ NUEVO (2026-06-02): Pasar formato preseleccionado
+                formatoPreseleccionado={formatoPreseleccionado}
             />
 
 
