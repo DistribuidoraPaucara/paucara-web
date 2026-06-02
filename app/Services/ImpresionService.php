@@ -154,7 +154,7 @@ class ImpresionService
                     'formato' => $formato,
                 ]);
 
-                $vistaFallback = $this->obtenerVistaFallback($tipoDocumento, $formato);
+                $vistaFallback = $this->obtenerVistaFallback($tipoDocumento, $formato, $opciones['tipoReporte'] ?? null);
 
                 if (!$vistaFallback) {
                     \Log::error('❌ [ImpresionService::generarPDF] No se encontró vista fallback', [
@@ -281,14 +281,24 @@ class ImpresionService
      * @param string|null $formato
      * @return string|null
      */
-    private function obtenerVistaFallback(string $tipoDocumento, ?string $formato = null): ?string
+    private function obtenerVistaFallback(string $tipoDocumento, ?string $formato = null, ?string $tipoReporte = null): ?string
     {
         \Log::info('🔍 [ImpresionService::obtenerVistaFallback] Buscando vista fallback', [
             'tipoDocumento' => $tipoDocumento,
             'formato' => $formato,
+            'tipoReporte' => $tipoReporte,
         ]);
 
         $formato = $formato ?? 'A4';
+
+        // ✅ NUEVO (2026-06-02): Si es reporte de entrega, usar el template correspondiente
+        if ($tipoReporte === 'entrega' && $tipoDocumento === 'venta') {
+            \Log::info('🔍 [ImpresionService::obtenerVistaFallback] Modo reporte de entrega activado', [
+                'tipoDocumento' => $tipoDocumento,
+                'formato' => $formato,
+            ]);
+            return 'impresion.ventas.reporte-entrega-completa';
+        }
 
         $fallbacks = [
             'venta' => [
@@ -297,8 +307,6 @@ class ImpresionService
                 // ✅ NUEVO: Vista específica para farmacias (usar imprimirVentaFarmacia() o pasar opciones['vista_farmacia'])
                 'TICKET_80_FARMACIA' => 'impresion.ventas.ticket-80-farmacia',
                 'TICKET_58' => 'impresion.ventas.ticket-58',
-                // ✅ NUEVO (2026-06-02): Reporte de entrega con información completa de confirmación
-                'REPORTE_ENTREGA' => 'impresion.ventas.reporte-entrega-completa',
             ],
             'prestamos_vendidos' => [
                 'A4' => 'prestamos.venta-pdf',
@@ -563,10 +571,11 @@ class ImpresionService
      *
      * @param \App\Models\Venta $venta
      * @param string|null $formato
+     * @param string|null $tipoReporte 'entrega' | null (para usar template de reporte de entrega)
      * @param array $opciones
      * @return \Barryvdh\DomPDF\PDF
      */
-    public function imprimirVenta($venta, ?string $formato = 'A4', array $opciones = [])
+    public function imprimirVenta($venta, ?string $formato = 'A4', ?string $tipoReporte = null, array $opciones = [])
     {
         // Cargar relaciones necesarias
         $venta->load([
@@ -600,7 +609,13 @@ class ImpresionService
             'tiene_proforma'     => (bool) $venta->proforma,
             'usuario_creador'    => $venta->proforma?->usuarioCreador?->name ?? 'NO EXISTE',
             'preventista_name'   => $venta->preventista?->name ?? 'NO EXISTE',
+            'tipoReporte'        => $tipoReporte,
         ]);
+
+        // ✅ NUEVO (2026-06-02): Agregar tipoReporte a las opciones
+        if ($tipoReporte === 'entrega') {
+            $opciones['tipoReporte'] = 'entrega';
+        }
 
         return $this->generarPDF('venta', $venta, $formato, $opciones);
     }
@@ -610,10 +625,11 @@ class ImpresionService
      *
      * @param \App\Models\Venta $venta
      * @param string|null $formato
+     * @param string|null $tipoReporte 'entrega' | null (para usar template de reporte de entrega)
      * @param array $opciones
      * @return \Barryvdh\DomPDF\PDF
      */
-    public function imprimirVentaFarmacia($venta, ?string $formato = 'A4', array $opciones = [])
+    public function imprimirVentaFarmacia($venta, ?string $formato = 'A4', ?string $tipoReporte = null, array $opciones = [])
     {
         // Cargar relaciones necesarias (igual que imprimirVenta)
         $venta->load([
@@ -642,6 +658,11 @@ class ImpresionService
         // ✅ NUEVO: Usar vista específica para farmacia si el formato es TICKET_80
         if ($formato === 'TICKET_80') {
             $opciones['vista_farmacia'] = 'impresion.ventas.ticket-80-farmacia';
+        }
+
+        // ✅ NUEVO (2026-06-02): Agregar tipoReporte a las opciones
+        if ($tipoReporte === 'entrega') {
+            $opciones['tipoReporte'] = 'entrega';
         }
 
         return $this->generarPDF('venta', $venta, $formato, $opciones);

@@ -1448,6 +1448,7 @@ class VentaController extends Controller
             'venta_id' => $venta->id,
             'user_id'  => auth()->id(),
             'formato'  => $request->input('formato'),
+            'tipoReporte' => $request->input('tipoReporte'),
         ]);
 
         $user = auth()->user();
@@ -1472,14 +1473,15 @@ class VentaController extends Controller
             'venta_id' => $venta->id,
         ]);
 
-        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58, REPORTE_ENTREGA
+        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58
         $accion  = $request->input('accion', 'download'); // download | stream
+        $tipoReporte = $request->input('tipoReporte');    // 'entrega' | null
 
         // ✅ Cargar relaciones necesarias para impresión
         $venta->load('detallesPagoVenta.tipoPago');
 
         // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega si es reporte de entrega
-        if ($formato === 'REPORTE_ENTREGA') {
+        if ($tipoReporte === 'entrega') {
             $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');
         }
 
@@ -1507,10 +1509,10 @@ class VentaController extends Controller
                 'es_farmacia'  => $esFarmacia,
             ]);
 
-            // Llamar al método apropiado según el tipo de empresa
+            // Llamar al método apropiado según el tipo de empresa y reporte
             $pdf = $esFarmacia
-                ? $this->impresionService->imprimirVentaFarmacia($venta, $formato)
-                : $this->impresionService->imprimirVenta($venta, $formato);
+                ? $this->impresionService->imprimirVentaFarmacia($venta, $formato, $tipoReporte)
+                : $this->impresionService->imprimirVenta($venta, $formato, $tipoReporte);
 
             $nombreArchivo = "venta_{$venta->numero}_{$formato}.pdf";
 

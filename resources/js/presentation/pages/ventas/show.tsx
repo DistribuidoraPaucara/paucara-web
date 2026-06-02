@@ -24,8 +24,8 @@ export default function VentaShow() {
     const [outputModal, setOutputModal] = useState(false);
     // ✅ NUEVO: Estado para modal de confirmación de entrega
     const [confirmacionEntregaModal, setConfirmacionEntregaModal] = useState<{ isOpen: boolean }>({ isOpen: false });
-    // ✅ NUEVO (2026-06-02): Estado para preseleccionar formato en modal de impresión
-    const [formatoPreseleccionado, setFormatoPreseleccionado] = useState<string>('');
+    // ✅ NUEVO (2026-06-02): Estado para modo de reporte en modal de impresión
+    const [modoReporte, setModoReporte] = useState<string>('');
 
     // Verificar si la venta está APROBADA
     const esAprobada = venta.estado_documento?.nombre?.toLowerCase() === 'aprobada' || venta.estado_documento?.codigo === 'APROBADO';
@@ -117,7 +117,7 @@ export default function VentaShow() {
                     {venta.entregaConfirmacion && (
                         <button
                             onClick={() => {
-                                setFormatoPreseleccionado('REPORTE_ENTREGA');
+                                setModoReporte('entrega');
                                 setOutputModal(true);
                             }}
                             className="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
@@ -131,7 +131,7 @@ export default function VentaShow() {
                     {/* Botón de Impresión/Exportación */}
                     <button
                         onClick={() => {
-                            setFormatoPreseleccionado('');
+                            setModoReporte('');
                             setOutputModal(true);
                         }}
                         className="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
@@ -931,7 +931,7 @@ export default function VentaShow() {
                 isOpen={outputModal}
                 onClose={() => {
                     setOutputModal(false);
-                    setFormatoPreseleccionado('');
+                    setModoReporte('');
                 }}
                 documentoId={venta.id}
                 tipoDocumento="venta"
@@ -940,8 +940,8 @@ export default function VentaShow() {
                     fecha: venta.fecha ? new Date(venta.fecha).toLocaleDateString('es-ES') : undefined,
                     monto: venta.total,
                 }}
-                // ✅ NUEVO (2026-06-02): Pasar formato preseleccionado
-                formatoPreseleccionado={formatoPreseleccionado}
+                // ✅ NUEVO (2026-06-02): Modo de reporte para filtrar formatos
+                modoReporte={modoReporte}
             />
 
 

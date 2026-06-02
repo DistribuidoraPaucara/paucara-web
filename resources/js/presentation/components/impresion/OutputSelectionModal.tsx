@@ -53,8 +53,8 @@ interface OutputSelectionModalProps {
         monto?: number;
     };
     printType?: 'cierre' | 'movimientos';
-    // ✅ NUEVO (2026-06-02): Formato preseleccionado para abrir modal directo
-    formatoPreseleccionado?: string;
+    // ✅ NUEVO (2026-06-02): Modo de reporte especial (ej: 'entrega') que filtra formatos disponibles
+    modoReporte?: string;
 }
 
 type Accion = 'imprimir' | 'excel' | 'pdf' | 'imagen' | null;
@@ -65,8 +65,6 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
         { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
-        // ✅ NUEVO (2026-06-02): Reporte de entrega con confirmación
-        { formato: 'REPORTE_ENTREGA', nombre: 'Reporte de Entrega Completo', descripcion: 'Reporte con confirmación de entrega e imágenes' },
     ],
     proforma: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
@@ -173,7 +171,7 @@ export function OutputSelectionModal({
     tipoDocumento,
     documentoInfo = {},
     printType = undefined,
-    formatoPreseleccionado = undefined,
+    modoReporte = undefined,
 }: OutputSelectionModalProps) {
     const [accion, setAccion] = useState<Accion>(null);
     const [formatoSeleccionado, setFormatoSeleccionado] = useState<string>('');
@@ -182,18 +180,12 @@ export function OutputSelectionModal({
     const [loading, setLoading] = useState(false);
     const [cargarImpresoras, setCargarImpresoras] = useState(false);
 
-    const formatosDisponibles = FORMATO_CONFIG[tipoDocumento];
+    // ✅ NUEVO (2026-06-02): Filtrar formatos según modo de reporte
+    const todosLosFormatos = FORMATO_CONFIG[tipoDocumento];
+    const formatosDisponibles = modoReporte === 'entrega'
+        ? todosLosFormatos?.filter(f => ['A4', 'TICKET_80'].includes(f.formato))
+        : todosLosFormatos;
     const formatoDefault = formatosDisponibles?.[0]?.formato || 'TICKET_80';
-
-    // ✅ NUEVO (2026-06-02): Si hay formato preseleccionado y el modal se abre, usar ese formato
-    // y abrir directamente la pantalla de impresión
-    useEffect(() => {
-        if (isOpen && formatoPreseleccionado) {
-            setFormatoSeleccionado(formatoPreseleccionado);
-            setAccion('imprimir');
-            setCargarImpresoras(true);
-        }
-    }, [isOpen, formatoPreseleccionado]);
 
     // ✅ DEBUG: Log cuando se abre el modal
     useEffect(() => {
@@ -399,6 +391,10 @@ export function OutputSelectionModal({
             } else if (tipoDocumento === 'venta') {
                 // Para ventas
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
+                // ✅ NUEVO (2026-06-02): Agregar parámetro tipoReporte si estamos en modo de reporte de entrega
+                if (modoReporte === 'entrega') {
+                    url += `&tipoReporte=entrega`;
+                }
             } else if (tipoDocumento === 'compra') {
                 // Para compras - usar nuevo endpoint HTML-based
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
