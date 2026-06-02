@@ -63,6 +63,8 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
         { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
+        // ✅ NUEVO (2026-06-02): Reporte de entrega con confirmación
+        { formato: 'REPORTE_ENTREGA', nombre: 'Reporte de Entrega Completo', descripcion: 'Reporte con confirmación de entrega e imágenes' },
     ],
     proforma: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
