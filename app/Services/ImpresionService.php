@@ -297,6 +297,8 @@ class ImpresionService
                 // ✅ NUEVO: Vista específica para farmacias (usar imprimirVentaFarmacia() o pasar opciones['vista_farmacia'])
                 'TICKET_80_FARMACIA' => 'impresion.ventas.ticket-80-farmacia',
                 'TICKET_58' => 'impresion.ventas.ticket-58',
+                // ✅ NUEVO (2026-06-02): Reporte de entrega con información completa de confirmación
+                'REPORTE_ENTREGA' => 'impresion.ventas.reporte-entrega-completa',
             ],
             'prestamos_vendidos' => [
                 'A4' => 'prestamos.venta-pdf',
@@ -865,7 +867,8 @@ class ImpresionService
 
             // Si no hay plantillas configuradas, retornar formatos por defecto
             if ($plantillas->isEmpty()) {
-                return collect([
+                // ✅ NUEVO (2026-06-02): Agregar formato REPORTE_ENTREGA solo para ventas
+                $formatosDefecto = [
                     [
                         'formato' => 'A4',
                         'nombre' => 'Hoja Completa (A4)',
@@ -881,7 +884,18 @@ class ImpresionService
                         'nombre' => 'Ticket 58mm',
                         'descripcion' => 'Impresora térmica 58mm',
                     ],
-                ]);
+                ];
+
+                // Agregar reporte de entrega solo para ventas
+                if ($tipoDocumento === 'venta') {
+                    $formatosDefecto[] = [
+                        'formato' => 'REPORTE_ENTREGA',
+                        'nombre' => 'Reporte de Entrega Completo',
+                        'descripcion' => 'Reporte con confirmación de entrega e imágenes',
+                    ];
+                }
+
+                return collect($formatosDefecto);
             }
 
             return $plantillas->map(fn($plantilla) => [
@@ -898,7 +912,7 @@ class ImpresionService
                 'error' => $e->getMessage(),
             ]);
 
-            return collect([
+            $formatosDefecto = [
                 [
                     'formato' => 'A4',
                     'nombre' => 'Hoja Completa (A4)',
@@ -909,7 +923,18 @@ class ImpresionService
                     'nombre' => 'Ticket 80mm',
                     'descripcion' => 'Impresora térmica 80mm',
                 ],
-            ]);
+            ];
+
+            // ✅ NUEVO (2026-06-02): Agregar formato REPORTE_ENTREGA solo para ventas
+            if ($tipoDocumento === 'venta') {
+                $formatosDefecto[] = [
+                    'formato' => 'REPORTE_ENTREGA',
+                    'nombre' => 'Reporte de Entrega Completo',
+                    'descripcion' => 'Reporte con confirmación de entrega e imágenes',
+                ];
+            }
+
+            return collect($formatosDefecto);
         }
     }
 

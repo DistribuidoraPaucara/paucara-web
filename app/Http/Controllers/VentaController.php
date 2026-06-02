@@ -1472,11 +1472,16 @@ class VentaController extends Controller
             'venta_id' => $venta->id,
         ]);
 
-        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58
+        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58, REPORTE_ENTREGA
         $accion  = $request->input('accion', 'download'); // download | stream
 
         // ✅ Cargar relaciones necesarias para impresión
         $venta->load('detallesPagoVenta.tipoPago');
+
+        // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega si es reporte de entrega
+        if ($formato === 'REPORTE_ENTREGA') {
+            $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');
+        }
 
         // 🔍 DEBUG: Loguear información de la venta antes de imprimir
         \Log::info('📋 [VentaController::imprimir] Datos de venta para descargar/stream', [
