@@ -89,16 +89,17 @@ class PrestamoClienteService
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
+                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
+
                     PrestamoClienteDetalle::create([
                         'prestamo_cliente_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
                         'precio_unitario' => $detalle['precio_unitario'] ?? null,
                         'precio_prestamo' => $detalle['precio_prestamo'] ?? null,
+                        'almacenes_ids' => !empty($almacenesIds) ? $almacenesIds : null,
                         'estado' => 'ACTIVO',
                     ]);
-
-                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
 
                     if (count($almacenesIds) > 0) {
                         $resultadoConsumo = $this->consumirStockDesdeAlmacenesSeleccionados(
@@ -320,8 +321,20 @@ class PrestamoClienteService
                         throw new \Exception("Cantidad a devolver ({$cantidadTotal}) excede cantidad restante ({$cantidadRestante}) para detalle {$detalleData['prestamo_cliente_detalle_id']}. Ya devuelto: {$cantidadYaDevuelta}");
                     }
 
-                    // Resolver almacén dinámicamente para evitar hardcode inválido (ej. id=3 inexistente)
-                    $almacenId = $this->resolverAlmacenIdParaPrestable($detalle->prestable_id);
+                    // Usar almacenes guardados en el detalle, o resolver dinámicamente si no existen
+                    $almacenesIds = $detalle->almacenes_ids ?? [];
+                    if (is_string($almacenesIds)) {
+                        $almacenesIds = json_decode($almacenesIds, true) ?? [];
+                    }
+
+                    $almacenId = !empty($almacenesIds) ? $almacenesIds[0] : $this->resolverAlmacenIdParaPrestable($detalle->prestable_id);
+
+                    \Log::info('🔍 Devolución - Almacén usado', [
+                        'prestable_id' => $detalle->prestable_id,
+                        'almacenes_ids_guardados' => $almacenesIds,
+                        'almacen_id_usado' => $almacenId,
+                        'cantidad_para_stock' => $cantidadParaStock,
+                    ]);
 
                     // Obtener condiciones para calcular garantía devuelta
                     $condicion = PrestableCondicion::where('prestable_id', $detalle->prestable_id)->first();

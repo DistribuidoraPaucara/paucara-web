@@ -12,11 +12,19 @@ class PrestamoEvento extends Model
 
     protected $fillable = [
         'evento_id',
+        'cliente_id',
+        'venta_id',
         'nombre_evento',
+        'encargado_evento',
+        'vehiculo_asignado',
+        'direccion_evento',
+        'telefono_uno',
+        'telefono_dos',
         'chofer_id',
         'cantidad',
         'monto_garantia',
         'fecha_prestamo',
+        'fecha_entrega',
         'fecha_esperada_devolucion',
         'estado',
     ];
@@ -24,8 +32,19 @@ class PrestamoEvento extends Model
     protected $casts = [
         'monto_garantia' => 'decimal:2',
         'fecha_prestamo' => 'date',
+        'fecha_entrega' => 'date',
         'fecha_esperada_devolucion' => 'date',
     ];
+
+    public function cliente(): BelongsTo
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function venta(): BelongsTo
+    {
+        return $this->belongsTo(Venta::class, 'venta_id');
+    }
 
     public function chofer(): BelongsTo
     {

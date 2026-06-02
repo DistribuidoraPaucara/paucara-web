@@ -25,6 +25,7 @@ interface SearchAndItemsTableProps<T> {
     totalLabel?: string;
     totalValue?: string | number;
     getRowClassName?: (item: any) => string;
+    getRowIndicator?: (item: any) => React.ReactNode;
 }
 
 export default function SearchAndItemsTable<T>({
@@ -45,6 +46,7 @@ export default function SearchAndItemsTable<T>({
     totalLabel,
     totalValue,
     getRowClassName,
+    getRowIndicator,
 }: SearchAndItemsTableProps<T>) {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -127,12 +129,17 @@ export default function SearchAndItemsTable<T>({
                 <table className="w-full">
                     <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
                         <tr>
+                            {getRowIndicator && (
+                                <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100 w-6">
+                                    —
+                                </th>
+                            )}
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
-                                    className={`px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100 ${
+                                    className={`px-2 py-1 text-sm font-semibold text-slate-900 dark:text-slate-100 ${
                                         column.align === 'right'
-                                            ? 'text-right'
+                                            ? 'text-left'
                                             : column.align === 'center'
                                               ? 'text-center'
                                               : 'text-left'
@@ -141,7 +148,7 @@ export default function SearchAndItemsTable<T>({
                                     {column.label}
                                 </th>
                             ))}
-                            <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <th className="px-2 py-1 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 Acción
                             </th>
                         </tr>
@@ -155,10 +162,15 @@ export default function SearchAndItemsTable<T>({
                                         getRowClassName ? getRowClassName(item) : 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800'
                                     }`}
                                 >
+                                    {getRowIndicator && (
+                                        <td className="px-2 py-1 text-center w-6">
+                                            {getRowIndicator(item)}
+                                        </td>
+                                    )}
                                     {columns.map((column) => (
                                         <td
                                             key={`${item.id}-${column.key}`}
-                                            className={`px-4 py-3 ${column.className || ''} ${
+                                            className={`px-2 py-1 ${column.className || ''} ${
                                                 column.align === 'right'
                                                     ? 'text-right'
                                                     : column.align === 'center'
@@ -171,7 +183,7 @@ export default function SearchAndItemsTable<T>({
                                                 : item[column.key]}
                                         </td>
                                     ))}
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-2 py-1 text-center">
                                         <button
                                             onClick={() => onDeleteItem(item.id)}
                                             className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
@@ -195,11 +207,12 @@ export default function SearchAndItemsTable<T>({
                     {items.length > 0 && totalLabel && (
                         <tfoot>
                             <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                                {getRowIndicator && <td></td>}
                                 <td
                                     colSpan={columns.length - 1}
-                                    className="px-4 py-4 text-right"
+                                    className="px-2 py-1 text-left"
                                 />
-                                <td className="px-4 py-4">
+                                <td className="px-2 py-1 text-right">
                                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                         {totalLabel}
                                     </p>

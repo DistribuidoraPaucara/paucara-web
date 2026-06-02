@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import conPrestables from './con-prestables'
 /**
 * @see \App\Http\Controllers\CompraController::indexJson
  * @see app/Http/Controllers/CompraController.php:2070
@@ -500,6 +501,7 @@ destroy.delete = (args: { compra: string | number } | [compra: string | number ]
     destroy.form = destroyForm
 const compras = {
     indexJson,
+conPrestables,
 index,
 store,
 show,

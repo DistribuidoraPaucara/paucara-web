@@ -2474,4 +2474,48 @@ class ClienteController extends Controller
 
         return response()->json($clientes);
     }
+
+    /**
+     * GET /api/clientes/index-json
+     * Listar clientes con búsqueda y paginación en formato JSON
+     */
+    public function indexJson(Request $request): JsonResponse
+    {
+        try {
+            $query = ClienteModel::where('activo', true)
+                ->orderBy('nombre', 'asc');
+
+            // Filtro de búsqueda general (q)
+            if ($request->filled('q')) {
+                $searchTerm = $request->string('q');
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('nombre', 'ilike', "%{$searchTerm}%")
+                        ->orWhere('razon_social', 'ilike', "%{$searchTerm}%")
+                        ->orWhere('nit', 'ilike', "%{$searchTerm}%");
+                });
+            }
+
+            // Paginación
+            $perPage = $request->integer('per_page', 20);
+            $clientes = $query->select('id', 'nombre', 'razon_social', 'nit', 'email')
+                ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $clientes->items(),
+                'pagination' => [
+                    'current_page' => $clientes->currentPage(),
+                    'per_page' => $clientes->perPage(),
+                    'total' => $clientes->total(),
+                    'last_page' => $clientes->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en clientes indexJson', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

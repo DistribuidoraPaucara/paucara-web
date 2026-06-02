@@ -132,12 +132,24 @@ class PrestableStockService
             // Lo dañado total se pierden (se reponen desde garantía)
             // No vuelven a disponible
 
-            $stock->update([
+            Log::info('📝 Antes de actualizar stock', [
+                'prestable_stock_id' => $stock->id,
+                'cantidad_disponible_antes' => $stock->cantidad_disponible,
+                'cantidad_cliente_deudor_antes' => $stock->cantidad_cliente_deudor,
+                'nuevo_disponible' => $nuevoDisponible,
+                'cantidad_devuelta' => $cantidadDevuelta,
+            ]);
+
+            $updateResult = $stock->update([
                 'cantidad_disponible' => $nuevoDisponible,
                 'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor -
                                                      ($cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal),
                 'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto +
                                                        ($cantidadDevuelta + $cantidadDañadaParcial),
+            ]);
+
+            Log::info('📝 Update result: ' . ($updateResult ? 'SUCCESS' : 'FAILED'), [
+                'prestable_stock_id' => $stock->id,
             ]);
 
             Log::info('✅ Canastillas devueltas por cliente', [

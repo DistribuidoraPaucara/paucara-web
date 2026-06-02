@@ -828,7 +828,13 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             ->name('clientes.imprimir')
             ->where('prestamo', '[0-9]+');
 
-        // Página de devoluciones de un préstamo
+        // Página para registrar una nueva devolución
+        Route::get('clientes/{prestamo}/registrar-devolucion', fn(\App\Models\PrestamoCliente $prestamo) =>
+            Inertia::render('prestamos/clientes/registrar-devolucion', ['prestamoId' => $prestamo->id])
+        )->name('clientes.registrar-devolucion')
+        ->where('prestamo', '[0-9]+');
+
+        // Página de historial de devoluciones de un préstamo
         Route::get('clientes/{prestamo}/devoluciones', fn(\App\Models\PrestamoCliente $prestamo) =>
             Inertia::render('prestamos/clientes/devoluciones', ['prestamoId' => $prestamo->id])
         )->name('clientes.devoluciones')
@@ -840,6 +846,11 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             ->where('prestamo', '[0-9]+');
 
         // Página de devoluciones de un préstamo a proveedor
+        Route::get('proveedores/{prestamo}/registrar-devolucion', fn(\App\Models\PrestamoProveedor $prestamo) =>
+            Inertia::render('prestamos/proveedores/registrar-devolucion', ['prestamoId' => $prestamo->id])
+        )->name('proveedores.registrar-devolucion')
+        ->where('prestamo', '[0-9]+');
+
         Route::get('proveedores/{prestamo}/devoluciones', fn(\App\Models\PrestamoProveedor $prestamo) =>
             Inertia::render('prestamos/proveedores/devoluciones', ['prestamoId' => $prestamo->id])
         )->name('proveedores.devoluciones')
@@ -859,6 +870,23 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         // Impresión de préstamos de proveedor
         Route::get('proveedores/{prestamo}/imprimir', [\App\Http\Controllers\PrestamoProveedorController::class, 'imprimir'])
             ->name('proveedores.imprimir')
+            ->where('prestamo', '[0-9]+');
+
+        // Préstamos a Eventos
+        Route::get('eventos', [\App\Http\Controllers\PrestamosInertiaController::class, 'eventosIndex'])->name('eventos.index');
+        Route::get('eventos/crear', [\App\Http\Controllers\PrestamosInertiaController::class, 'eventosCrear'])->name('eventos.crear');
+        Route::post('eventos', [\App\Http\Controllers\PrestamosInertiaController::class, 'eventosStore'])->name('eventos.store');
+        Route::get('eventos/{prestamo}', [\App\Http\Controllers\PrestamosInertiaController::class, 'eventosShow'])->name('eventos.show')->where('prestamo', '[0-9]+');
+
+        // Página de devoluciones de un préstamo a evento
+        Route::get('eventos/{prestamo}/devoluciones', fn(\App\Models\PrestamoEvento $prestamo) =>
+            Inertia::render('prestamos/eventos/devoluciones', ['prestamoId' => $prestamo->id])
+        )->name('eventos.devoluciones')
+        ->where('prestamo', '[0-9]+');
+
+        // Impresión de préstamo a evento
+        Route::get('eventos/{prestamo}/imprimir', [\App\Http\Controllers\PrestamoEventoController::class, 'imprimir'])
+            ->name('eventos.imprimir')
             ->where('prestamo', '[0-9]+');
 
         Route::get('reportes', [\App\Http\Controllers\PrestamosInertiaController::class, 'reportes'])->name('reportes');

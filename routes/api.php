@@ -55,6 +55,7 @@ use App\Http\Controllers\CompraPrestableController;
 use App\Http\Controllers\PrestableStockController;
 use App\Http\Controllers\PrestamoClienteController;
 use App\Http\Controllers\PrestamoProveedorController;
+use App\Http\Controllers\PrestamoEventoController;
 use App\Http\Controllers\ReportesController;
 use Illuminate\Support\Facades\Route;
 
@@ -508,6 +509,8 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         Route::get('index-json', [CompraController::class, 'indexApi'])->name('api.compras.index-json');
         // 🔍 Búsqueda para AsyncSearchSelect
         Route::get('search', [CompraController::class, 'search']);
+        // 🔗 ✅ NUEVO: Buscar compras que tengan productos con prestables (para préstamos a proveedores)
+        Route::get('con-prestables/search', [CompraController::class, 'searchWithPrestables'])->name('api.compras.con-prestables.search');
         // 📦 Obtener detalles de una compra (para prestamos)
         Route::get('{id}/detalles', [CompraController::class, 'show']);
         // 🖨️ Rutas de impresión - ANTES que apiResource
@@ -569,6 +572,8 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         // 🖨️ Rutas de impresión - ANTES que apiResource
         Route::get('para-impresion', [VentaController::class, 'ventasParaImpresion']);
         Route::get('search', [VentaController::class, 'search'])->name('api.ventas.search');
+        // 🔗 ✅ NUEVO: Buscar ventas que tengan productos con prestables (para préstamos)
+        Route::get('con-prestables/search', [VentaController::class, 'searchWithPrestables'])->name('api.ventas.con-prestables.search');
         // 📦 Obtener detalles de una venta (para préstamos)
         Route::get('{id}/detalles', [VentaController::class, 'show']);
         Route::post('verificar-stock', [VentaController::class, 'verificarStock']);
@@ -711,6 +716,7 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         Route::post('/', [ClienteController::class, 'store']);
         Route::get('buscar', [ClienteController::class, 'buscarApi']);
         Route::get('search', [ClienteController::class, 'search']);
+        Route::get('index-json', [ClienteController::class, 'indexJson']);
 
         // Ruta especial para obtener el perfil del cliente autenticado (debe ir antes de {cliente})
         Route::get('mi-perfil', [ClienteController::class, 'miPerfil']);
@@ -1662,6 +1668,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{prestamo}', [PrestamoProveedorController::class, 'show']);
         Route::post('/{prestamo}/devolver', [PrestamoProveedorController::class, 'registrarDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoProveedorController::class, 'anularPrestamo']);
+    });
+
+    // Préstamos a Eventos
+    Route::prefix('prestamos-evento')->group(function () {
+        Route::get('/', [PrestamoEventoController::class, 'index']);
+        Route::post('/', [PrestamoEventoController::class, 'store']);
+        Route::get('/{prestamo}', [PrestamoEventoController::class, 'show']);
+        Route::post('/{prestamo}/devolver', [PrestamoEventoController::class, 'registrarDevolucion']);
+        Route::post('/{prestamo}/anular', [PrestamoEventoController::class, 'anularPrestamo']);
     });
 
     // Reportes de Préstamos

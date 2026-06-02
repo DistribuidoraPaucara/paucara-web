@@ -523,6 +523,55 @@ export default function VentaShow() {
                         </div>
                     </div>
 
+                    {/* Observaciones */}
+                    {(venta.observaciones || venta.observaciones_logistica) && (
+                        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
+                            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                                Observaciones
+                            </h2>
+
+                            <div className="space-y-4">
+                                {/* Observaciones generales */}
+                                {venta.observaciones && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 mt-1">
+                                                <span className="text-lg">📝</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1 uppercase">
+                                                    Observaciones
+                                                </h3>
+                                                <p className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-wrap break-words">
+                                                    {venta.observaciones}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Observaciones logística */}
+                                {venta.observaciones_logistica && (
+                                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 mt-1">
+                                                <span className="text-lg">🚚</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-1 uppercase">
+                                                    Observaciones Logística
+                                                </h3>
+                                                <p className="text-sm text-orange-800 dark:text-orange-300 whitespace-pre-wrap break-words">
+                                                    {venta.observaciones_logistica}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
 {/* Pagos si existen */}
                     {venta.pagos && venta.pagos.length > 0 && (
                         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-6">

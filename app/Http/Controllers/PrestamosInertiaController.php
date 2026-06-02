@@ -221,6 +221,83 @@ class PrestamosInertiaController extends Controller
     }
 
     /**
+     * Listado de préstamos a eventos
+     */
+    public function eventosIndex(): Response
+    {
+        $choferes = User::role('chofer')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($user) => ['id' => $user->id, 'name' => $user->name]);
+
+        $vehiculos = \App\Models\Vehiculo::where('activo', true)
+            ->select('id', 'placa', 'marca', 'modelo', 'anho')
+            ->orderBy('placa')
+            ->get();
+
+        return Inertia::render('prestamos/eventos/index', [
+            'choferes' => $choferes,
+            'vehiculos' => $vehiculos,
+        ]);
+    }
+
+    /**
+     * Formulario para crear nuevo préstamo a evento
+     */
+    public function eventosCrear(): Response
+    {
+        $choferes = User::role('chofer')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($user) => ['id' => $user->id, 'nombre' => $user->name]);
+
+        $ventas = \App\Models\Venta::select('id', 'numero', 'cliente_id')
+            ->with(['cliente:id,nombre,razon_social'])
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get();
+
+        $vehiculos = \App\Models\Vehiculo::where('activo', true)
+            ->select('id', 'placa', 'marca', 'modelo', 'anho')
+            ->orderBy('placa')
+            ->get();
+
+        return Inertia::render('prestamos/eventos/crear', [
+            'choferes' => $choferes,
+            'ventas' => $ventas,
+            'vehiculos' => $vehiculos,
+        ]);
+    }
+
+    /**
+     * Procesar creación de préstamo a evento
+     * Nota: El procesamiento real se hace vía API /api/prestamos-evento
+     */
+    public function eventosStore(Request $request)
+    {
+        // Redirigir al index después de crear via API
+        return redirect()->route('prestamos.eventos.index');
+    }
+
+    /**
+     * Mostrar detalles de un préstamo a evento
+     */
+    public function eventosShow(\App\Models\PrestamoEvento $prestamo): Response
+    {
+        $prestamo->load([
+            'cliente',
+            'chofer',
+            'detalles.prestable',
+        ]);
+
+        return Inertia::render('prestamos/eventos/show', [
+            'prestamo' => $prestamo,
+        ]);
+    }
+
+    /**
      * Reportes de préstamos
      */
     public function reportes(): Response

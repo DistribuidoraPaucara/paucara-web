@@ -316,6 +316,11 @@ class ImpresionService
                 'A4_COPIA' => 'impresion.prestamos_proveedores.a4-2-copias',
                 'TICKET_80' => 'impresion.prestamos_proveedores.ticket-80',
             ],
+            'prestamo_evento' => [
+                'A4' => 'impresion.prestamos_eventos.a4-2-copias',
+                'A4_COPIA' => 'impresion.prestamos_eventos.a4-2-copias',
+                'TICKET_80' => 'impresion.prestamos_eventos.ticket-80',
+            ],
             'devolucion_cliente' => [
                 'A4' => 'impresion.prestamos_clientes.devolucion-a4',
             ],
@@ -471,15 +476,15 @@ class ImpresionService
         $config = match($formato) {
             'A4' => [
                 'paper' => 'A4',
-                // Entregas, Préstamos a clientes y Préstamos a proveedores = landscape
+                // Entregas, Préstamos a clientes, Préstamos a proveedores y Préstamos a eventos = landscape
                 // Todo lo demás (pagos, compras, ventas, etc.) = portrait
-                'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor'])
+                'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor', 'prestamo_evento'])
                     ? 'landscape'
                     : 'portrait',
             ],
             'A4_COPIA' => [
                 'paper' => 'A4',
-                'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor'])
+                'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor', 'prestamo_evento'])
                     ? 'landscape'
                     : 'portrait',
             ],

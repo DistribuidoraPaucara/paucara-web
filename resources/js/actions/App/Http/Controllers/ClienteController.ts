@@ -434,6 +434,84 @@ search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     search.form = searchForm
 /**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+export const indexJson = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexJson.url(options),
+    method: 'get',
+})
+
+indexJson.definition = {
+    methods: ["get","head"],
+    url: '/api/clientes/index-json',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+indexJson.url = (options?: RouteQueryOptions) => {
+    return indexJson.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+indexJson.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: indexJson.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+indexJson.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: indexJson.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+    const indexJsonForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexJson.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+        indexJsonForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexJson.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ClienteController::indexJson
+ * @see app/Http/Controllers/ClienteController.php:2482
+ * @route '/api/clientes/index-json'
+ */
+        indexJsonForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexJson.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexJson.form = indexJsonForm
+/**
 * @see \App\Http\Controllers\ClienteController::miPerfil
  * @see app/Http/Controllers/ClienteController.php:752
  * @route '/api/clientes/mi-perfil'
@@ -3286,6 +3364,6 @@ edit.head = (args: { cliente: number | { id: number } } | [cliente: number | { i
         })
     
     edit.form = editForm
-const ClienteController = { index, store, buscarApi, search, miPerfil, showApi, update, destroy, saldoCuentasPorCobrar, historialVentas, obtenerDetallesCreditoApi, obtenerAuditoriaCreditoApi, registrarPagoApi, cambiarCredenciales, obtenerCuentasPendientes, obtenerCuentasVencidas, obtenerHistorialPagos, anularPago, ajustarLimiteCredito, imprimirCredito, previewCredito, imprimirPago, previewPago, listarCreditos, obtenerMiCredito, obtenerResumenCredito, obtenerEstadisticasCreditos, exportarReporteCreditos, create, show, edit }
+const ClienteController = { index, store, buscarApi, search, indexJson, miPerfil, showApi, update, destroy, saldoCuentasPorCobrar, historialVentas, obtenerDetallesCreditoApi, obtenerAuditoriaCreditoApi, registrarPagoApi, cambiarCredenciales, obtenerCuentasPendientes, obtenerCuentasVencidas, obtenerHistorialPagos, anularPago, ajustarLimiteCredito, imprimirCredito, previewCredito, imprimirPago, previewPago, listarCreditos, obtenerMiCredito, obtenerResumenCredito, obtenerEstadisticasCreditos, exportarReporteCreditos, create, show, edit }
 
 export default ClienteController

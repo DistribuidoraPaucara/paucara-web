@@ -46,6 +46,101 @@ class PrestamoProveedorService
     }
 
     /**
+     * Recibir stock de proveedor en múltiples almacenes seleccionados
+     * Distribuye la cantidad entre los almacenes especificados y registra movimientos
+     */
+    private function recibirStockEnAlmacenesSeleccionados(
+        int $prestableId,
+        int $cantidad,
+        array $almacenesIds,
+        bool $esCompra,
+        int $prestamoId
+    ): array {
+        try {
+            return DB::transaction(function () use ($prestableId, $cantidad, $almacenesIds, $esCompra, $prestamoId) {
+                $cantidadRestante = $cantidad;
+                $detallesPorAlmacen = [];
+
+                foreach ($almacenesIds as $almacenId) {
+                    if ($cantidadRestante <= 0) break;
+
+                    $stock = $this->stockService->obtenerStock($prestableId, $almacenId);
+
+                    // Registrar cantidad en este almacén (los detalles simplemente registran la entrada)
+                    $cantidadARegistrar = min($cantidadRestante, $cantidad);
+
+                    // Obtener valores ANTES de actualizar
+                    $disponibleAntes = $stock->cantidad_disponible;
+                    $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                    $vendidaAntes = 0;
+
+                    // Actualizar stock según tipo de operación
+                    if ($esCompra) {
+                        $this->stockService->incrementarStockInicial(
+                            $prestableId,
+                            $almacenId,
+                            $cantidadARegistrar
+                        );
+                    } else {
+                        $this->stockService->recibirPrestamoProveedor(
+                            $prestableId,
+                            $almacenId,
+                            $cantidadARegistrar
+                        );
+                    }
+
+                    // Refrescar stock DESPUÉS de actualizar
+                    $stock->refresh();
+
+                    // Registrar movimiento
+                    $this->movimientoService->registrarMovimiento([
+                        'prestable_stock_id' => $stock->id,
+                        'almacenes_prestables_id' => $almacenId,
+                        'usuario_id' => Auth::id(),
+                        'tipo' => 'ENTRADA',
+                        'cantidad' => $cantidadARegistrar,
+                        'disponible_anterior' => $disponibleAntes,
+                        'prestamo_cliente_anterior' => $prestamoClienteAntes,
+                        'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                        'vendida_anterior' => $vendidaAntes,
+                        'disponible_posterior' => $stock->cantidad_disponible,
+                        'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                        'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                        'vendida_posterior' => 0,
+                        'categoria_afectada' => 'prestamo_proveedor',
+                        'motivo' => $esCompra ? 'Compra de prestable' : 'Préstamo de proveedor',
+                        'numero_referencia' => $prestamoId,
+                        'referencia_tipo' => 'PRESTAMO_PROVEEDOR',
+                        'referencia_id' => $prestamoId,
+                    ]);
+
+                    $detallesPorAlmacen[] = [
+                        'almacen_id' => $almacenId,
+                        'cantidad' => $cantidadARegistrar,
+                    ];
+
+                    $cantidadRestante -= $cantidadARegistrar;
+                }
+
+                return [
+                    'exito' => true,
+                    'cantidad_recibida' => $cantidad,
+                    'detalles_por_almacen' => $detallesPorAlmacen,
+                ];
+            });
+        } catch (\Exception $e) {
+            Log::error('Error recibiendo stock en almacenes para préstamo proveedor', [
+                'prestable_id' => $prestableId,
+                'cantidad' => $cantidad,
+                'almacenes_ids' => $almacenesIds,
+                'error' => $e->getMessage(),
+            ]);
+            return ['exito' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Registrar préstamo/compra de proveedor
      *
      * @param array $datos
@@ -76,17 +171,23 @@ class PrestamoProveedorService
                     'estado' => 'ACTIVO',
                 ]);
 
-                // ✅ NUEVO: Procesar detalles (múltiples prestables)
-                // Usar el almacén seleccionado por el usuario
+                // ✅ Procesar detalles (múltiples prestables, un único almacén)
                 $almacenId = $datos['almacen_prestable_id'];
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
-                    // ✅ NUEVO: Crear detalle del préstamo
+                    // Obtener almacenes_ids si vienen en el detalle, sino usar el almacén global
+                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
+                    if (empty($almacenesIds)) {
+                        $almacenesIds = [$almacenId];
+                    }
+
+                    // Crear detalle del préstamo
                     PrestamoProveedorDetalle::create([
                         'prestamo_proveedor_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
+                        'almacenes_ids' => $almacenesIds,
                         'estado' => 'ACTIVO',
                     ]);
 
@@ -106,7 +207,7 @@ class PrestamoProveedorService
                             $detalle['cantidad']
                         );
                     } else {
-                        // PRÉSTAMO: incrementa disponible para operar y deuda activa con proveedor
+                        // PRÉSTAMO: incrementa disponible y deuda activa con proveedor
                         $this->stockService->recibirPrestamoProveedor(
                             $detalle['prestable_id'],
                             $almacenId,
@@ -117,7 +218,7 @@ class PrestamoProveedorService
                     // Obtener stock DESPUÉS de actualizar
                     $stock->refresh();
 
-                    // Registrar movimiento de entrada de préstamo de proveedor
+                    // Registrar movimiento de entrada
                     $this->movimientoService->registrarMovimiento([
                         'prestable_stock_id' => $stock->id,
                         'almacenes_prestables_id' => $almacenId,
@@ -143,6 +244,7 @@ class PrestamoProveedorService
                         'prestamo_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad' => $detalle['cantidad'],
+                        'almacen_id' => $almacenId,
                     ]);
                 }
 

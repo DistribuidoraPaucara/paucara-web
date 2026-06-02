@@ -6,6 +6,7 @@ import ventas from './ventas'
 import compras from './compras'
 import clientes from './clientes'
 import proveedores from './proveedores'
+import eventos from './eventos'
 /**
 * @see \App\Http\Controllers\Prestamos\DashboardController::dashboard
  * @see app/Http/Controllers/Prestamos/DashboardController.php:19
@@ -164,7 +165,7 @@ stock.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     stock.form = stockForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
 export const reportes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -179,7 +180,7 @@ reportes.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
 reportes.url = (options?: RouteQueryOptions) => {
@@ -188,7 +189,7 @@ reportes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
 reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +198,7 @@ reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
 reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +208,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
     const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +218,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
         reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -226,7 +227,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:226
+ * @see app/Http/Controllers/PrestamosInertiaController.php:303
  * @route '/prestamos/reportes'
  */
         reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -405,6 +406,7 @@ ventas,
 compras,
 clientes,
 proveedores,
+eventos,
 reportes,
 dashboardAlt,
 alertas,

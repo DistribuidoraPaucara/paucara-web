@@ -31,6 +31,7 @@ class VentaResponseDTO extends BaseDTO
         public ?array $moneda = null,
         public ?array $usuario = null,
         public ?string $observaciones = null,
+        public ?string $observaciones_logistica = null,  // ✅ NUEVO: Observaciones sobre entrega/logística
         public array $detalles = [],
         public string $created_at = '',
         public string $updated_at = '',
@@ -173,6 +174,7 @@ class VentaResponseDTO extends BaseDTO
                 'email' => $venta->usuario->email,
             ] : null,
             observaciones: $venta->observaciones,
+            observaciones_logistica: $venta->observaciones_logistica,  // ✅ NUEVO: Observaciones de logística
             detalles: $venta->detalles->map(fn($det) => [
                 'id' => $det->id,
                 'producto_id' => $det->producto_id,

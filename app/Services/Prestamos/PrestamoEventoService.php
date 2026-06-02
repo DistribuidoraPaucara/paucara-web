@@ -2,6 +2,7 @@
 
 namespace App\Services\Prestamos;
 
+use App\Models\Cliente;
 use App\Models\PrestamoEvento;
 use App\Models\PrestamoEventoDetalle;
 use App\Models\DevolucionEvento;
@@ -34,16 +35,23 @@ class PrestamoEventoService
      * @param array $datos
      * {
      *   'evento_id': ?int,
+     *   'venta_id': ?int,
      *   'nombre_evento': string,
+     *   'encargado_evento': ?string,
+     *   'vehiculo_asignado': ?string,
+     *   'direccion_evento': ?string,
+     *   'telefono_uno': ?string,
+     *   'telefono_dos': ?string,
      *   'chofer_id': ?int,
      *   'monto_garantia': ?float,
      *   'fecha_prestamo': date,
+     *   'fecha_entrega': ?date,
      *   'fecha_esperada_devolucion': ?date,
-     *   'almacen_id': int,
      *   'detalles': [
      *     {
      *       'prestable_id': int,
      *       'cantidad': int,
+     *       'almacenes_ids': [int, ...]
      *     },
      *     ...
      *   ]
@@ -56,70 +64,121 @@ class PrestamoEventoService
                 $montoGarantia = (float) ($datos['monto_garantia'] ?? 0);
                 $cantidadTotal = 0;
 
+                // Cliente fijo para eventos: id=51
+                $clienteEventosId = 51;
+
                 // Crear registro encabezado de préstamo
                 $prestamo = PrestamoEvento::create([
                     'evento_id' => $datos['evento_id'] ?? null,
+                    'cliente_id' => $clienteEventosId,
+                    'venta_id' => $datos['venta_id'] ?? null,
                     'nombre_evento' => $datos['nombre_evento'],
+                    'encargado_evento' => $datos['encargado_evento'] ?? null,
+                    'vehiculo_asignado' => $datos['vehiculo_asignado'] ?? null,
+                    'direccion_evento' => $datos['direccion_evento'] ?? null,
+                    'telefono_uno' => $datos['telefono_uno'] ?? null,
+                    'telefono_dos' => $datos['telefono_dos'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
                     'cantidad' => 0, // Se actualiza después
                     'monto_garantia' => $montoGarantia,
                     'fecha_prestamo' => $datos['fecha_prestamo'],
+                    'fecha_entrega' => $datos['fecha_entrega'] ?? null,
                     'fecha_esperada_devolucion' => $datos['fecha_esperada_devolucion'] ?? null,
                     'estado' => 'ACTIVO',
                 ]);
 
+                Log::info('✅ Cliente EVENTOS asignado automáticamente', [
+                    'prestamo_evento_id' => $prestamo->id,
+                    'cliente_id' => $clienteEventosId,
+                ]);
+
+
                 // Crear detalles y actualizar stock
-                $almacenId = $datos['almacen_id'] ?? 1; // Default a distribuidora
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
+                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
+
                     PrestamoEventoDetalle::create([
                         'prestamo_evento_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
-                        'monto_garantia' => 0, // Será calculado si es necesario
+                        'almacenes_ids' => !empty($almacenesIds) ? $almacenesIds : null,
+                        'monto_garantia' => 0,
                         'estado' => 'ACTIVO',
                     ]);
 
                     $cantidadTotal += $detalle['cantidad'];
 
-                    // Obtener stock antes de actualizar
-                    $stock = PrestableStock::where('prestable_id', $detalle['prestable_id'])
-                        ->where('almacenes_prestables_id', $almacenId)
-                        ->first();
+                    // Consumir stock de los almacenes seleccionados
+                    $almacenesIds = $detalle['almacenes_ids'] ?? [];
+                    $cantidadRestante = $detalle['cantidad'];
 
-                    if ($stock) {
-                        $eventoActivoAntes = $stock->cantidad_evento_deudor;
+                    foreach ($almacenesIds as $almacenId) {
+                        if ($cantidadRestante <= 0) {
+                            break;
+                        }
+
+                        $stock = PrestableStock::where('prestable_id', $detalle['prestable_id'])
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->first();
+
+                        if (!$stock || (int) $stock->cantidad_disponible <= 0) {
+                            continue;
+                        }
+
+                        $cantidadATomar = min($cantidadRestante, (int) $stock->cantidad_disponible);
                         $disponibleAntes = $stock->cantidad_disponible;
 
-                        // Actualizar stock: move from disponible to evento_activo
+                        // Actualizar stock
                         $stock->update([
-                            'cantidad_disponible' => max(0, $stock->cantidad_disponible - $detalle['cantidad']),
-                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $detalle['cantidad'],
+                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomar,
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantidadATomar,
                         ]);
+
+                        // Obtener stock actualizado
+                        $stock->refresh();
+                        $disponibleDespues = $stock->cantidad_disponible;
+                        $eventoDeudorDespues = $stock->cantidad_evento_deudor;
 
                         // Registrar movimiento
                         $this->movimientoService->registrarMovimiento([
-                            'prestable_id' => $detalle['prestable_id'],
-                            'almacen_id' => $almacenId,
-                            'tipo' => 'PRESTAMO_EVENTO',
-                            'cantidad_antes' => $disponibleAntes,
-                            'cantidad_despues' => $stock->cantidad_disponible,
-                            'referencia_id' => $prestamo->id,
+                            'prestable_stock_id' => $stock->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'tipo' => 'CONSUMO_RESERVA',
+                            'cantidad' => -$cantidadATomar,
+                            'disponible_anterior' => $disponibleAntes,
+                            'disponible_posterior' => $disponibleDespues,
+                            'categoria_afectada' => 'prestamo_evento',
+                            'motivo' => 'Préstamo a evento',
                             'observaciones' => "Préstamo a evento: {$datos['nombre_evento']}",
+                            'referencia_tipo' => 'PRESTAMO_EVENTO',
+                            'referencia_id' => $prestamo->id,
                         ]);
 
-                        Log::info('✅ Préstamo a evento creado', [
+                        $cantidadRestante -= $cantidadATomar;
+
+                        Log::info('✅ Stock consumido para préstamo a evento', [
                             'prestamo_evento_id' => $prestamo->id,
                             'prestable_id' => $detalle['prestable_id'],
-                            'cantidad' => $detalle['cantidad'],
-                            'evento' => $datos['nombre_evento'],
+                            'almacen_id' => $almacenId,
+                            'cantidad' => $cantidadATomar,
                         ]);
+                    }
+
+                    if ($cantidadRestante > 0) {
+                        throw new \Exception("Stock insuficiente en almacenes seleccionados. Solicitado: {$detalle['cantidad']}, disponible: " . ($detalle['cantidad'] - $cantidadRestante));
                     }
                 }
 
                 // Actualizar cantidad total en encabezado
                 $prestamo->update(['cantidad' => $cantidadTotal]);
+
+                Log::info('✅ Préstamo a evento creado exitosamente', [
+                    'prestamo_evento_id' => $prestamo->id,
+                    'nombre_evento' => $datos['nombre_evento'],
+                    'cantidad_total' => $cantidadTotal,
+                ]);
 
                 return $prestamo;
             });
@@ -300,5 +359,83 @@ class PrestamoEventoService
             'cantidad_en_campo' => $totalEnCampo,
             'detalles' => $detalles,
         ];
+    }
+
+    /**
+     * Anular préstamo a evento
+     *
+     * Devuelve automáticamente todos los prestables al almacén de origen
+     */
+    public function anularPrestamo(int $prestamoEventoId, ?string $razonAnulacion = null): PrestamoEvento|false
+    {
+        try {
+            return DB::transaction(function () use ($prestamoEventoId, $razonAnulacion) {
+                $prestamo = PrestamoEvento::with('detalles')->find($prestamoEventoId);
+
+                if (!$prestamo) {
+                    throw new \Exception('Préstamo a evento no encontrado');
+                }
+
+                if ($prestamo->estado === 'CANCELADO') {
+                    throw new \Exception('El préstamo ya está cancelado');
+                }
+
+                foreach ($prestamo->detalles as $detalle) {
+                    // Buscar todos los stocks de este prestable
+                    $stocks = PrestableStock::where('prestable_id', $detalle->prestable_id)->get();
+
+                    foreach ($stocks as $stock) {
+                        if ((int) $stock->cantidad_evento_deudor > 0) {
+                            $cantidadADevolver = (int) $stock->cantidad_evento_deudor;
+                            $disponibleAntes = (int) $stock->cantidad_disponible;
+
+                            // Devolver al disponible
+                            $stock->update([
+                                'cantidad_evento_deudor' => 0,
+                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadADevolver,
+                            ]);
+
+                            $stock->refresh();
+                            $disponibleDespues = (int) $stock->cantidad_disponible;
+
+                            // Registrar movimiento
+                            $this->movimientoService->registrarMovimiento([
+                                'prestable_stock_id' => $stock->id,
+                                'almacenes_prestables_id' => $stock->almacenes_prestables_id,
+                                'tipo' => 'ANULACION_EVENTO',
+                                'cantidad' => $cantidadADevolver,
+                                'disponible_anterior' => $disponibleAntes,
+                                'disponible_posterior' => $disponibleDespues,
+                                'categoria_afectada' => 'anulacion_evento',
+                                'motivo' => 'Anulación de préstamo a evento',
+                                'observaciones' => $razonAnulacion ?? 'Sin descripción',
+                                'referencia_tipo' => 'PRESTAMO_EVENTO',
+                                'referencia_id' => $prestamo->id,
+                            ]);
+                        }
+                    }
+
+                    // Marcar detalle como cancelado
+                    $detalle->update(['estado' => 'CANCELADO']);
+                }
+
+                // Actualizar estado del préstamo
+                $prestamo->update(['estado' => 'CANCELADO']);
+
+                Log::info('✅ Préstamo a evento anulado exitosamente', [
+                    'prestamo_evento_id' => $prestamo->id,
+                    'razon' => $razonAnulacion,
+                ]);
+
+                return $prestamo;
+            });
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando préstamo a evento', [
+                'error' => $e->getMessage(),
+                'prestamo_evento_id' => $prestamoEventoId,
+            ]);
+
+            return false;
+        }
     }
 }

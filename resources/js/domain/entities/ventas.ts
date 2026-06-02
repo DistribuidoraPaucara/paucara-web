@@ -132,6 +132,7 @@ export interface Venta extends BaseEntity {
     total: number;
     peso_total_estimado?: number;  // ✅ NUEVO: Peso total en kg
     observaciones?: string;
+    observaciones_logistica?: string;  // ✅ NUEVO: Observaciones sobre entrega/logística
     cliente_id: Id;
     usuario_id: Id;
     estado_documento_id: Id;
@@ -213,6 +214,7 @@ export interface VentaFormData extends BaseFormData {
     total: number;
     peso_total_estimado?: number;  // ✅ NUEVO: Peso total en kg
     observaciones?: string;
+    observaciones_logistica?: string;  // ✅ NUEVO: Observaciones sobre entrega/logística
     cliente_id: Id;
     usuario_id: Id;
     estado_documento_id: Id;

@@ -66,6 +66,7 @@ class CompraPrestableService
         int $cantidad,
         float $precioUnitario = 0,
         ?string $observaciones = null,
+        ?int $prestablePadreId = null,
     ): CompraPrestableDetalle {
         try {
             // Verificar que el prestable existe
@@ -76,6 +77,7 @@ class CompraPrestableService
             $detalle = CompraPrestableDetalle::create([
                 'compra_prestable_id' => $compra->id,
                 'prestable_id' => $prestableId,
+                'prestable_padre_id' => $prestablePadreId,
                 'almacenes_prestables_id' => $almacenId,
                 'cantidad' => $cantidad,
                 'precio_unitario' => $precioUnitario,
@@ -110,17 +112,12 @@ class CompraPrestableService
     {
         return DB::transaction(function () use ($compra) {
             try {
-                // Validar que tenga detalles
-                if ($compra->detalles()->count() === 0) {
-                    throw new \Exception('La compra debe tener al menos un detalle');
-                }
-
-                // Procesar cada detalle
+                // Procesar cada detalle si existen
                 foreach ($compra->detalles as $detalle) {
                     $this->procesarDetalleCompra($compra, $detalle);
                 }
 
-                // Confirmar la compra
+                // Confirmar la compra (cambiar estado a CONFIRMADA)
                 $compra->confirmar();
 
                 Log::info('✅ Compra de prestables confirmada', [
@@ -324,10 +321,14 @@ class CompraPrestableService
 
     /**
      * Actualizar totales de la compra (sin IVA)
+     * Excluye embases relacionados (con prestable_padre_id) del total
      */
     private function actualizarTotales(CompraPrestable $compra): void
     {
-        $subtotal = $compra->detalles()->sum('subtotal');
+        // Solo sumar detalles que no sean embases relacionados
+        $subtotal = $compra->detalles()
+            ->whereNull('prestable_padre_id')
+            ->sum('subtotal');
         $total = $subtotal; // Sin IVA
 
         $compra->update([

@@ -139,6 +139,7 @@ class CompraPrestableController extends Controller
                 'detalles.*.almacenes_prestables_id' => 'nullable|integer',
                 'detalles.*.cantidad' => 'required|integer|min:1',
                 'detalles.*.precio_unitario' => 'required|numeric|min:0',
+                'detalles.*.prestable_padre_id' => 'nullable|integer', // Para identificar embases relacionados
                 'detalles.*.observaciones' => 'nullable|string|max:500',
             ]);
 
@@ -166,7 +167,7 @@ class CompraPrestableController extends Controller
                 ]);
             }
 
-            // Si hay detalles, agregarlos
+            // Agregar detalles si existen
             if (!empty($validated['detalles'])) {
                 foreach ($validated['detalles'] as $detalle) {
                     $almacenId = $detalle['almacen_id'] ?? $detalle['almacenes_prestables_id'] ?? null;
@@ -185,13 +186,15 @@ class CompraPrestableController extends Controller
                         cantidad: $detalle['cantidad'],
                         precioUnitario: $detalle['precio_unitario'],
                         observaciones: $detalle['observaciones'] ?? null,
+                        prestablePadreId: $detalle['prestable_padre_id'] ?? null,
                     );
                 }
+            }
 
-                // Confirmar la compra solo si se creó nueva (sin compra_id)
-                if (!$validated['compra_id']) {
-                    $compra = $this->service->confirmarCompra($compra);
-                }
+            // SIEMPRE confirmar compra de prestables si hay detalles
+            // compra_id es solo referencial (opcional) y NO afecta la confirmación
+            if (!empty($validated['detalles'])) {
+                $compra = $this->service->confirmarCompra($compra);
             }
 
             // Cargar relaciones para la respuesta
@@ -199,7 +202,9 @@ class CompraPrestableController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $validated['detalles'] ? 'Compra creada y confirmada exitosamente' : 'Compra creada en borrador',
+                'message' => $validated['compra_id']
+                    ? 'Compra asignada exitosamente'
+                    : 'Compra creada y confirmada exitosamente',
                 'data' => $compra,
             ], 201);
         } catch (\Exception $e) {
@@ -229,6 +234,7 @@ class CompraPrestableController extends Controller
                 'almacenes_prestables_id' => 'nullable|integer',
                 'cantidad' => 'required|integer|min:1',
                 'precio_unitario' => 'required|numeric|min:0',
+                'prestable_padre_id' => 'nullable|integer',
                 'observaciones' => 'nullable|string|max:500',
             ]);
 
@@ -255,6 +261,7 @@ class CompraPrestableController extends Controller
                 cantidad: $validated['cantidad'],
                 precioUnitario: $validated['precio_unitario'],
                 observaciones: $validated['observaciones'] ?? null,
+                prestablePadreId: $validated['prestable_padre_id'] ?? null,
             );
 
             // Recargar compra con relaciones actualizadas

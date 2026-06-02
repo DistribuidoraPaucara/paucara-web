@@ -432,8 +432,8 @@ export default function PrestamosProveedoresIndex() {
                     )}
                 </div>
 
-                {/* Modal de Devolución Flotante - Tabla Editable */}
-                {selectedPrestamo && (() => {
+                {/* Modal de Devolución Flotante - DESHABILITADO: Usar página separada /prestamos/proveedores/{id}/devoluciones */}
+                {false && selectedPrestamo && (() => {
                     const prestabesNombres = selectedPrestamo.detalles?.map((d: any) => d.prestable?.nombre).join(', ') || 'N/D';
 
 
@@ -819,19 +819,8 @@ export default function PrestamosProveedoresIndex() {
                                                                 Imprimir
                                                             </DropdownMenuItem>
                                                             {['ACTIVO', 'PARCIALMENTE_DEVUELTO'].includes((p.estado || '').trim()) && (
-                                                                <DropdownMenuItem onSelect={async () => {
-                                                                    try {
-                                                                        const response = await fetch(`/api/prestamos-proveedor/${p.id}`);
-                                                                        const result = await response.json();
-                                                                        if (result.success) {
-                                                                            setSelectedPrestamo(result.data);
-                                                                            setShowDevolucionModal(true);
-                                                                        }
-                                                                    } catch (error) {
-                                                                        console.error('Error cargando préstamo:', error);
-                                                                        setSelectedPrestamo(p);
-                                                                        setShowDevolucionModal(true);
-                                                                    }
+                                                                <DropdownMenuItem onSelect={() => {
+                                                                    window.location.href = `/prestamos/proveedores/${p.id}/registrar-devolucion`;
                                                                 }}>
                                                                     <RotateCcw size={16} />
                                                                     Registrar devolución

@@ -76,6 +76,107 @@ class VentaController extends Controller
     }
 
     /**
+     * Buscar ventas con productos que tengan prestables (para préstamos)
+     *
+     * Filtra SOLO ventas donde TODOS sus productos tengan relación con prestables
+     * (canastillas, embases, etc.)
+     *
+     * PARÁMETROS SOPORTADOS:
+     * - q: búsqueda por número de venta
+     * - cliente_id: filtrar por cliente
+     * - fecha_desde, fecha_hasta: rango de fechas
+     * - per_page: cantidad de resultados (default: 20)
+     *
+     * RESPUESTA JSON:
+     * {
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "numero": "V-001",
+     *       "fecha": "2024-01-15",
+     *       "cliente": { "id": 5, "nombre": "Cliente A" },
+     *       "total": 1500.00
+     *     }
+     *   ],
+     *   "pagination": { ... }
+     * }
+     */
+    public function searchWithPrestables(Request $request): JsonResponse
+    {
+        try {
+            $query = Venta::select('id', 'numero', 'fecha', 'cliente_id', 'total');
+
+            // Filtrar por búsqueda
+            if ($request->filled('q')) {
+                $search = $request->input('q');
+                $query->where('numero', 'like', "%{$search}%");
+            }
+
+            // Filtrar por cliente
+            if ($request->filled('cliente_id')) {
+                $query->where('cliente_id', $request->input('cliente_id'));
+            }
+
+            // Filtrar por rango de fechas
+            if ($request->filled('fecha_desde')) {
+                $query->whereDate('fecha', '>=', $request->input('fecha_desde'));
+            }
+            if ($request->filled('fecha_hasta')) {
+                $query->whereDate('fecha', '<=', $request->input('fecha_hasta'));
+            }
+
+            // ⭐ FILTRO PRINCIPAL: Ventas que tengan al menos un producto con prestables
+            $query->whereHas('detalles', function ($subQuery) {
+                $subQuery->whereHas('producto.prestables');
+            });
+
+            // Cargar relaciones necesarias
+            $query->with([
+                'cliente:id,nombre,razon_social',
+                'detalles.producto:id,nombre,sku'
+            ]);
+
+            // Ordenamiento
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Paginación
+            $perPage = $request->input('per_page', 20);
+            $ventas = $query->paginate($perPage);
+
+            // Formatear respuesta simplificada para el frontend
+            $data = $ventas->map(fn($venta) => [
+                'id' => $venta->id,
+                'numero' => $venta->numero,
+                'fecha' => $venta->fecha?->format('Y-m-d'),
+                'total' => floatval($venta->total),
+                'cliente' => [
+                    'id' => $venta->cliente->id,
+                    'nombre' => $venta->cliente->nombre,
+                ]
+            ])->all();
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $ventas->currentPage(),
+                    'per_page' => $ventas->perPage(),
+                    'total' => $ventas->total(),
+                    'last_page' => $ventas->lastPage(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error searching ventas with prestables: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar ventas con prestables'
+            ], 500);
+        }
+    }
+
+    /**
      * Listar ventas con paginación
      *
      * Usado por:

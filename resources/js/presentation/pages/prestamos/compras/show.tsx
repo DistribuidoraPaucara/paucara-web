@@ -284,9 +284,6 @@ export default function ShowCompra({ compra }: { compra: Compra }) {
                                         <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
                                             Subtotal
                                         </th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                            Observaciones
-                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -312,9 +309,6 @@ export default function ShowCompra({ compra }: { compra: Compra }) {
                                                 </td>
                                                 <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
                                                     {formatCurrencyWith2Decimals(detalle.subtotal)}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                                                    {detalle.observaciones || '-'}
                                                 </td>
                                             </tr>
                                         ))

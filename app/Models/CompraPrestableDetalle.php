@@ -13,6 +13,7 @@ class CompraPrestableDetalle extends Model
     protected $fillable = [
         'compra_prestable_id',
         'prestable_id',
+        'prestable_padre_id',
         'almacenes_prestables_id',
         'cantidad',
         'precio_unitario',

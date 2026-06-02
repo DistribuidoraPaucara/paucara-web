@@ -14,10 +14,13 @@ interface DetalleLocal {
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
-    prestable?: { id: number; nombre: string; codigo: string; tipo?: string };
+    prestable?: { id: number; nombre: string; codigo: string; tipo?: string; capacidad?: number };
     almacen?: { id: number; nombre: string };
     tipo?: string;
     precio_compra_referencial?: number;
+    prestable_padre_id?: number; // Para embases: ID de la canastilla padre
+    capacidad?: number; // Capacidad de la canastilla
+    precio_unitario_original?: number; // Precio original del embase (antes de ajustar por capacidad)
 }
 
 interface Prestable {
@@ -267,9 +270,34 @@ export default function CrearCompraPrestable() {
         if (item.tipo === 'CANASTILLA') {
             return baseClass + 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500';
         } else if (item.tipo === 'EMBASES') {
+            // Embases relacionados (incluidos en canastilla)
+            if (item.prestable_padre_id) {
+                return baseClass + 'bg-blue-100/50 hover:bg-blue-150/50 dark:bg-blue-900/30 dark:hover:bg-blue-900/40 border-l-4 border-blue-400';
+            }
+            // Embases sueltos
             return baseClass + 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 border-l-4 border-amber-500';
         }
         return baseClass + 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800';
+    };
+
+    const getRowIndicator = (item: DetalleLocal) => {
+        if (item.prestable_padre_id) {
+            // Es un embase relacionado (incluido en la canastilla)
+            return (
+                <span className="inline-flex items-center justify-center rounded-full bg-blue-200 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" title="Incluido en canastilla">
+                    ✓
+                </span>
+            );
+        } else if (item.tipo === 'EMBASES') {
+            // Es un embase suelto (no relacionado)
+            return (
+                <span className="inline-flex items-center justify-center rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" title="Embase suelto">
+                    ◆
+                </span>
+            );
+        }
+        // Canastilla
+        return null;
     };
 
     const actualizarAlmacenDetalle = (detalleId: string, nuevoAlmacenId: number) => {
@@ -293,34 +321,39 @@ export default function CrearCompraPrestable() {
     };
 
     const seleccionarPrestable = (prestable: Prestable) => {
+        if (!almacenSeleccionado) {
+            alert('Debe seleccionar un almacén primero');
+            return;
+        }
+
         console.log('✅ Prestable seleccionado:', prestable.nombre);
         console.log('📦 Stock disponible:', prestable.stocks);
         console.log('🔗 Embases relacionados:', prestable.embasesRelacionados);
 
         const nuevosDetalles: DetalleLocal[] = [];
-        const almacenesPrestable = getAlmacenesDePrestable(prestable);
-        const almacenDefault = almacenesPrestable[0];
         const precioCompraPrestable = getPrecioCompraPrestable(prestable);
 
         // Agregar el prestable seleccionado
         const nuevoDetalle: DetalleLocal = {
             id: Date.now().toString(),
             prestable_id: prestable.id,
-            almacen_id: almacenDefault.id,
+            almacen_id: almacenSeleccionado.id,
             cantidad: 1,
             precio_unitario: precioCompraPrestable,
             subtotal: precioCompraPrestable,
             tipo: prestable.tipo,
+            capacidad: prestable.capacidad,
             precio_compra_referencial: prestable.precio_compra_referencial,
             prestable: {
                 id: prestable.id,
                 nombre: prestable.nombre,
                 codigo: prestable.codigo,
                 tipo: prestable.tipo,
+                capacidad: prestable.capacidad,
             },
             almacen: {
-                id: almacenDefault.id,
-                nombre: almacenDefault.nombre,
+                id: almacenSeleccionado.id,
+                nombre: almacenSeleccionado.nombre,
             },
         };
         nuevosDetalles.push(nuevoDetalle);
@@ -328,28 +361,33 @@ export default function CrearCompraPrestable() {
         // Si tiene embases relacionados, agregarlos automáticamente
         if (prestable.embasesRelacionados && prestable.embasesRelacionados.length > 0) {
             prestable.embasesRelacionados.forEach((embase) => {
-                const almacenesEmbase = getAlmacenesDePrestable(embase);
-                const almacenEmbaseDefault = almacenesEmbase[0];
-                const precioCompraEmbase = getPrecioCompraPrestable(embase);
+                // Cantidad inicial de embases = cantidad canastilla * capacidad
+                const cantidadEmbase = (prestable.capacidad || 1) * 1;
+                // Precio unitario del embase = precio canastilla / capacidad de la canastilla
+                const precioUnitarioEmbase = precioCompraPrestable / (prestable.capacidad || 1);
 
                 const detalleEmbase: DetalleLocal = {
                     id: (Date.now() + Math.random()).toString(),
                     prestable_id: embase.id,
-                    almacen_id: almacenEmbaseDefault.id,
-                    cantidad: 1, // 1 embase por canastilla
-                    precio_unitario: precioCompraEmbase,
-                    subtotal: precioCompraEmbase,
+                    almacen_id: almacenSeleccionado.id,
+                    cantidad: cantidadEmbase,
+                    precio_unitario: precioUnitarioEmbase,
+                    subtotal: cantidadEmbase * precioUnitarioEmbase,
                     tipo: embase.tipo,
+                    capacidad: embase.capacidad,
                     precio_compra_referencial: embase.precio_compra_referencial,
+                    precio_unitario_original: precioCompraPrestable, // Guardar precio de canastilla como referencia
+                    prestable_padre_id: prestable.id, // Guardar la relación con la canastilla
                     prestable: {
                         id: embase.id,
                         nombre: embase.nombre,
                         codigo: embase.codigo,
                         tipo: embase.tipo,
+                        capacidad: embase.capacidad,
                     },
                     almacen: {
-                        id: almacenEmbaseDefault.id,
-                        nombre: almacenEmbaseDefault.nombre,
+                        id: almacenSeleccionado.id,
+                        nombre: almacenSeleccionado.nombre,
                     },
                 };
                 nuevosDetalles.push(detalleEmbase);
@@ -365,12 +403,15 @@ export default function CrearCompraPrestable() {
     };
 
     const actualizarDetalle = (detalleId: string, campo: 'cantidad' | 'precio_unitario', valor: string) => {
-        setDetalles(
-            detalles.map((d) => {
-                if (d.id !== detalleId) return d;
+        setDetalles((prevDetalles) => {
+            const detalleActualizado = prevDetalles.find((d) => d.id === detalleId);
+            if (!detalleActualizado) return prevDetalles;
 
-                const cantidad = campo === 'cantidad' ? parseInt(valor) || 0 : d.cantidad;
-                const precio = campo === 'precio_unitario' ? parseFloat(valor) || 0 : d.precio_unitario;
+            const cantidad = campo === 'cantidad' ? parseInt(valor) || 0 : detalleActualizado.cantidad;
+            const precio = campo === 'precio_unitario' ? parseFloat(valor) || 0 : detalleActualizado.precio_unitario;
+
+            const nuevoDetalles = prevDetalles.map((d) => {
+                if (d.id !== detalleId) return d;
 
                 return {
                     ...d,
@@ -378,8 +419,41 @@ export default function CrearCompraPrestable() {
                     precio_unitario: precio,
                     subtotal: cantidad * precio,
                 };
-            })
-        );
+            });
+
+            // Si es una canastilla, actualizar embases relacionados
+            if (detalleActualizado.tipo === 'CANASTILLA' && detalleActualizado.capacidad) {
+                const nuevoDetallesConEmbases = nuevoDetalles.map((d) => {
+                    // Si es un embase de esta canastilla, actualizar automáticamente
+                    if (
+                        d.prestable_padre_id === detalleActualizado.prestable_id &&
+                        d.tipo === 'EMBASES'
+                    ) {
+                        // Actualizar cantidad si se cambió la cantidad de canastilla
+                        const nuevaCantidadEmbase = campo === 'cantidad'
+                            ? cantidad * detalleActualizado.capacidad
+                            : d.cantidad;
+
+                        // Actualizar precio unitario del embase si se cambió el precio de canastilla
+                        // Fórmula: precio_embase_unitario = precio_canastilla / capacidad_canastilla
+                        const nuevoPrecioUnitarioEmbase = campo === 'precio_unitario'
+                            ? precio / detalleActualizado.capacidad
+                            : (d.precio_unitario_original || d.precio_unitario) / (detalleActualizado.capacidad || 1);
+
+                        return {
+                            ...d,
+                            cantidad: nuevaCantidadEmbase,
+                            precio_unitario: nuevoPrecioUnitarioEmbase,
+                            subtotal: nuevaCantidadEmbase * nuevoPrecioUnitarioEmbase,
+                        };
+                    }
+                    return d;
+                });
+                return nuevoDetallesConEmbases;
+            }
+
+            return nuevoDetalles;
+        });
     };
 
     const getPrecioCompraPrestable = (prestable?: Prestable): number => {
@@ -417,14 +491,18 @@ export default function CrearCompraPrestable() {
         try {
             setLoading(true);
 
-            // Preparar detalles para enviar (sin el ID temporal)
-            const detallesParaEnviar = detalles.map((d) => ({
-                prestable_id: d.prestable_id,
-                almacen_id: d.almacen_id,
-                almacenes_prestables_id: almacenSeleccionado.id,
-                cantidad: d.cantidad,
-                precio_unitario: d.precio_unitario,
-            }));
+            // Preparar detalles para enviar (incluyendo embases relacionados)
+            // Los embases relacionados son referenciales en precio (no suman total)
+            // pero su cantidad SÍ afecta el stock
+            const detallesParaEnviar = detalles
+                .map((d) => ({
+                    prestable_id: d.prestable_id,
+                    almacen_id: d.almacen_id,
+                    almacenes_prestables_id: almacenSeleccionado.id,
+                    cantidad: d.cantidad,
+                    precio_unitario: d.precio_unitario,
+                    prestable_padre_id: d.prestable_padre_id || null, // Identificar embases relacionados
+                }));
 
             const response = await fetch('/api/compras-prestables', {
                 method: 'POST',
@@ -461,7 +539,17 @@ export default function CrearCompraPrestable() {
     };
 
     const calcularTotal = () => {
-        return detalles.reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
+        // Solo sumar canastillas y embases sueltos (sin prestable_padre_id)
+        return detalles
+            .filter((d) => !d.prestable_padre_id) // Excluir embases relacionados
+            .reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
+    };
+
+    const calcularTotalEmbasesRelacionados = () => {
+        // Sumar solo embases que están relacionados a canastillas
+        return detalles
+            .filter((d) => d.prestable_padre_id) // Solo embases relacionados
+            .reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
     };
 
     return (
@@ -475,9 +563,6 @@ export default function CrearCompraPrestable() {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                             Nueva Compra de Prestables
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Modo de creación directa: Agregar detalles y confirmar
-                        </p>
                     </div>
                 </div>
 
@@ -595,11 +680,15 @@ export default function CrearCompraPrestable() {
                                 <div className="font-medium text-slate-900 dark:text-slate-100">
                                     {almacen.nombre}
                                 </div>
-                                {almacen.es_proveedor && (
-                                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                                        (Proveedor)
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className={`inline-block rounded px-2 py-0.5 font-semibold ${
+                                        almacen.es_proveedor
+                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                    }`}>
+                                        {almacen.es_proveedor ? '👤 Proveedor' : '🏢 Cliente'}
+                                    </span>
+                                </div>
                             </div>
                         )}
                     />
@@ -617,6 +706,26 @@ export default function CrearCompraPrestable() {
                     items={detalles}
                     columns={[
                         {
+                            key: 'tipo',
+                            label: 'Tipo Prestable',
+                            render: (item) => {
+                                if (item.tipo === 'CANASTILLA') {
+                                    return (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                            📦 Canastilla
+                                        </span>
+                                    );
+                                } else if (item.tipo === 'EMBASES') {
+                                    return (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                            🏪 Embase
+                                        </span>
+                                    );
+                                }
+                                return <span className="text-xs text-slate-500">—</span>;
+                            }
+                        },
+                        {
                             key: 'prestable',
                             label: 'Prestable',
                             render: (item) => (
@@ -626,6 +735,11 @@ export default function CrearCompraPrestable() {
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                         ID: {item.prestable?.id} | Código: {item.prestable?.codigo}
+                                        {item.tipo === 'CANASTILLA' && item.capacidad && (
+                                            <span className="ml-2 inline-block rounded bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                Cap: {item.capacidad}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                             ),
@@ -641,24 +755,14 @@ export default function CrearCompraPrestable() {
                                     onChange={(e) =>
                                         actualizarDetalle(item.id, 'cantidad', e.target.value)
                                     }
-                                    className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-center text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                    className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                                 />
-                            ),
-                        },
-                        {
-                            key: 'precio_compra_referencial',
-                            label: 'Precio Ref.',
-                            align: 'right',
-                            render: (item) => (
-                                <span className="text-sm text-slate-600 dark:text-slate-400">
-                                    {item.precio_compra_referencial ? parseFloat(item.precio_compra_referencial.toString()).toFixed(2) : '—'}
-                                </span>
                             ),
                         },
                         {
                             key: 'precio_unitario',
                             label: 'Precio Unitario',
-                            align: 'right',
+                            align: 'left',
                             render: (item) => (
                                 <input
                                     type="number"
@@ -668,14 +772,14 @@ export default function CrearCompraPrestable() {
                                     onChange={(e) =>
                                         actualizarDetalle(item.id, 'precio_unitario', e.target.value)
                                     }
-                                    className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-right text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                    className="w-32 rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                                 />
                             ),
                         },
                         {
                             key: 'subtotal',
                             label: 'Subtotal',
-                            align: 'right',
+                            align: 'left',
                             render: (item) => (
                                 <span className="font-bold text-slate-900 dark:text-slate-100">
                                     {(parseFloat(item.subtotal ?? 0)).toFixed(2)}
@@ -684,16 +788,32 @@ export default function CrearCompraPrestable() {
                         },
                     ]}
                     getRowClassName={getRowClassName}
+                    getRowIndicator={getRowIndicator}
                     onDeleteItem={eliminarDetalle}
                     getItemId={(item) => item.id}
                     renderSearchItem={(prestable) => (
-                        <div>
-                            <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                {prestable.nombre}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Código: {prestable.codigo}
-                            </p>
+                        <div className="flex items-center justify-between gap-2">
+                            <div>
+                                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {prestable.nombre}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Código: {prestable.codigo}
+                                </p>
+                            </div>
+                            {prestable.tipo && (
+                                <>
+                                    {prestable.tipo === 'CANASTILLA' ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
+                                            📦 Canastilla
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                                            🏪 Embase
+                                        </span>
+                                    )}
+                                </>
+                            )}
                         </div>
                     )}
                     emptyMessage="Busca arriba para agregar prestables"
@@ -707,12 +827,12 @@ export default function CrearCompraPrestable() {
                         <Button
                             onClick={confirmarCompra}
                             disabled={loading}
-                            className="bg-green-600 px-8 hover:bg-green-700"
+                            className="bg-green-600 px-8 hover:bg-green-700 text-white"
                         >
                             {loading ? (
                                 <>Confirmando...</>
                             ) : (
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-center gap-2 text-white">
                                     <CheckCircle size={18} />
                                     Confirmar Compra
                                 </span>

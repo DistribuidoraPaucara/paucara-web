@@ -64,14 +64,13 @@ class PrestamoProveedorController extends Controller
         try {
             $validated = $request->validate([
                 'proveedor_id' => 'required|exists:proveedores,id',
+                'almacen_prestable_id' => 'required|exists:almacenes_prestables,id',
                 'compra_id' => 'nullable|exists:compras,id',
                 'es_compra' => 'required|boolean',
-                'almacen_prestable_id' => 'required|exists:almacenes_prestables,id',
                 'monto_garantia' => 'nullable|numeric|min:0',
                 'fecha_prestamo' => 'required|date',
                 'fecha_esperada_devolucion' => 'nullable|date|after_or_equal:fecha_prestamo',
                 'observaciones' => 'nullable|string|max:1000',
-                // ✅ Validación para múltiples detalles
                 'detalles' => 'required|array|min:1',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
                 'detalles.*.cantidad' => 'required|integer|min:1',

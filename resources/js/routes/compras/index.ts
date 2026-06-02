@@ -158,7 +158,7 @@ anular.post = (args: { compra: string | number } | [compra: string | number ] | 
     anular.form = anularForm
 /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
 export const editarLotes = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -173,7 +173,7 @@ editarLotes.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
 editarLotes.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -206,7 +206,7 @@ editarLotes.url = (args: { compra: number | { id: number } } | [compra: number |
 
 /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
 editarLotes.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -215,7 +215,7 @@ editarLotes.get = (args: { compra: number | { id: number } } | [compra: number |
 })
 /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
 editarLotes.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -225,7 +225,7 @@ editarLotes.head = (args: { compra: number | { id: number } } | [compra: number 
 
     /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
     const editarLotesForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ editarLotes.head = (args: { compra: number | { id: number } } | [compra: number 
 
             /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
         editarLotesForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +244,7 @@ editarLotes.head = (args: { compra: number | { id: number } } | [compra: number 
         })
             /**
 * @see \App\Http\Controllers\CompraController::editarLotes
- * @see app/Http/Controllers/CompraController.php:2189
+ * @see app/Http/Controllers/CompraController.php:2274
  * @route '/compras/{compra}/editar-lotes'
  */
         editarLotesForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -260,7 +260,7 @@ editarLotes.head = (args: { compra: number | { id: number } } | [compra: number 
     editarLotes.form = editarLotesForm
 /**
 * @see \App\Http\Controllers\CompraController::guardarLotes
- * @see app/Http/Controllers/CompraController.php:2306
+ * @see app/Http/Controllers/CompraController.php:2391
  * @route '/compras/{compra}/guardar-lotes'
  */
 export const guardarLotes = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -275,7 +275,7 @@ guardarLotes.definition = {
 
 /**
 * @see \App\Http\Controllers\CompraController::guardarLotes
- * @see app/Http/Controllers/CompraController.php:2306
+ * @see app/Http/Controllers/CompraController.php:2391
  * @route '/compras/{compra}/guardar-lotes'
  */
 guardarLotes.url = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -308,7 +308,7 @@ guardarLotes.url = (args: { compra: number | { id: number } } | [compra: number 
 
 /**
 * @see \App\Http\Controllers\CompraController::guardarLotes
- * @see app/Http/Controllers/CompraController.php:2306
+ * @see app/Http/Controllers/CompraController.php:2391
  * @route '/compras/{compra}/guardar-lotes'
  */
 guardarLotes.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -318,7 +318,7 @@ guardarLotes.post = (args: { compra: number | { id: number } } | [compra: number
 
     /**
 * @see \App\Http\Controllers\CompraController::guardarLotes
- * @see app/Http/Controllers/CompraController.php:2306
+ * @see app/Http/Controllers/CompraController.php:2391
  * @route '/compras/{compra}/guardar-lotes'
  */
     const guardarLotesForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -328,7 +328,7 @@ guardarLotes.post = (args: { compra: number | { id: number } } | [compra: number
 
             /**
 * @see \App\Http\Controllers\CompraController::guardarLotes
- * @see app/Http/Controllers/CompraController.php:2306
+ * @see app/Http/Controllers/CompraController.php:2391
  * @route '/compras/{compra}/guardar-lotes'
  */
         guardarLotesForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

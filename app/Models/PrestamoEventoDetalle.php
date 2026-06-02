@@ -14,12 +14,14 @@ class PrestamoEventoDetalle extends Model
         'prestamo_evento_id',
         'prestable_id',
         'cantidad_prestada',
+        'almacenes_ids',
         'monto_garantia',
         'estado',
     ];
 
     protected $casts = [
         'monto_garantia' => 'decimal:2',
+        'almacenes_ids' => 'array',
     ];
 
     public function prestamoEvento(): BelongsTo

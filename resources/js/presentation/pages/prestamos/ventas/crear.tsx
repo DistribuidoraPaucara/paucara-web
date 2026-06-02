@@ -1,20 +1,26 @@
 import { Head } from '@inertiajs/react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
-import ClienteSelector from '@/presentation/components/form-sections/ClienteSelector';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { Search, X, CheckCircle, Trash2, AlertCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import SearchAndItemsTable from '@/presentation/components/form-sections/SearchAndItemsTable';
 
 interface DetalleLocal {
     id: string; // ID temporal único
     prestable_id: number;
-    almacenes_prestables_id: number;
+    almacen_id: number;
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
-    prestable?: { id: number; nombre: string; codigo: string };
+    prestable?: { id: number; nombre: string; codigo: string; tipo?: string; capacidad?: number };
     almacen?: { id: number; nombre: string };
+    tipo?: string;
+    precio_venta_referencial?: number;
+    prestable_padre_id?: number; // Para embases: ID de la canastilla padre
+    capacidad?: number; // Capacidad de la canastilla
+    precio_unitario_original?: number; // Precio original del embase (antes de ajustar por capacidad)
 }
 
 interface Prestable {
@@ -23,11 +29,16 @@ interface Prestable {
     codigo: string;
     tipo?: string;
     capacidad?: number;
+    precio_venta_referencial?: number;
     precios?: Array<{
         tipo_precio?: string;
         valor?: number;
         activo?: boolean;
     }>;
+    ultimoDetalleVenta?: {
+        precio_unitario?: number;
+    };
+    embasesRelacionados?: Prestable[];
     stocks?: Array<{
         almacen_id?: number;
         almacenes_prestables_id?: number;
@@ -36,38 +47,7 @@ interface Prestable {
         almacenPrestable?: { id: number; nombre: string };
         cantidad_disponible: number;
     }>;
-    embasesRelacionados?: Array<{
-        id: number;
-        nombre: string;
-        codigo: string;
-        tipo?: string;
-        capacidad?: number;
-        stocks?: Array<{
-            almacen_id?: number;
-            almacenes_prestables_id?: number;
-            almacen?: { id: number; nombre: string };
-            almacen_prestable?: { id: number; nombre: string };
-            almacenPrestable?: { id: number; nombre: string };
-            cantidad_disponible: number;
-        }>;
-    }>;
 }
-
-interface AlmacenPrestableOption {
-    id: number;
-    nombre: string;
-    stock: number;
-}
-
-const getPrecioVentaPrestable = (prestable?: Prestable): number => {
-    if (!prestable) return 0;
-
-    const precioVenta = (prestable.precios || []).find(
-        (p) => String(p?.tipo_precio || '').toUpperCase() === 'VENTA' && p?.activo !== false
-    );
-
-    return Number(precioVenta?.valor || 0);
-};
 
 interface Cliente {
     id: number;
@@ -78,13 +58,27 @@ interface Cliente {
     email?: string;
 }
 
+interface Almacen {
+    id: number;
+    nombre: string;
+}
+
 export default function CrearVentaPrestable() {
+    const ALMACEN_ID_PRESTABLES = 3; // Almacén fijo para prestables
+
     const [detalles, setDetalles] = useState<DetalleLocal[]>([]);
     const [loading, setLoading] = useState(false);
     const [prestables, setPrestables] = useState<Prestable[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [buscandoClientes, setBuscandoClientes] = useState(false);
+    const [busquedaCliente, setBusquedaCliente] = useState('');
     const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
+
+    // Estados para seleccionar almacén de prestables
+    const [almacenes, setAlmacenes] = useState<any[]>([]);
+    const [buscandoAlmacenes, setBuscandoAlmacenes] = useState(false);
+    const [busquedaAlmacen, setBusquedaAlmacen] = useState('');
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState<any | null>(null);
 
     // Modal de impresión
     const [showOutputModal, setShowOutputModal] = useState(false);
@@ -98,10 +92,22 @@ export default function CrearVentaPrestable() {
     const busquedaRef = useRef<HTMLInputElement>(null);
     const sugerenciasRef = useRef<HTMLDivElement>(null);
 
+    const cargarAlmacenes = useCallback(async () => {
+        try {
+            const response = await fetch('/api/almacenes-prestables/index-json?per_page=100');
+            const data = await response.json();
+            const almacenesData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            setAlmacenes(almacenesData);
+        } catch (error) {
+            console.error('Error cargando almacenes:', error);
+        }
+    }, []);
+
     useEffect(() => {
         cargarPrestables();
         cargarClientes();
-    }, []);
+        cargarAlmacenes();
+    }, [cargarAlmacenes]);
 
     // Cerrar sugerencias al hacer click fuera
     useEffect(() => {
@@ -146,28 +152,28 @@ export default function CrearVentaPrestable() {
         }
     };
 
-    const cargarClientes = async () => {
+    const cargarClientes = useCallback(async () => {
         try {
-            const response = await fetch('/api/clientes?limit=50');
+            const response = await fetch('/api/clientes?limit=100');
             const data = await response.json();
             const clientesData = Array.isArray(data) ? data : (data.data?.data || data.data || []);
             setClientes(clientesData);
         } catch (error) {
             console.error('Error cargando clientes:', error);
         }
-    };
+    }, []);
 
-    const buscarClientes = async (query: string) => {
+    const buscarClientes = useCallback(async (query: string) => {
         if (query.trim().length === 0) {
-            setClientes([]);
+            await cargarClientes();
             return;
         }
 
         try {
             setBuscandoClientes(true);
-            const response = await fetch(`/api/clientes/search?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/clientes/index-json?q=${encodeURIComponent(query)}&per_page=20`);
             const data = await response.json();
-            const clientesData = Array.isArray(data) ? data : (data.data || []);
+            const clientesData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
             setClientes(clientesData);
         } catch (error) {
             console.error('Error buscando clientes:', error);
@@ -175,69 +181,101 @@ export default function CrearVentaPrestable() {
         } finally {
             setBuscandoClientes(false);
         }
-    };
+    }, [cargarClientes]);
 
-    const getAlmacenesConStock = (prestable?: Prestable): AlmacenPrestableOption[] => {
-        const almacenesMap = new Map<number, AlmacenPrestableOption>();
+    const buscarAlmacenes = useCallback(async (query: string) => {
+        if (query.trim().length === 0) {
+            // Si no hay búsqueda, mantener almacenes pre-cargados
+            await cargarAlmacenes();
+            return;
+        }
+
+        try {
+            setBuscandoAlmacenes(true);
+            const response = await fetch(`/api/almacenes-prestables/index-json?q=${encodeURIComponent(query)}&per_page=20`);
+            const data = await response.json();
+            const almacenesData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            setAlmacenes(almacenesData);
+        } catch (error) {
+            console.error('Error buscando almacenes:', error);
+            setAlmacenes([]);
+        } finally {
+            setBuscandoAlmacenes(false);
+        }
+    }, [cargarAlmacenes]);
+
+    const getAlmacenesDePrestable = useCallback((prestable?: Prestable): Almacen[] => {
+        const almacenesMap = new Map<number, Almacen>();
 
         (prestable?.stocks || []).forEach((stock) => {
-            const stockDisponible = Number(stock.cantidad_disponible || 0);
-            if (stockDisponible <= 0) return;
-
-            const almacenId = Number(stock.almacenes_prestables_id || stock.almacen_id || 0);
+            const almacenId = Number(stock.almacen_id || stock.almacenes_prestables_id || 0);
             if (almacenId <= 0) return;
 
             const nombre =
+                stock.almacen?.nombre ||
                 stock.almacen_prestable?.nombre ||
                 stock.almacenPrestable?.nombre ||
-                stock.almacen?.nombre ||
                 `Almacén ${almacenId}`;
 
-            const acumulado = almacenesMap.get(almacenId);
-            if (acumulado) {
-                acumulado.stock += stockDisponible;
-                almacenesMap.set(almacenId, acumulado);
-            } else {
-                almacenesMap.set(almacenId, {
-                    id: almacenId,
-                    nombre,
-                    stock: stockDisponible,
-                });
-            }
+            almacenesMap.set(almacenId, { id: almacenId, nombre });
         });
 
+        if (almacenesMap.size === 0) {
+            almacenesMap.set(ALMACEN_ID_PRESTABLES, {
+                id: ALMACEN_ID_PRESTABLES,
+                nombre: 'Almacén Prestables',
+            });
+        }
+
         return Array.from(almacenesMap.values());
+    }, []);
+
+    const getAlmacenesDetalle = useCallback(
+        (prestableId: number): Almacen[] => {
+            const prestable = prestables.find((p) => p.id === prestableId);
+            return getAlmacenesDePrestable(prestable);
+        },
+        [prestables, getAlmacenesDePrestable]
+    );
+
+    const getRowClassName = (item: DetalleLocal): string => {
+        const baseClass = 'transition ';
+        if (item.tipo === 'CANASTILLA') {
+            return baseClass + 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500';
+        } else if (item.tipo === 'EMBASES') {
+            // Embases relacionados (incluidos en canastilla)
+            if (item.prestable_padre_id) {
+                return baseClass + 'bg-blue-100/50 hover:bg-blue-150/50 dark:bg-blue-900/30 dark:hover:bg-blue-900/40 border-l-4 border-blue-400';
+            }
+            // Embases sueltos
+            return baseClass + 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 border-l-4 border-amber-500';
+        }
+        return baseClass + 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800';
     };
 
-    const getAlmacenesDetalle = (prestableId: number): AlmacenPrestableOption[] => {
-        const prestable = prestables.find((p) => p.id === prestableId);
-        return getAlmacenesConStock(prestable);
-    };
-
-    const actualizarAlmacenDetalle = (detalleId: string, nuevoAlmacenId: number) => {
-        setDetalles((prev) =>
-            prev.map((d) => {
-                if (d.id !== detalleId) return d;
-
-                const almacenSeleccionado =
-                    getAlmacenesDetalle(d.prestable_id).find((a) => a.id === nuevoAlmacenId) ||
-                    { id: nuevoAlmacenId, nombre: `Almacén ${nuevoAlmacenId}`, stock: 0 };
-
-                return {
-                    ...d,
-                    almacenes_prestables_id: nuevoAlmacenId,
-                    almacen: { id: almacenSeleccionado.id, nombre: almacenSeleccionado.nombre },
-                };
-            })
-        );
+    const getRowIndicator = (item: DetalleLocal) => {
+        if (item.prestable_padre_id) {
+            // Es un embase relacionado (incluido en la canastilla)
+            return (
+                <span className="inline-flex items-center justify-center rounded-full bg-blue-200 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" title="Incluido en canastilla">
+                    ✓
+                </span>
+            );
+        } else if (item.tipo === 'EMBASES') {
+            // Es un embase suelto (no relacionado)
+            return (
+                <span className="inline-flex items-center justify-center rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" title="Embase suelto">
+                    ◆
+                </span>
+            );
+        }
+        // Canastilla
+        return null;
     };
 
     const seleccionarPrestable = (prestable: Prestable) => {
-        // Validar que tenga stock
-        const almacenesDisponibles = getAlmacenesConStock(prestable);
-        const almacenConStock = almacenesDisponibles[0];
-        if (!almacenConStock) {
-            alert('❌ Este prestable no tiene stock disponible');
+        if (!almacenSeleccionado) {
+            alert('Debe seleccionar un almacén primero');
             return;
         }
 
@@ -252,43 +290,61 @@ export default function CrearVentaPrestable() {
         const nuevoDetalle: DetalleLocal = {
             id: Date.now().toString(),
             prestable_id: prestable.id,
-            almacenes_prestables_id: almacenConStock.id,
+            almacen_id: almacenSeleccionado.id,
             cantidad: 1,
             precio_unitario: precioVentaPrestable,
             subtotal: precioVentaPrestable,
+            tipo: prestable.tipo,
+            capacidad: prestable.capacidad,
+            precio_venta_referencial: prestable.precio_venta_referencial,
             prestable: {
                 id: prestable.id,
                 nombre: prestable.nombre,
                 codigo: prestable.codigo,
+                tipo: prestable.tipo,
+                capacidad: prestable.capacidad,
             },
-            almacen: { id: almacenConStock.id, nombre: almacenConStock.nombre },
+            almacen: {
+                id: almacenSeleccionado.id,
+                nombre: almacenSeleccionado.nombre,
+            },
         };
         nuevosDetalles.push(nuevoDetalle);
 
         // Si tiene embases relacionados, agregarlos automáticamente
         if (prestable.embasesRelacionados && prestable.embasesRelacionados.length > 0) {
             prestable.embasesRelacionados.forEach((embase) => {
-                const almacenesEmbase = getAlmacenesConStock(embase as Prestable);
-                const almacenEmbase = almacenesEmbase[0];
-                if (almacenEmbase) {
-                    const precioVentaEmbase = getPrecioVentaPrestable(embase as Prestable);
-                    const detalleEmbase: DetalleLocal = {
-                        id: (Date.now() + Math.random()).toString(),
-                        prestable_id: embase.id,
-                        almacenes_prestables_id: almacenEmbase.id,
-                        cantidad: 1, // 1 embase por canastilla
-                        precio_unitario: precioVentaEmbase,
-                        subtotal: precioVentaEmbase,
-                        prestable: {
-                            id: embase.id,
-                            nombre: embase.nombre,
-                            codigo: embase.codigo,
-                        },
-                        almacen: { id: almacenEmbase.id, nombre: almacenEmbase.nombre },
-                    };
-                    nuevosDetalles.push(detalleEmbase);
-                    console.log('✅ Embase agregado automáticamente:', embase.nombre);
-                }
+                // Cantidad inicial de embases = cantidad canastilla * capacidad
+                const cantidadEmbase = (prestable.capacidad || 1) * 1;
+                // Precio unitario del embase = precio canastilla / capacidad de la canastilla
+                const precioUnitarioEmbase = precioVentaPrestable / (prestable.capacidad || 1);
+
+                const detalleEmbase: DetalleLocal = {
+                    id: (Date.now() + Math.random()).toString(),
+                    prestable_id: embase.id,
+                    almacen_id: almacenSeleccionado.id,
+                    cantidad: cantidadEmbase,
+                    precio_unitario: precioUnitarioEmbase,
+                    subtotal: cantidadEmbase * precioUnitarioEmbase,
+                    tipo: embase.tipo,
+                    capacidad: embase.capacidad,
+                    precio_venta_referencial: embase.precio_venta_referencial,
+                    precio_unitario_original: precioVentaPrestable, // Guardar precio de canastilla como referencia
+                    prestable_padre_id: prestable.id, // Guardar la relación con la canastilla
+                    prestable: {
+                        id: embase.id,
+                        nombre: embase.nombre,
+                        codigo: embase.codigo,
+                        tipo: embase.tipo,
+                        capacidad: embase.capacidad,
+                    },
+                    almacen: {
+                        id: almacenSeleccionado.id,
+                        nombre: almacenSeleccionado.nombre,
+                    },
+                };
+                nuevosDetalles.push(detalleEmbase);
+                console.log('✅ Embase agregado automáticamente:', embase.nombre);
             });
         }
 
@@ -300,12 +356,15 @@ export default function CrearVentaPrestable() {
     };
 
     const actualizarDetalle = (detalleId: string, campo: 'cantidad' | 'precio_unitario', valor: string) => {
-        setDetalles(
-            detalles.map((d) => {
-                if (d.id !== detalleId) return d;
+        setDetalles((prevDetalles) => {
+            const detalleActualizado = prevDetalles.find((d) => d.id === detalleId);
+            if (!detalleActualizado) return prevDetalles;
 
-                const cantidad = campo === 'cantidad' ? parseInt(valor) || 0 : d.cantidad;
-                const precio = campo === 'precio_unitario' ? parseFloat(valor) || 0 : d.precio_unitario;
+            const cantidad = campo === 'cantidad' ? parseInt(valor) || 0 : detalleActualizado.cantidad;
+            const precio = campo === 'precio_unitario' ? parseFloat(valor) || 0 : detalleActualizado.precio_unitario;
+
+            const nuevoDetalles = prevDetalles.map((d) => {
+                if (d.id !== detalleId) return d;
 
                 return {
                     ...d,
@@ -313,8 +372,58 @@ export default function CrearVentaPrestable() {
                     precio_unitario: precio,
                     subtotal: cantidad * precio,
                 };
-            })
+            });
+
+            // Si es una canastilla, actualizar embases relacionados
+            if (detalleActualizado.tipo === 'CANASTILLA' && detalleActualizado.capacidad) {
+                const nuevoDetallesConEmbases = nuevoDetalles.map((d) => {
+                    // Si es un embase de esta canastilla, actualizar automáticamente
+                    if (
+                        d.prestable_padre_id === detalleActualizado.prestable_id &&
+                        d.tipo === 'EMBASES'
+                    ) {
+                        // Actualizar cantidad si se cambió la cantidad de canastilla
+                        const nuevaCantidadEmbase = campo === 'cantidad'
+                            ? cantidad * detalleActualizado.capacidad
+                            : d.cantidad;
+
+                        // Actualizar precio unitario del embase si se cambió el precio de canastilla
+                        // Fórmula: precio_embase_unitario = precio_canastilla / capacidad_canastilla
+                        const nuevoPrecioUnitarioEmbase = campo === 'precio_unitario'
+                            ? precio / detalleActualizado.capacidad
+                            : (d.precio_unitario_original || d.precio_unitario) / (detalleActualizado.capacidad || 1);
+
+                        return {
+                            ...d,
+                            cantidad: nuevaCantidadEmbase,
+                            precio_unitario: nuevoPrecioUnitarioEmbase,
+                            subtotal: nuevaCantidadEmbase * nuevoPrecioUnitarioEmbase,
+                        };
+                    }
+                    return d;
+                });
+                return nuevoDetallesConEmbases;
+            }
+
+            return nuevoDetalles;
+        });
+    };
+
+    const getPrecioVentaPrestable = (prestable?: Prestable): number => {
+        if (!prestable) return 0;
+
+        const referencial = Number(prestable.precio_venta_referencial || 0);
+        if (referencial > 0) return referencial;
+
+        const precioVenta = (prestable.precios || []).find(
+            (p) => p?.tipo_precio === 'VENTA' && p?.activo !== false
         );
+
+        if (Number(precioVenta?.valor || 0) > 0) {
+            return Number(precioVenta?.valor || 0);
+        }
+
+        return Number(prestable.ultimoDetalleVenta?.precio_unitario || 0);
     };
 
     const eliminarDetalle = (detalleId: string) => {
@@ -328,20 +437,30 @@ export default function CrearVentaPrestable() {
         }
 
         if (!clienteSeleccionado) {
-            alert('Seleccione un cliente antes de confirmar');
+            alert('Debe seleccionar un cliente');
+            return;
+        }
+
+        if (!almacenSeleccionado) {
+            alert('Debe seleccionar un almacén de prestables');
             return;
         }
 
         try {
             setLoading(true);
 
-            // Preparar detalles para enviar (sin el ID temporal)
-            const detallesParaEnviar = detalles.map((d) => ({
-                prestable_id: d.prestable_id,
-                almacenes_prestables_id: d.almacenes_prestables_id,
-                cantidad: d.cantidad,
-                precio_unitario: d.precio_unitario,
-            }));
+            // Preparar detalles para enviar (incluyendo embases relacionados)
+            // Los embases relacionados son referenciales en precio (no suman total)
+            // pero su cantidad SÍ afecta el stock
+            const detallesParaEnviar = detalles
+                .map((d) => ({
+                    prestable_id: d.prestable_id,
+                    almacen_id: d.almacen_id,
+                    almacenes_prestables_id: almacenSeleccionado.id,
+                    cantidad: d.cantidad,
+                    precio_unitario: d.precio_unitario,
+                    prestable_padre_id: d.prestable_padre_id || null, // Identificar embases relacionados
+                }));
 
             const response = await fetch('/api/prestamos-vendidos', {
                 method: 'POST',
@@ -350,7 +469,8 @@ export default function CrearVentaPrestable() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
-                    cliente_id: clienteSeleccionado.id,
+                    cliente_id: clienteSeleccionado?.id || null,
+                    almacenes_prestables_id: almacenSeleccionado?.id || null,
                     detalles: detallesParaEnviar,
                 }),
             });
@@ -363,6 +483,7 @@ export default function CrearVentaPrestable() {
                 // Limpiar detalles
                 setDetalles([]);
                 setClienteSeleccionado(null);
+                setAlmacenSeleccionado(null);
             } else {
                 alert('Error: ' + result.message);
             }
@@ -375,222 +496,260 @@ export default function CrearVentaPrestable() {
     };
 
     const calcularTotal = () => {
-        return detalles.reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
+        // Solo sumar canastillas y embases sueltos (sin prestable_padre_id)
+        return detalles
+            .filter((d) => !d.prestable_padre_id) // Excluir embases relacionados
+            .reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
+    };
+
+    const calcularTotalEmbasesRelacionados = () => {
+        // Sumar solo embases que están relacionados a canastillas
+        return detalles
+            .filter((d) => d.prestable_padre_id) // Solo embases relacionados
+            .reduce((sum, d) => sum + (d.subtotal ?? 0), 0);
     };
 
     return (
-        <AppLayout breadcrumbs={[{ label: 'Préstamos', href: '/prestamos' }, { label: 'Nueva Venta de Prestables' }]}>
-            <Head title="Crear Venta de Prestables" />
+        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Nueva Venta de Canastillas / Embases', href: '/prestamos/ventas/crear' }]}>
+            <Head title="Crear Venta de Canastillas / Embases" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                            Nueva Venta de Prestables
+                            Nueva Venta de Canastillas / Embases
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Modo de creación directa: Agregar detalles y confirmar
-                        </p>
                     </div>
                 </div>
 
-                {/* Selector de Cliente */}
-                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                    <ClienteSelector
-                        value={clienteSeleccionado?.id ?? null}
-                        display={clienteSeleccionado?.nombre ?? ''}
-                        onSelect={setClienteSeleccionado}
-                        clientesDisponibles={clientes}
-                        onSearchChange={buscarClientes}
-                        isSearching={buscandoClientes}
-                        label="👥 Cliente"
-                        showCreateButton={false}
+                {/* Contenedor con 2 columnas responsivas */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {/* Selector de Cliente - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="👤 Cliente (Requerido)"
+                        placeholder="Buscar por nombre o NIT..."
+                        selectedItem={clienteSeleccionado}
+                        items={clientes}
+                        isLoading={buscandoClientes}
+                        searchValue={busquedaCliente}
+                        onSearch={(query) => {
+                            setBusquedaCliente(query);
+                            buscarClientes(query);
+                        }}
+                        onSelect={(cliente) => {
+                            setClienteSeleccionado(cliente);
+                            setBusquedaCliente('');
+                            setClientes([]);
+                        }}
+                        onClear={() => {
+                            setClienteSeleccionado(null);
+                            setBusquedaCliente('');
+                            setClientes([]);
+                        }}
+                        getItemId={(cliente) => cliente.id}
+                        getDisplayValue={(cliente) => cliente.nombre}
+                        renderItem={(cliente) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {cliente.nombre}
+                                </div>
+                                {cliente.razon_social && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        {cliente.razon_social}
+                                    </div>
+                                )}
+                                {cliente.nit && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        NIT: {cliente.nit}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />
+
+                    {/* Selector de Almacén de Prestables - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="📦 Almacén de Prestables (Requerido)"
+                        placeholder="Buscar almacén..."
+                        selectedItem={almacenSeleccionado}
+                        items={almacenes}
+                        isLoading={buscandoAlmacenes}
+                        searchValue={busquedaAlmacen}
+                        onSearch={(query) => {
+                            setBusquedaAlmacen(query);
+                            buscarAlmacenes(query);
+                        }}
+                        onSelect={(almacen) => {
+                            setAlmacenSeleccionado(almacen);
+                            setBusquedaAlmacen('');
+                            setAlmacenes([]);
+                        }}
+                        onClear={() => {
+                            setAlmacenSeleccionado(null);
+                            setBusquedaAlmacen('');
+                            setAlmacenes([]);
+                        }}
+                        getItemId={(almacen) => almacen.id}
+                        getDisplayValue={(almacen) => almacen.nombre}
+                        renderItem={(almacen) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {almacen.nombre}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className={`inline-block rounded px-2 py-0.5 font-semibold ${
+                                        almacen.es_proveedor
+                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                    }`}>
+                                        {almacen.es_proveedor ? '👤 Proveedor' : '🏢 Cliente'}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     />
                 </div>
 
-                {/* Buscador de Prestables */}
-                <div className="relative">
-                    <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        🔍 Buscar Prestable para Agregar
-                    </label>
-                    <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                        <input
-                            ref={busquedaRef}
-                            type="text"
-                            placeholder="Buscar por nombre o código..."
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
-                        />
-                    </div>
-
-                    {/* Sugerencias */}
-                    {showSugerencias && sugerencias.length > 0 && (
-                        <div
-                            ref={sugerenciasRef}
-                            className="absolute top-full z-50 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
-                        >
-                            {sugerencias.map((prestable) => (
-                                <button
-                                    key={prestable.id}
-                                    onClick={() => seleccionarPrestable(prestable)}
-                                    className="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition hover:bg-blue-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                >
-                                    <div>
-                                        <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                            {prestable.nombre}
-                                        </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            Código: {prestable.codigo}
-                                        </p>
-                                    </div>
-                                    <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                        +
-                                    </span>
-                                </button>
-                            ))}
+                {/* Búsqueda y Tabla de Prestables - Componente Genérico */}
+                <SearchAndItemsTable
+                    label="🔍 Buscar Prestable para Agregar"
+                    placeholder="Buscar por nombre o código..."
+                    searchValue={busqueda}
+                    onSearchChange={setBusqueda}
+                    isSearching={false}
+                    searchResults={sugerencias}
+                    onSelectItem={seleccionarPrestable}
+                    items={detalles}
+                    columns={[
+                        {
+                            key: 'tipo',
+                            label: 'Tipo Prestable',
+                            render: (item) => {
+                                if (item.tipo === 'CANASTILLA') {
+                                    return (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                            📦 Canastilla
+                                        </span>
+                                    );
+                                } else if (item.tipo === 'EMBASES') {
+                                    return (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                            🏪 Embase
+                                        </span>
+                                    );
+                                }
+                                return <span className="text-xs text-slate-500">—</span>;
+                            }
+                        },
+                        {
+                            key: 'prestable',
+                            label: 'Prestable',
+                            render: (item) => (
+                                <div>
+                                    <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                        {item.prestable?.nombre}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        ID: {item.prestable?.id} | Código: {item.prestable?.codigo}
+                                        {item.tipo === 'CANASTILLA' && item.capacidad && (
+                                            <span className="ml-2 inline-block rounded bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                Cap: {item.capacidad}
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            ),
+                        },
+                        {
+                            key: 'cantidad',
+                            label: 'Cantidad',
+                            render: (item) => (
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={item.cantidad}
+                                    onChange={(e) =>
+                                        actualizarDetalle(item.id, 'cantidad', e.target.value)
+                                    }
+                                    className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                />
+                            ),
+                        },
+                        {
+                            key: 'precio_unitario',
+                            label: 'Precio Unitario',
+                            align: 'left',
+                            render: (item) => (
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={item.precio_unitario}
+                                    onChange={(e) =>
+                                        actualizarDetalle(item.id, 'precio_unitario', e.target.value)
+                                    }
+                                    className="w-32 rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                />
+                            ),
+                        },
+                        {
+                            key: 'subtotal',
+                            label: 'Subtotal',
+                            align: 'left',
+                            render: (item) => (
+                                <span className="font-bold text-slate-900 dark:text-slate-100">
+                                    {(parseFloat(item.subtotal ?? 0)).toFixed(2)}
+                                </span>
+                            ),
+                        },
+                    ]}
+                    getRowClassName={getRowClassName}
+                    getRowIndicator={getRowIndicator}
+                    onDeleteItem={eliminarDetalle}
+                    getItemId={(item) => item.id}
+                    renderSearchItem={(prestable) => (
+                        <div className="flex items-center justify-between gap-2">
+                            <div>
+                                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {prestable.nombre}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Código: {prestable.codigo}
+                                </p>
+                            </div>
+                            {prestable.tipo && (
+                                <>
+                                    {prestable.tipo === 'CANASTILLA' ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
+                                            📦 Canastilla
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                                            🏪 Embase
+                                        </span>
+                                    )}
+                                </>
+                            )}
                         </div>
                     )}
-                </div>
-
-                {/* Tabla de detalles */}
-                <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                    <table className="w-full">
-                        <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Prestable
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Almacén
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Cantidad
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Precio Unitario
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Subtotal
-                                </th>
-                                <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    Acción
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                            {detalles.length > 0 ? (
-                                detalles.map((detalle) => (
-                                    <tr
-                                        key={detalle.id}
-                                        className="bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
-                                    >
-                                        <td className="px-4 py-3">
-                                            <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                                {detalle.prestable?.nombre}
-                                            </p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                {detalle.prestable?.codigo}
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                            <select
-                                                value={detalle.almacenes_prestables_id}
-                                                onChange={(e) =>
-                                                    actualizarAlmacenDetalle(
-                                                        detalle.id,
-                                                        Number(e.target.value)
-                                                    )
-                                                }
-                                                className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            >
-                                                {getAlmacenesDetalle(detalle.prestable_id).map((almacen) => (
-                                                    <option key={`${detalle.id}-${almacen.id}`} value={almacen.id}>
-                                                        {almacen.nombre} | Stock: {almacen.stock}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={detalle.cantidad}
-                                                onChange={(e) =>
-                                                    actualizarDetalle(detalle.id, 'cantidad', e.target.value)
-                                                }
-                                                className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-center text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={detalle.precio_unitario}
-                                                onChange={(e) =>
-                                                    actualizarDetalle(detalle.id, 'precio_unitario', e.target.value)
-                                                }
-                                                className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-right text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
-                                            {(parseFloat(detalle.subtotal ?? 0)).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => eliminarDetalle(detalle.id)}
-                                                className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={6} className="py-12 text-center">
-                                        <div className="flex flex-col items-center gap-2 text-slate-400">
-                                            <AlertCircle size={24} />
-                                            <p>Busca arriba para agregar prestables</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                        {detalles.length > 0 && (
-                            <tfoot>
-                                <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                                    <td colSpan={4} className="px-4 py-4 text-right" />
-                                    <td className="px-4 py-4">
-                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                            TOTAL
-                                        </p>
-                                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                            {(parseFloat(calcularTotal() ?? 0)).toFixed(2)}
-                                        </p>
-                                    </td>
-                                    <td />
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
-                </div>
+                    emptyMessage="Busca arriba para agregar prestables"
+                    totalLabel="TOTAL"
+                    totalValue={(parseFloat(calcularTotal() ?? 0)).toFixed(2)}
+                />
 
                 {/* Botón confirmar */}
-                {detalles.length > 0 && clienteSeleccionado && (
+                {detalles.length > 0 && (
                     <div className="flex justify-end">
                         <Button
                             onClick={confirmarVenta}
                             disabled={loading}
-                            className="bg-green-600 px-8 hover:bg-green-700"
+                            className="bg-green-600 px-8 hover:bg-green-700 text-white"
                         >
                             {loading ? (
                                 <>Confirmando...</>
                             ) : (
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-center gap-2 text-white">
                                     <CheckCircle size={18} />
                                     Confirmar Venta
                                 </span>
@@ -613,9 +772,10 @@ export default function CrearVentaPrestable() {
                         documentoId={ventaCreada.id}
                         tipoDocumento="prestamos-vendidos"
                         documentoInfo={{
-                            numero: ventaCreada.numero_venta,
-                            fecha: ventaCreada.created_at,
-                            monto: ventaCreada.total,
+                            numero: ventaCreada.numero_venta || ventaCreada.id,
+                            cliente: ventaCreada.cliente?.nombre || 'Sin cliente',
+                            cantidad_total: ventaCreada.cantidad_total,
+                            total: ventaCreada.total,
                         }}
                     />
                 )}

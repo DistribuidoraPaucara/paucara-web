@@ -162,8 +162,8 @@ export default function ListadoVentas() {
         const data = ventas.data;
         return {
             total: data.length,
-            confirmadas: data.filter(v => v.estado === 'CONFIRMADA').reduce((sum, v) => sum + v.total, 0),
-            borrador: data.filter(v => v.estado === 'BORRADOR').reduce((sum, v) => sum + v.total, 0),
+            confirmadas: data.filter(v => v.estado === 'CONFIRMADA').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
+            borrador: data.filter(v => v.estado === 'BORRADOR').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
             canceladas: data.filter(v => v.estado === 'CANCELADA').length,
         };
     };

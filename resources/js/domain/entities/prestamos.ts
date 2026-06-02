@@ -254,6 +254,73 @@ export interface NuevoPrestamoProveedor extends BaseFormData {
     }>;
 }
 
+export interface PrestamoEventoDetalle extends BaseEntity {
+    id: Id;
+    prestamo_evento_id: Id;
+    prestable_id: Id;
+    cantidad_prestada: number;
+    monto_garantia: number;
+    estado: EstadoPrestamo;
+    devoluciones?: Array<any>;
+    prestable?: Prestable;
+}
+
+export interface DevolucionEvento extends BaseEntity {
+    id: Id;
+    prestamo_evento_id: Id;
+    fecha_devolucion: string;
+    monto_cobrado_daño_total?: number;
+    monto_garantia_devuelta_total?: number;
+    observaciones?: string | null;
+    chofer_id?: Id | null;
+    detalles?: Array<any>;
+}
+
+export interface PrestamoEvento extends BaseEntity {
+    id: Id;
+    cliente_id?: Id | null;
+    nombre_evento: string;
+    encargado_evento?: string | null;
+    vehiculo_asignado?: string | null;
+    direccion_evento?: string | null;
+    telefono_uno?: string | null;
+    telefono_dos?: string | null;
+    venta_id?: Id | null;
+    chofer_id?: Id | null;
+    cantidad: number;
+    monto_garantia: number;
+    fecha_prestamo: string;
+    fecha_entrega?: string | null;
+    fecha_esperada_devolucion?: string | null;
+    estado: EstadoPrestamo;
+    detalles: PrestamoEventoDetalle[];
+    devoluciones: DevolucionEvento[];
+    cliente?: { id: Id; nombre?: string; razon_social?: string } | null;
+    chofer?: { id: Id; nombre: string } | null;
+    venta?: { id: Id; numero: string } | null;
+}
+
+export interface NuevoPrestamoEventoDetalle {
+    prestable_id: Id;
+    cantidad: number;
+    almacenes_ids: Id[];
+}
+
+export interface NuevoPrestamoEvento extends BaseFormData {
+    nombre_evento: string;
+    encargado_evento?: string;
+    vehiculo_asignado?: string;
+    direccion_evento?: string;
+    telefono_uno?: string;
+    telefono_dos?: string;
+    venta_id?: Id;
+    chofer_id?: Id;
+    fecha_prestamo: string;
+    fecha_esperada_devolucion?: string;
+    monto_garantia?: number;
+    detalles: NuevoPrestamoEventoDetalle[];
+}
+
 export interface DetalleDevolucionCliente {
     prestamo_cliente_detalle_id: Id;
     cantidad_devuelta: number;

@@ -169,12 +169,12 @@ export default function ListadoCompras() {
 
     // Calcular totales para cards
     const calcularTotales = () => {
-        if (!compras) return { total: 0, confirmadas: 0, borrador: 0, canceladas: 0 };
+        if (!compras || !compras.data) return { total: 0, confirmadas: 0, borrador: 0, canceladas: 0 };
         const data = compras.data;
         return {
             total: data.length,
-            confirmadas: data.filter(c => c.estado === 'CONFIRMADA').reduce((sum, c) => sum + c.total, 0),
-            borrador: data.filter(c => c.estado === 'BORRADOR').reduce((sum, c) => sum + c.total, 0),
+            confirmadas: data.filter(c => c.estado === 'CONFIRMADA').reduce((sum, c) => sum + (Number(c.total) || 0), 0),
+            borrador: data.filter(c => c.estado === 'BORRADOR').reduce((sum, c) => sum + (Number(c.total) || 0), 0),
             canceladas: data.filter(c => c.estado === 'CANCELADA').length,
         };
     };
