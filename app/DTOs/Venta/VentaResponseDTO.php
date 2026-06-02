@@ -82,11 +82,14 @@ class VentaResponseDTO extends BaseDTO
                 'producto_id' => $item['producto_id'],
                 'cantidad' => $item['cantidad'],
                 'incluido' => $item['incluido'] ?? true,
+                // ✅ NUEVO (2026-06-02): Precio unitario del componente
+                'precio_unitario' => $item['precio_unitario'] ?? $producto?->precio_venta ?? 0,
                 // ✅ NUEVO: Datos del producto
                 'producto' => $producto ? [
                     'id' => $producto->id,
                     'nombre' => $producto->nombre,
                     'sku' => $producto->sku,
+                    'precio_venta' => $producto->precio_venta ?? 0,
                 ] : null,
             ];
         }, $comboItems);
@@ -134,6 +137,11 @@ class VentaResponseDTO extends BaseDTO
         // ✅ NUEVO: Cargar datos completos de productos en detalles
         if (!isset($venta->detalles[0]->producto->categoria)) {
             $venta->load('detalles.producto.categoria', 'detalles.producto.marca', 'detalles.producto.unidad', 'detalles.producto.codigosBarra');
+        }
+
+        // ✅ NUEVO (2026-06-02): Cargar comboItems para obtener precios correctos de componentes
+        if (!isset($venta->detalles[0]->producto->comboItems)) {
+            $venta->load('detalles.producto.comboItems.producto');
         }
 
         return new self(
@@ -214,7 +222,22 @@ class VentaResponseDTO extends BaseDTO
                 'precio_unitario' => (float) $det->precio_unitario,
                 'descuento' => (float) ($det->descuento ?? 0),
                 'subtotal' => (float) $det->subtotal,
-                'combo_items_seleccionados' => static::enrichComboItems($det->combo_items_seleccionados ?? []),
+                // ✅ NUEVO (2026-06-02): Usar comboItems cargados si existen, sino usar el array guardado
+                'combo_items_seleccionados' => ($det->producto && $det->producto->comboItems && $det->producto->comboItems->count() > 0)
+                    ? $det->producto->comboItems->map(fn($item) => [
+                        'combo_item_id' => $item->id,
+                        'producto_id' => $item->producto_id,
+                        'cantidad' => $item->cantidad,
+                        'precio_unitario' => (float) ($item->precio_unitario ?? $item->producto?->precio_venta ?? 0),
+                        'incluido' => true,
+                        'producto' => $item->producto ? [
+                            'id' => $item->producto->id,
+                            'nombre' => $item->producto->nombre,
+                            'sku' => $item->producto->sku,
+                            'precio_venta' => (float) ($item->producto->precio_venta ?? 0),
+                        ] : null,
+                    ])->toArray()
+                    : static::enrichComboItems($det->combo_items_seleccionados ?? []),
             ])->toArray(),
             created_at: $venta->created_at->toIso8601String(),
             updated_at: $venta->updated_at->toIso8601String(),

@@ -12,6 +12,13 @@
 <div class="center" style="margin-top: 3px; font-size:11px">
     <p style="margin: 2px 0;"><strong>Creados:</strong> {{ $documento->created_at->format('d/m/Y H:i') }}</p>
     <p style="margin: 2px 0;"><strong>Emisión:</strong> {{ now()->format('d/m/Y H:i') }}</p>
+    @if($documento->estadoDocumento)
+        <p style="margin: 2px 0;"><strong>Estado:</strong> {{ $documento->estadoDocumento->nombre }}</p>
+    @endif
+    @if($documento->confirmaciones && $documento->confirmaciones->count() > 0)
+        @php $confirmacion = $documento->confirmaciones->first(); @endphp
+        <p style="margin: 2px 0;"><strong>Entrega:</strong> {{ $confirmacion->tipo_entrega === 'COMPLETA' ? 'Completa' : 'Con Novedad' }}</p>
+    @endif
 </div>
 
 <div class="separador"></div>

@@ -1107,6 +1107,7 @@ export default function VentaForm() {
                         combo_item_id: item.id,
                         producto_id: item.producto_id,
                         cantidad: item.cantidad || 0, // ✅ NUEVO: Incluir cantidad del item
+                        precio_unitario: item.precio_unitario || item.producto?.precio_venta || 0, // ✅ NUEVO (2026-06-02): Precio del componente
                         incluido: item.incluido !== false // true si está incluido, false si está excluido
                     }));
 

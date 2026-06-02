@@ -327,6 +327,7 @@ class VentaService
                             'combo_item_id' => $item['combo_item_id'] ?? null,
                             'producto_id' => $item['producto_id'] ?? null,
                             'cantidad' => $item['cantidad'] ?? 0, // ✅ NUEVO (2026-03-28): Incluir cantidad para impresión
+                            'precio_unitario' => $item['precio_unitario'] ?? 0, // ✅ NUEVO (2026-06-02): Incluir precio para mostrar en detalles
                             'incluido' => $item['incluido'] ?? false,
                         ];
                     }, $comboItemsSeleccionados) : null, // ✅ NUEVO: Items del combo seleccionados

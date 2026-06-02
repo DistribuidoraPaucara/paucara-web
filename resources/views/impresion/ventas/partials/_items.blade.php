@@ -114,7 +114,7 @@
                             {{ number_format($cantidadComponente, 0) }}
                         </td>
                         <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 11px;">
-                            └─ {{ $comboItem->producto->nombre }}
+                            ->{{ $comboItem->producto->nombre }}
                         </td>
                         <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 11px;">
                             {{ number_format($precioUnitarioComponente, 2) }}

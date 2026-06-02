@@ -430,6 +430,11 @@ export default function VentaShow() {
                                                         </tr>
                                                         {comboItems.map((item: any, idx: number) => {
                                                             const cantidadTotal = (item.cantidad || 0) * (detalle.cantidad || 1);
+                                                            // ✅ Si precio_unitario es 0 o undefined, usar precio_venta del producto
+                                                            const precioUnitario = (item.precio_unitario && item.precio_unitario > 0)
+                                                                ? item.precio_unitario
+                                                                : (item.producto?.precio_venta || 0);
+                                                            const subtotal = cantidadTotal * precioUnitario;
                                                             return (
                                                                 <tr key={`${detalle.id}-item-${idx}`} className="bg-gray-50 dark:bg-zinc-800">
                                                                     <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">
@@ -449,8 +454,11 @@ export default function VentaShow() {
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                         {formatCurrencyWith2Decimals(cantidadTotal)}
                                                                     </td>
-                                                                    <td colSpan={2} className="px-6 py-3 text-xs text-gray-500 dark:text-gray-400">
-                                                                        (cantidad base: {item.cantidad})
+                                                                    <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                        {formatCurrencyWith2Decimals(precioUnitario, venta.moneda.codigo)}
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                        {formatCurrencyWith2Decimals(subtotal, venta.moneda.codigo)}
                                                                     </td>
                                                                 </tr>
                                                             );

@@ -1480,10 +1480,8 @@ class VentaController extends Controller
         // ✅ Cargar relaciones necesarias para impresión
         $venta->load('detallesPagoVenta.tipoPago');
 
-        // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega si es reporte de entrega
-        if ($tipoReporte === 'entrega') {
-            $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');
-        }
+        // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega (necesarias para mostrar estado de entrega)
+        $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');
 
         // 🔍 DEBUG: Loguear información de la venta antes de imprimir
         \Log::info('📋 [VentaController::imprimir] Datos de venta para descargar/stream', [
