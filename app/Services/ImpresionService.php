@@ -139,6 +139,74 @@ class ImpresionService
                 return $pdf;
             }
 
+            // ✅ NUEVO (2026-06-02): Si hay tipoReporte especial, usar fallback directamente
+            $tipoReporteEspecial = $opciones['tipoReporte'] ?? null;
+            if ($tipoReporteEspecial) {
+                \Log::info('📝 [ImpresionService::generarPDF] Tipo reporte especial detectado, usando fallback', [
+                    'tipoDocumento' => $tipoDocumento,
+                    'formato' => $formato,
+                    'tipoReporte' => $tipoReporteEspecial,
+                ]);
+
+                $vistaFallback = $this->obtenerVistaFallback($tipoDocumento, $formato, $tipoReporteEspecial);
+
+                if (!$vistaFallback) {
+                    \Log::error('❌ [ImpresionService::generarPDF] No se encontró vista fallback para reporte especial', [
+                        'tipoDocumento' => $tipoDocumento,
+                        'formato' => $formato,
+                        'tipoReporte' => $tipoReporteEspecial,
+                    ]);
+                    throw new Exception(
+                        "No existe vista para '{$tipoDocumento}' " .
+                        "con tipoReporte '{$tipoReporteEspecial}'"
+                    );
+                }
+
+                \Log::info('✅ [ImpresionService::generarPDF] Vista fallback encontrada para reporte especial', [
+                    'tipoDocumento' => $tipoDocumento,
+                    'formato' => $formato,
+                    'vista' => $vistaFallback,
+                ]);
+
+                // Usar vista fallback
+                $empresa = $this->empresa ?? Empresa::principalFresh();
+                $logoPrincipalBase64 = $this->logoToBase64($empresa->logo_principal);
+                $logoFooterBase64 = $this->logoToBase64($empresa->logo_footer);
+                $datosAdjuntos = is_array($documento) ? $documento : [];
+                $nombreFuente = $opciones['fuente'] ?? 'consolas';
+                $fuente = $this->obtenerFuente($nombreFuente);
+
+                $datos = array_merge([
+                    $tipoDocumento => $documento,
+                    'documento' => $documento,
+                    'empresa' => $empresa,
+                    'fecha_impresion' => now(),
+                    'usuario' => auth()->user() ?? 'Sistema',
+                    'opciones' => $opciones,
+                    'logo_principal_base64' => $logoPrincipalBase64,
+                    'logo_footer_base64' => $logoFooterBase64,
+                    'fuente_config' => $fuente,
+                    'fuentes_disponibles' => $this->obtenerFuentesDisponibles(),
+                ], $datosAdjuntos);
+
+                $pdf = PDF::loadView($vistaFallback, $datos);
+
+                \Log::info('📝 [ImpresionService::generarPDF] PDF cargado desde vista fallback (reporte especial)', [
+                    'tipoDocumento' => $tipoDocumento,
+                    'tipoReporte' => $tipoReporteEspecial,
+                ]);
+
+                $this->aplicarConfiguracionFormato($pdf, $formato ?? 'A4', $tipoDocumento);
+
+                \Log::info('✅ [ImpresionService::generarPDF] PDF generado exitosamente (reporte especial)', [
+                    'tipoDocumento' => $tipoDocumento,
+                    'formato' => $formato,
+                    'tipoReporte' => $tipoReporteEspecial,
+                ]);
+
+                return $pdf;
+            }
+
             // Obtener plantilla adecuada
             \Log::info('📝 [ImpresionService::generarPDF] Buscando plantilla', [
                 'tipoDocumento' => $tipoDocumento,
@@ -154,7 +222,7 @@ class ImpresionService
                     'formato' => $formato,
                 ]);
 
-                $vistaFallback = $this->obtenerVistaFallback($tipoDocumento, $formato, $opciones['tipoReporte'] ?? null);
+                $vistaFallback = $this->obtenerVistaFallback($tipoDocumento, $formato, null);
 
                 if (!$vistaFallback) {
                     \Log::error('❌ [ImpresionService::generarPDF] No se encontró vista fallback', [

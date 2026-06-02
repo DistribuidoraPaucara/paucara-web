@@ -1,6 +1,6 @@
 @extends('impresion.layouts.base-a4')
 
-@section('titulo', 'Reporte Entrega #' . $documento->numero)
+@section('titulo', 'Reporte Entrega #' . $documento->id)
 
 @section('contenido')
 
