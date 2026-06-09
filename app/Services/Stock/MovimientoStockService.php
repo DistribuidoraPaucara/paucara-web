@@ -110,6 +110,16 @@ class MovimientoStockService
                         $nuevaDisponible
                     ),
 
+                    // ✅ ENTRADAS: Aumentan el stock total
+                    MovimientoInventario::TIPO_ENTRADA_AJUSTE,
+                    MovimientoInventario::TIPO_ENTRADA_COMPRA,
+                    MovimientoInventario::TIPO_ENTRADA_DEVOLUCION => $this->aplicarEntrada(
+                        $cantidad,
+                        $nuevoTotal,
+                        $nuevaReservada,
+                        $nuevaDisponible
+                    ),
+
                     default => throw new Exception("Tipo de movimiento desconocido: {$tipo}"),
                 };
 
@@ -385,6 +395,22 @@ class MovimientoStockService
         $nuevoTotal -= $cantidadAConsumir;
         $nuevaReservada -= $cantidadAConsumir;
         // Disponible NO cambia
+    }
+
+    /**
+     * ✅ NUEVO (2026-06-09): Aplicar lógica de Entrada (Compra/Ajuste/Devolución)
+     * Aumenta total y disponible (reservado no cambia)
+     */
+    private function aplicarEntrada(
+        int $cantidad,
+        int &$nuevoTotal,
+        int &$nuevaReservada,
+        int &$nuevaDisponible
+    ): void {
+        $cantidadAEntrar = abs($cantidad);
+        $nuevoTotal += $cantidadAEntrar;
+        $nuevaDisponible += $cantidadAEntrar;
+        // Reservado NO cambia
     }
 
     /**

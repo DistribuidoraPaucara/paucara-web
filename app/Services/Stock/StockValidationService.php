@@ -75,10 +75,15 @@ class StockValidationService
     public function validarOperacionPosible(StockProducto $stock, int $cantidad, string $tipo): void
     {
         match ($tipo) {
+            // Salidas: Validar disponibilidad
             MovimientoInventario::TIPO_RESERVA_PROFORMA => $this->validarProforma($stock, $cantidad),
             MovimientoInventario::TIPO_LIBERACION_RESERVA => $this->validarLiberacion($stock, $cantidad),
             MovimientoInventario::TIPO_SALIDA_VENTA => $this->validarVentaDirecta($stock, $cantidad),
             MovimientoInventario::TIPO_CONSUMO_RESERVA => $this->validarVentaConsumo($stock, $cantidad),
+            // Entradas: No necesitan validación especial (aumentan stock)
+            MovimientoInventario::TIPO_ENTRADA_AJUSTE,
+            MovimientoInventario::TIPO_ENTRADA_COMPRA,
+            MovimientoInventario::TIPO_ENTRADA_DEVOLUCION => null,  // ✅ Las entradas siempre son válidas, no requieren validación
             default => throw new InvalidArgumentException("Tipo de movimiento desconocido: {$tipo}"),
         };
     }

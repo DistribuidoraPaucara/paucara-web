@@ -5,6 +5,7 @@ namespace App\Services\Venta;
 use App\Models\MovimientoInventario;
 use App\Models\Producto;
 use App\Models\StockProducto;
+use App\Models\Venta;  // ✅ NUEVO (2026-06-09): Para obtener venta_id en devoluciones
 use App\Services\Stock\MovimientoInventarioService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -398,6 +399,10 @@ class VentaDistribucionService
 
         try {
             return DB::transaction(function () use ($numeroVenta) {
+                // ✅ NUEVO: Obtener venta_id desde el número de venta para referencia_id
+                $venta = Venta::where('numero', $numeroVenta)->first();
+                $ventaId = $venta?->id ?? 0;
+
                 // Obtener movimientos de consumo (SALIDA_VENTA + CONSUMO_RESERVA)
                 // ✅ CORREGIDO (2026-02-11): Incluir CONSUMO_RESERVA para ventas convertidas desde proforma
                 $movimientos = MovimientoInventario::where('numero_documento', $numeroVenta)
@@ -452,14 +457,15 @@ class VentaDistribucionService
                                 stockProductoId: $stock->id,
                                 cantidad: (int)$cantidadADevolver,  // Positivo: entrada/devolución
                                 tipo: MovimientoInventario::TIPO_ENTRADA_AJUSTE,
-                                referencia_tipo: 'venta_devolucion',
-                                referencia_id: 0,  // Se establecerá con venta_id si es necesario
+                                referencia_tipo: 'venta_devolucion',  // ✅ Dejado como antes
+                                referencia_id: $ventaId,  // ✅ Usar ID real de la venta obtenido arriba
                                 metadataAdicional: [
                                     'numero_venta' => $numeroVenta . '-DEV',
                                     'lote' => $stock->lote,
                                     'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
                                     'movimiento_original_id' => $movimiento->id,
-                                ]
+                                ],
+                                numeroDocumento: $numeroVenta . '-DEV'  // ✅ Incluir -DEV para devoluciones
                             );
 
                             Log::debug('✅ [VentaDistribucionService] Devolución registrada por lote', [
