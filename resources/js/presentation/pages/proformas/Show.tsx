@@ -441,6 +441,10 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
     // ✅ NUEVO: Estado para modal de selección de salida de proforma
     const [showProformaOutputSelection, setShowProformaOutputSelection] = useState(false)
 
+    // ✅ NUEVO (2026-06-09): Estado para resumen de crédito en header
+    const [resumenCredito, setResumenCredito] = useState<any>(null)
+    const [loadingResumenCredito, setLoadingResumenCredito] = useState(false)
+
     // Estados para edición de detalles
     const [editableDetalles, setEditableDetalles] = useState(
         proforma.detalles.map(d => {
@@ -695,6 +699,25 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
 
         verificarReservasAlCargar();
     }, [proforma.id])
+
+    // ✅ NUEVO (2026-06-09): Cargar resumen de crédito cuando la proforma es CREDITO
+    useEffect(() => {
+        if (proforma.politica_pago === 'CREDITO' && proforma.id) {
+            setLoadingResumenCredito(true);
+            fetch(`/proformas/${proforma.id}/resumen-credito`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        setResumenCredito(data.data);
+                        console.log('📊 Resumen de crédito cargado en header:', data.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error al cargar resumen de crédito:', error);
+                })
+                .finally(() => setLoadingResumenCredito(false));
+        }
+    }, [proforma.id, proforma.politica_pago])
 
     // Handlers para edición de detalles
     const handleEditarCantidad = (index: number, cantidad: number) => {
@@ -1824,18 +1847,71 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                             </div>
                         </div>
 
-                        {/* Card: Límite de Crédito */}
-                        {proforma.politica_pago === 'CREDITO' && proforma.cliente?.puede_tener_credito && (
+                        {/* Card: Resumen de Límite de Crédito */}
+                        {proforma.politica_pago === 'CREDITO' && (
                             <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800 p-4">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-2xl">💳</span>
-                                    <div>
-                                        <p className="text-xs font-semibold text-purple-900 dark:text-purple-200 uppercase">Límite de Crédito</p>
-                                        <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
-                                            {proforma.moneda?.simbolo || 'Bs.'} {proforma.cliente.limite_credito?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                                        </p>
+                                {loadingResumenCredito ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full"></div>
+                                        <p className="text-xs text-purple-600 dark:text-purple-400">Cargando resumen de crédito...</p>
                                     </div>
-                                </div>
+                                ) : resumenCredito ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="text-2xl">💳</span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-purple-900 dark:text-purple-200 uppercase">Resumen de Límite de Crédito</p>
+                                                <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
+                                                    {proforma.moneda?.simbolo || 'Bs.'} {resumenCredito.disponible?.toLocaleString('es-ES', { minimumFractionDigits: 2 })} disponible
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-4 gap-2 text-xs">
+                                            <div className="bg-white/60 dark:bg-black/20 p-2 rounded">
+                                                <span className="text-gray-600 dark:text-gray-400">Límite:</span>
+                                                <p className="font-semibold text-purple-800 dark:text-purple-200">
+                                                    {proforma.moneda?.simbolo || 'Bs.'} {resumenCredito.limite_credito?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                            <div className="bg-red-100/60 dark:bg-red-900/30 p-2 rounded">
+                                                <span className="text-gray-600 dark:text-gray-400">Utilizado (CxC):</span>
+                                                <p className="font-semibold text-red-700 dark:text-red-300">
+                                                    {proforma.moneda?.simbolo || 'Bs.'} {resumenCredito.monto_utilizado?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                            <div className="bg-yellow-100/60 dark:bg-yellow-900/30 p-2 rounded">
+                                                <span className="text-gray-600 dark:text-gray-400">Intenciones:</span>
+                                                <p className="font-semibold text-yellow-700 dark:text-yellow-300">
+                                                    {proforma.moneda?.simbolo || 'Bs.'} {resumenCredito.total_intenciones?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                            <div className={`${resumenCredito.puede_convertir ? 'bg-green-100/60 dark:bg-green-900/30' : 'bg-red-100/60 dark:bg-red-900/30'} p-2 rounded`}>
+                                                <span className="text-gray-600 dark:text-gray-400">Estado:</span>
+                                                <p className={`font-semibold ${resumenCredito.puede_convertir ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                                                    {resumenCredito.puede_convertir ? '✅ Permitido' : resumenCredito.advertencia}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Listado de Proformas Pendientes */}
+                                        {resumenCredito.proformas_pendientes?.length > 0 && (
+                                            <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
+                                                <p className="text-xs font-semibold text-purple-900 dark:text-purple-200 mb-2">📋 Proformas Pendientes (Intenciones):</p>
+                                                <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                                                    {resumenCredito.proformas_pendientes.map((pf: any, idx: number) => (
+                                                        <div key={idx} className="text-xs flex justify-between items-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-100 dark:border-purple-800">
+                                                            <span className="font-medium text-purple-900 dark:text-purple-200">{pf.numero}</span>
+                                                            <span className="text-purple-700 dark:text-purple-300 font-mono">Bs. {pf.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">No se pudo cargar la información de crédito</p>
+                                )}
                             </div>
                         )}
                     </div>

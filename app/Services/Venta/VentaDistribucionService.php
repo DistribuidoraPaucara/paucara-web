@@ -320,7 +320,7 @@ class VentaDistribucionService
 
                     try {
                         // ✅ NUEVO: Usar MovimientoStockService que valida y actualiza atomicamente
-                        $movimientoStockService->registrarMovimientoYActualizar(
+                        $movimientoRegistrado = $movimientoStockService->registrarMovimientoYActualizar(
                             stockProductoId: $stock->id,
                             cantidad: -(int)$cantidadTomar,  // Negativo: salida
                             tipo: MovimientoInventario::TIPO_SALIDA_VENTA,
@@ -336,6 +336,9 @@ class VentaDistribucionService
                             ],
                             numeroDocumento: $numeroVenta  // ✅ NUEVO (2026-06-09)
                         );
+
+                        // ✅ NUEVO: Agregar a movimientos para retornar
+                        $movimientos[] = $movimientoRegistrado;
 
                         Log::debug('📦 [VentaDistribucionService] Stock consumido de lote', [
                             'venta' => $numeroVenta,

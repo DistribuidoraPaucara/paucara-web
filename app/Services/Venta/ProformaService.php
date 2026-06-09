@@ -1070,16 +1070,22 @@ class ProformaService
         // ====================================
         $montoUtilizado = DB::table('cuentas_por_cobrar')
             ->where('cliente_id', $cliente->id)
-            ->whereNull('fecha_pago')  // Solo deudas no pagadas
-            ->sum('monto');
+            ->where('saldo_pendiente', '>', 0)  // ✅ Solo deudas pendientes
+            ->sum('saldo_pendiente');  // ✅ Columna correcta: saldo_pendiente
         $montoUtilizado = (float) ($montoUtilizado ?? 0);
 
         // ====================================
         // 3. PROFORMAS PENDIENTES CON CRÉDITO (INTENCIONES)
         // ====================================
+        // ✅ Obtener ID del estado PENDIENTE de la tabla estados_logistica
+        $estadoPendienteId = DB::table('estados_logistica')
+            ->where('codigo', 'PENDIENTE')
+            ->where('categoria', 'proforma')
+            ->value('id') ?? 1;  // Fallback a 1 si no se encuentra
+
         $proformasPendientes = Proforma::where('cliente_id', $cliente->id)
             ->where('politica_pago', 'CREDITO')
-            ->where('estado', 'PENDIENTE')
+            ->where('estado_proforma_id', $estadoPendienteId)  // ✅ Usar estado_proforma_id
             ->where('id', '!=', $proformaId)  // Excluir la proforma actual
             ->get()
             ->map(function ($p) {
@@ -1095,17 +1101,16 @@ class ProformaService
             ->toArray();
 
         // ====================================
-        // 4. TOTAL DE INTENCIONES (proformas pendientes)
+        // 4. TOTAL DE INTENCIONES (proformas pendientes + esta proforma actual)
         // ====================================
         $totalIntenciones = collect($proformasPendientes)
-            ->sum('total');
+            ->sum('total') + (float) $proforma->total;  // ✅ Incluir esta proforma
         $totalIntenciones = (float) $totalIntenciones;
 
         // ====================================
-        // 5. DISPONIBLE CALCULADO
+        // 5. DISPONIBLE CALCULADO (valor real, antes de truncar)
         // ====================================
-        $disponible = $limiteCredito - $montoUtilizado - $totalIntenciones;
-        $disponible = max(0, $disponible);  // No puede ser negativo
+        $disponibleReal = $limiteCredito - $montoUtilizado - $totalIntenciones;
 
         // ====================================
         // 6. MONTO DE ESTA VENTA (proforma actual)
@@ -1115,19 +1120,24 @@ class ProformaService
         // ====================================
         // 7. VALIDAR SI PUEDE CONVERTIR
         // ====================================
-        $puedeConvertir = $disponible >= $montoProformaActual;
-        $quedariaDisponible = $disponible - $montoProformaActual;
+        // ✅ NOTA: totalIntenciones YA incluye montoProformaActual
+        // Validar ANTES de truncar a 0
+        $puedeConvertir = $disponibleReal > 0;  // ✅ Estrictamente mayor que 0
+        $disponible = max(0, $disponibleReal);  // ✅ Ahora sí truncar para mostrar
+        $quedariaDisponible = $disponible;   // ✅ Ya es lo que quedará
 
         // ====================================
-        // 8. DETECTAR ADVERTENCIAS
+        // 8. DETECTAR ADVERTENCIAS (con montos reales)
         // ====================================
         $advertencia = null;
-        $porcentajeUtilizado = $limiteCredito > 0
-            ? (($montoUtilizado + $totalIntenciones) / $limiteCredito) * 100
-            : 0;
 
-        if ($porcentajeUtilizado >= 80) {
-            $advertencia = "Límite de crédito casi alcanzado ({$porcentajeUtilizado}% utilizado)";
+        if ($disponibleReal < 0) {
+            // ✅ Límite excedido: mostrar el monto que sobrepasa
+            $montoExceso = abs($disponibleReal);
+            $advertencia = "⚠️ Límite excedido por Bs. " . number_format($montoExceso, 2, ',', '.');
+        } elseif ($disponibleReal > 0 && $disponibleReal < $limiteCredito * 0.2) {
+            // ✅ Menos del 20% disponible: mostrar monto disponible real
+            $advertencia = "⚠️ Solo Bs. " . number_format($disponibleReal, 2, ',', '.') . " disponible";
         }
 
         if (!$cliente->puede_tener_credito) {
@@ -1149,8 +1159,7 @@ class ProformaService
             'monto_proforma_actual' => $montoProformaActual,
             'puede_convertir' => $puedeConvertir,
             'quedaria_disponible' => $quedariaDisponible,
-            'porcentaje_utilizado' => round($porcentajeUtilizado, 2),
-            'advertencia' => $advertencia,
+            'advertencia' => $advertencia,  // ✅ Ahora retorna montos en lugar de porcentajes
         ];
     }
 }
