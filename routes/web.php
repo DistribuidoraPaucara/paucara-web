@@ -525,6 +525,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         // Vista: Detalle de proforma (usa ProformaController::show)
         Route::get('/{proforma}', [\App\Http\Controllers\ProformaController::class, 'show'])->name('show');
 
+        // ✅ NUEVO: Resumen de crédito del cliente (para el modal de aprobación)
+        Route::get('/{proforma}/resumen-credito', [\App\Http\Controllers\ProformaController::class, 'resumenCredito'])->name('resumen-credito');
+
         // Acciones POST - usan ProformaController (compatible con ReservaStock del web UI)
         Route::post('/{id}/aprobar', [\App\Http\Controllers\ProformaController::class, 'aprobar'])->name('aprobar');
         Route::post('/{id}/rechazar', [\App\Http\Controllers\ProformaController::class, 'rechazar'])->name('rechazar');
@@ -811,6 +814,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('stock/{tipo}/ajuste/{prestable_id}/{almacen_id}', [\App\Http\Controllers\Prestamos\StockController::class, 'ajuste'])->name('stock.ajuste');
         Route::get('ajustes/historial', fn() => Inertia::render('prestamos/ajustes/historial'))->name('ajustes.historial');
         Route::get('ajustes/movimientos', fn() => Inertia::render('prestamos/ajustes/movimientos'))->name('ajustes.movimientos');
+        Route::get('ajustes/movimientos/clientes', fn() => Inertia::render('prestamos/ajustes/movimientos-clientes'))->name('ajustes.movimientos.clientes');
+        Route::get('ajustes/movimientos/proveedores', fn() => Inertia::render('prestamos/ajustes/movimientos-proveedores'))->name('ajustes.movimientos.proveedores');
+        Route::get('ajustes/movimientos/eventos', fn() => Inertia::render('prestamos/ajustes/movimientos-eventos'))->name('ajustes.movimientos.eventos');
         Route::get('ventas', fn() => Inertia::render('prestamos/ventas/listado'))->name('ventas.listado');
         Route::get('ventas/crear', fn() => Inertia::render('prestamos/ventas/crear'))->name('ventas.crear');
         Route::get('ventas/{venta}', [\App\Http\Controllers\PrestamoVendidoController::class, 'showWeb'])->name('ventas.show');
@@ -885,10 +891,21 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         )->name('eventos.devoluciones')
         ->where('prestamo', '[0-9]+');
 
+        // Página para registrar devolución de un préstamo a evento
+        Route::get('eventos/{prestamo}/registrar-devolucion', fn(\App\Models\PrestamoEvento $prestamo) =>
+            Inertia::render('prestamos/eventos/registrar-devolucion', ['prestamoId' => $prestamo->id])
+        )->name('eventos.registrar-devolucion')
+        ->where('prestamo', '[0-9]+');
+
         // Impresión de préstamo a evento
         Route::get('eventos/{prestamo}/imprimir', [\App\Http\Controllers\PrestamoEventoController::class, 'imprimir'])
             ->name('eventos.imprimir')
             ->where('prestamo', '[0-9]+');
+
+        // Impresión de devolución de evento
+        Route::get('eventos/devoluciones/{devolucion}/imprimir', [\App\Http\Controllers\PrestamoEventoController::class, 'imprimirDevolucion'])
+            ->name('eventos.devolucion.imprimir')
+            ->where('devolucion', '[0-9]+');
 
         Route::get('reportes', [\App\Http\Controllers\PrestamosInertiaController::class, 'reportes'])->name('reportes');
     });

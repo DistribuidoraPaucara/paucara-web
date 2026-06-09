@@ -77,12 +77,24 @@ class PrestamosInertiaController extends Controller
             ->limit(100)
             ->get();
 
+        // Traer prestables con stocks actualizados
+        $prestables = \App\Models\Prestable::where('activo', true)
+            ->with([
+                'stocks' => function ($query) {
+                    $query->select('id', 'prestable_id', 'almacenes_prestables_id', 'cantidad_disponible', 'created_at');
+                }
+            ])
+            ->select('id', 'tipo', 'nombre', 'codigo', 'capacidad', 'prestable_relacionado_id', 'producto_id', 'proveedor_id', 'activo')
+            ->orderBy('nombre')
+            ->get();
+
         return Inertia::render('prestamos/clientes/crear', [
             'clientes' => $clientes,
             'choferes' => $choferes,
             'almacenes' => $almacenes,
             'vehiculos' => $vehiculos,
             'ventas' => $ventas,
+            'prestables' => $prestables, // ✅ Nuevo: prestables con stocks
         ]);
     }
 
@@ -184,10 +196,24 @@ class PrestamosInertiaController extends Controller
             })
             ->values();
 
+        $choferes = User::role('chofer')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($user) => ['id' => $user->id, 'nombre' => $user->name]);
+
+        $vehiculos = \App\Models\Vehiculo::where('activo', true)
+            ->select('id', 'placa', 'marca', 'modelo')
+            ->orderBy('placa')
+            ->get()
+            ->map(fn($v) => ['id' => $v->id, 'placa' => $v->placa, 'marca' => $v->marca, 'modelo' => $v->modelo]);
+
         return Inertia::render('prestamos/proveedores/crear', [
             'proveedores' => $proveedores,
             'compras' => $compras,
             'almacenes_proveedor' => $almacenesProveedor->map(fn($a) => ['id' => $a->id, 'nombre' => $a->nombre])->values(),
+            'choferes' => $choferes,
+            'vehiculos' => $vehiculos,
             'prestables_proveedor' => $prestables,
         ]);
     }
@@ -265,6 +291,11 @@ class PrestamosInertiaController extends Controller
             ->get()
             ->map(fn($user) => ['id' => $user->id, 'nombre' => $user->name]);
 
+        $almacenes = \App\Models\AlmacenPrestable::where('activo', true)
+            ->select('id', 'nombre', 'es_proveedor')
+            ->orderBy('nombre')
+            ->get();
+
         $ventas = \App\Models\Venta::select('id', 'numero', 'cliente_id')
             ->with(['cliente:id,nombre,razon_social'])
             ->orderByDesc('created_at')
@@ -276,10 +307,23 @@ class PrestamosInertiaController extends Controller
             ->orderBy('placa')
             ->get();
 
+        // ✅ NUEVO: Traer prestables con stocks actualizados
+        $prestables = \App\Models\Prestable::where('activo', true)
+            ->with([
+                'stocks' => function ($query) {
+                    $query->select('id', 'prestable_id', 'almacenes_prestables_id', 'cantidad_disponible', 'created_at');
+                }
+            ])
+            ->select('id', 'tipo', 'nombre', 'codigo', 'capacidad', 'prestable_relacionado_id', 'producto_id', 'proveedor_id', 'activo')
+            ->orderBy('nombre')
+            ->get();
+
         return Inertia::render('prestamos/eventos/crear', [
             'choferes' => $choferes,
+            'almacenes' => $almacenes,
             'ventas' => $ventas,
             'vehiculos' => $vehiculos,
+            'prestables' => $prestables, // ✅ Nuevo: prestables con stocks
         ]);
     }
 

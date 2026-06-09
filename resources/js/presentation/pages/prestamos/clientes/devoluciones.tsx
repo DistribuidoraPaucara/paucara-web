@@ -184,12 +184,6 @@ export default function DevolucionesPage({ prestamoId }: { prestamoId: number })
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <Link href="/prestamos/clientes">
-                            <Button variant="outline" className="gap-2 mb-4">
-                                <ArrowLeft size={20} />
-                                Volver
-                            </Button>
-                        </Link>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                             📋 Historial de Devoluciones
                         </h1>

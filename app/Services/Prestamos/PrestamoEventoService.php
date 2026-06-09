@@ -5,9 +5,13 @@ namespace App\Services\Prestamos;
 use App\Models\Cliente;
 use App\Models\PrestamoEvento;
 use App\Models\PrestamoEventoDetalle;
+use App\Models\PrestamoEventoAlmacen;
 use App\Models\DevolucionEvento;
 use App\Models\DevolucionEventoDetalle;
+use App\Models\DevolucionEventoDetalleAlmacen;
 use App\Models\PrestableStock;
+use App\Models\AlmacenPrestable;
+use App\Models\PrestableCondicion;
 use App\Services\MovimientoPrestableService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -66,12 +70,13 @@ class PrestamoEventoService
 
                 // Cliente fijo para eventos: id=51
                 $clienteEventosId = 51;
+                $almacenCabecera = !empty($datos['almacenes_prestables_id']) ? (int) $datos['almacenes_prestables_id'] : null;
 
                 // Crear registro encabezado de préstamo
                 $prestamo = PrestamoEvento::create([
                     'evento_id' => $datos['evento_id'] ?? null,
                     'cliente_id' => $clienteEventosId,
-                    'venta_id' => $datos['venta_id'] ?? null,
+                    'almacenes_prestables_id' => $almacenCabecera,
                     'nombre_evento' => $datos['nombre_evento'],
                     'encargado_evento' => $datos['encargado_evento'] ?? null,
                     'vehiculo_asignado' => $datos['vehiculo_asignado'] ?? null,
@@ -79,7 +84,7 @@ class PrestamoEventoService
                     'telefono_uno' => $datos['telefono_uno'] ?? null,
                     'telefono_dos' => $datos['telefono_dos'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
-                    'cantidad' => 0, // Se actualiza después
+                    'cantidad' => 0,
                     'monto_garantia' => $montoGarantia,
                     'fecha_prestamo' => $datos['fecha_prestamo'],
                     'fecha_entrega' => $datos['fecha_entrega'] ?? null,
@@ -87,94 +92,142 @@ class PrestamoEventoService
                     'estado' => 'ACTIVO',
                 ]);
 
+                // ✅ Asociar múltiples ventas (relación many-to-many)
+                if (!empty($datos['ventas_ids']) && is_array($datos['ventas_ids'])) {
+                    $prestamo->ventas()->attach(array_filter($datos['ventas_ids']));
+                    Log::info('✅ Ventas asociadas al préstamo', [
+                        'prestamo_evento_id' => $prestamo->id,
+                        'ventas_ids' => $datos['ventas_ids'],
+                    ]);
+                }
+
                 Log::info('✅ Cliente EVENTOS asignado automáticamente', [
                     'prestamo_evento_id' => $prestamo->id,
                     'cliente_id' => $clienteEventosId,
                 ]);
 
-
                 // Crear detalles y actualizar stock
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
-                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
+                    $cantidadTotal_detalle = (int) $detalle['cantidad'];
 
-                    PrestamoEventoDetalle::create([
+                    // Crear detalle de préstamo
+                    $prestamoDetalle = PrestamoEventoDetalle::create([
                         'prestamo_evento_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
-                        'cantidad_prestada' => $detalle['cantidad'],
-                        'almacenes_ids' => !empty($almacenesIds) ? $almacenesIds : null,
+                        'cantidad_prestada' => $cantidadTotal_detalle,
                         'monto_garantia' => 0,
                         'estado' => 'ACTIVO',
                     ]);
 
-                    $cantidadTotal += $detalle['cantidad'];
+                    $cantidadTotal += $cantidadTotal_detalle;
 
-                    // Consumir stock de los almacenes seleccionados
-                    $almacenesIds = $detalle['almacenes_ids'] ?? [];
-                    $cantidadRestante = $detalle['cantidad'];
+                    // Determinar almacenes a usar
+                    $almacenesAUsar = [];
 
-                    foreach ($almacenesIds as $almacenId) {
-                        if ($cantidadRestante <= 0) {
-                            break;
+                    // CASO 1: Detalle especifica múltiples almacenes (NUEVO)
+                    if (!empty($detalle['almacenes']) && is_array($detalle['almacenes'])) {
+                        $almacenesAUsar = $detalle['almacenes'];
+                    }
+                    // CASO 2: Usar almacén de cabecera (ANTIGUO - compatibilidad)
+                    elseif (!empty($detalle['almacenes_ids']) && is_array($detalle['almacenes_ids'])) {
+                        foreach (array_filter(array_map('intval', $detalle['almacenes_ids'])) as $almacenId) {
+                            $almacenesAUsar[] = ['almacenes_prestables_id' => $almacenId, 'cantidad' => null];
+                        }
+                    }
+                    elseif ($almacenCabecera) {
+                        $almacenesAUsar = [
+                            ['almacenes_prestables_id' => $almacenCabecera, 'cantidad' => null]
+                        ];
+                    }
+                    else {
+                        throw new \Exception("Debe especificar almacenes_prestables_id en cabecera o detalles.almacenes");
+                    }
+
+                    // Procesar cada almacén
+                    $cantidadDistribuida = 0;
+                    foreach ($almacenesAUsar as $index => $almacenData) {
+                        $almacenId = (int) $almacenData['almacenes_prestables_id'];
+
+                        // Si hay cantidad específica, usarla; sino, distribuir proporcionalmente
+                        if (!empty($almacenData['cantidad']) && is_numeric($almacenData['cantidad'])) {
+                            $cantidadAlmacen = (int) $almacenData['cantidad'];
+                        } else {
+                            // Distribuir cantidad restante entre almacenes sin cantidad específica
+                            $almacenesSinCantidad = count(array_filter($almacenesAUsar, fn($a) => empty($a['cantidad'])));
+                            $cantidadRestante = $cantidadTotal_detalle - $cantidadDistribuida;
+                            $cantidadAlmacen = $almacenesSinCantidad > 0 ? floor($cantidadRestante / $almacenesSinCantidad) : $cantidadRestante;
+
+                            // El último almacén toma el resto
+                            if ($index === count($almacenesAUsar) - 1) {
+                                $cantidadAlmacen = $cantidadRestante;
+                            }
                         }
 
-                        $stock = PrestableStock::where('prestable_id', $detalle['prestable_id'])
-                            ->where('almacenes_prestables_id', $almacenId)
-                            ->first();
-
-                        if (!$stock || (int) $stock->cantidad_disponible <= 0) {
+                        if ($cantidadAlmacen <= 0) {
                             continue;
                         }
 
-                        $cantidadATomar = min($cantidadRestante, (int) $stock->cantidad_disponible);
+                        // Obtener info del almacén
+                        $almacen = AlmacenPrestable::findOrFail($almacenId);
+
+                        // Registrar en tabla pivot PrestamoEventoAlmacen
+                        PrestamoEventoAlmacen::create([
+                            'prestamo_evento_detalle_id' => $prestamoDetalle->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'cantidad' => $cantidadAlmacen,
+                            'es_proveedor' => (bool) $almacen->es_proveedor,
+                        ]);
+
+                        // Consumir stock del almacén
+                        $stock = PrestableStock::where('prestable_id', $detalle['prestable_id'])
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->firstOrFail();
+
+                        if ((int) $stock->cantidad_disponible < $cantidadAlmacen) {
+                            throw new \Exception("Stock insuficiente en almacén {$almacen->nombre}. Disponible: {$stock->cantidad_disponible}, solicitado: {$cantidadAlmacen}");
+                        }
+
                         $disponibleAntes = $stock->cantidad_disponible;
 
                         // Actualizar stock
                         $stock->update([
-                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadATomar,
-                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantidadATomar,
+                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadAlmacen,
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantidadAlmacen,
                         ]);
 
-                        // Obtener stock actualizado
                         $stock->refresh();
-                        $disponibleDespues = $stock->cantidad_disponible;
-                        $eventoDeudorDespues = $stock->cantidad_evento_deudor;
+                        $cantidadDistribuida += $cantidadAlmacen;
 
                         // Registrar movimiento
                         $this->movimientoService->registrarMovimiento([
                             'prestable_stock_id' => $stock->id,
                             'almacenes_prestables_id' => $almacenId,
                             'tipo' => 'CONSUMO_RESERVA',
-                            'cantidad' => -$cantidadATomar,
+                            'cantidad' => -$cantidadAlmacen,
                             'disponible_anterior' => $disponibleAntes,
-                            'disponible_posterior' => $disponibleDespues,
+                            'disponible_posterior' => $stock->cantidad_disponible,
                             'categoria_afectada' => 'prestamo_evento',
                             'motivo' => 'Préstamo a evento',
-                            'observaciones' => "Préstamo a evento: {$datos['nombre_evento']}",
+                            'observaciones' => "Evento: {$datos['nombre_evento']}",
                             'referencia_tipo' => 'PRESTAMO_EVENTO',
                             'referencia_id' => $prestamo->id,
                         ]);
 
-                        $cantidadRestante -= $cantidadATomar;
-
-                        Log::info('✅ Stock consumido para préstamo a evento', [
+                        Log::info('✅ Stock consumido para evento', [
                             'prestamo_evento_id' => $prestamo->id,
                             'prestable_id' => $detalle['prestable_id'],
                             'almacen_id' => $almacenId,
-                            'cantidad' => $cantidadATomar,
+                            'cantidad' => $cantidadAlmacen,
                         ]);
-                    }
-
-                    if ($cantidadRestante > 0) {
-                        throw new \Exception("Stock insuficiente en almacenes seleccionados. Solicitado: {$detalle['cantidad']}, disponible: " . ($detalle['cantidad'] - $cantidadRestante));
                     }
                 }
 
                 // Actualizar cantidad total en encabezado
                 $prestamo->update(['cantidad' => $cantidadTotal]);
 
-                Log::info('✅ Préstamo a evento creado exitosamente', [
+                Log::info('✅ Préstamo a evento creado (con soporte de múltiples almacenes)', [
                     'prestamo_evento_id' => $prestamo->id,
                     'nombre_evento' => $datos['nombre_evento'],
                     'cantidad_total' => $cantidadTotal,
@@ -223,6 +276,11 @@ class PrestamoEventoService
             return DB::transaction(function () use ($datos) {
                 $prestamo = PrestamoEvento::findOrFail($datos['prestamo_evento_id']);
 
+                Log::info('📦 Procesando devolución evento', [
+                    'monto_cobrado_daño_total_header' => $datos['monto_cobrado_daño_total'] ?? 0,
+                    'cantidad_detalles' => count($datos['detalles'] ?? []),
+                ]);
+
                 // Crear encabezado de devolución
                 $devolucion = DevolucionEvento::create([
                     'prestamo_evento_id' => $prestamo->id,
@@ -238,53 +296,203 @@ class PrestamoEventoService
                 $cantidadDevueltaTotal = 0;
 
                 // Procesar detalles de devolución
-                foreach ($datos['detalles'] ?? [] as $detalle) {
-                    $prestamoDetalle = PrestamoEventoDetalle::findOrFail($detalle['prestamo_evento_detalle_id']);
+                foreach ($datos['detalles'] ?? [] as $detalleData) {
+                    $detallePrestamoEvento = PrestamoEventoDetalle::findOrFail($detalleData['prestamo_evento_detalle_id']);
+                    $cantidadDevuelta = (int) ($detalleData['cantidad_devuelta'] ?? 0);
+                    $cantidadDañadaTotal = (int) ($detalleData['cantidad_dañada_total'] ?? 0);
 
-                    DevolucionEventoDetalle::create([
+                    // Registrar detalle de devolución
+                    $detalleDevolucion = DevolucionEventoDetalle::create([
                         'devolucion_evento_id' => $devolucion->id,
-                        'prestamo_evento_detalle_id' => $prestamoDetalle->id,
-                        'cantidad_devuelta' => $detalle['cantidad_devuelta'],
-                        'cantidad_dañada_parcial' => $detalle['cantidad_dañada_parcial'] ?? 0,
-                        'cantidad_dañada_total' => $detalle['cantidad_dañada_total'] ?? 0,
-                        'monto_cobrado_daño' => (float) ($detalle['monto_cobrado_daño'] ?? 0),
-                        'monto_garantia_devuelta' => (float) ($detalle['monto_garantia_devuelta'] ?? 0),
+                        'prestamo_evento_detalle_id' => $detallePrestamoEvento->id,
+                        'cantidad_devuelta' => $cantidadDevuelta,
+                        'cantidad_dañada_parcial' => 0,
+                        'cantidad_dañada_total' => $cantidadDañadaTotal,
+                        'monto_cobrado_daño' => (float) ($detalleData['monto_cobrado_daño'] ?? 0),
+                        'monto_garantia_devuelta' => (float) ($detalleData['monto_garantia_devuelta'] ?? 0),
                     ]);
 
-                    $cantidadDevueltaTotal += $detalle['cantidad_devuelta'];
+                    // ✅ NUEVO: Procesar devoluciones por CADA ALMACÉN especificado
+                    $devolucionesAlmacenes = $detalleData['devolucion_almacenes'] ?? [];
+                    $condicion = PrestableCondicion::where('prestable_id', $detallePrestamoEvento->prestable_id)->first();
 
-                    // Actualizar stock: move from evento_activo to evento_devuelto + disponible
-                    $stock = PrestableStock::where('prestable_id', $prestamoDetalle->prestable_id)
-                        ->where('almacenes_prestables_id', $almacenId)
-                        ->first();
+                    if (!empty($devolucionesAlmacenes)) {
+                        // ✅ NUEVO: Validar que los valores de almacenes sumen correctamente
+                        $sumaCantidadDevuelta = array_sum(array_map(fn($a) => (int) ($a['cantidad_devuelta'] ?? 0), $devolucionesAlmacenes));
+                        $sumaCantidadDanada = array_sum(array_map(fn($a) => (int) ($a['cantidad_dañada_total'] ?? 0), $devolucionesAlmacenes));
 
-                    if ($stock) {
-                        $eventoActivoAntes = $stock->cantidad_evento_deudor;
+                        if ($sumaCantidadDevuelta !== $cantidadDevuelta) {
+                            throw new \Exception(
+                                "❌ Inconsistencia de cantidades devueltas para detalle {$detalleData['prestamo_evento_detalle_id']}: " .
+                                "suma de almacenes ({$sumaCantidadDevuelta}) ≠ cantidad total ({$cantidadDevuelta})"
+                            );
+                        }
 
-                        $stock->update([
-                            'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $detalle['cantidad_devuelta']),
-                            'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto + $detalle['cantidad_devuelta'],
-                            // Las dañadas no retornan a disponible
-                            'cantidad_disponible' => $stock->cantidad_disponible + $detalle['cantidad_devuelta'],
+                        if ($sumaCantidadDanada !== $cantidadDañadaTotal) {
+                            throw new \Exception(
+                                "❌ Inconsistencia de cantidades dañadas para detalle {$detalleData['prestamo_evento_detalle_id']}: " .
+                                "suma de almacenes ({$sumaCantidadDanada}) ≠ cantidad total ({$cantidadDañadaTotal})"
+                            );
+                        }
+
+                        // ✅ El usuario especificó almacenes en la devolución
+                        Log::info('🔍 Devolución evento por almacenes especificados', [
+                            'prestable_id' => $detallePrestamoEvento->prestable_id,
+                            'cantidad_almacenes' => count($devolucionesAlmacenes),
+                            'suma_cantidad_devuelta' => $sumaCantidadDevuelta,
+                            'suma_cantidad_danada' => $sumaCantidadDanada,
                         ]);
 
-                        // Registrar movimiento
-                        $this->movimientoService->registrarMovimiento([
-                            'prestable_id' => $prestamoDetalle->prestable_id,
-                            'almacen_id' => $almacenId,
-                            'tipo' => 'DEVOLUCION_EVENTO',
-                            'cantidad_antes' => $eventoActivoAntes,
-                            'cantidad_despues' => $stock->cantidad_evento_deudor,
-                            'referencia_id' => $devolucion->id,
-                            'observaciones' => "Devolución evento: {$detalle['cantidad_devuelta']} devuelto(s), {$detalle['cantidad_dañada_total']} dañado(s)",
-                        ]);
+                        // ✅ Procesar cada almacén especificado
+                        foreach ($devolucionesAlmacenes as $almacenDev) {
+                            $almacenIdDev = $almacenDev['almacenes_prestables_id'];
+                            $cantDevAlmacen = (int) ($almacenDev['cantidad_devuelta'] ?? 0);
+                            $cantDanAlmacen = (int) ($almacenDev['cantidad_dañada_total'] ?? 0);
 
-                        Log::info('✅ Devolución de evento registrada', [
-                            'devolucion_evento_id' => $devolucion->id,
-                            'prestable_id' => $prestamoDetalle->prestable_id,
-                            'cantidad_devuelta' => $detalle['cantidad_devuelta'],
-                        ]);
+                            // Crear registro en DevolucionEventoDetalleAlmacen
+                            if ($cantDevAlmacen > 0 || $cantDanAlmacen > 0) {
+                                $almacenObj = AlmacenPrestable::find($almacenIdDev);
+                                DevolucionEventoDetalleAlmacen::create([
+                                    'devolucion_evento_detalle_id' => $detalleDevolucion->id,
+                                    'almacenes_prestables_id' => $almacenIdDev,
+                                    'cantidad_devuelta' => $cantDevAlmacen,
+                                    'cantidad_dañada_parcial' => 0,
+                                    'cantidad_dañada_total' => $cantDanAlmacen,
+                                    'monto_cobrado_daño' => $cantDanAlmacen * ($condicion->monto_daño_total ?? 0),
+                                    'monto_garantia_devuelta' => $cantDevAlmacen * ($condicion->monto_garantia ?? 0),
+                                    'es_proveedor' => (bool) $almacenObj->es_proveedor,
+                                ]);
+
+                                // Obtener stock ANTES de devolver
+                                $stock = $this->stockService->obtenerStock($detallePrestamoEvento->prestable_id, $almacenIdDev);
+                                $disponibleAntes = $stock->cantidad_disponible;
+                                $eventoDeudorAntes = $stock->cantidad_evento_deudor;
+                                $eventoDañadaAntes = $stock->cantidad_evento_dañada;
+
+                                // ✅ Actualizar stock con devolución de evento
+                                $this->stockService->devolverDelEvento(
+                                    $detallePrestamoEvento->prestable_id,
+                                    $almacenIdDev,
+                                    $cantDevAlmacen,
+                                    $cantDanAlmacen
+                                );
+
+                                // Obtener stock DESPUÉS de devolver
+                                $stock->refresh();
+
+                                // Registrar movimiento de devolución POR ALMACÉN
+                                $this->movimientoService->registrarMovimiento([
+                                    'prestable_stock_id' => $stock->id,
+                                    'almacenes_prestables_id' => $almacenIdDev,
+                                    'tipo' => 'ENTRADA',
+                                    'cantidad' => $cantDevAlmacen,
+                                    'disponible_anterior' => $disponibleAntes,
+                                    'disponible_posterior' => $stock->cantidad_disponible,
+                                    'categoria_afectada' => 'evento_devolucion',
+                                    'motivo' => 'Devolución de evento',
+                                    'observaciones' => "Evento: {$prestamo->nombre_evento}, Almacén: {$almacenObj->nombre}",
+                                    'referencia_tipo' => 'DEVOLUCION_EVENTO',
+                                    'referencia_id' => $devolucion->id,
+                                    'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
+                                    'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada,
+                                    'cantidad_dañada_registrada' => $cantDanAlmacen,
+                                ]);
+
+                                Log::info('✅ Devolución evento procesada por almacén', [
+                                    'prestable_id' => $detallePrestamoEvento->prestable_id,
+                                    'almacen_id' => $almacenIdDev,
+                                    'cantidad_devuelta' => $cantDevAlmacen,
+                                    'cantidad_dañada' => $cantDanAlmacen,
+                                ]);
+                            }
+                        }
+                    } else {
+                        // ✅ Si no hay almacenes especificados, usar los del préstamo original
+                        $almacenesDelDetalle = $detallePrestamoEvento->almacenes()->get();
+
+                        if ($almacenesDelDetalle->isNotEmpty()) {
+                            // Distribuir cantidades entre almacenes originales
+                            $cantidadDevueltaDistribuida = 0;
+                            $cantidadDañadaDistribuida = 0;
+
+                            foreach ($almacenesDelDetalle as $index => $almacenRel) {
+                                $esUltimo = ($index === $almacenesDelDetalle->count() - 1);
+                                $cantidadAlmacenDisp = $almacenRel->cantidad;
+
+                                // Distribuir cantidad devuelta
+                                $cantDevAlm = min($cantidadDevuelta - $cantidadDevueltaDistribuida, $cantidadAlmacenDisp);
+                                if ($esUltimo) {
+                                    $cantDevAlm = $cantidadDevuelta - $cantidadDevueltaDistribuida;
+                                }
+                                $cantidadDevueltaDistribuida += $cantDevAlm;
+
+                                // Distribuir cantidad dañada
+                                $cantDanAlm = min($cantidadDañadaTotal - $cantidadDañadaDistribuida, max(0, $cantidadAlmacenDisp - $cantDevAlm));
+                                if ($esUltimo) {
+                                    $cantDanAlm = $cantidadDañadaTotal - $cantidadDañadaDistribuida;
+                                }
+                                $cantidadDañadaDistribuida += $cantDanAlm;
+
+                                // Crear registro en DevolucionEventoDetalleAlmacen
+                                if ($cantDevAlm > 0 || $cantDanAlm > 0) {
+                                    $almacenObj = AlmacenPrestable::find($almacenRel->almacenes_prestables_id);
+                                    DevolucionEventoDetalleAlmacen::create([
+                                        'devolucion_evento_detalle_id' => $detalleDevolucion->id,
+                                        'almacenes_prestables_id' => $almacenRel->almacenes_prestables_id,
+                                        'cantidad_devuelta' => $cantDevAlm,
+                                        'cantidad_dañada_parcial' => 0,
+                                        'cantidad_dañada_total' => $cantDanAlm,
+                                        'monto_cobrado_daño' => $cantDanAlm * ($condicion->monto_daño_total ?? 0),
+                                        'monto_garantia_devuelta' => $cantDevAlm * ($condicion->monto_garantia ?? 0),
+                                        'es_proveedor' => (bool) $almacenObj->es_proveedor,
+                                    ]);
+
+                                    // Obtener stock ANTES de devolver
+                                    $stock = $this->stockService->obtenerStock($detallePrestamoEvento->prestable_id, $almacenRel->almacenes_prestables_id);
+                                    $disponibleAntes = $stock->cantidad_disponible;
+                                    $eventoDañadaAntes = $stock->cantidad_evento_dañada;
+
+                                    // ✅ Actualizar stock con devolución de evento
+                                    $this->stockService->devolverDelEvento(
+                                        $detallePrestamoEvento->prestable_id,
+                                        $almacenRel->almacenes_prestables_id,
+                                        $cantDevAlm,
+                                        $cantDanAlm
+                                    );
+
+                                    // Obtener stock DESPUÉS de devolver
+                                    $stock->refresh();
+
+                                    // Registrar movimiento
+                                    $this->movimientoService->registrarMovimiento([
+                                        'prestable_stock_id' => $stock->id,
+                                        'almacenes_prestables_id' => $almacenRel->almacenes_prestables_id,
+                                        'tipo' => 'ENTRADA',
+                                        'cantidad' => $cantDevAlm,
+                                        'disponible_anterior' => $disponibleAntes,
+                                        'disponible_posterior' => $stock->cantidad_disponible,
+                                        'categoria_afectada' => 'evento_devolucion',
+                                        'motivo' => 'Devolución de evento',
+                                        'observaciones' => "Evento: {$prestamo->nombre_evento}",
+                                        'referencia_tipo' => 'DEVOLUCION_EVENTO',
+                                        'referencia_id' => $devolucion->id,
+                                        'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
+                                        'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada,
+                                        'cantidad_dañada_registrada' => $cantDanAlm,
+                                    ]);
+                                }
+                            }
+                        }
                     }
+
+                    Log::info('💰 Detalle de devolución evento procesado', [
+                        'prestable_id' => $detallePrestamoEvento->prestable_id,
+                        'cantidad_dañada' => $cantidadDañadaTotal,
+                        'monto_desde_frontend' => $detalleData['monto_cobrado_daño'] ?? 0,
+                        'monto_final_usado' => (float) ($detalleData['monto_cobrado_daño'] ?? 0),
+                    ]);
+
+                    $cantidadDevueltaTotal += $cantidadDevuelta;
                 }
 
                 // Actualizar cantidad total
@@ -306,7 +514,6 @@ class PrestamoEventoService
         } catch (\Exception $e) {
             Log::error('❌ Error registrando devolución de evento', [
                 'error' => $e->getMessage(),
-                'datos' => $datos,
             ]);
 
             return false;

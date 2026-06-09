@@ -41,4 +41,9 @@ class PrestamoProveedorDetalle extends Model
     {
         return $this->hasMany(DevolucionProveedorDetalle::class, 'prestamo_proveedor_detalle_id');
     }
+
+    public function almacenes(): HasMany
+    {
+        return $this->hasMany(PrestamoProveedorAlmacen::class, 'prestamo_proveedor_detalle_id');
+    }
 }

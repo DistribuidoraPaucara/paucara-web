@@ -12,7 +12,7 @@ use App\Models\Producto;
 use App\Models\Proforma;
 use App\Services\ComboStockService;
 use App\Services\Reservas\ReservaDistribucionService;
-use App\Services\Stock\MovimientoInventarioService;
+use App\Services\Stock\MovimientoStockService;  // ✅ NUEVO: Servicio centralizado
 use App\Services\Stock\StockService; // ✅ CORREGIDO: namespace correcto
 use App\Services\Venta\PrecioRangoProductoService;
 use App\Services\PagoVentaService; // ✅ NUEVO: Para registrar detalles de pago
@@ -27,7 +27,7 @@ use Inertia\Response;
 class ApiProformaController extends Controller
 {
     public function __construct(
-        private MovimientoInventarioService $movimientoService,
+        private MovimientoStockService $movimientoService,  // ✅ NUEVO: Servicio centralizado
         private PagoVentaService $pagoVentaService, // ✅ NUEVO: Para registrar detalles de pago
     ) {}
 
@@ -257,6 +257,89 @@ class ApiProformaController extends Controller
                         'capacidad_disponible' => $capacidadDisponible,
                         'cuello_botella'       => $capacidad['cuello_botella'] ?? null,
                     ]);
+
+                    // ✅ NUEVO: Validar productos seleccionados en combo_items_seleccionados
+                    if (isset($item['combo_items_seleccionados']) && is_array($item['combo_items_seleccionados'])) {
+                        $productosEnCombo = \App\Models\ComboItem::where('combo_id', $producto->id)
+                            ->pluck('producto_id', 'id')
+                            ->toArray();
+
+                        $componentesSinStock = [];
+
+                        foreach ($item['combo_items_seleccionados'] as $itemSeleccionado) {
+                            $comboItemId = $itemSeleccionado['combo_item_id'] ?? null;
+                            $productoIdSeleccionado = $itemSeleccionado['producto_id'] ?? null;
+                            $cantidadItemCombo = (float) ($itemSeleccionado['cantidad'] ?? 1);
+
+                            // ✅ Validación 1: Que el combo_item_id pertenezca al combo
+                            if (!isset($productosEnCombo[$comboItemId])) {
+                                throw new \Exception(json_encode([
+                                    'success' => false,
+                                    'message' => "El item #{$comboItemId} no pertenece al combo {$producto->nombre}",
+                                    'code' => 'COMBO_ITEM_NO_PERTENECE',
+                                    'status' => 422,
+                                    'combo_id' => $producto->id,
+                                    'combo_item_id' => $comboItemId,
+                                ]));
+                            }
+
+                            // ✅ Validación 2: Que el producto_id coincida con el combo_item
+                            if ($productosEnCombo[$comboItemId] !== $productoIdSeleccionado) {
+                                throw new \Exception(json_encode([
+                                    'success' => false,
+                                    'message' => "El producto seleccionado no coincide con el item del combo",
+                                    'code' => 'PRODUCTO_NO_COINCIDE',
+                                    'status' => 422,
+                                    'combo_item_id' => $comboItemId,
+                                    'producto_esperado' => $productosEnCombo[$comboItemId],
+                                    'producto_recibido' => $productoIdSeleccionado,
+                                ]));
+                            }
+
+                            // ✅ Validación 3: Validar stock de cada componente seleccionado
+                            $productoDeLista = \App\Models\Producto::findOrFail($productoIdSeleccionado);
+                            $stockComponente = $productoDeLista->stock()->sum('cantidad_disponible') ?? 0;
+
+                            // Stock requerido = cantidad_combos × cantidad_del_item
+                            $comboItem = \App\Models\ComboItem::find($comboItemId);
+                            $cantidadRequeridaPorCombo = $comboItem->cantidad ?? 1;
+                            $stockRequerido = $cantidad * $cantidadRequeridaPorCombo;
+
+                            if ($stockComponente < $stockRequerido) {
+                                $componentesSinStock[] = [
+                                    'combo_item_id'    => $comboItemId,
+                                    'componente'       => $productoDeLista->nombre,
+                                    'combos_solicitados' => (int) $cantidad,
+                                    'cantidad_por_combo' => $cantidadRequeridaPorCombo,
+                                    'stock_requerido'  => $stockRequerido,
+                                    'stock_disponible' => $stockComponente,
+                                    'faltante'         => $stockRequerido - $stockComponente,
+                                ];
+
+                                \Log::warning('⚠️ Stock insuficiente en componente de combo', [
+                                    'combo_id'           => $producto->id,
+                                    'combo_nombre'       => $producto->nombre,
+                                    'combo_item_id'      => $comboItemId,
+                                    'componente_id'      => $productoIdSeleccionado,
+                                    'componente_nombre'  => $productoDeLista->nombre,
+                                    'stock_requerido'    => $stockRequerido,
+                                    'stock_disponible'   => $stockComponente,
+                                ]);
+                            }
+                        }
+
+                        // Si hay componentes con stock insuficiente, agregar al error
+                        if (!empty($componentesSinStock)) {
+                            $stockInsuficiente[] = [
+                                'producto'   => $producto->nombre . ' (COMBO)',
+                                'tipo_error' => 'COMPONENTES_SIN_STOCK',
+                                'requerido'  => $cantidad . ' ' . ($cantidad == 1 ? 'combo' : 'combos'),
+                                'detalles'   => [
+                                    'componentes_sin_stock' => $componentesSinStock,
+                                ],
+                            ];
+                        }
+                    }
                 } else {
                     // Para PRODUCTOS SIMPLES: Validar stock disponible
                     $stockDisponible = $producto->stock()->sum('cantidad_disponible');
@@ -2664,17 +2747,8 @@ class ApiProformaController extends Controller
                         ->first();
                 }
 
-                // ✅ Establecer atributo especial para el listener
-                if ($cajaAbiertaParaRegistro) {
-                    $venta->setAttribute('_caja_id', $cajaAbiertaParaRegistro->caja_id);
-                    Log::info('🔑 [procesarVenta] Establecido _caja_id para listener', [
-                        'venta_id'    => $venta->id,
-                        'caja_id'     => $cajaAbiertaParaRegistro->caja_id,
-                        'caja_nombre' => $cajaAbiertaParaRegistro->caja?->nombre,
-                    ]);
-                }
-
                 // ✅ DISPARO MANUAL DEL EVENTO: VentaCreada (para que se registre en caja)
+                // caja_id ya fue asignado correctamente en $datosVenta, no se necesita atributo temporal
                 event(new \App\Events\VentaCreada($venta));
 
                 // Marcar la proforma como convertida
@@ -3413,22 +3487,8 @@ class ApiProformaController extends Controller
                         ->first();
                 }
 
-                // ✅ Establecer atributo especial para el listener
-                if ($cajaAbiertaParaRegistro) {
-                    $venta->setAttribute('_caja_id', $cajaAbiertaParaRegistro->caja_id);
-                    Log::info('🔑 [convertirAVenta] Establecido _caja_id para listener', [
-                        'venta_id'    => $venta->id,
-                        'caja_id'     => $cajaAbiertaParaRegistro->caja_id,
-                        'caja_nombre' => $cajaAbiertaParaRegistro->caja?->nombre,
-                    ]);
-                } else {
-                    Log::warning('⚠️ [convertirAVenta] No hay caja para establecer _caja_id', [
-                        'venta_id'   => $venta->id,
-                        'usuario_id' => request()->user()->id,
-                    ]);
-                }
-
                 // ✅ DISPARO MANUAL DEL EVENTO: VentaCreada (para que se registre en caja)
+                // caja_id ya fue asignado correctamente en $datosVenta, no se necesita atributo temporal
                 event(new \App\Events\VentaCreada($venta));
 
                 // ✅ NUEVO: Disparar evento ProformaConvertida para notificar al cliente a través de WebSocket
@@ -4219,96 +4279,24 @@ class ApiProformaController extends Controller
         }
 
         try {
-            // 1️⃣ Obtener stock ANTES de cambios
-            $stockProducto             = \App\Models\StockProducto::lockForUpdate()->findOrFail($reserva->stock_producto_id);
-            $almacenId                 = $stockProducto->almacen_id;
-            $productoId                = $stockProducto->producto_id;
-            $cantidadAnterior          = $stockProducto->cantidad_disponible;
-            $cantidadReservadaAnterior = $stockProducto->cantidad_reservada;
-
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO antes de cambios
-            $totalProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 2️⃣ Actualizar stock_productos (liberar cantidad_reservada → cantidad_disponible)
+            // ✅ NUEVO: Usar MovimientoStockService que hace TODO en una transacción
             $cantidadALiberar = $reserva->cantidad_reservada;
-            $stockProducto->update([
-                'cantidad_disponible' => $stockProducto->cantidad_disponible + $cantidadALiberar,
-                'cantidad_reservada'  => $stockProducto->cantidad_reservada - $cantidadALiberar,
-            ]);
 
-            // 3️⃣ Obtener valores DESPUÉS
-            $stockProducto->refresh();
-            $cantidadPosterior          = $stockProducto->cantidad_disponible;
-            $cantidadReservadaPosterior = $stockProducto->cantidad_reservada;
-
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO después de cambios
-            $totalProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 4️⃣ Actualizar estado de la reserva
-            $reserva->update(['estado' => \App\Models\ReservaProforma::LIBERADA]);
-
-            // 5️⃣ Registrar movimiento con totales del PRODUCTO (no solo del lote)
-            $detalleLotetodo = [
-                [
-                    'stock_producto_id' => $stockProducto->id,
-                    'lote' => $stockProducto->lote,
-                    'cantidad' => $cantidadALiberar,
-                    'cantidad_total_anterior' => $totalProductoAnterior,
-                    'cantidad_total_posterior' => $totalProductoPosterior,
-                    'cantidad_disponible_anterior' => $cantidadAnterior,
-                    'cantidad_disponible_posterior' => $cantidadPosterior,
-                    'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                    'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                ]
-            ];
-
-            $this->movimientoService->registrarMovimientoAgrupado(
-                $productoId,
-                $almacenId,
-                \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
-                'proforma',
-                $cantidadALiberar,  // Positivo: liberado
-                $numeroProforma ?? '',
-                $detalleLotetodo,
-                [
-                    'referencia_tipo' => 'proforma',
-                    'referencia_id' => $reserva->proforma_id,
-                    'totales_previos' => [
-                        'cantidad_total_anterior' => $totalProductoAnterior,
-                        'cantidad_disponible_anterior' => $totalDisponibleProductoAnterior,
-                        'cantidad_reservada_anterior' => $totalReservadoProductoAnterior,
-                    ],
-                    'totales_posteriores' => [
-                        'cantidad_total_posterior' => $totalProductoPosterior,
-                        'cantidad_disponible_posterior' => $totalDisponibleProductoPosterior,
-                        'cantidad_reservada_posterior' => $totalReservadoProductoPosterior,
-                    ],
-                    'observacion_extra' => [
-                        'motivo' => $motivo,
-                        'reserva_id' => $reserva->id,
-                    ]
+            $this->movimientoService->registrarMovimientoYActualizar(
+                stockProductoId: $reserva->stock_producto_id,
+                cantidad: $cantidadALiberar,  // Positivo: libera
+                tipo: \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
+                referencia_tipo: 'proforma_liberada',
+                referencia_id: $reserva->proforma_id,
+                metadataAdicional: [
+                    'motivo' => $motivo,
+                    'reserva_id' => $reserva->id,
+                    'numero_proforma' => $numeroProforma,
                 ]
             );
+
+            // ✅ NUEVO: Actualizar estado de la reserva DESPUÉS del movimiento (ya es consistente)
+            $reserva->update(['estado' => \App\Models\ReservaProforma::LIBERADA]);
 
             \Illuminate\Support\Facades\Log::info('✅ Reserva liberada completamente', [
                 'reserva_id'                  => $reserva->id,
@@ -4408,100 +4396,19 @@ class ApiProformaController extends Controller
     private function liberarExcesoReserva(\App\Models\ReservaProforma $reserva, int $exceso, string $motivo, ?string $numeroProforma = null)
     {
         try {
-            // 1️⃣ Obtener stock ANTES de cambios
-            $stockProducto             = \App\Models\StockProducto::lockForUpdate()->findOrFail($reserva->stock_producto_id);
-            $almacenId                 = $stockProducto->almacen_id;
-            $productoId                = $stockProducto->producto_id;
-            $cantidadAnterior          = $stockProducto->cantidad_disponible;
-            $cantidadReservadaAnterior = $stockProducto->cantidad_reservada;
-
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO antes de cambios
-            $totalProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 2️⃣ Actualizar stock_productos (liberar cantidad_reservada → cantidad_disponible)
-            $stockProducto->update([
-                'cantidad_disponible' => $stockProducto->cantidad_disponible + $exceso,
-                'cantidad_reservada'  => $stockProducto->cantidad_reservada - $exceso,
-            ]);
-
-            // 3️⃣ Obtener valores DESPUÉS
-            $stockProducto->refresh();
-            $cantidadPosterior          = $stockProducto->cantidad_disponible;
-            $cantidadReservadaPosterior = $stockProducto->cantidad_reservada;
-
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO después de cambios
-            $totalProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 4️⃣ Registrar movimiento con totales del PRODUCTO (no solo del lote)
-            $detalleLotetodo = [
-                [
-                    'stock_producto_id' => $stockProducto->id,
-                    'lote' => $stockProducto->lote,
-                    'cantidad' => $exceso,
-                    'cantidad_total_anterior' => $totalProductoAnterior,
-                    'cantidad_total_posterior' => $totalProductoPosterior,
-                    'cantidad_disponible_anterior' => $cantidadAnterior,
-                    'cantidad_disponible_posterior' => $cantidadPosterior,
-                    'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                    'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                ]
-            ];
-
-            $this->movimientoService->registrarMovimientoAgrupado(
-                $productoId,
-                $almacenId,
-                \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
-                'proforma',
-                $exceso,  // Positivo: liberado
-                $numeroProforma ?? '',
-                $detalleLotetodo,
-                [
-                    'referencia_tipo' => 'proforma',
-                    'referencia_id' => $reserva->proforma_id,
-                    'totales_previos' => [
-                        'cantidad_total_anterior' => $totalProductoAnterior,
-                        'cantidad_disponible_anterior' => $totalDisponibleProductoAnterior,
-                        'cantidad_reservada_anterior' => $totalReservadoProductoAnterior,
-                    ],
-                    'totales_posteriores' => [
-                        'cantidad_total_posterior' => $totalProductoPosterior,
-                        'cantidad_disponible_posterior' => $totalDisponibleProductoPosterior,
-                        'cantidad_reservada_posterior' => $totalReservadoProductoPosterior,
-                    ],
-                    'observacion_extra' => [
-                        'motivo' => $motivo,
-                        'reserva_id' => $reserva->id,
-                    ]
+            // ✅ NUEVO: Usar MovimientoStockService que hace TODO en una transacción
+            $this->movimientoService->registrarMovimientoYActualizar(
+                stockProductoId: $reserva->stock_producto_id,
+                cantidad: $exceso,  // Positivo: libera
+                tipo: \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
+                referencia_tipo: 'proforma_reducida',
+                referencia_id: $reserva->proforma_id,
+                metadataAdicional: [
+                    'motivo' => $motivo,
+                    'exceso' => $exceso,
+                    'numero_proforma' => $numeroProforma,
                 ]
             );
-
-            \Illuminate\Support\Facades\Log::info('✅ Exceso liberado correctamente', [
-                'reserva_id'                  => $reserva->id,
-                'exceso'                      => $exceso,
-                'cantidad_disponible_antes'   => $cantidadAnterior,
-                'cantidad_disponible_despues' => $cantidadPosterior,
-                'motivo'                      => $motivo,
-            ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('❌ Error liberando exceso', [
                 'reserva_id' => $reserva->id,
@@ -4520,97 +4427,24 @@ class ApiProformaController extends Controller
         }
 
         try {
-            // 1️⃣ Obtener stock ANTES de cambios
-            $stockProducto              = \App\Models\StockProducto::lockForUpdate()->findOrFail($reserva->stock_producto_id);
-            $almacenId                  = $stockProducto->almacen_id;
-            $productoId                 = $stockProducto->producto_id;
-            $cantidadDisponibleAnterior = $stockProducto->cantidad_disponible;
-            $cantidadReservadaAnterior  = $reserva->cantidad_reservada;
+            // ✅ NUEVO: Usar MovimientoStockService que hace TODO en una transacción
+            $diferencia = $cantidadNueva - $reserva->cantidad_reservada;
 
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO antes de cambios
-            $totalProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoAnterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 2️⃣ Validar disponibilidad
-            $diferencia = $cantidadNueva - $cantidadReservadaAnterior;
-            if ($stockProducto->cantidad_disponible < $diferencia) {
-                throw new \Exception("Stock insuficiente para ampliar reserva");
-            }
-
-            // 3️⃣ Actualizar cantidad de la reserva
-            $reserva->update(['cantidad_reservada' => $cantidadNueva]);
-
-            // 4️⃣ Actualizar stock_productos (reducir cantidad_disponible y aumentar cantidad_reservada)
-            $stockProducto->update([
-                'cantidad_disponible' => $stockProducto->cantidad_disponible - $diferencia,
-                'cantidad_reservada'  => $stockProducto->cantidad_reservada + $diferencia,
-            ]);
-
-            // 5️⃣ Obtener valores DESPUÉS
-            $stockProducto->refresh();
-            $cantidadDisponiblePosterior = $stockProducto->cantidad_disponible;
-            $cantidadReservadaPosterior = $stockProducto->cantidad_reservada;
-
-            // ✅ NUEVO (2026-04-05): Obtener TOTALES del PRODUCTO después de cambios
-            $totalProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad');
-
-            $totalDisponibleProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_disponible');
-
-            $totalReservadoProductoPosterior = \App\Models\StockProducto::where('producto_id', $productoId)
-                ->where('almacen_id', $almacenId)
-                ->sum('cantidad_reservada');
-
-            // 6️⃣ Registrar movimiento en inventario con totales del PRODUCTO (no solo del lote)
-            $detalleLotetodo = [
-                [
-                    'stock_producto_id' => $stockProducto->id,
-                    'lote' => $stockProducto->lote,
-                    'cantidad' => -$diferencia,  // Negativo: reservar
-                    'cantidad_total_anterior' => $totalProductoAnterior,
-                    'cantidad_total_posterior' => $totalProductoPosterior,
-                    'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
-                    'cantidad_disponible_posterior' => $cantidadDisponiblePosterior,
-                    'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                    'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                ]
-            ];
-
-            $this->movimientoService->registrarMovimientoAgrupado(
-                $productoId,
-                $almacenId,
-                \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
-                'proforma',
-                -$diferencia,  // Negativo: reservar
-                $proforma?->numero ?? '',
-                $detalleLotetodo,
-                [
-                    'referencia_tipo' => 'proforma',
-                    'referencia_id' => $proforma?->id,
-                    'totales_previos' => [
-                        'cantidad_total_anterior' => $totalProductoAnterior,
-                        'cantidad_disponible_anterior' => $totalDisponibleProductoAnterior,
-                        'cantidad_reservada_anterior' => $totalReservadoProductoAnterior,
-                    ],
-                    'totales_posteriores' => [
-                        'cantidad_total_posterior' => $totalProductoPosterior,
-                        'cantidad_disponible_posterior' => $totalDisponibleProductoPosterior,
-                        'cantidad_reservada_posterior' => $totalReservadoProductoPosterior,
-                    ],
+            $this->movimientoService->registrarMovimientoYActualizar(
+                stockProductoId: $reserva->stock_producto_id,
+                cantidad: -$diferencia,  // Negativo: reservar más
+                tipo: \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
+                referencia_tipo: 'proforma_ampliada',
+                referencia_id: $proforma?->id ?? $reserva->proforma_id,
+                metadataAdicional: [
+                    'cantidad_anterior' => $reserva->cantidad_reservada,
+                    'cantidad_nueva' => $cantidadNueva,
+                    'numero_proforma' => $proforma?->numero,
                 ]
             );
+
+            // ✅ NUEVO: Actualizar cantidad de la reserva DESPUÉS del movimiento (ya es consistente)
+            $reserva->update(['cantidad_reservada' => $cantidadNueva]);
 
             \Illuminate\Support\Facades\Log::info('✅ Reserva ampliada correctamente', [
                 'reserva_id'                  => $reserva->id,

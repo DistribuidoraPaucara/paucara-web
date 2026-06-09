@@ -653,9 +653,9 @@ export default function PrestamosClientesIndex() {
                                         {/* <TableHead className="text-gray-900 dark:text-gray-100">Prestable</TableHead> */}
                                         {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Cantidad</TableHead> */}
                                         <TableHead className="text-gray-900 dark:text-gray-100">Garantía</TableHead>
-                                        <TableHead className="text-center text-gray-900 dark:text-gray-100">Total</TableHead>
-                                        <TableHead className="text-center text-gray-900 dark:text-gray-100">Devuelto</TableHead>
-                                        <TableHead className="text-center text-gray-900 dark:text-gray-100">Faltante</TableHead>
+                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Total</TableHead> */}
+                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Devuelto</TableHead> */}
+                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Faltante</TableHead> */}
                                         <TableHead className="text-gray-900 dark:text-gray-100">Fecha Préstamo</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100">Plazo</TableHead>
                                         {/* <TableHead className="text-gray-900 dark:text-gray-100">Vencido</TableHead> */}
@@ -699,13 +699,13 @@ export default function PrestamosClientesIndex() {
                                                 {/* <TableCell className="text-gray-900 dark:text-gray-100 text-sm">{prestabesNombres}</TableCell> */}
                                                 {/* <TableCell className="text-center text-gray-900 dark:text-gray-100">{cantidadTotal || p.cantidad || 0}</TableCell> */}
                                                 <TableCell className="text-gray-900 dark:text-gray-100">Bs {p.monto_garantia}</TableCell>
-                                                <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold">{cantidadTotal}</TableCell>
-                                                <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold text-green-600 dark:text-green-400">{cantidadDevuelta}</TableCell>
-                                                <TableCell className="text-center">
+                                                {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold">{cantidadTotal}</TableCell> */}
+                                                {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold text-green-600 dark:text-green-400">{cantidadDevuelta}</TableCell> */}
+                                                {/* <TableCell className="text-center">
                                                     <span className={`font-semibold ${cantidadFaltante === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                                                         {cantidadFaltante}
                                                     </span>
-                                                </TableCell>
+                                                </TableCell> */}
                                                 <TableCell className="text-gray-900 dark:text-gray-100">
                                                     {new Date(p.fecha_prestamo).toLocaleDateString('es-ES')}
                                                 </TableCell>
@@ -820,16 +820,14 @@ export default function PrestamosClientesIndex() {
 
                                                 return (
                                                     <TableRow key={`${p.id}-detail-${detalleIdx}`} className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700">
+                                                        <TableCell></TableCell>
                                                         <TableCell className="pl-4 text-gray-700 dark:text-gray-300 text-sm">{nombreDetalle}</TableCell>
-                                                        <TableCell></TableCell>
-                                                        <TableCell></TableCell>
-                                                        <TableCell></TableCell>
-                                                        <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm font-medium">{totalDetalle}</TableCell>
-                                                        <TableCell className="text-center text-green-600 dark:text-green-400 text-sm font-medium">{devueltoDetalle}</TableCell>
+                                                        <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm font-medium">Cantidad: {totalDetalle}</TableCell>
+                                                        <TableCell className="text-center text-green-600 dark:text-green-400 text-sm font-medium">Devuelto: {devueltoDetalle}</TableCell>
                                                         <TableCell className="text-center">
-                                                            <span className={`text-sm font-medium ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                                            {/* <span className={`text-sm font-medium ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                                                                 {faltanteDetalle}
-                                                            </span>
+                                                            </span> */}
                                                         </TableCell>
                                                         <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
                                                         <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>

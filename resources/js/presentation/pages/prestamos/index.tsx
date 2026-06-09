@@ -8,6 +8,7 @@ import type { ReporteResumen } from '@/domain/entities/prestamos';
 export default function PrestamosIndex() {
     const [resumen, setResumen] = useState<ReporteResumen | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         const fetchResumen = async () => {
@@ -28,6 +29,64 @@ export default function PrestamosIndex() {
                 <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
                     🧺 Gestión de Préstamos de Canastillas
                 </h1>
+
+                {/* Botón para mostrar/ocultar filtros */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
+                    >
+                        <span>{showFilters ? '▼' : '▶'}</span>
+                        {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                    </button>
+                </div>
+
+                {/* Sección de filtros expandible */}
+                {showFilters && (
+                    <Card className="p-6 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Almacén
+                                </label>
+                                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                    <option value="">Todos</option>
+                                    <option value="almacen1">Almacén Principal</option>
+                                    <option value="almacen2">Almacén Secundario</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Estado
+                                </label>
+                                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                    <option value="">Todos</option>
+                                    <option value="disponible">Disponible</option>
+                                    <option value="prestado">En Préstamo</option>
+                                    <option value="devolucion">En Devolución</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Búsqueda
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar canastilla..."
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                                Aplicar Filtros
+                            </button>
+                            <button className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition">
+                                Limpiar
+                            </button>
+                        </div>
+                    </Card>
+                )}
 
                 {loading ? (
                     <div className="text-center py-12 text-gray-600 dark:text-gray-400">

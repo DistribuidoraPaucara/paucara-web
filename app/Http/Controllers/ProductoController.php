@@ -4168,4 +4168,61 @@ class ProductoController extends Controller
         // ✅ Mapear productos con todas las relaciones
         return $this->mapearProductos($query, $almacenId, $tipo, $clienteId);
     }
+
+    /**
+     * GET /api/productos/sin-restriccion
+     * Obtener todos los productos SIN restricción de stock
+     * Usado en: Formularios como Prestables
+     * ✅ NO filtra por stock disponible
+     * ✅ Devuelve activos e inactivos
+     */
+    public function obtenerTodosSinRestriccion(Request $request): JsonResponse
+    {
+        try {
+            $q = $request->string('q', '');
+            $perPage = $request->integer('per_page', 1000);
+
+            $query = Producto::with([
+                'categoria:id,nombre',
+                'marca:id,nombre',
+                'unidad:id,nombre',
+            ]);
+
+            // Búsqueda por nombre, SKU o descripción
+            if ($q) {
+                $query->where(function ($subQuery) use ($q) {
+                    $subQuery->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
+                        ->orWhereRaw('LOWER(sku) LIKE ?', ['%' . strtolower($q) . '%'])
+                        ->orWhereRaw('LOWER(descripcion) LIKE ?', ['%' . strtolower($q) . '%']);
+                });
+            }
+
+            $productos = $query
+                ->orderBy('nombre')
+                ->paginate($perPage)
+                ->through(function ($producto) {
+                    return [
+                        'id' => $producto->id,
+                        'nombre' => $producto->nombre,
+                        'sku' => $producto->sku,
+                        'codigo' => $producto->codigo,
+                        'descripcion' => $producto->descripcion,
+                        'categoria' => $producto->categoria,
+                        'marca' => $producto->marca,
+                        'unidad' => $producto->unidad,
+                        'activo' => $producto->activo,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $productos,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

@@ -6,11 +6,11 @@ import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
 import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
 import prestamoClienteService from '@/infrastructure/services/prestamo-cliente.service';
-import { usePrestables } from '@/stores/usePrestables';
 import { useToast } from '@/presentation/hooks/useToast';
 import type { Prestable } from '@/domain/entities/prestamos';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import ModalAlmacenesDetalle from '@/presentation/components/modales/ModalAlmacenesDetalle';
 
 interface Props {
     clientes: Array<{ id: number; nombre: string; razon_social?: string; telefono?: string | null }>;
@@ -18,24 +18,31 @@ interface Props {
     almacenes: Array<{ id: number; nombre: string; es_proveedor?: boolean }>;
     vehiculos: Array<{ id: number; placa: string; marca?: string; modelo?: string }>;
     ventas: Array<{ id: number; numero: string; cliente_id: number; cliente?: { id: number; nombre: string; razon_social?: string } }>;
+    prestables: Prestable[]; // ✅ Nuevo: prestables vienen del servidor
 }
 
 interface PrestamoItem {
     prestable_id: number;
     cantidad: number;
-    almacenes_ids: number[];
+    almacenes_ids: number[]; // Antiguo formato (para compatibilidad)
+    almacenes?: Array<{
+        almacenes_prestables_id: number;
+        cantidad: number;
+    }>; // Nuevo formato (múltiples almacenes con cantidad)
     prestable?: Prestable;
+    isAutomaticEmbase?: boolean;
 }
 
-export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas }: Props) {
-    const { prestables, loading: loadingPrestables, fetchPrestables } = usePrestables();
+export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas, prestables }: Props) {
+    // ✅ Cambio: usar prestables del prop en lugar de fetchear del API
+    const loadingPrestables = false; // No necesita loading porque vienen en props
     const { toasts, removeToast, error: toastError, warning: toastWarning, success: toastSuccess } = useToast();
 
 
     // Estado principal del préstamo
     const [formData, setFormData] = useState({
         cliente_id: undefined as number | undefined,
-        almacenes_prestables_id: undefined as number | undefined,
+        almacenes_prestables_id: undefined as number | undefined, // OPCIONAL: si no hay, se usa almacenes en detalles
         chofer_id: undefined as number | undefined,
         vehiculo_id: undefined as number | undefined,
         telefono_cliente_1: '',
@@ -48,6 +55,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         fecha_esperada_devolucion: getDateAdd7Days(),
         monto_garantia: 0,
     });
+
 
     // Lista de prestables agregados
     const [prestablesAgregados, setPrestablesAgregados] = useState<PrestamoItem[]>([]);
@@ -75,10 +83,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     const [mostrarModalImpresion, setMostrarModalImpresion] = useState(false);
     const [ultimoPrestamoId, setUltimoPrestamoId] = useState<number | null>(null);
 
-    useEffect(() => {
-        fetchPrestables();
-    }, []);
-
+    // Estados para modal de almacenes
+    const [mostrarModalAlmacenes, setMostrarModalAlmacenes] = useState(false);
+    const [prestamoItemEnEdicion, setPrestamoItemEnEdicion] = useState<PrestamoItem | null>(null);
+    const [indexEnEdicion, setIndexEnEdicion] = useState<number | null>(null);
 
     function getDateAdd7Days() {
         const date = new Date();
@@ -125,6 +133,11 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 headers: { 'Accept': 'application/json' }
             });
             const data = await response.json();
+            console.log('🔍 BÚSQUEDA DE VENTAS - Respuesta del backend:', {
+                respuesta_completa: data,
+                ventas_encontradas: data.data || [],
+                estructura_primera_venta: data.data?.[0],
+            });
             setVentasResults(data.data || []);
         } catch (error) {
             console.error('Error buscando ventas:', error);
@@ -140,14 +153,80 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         setVentasResults([]);
 
         try {
-            const response = await fetch(`/api/ventas/${venta.id}/detalles`, {
+            const response = await fetch(`/api/ventas/${venta.id}`, {
                 headers: { 'Accept': 'application/json' }
             });
             const data = await response.json();
             const ventaData = data.data || data;
+
+            console.log('📋 DETALLE DE VENTA SELECCIONADA - Respuesta del backend:', {
+                respuesta_completa: data,
+                venta_data: ventaData,
+                detalles: ventaData.detalles,
+                estructura_primer_detalle: ventaData.detalles?.[0],
+                producto_primer_detalle: ventaData.detalles?.[0]?.producto,
+                prestables_en_producto: ventaData.detalles?.[0]?.producto?.prestables,
+            });
+
             const clienteId = ventaData.cliente_id;
             const telefonoVenta = (ventaData?.cliente?.telefono || '').trim();
             const telefonoCliente = telefonoVenta || obtenerTelefonoCliente(clienteId);
+
+            // Cargar prestables desde productos de la venta
+            const nuevosPrestables: PrestamoItem[] = [];
+            if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
+                ventaData.detalles.forEach((detalle: any) => {
+                    const producto = detalle.producto;
+                    const cantidad = detalle.cantidad || 0;
+
+                    // Buscar prestable CANASTILLA relacionado (ventas al por mayor son en canastillas)
+                    if (producto && producto.prestables && producto.prestables.length > 0 && cantidad > 0) {
+                        // ✅ Buscar CANASTILLA primero (ventas al por mayor)
+                        const prestableCanastilla = producto.prestables.find(
+                            (p: any) => prestables.find(pr => pr.id === p.prestable_id)?.tipo === 'CANASTILLA'
+                        );
+
+                        if (prestableCanastilla) {
+                            const canastilla = prestables.find(p => p.id === prestableCanastilla.prestable_id);
+
+                            if (canastilla) {
+                                console.log('📦 Cargando CANASTILLA + EMBASES desde venta:', {
+                                    producto: producto.nombre,
+                                    canastilla: canastilla.nombre,
+                                    cantidad_canastillas: cantidad,
+                                    capacidad: canastilla.capacidad,
+                                    cantidad_embases: cantidad * (canastilla.capacidad || 0),
+                                });
+
+                                // 1️⃣ Agregar CANASTILLA
+                                nuevosPrestables.push({
+                                    prestable_id: Number(canastilla.id),
+                                    cantidad: cantidad,
+                                    almacenes_ids: [],
+                                    prestable: canastilla,
+                                });
+
+                                // 2️⃣ Agregar EMBASES automáticos relacionados
+                                const embasesRelacionados = prestables.filter(
+                                    p => p.tipo === 'EMBASES' &&
+                                         (p as any).prestable_relacionado_id === canastilla.id
+                                );
+
+                                embasesRelacionados.forEach(embase => {
+                                    const cantidadEmbases = cantidad * (canastilla.capacidad || 0);
+                                    nuevosPrestables.push({
+                                        prestable_id: Number(embase.id),
+                                        cantidad: cantidadEmbases,
+                                        almacenes_ids: [],
+                                        prestable: embase,
+                                        isAutomaticEmbase: true,
+                                    });
+                                });
+                            }
+                        }
+                    }
+                });
+            }
 
             setFormData({
                 ...formData,
@@ -156,8 +235,15 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 telefono_cliente_1: telefonoCliente,
             });
             setClienteSeleccionado(clientes.find(c => c.id === clienteId));
+
+            // Agregar prestables cargados
+            if (nuevosPrestables.length > 0) {
+                setPrestablesAgregados([...prestablesAgregados, ...nuevosPrestables]);
+                toastSuccess(`✅ Cargados ${nuevosPrestables.length} prestables desde la venta`);
+            }
         } catch (error) {
             console.error('Error obteniendo venta:', error);
+            toastError('Error al cargar datos de la venta');
         }
     };
 
@@ -257,16 +343,22 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }
     };
 
-    const handleCambiarCantidad = (prestable_id: number, nueva_cantidad: number) => {
-        const prestable = prestables.find(p => Number(p.id) === prestable_id);
+    const handleCambiarCantidad = (itemIndex: number, nueva_cantidad: number) => {
+        const itemActualizado = prestablesAgregados[itemIndex];
+        if (!itemActualizado) return;
 
-        setPrestablesAgregados(prestablesAgregados.map(item => {
-            if (item.prestable_id === prestable_id) {
+        const prestable = prestables.find(p => Number(p.id) === itemActualizado.prestable_id);
+
+        setPrestablesAgregados(prestablesAgregados.map((item, idx) => {
+            // Actualizar solo el item específico por índice
+            if (idx === itemIndex) {
                 return { ...item, cantidad: nueva_cantidad };
             }
 
-            // Si es una canastilla y cambió su cantidad, actualizar embases relacionados
-            if (prestable?.tipo === 'CANASTILLA' && (item.prestable as any)?.prestable_relacionado_id === prestable_id) {
+            // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
+            if (prestable?.tipo === 'CANASTILLA' &&
+                item.isAutomaticEmbase === true &&  // ✅ SOLO embases automáticos
+                (item.prestable as any)?.prestable_relacionado_id === prestable?.id) {
                 const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
                 return { ...item, cantidad: cantidadEmbasesAutomatica };
             }
@@ -275,29 +367,128 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }));
     };
 
-    const handleAgregarCanastilla = (prestable: Prestable) => {
-        // Usar el almacén seleccionado en la cabecera
-        const almacenSeleccionadoId = formData.almacenes_prestables_id;
+    const handleEditAlmacenes = async (item: PrestamoItem, index: number) => {
+        try {
+            // Refrescar datos del prestable desde el API para obtener stock actual
+            if (item.prestable_id) {
+                const response = await fetch(`/api/prestables/${item.prestable_id}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
 
-        if (!almacenSeleccionadoId) {
-            const msg = 'Selecciona un almacén primero';
-            setError(msg);
-            toastError(msg);
-            return;
+                if (response.ok) {
+                    const data = await response.json();
+                    const prestableActualizado = data.data || data;
+
+                    // Actualizar el item con datos frescos del API
+                    const itemConDatosActuales = {
+                        ...item,
+                        prestable: prestableActualizado,
+                    };
+
+                    setPrestamoItemEnEdicion(itemConDatosActuales);
+                    console.log('✅ Stock refrescado del API:', {
+                        prestable: prestableActualizado.nombre,
+                        stocks: prestableActualizado.stocks,
+                    });
+                } else {
+                    // Si falla, usar datos en memoria
+                    setPrestamoItemEnEdicion(item);
+                    toastWarning('⚠️ No se pudo refrescar el stock del servidor, usando datos locales');
+                }
+            } else {
+                setPrestamoItemEnEdicion(item);
+            }
+
+            setIndexEnEdicion(index);
+            setMostrarModalAlmacenes(true);
+        } catch (error) {
+            console.error('Error refrescando prestable:', error);
+            setPrestamoItemEnEdicion(item);
+            setIndexEnEdicion(index);
+            setMostrarModalAlmacenes(true);
+            toastWarning('⚠️ Usando datos de stock locales');
         }
+    };
 
-        const almacenesSeleccionados = [almacenSeleccionadoId];
+    const handleGuardarAlmacenes = (almacenesSeleccionados: Array<{ almacenes_prestables_id: number; cantidad: number }>) => {
+        if (indexEnEdicion !== null && prestamoItemEnEdicion) {
+            const nuevosItems = [...prestablesAgregados];
+            const itemActual = nuevosItems[indexEnEdicion];
+            const prestableActual = prestables.find(p => p.id === itemActual.prestable_id);
+
+            // Actualizar el item actual con los almacenes seleccionados
+            nuevosItems[indexEnEdicion] = {
+                ...itemActual,
+                almacenes: almacenesSeleccionados,
+                almacenes_ids: almacenesSeleccionados.map(a => a.almacenes_prestables_id),
+            };
+
+            // Si es CANASTILLA, actualizar automáticamente los EMBASES relacionados
+            if (prestableActual?.tipo === 'CANASTILLA') {
+                const capacidadCanastilla = prestableActual.capacidad || 0;
+
+                // Encontrar embases automáticos relacionados a esta canastilla
+                const embasesRelacionados = nuevosItems
+                    .map((item, idx) => {
+                        const prestableEmbase = prestables.find(p => p.id === item.prestable_id);
+                        const esEmbaseAuto = item.isAutomaticEmbase === true;
+                        const estaRelacionado = (prestableEmbase as any)?.prestable_relacionado_id === prestableActual.id;
+
+                        if (prestableEmbase?.tipo === 'EMBASES' && esEmbaseAuto && estaRelacionado) {
+                            return { index: idx, item, prestableEmbase };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean) as Array<{ index: number; item: PrestamoItem; prestableEmbase: Prestable }>;
+
+                // Actualizar cantidades de embases proporcionalmente
+                embasesRelacionados.forEach(({ index }) => {
+                    // Calcular cantidad de embases = cantidad canastilla × capacidad
+                    const cantidadEmbasesNueva = itemActual.cantidad * capacidadCanastilla;
+
+                    // Los embases usan la misma distribución de almacenes que la canastilla
+                    const almacenesEmbase = almacenesSeleccionados.map(almData => ({
+                        almacenes_prestables_id: almData.almacenes_prestables_id,
+                        cantidad: Math.round((almData.cantidad / itemActual.cantidad) * cantidadEmbasesNueva) || 0,
+                    }));
+
+                    nuevosItems[index] = {
+                        ...nuevosItems[index],
+                        cantidad: cantidadEmbasesNueva,
+                        almacenes: almacenesEmbase,
+                        almacenes_ids: almacenesEmbase.map(a => a.almacenes_prestables_id),
+                    };
+                });
+
+                console.log('✅ Embases automáticos actualizados:', {
+                    canastilla: prestableActual.nombre,
+                    capacidad: capacidadCanastilla,
+                    embasesActualizados: embasesRelacionados.length,
+                });
+            }
+
+            setPrestablesAgregados(nuevosItems);
+            setMostrarModalAlmacenes(false);
+            setPrestamoItemEnEdicion(null);
+            setIndexEnEdicion(null);
+        }
+    };
+
+    const handleAgregarCanastilla = (prestable: Prestable) => {
+        // ✅ MODIFICADO: NO cargar con almacén de cabecera
+        // Los prestables se cargan VACÍOS en almacenes
+        // El almacén de cabecera es solo referencia si el usuario no abre el modal
 
         const nuevosItems: PrestamoItem[] = [
             {
                 prestable_id: Number(prestable.id),
                 cantidad: 1,
-                almacenes_ids: almacenesSeleccionados,
+                almacenes_ids: [], // ✅ VACÍO - el usuario debe especificar
+                almacenes: undefined, // SIN almacenes pre-seleccionados
                 prestable,
             },
         ];
 
-        // Si es canastilla, agregar automáticamente sus embases relacionados
         if (prestable.tipo === 'CANASTILLA') {
             const embasesRelacionados = prestables.filter(
                 p => p.tipo === 'EMBASES'
@@ -306,19 +497,31 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             );
 
             embasesRelacionados.forEach(embase => {
-                // Preseleccionar cantidad de embases = cantidad canastillas × capacidad
                 const cantidadEmbasesAutomatica = 1 * (prestable.capacidad || 0);
 
                 nuevosItems.push({
                     prestable_id: Number(embase.id),
                     cantidad: cantidadEmbasesAutomatica,
-                    almacenes_ids: almacenesSeleccionados,
+                    almacenes_ids: [], // ✅ VACÍO
+                    almacenes: undefined, // SIN almacenes
                     prestable: embase,
+                    isAutomaticEmbase: true, // Marca que fue cargado automáticamente con la canastilla
                 });
             });
         }
 
-        setPrestablesAgregados([...prestablesAgregados, ...nuevosItems]);
+        const actualizado = [...prestablesAgregados, ...nuevosItems];
+        console.log('🔵 handleAgregarCanastilla - Prestable:', prestable.nombre, prestable.tipo);
+        console.log('   Items nuevos:', nuevosItems.map(i => ({
+            id: i.prestable_id,
+            nombre: i.prestable?.nombre,
+            tipo: i.prestable?.tipo,
+            isAutomaticEmbase: i.isAutomaticEmbase,
+            almacenes_ids: i.almacenes_ids // ✅ Mostrar almacenes vacíos
+        })));
+        console.log('   ⚠️ USUARIO DEBE ESPECIFICAR ALMACENES en el modal');
+        toastWarning('⚠️ Especifica los almacenes para este prestable en el modal');
+        setPrestablesAgregados(actualizado);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -327,13 +530,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
         if (!formData.cliente_id) {
             const msg = 'Selecciona un cliente';
-            setError(msg);
-            toastError(msg);
-            return;
-        }
-
-        if (!formData.almacenes_prestables_id) {
-            const msg = 'Selecciona un almacén';
             setError(msg);
             toastError(msg);
             return;
@@ -353,16 +549,46 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             return;
         }
 
-        for (const item of prestablesAgregados) {
+        // Validar que cada prestable tiene almacenes especificados
+        for (let i = 0; i < prestablesAgregados.length; i++) {
+            const item = prestablesAgregados[i];
             const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
             if (!prestable) continue;
 
-            // Validar stock en el almacén seleccionado
-            const stock = prestable.stocks?.find(s => Number(s.almacenes_prestables_id) === formData.almacenes_prestables_id);
-            const cantidadDisponible = stock ? Number(stock.cantidad_disponible || 0) : 0;
+            // Usar almacenes del detalle si existen, sino almacén de cabecera
+            const almacenesAUsar = (item.almacenes && item.almacenes.length > 0)
+                ? item.almacenes
+                : formData.almacenes_prestables_id
+                    ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: item.cantidad }]
+                    : [];
 
-            if (item.cantidad > cantidadDisponible) {
-                const msg = `Stock insuficiente en el almacén para ${prestable.nombre}. Disponible: ${cantidadDisponible}, solicitado: ${item.cantidad}`;
+            if (almacenesAUsar.length === 0) {
+                const msg = `${prestable.nombre}: Debes especificar almacenes (en cabecera o en el detalle)`;
+                setError(msg);
+                toastError(msg);
+                return;
+            }
+
+            // Validar stock en cada almacén
+            let cantidadValidadaTotal = 0;
+            for (const almacenData of almacenesAUsar) {
+                const stock = prestable.stocks?.find(s => Number(s.almacenes_prestables_id) === almacenData.almacenes_prestables_id);
+                const cantidadDisponible = stock ? Number(stock.cantidad_disponible || 0) : 0;
+                const cantidadSolicitada = almacenData.cantidad;
+
+                if (cantidadSolicitada > cantidadDisponible) {
+                    const almacenNombre = almacenes.find(a => a.id === almacenData.almacenes_prestables_id)?.nombre || `Almacén #${almacenData.almacenes_prestables_id}`;
+                    const msg = `${prestable.nombre} en ${almacenNombre}: Stock insuficiente. Disponible: ${cantidadDisponible}, solicitado: ${cantidadSolicitada}`;
+                    setError(msg);
+                    toastError(msg);
+                    return;
+                }
+
+                cantidadValidadaTotal += cantidadSolicitada;
+            }
+
+            if (cantidadValidadaTotal !== item.cantidad) {
+                const msg = `${prestable.nombre}: Suma de cantidades en almacenes (${cantidadValidadaTotal}) no coincide con cantidad total (${item.cantidad})`;
                 setError(msg);
                 toastError(msg);
                 return;
@@ -388,11 +614,21 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 fecha_esperada_devolucion: formData.fecha_esperada_devolucion,
                 monto_garantia: formData.monto_garantia,
                 observaciones: '',
-                detalles: prestablesAgregados.map(item => ({
-                    prestable_id: item.prestable_id,
-                    cantidad: item.cantidad,
-                    almacenes_ids: item.almacenes_ids,
-                })),
+                detalles: prestablesAgregados.map(item => {
+                    // Si tiene almacenes en el nuevo formato, usarlo; sino usar almacenes_ids (antiguo)
+                    const detallePayload: any = {
+                        prestable_id: item.prestable_id,
+                        cantidad: item.cantidad,
+                    };
+
+                    if (item.almacenes && item.almacenes.length > 0) {
+                        detallePayload.almacenes = item.almacenes;
+                    } else if (item.almacenes_ids && item.almacenes_ids.length > 0) {
+                        detallePayload.almacenes_ids = item.almacenes_ids;
+                    }
+
+                    return detallePayload;
+                }),
             };
 
             console.log('📤 Enviando préstamo con detalles:', payload);
@@ -444,6 +680,32 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         </h2> */}
 
                         <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
+                            {/* Almacén - Búsqueda */}
+                            <DynamicSearchSelect
+                                label="🏭 Almacén *"
+                                placeholder="Buscar almacén..."
+                                selectedItem={almacenSeleccionado}
+                                items={almacenesFiltered}
+                                isLoading={false}
+                                searchValue={almacenesSearch}
+                                onSearch={handleSearchAlmacenes}
+                                onSelect={handleSelectAlmacen}
+                                onClear={() => {
+                                    setAlmacenSeleccionado(null);
+                                    setAlmacenesSearch('');
+                                    setFormData({ ...formData, almacenes_prestables_id: undefined });
+                                }}
+                                renderItem={(almacen) => (
+                                    <div>
+                                        <p className="font-medium">{almacen.nombre}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {almacen.es_proveedor ? 'Almacén Proveedor' : 'Almacén Distribuidora'}
+                                        </p>
+                                    </div>
+                                )}
+                                getItemId={(almacen) => almacen.id}
+                                getDisplayValue={(almacen) => almacen.nombre}
+                            />
                             {/* Venta - Búsqueda Dinámica */}
                             <DynamicSearchSelect
                                 label="🛒 Venta (Opcional)"
@@ -504,7 +766,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 items={choferes}
                                 isLoading={false}
                                 searchValue=""
-                                onSearch={() => {}}
+                                onSearch={() => { }}
                                 onSelect={(chofer) => {
                                     setFormData({ ...formData, chofer_id: chofer.id });
                                 }}
@@ -517,36 +779,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getItemId={(chofer) => chofer.id}
                                 getDisplayValue={(chofer) => chofer.nombre}
                             />
-                        </div>
-
-                        <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
-                            {/* Almacén - Búsqueda */}
-                            <DynamicSearchSelect
-                                label="🏭 Almacén *"
-                                placeholder="Buscar almacén..."
-                                selectedItem={almacenSeleccionado}
-                                items={almacenesFiltered}
-                                isLoading={false}
-                                searchValue={almacenesSearch}
-                                onSearch={handleSearchAlmacenes}
-                                onSelect={handleSelectAlmacen}
-                                onClear={() => {
-                                    setAlmacenSeleccionado(null);
-                                    setAlmacenesSearch('');
-                                    setFormData({ ...formData, almacenes_prestables_id: undefined });
-                                }}
-                                renderItem={(almacen) => (
-                                    <div>
-                                        <p className="font-medium">{almacen.nombre}</p>
-                                        {almacen.es_proveedor && (
-                                            <p className="text-xs text-gray-500">Almacén Proveedor</p>
-                                        )}
-                                    </div>
-                                )}
-                                getItemId={(almacen) => almacen.id}
-                                getDisplayValue={(almacen) => almacen.nombre}
-                            />
-
                             {/* Vehículo - Búsqueda */}
                             <DynamicSearchSelect
                                 label="🚗 Vehículo (Opcional)"
@@ -573,8 +805,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getItemId={(vehiculo) => vehiculo.id}
                                 getDisplayValue={(vehiculo) => `${vehiculo.placa}${vehiculo.marca ? ` - ${vehiculo.marca} ${vehiculo.modelo}` : ''}`}
                             />
-
-                            <div />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -701,9 +931,11 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         <PrestablesSelectionTable
                             prestables={prestables}
                             items={prestablesAgregados}
+                            almacenes={almacenes}
                             onSelectItem={handleAgregarCanastilla}
                             onDeleteItem={handleEliminarPrestable}
                             onUpdateCantidad={handleCambiarCantidad}
+                            onEditAlmacenes={handleEditAlmacenes}
                             getStockDisponibleTotal={getStockDisponibleTotal}
                             loading={loadingPrestables}
                             almacen_prestable_id={formData.almacenes_prestables_id}
@@ -730,6 +962,91 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
             {/* Toast Container */}
             <ToastContainer toasts={toasts} onClose={removeToast} />
+
+            {/* Modal de Almacenes */}
+            {prestamoItemEnEdicion && (() => {
+                const prestableActual = prestamoItemEnEdicion.prestable;
+                const esCanastilla = prestableActual?.tipo === 'CANASTILLA';
+                const capacidadCanastilla = prestableActual?.capacidad || 0;
+
+                // Buscar embases relacionados si es canastilla
+                let embaseRelacionado = null;
+                let embaseStockDisponible = [];
+
+                if (esCanastilla) {
+                    embaseRelacionado = prestables.find(p =>
+                        p.tipo === 'EMBASES' &&
+                        (p as any).prestable_relacionado_id === prestableActual?.id
+                    );
+
+                    if (embaseRelacionado) {
+                        embaseStockDisponible = embaseRelacionado.stocks?.map(s => ({
+                            almacenes_prestables_id: s.almacenes_prestables_id,
+                            cantidad_disponible: s.cantidad_disponible,
+                        })) || [];
+                    }
+                }
+
+                return (
+                    <ModalAlmacenesDetalle
+                        isOpen={mostrarModalAlmacenes}
+                        onClose={() => {
+                            setMostrarModalAlmacenes(false);
+                            setPrestamoItemEnEdicion(null);
+                            setIndexEnEdicion(null);
+                        }}
+                        onSave={(almacenesCanastilla, almacenesEmbase) => {
+                            if (indexEnEdicion !== null) {
+                                const nuevosItems = [...prestablesAgregados];
+
+                                // Actualizar canastilla
+                                nuevosItems[indexEnEdicion] = {
+                                    ...nuevosItems[indexEnEdicion],
+                                    almacenes: almacenesCanastilla,
+                                    almacenes_ids: almacenesCanastilla.map(a => a.almacenes_prestables_id),
+                                };
+
+                                // Actualizar embase relacionado si existe
+                                if (esCanastilla && almacenesEmbase && embaseRelacionado) {
+                                    const embaseIndex = nuevosItems.findIndex(
+                                        item => item.prestable_id === embaseRelacionado?.id &&
+                                                 item.isAutomaticEmbase === true
+                                    );
+
+                                    if (embaseIndex !== -1) {
+                                        const cantidadEmbase = prestamoItemEnEdicion.cantidad * capacidadCanastilla;
+                                        nuevosItems[embaseIndex] = {
+                                            ...nuevosItems[embaseIndex],
+                                            cantidad: cantidadEmbase,
+                                            almacenes: almacenesEmbase,
+                                            almacenes_ids: almacenesEmbase.map(a => a.almacenes_prestables_id),
+                                        };
+                                    }
+                                }
+
+                                setPrestablesAgregados(nuevosItems);
+                            }
+                            setMostrarModalAlmacenes(false);
+                            setPrestamoItemEnEdicion(null);
+                            setIndexEnEdicion(null);
+                        }}
+                        prestableNombre={prestamoItemEnEdicion.prestable?.nombre || 'Prestable'}
+                        cantidadTotal={prestamoItemEnEdicion.cantidad}
+                        almacenes={almacenes}
+                        stockDisponible={
+                            prestamoItemEnEdicion.prestable?.stocks?.map(s => ({
+                                almacenes_prestables_id: s.almacenes_prestables_id,
+                                cantidad_disponible: s.cantidad_disponible,
+                            })) || []
+                        }
+                        almacenesActuales={prestamoItemEnEdicion.almacenes || []}
+                        esCanastilla={esCanastilla}
+                        capacidadCanastilla={capacidadCanastilla}
+                        embaseNombre={embaseRelacionado?.nombre || ''}
+                        embaseStockDisponible={embaseStockDisponible}
+                    />
+                );
+            })()}
 
             {/* Modal de Impresión */}
             <OutputSelectionModal

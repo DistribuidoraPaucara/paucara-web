@@ -18,14 +18,25 @@ class MovimientoPrestable extends Model
         'usuario_id',
         'tipo',
         'cantidad',
+        'cantidad_dañada_registrada',
         'disponible_anterior',
         'prestamo_cliente_anterior',
         'prestamo_proveedor_anterior',
+        'prestamo_evento_anterior',
+        'compra_anterior',
         'vendida_anterior',
         'disponible_posterior',
         'prestamo_cliente_posterior',
         'prestamo_proveedor_posterior',
+        'prestamo_evento_posterior',
+        'compra_posterior',
         'vendida_posterior',
+        'cantidad_cliente_dañada_anterior',
+        'cantidad_cliente_dañada_posterior',
+        'cantidad_proveedor_dañada_anterior',
+        'cantidad_proveedor_dañada_posterior',
+        'cantidad_evento_dañada_anterior',
+        'cantidad_evento_dañada_posterior',
         'categoria_afectada',
         'motivo',
         'observaciones',
@@ -80,6 +91,8 @@ class MovimientoPrestable extends Model
         return $this->disponible_anterior +
                $this->prestamo_cliente_anterior +
                $this->prestamo_proveedor_anterior +
+               ($this->prestamo_evento_anterior ?? 0) +
+               ($this->compra_anterior ?? 0) +
                $this->vendida_anterior;
     }
 
@@ -91,6 +104,8 @@ class MovimientoPrestable extends Model
         return $this->disponible_posterior +
                $this->prestamo_cliente_posterior +
                $this->prestamo_proveedor_posterior +
+               ($this->prestamo_evento_posterior ?? 0) +
+               ($this->compra_posterior ?? 0) +
                $this->vendida_posterior;
     }
 
@@ -111,6 +126,8 @@ class MovimientoPrestable extends Model
             'disponible' => $this->disponible_posterior - $this->disponible_anterior,
             'prestamo_cliente' => $this->prestamo_cliente_posterior - $this->prestamo_cliente_anterior,
             'prestamo_proveedor' => $this->prestamo_proveedor_posterior - $this->prestamo_proveedor_anterior,
+            'prestamo_evento' => ($this->prestamo_evento_posterior ?? 0) - ($this->prestamo_evento_anterior ?? 0),
+            'compra' => ($this->compra_posterior ?? 0) - ($this->compra_anterior ?? 0),
             'vendida' => $this->vendida_posterior - $this->vendida_anterior,
         ];
     }

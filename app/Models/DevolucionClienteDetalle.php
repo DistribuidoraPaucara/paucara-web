@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DevolucionClienteDetalle extends Model
 {
@@ -17,6 +18,7 @@ class DevolucionClienteDetalle extends Model
         'cantidad_dañada_total',
         'monto_cobrado_daño',
         'monto_garantia_devuelta',
+        'monto_excedido_detalle',
     ];
 
     protected $casts = [
@@ -25,6 +27,7 @@ class DevolucionClienteDetalle extends Model
         'cantidad_dañada_total'   => 'integer',
         'monto_cobrado_daño'      => 'decimal:2',
         'monto_garantia_devuelta' => 'decimal:2',
+        'monto_excedido_detalle'  => 'decimal:2',
     ];
 
     public function devolucion(): BelongsTo
@@ -35,5 +38,10 @@ class DevolucionClienteDetalle extends Model
     public function detallePrestamoCliente(): BelongsTo
     {
         return $this->belongsTo(PrestamoClienteDetalle::class, 'prestamo_cliente_detalle_id');
+    }
+
+    public function devolucionesAlmacenes(): HasMany
+    {
+        return $this->hasMany(DevolucionClienteDetalleAlmacen::class, 'devolucion_cliente_detalle_id');
     }
 }

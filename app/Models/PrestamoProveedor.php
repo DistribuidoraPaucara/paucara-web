@@ -14,6 +14,9 @@ class PrestamoProveedor extends Model
         'proveedor_id',
         'compra_id',
         'es_compra',
+        'almacenes_prestables_id',
+        'chofer_id',
+        'vehiculo_asignado',
         'monto_garantia',
         'fecha_prestamo',
         'fecha_esperada_devolucion',
@@ -42,6 +45,16 @@ class PrestamoProveedor extends Model
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class);
+    }
+
+    public function almacen(): BelongsTo
+    {
+        return $this->belongsTo(AlmacenPrestable::class, 'almacenes_prestables_id');
+    }
+
+    public function chofer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'chofer_id');
     }
 
     // ✅ Relación a devoluciones (cabecera)

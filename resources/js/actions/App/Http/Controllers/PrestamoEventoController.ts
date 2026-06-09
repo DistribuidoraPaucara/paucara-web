@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::index
- * @see app/Http/Controllers/PrestamoEventoController.php:25
+ * @see app/Http/Controllers/PrestamoEventoController.php:27
  * @route '/api/prestamos-evento'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::store
- * @see app/Http/Controllers/PrestamoEventoController.php:115
+ * @see app/Http/Controllers/PrestamoEventoController.php:118
  * @route '/api/prestamos-evento'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::store
- * @see app/Http/Controllers/PrestamoEventoController.php:115
+ * @see app/Http/Controllers/PrestamoEventoController.php:118
  * @route '/api/prestamos-evento'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::store
- * @see app/Http/Controllers/PrestamoEventoController.php:115
+ * @see app/Http/Controllers/PrestamoEventoController.php:118
  * @route '/api/prestamos-evento'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::store
- * @see app/Http/Controllers/PrestamoEventoController.php:115
+ * @see app/Http/Controllers/PrestamoEventoController.php:118
  * @route '/api/prestamos-evento'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::store
- * @see app/Http/Controllers/PrestamoEventoController.php:115
+ * @see app/Http/Controllers/PrestamoEventoController.php:118
  * @route '/api/prestamos-evento'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
 export const show = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
 show.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ show.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { 
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
 show.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ show.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { 
 })
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
 show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
     const showForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
         showForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
         })
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::show
- * @see app/Http/Controllers/PrestamoEventoController.php:214
+ * @see app/Http/Controllers/PrestamoEventoController.php:245
  * @route '/api/prestamos-evento/{prestamo}'
  */
         showForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,8 +235,97 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
     
     show.form = showForm
 /**
+* @see \App\Http\Controllers\PrestamoEventoController::update
+ * @see app/Http/Controllers/PrestamoEventoController.php:277
+ * @route '/api/prestamos-evento/{prestamo}'
+ */
+export const update = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+update.definition = {
+    methods: ["put"],
+    url: '/api/prestamos-evento/{prestamo}',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::update
+ * @see app/Http/Controllers/PrestamoEventoController.php:277
+ * @route '/api/prestamos-evento/{prestamo}'
+ */
+update.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { prestamo: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { prestamo: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    prestamo: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        prestamo: typeof args.prestamo === 'object'
+                ? args.prestamo.id
+                : args.prestamo,
+                }
+
+    return update.definition.url
+            .replace('{prestamo}', parsedArgs.prestamo.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::update
+ * @see app/Http/Controllers/PrestamoEventoController.php:277
+ * @route '/api/prestamos-evento/{prestamo}'
+ */
+update.put = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+    /**
+* @see \App\Http\Controllers\PrestamoEventoController::update
+ * @see app/Http/Controllers/PrestamoEventoController.php:277
+ * @route '/api/prestamos-evento/{prestamo}'
+ */
+    const updateForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoEventoController::update
+ * @see app/Http/Controllers/PrestamoEventoController.php:277
+ * @route '/api/prestamos-evento/{prestamo}'
+ */
+        updateForm.put = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
+/**
 * @see \App\Http\Controllers\PrestamoEventoController::registrarDevolucion
- * @see app/Http/Controllers/PrestamoEventoController.php:244
+ * @see app/Http/Controllers/PrestamoEventoController.php:338
  * @route '/api/prestamos-evento/{prestamo}/devolver'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -251,7 +340,7 @@ registrarDevolucion.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::registrarDevolucion
- * @see app/Http/Controllers/PrestamoEventoController.php:244
+ * @see app/Http/Controllers/PrestamoEventoController.php:338
  * @route '/api/prestamos-evento/{prestamo}/devolver'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +373,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::registrarDevolucion
- * @see app/Http/Controllers/PrestamoEventoController.php:244
+ * @see app/Http/Controllers/PrestamoEventoController.php:338
  * @route '/api/prestamos-evento/{prestamo}/devolver'
  */
 registrarDevolucion.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -294,7 +383,7 @@ registrarDevolucion.post = (args: { prestamo: number | { id: number } } | [prest
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::registrarDevolucion
- * @see app/Http/Controllers/PrestamoEventoController.php:244
+ * @see app/Http/Controllers/PrestamoEventoController.php:338
  * @route '/api/prestamos-evento/{prestamo}/devolver'
  */
     const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +393,7 @@ registrarDevolucion.post = (args: { prestamo: number | { id: number } } | [prest
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::registrarDevolucion
- * @see app/Http/Controllers/PrestamoEventoController.php:244
+ * @see app/Http/Controllers/PrestamoEventoController.php:338
  * @route '/api/prestamos-evento/{prestamo}/devolver'
  */
         registrarDevolucionForm.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +404,7 @@ registrarDevolucion.post = (args: { prestamo: number | { id: number } } | [prest
     registrarDevolucion.form = registrarDevolucionForm
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::anularPrestamo
- * @see app/Http/Controllers/PrestamoEventoController.php:303
+ * @see app/Http/Controllers/PrestamoEventoController.php:401
  * @route '/api/prestamos-evento/{prestamo}/anular'
  */
 export const anularPrestamo = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -330,7 +419,7 @@ anularPrestamo.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::anularPrestamo
- * @see app/Http/Controllers/PrestamoEventoController.php:303
+ * @see app/Http/Controllers/PrestamoEventoController.php:401
  * @route '/api/prestamos-evento/{prestamo}/anular'
  */
 anularPrestamo.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -363,7 +452,7 @@ anularPrestamo.url = (args: { prestamo: number | { id: number } } | [prestamo: n
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::anularPrestamo
- * @see app/Http/Controllers/PrestamoEventoController.php:303
+ * @see app/Http/Controllers/PrestamoEventoController.php:401
  * @route '/api/prestamos-evento/{prestamo}/anular'
  */
 anularPrestamo.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -373,7 +462,7 @@ anularPrestamo.post = (args: { prestamo: number | { id: number } } | [prestamo: 
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::anularPrestamo
- * @see app/Http/Controllers/PrestamoEventoController.php:303
+ * @see app/Http/Controllers/PrestamoEventoController.php:401
  * @route '/api/prestamos-evento/{prestamo}/anular'
  */
     const anularPrestamoForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -383,7 +472,7 @@ anularPrestamo.post = (args: { prestamo: number | { id: number } } | [prestamo: 
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::anularPrestamo
- * @see app/Http/Controllers/PrestamoEventoController.php:303
+ * @see app/Http/Controllers/PrestamoEventoController.php:401
  * @route '/api/prestamos-evento/{prestamo}/anular'
  */
         anularPrestamoForm.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -394,7 +483,7 @@ anularPrestamo.post = (args: { prestamo: number | { id: number } } | [prestamo: 
     anularPrestamo.form = anularPrestamoForm
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 export const imprimir = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -409,7 +498,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -442,7 +531,7 @@ imprimir.url = (args: { prestamo: number | { id: number } } | [prestamo: number 
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -451,7 +540,7 @@ imprimir.get = (args: { prestamo: number | { id: number } } | [prestamo: number 
 })
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -461,7 +550,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
     const imprimirForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -471,7 +560,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
         imprimirForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -480,7 +569,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
         })
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:355
+ * @see app/Http/Controllers/PrestamoEventoController.php:453
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
         imprimirForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -494,6 +583,108 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
         })
     
     imprimir.form = imprimirForm
-const PrestamoEventoController = { index, store, show, registrarDevolucion, anularPrestamo, imprimir }
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+export const imprimirDevolucion = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: imprimirDevolucion.url(args, options),
+    method: 'get',
+})
+
+imprimirDevolucion.definition = {
+    methods: ["get","head"],
+    url: '/prestamos/eventos/devoluciones/{devolucion}/imprimir',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+imprimirDevolucion.url = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { devolucion: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { devolucion: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    devolucion: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        devolucion: typeof args.devolucion === 'object'
+                ? args.devolucion.id
+                : args.devolucion,
+                }
+
+    return imprimirDevolucion.definition.url
+            .replace('{devolucion}', parsedArgs.devolucion.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+imprimirDevolucion.get = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: imprimirDevolucion.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+imprimirDevolucion.head = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: imprimirDevolucion.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+    const imprimirDevolucionForm = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimirDevolucion.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+        imprimirDevolucionForm.get = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirDevolucion.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoEventoController::imprimirDevolucion
+ * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
+ */
+        imprimirDevolucionForm.head = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirDevolucion.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimirDevolucion.form = imprimirDevolucionForm
+const PrestamoEventoController = { index, store, show, update, registrarDevolucion, anularPrestamo, imprimir, imprimirDevolucion }
 
 export default PrestamoEventoController

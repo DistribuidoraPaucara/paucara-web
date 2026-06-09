@@ -14,10 +14,18 @@ interface Prestable {
     tipo: string;
 }
 
+interface Devolucion {
+    id: number;
+    cantidad_devuelta: number;
+    cantidad_dañada_total: number;
+}
+
 interface PrestamoEventoDetalle {
     id: number;
     prestable_id: number;
     cantidad: number;
+    cantidad_prestada?: number;
+    devoluciones?: Devolucion[];
     prestable?: Prestable;
 }
 
@@ -61,6 +69,22 @@ const getEstadoBadgeStyle = (estado: string) => {
         CANCELADO: { bg: 'bg-red-100', text: 'text-red-700' },
     };
     return styles[estado] || { bg: 'bg-gray-100', text: 'text-gray-700' };
+};
+
+const calcularDevolucion = (detalle: PrestamoEventoDetalle) => {
+    const cantidadPrestada = detalle.cantidad_prestada || detalle.cantidad || 0;
+    const cantidadDevuelta = detalle.devoluciones?.reduce((sum, dev) => sum + dev.cantidad_devuelta, 0) || 0;
+    const cantidadPendiente = Math.max(0, cantidadPrestada - cantidadDevuelta);
+    const porcentajeDevuelto = cantidadPrestada > 0 ? Math.round((cantidadDevuelta / cantidadPrestada) * 100) : 0;
+
+    return { cantidadDevuelta, cantidadPendiente, porcentajeDevuelto, cantidadPrestada };
+};
+
+const getProgressColor = (porcentaje: number) => {
+    if (porcentaje === 0) return 'bg-red-500';
+    if (porcentaje < 50) return 'bg-orange-500';
+    if (porcentaje < 100) return 'bg-yellow-500';
+    return 'bg-green-500';
 };
 
 export default function ShowPrestamoEvento({ prestamo }: { prestamo: PrestamoEvento }) {
@@ -196,6 +220,64 @@ export default function ShowPrestamoEvento({ prestamo }: { prestamo: PrestamoEve
                     </Card>
                 </div>
 
+                {/* Resumen de Devoluciones */}
+                {(() => {
+                    const totalPrestado = prestamo.detalles.reduce((sum, d) => sum + (d.cantidad_prestada || d.cantidad || 0), 0);
+                    const totalDevuelto = prestamo.detalles.reduce((sum, d) => {
+                        const dev = calcularDevolucion(d);
+                        return sum + dev.cantidadDevuelta;
+                    }, 0);
+                    const totalPendiente = totalPrestado - totalDevuelto;
+                    const porcentajeTotal = totalPrestado > 0 ? Math.round((totalDevuelto / totalPrestado) * 100) : 0;
+
+                    return (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">📤 Total Prestado</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalPrestado}</p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">✅ Total Devuelto</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalDevuelto}</p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">⏳ Pendiente</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className={`text-2xl font-bold ${totalPendiente === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                        {totalPendiente}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">📊 Progreso</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{porcentajeTotal}%</p>
+                                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${getProgressColor(porcentajeTotal)} transition-all duration-300`}
+                                                style={{ width: `${porcentajeTotal}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    );
+                })()}
+
                 {/* Fechas */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>
@@ -235,7 +317,7 @@ export default function ShowPrestamoEvento({ prestamo }: { prestamo: PrestamoEve
                 {/* Detalles de Prestables */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Detalles de Prestables</CardTitle>
+                        <CardTitle className="text-lg">📦 Detalles de Prestables y Devoluciones</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -251,28 +333,79 @@ export default function ShowPrestamoEvento({ prestamo }: { prestamo: PrestamoEve
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                             Tipo
                                         </th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                                            Cantidad
+                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                            📤 Prestado
+                                        </th>
+                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                            ✅ Devuelto
+                                        </th>
+                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                            ⏳ Pendiente
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                            📊 Progreso
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {prestamo.detalles.map((detalle) => (
-                                        <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                                {detalle.prestable?.nombre || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                                {detalle.prestable?.codigo || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                                {detalle.prestable?.tipo || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white font-medium">
-                                                {detalle.cantidad}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {prestamo.detalles.map((detalle) => {
+                                        const { cantidadDevuelta, cantidadPendiente, porcentajeDevuelto, cantidadPrestada } = calcularDevolucion(detalle);
+                                        const colorProgress = getProgressColor(porcentajeDevuelto);
+
+                                        return (
+                                            <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                    {detalle.prestable?.nombre || '-'}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
+                                                    {detalle.prestable?.codigo || '-'}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                                                        detalle.prestable?.tipo === 'CANASTILLA'
+                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                    }`}>
+                                                        {detalle.prestable?.tipo || '-'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className="inline-block px-3 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold text-sm">
+                                                        {cantidadPrestada}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className="inline-block px-3 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold text-sm">
+                                                        {cantidadDevuelta}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className={`inline-block px-3 py-1 rounded-md font-semibold text-sm ${
+                                                        cantidadPendiente === 0
+                                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200'
+                                                            : 'bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200'
+                                                    }`}>
+                                                        {cantidadPendiente}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full ${colorProgress} transition-all duration-300`}
+                                                                    style={{ width: `${porcentajeDevuelto}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 w-8 text-right">
+                                                                {porcentajeDevuelto}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

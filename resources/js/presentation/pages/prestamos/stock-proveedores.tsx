@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, Filter, RefreshCw, Download } from 'lucide-react';
 import { Input } from '@/presentation/components/ui/input';
 import { Button } from '@/presentation/components/ui/button';
@@ -27,13 +27,23 @@ interface StockItem {
     prestable_nombre: string;
     prestable_codigo: string;
     prestable_tipo: string;
+    prestable_relacionado_id?: number | null;
+    embase_asociado_id?: number | null;
     almacen_nombre: string;
     cantidad_disponible: number;
+    cantidad_cliente_deudor: number;
     cantidad_proveedor_acreedor: number;
     cantidad_proveedor_devuelto: number;
+    cantidad_proveedor_dañada: number;
     cantidad_proveedor_total: number;
     cantidad_total: number;
     almacenes_prestables_id: number;
+}
+
+interface StockItemWithGroupIndex extends StockItem {
+    isEmbaseRelacionado?: boolean;
+    canastillaId?: number;
+    groupIndex?: number;
 }
 
 interface StockPageProps {
@@ -89,6 +99,8 @@ export default function StockProveedoresPage({
         switch (tipo) {
             case 'EMBASE':
                 return 'bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20';
+            case 'EMBASES':
+                return 'bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20';
             case 'CANASTILLA':
                 return 'bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20';
             default:
@@ -96,9 +108,94 @@ export default function StockProveedoresPage({
         }
     };
 
+    // Función para agrupar embases con sus canastillas usando embase_asociado_id
+    const agruparConRelaciones = (items: StockItem[]): StockItemWithGroupIndex[] => {
+        const itemsAgrupados: StockItemWithGroupIndex[] = [];
+        const procesados = new Set<string>();
+        let groupIndex = 0;
+
+        // Ordenar por almacén, luego por tipo (canastillas primero) y luego por nombre
+        const itemsOrdenados = [...items].sort((a, b) => {
+            // Primero ordenar por almacén
+            if (a.almacen_nombre !== b.almacen_nombre) {
+                return a.almacen_nombre.localeCompare(b.almacen_nombre);
+            }
+            // Luego por tipo
+            if (a.prestable_tipo !== b.prestable_tipo) {
+                return a.prestable_tipo === 'CANASTILLA' ? -1 : 1;
+            }
+            // Finalmente por nombre
+            return a.prestable_nombre.localeCompare(b.prestable_nombre);
+        });
+
+        itemsOrdenados.forEach((item) => {
+            // Clave única: prestable_id + almacén
+            const itemKey = `${item.prestable_id}_${item.almacen_nombre}`;
+
+            // Si ya fue procesado, saltar
+            if (procesados.has(itemKey)) return;
+
+            // Si es una canastilla
+            if (item.prestable_tipo === 'CANASTILLA') {
+                itemsAgrupados.push({
+                    ...item,
+                    groupIndex,
+                });
+                procesados.add(itemKey);
+
+                // Buscar embases relacionados en el mismo almacén
+                // Usa embase_asociado_id de la canastilla como referencia
+                const embasesRelacionados = itemsOrdenados.filter(
+                    (e) => {
+                        const embaseKey = `${e.prestable_id}_${e.almacen_nombre}`;
+                        return (
+                            (e.prestable_tipo === 'EMBASES' || e.prestable_tipo === 'EMBASE') &&
+                            (
+                                e.prestable_relacionado_id === item.prestable_id ||  // Búsqueda por prestable_relacionado_id
+                                item.embase_asociado_id === e.prestable_id  // O búsqueda por embase_asociado_id de canastilla
+                            ) &&
+                            e.almacen_nombre === item.almacen_nombre &&
+                            !procesados.has(embaseKey)
+                        );
+                    }
+                );
+
+                // Agregar embases relacionados indentados (mismo groupIndex)
+                embasesRelacionados.forEach((embase) => {
+                    const embaseKey = `${embase.prestable_id}_${embase.almacen_nombre}`;
+                    itemsAgrupados.push({
+                        ...embase,
+                        isEmbaseRelacionado: true,
+                        canastillaId: item.prestable_id,
+                        groupIndex,
+                    });
+                    procesados.add(embaseKey);
+                });
+
+                groupIndex++;
+            } else if (item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE') {
+                // Si es un embase sin canastilla relacionada (prestable_relacionado_id es null)
+                if (!item.prestable_relacionado_id) {
+                    itemsAgrupados.push({
+                        ...item,
+                        groupIndex,
+                    });
+                    procesados.add(itemKey);
+                    groupIndex++;
+                }
+            }
+        });
+
+        return itemsAgrupados;
+    };
+
     // Filtrado y búsqueda
     const filteredItems = useMemo(() => {
-        let filtered = initialItems;
+        // 1. PRIMERO: Agrupar con TODOS los items para mantener relaciones
+        const agrupado = agruparConRelaciones(initialItems);
+
+        // 2. LUEGO: Aplicar filtros al resultado agrupado, manteniendo la jerarquía
+        let filtered = agrupado;
 
         // Filtro por almacén
         if (almacenFilter && almacenFilter !== 'all') {
@@ -109,9 +206,17 @@ export default function StockProveedoresPage({
 
         // Filtro por tipo de prestable
         if (tipoFilter && tipoFilter !== 'all') {
-            filtered = filtered.filter((item) =>
-                item.prestable_tipo === tipoFilter
-            );
+            if (tipoFilter === 'CANASTILLA') {
+                // Mostrar canastillas + sus embases relacionados
+                filtered = filtered.filter((item) => {
+                    const isEmbaseRelacionado = (item as any).isEmbaseRelacionado || false;
+                    if (isEmbaseRelacionado) return true;
+                    return item.prestable_tipo === 'CANASTILLA';
+                });
+            } else if (tipoFilter === 'EMBASES') {
+                // Mostrar solo embases (con o sin canastilla relacionada)
+                filtered = filtered.filter((item) => item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE');
+            }
         }
 
         // Búsqueda
@@ -123,18 +228,38 @@ export default function StockProveedoresPage({
             );
         }
 
-        // Ordenamiento
+        // Ordenamiento: primero por groupIndex para mantener la estructura jerárquica
         filtered.sort((a, b) => {
-            switch (sortBy) {
-                case 'nombre':
-                    return a.prestable_nombre.localeCompare(b.prestable_nombre);
-                case 'disponible':
-                    return b.cantidad_disponible - a.cantidad_disponible;
-                case 'prestamo':
-                    return b.cantidad_proveedor_total - a.cantidad_proveedor_total;
-                default:
-                    return 0;
+            const groupIndexA = (a as any).groupIndex || 0;
+            const groupIndexB = (b as any).groupIndex || 0;
+
+            // Primero: respetar el groupIndex (mantiene canastilla + embases juntos)
+            if (groupIndexA !== groupIndexB) {
+                return groupIndexA - groupIndexB;
             }
+
+            // Segundo: dentro del mismo grupo, canastillas primero
+            const isEmbaseA = (a.isEmbaseRelacionado || false);
+            const isEmbaseB = (b.isEmbaseRelacionado || false);
+            if (isEmbaseA !== isEmbaseB) {
+                return isEmbaseA ? 1 : -1;
+            }
+
+            // Tercero: aplicar criterio de ordenamiento elegido (solo a canastillas)
+            if (!isEmbaseA) {
+                switch (sortBy) {
+                    case 'nombre':
+                        return a.prestable_nombre.localeCompare(b.prestable_nombre);
+                    case 'disponible':
+                        return b.cantidad_disponible - a.cantidad_disponible;
+                    case 'prestamo':
+                        return b.cantidad_proveedor_total - a.cantidad_proveedor_total;
+                    default:
+                        return 0;
+                }
+            }
+
+            return 0;
         });
 
         return filtered;
@@ -149,12 +274,15 @@ export default function StockProveedoresPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Préstamo Proveedor', 'Total'];
+        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Por Devolver', 'Devuelto', 'Dañada', 'Total Préstamo Proveedor', 'Total General'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
+            item.cantidad_proveedor_acreedor,
+            item.cantidad_proveedor_devuelto,
+            item.cantidad_proveedor_dañada,
             item.cantidad_proveedor_total,
             item.cantidad_total,
         ]);
@@ -539,7 +667,7 @@ export default function StockProveedoresPage({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Stock - Préstamos" />
+            <Head title="Stock Proveedores" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Header */}
@@ -588,59 +716,6 @@ export default function StockProveedoresPage({
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             Actualizar
                         </Button>
-                    </div>
-                </div>
-
-                {/* Gráfico de Distribución */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                        <DistributionChart
-                            disponible={resumen.total_disponible}
-                            enPrestamo={resumen.total_proveedor}
-                            vendido={0}
-                            deuda={resumen.total_proveedor_acreedor}
-                            title="Distribución General de Stock - Proveedores"
-                            size="lg"
-                        />
-                    </div>
-
-                    {/* Cards de Totales */}
-                    <div className="space-y-3">
-                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                            <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase">
-                                Disponible
-                            </p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-200 mt-1">
-                                {resumen.total_disponible}
-                            </p>
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-                            <p className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase">
-                                🟠 Por Devolver (Proveedor)
-                            </p>
-                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-200 mt-1">
-                                {resumen.total_proveedor_acreedor}
-                            </p>
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                            <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase">
-                                ✅ Devuelto (Proveedor)
-                            </p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-200 mt-1">
-                                {resumen.total_proveedor_devuelto}
-                            </p>
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                            <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase">
-                                Total
-                            </p>
-                            <p className="text-2xl font-bold text-red-900 dark:text-red-200 mt-1">
-                                {resumen.total_general}
-                            </p>
-                        </div>
                     </div>
                 </div>
 
@@ -719,13 +794,20 @@ export default function StockProveedoresPage({
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                                     <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                        #
+                                    </th>
+                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Código
                                     </th>
                                     <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Nombre
                                     </th>
+                                    {/* Almacen */}
                                     <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Almacén
+                                    </th>
+                                    <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                        🏷️ Tipo
                                     </th>
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Disponible
@@ -733,14 +815,17 @@ export default function StockProveedoresPage({
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         🟠 Por Devolver
                                     </th>
-                                    <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        ✅ Devuelto
-                                    </th>
                                     {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Vendido
+                                        ✅ Devuelto
                                     </th> */}
                                     <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Total
+                                        🔴 Dañada
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
+                                        🧑‍💼Cliente
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
+                                        📅 Evento
                                     </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Acciones
@@ -751,70 +836,97 @@ export default function StockProveedoresPage({
                                 {filteredItems.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={9}
+                                            colSpan={10}
                                             className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                                         >
                                             No hay resultados
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredItems.map((item) => (
-                                        <tr
-                                            key={`${item.prestable_id}-${item.almacen_nombre}`}
-                                            className={`border-b border-slate-200 dark:border-slate-700 ${getRowColor(item.prestable_tipo)} transition-colors`}
-                                        >
-                                            <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
-                                                {item.prestable_codigo}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                                                {item.prestable_nombre}
-                                            </td>
-                                            <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                                                {item.almacen_nombre}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
-                                                    {item.cantidad_disponible}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
-                                                    {item.cantidad_proveedor_acreedor}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
-                                                    {item.cantidad_proveedor_devuelto}
-                                                </span>
-                                            </td>
-                                            {/* <td className="px-4 py-3 text-right">
-                                                <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
-                                                    {item.cantidad_vendida}
-                                                </span>
-                                            </td> */}
-                                            <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
-                                                {item.cantidad_total}
-                                            </td>
-                                            <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
-                                                {/* <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleOpenEditModal(item)}
-                                                    className="gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                                                >
-                                                    📊 Editar
-                                                </Button> */}
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => router.visit(`/prestamos/stock/proveedores/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
-                                                    className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                                                >
-                                                    ➕➖ Ajustar
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    <>
+                                        {filteredItems.map((item, idx) => {
+                                            const isEmbaseRelacionado = (item as any).isEmbaseRelacionado || false;
+                                            const proximoEsEmbase = idx < filteredItems.length - 1
+                                                ? (filteredItems[idx + 1] as any).isEmbaseRelacionado
+                                                : false;
+                                            const debeAgregarSeparador = !proximoEsEmbase && isEmbaseRelacionado;
+
+                                            return (
+                                                <React.Fragment key={`${item.prestable_id}-${item.almacen_nombre}`}>
+                                                    <tr
+                                                        className={`border-b border-slate-200 dark:border-slate-700 ${
+                                                            isEmbaseRelacionado
+                                                                ? 'bg-slate-50 dark:bg-slate-800/50'
+                                                                : getRowColor(item.prestable_tipo)
+                                                        } transition-colors`}
+                                                    >
+                                                        <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
+                                                            {item.id}
+                                                        </td>
+                                                        <td className={`px-4 py-3 font-mono text-slate-600 dark:text-slate-400 ${isEmbaseRelacionado ? 'pl-8' : ''}`}>
+                                                            {isEmbaseRelacionado && <span className="text-slate-400">↳ </span>}
+                                                            {item.prestable_codigo}
+                                                        </td>
+                                                        <td className={`px-4 py-3 font-medium text-slate-900 dark:text-slate-100 ${isEmbaseRelacionado ? 'text-slate-700 dark:text-slate-300' : ''}`}>
+                                                            {item.prestable_nombre}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                                                                item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE'
+                                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
+                                                            }`}>
+                                                                {item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE' ? '🔖 Embase' : '📦 Canastilla'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                                                            <p>{item.almacen_nombre}</p>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
+                                                                {item.cantidad_disponible}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
+                                                                {item.cantidad_proveedor_acreedor}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
+                                                                {item.cantidad_proveedor_dañada}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200">
+                                                                {item.cantidad_cliente_deudor}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200">
+                                                                {item.cantidad_evento_deudor}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => router.visit(`/prestamos/stock/proveedores/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
+                                                                className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                                                            >
+                                                                Ajustar
+                                                            </Button>
+                                                        </td>
+                                                    </tr>
+                                                    {debeAgregarSeparador && (
+                                                        <tr className="border-b-2 border-slate-300 dark:border-slate-600 h-1 bg-slate-100 dark:bg-slate-800">
+                                                            <td colSpan={10} className="px-0 py-0"></td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </>
                                 )}
                             </tbody>
                         </table>

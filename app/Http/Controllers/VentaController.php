@@ -133,7 +133,8 @@ class VentaController extends Controller
             // Cargar relaciones necesarias
             $query->with([
                 'cliente:id,nombre,razon_social',
-                'detalles.producto:id,nombre,sku'
+                'detalles.producto:id,nombre,sku',
+                'detalles.producto.prestables' // ✅ Incluir prestables relacionados
             ]);
 
             // Ordenamiento

@@ -1036,4 +1036,121 @@ class ProformaService
 
         return $estadoId;
     }
+
+    /**
+     * ✅ NUEVO (2026-06-09): Obtener resumen de crédito del cliente
+     *
+     * Devuelve información consolidada del límite de crédito:
+     * - Límite total configurado
+     * - Monto utilizado (desde cuentas_por_cobrar)
+     * - Proformas pendientes con política CRÉDITO (intenciones)
+     * - Disponible calculado
+     * - Validación si puede convertir esta venta
+     *
+     * @param int $proformaId ID de la proforma a convertir
+     * @return array Resumen de crédito del cliente
+     */
+    public function obtenerResumenCredito(int $proformaId): array
+    {
+        // Obtener la proforma
+        $proforma = Proforma::with(['cliente', 'detalles'])->findOrFail($proformaId);
+        $cliente = $proforma->cliente;
+
+        if (!$cliente) {
+            throw new \Exception('Cliente no encontrado en la proforma');
+        }
+
+        // ====================================
+        // 1. LÍMITE DE CRÉDITO DEL CLIENTE
+        // ====================================
+        $limiteCredito = (float) ($cliente->limite_credito ?? 0);
+
+        // ====================================
+        // 2. MONTO UTILIZADO (desde cuentas_por_cobrar)
+        // ====================================
+        $montoUtilizado = DB::table('cuentas_por_cobrar')
+            ->where('cliente_id', $cliente->id)
+            ->whereNull('fecha_pago')  // Solo deudas no pagadas
+            ->sum('monto');
+        $montoUtilizado = (float) ($montoUtilizado ?? 0);
+
+        // ====================================
+        // 3. PROFORMAS PENDIENTES CON CRÉDITO (INTENCIONES)
+        // ====================================
+        $proformasPendientes = Proforma::where('cliente_id', $cliente->id)
+            ->where('politica_pago', 'CREDITO')
+            ->where('estado', 'PENDIENTE')
+            ->where('id', '!=', $proformaId)  // Excluir la proforma actual
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'numero' => $p->numero,
+                    'total' => (float) $p->total,
+                    'estado' => $p->estado,
+                    'politica_pago' => $p->politica_pago,
+                    'fecha_creacion' => $p->created_at?->format('Y-m-d'),
+                ];
+            })
+            ->toArray();
+
+        // ====================================
+        // 4. TOTAL DE INTENCIONES (proformas pendientes)
+        // ====================================
+        $totalIntenciones = collect($proformasPendientes)
+            ->sum('total');
+        $totalIntenciones = (float) $totalIntenciones;
+
+        // ====================================
+        // 5. DISPONIBLE CALCULADO
+        // ====================================
+        $disponible = $limiteCredito - $montoUtilizado - $totalIntenciones;
+        $disponible = max(0, $disponible);  // No puede ser negativo
+
+        // ====================================
+        // 6. MONTO DE ESTA VENTA (proforma actual)
+        // ====================================
+        $montoProformaActual = (float) $proforma->total;
+
+        // ====================================
+        // 7. VALIDAR SI PUEDE CONVERTIR
+        // ====================================
+        $puedeConvertir = $disponible >= $montoProformaActual;
+        $quedariaDisponible = $disponible - $montoProformaActual;
+
+        // ====================================
+        // 8. DETECTAR ADVERTENCIAS
+        // ====================================
+        $advertencia = null;
+        $porcentajeUtilizado = $limiteCredito > 0
+            ? (($montoUtilizado + $totalIntenciones) / $limiteCredito) * 100
+            : 0;
+
+        if ($porcentajeUtilizado >= 80) {
+            $advertencia = "Límite de crédito casi alcanzado ({$porcentajeUtilizado}% utilizado)";
+        }
+
+        if (!$cliente->puede_tener_credito) {
+            $advertencia = "Cliente no tiene permiso para solicitar crédito";
+            $puedeConvertir = false;
+        }
+
+        // ====================================
+        // 9. CONSTRUIR RESPUESTA
+        // ====================================
+        return [
+            'cliente_id' => $cliente->id,
+            'cliente_nombre' => $cliente->nombre,
+            'limite_credito' => $limiteCredito,
+            'monto_utilizado' => $montoUtilizado,
+            'proformas_pendientes' => $proformasPendientes,
+            'total_intenciones' => $totalIntenciones,
+            'disponible' => $disponible,
+            'monto_proforma_actual' => $montoProformaActual,
+            'puede_convertir' => $puedeConvertir,
+            'quedaria_disponible' => $quedariaDisponible,
+            'porcentaje_utilizado' => round($porcentajeUtilizado, 2),
+            'advertencia' => $advertencia,
+        ];
+    }
 }

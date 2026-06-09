@@ -217,6 +217,16 @@ class VentaResponseDTO extends BaseDTO
                             'es_principal' => $cb->es_principal ?? false,
                         ])->toArray()
                         : [],
+                    // ✅ NUEVO: Prestables relacionados (para cargar en préstamos)
+                    'prestables' => $det->producto->prestables ?
+                        $det->producto->prestables->map(fn($prestable) => [
+                            'id' => $prestable->id,
+                            'nombre' => $prestable->nombre,
+                            'tipo' => $prestable->tipo,
+                            'capacidad' => $prestable->capacidad,
+                            'prestable_id' => $prestable->id,
+                        ])->toArray()
+                        : [],
                 ] : null,
                 'cantidad' => $det->cantidad,
                 'precio_unitario' => (float) $det->precio_unitario,

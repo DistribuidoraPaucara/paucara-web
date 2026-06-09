@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PrestamoEventoDetalle extends Model
 {
@@ -24,6 +25,19 @@ class PrestamoEventoDetalle extends Model
         'almacenes_ids' => 'array',
     ];
 
+    protected $appends = [
+        'cantidad',
+        'almacen_nombre',
+    ];
+
+    /**
+     * Accessor para alias del campo cantidad_prestada
+     */
+    public function getCantidadAttribute(): int
+    {
+        return $this->cantidad_prestada ?? 0;
+    }
+
     public function prestamoEvento(): BelongsTo
     {
         return $this->belongsTo(PrestamoEvento::class, 'prestamo_evento_id');
@@ -34,8 +48,41 @@ class PrestamoEventoDetalle extends Model
         return $this->belongsTo(Prestable::class, 'prestable_id');
     }
 
+    public function almacenes(): HasMany
+    {
+        return $this->hasMany(PrestamoEventoAlmacen::class, 'prestamo_evento_detalle_id');
+    }
+
     public function devoluciones(): HasMany
     {
         return $this->hasMany(DevolucionEventoDetalle::class, 'prestamo_evento_detalle_id');
+    }
+
+    // ✅ NUEVO: Alias para compatibilidad con servicio genérico
+    public function devolucionDetalles(): HasMany
+    {
+        return $this->devoluciones();
+    }
+
+    /**
+     * Accessor para obtener el nombre del primer almacén
+     */
+    public function getAlmacenNombreAttribute(): ?string
+    {
+        $almacenesIds = $this->almacenes_ids;
+
+        if (empty($almacenesIds) || !is_array($almacenesIds)) {
+            return null;
+        }
+
+        // Obtener el primer almacén
+        $primerAlmacenId = $almacenesIds[0];
+
+        try {
+            $almacen = AlmacenPrestable::find($primerAlmacenId);
+            return $almacen?->nombre;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

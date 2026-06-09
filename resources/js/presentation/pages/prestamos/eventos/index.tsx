@@ -5,7 +5,7 @@ import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
 import { useToast } from '@/presentation/hooks/useToast';
-import { Printer } from 'lucide-react';
+import { Printer, MoreVertical, Eye, RotateCcw, Edit3 } from 'lucide-react';
 import type { PrestamoEvento } from '@/domain/entities/prestamos';
 import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
 import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
@@ -24,6 +24,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
     const [error, setError] = useState('');
     const [filtroEstado, setFiltroEstado] = useState<string>('');
     const [filtroId, setFiltroId] = useState<string>('');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
     // Filtros con DynamicSearchSelect
     const [nombreEventoSearch, setNombreEventoSearch] = useState<string>('');
@@ -44,14 +45,43 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
     const [filtroFechaDesde, setFiltroFechaDesde] = useState<string>('');
     const [filtroFechaHasta, setFiltroFechaHasta] = useState<string>('');
 
+    // Paginación
+    const [paginaActual, setPaginaActual] = useState(1);
+    const [paginacion, setPaginacion] = useState({
+        current_page: 1,
+        last_page: 1,
+        per_page: 15,
+        total: 0,
+        from: 1,
+        to: 0,
+    });
+
     // Modal de impresión
     const [showOutputModal, setShowOutputModal] = useState(false);
     const [prestamoParaImprimir, setPrestamoParaImprimir] = useState<PrestamoEvento | null>(null);
+
+    // Dropdown abierto
+    const [openDropdown, setOpenDropdown] = useState<number | null>(null);
 
     // Cargar datos iniciales
     useEffect(() => {
         cargarDatosIniciales();
     }, []);
+
+    // Cerrar dropdown cuando se hace click fuera
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('[data-dropdown-trigger]') && !target.closest('[data-dropdown-menu]')) {
+                setOpenDropdown(null);
+            }
+        };
+
+        if (openDropdown !== null) {
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
+        }
+    }, [openDropdown]);
 
     // Buscar cuando cambian los filtros
     useEffect(() => {
@@ -65,6 +95,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         vehiculoSeleccionado,
         filtroFechaDesde,
         filtroFechaHasta,
+        paginaActual,
     ]);
 
     const cargarDatosIniciales = () => {
@@ -120,9 +151,12 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
             if (vehiculoSeleccionado) filtros.vehiculo_asignado = vehiculoSeleccionado.placa;
             if (filtroFechaDesde) filtros.fecha_desde = filtroFechaDesde;
             if (filtroFechaHasta) filtros.fecha_hasta = filtroFechaHasta;
+            filtros.page = paginaActual;
+            filtros.per_page = 15;
 
-            const datos = await prestamoEventoService.listar(filtros);
-            setPrestamos(Array.isArray(datos) ? datos : []);
+            const resultado = await prestamoEventoService.listar(filtros);
+            setPrestamos(resultado.data || []);
+            setPaginacion(resultado.pagination);
         } catch (err: any) {
             const msg = err.message || 'Error cargando préstamos';
             setError(msg);
@@ -145,6 +179,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         setVehiculosSearch('');
         setFiltroFechaDesde('');
         setFiltroFechaHasta('');
+        setPaginaActual(1);
     };
 
     const getEstadoBadge = (estado: string) => {
@@ -193,8 +228,20 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                     </div>
                 )}
 
+                {/* Botón para mostrar/ocultar filtros */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
+                    >
+                        <span>{mostrarFiltros ? '▼' : '▶'}</span>
+                        {mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                    </button>
+                </div>
+
                 {/* Filtros */}
-                <Card className="p-4 mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                {mostrarFiltros && (
+                    <Card className="p-4 mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
                     <div className="space-y-4">
                         {/* Primera fila de filtros */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -343,11 +390,13 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
                         {/* Cuarta fila: Estado y botones */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            
-                            
+
+
                         </div>
                     </div>
                 </Card>
+                )}
+
 
                 {/* Tabla de Préstamos */}
                 <Card className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
@@ -369,7 +418,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Encargado</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Chofer</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehiculo</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cantidad</th>
+                                    {/* <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cantidad</th> */}
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Garantía</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Préstamo</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Esperada Devolución</th>
@@ -398,9 +447,9 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {prestamo.vehiculo_asignado || '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                        {/* <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                             {prestamo.cantidad}
-                                        </td>
+                                        </td> */}
                                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             Bs {Number(prestamo.monto_garantia).toFixed(2)}
                                         </td>
@@ -414,29 +463,53 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                             {getEstadoBadge(prestamo.estado)}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
-                                            <div className="flex gap-2">
-                                                {prestamo.estado === 'ACTIVO' && (
-                                                    <button
-                                                        onClick={() => window.location.href = `/prestamos/eventos/${prestamo.id}/devoluciones`}
-                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium"
-                                                    >
-                                                        Devolver
-                                                    </button>
+                                            <div className="relative">
+                                                <button
+                                                    data-dropdown-trigger
+                                                    onClick={() => setOpenDropdown(openDropdown === prestamo.id ? null : prestamo.id)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    title="Acciones"
+                                                >
+                                                    <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                                </button>
+
+                                                {/* Dropdown Menu */}
+                                                {openDropdown === prestamo.id && (
+                                                    <div data-dropdown-menu className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                                                        {(prestamo.estado === 'ACTIVO' || prestamo.estado === 'PARCIALMENTE_DEVUELTO') && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    window.location.href = `/prestamos/eventos/${prestamo.id}/devoluciones`;
+                                                                    setOpenDropdown(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
+                                                            >
+                                                                <RotateCcw className="w-4 h-4 text-green-600" />
+                                                                Registrar Devolución
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => {
+                                                                handleImprimir(prestamo);
+                                                                setOpenDropdown(null);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
+                                                        >
+                                                            <Printer className="w-4 h-4 text-purple-600" />
+                                                            Imprimir
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                window.open(`/prestamos/eventos/${prestamo.id}`, '_blank');
+                                                                setOpenDropdown(null);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2"
+                                                        >
+                                                            <Eye className="w-4 h-4 text-blue-600" />
+                                                            Ver Detalle
+                                                        </button>
+                                                    </div>
                                                 )}
-                                                <button
-                                                    onClick={() => handleImprimir(prestamo)}
-                                                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-medium flex items-center gap-1"
-                                                    title="Imprimir"
-                                                >
-                                                    <Printer className="w-3 h-3" />
-                                                    Imprimir
-                                                </button>
-                                                <button
-                                                    onClick={() => window.open(`/prestamos/eventos/${prestamo.id}`, '_blank')}
-                                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"
-                                                >
-                                                    Ver
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -444,9 +517,70 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                             </tbody>
                         </table>
                     )}
+
+                    {/* Controles de Paginación */}
+                    {prestamos.length > 0 && (
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                            {/* Información de resultados */}
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                Mostrando <span className="font-semibold text-gray-900 dark:text-white">{paginacion.from}</span> a{' '}
+                                <span className="font-semibold text-gray-900 dark:text-white">{paginacion.to}</span> de{' '}
+                                <span className="font-semibold text-gray-900 dark:text-white">{paginacion.total}</span> resultados
+                            </div>
+
+                            {/* Controles de navegación */}
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
+                                    disabled={paginaActual === 1}
+                                    className="text-sm"
+                                >
+                                    ← Anterior
+                                </Button>
+
+                                {/* Números de página */}
+                                <div className="flex gap-1">
+                                    {Array.from({ length: Math.min(5, paginacion.last_page) }, (_, i) => {
+                                        const numeroPagina = paginacion.current_page <= 3
+                                            ? i + 1
+                                            : Math.max(1, paginacion.current_page - 2 + i);
+
+                                        if (numeroPagina > paginacion.last_page) return null;
+
+                                        return (
+                                            <Button
+                                                key={numeroPagina}
+                                                onClick={() => setPaginaActual(numeroPagina)}
+                                                variant={numeroPagina === paginacion.current_page ? 'default' : 'outline'}
+                                                className="w-10 h-10 p-0 text-sm"
+                                            >
+                                                {numeroPagina}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPaginaActual(Math.min(paginacion.last_page, paginaActual + 1))}
+                                    disabled={paginaActual === paginacion.last_page}
+                                    className="text-sm"
+                                >
+                                    Siguiente →
+                                </Button>
+                            </div>
+
+                            {/* Información de página */}
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                Página <span className="font-semibold text-gray-900 dark:text-white">{paginacion.current_page}</span> de{' '}
+                                <span className="font-semibold text-gray-900 dark:text-white">{paginacion.last_page}</span>
+                            </div>
+                        </div>
+                    )}
                 </Card>
 
-                <ToastContainer toasts={toasts} removeToast={removeToast} />
+                <ToastContainer toasts={toasts} onClose={removeToast} />
 
                 {prestamoParaImprimir && (
                     <OutputSelectionModal

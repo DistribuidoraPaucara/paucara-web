@@ -399,6 +399,10 @@ class ImpresionService
                 'A4_COPIA' => 'impresion.prestamos_eventos.a4-2-copias',
                 'TICKET_80' => 'impresion.prestamos_eventos.ticket-80',
             ],
+            'devolucion_evento' => [
+                'A4' => 'impresion.prestamos_eventos.devolucion-a4',
+                'TICKET_80' => 'impresion.prestamos_eventos.devolucion-ticket-80',
+            ],
             'devolucion_cliente' => [
                 'A4' => 'impresion.prestamos_clientes.devolucion-a4',
             ],

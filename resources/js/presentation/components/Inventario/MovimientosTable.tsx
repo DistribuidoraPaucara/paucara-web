@@ -16,8 +16,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/presentation/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, Eye, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, AlertTriangle, Calculator } from 'lucide-react';
 import MovimientoDetallesModal from './MovimientoDetallesModal';
+import StockRecorrectorModal from './StockRecorrectorModal';
 
 interface MovimientoInventario {
     id: number;
@@ -103,6 +104,8 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMovimiento, setSelectedMovimiento] = useState<MovimientoInventario | null>(null);
     const [mostrarStockEsperado, setMostrarStockEsperado] = useState(false); // ✅ NUEVO (2026-06-02): Toggle para stock esperado
+    const [isStockRecorrectorOpen, setIsStockRecorrectorOpen] = useState(false); // ✅ NUEVO (2026-06-02): Modal recorredor
+    const [movimientoRecorridorId, setMovimientoRecorridorId] = useState<number | undefined>(); // ✅ NUEVO (2026-06-02): ID para recorredor
 
     // ✅ NUEVO: Verificar si hay movimientos con error
     const hayErrorStock = movimientos.some(m => m.tiene_error_stock);
@@ -361,7 +364,21 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                                     )}
 
                                     {/* ✅ NUEVO (2026-03-26): Botón simple para ver detalles */}
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-center flex items-center justify-center gap-2">
+                                        {/* ✅ NUEVO (2026-06-02): Botón para recorrer stock */}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setMovimientoRecorridorId(movimiento.id);
+                                                setIsStockRecorrectorOpen(true);
+                                            }}
+                                            className="h-8 w-8 p-0"
+                                            title="Calcular stock correcto desde este movimiento"
+                                        >
+                                            <Calculator className="h-4 w-4" />
+                                        </Button>
+
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -482,6 +499,16 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 movimiento={selectedMovimiento}
+            />
+
+            {/* ✅ NUEVO (2026-06-02): Modal recorredor de stock */}
+            <StockRecorrectorModal
+                isOpen={isStockRecorrectorOpen}
+                onClose={() => {
+                    setIsStockRecorrectorOpen(false);
+                    setMovimientoRecorridorId(undefined);
+                }}
+                movimientoIdInicial={movimientoRecorridorId}
             />
             </CardContent>
         </Card>

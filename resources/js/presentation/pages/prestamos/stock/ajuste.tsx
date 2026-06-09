@@ -17,10 +17,13 @@ interface StockItem {
     cantidad_disponible: number;
     cantidad_cliente_deudor?: number;
     cantidad_cliente_devuelto?: number;
+    cantidad_cliente_dañada?: number;
     cantidad_evento_deudor?: number;
     cantidad_evento_devuelto?: number;
+    cantidad_evento_dañada?: number;
     cantidad_proveedor_acreedor?: number;
     cantidad_proveedor_devuelto?: number;
+    cantidad_proveedor_dañada?: number;
 }
 
 interface PrestableDetails {
@@ -38,16 +41,19 @@ interface EmbaseData {
     cantidad_disponible: number;
     cantidad_cliente_deudor?: number;
     cantidad_cliente_devuelto?: number;
+    cantidad_cliente_dañada?: number;
     cantidad_evento_deudor?: number;
     cantidad_evento_devuelto?: number;
+    cantidad_evento_dañada?: number;
     cantidad_proveedor_acreedor?: number;
     cantidad_proveedor_devuelto?: number;
+    cantidad_proveedor_dañada?: number;
 }
 
 interface AjustePageProps {
     prestable_id: number;
     almacen_id: number;
-    tipo: 'clientes' | 'proveedores';
+    tipo: 'clientes' | 'eventos' | 'proveedores';
     item: StockItem;
     embaseRelacionado?: EmbaseData | null;
     motivosOptions: string[];
@@ -99,14 +105,21 @@ export default function AjustePage({
                 cantidad_disponible: embaseRelacionado.cantidad_disponible || 0,
                 cantidad_cliente_deudor: embaseRelacionado.cantidad_cliente_deudor || 0,
                 cantidad_cliente_devuelto: embaseRelacionado.cantidad_cliente_devuelto || 0,
+                cantidad_cliente_dañada: embaseRelacionado.cantidad_cliente_dañada || 0,
+            };
+        } else if (tipo === 'eventos') {
+            return {
+                cantidad_disponible: embaseRelacionado.cantidad_disponible || 0,
                 cantidad_evento_deudor: embaseRelacionado.cantidad_evento_deudor || 0,
                 cantidad_evento_devuelto: embaseRelacionado.cantidad_evento_devuelto || 0,
+                cantidad_evento_dañada: embaseRelacionado.cantidad_evento_dañada || 0,
             };
         } else {
             return {
                 cantidad_disponible: embaseRelacionado.cantidad_disponible || 0,
                 cantidad_proveedor_acreedor: embaseRelacionado.cantidad_proveedor_acreedor || 0,
                 cantidad_proveedor_devuelto: embaseRelacionado.cantidad_proveedor_devuelto || 0,
+                cantidad_proveedor_dañada: embaseRelacionado.cantidad_proveedor_dañada || 0,
             };
         }
     });
@@ -126,8 +139,15 @@ export default function AjustePage({
         cantidad_disponible: initialItem.cantidad_disponible,
         cantidad_cliente_deudor: initialItem.cantidad_cliente_deudor || 0,
         cantidad_cliente_devuelto: initialItem.cantidad_cliente_devuelto || 0,
+        cantidad_cliente_dañada: initialItem.cantidad_cliente_dañada || 0,
+    });
+
+    // Estados editable para eventos
+    const [eventosData, setEventosData] = useState({
+        cantidad_disponible: initialItem.cantidad_disponible,
         cantidad_evento_deudor: initialItem.cantidad_evento_deudor || 0,
         cantidad_evento_devuelto: initialItem.cantidad_evento_devuelto || 0,
+        cantidad_evento_dañada: initialItem.cantidad_evento_dañada || 0,
     });
 
     // Estados editable para proveedores
@@ -135,10 +155,11 @@ export default function AjustePage({
         cantidad_disponible: initialItem.cantidad_disponible,
         cantidad_proveedor_acreedor: initialItem.cantidad_proveedor_acreedor || 0,
         cantidad_proveedor_devuelto: initialItem.cantidad_proveedor_devuelto || 0,
+        cantidad_proveedor_dañada: initialItem.cantidad_proveedor_dañada || 0,
     });
 
-    const currentData = tipo === 'clientes' ? clientesData : proveedoresData;
-    const setCurrentData = tipo === 'clientes' ? setClientesData : setProveedoresData;
+    const currentData = tipo === 'clientes' ? clientesData : tipo === 'eventos' ? eventosData : proveedoresData;
+    const setCurrentData = tipo === 'clientes' ? setClientesData : tipo === 'eventos' ? setEventosData : setProveedoresData;
 
     // 📡 LOG: Verificar si hay embase relacionado al cargar
     useEffect(() => {
@@ -166,34 +187,41 @@ export default function AjustePage({
         if (actualizarEmbase && embaseRelacionado && initialItem.prestable_capacidad) {
             const capacidad = initialItem.prestable_capacidad;
             const calculados: any = {};
+            const difDisponible = currentData.cantidad_disponible - initialItem.cantidad_disponible;
+
+            calculados.cantidad_disponible = Math.max(0, (embaseRelacionado.cantidad_disponible || 0) + (difDisponible * capacidad));
 
             if (tipo === 'clientes') {
-                const difDisponible = clientesData.cantidad_disponible - initialItem.cantidad_disponible;
                 const difClienteDeudor = clientesData.cantidad_cliente_deudor - (initialItem.cantidad_cliente_deudor || 0);
                 const difClienteDevuelto = clientesData.cantidad_cliente_devuelto - (initialItem.cantidad_cliente_devuelto || 0);
-                const difEventoDeudor = clientesData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0);
-                const difEventoDevuelto = clientesData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0);
+                const difClienteDañada = clientesData.cantidad_cliente_dañada - (initialItem.cantidad_cliente_dañada || 0);
 
-                calculados.cantidad_disponible = Math.max(0, (embaseRelacionado.cantidad_disponible || 0) + (difDisponible * capacidad));
                 calculados.cantidad_cliente_deudor = Math.max(0, (embaseRelacionado.cantidad_cliente_deudor || 0) + (difClienteDeudor * capacidad));
                 calculados.cantidad_cliente_devuelto = Math.max(0, (embaseRelacionado.cantidad_cliente_devuelto || 0) + (difClienteDevuelto * capacidad));
+                calculados.cantidad_cliente_dañada = Math.max(0, (embaseRelacionado.cantidad_cliente_dañada || 0) + (difClienteDañada * capacidad));
+            } else if (tipo === 'eventos') {
+                const difEventoDeudor = eventosData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0);
+                const difEventoDevuelto = eventosData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0);
+                const difEventoDañada = eventosData.cantidad_evento_dañada - (initialItem.cantidad_evento_dañada || 0);
+
                 calculados.cantidad_evento_deudor = Math.max(0, (embaseRelacionado.cantidad_evento_deudor || 0) + (difEventoDeudor * capacidad));
                 calculados.cantidad_evento_devuelto = Math.max(0, (embaseRelacionado.cantidad_evento_devuelto || 0) + (difEventoDevuelto * capacidad));
+                calculados.cantidad_evento_dañada = Math.max(0, (embaseRelacionado.cantidad_evento_dañada || 0) + (difEventoDañada * capacidad));
             } else {
-                const difDisponible = proveedoresData.cantidad_disponible - initialItem.cantidad_disponible;
                 const difProveedorAcreedor = proveedoresData.cantidad_proveedor_acreedor - (initialItem.cantidad_proveedor_acreedor || 0);
                 const difProveedorDevuelto = proveedoresData.cantidad_proveedor_devuelto - (initialItem.cantidad_proveedor_devuelto || 0);
+                const difProveedorDañada = proveedoresData.cantidad_proveedor_dañada - (initialItem.cantidad_proveedor_dañada || 0);
 
-                calculados.cantidad_disponible = Math.max(0, (embaseRelacionado.cantidad_disponible || 0) + (difDisponible * capacidad));
                 calculados.cantidad_proveedor_acreedor = Math.max(0, (embaseRelacionado.cantidad_proveedor_acreedor || 0) + (difProveedorAcreedor * capacidad));
                 calculados.cantidad_proveedor_devuelto = Math.max(0, (embaseRelacionado.cantidad_proveedor_devuelto || 0) + (difProveedorDevuelto * capacidad));
+                calculados.cantidad_proveedor_dañada = Math.max(0, (embaseRelacionado.cantidad_proveedor_dañada || 0) + (difProveedorDañada * capacidad));
             }
 
             console.log('🔄 Cálculo Automático (Opción A):', {
                 actualizarEmbase,
                 capacidad,
-                clientesData,
-                proveedoresData,
+                tipo,
+                currentData,
                 calculados,
             });
 
@@ -203,7 +231,7 @@ export default function AjustePage({
             console.log('⚙️ Modo Manual (Opción B) - El usuario edita manualmente');
             setEmbaseValoresCalculados(null);
         }
-    }, [actualizarEmbase, clientesData, proveedoresData, embaseRelacionado, initialItem, tipo]);
+    }, [actualizarEmbase, clientesData, eventosData, proveedoresData, embaseRelacionado, initialItem, tipo]);
 
     // Calcular totales
     const getTotals = () => {
@@ -212,14 +240,21 @@ export default function AjustePage({
                 total: clientesData.cantidad_disponible +
                     clientesData.cantidad_cliente_deudor +
                     clientesData.cantidad_cliente_devuelto +
-                    clientesData.cantidad_evento_deudor +
-                    clientesData.cantidad_evento_devuelto,
+                    clientesData.cantidad_cliente_dañada,
+            };
+        } else if (tipo === 'eventos') {
+            return {
+                total: eventosData.cantidad_disponible +
+                    eventosData.cantidad_evento_deudor +
+                    eventosData.cantidad_evento_devuelto +
+                    eventosData.cantidad_evento_dañada,
             };
         } else {
             return {
                 total: proveedoresData.cantidad_disponible +
                     proveedoresData.cantidad_proveedor_acreedor +
-                    proveedoresData.cantidad_proveedor_devuelto,
+                    proveedoresData.cantidad_proveedor_devuelto +
+                    proveedoresData.cantidad_proveedor_dañada,
             };
         }
     };
@@ -260,26 +295,38 @@ export default function AjustePage({
             if (tipo === 'clientes') {
                 body.cantidad_cliente_deudor = clientesData.cantidad_cliente_deudor;
                 body.cantidad_cliente_devuelto = clientesData.cantidad_cliente_devuelto;
-                body.cantidad_evento_deudor = clientesData.cantidad_evento_deudor;
-                body.cantidad_evento_devuelto = clientesData.cantidad_evento_devuelto;
+                body.cantidad_cliente_dañada = clientesData.cantidad_cliente_dañada;
 
                 // Enviar valores editados del embase
                 if (actualizarEmbaseBoolean && embaseData) {
                     body.embase_cantidad_disponible = embaseData.cantidad_disponible;
                     body.embase_cantidad_cliente_deudor = embaseData.cantidad_cliente_deudor;
                     body.embase_cantidad_cliente_devuelto = embaseData.cantidad_cliente_devuelto;
+                    body.embase_cantidad_cliente_dañada = embaseData.cantidad_cliente_dañada;
+                }
+            } else if (tipo === 'eventos') {
+                body.cantidad_evento_deudor = eventosData.cantidad_evento_deudor;
+                body.cantidad_evento_devuelto = eventosData.cantidad_evento_devuelto;
+                body.cantidad_evento_dañada = eventosData.cantidad_evento_dañada;
+
+                // Enviar valores editados del embase
+                if (actualizarEmbaseBoolean && embaseData) {
+                    body.embase_cantidad_disponible = embaseData.cantidad_disponible;
                     body.embase_cantidad_evento_deudor = embaseData.cantidad_evento_deudor;
                     body.embase_cantidad_evento_devuelto = embaseData.cantidad_evento_devuelto;
+                    body.embase_cantidad_evento_dañada = embaseData.cantidad_evento_dañada;
                 }
             } else {
                 body.cantidad_proveedor_acreedor = proveedoresData.cantidad_proveedor_acreedor;
                 body.cantidad_proveedor_devuelto = proveedoresData.cantidad_proveedor_devuelto;
+                body.cantidad_proveedor_dañada = proveedoresData.cantidad_proveedor_dañada;
 
                 // Enviar valores editados del embase
                 if (actualizarEmbaseBoolean && embaseData) {
                     body.embase_cantidad_disponible = embaseData.cantidad_disponible;
                     body.embase_cantidad_proveedor_acreedor = embaseData.cantidad_proveedor_acreedor;
                     body.embase_cantidad_proveedor_devuelto = embaseData.cantidad_proveedor_devuelto;
+                    body.embase_cantidad_proveedor_dañada = embaseData.cantidad_proveedor_dañada;
                 }
             }
 
@@ -347,7 +394,7 @@ export default function AjustePage({
             href: '/prestamos',
         },
         {
-            title: tipo === 'clientes' ? 'Stock Clientes' : 'Stock Proveedores',
+            title: tipo === 'clientes' ? 'Stock Clientes' : tipo === 'eventos' ? 'Stock Eventos' : 'Stock Proveedores',
             href: `/prestamos/stock/${tipo}`,
         },
         {
@@ -363,7 +410,7 @@ export default function AjustePage({
             <div className="p-4 sm:p-6">
                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                        ➕➖ Ajustar Stock - {initialItem.prestable_nombre}
+                        Ajustar Stock - {initialItem.prestable_nombre}
                     </h1>
 
                     {/* Prestable Info */}
@@ -372,7 +419,7 @@ export default function AjustePage({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Código
                             </label>
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {initialItem.prestable_codigo}
                             </p>
                         </div>
@@ -380,7 +427,7 @@ export default function AjustePage({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Tipo Prestable
                             </label>
-                            <p className={`text-lg font-semibold ${initialItem.prestable_tipo === 'EMBASE' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                            <p className={`text-sm font-semibold ${initialItem.prestable_tipo === 'EMBASE' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                 {initialItem.prestable_tipo}
                             </p>
                         </div>
@@ -388,7 +435,7 @@ export default function AjustePage({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Almacén
                             </label>
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {initialItem.almacen_nombre}
                             </p>
                         </div>
@@ -396,7 +443,7 @@ export default function AjustePage({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Tipo Almacén
                             </label>
-                            <p className={`text-lg font-semibold ${initialItem.almacen_tipo === 'Proveedor' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                            <p className={`text-sm font-semibold ${initialItem.almacen_tipo === 'Proveedor' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                 {initialItem.almacen_tipo}
                             </p>
                         </div>
@@ -404,7 +451,7 @@ export default function AjustePage({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Total
                             </label>
-                            <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                            <p className="text-sm font-bold text-green-600 dark:text-green-400">
                                 {totals.total}
                             </p>
                         </div>
@@ -512,7 +559,7 @@ export default function AjustePage({
                                             <>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        🔵 Cliente Deudor
+                                                        🔵 Deudor
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_cliente_deudor || 0}
@@ -534,7 +581,7 @@ export default function AjustePage({
                                                 </tr>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        ✅ Cliente Devuelto
+                                                        ✅ Devuelto
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_cliente_devuelto || 0}
@@ -556,7 +603,35 @@ export default function AjustePage({
                                                 </tr>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        🟣 Evento Deudor
+                                                        🔴 Dañada
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                        {initialItem.cantidad_cliente_dañada || 0}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={clientesData.cantidad_cliente_dañada}
+                                                            onChange={(e) => handleInputChange('cantidad_cliente_dañada', parseInt(e.target.value) || 0)}
+                                                            className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm font-semibold">
+                                                        <span className={clientesData.cantidad_cliente_dañada > (initialItem.cantidad_cliente_dañada || 0) ? 'text-green-600 dark:text-green-400' : clientesData.cantidad_cliente_dañada < (initialItem.cantidad_cliente_dañada || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                                            {clientesData.cantidad_cliente_dañada - (initialItem.cantidad_cliente_dañada || 0) >= 0 ? '+' : ''}{clientesData.cantidad_cliente_dañada - (initialItem.cantidad_cliente_dañada || 0)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </>
+                                        )}
+
+                                        {/* Evento rows */}
+                                        {tipo === 'eventos' && (
+                                            <>
+                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                        🟣 Deudor
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_evento_deudor || 0}
@@ -565,20 +640,20 @@ export default function AjustePage({
                                                         <input
                                                             type="number"
                                                             min="0"
-                                                            value={clientesData.cantidad_evento_deudor}
+                                                            value={eventosData.cantidad_evento_deudor}
                                                             onChange={(e) => handleInputChange('cantidad_evento_deudor', parseInt(e.target.value) || 0)}
                                                             className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
                                                         />
                                                     </td>
                                                     <td className="px-4 py-3 text-sm font-semibold">
-                                                        <span className={clientesData.cantidad_evento_deudor > (initialItem.cantidad_evento_deudor || 0) ? 'text-green-600 dark:text-green-400' : clientesData.cantidad_evento_deudor < (initialItem.cantidad_evento_deudor || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
-                                                            {clientesData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0) >= 0 ? '+' : ''}{clientesData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0)}
+                                                        <span className={eventosData.cantidad_evento_deudor > (initialItem.cantidad_evento_deudor || 0) ? 'text-green-600 dark:text-green-400' : eventosData.cantidad_evento_deudor < (initialItem.cantidad_evento_deudor || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                                            {eventosData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0) >= 0 ? '+' : ''}{eventosData.cantidad_evento_deudor - (initialItem.cantidad_evento_deudor || 0)}
                                                         </span>
                                                     </td>
                                                 </tr>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        ↩️ Evento Devuelto
+                                                        ✅ Devuelto
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_evento_devuelto || 0}
@@ -587,14 +662,36 @@ export default function AjustePage({
                                                         <input
                                                             type="number"
                                                             min="0"
-                                                            value={clientesData.cantidad_evento_devuelto}
+                                                            value={eventosData.cantidad_evento_devuelto}
                                                             onChange={(e) => handleInputChange('cantidad_evento_devuelto', parseInt(e.target.value) || 0)}
                                                             className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
                                                         />
                                                     </td>
                                                     <td className="px-4 py-3 text-sm font-semibold">
-                                                        <span className={clientesData.cantidad_evento_devuelto > (initialItem.cantidad_evento_devuelto || 0) ? 'text-green-600 dark:text-green-400' : clientesData.cantidad_evento_devuelto < (initialItem.cantidad_evento_devuelto || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
-                                                            {clientesData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0) >= 0 ? '+' : ''}{clientesData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0)}
+                                                        <span className={eventosData.cantidad_evento_devuelto > (initialItem.cantidad_evento_devuelto || 0) ? 'text-green-600 dark:text-green-400' : eventosData.cantidad_evento_devuelto < (initialItem.cantidad_evento_devuelto || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                                            {eventosData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0) >= 0 ? '+' : ''}{eventosData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                        🔴 Dañada
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                        {initialItem.cantidad_evento_dañada || 0}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={eventosData.cantidad_evento_dañada}
+                                                            onChange={(e) => handleInputChange('cantidad_evento_dañada', parseInt(e.target.value) || 0)}
+                                                            className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm font-semibold">
+                                                        <span className={eventosData.cantidad_evento_dañada > (initialItem.cantidad_evento_dañada || 0) ? 'text-green-600 dark:text-green-400' : eventosData.cantidad_evento_dañada < (initialItem.cantidad_evento_dañada || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                                            {eventosData.cantidad_evento_dañada - (initialItem.cantidad_evento_dañada || 0) >= 0 ? '+' : ''}{eventosData.cantidad_evento_dañada - (initialItem.cantidad_evento_dañada || 0)}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -628,7 +725,7 @@ export default function AjustePage({
                                                 </tr>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        ✅ Proveedor Devuelto
+                                                        ✅ Devuelto
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_proveedor_devuelto || 0}
@@ -645,6 +742,28 @@ export default function AjustePage({
                                                     <td className="px-4 py-3 text-sm font-semibold">
                                                         <span className={proveedoresData.cantidad_proveedor_devuelto > (initialItem.cantidad_proveedor_devuelto || 0) ? 'text-green-600 dark:text-green-400' : proveedoresData.cantidad_proveedor_devuelto < (initialItem.cantidad_proveedor_devuelto || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
                                                             {proveedoresData.cantidad_proveedor_devuelto - (initialItem.cantidad_proveedor_devuelto || 0) >= 0 ? '+' : ''}{proveedoresData.cantidad_proveedor_devuelto - (initialItem.cantidad_proveedor_devuelto || 0)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                        🔴 Dañada
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                        {initialItem.cantidad_proveedor_dañada || 0}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={proveedoresData.cantidad_proveedor_dañada}
+                                                            onChange={(e) => handleInputChange('cantidad_proveedor_dañada', parseInt(e.target.value) || 0)}
+                                                            className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm font-semibold">
+                                                        <span className={proveedoresData.cantidad_proveedor_dañada > (initialItem.cantidad_proveedor_dañada || 0) ? 'text-green-600 dark:text-green-400' : proveedoresData.cantidad_proveedor_dañada < (initialItem.cantidad_proveedor_dañada || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                                            {proveedoresData.cantidad_proveedor_dañada - (initialItem.cantidad_proveedor_dañada || 0) >= 0 ? '+' : ''}{proveedoresData.cantidad_proveedor_dañada - (initialItem.cantidad_proveedor_dañada || 0)}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -707,9 +826,6 @@ export default function AjustePage({
 
                                 {/* Tabla Editable del Embase */}
                                 <div>
-                                    {/* <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 px-4 pt-4">
-                                    📦 {embaseRelacionado.prestable_nombre}
-                                </h3> */}
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800">
@@ -782,6 +898,29 @@ export default function AjustePage({
                                                             </td>
                                                         </tr>
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
+                                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_cliente_dañada || 0}</td>
+                                                            <td className="px-4 py-3">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={embaseData?.cantidad_cliente_dañada || 0}
+                                                                    onChange={(e) => handleEmbaseInputChange('cantidad_cliente_dañada', parseInt(e.target.value) || 0)}
+                                                                    className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`text-xs font-semibold ${(embaseData?.cantidad_cliente_dañada || 0) - (embaseRelacionado?.cantidad_cliente_dañada || 0) > 0 ? 'text-green-600 dark:text-green-400' : (embaseData?.cantidad_cliente_dañada || 0) - (embaseRelacionado?.cantidad_cliente_dañada || 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                                                    {(embaseData?.cantidad_cliente_dañada || 0) - (embaseRelacionado?.cantidad_cliente_dañada || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_cliente_dañada || 0) - (embaseRelacionado?.cantidad_cliente_dañada || 0)}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    </>
+                                                )}
+
+                                                {tipo === 'eventos' && (
+                                                    <>
+                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🟣 Evento Deudor</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_deudor || 0}</td>
                                                             <td className="px-4 py-3">
@@ -800,7 +939,7 @@ export default function AjustePage({
                                                             </td>
                                                         </tr>
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">↩️ Evento Devuelto</td>
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Evento Devuelto</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_devuelto || 0}</td>
                                                             <td className="px-4 py-3">
                                                                 <input
@@ -814,6 +953,24 @@ export default function AjustePage({
                                                             <td className="px-4 py-3">
                                                                 <span className={`text-xs font-semibold ${(embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0) > 0 ? 'text-green-600 dark:text-green-400' : (embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
                                                                     {(embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0)}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
+                                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_dañada || 0}</td>
+                                                            <td className="px-4 py-3">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={embaseData?.cantidad_evento_dañada || 0}
+                                                                    onChange={(e) => handleEmbaseInputChange('cantidad_evento_dañada', parseInt(e.target.value) || 0)}
+                                                                    className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`text-xs font-semibold ${(embaseData?.cantidad_evento_dañada || 0) - (embaseRelacionado?.cantidad_evento_dañada || 0) > 0 ? 'text-green-600 dark:text-green-400' : (embaseData?.cantidad_evento_dañada || 0) - (embaseRelacionado?.cantidad_evento_dañada || 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                                                    {(embaseData?.cantidad_evento_dañada || 0) - (embaseRelacionado?.cantidad_evento_dañada || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_evento_dañada || 0) - (embaseRelacionado?.cantidad_evento_dañada || 0)}
                                                                 </span>
                                                             </td>
                                                         </tr>
@@ -841,7 +998,7 @@ export default function AjustePage({
                                                             </td>
                                                         </tr>
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Proveedor Devuelto</td>
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Devuelto</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_proveedor_devuelto || 0}</td>
                                                             <td className="px-4 py-3">
                                                                 <input
@@ -855,6 +1012,24 @@ export default function AjustePage({
                                                             <td className="px-4 py-3">
                                                                 <span className={`text-xs font-semibold ${(embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0) > 0 ? 'text-green-600 dark:text-green-400' : (embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
                                                                     {(embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0)}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
+                                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_proveedor_dañada || 0}</td>
+                                                            <td className="px-4 py-3">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={embaseData?.cantidad_proveedor_dañada || 0}
+                                                                    onChange={(e) => handleEmbaseInputChange('cantidad_proveedor_dañada', parseInt(e.target.value) || 0)}
+                                                                    className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`text-xs font-semibold ${(embaseData?.cantidad_proveedor_dañada || 0) - (embaseRelacionado?.cantidad_proveedor_dañada || 0) > 0 ? 'text-green-600 dark:text-green-400' : (embaseData?.cantidad_proveedor_dañada || 0) - (embaseRelacionado?.cantidad_proveedor_dañada || 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                                                    {(embaseData?.cantidad_proveedor_dañada || 0) - (embaseRelacionado?.cantidad_proveedor_dañada || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_proveedor_dañada || 0) - (embaseRelacionado?.cantidad_proveedor_dañada || 0)}
                                                                 </span>
                                                             </td>
                                                         </tr>

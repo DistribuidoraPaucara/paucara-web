@@ -4245,6 +4245,220 @@ class InventarioController extends Controller
     }
 
     /**
+     * ✅ NUEVO (2026-06-02): Recorrer stock desde un movimiento inicial y validar/corregir continuidad
+     *
+     * Recorre todos los movimientos desde el inicial hasta el final, verificando:
+     * 1. Que posterior de un movimiento = anterior del siguiente
+     * 2. Que anterior + cambio = posterior (según tipo de movimiento)
+     * 3. Que el invariante Total = Disponible + Reserva se cumpla
+     */
+    public function recorrerStock(Request $request): JsonResponse
+    {
+        $movimientoId = $request->integer('movimiento_id');
+
+        // Obtener el movimiento inicial
+        $movimientoInicial = MovimientoInventario::with('stockProducto.producto:id,sku,nombre')
+            ->find($movimientoId);
+
+        if (!$movimientoInicial) {
+            return response()->json(['error' => 'Movimiento no encontrado'], 404);
+        }
+
+        $productoId = $movimientoInicial->stockProducto->producto_id;
+
+        // Obtener movimientos del PRODUCTO desde el movimiento seleccionado EN ADELANTE
+        $movimientos = MovimientoInventario::whereHas('stockProducto', function($query) use ($productoId) {
+                $query->where('producto_id', $productoId);
+            })
+            ->where('created_at', '>=', $movimientoInicial->created_at)
+            ->orderBy('created_at', 'ASC')
+            ->select('id', 'tipo', 'cantidad', 'cantidad_total_anterior', 'cantidad_disponible_anterior', 'cantidad_reservada_anterior', 'anulado', 'created_at')
+            ->get();
+
+        // Encontrar el índice del movimiento inicial en esta colección
+        $indiceInicial = $movimientos->search(fn($m) => $m->id === $movimientoId);
+
+        if ($indiceInicial === false) {
+            return response()->json(['error' => 'Movimiento no existe'], 404);
+        }
+
+        // Función auxiliar para aplicar lógica de movimiento
+        $aplicarMovimiento = function($cambio, $tipo, &$tot, &$dis, &$res) {
+            switch (true) {
+                // SALIDA_VENTA: Descuenta Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_SALIDA_VENTA):
+                    $tot += $cambio;  // negativo
+                    $dis += $cambio;  // negativo
+                    break;
+
+                // ANULACION_VENTA: Regresa (incrementa) Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_ANULACION_VENTA):
+                    $tot += $cambio;  // positivo
+                    $dis += $cambio;  // positivo
+                    break;
+
+                // CONSUMO_RESERVA: Disminuye Reservado y Total
+                case str_contains($tipo, MovimientoInventario::TIPO_CONSUMO_RESERVA):
+                    $tot += $cambio;  // negativo
+                    $res += $cambio;  // negativo
+                    break;
+
+                // ANULACION_CONSUMO_RESERVA: Regresa Reservado y Total
+                case str_contains($tipo, MovimientoInventario::TIPO_ANULACION_CONSUMO_RESERVA):
+                    $tot += $cambio;  // positivo
+                    $res += $cambio;  // positivo
+                    break;
+
+                // RESERVA_PROFORMA: Disminuye Disponible e incrementa Reservado
+                case str_contains($tipo, MovimientoInventario::TIPO_RESERVA_PROFORMA):
+                    $res -= $cambio;  // invierte signo para incrementar (cantidad negativa = resta negativa = suma)
+                    $dis += $cambio;  // mantiene signo para decrementar
+                    break;
+
+                // ANULACION_PROFORMA: Disminuye Reservado e incrementa Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_ANULACION_PROFORMA):
+                    $res -= $cambio;  // invierte signo para decrementar
+                    $dis += $cambio;  // mantiene signo para incrementar
+                    break;
+
+                // ENTRADA_COMPRA: Incrementa Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_ENTRADA_COMPRA):
+                    $tot += $cambio;  // positivo
+                    $dis += $cambio;  // positivo
+                    break;
+
+                // ANULACION_COMPRA: Disminuye Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_ANULACION_COMPRA):
+                    $tot -= $cambio;  // negativo
+                    $dis -= $cambio;  // negativo
+                    break;
+
+                // AJUSTE_ENTRADA: Incrementa Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_ENTRADA_AJUSTE):
+                    $tot += $cambio;
+                    $dis += $cambio;
+                    break;
+
+                // AJUSTE_SALIDA: Disminuye Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_SALIDA_AJUSTE):
+                    $tot -= $cambio;
+                    $dis -= $cambio;
+                    break;
+
+                // AJUSTE genérico: incrementa Total y Disponible
+                case str_contains($tipo, MovimientoInventario::TIPO_AJUSTE):
+                    $tot += $cambio;
+                    $dis += $cambio;
+                    break;
+
+                default:
+                    $tot += $cambio;
+                    $dis += $cambio;
+            }
+        };
+
+        // ✅ USAR LOS VALORES DEL MOVIMIENTO SELECCIONADO COMO PUNTO DE INICIO (no los del primer movimiento)
+        $totalCorrecto = $movimientoInicial->cantidad_total_anterior ?? 0;
+        $disponibleCorrecto = $movimientoInicial->cantidad_disponible_anterior ?? 0;
+        $reservadoCorrecto = $movimientoInicial->cantidad_reservada_anterior ?? 0;
+
+        // ✅ VALIDACIÓN: Detectar si los valores iniciales tienen problemas
+        $advertenciaInicial = [];
+        if ($totalCorrecto < 0) {
+            $advertenciaInicial[] = "Total inicial negativo: $totalCorrecto";
+        }
+        if ($disponibleCorrecto < 0) {
+            $advertenciaInicial[] = "Disponible inicial negativo: $disponibleCorrecto";
+        }
+        if ($reservadoCorrecto < 0) {
+            $advertenciaInicial[] = "Reservado inicial negativo: $reservadoCorrecto";
+        }
+        if (abs($totalCorrecto - ($disponibleCorrecto + $reservadoCorrecto)) > 0.01) {
+            $advertenciaInicial[] = "Invariante roto en valores iniciales: T($totalCorrecto) ≠ D($disponibleCorrecto) + R($reservadoCorrecto)";
+        }
+
+        // Recorrer movimientos desde el seleccionado EN ADELANTE y crear trace
+        $trace = [];
+        $movimientosARecorrer = $movimientos->slice($indiceInicial);
+
+        foreach ($movimientosARecorrer as $mov) {
+            $cambio = $mov->cantidad ?? 0;
+            $tipo = $mov->tipo;
+
+            // Si está anulado, invertir el cambio y mapear al tipo de anulación correspondiente
+            if ($mov->anulado) {
+                $cambio = -$cambio;
+                if (str_contains($tipo, MovimientoInventario::TIPO_SALIDA_VENTA)) {
+                    $tipo = MovimientoInventario::TIPO_ANULACION_VENTA;
+                } elseif (str_contains($tipo, MovimientoInventario::TIPO_CONSUMO_RESERVA)) {
+                    $tipo = MovimientoInventario::TIPO_ANULACION_CONSUMO_RESERVA;
+                } elseif (str_contains($tipo, MovimientoInventario::TIPO_RESERVA_PROFORMA)) {
+                    $tipo = MovimientoInventario::TIPO_ANULACION_PROFORMA;
+                } elseif (str_contains($tipo, MovimientoInventario::TIPO_ENTRADA_COMPRA)) {
+                    $tipo = MovimientoInventario::TIPO_ANULACION_COMPRA;
+                }
+            }
+
+            // Valores anteriores (los que deberían ser)
+            $anteriorTotal = $totalCorrecto;
+            $anteriorDisponible = $disponibleCorrecto;
+            $anteriorReservada = $reservadoCorrecto;
+
+            // Aplicar movimiento para obtener valores posteriores correctos
+            $aplicarMovimiento($cambio, $tipo, $totalCorrecto, $disponibleCorrecto, $reservadoCorrecto);
+
+            // Detectar si hay diferencia con la BD
+            $hayError = abs(($mov->cantidad_total_anterior ?? 0) - $anteriorTotal) > 0.01 ||
+                        abs(($mov->cantidad_disponible_anterior ?? 0) - $anteriorDisponible) > 0.01 ||
+                        abs(($mov->cantidad_reservada_anterior ?? 0) - $anteriorReservada) > 0.01;
+
+            $trace[] = [
+                'id' => $mov->id,
+                'tipo' => $mov->tipo,
+                'cambio' => $cambio,
+                'valores_anteriores' => [
+                    'total' => round($anteriorTotal, 2),
+                    'disponible' => round($anteriorDisponible, 2),
+                    'reservada' => round($anteriorReservada, 2),
+                ],
+                'valores_posteriores' => [
+                    'total' => round($totalCorrecto, 2),
+                    'disponible' => round($disponibleCorrecto, 2),
+                    'reservada' => round($reservadoCorrecto, 2),
+                ],
+                'invariante_ok' => round($totalCorrecto - ($disponibleCorrecto + $reservadoCorrecto), 2) === 0,
+                'tiene_error' => $hayError,
+            ];
+        }
+
+        $ultimoMovimiento = $movimientosARecorrer->last();
+
+        return response()->json([
+            'exito' => true,
+            'advertencias' => $advertenciaInicial,
+            'stock_final_correcto' => [
+                'total' => round($totalCorrecto, 2),
+                'disponible' => round($disponibleCorrecto, 2),
+                'reservado' => round($reservadoCorrecto, 2),
+                'invariante' => round($totalCorrecto - ($disponibleCorrecto + $reservadoCorrecto), 2) === 0,
+            ],
+            'movimiento_inicial' => [
+                'id' => $movimientoInicial->id,
+                'tipo' => $movimientoInicial->tipo,
+                'sku' => $movimientoInicial->stockProducto->producto->sku,
+                'nombre' => $movimientoInicial->stockProducto->producto->nombre,
+            ],
+            'movimiento_final' => [
+                'id' => $ultimoMovimiento->id,
+                'tipo' => $ultimoMovimiento->tipo,
+                'fecha' => $ultimoMovimiento->created_at->toISOString(),
+            ],
+            'trace' => $trace,
+            'total_movimientos' => count($trace),
+        ]);
+    }
+
+    /**
      * ✅ NUEVO (2026-06-02): Detectar inconsistencias en movimientos de inventario - VALIDACIÓN DETALLADA
      *
      * Validaciones:

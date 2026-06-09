@@ -27,6 +27,6 @@ class ProformaConvertida
         $this->venta = $venta;
 
         $this->proforma->load(['cliente', 'usuarioCreador']);
-        $this->venta->load(['cliente']);
+        $this->venta->load(['cliente', 'tipoPago']);
     }
 }

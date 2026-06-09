@@ -2,6 +2,7 @@
 
 namespace App\Services\Prestamos;
 
+use App\Models\AlmacenPrestable;
 use App\Models\PrestableStock;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -97,19 +98,17 @@ class PrestableStockService
      * Devolver canastillas del cliente
      *
      * Parámetros:
-     * - $cantidadDevuelta: cantidad en buen estado
-     * - $cantidadDañadaParcial: cantidad con daño reparable
-     * - $cantidadDañadaTotal: cantidad inutilizable
+     * - $cantidadDevuelta: cantidad en buen estado (vuelve a disponible)
+     * - $cantidadDañadaTotal: cantidad inutilizable (se registra como dañada, no disponible)
      */
     public function devolverDelCliente(
         int $prestableId,
         int $almacenId,
         int $cantidadDevuelta,
-        int $cantidadDañadaParcial = 0,
         int $cantidadDañadaTotal = 0
     ): bool {
         $stock = $this->obtenerStock($prestableId, $almacenId);
-        $cantidadTotal = $cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal;
+        $cantidadTotal = $cantidadDevuelta + $cantidadDañadaTotal;
 
         // Validar que no devuelve más de lo que pidió prestado
         if ($stock->cantidad_cliente_deudor < $cantidadTotal) {
@@ -122,31 +121,37 @@ class PrestableStockService
             return false;
         }
 
-        DB::transaction(function () use ($stock, $cantidadDevuelta, $cantidadDañadaParcial, $cantidadDañadaTotal) {
+        DB::transaction(function () use ($stock, $cantidadDevuelta, $cantidadDañadaTotal, $cantidadTotal) {
             // Lo devuelto en buen estado vuelve a disponible
             $nuevoDisponible = $stock->cantidad_disponible + $cantidadDevuelta;
-
-            // Lo dañado parcial vuelve a disponible (se puede reparar)
-            $nuevoDisponible += $cantidadDañadaParcial;
-
-            // Lo dañado total se pierden (se reponen desde garantía)
-            // No vuelven a disponible
 
             Log::info('📝 Antes de actualizar stock', [
                 'prestable_stock_id' => $stock->id,
                 'cantidad_disponible_antes' => $stock->cantidad_disponible,
                 'cantidad_cliente_deudor_antes' => $stock->cantidad_cliente_deudor,
+                'cantidad_cliente_dañada_antes' => $stock->cantidad_cliente_dañada,
                 'nuevo_disponible' => $nuevoDisponible,
                 'cantidad_devuelta' => $cantidadDevuelta,
+                'cantidad_dañada_total' => $cantidadDañadaTotal,
             ]);
 
-            $updateResult = $stock->update([
+            // ✅ NUEVO: Diferenciar por tipo de almacén para actualizar dañadas correctamente
+            $almacen = AlmacenPrestable::find($stock->almacenes_prestables_id);
+            $actualizacion = [
                 'cantidad_disponible' => $nuevoDisponible,
-                'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor -
-                                                     ($cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal),
-                'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto +
-                                                       ($cantidadDevuelta + $cantidadDañadaParcial),
-            ]);
+                'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor - ($cantidadDevuelta + $cantidadDañadaTotal),
+                'cantidad_cliente_devuelto' => $stock->cantidad_cliente_devuelto + $cantidadDevuelta,
+            ];
+
+            if ($almacen && $almacen->es_proveedor) {
+                // Si es almacén PROVEEDOR → actualizar cantidad_proveedor_dañada
+                $actualizacion['cantidad_proveedor_dañada'] = $stock->cantidad_proveedor_dañada + $cantidadDañadaTotal;
+            } else {
+                // Si es almacén DISTRIBUIDORA → actualizar cantidad_cliente_dañada
+                $actualizacion['cantidad_cliente_dañada'] = $stock->cantidad_cliente_dañada + $cantidadDañadaTotal;
+            }
+
+            $updateResult = $stock->update($actualizacion);
 
             Log::info('📝 Update result: ' . ($updateResult ? 'SUCCESS' : 'FAILED'), [
                 'prestable_stock_id' => $stock->id,
@@ -156,7 +161,132 @@ class PrestableStockService
                 'prestable_id' => $stock->prestable_id,
                 'almacenes_prestables_id' => $stock->almacenes_prestables_id,
                 'devueltas_buen_estado' => $cantidadDevuelta,
-                'devueltas_daño_parcial' => $cantidadDañadaParcial,
+                'devueltas_daño_total' => $cantidadDañadaTotal,
+            ]);
+        });
+
+        return true;
+    }
+
+    /**
+     * ✅ NUEVO: Devolver canastillas/embases a almacén proveedor
+     *
+     * Parámetros:
+     * - $cantidadDevuelta: cantidad en buen estado (vuelve a disponible)
+     * - $cantidadDañadaTotal: cantidad inutilizable (se registra como dañada, no disponible)
+     */
+    public function devolverDelProveedor(
+        int $prestableId,
+        int $almacenId,
+        int $cantidadDevuelta,
+        int $cantidadDañadaTotal = 0
+    ): bool {
+        $stock = $this->obtenerStock($prestableId, $almacenId);
+        $cantidadTotal = $cantidadDevuelta + $cantidadDañadaTotal;
+
+        // Validar que no devuelve más de lo que pidió prestado al proveedor
+        if ($stock->cantidad_proveedor_acreedor < $cantidadTotal) {
+            Log::warning('❌ Intento de devolución inválida al proveedor', [
+                'prestable_id' => $prestableId,
+                'almacenes_prestables_id' => $almacenId,
+                'en_prestamo' => $stock->cantidad_proveedor_acreedor,
+                'intenta_devolver' => $cantidadTotal,
+            ]);
+            return false;
+        }
+
+        DB::transaction(function () use ($stock, $cantidadDevuelta, $cantidadDañadaTotal, $cantidadTotal) {
+            // Lo devuelto en buen estado vuelve a disponible
+            $nuevoDisponible = $stock->cantidad_disponible + $cantidadDevuelta;
+
+            Log::info('📝 Antes de actualizar stock (PROVEEDOR)', [
+                'prestable_stock_id' => $stock->id,
+                'cantidad_disponible_antes' => $stock->cantidad_disponible,
+                'cantidad_proveedor_acreedor_antes' => $stock->cantidad_proveedor_acreedor,
+                'cantidad_proveedor_dañada_antes' => $stock->cantidad_proveedor_dañada,
+                'nuevo_disponible' => $nuevoDisponible,
+                'cantidad_devuelta' => $cantidadDevuelta,
+                'cantidad_dañada_total' => $cantidadDañadaTotal,
+            ]);
+
+            $updateResult = $stock->update([
+                'cantidad_disponible' => $nuevoDisponible,
+                'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor - ($cantidadDevuelta + $cantidadDañadaTotal),
+                'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto + $cantidadDevuelta,
+                'cantidad_proveedor_dañada' => $stock->cantidad_proveedor_dañada + $cantidadDañadaTotal,  // ✅ PROVEEDOR
+            ]);
+
+            Log::info('📝 Update result (PROVEEDOR): ' . ($updateResult ? 'SUCCESS' : 'FAILED'), [
+                'prestable_stock_id' => $stock->id,
+            ]);
+
+            Log::info('✅ Devuelto al proveedor', [
+                'prestable_id' => $stock->prestable_id,
+                'almacenes_prestables_id' => $stock->almacenes_prestables_id,
+                'devueltas_buen_estado' => $cantidadDevuelta,
+                'devueltas_daño_total' => $cantidadDañadaTotal,
+            ]);
+        });
+
+        return true;
+    }
+
+    /**
+     * Devolver canastillas/embases del evento
+     *
+     * Parámetros:
+     * - $cantidadDevuelta: cantidad en buen estado (vuelve a disponible)
+     * - $cantidadDañadaTotal: cantidad inutilizable (se registra como dañada, no disponible)
+     */
+    public function devolverDelEvento(
+        int $prestableId,
+        int $almacenId,
+        int $cantidadDevuelta,
+        int $cantidadDañadaTotal = 0
+    ): bool {
+        $stock = $this->obtenerStock($prestableId, $almacenId);
+        $cantidadTotal = $cantidadDevuelta + $cantidadDañadaTotal;
+
+        // Validar que no devuelve más de lo que pidió prestado
+        if ($stock->cantidad_evento_deudor < $cantidadTotal) {
+            Log::warning('❌ Intento de devolución inválida a evento', [
+                'prestable_id' => $prestableId,
+                'almacenes_prestables_id' => $almacenId,
+                'en_prestamo' => $stock->cantidad_evento_deudor,
+                'intenta_devolver' => $cantidadTotal,
+            ]);
+            return false;
+        }
+
+        DB::transaction(function () use ($stock, $cantidadDevuelta, $cantidadDañadaTotal, $cantidadTotal) {
+            // Lo devuelto en buen estado vuelve a disponible
+            $nuevoDisponible = $stock->cantidad_disponible + $cantidadDevuelta;
+
+            Log::info('📝 Antes de actualizar stock evento', [
+                'prestable_stock_id' => $stock->id,
+                'cantidad_disponible_antes' => $stock->cantidad_disponible,
+                'cantidad_evento_deudor_antes' => $stock->cantidad_evento_deudor,
+                'cantidad_evento_dañada_antes' => $stock->cantidad_evento_dañada,
+                'nuevo_disponible' => $nuevoDisponible,
+                'cantidad_devuelta' => $cantidadDevuelta,
+                'cantidad_dañada_total' => $cantidadDañadaTotal,
+            ]);
+
+            $updateResult = $stock->update([
+                'cantidad_disponible' => $nuevoDisponible,
+                'cantidad_evento_deudor' => $stock->cantidad_evento_deudor - ($cantidadDevuelta + $cantidadDañadaTotal),
+                'cantidad_evento_devuelto' => $stock->cantidad_evento_devuelto + $cantidadDevuelta,
+                'cantidad_evento_dañada' => $stock->cantidad_evento_dañada + $cantidadDañadaTotal,
+            ]);
+
+            Log::info('📝 Update result evento: ' . ($updateResult ? 'SUCCESS' : 'FAILED'), [
+                'prestable_stock_id' => $stock->id,
+            ]);
+
+            Log::info('✅ Items devueltos por evento', [
+                'prestable_id' => $stock->prestable_id,
+                'almacenes_prestables_id' => $stock->almacenes_prestables_id,
+                'devueltas_buen_estado' => $cantidadDevuelta,
                 'devueltas_daño_total' => $cantidadDañadaTotal,
             ]);
         });
@@ -286,6 +416,8 @@ class PrestableStockService
                 // ✅ Restar la cantidad TOTAL devuelta
                 'cantidad_disponible' => $stock->cantidad_disponible - $cantidadDevuelta,
                 'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor - $cantidadDevuelta,
+                // ✅ NUEVO: Registrar dañadas de proveedor
+                'cantidad_proveedor_dañada' => $stock->cantidad_proveedor_dañada + $cantidadDañadaTotal,
                 // Registrar devueltas (sin separar dañadas)
                 'cantidad_proveedor_devuelto' => $stock->cantidad_proveedor_devuelto + $cantidadDevuelta,
             ]);
@@ -294,7 +426,7 @@ class PrestableStockService
                 'prestable_id' => $stock->prestable_id,
                 'almacenes_prestables_id' => $stock->almacenes_prestables_id,
                 'cantidad_devuelta_total' => $cantidadDevuelta,
-                'cantidad_dañada_información' => $cantidadDañadaTotal,
+                'cantidad_dañada_total' => $cantidadDañadaTotal,  // ✅ Nombre correcto
             ]);
         });
 

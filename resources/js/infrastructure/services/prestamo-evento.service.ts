@@ -46,7 +46,14 @@ export const prestamoEventoService = {
     },
 
     /**
-     * Listar préstamos
+     * Alias para obtener (compatible con RegistrarDevolucionGenerico)
+     */
+    async getById(id: Id): Promise<PrestamoEvento> {
+        return this.obtener(id);
+    },
+
+    /**
+     * Listar préstamos con paginación
      */
     async listar(filtros?: {
         id?: string;
@@ -60,7 +67,18 @@ export const prestamoEventoService = {
         fecha_desde?: string;
         fecha_hasta?: string;
         per_page?: number;
-    }): Promise<PrestamoEvento[]> {
+        page?: number;
+    }): Promise<{
+        data: PrestamoEvento[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+            from: number;
+            to: number;
+        };
+    }> {
         const params = new URLSearchParams();
 
         if (filtros?.id) {
@@ -96,6 +114,9 @@ export const prestamoEventoService = {
         if (filtros?.per_page) {
             params.append('per_page', String(filtros.per_page));
         }
+        if (filtros?.page) {
+            params.append('page', String(filtros.page));
+        }
 
         const url = params.toString() ? `${BASE_URL}?${params}` : BASE_URL;
         const response = await fetch(url, {
@@ -112,10 +133,30 @@ export const prestamoEventoService = {
         // Manejar respuesta paginada de Laravel
         // data = {success: true, data: {data: [...], links, meta}}
         if (data.data?.data && Array.isArray(data.data.data)) {
-            return data.data.data;
+            return {
+                data: data.data.data,
+                pagination: {
+                    current_page: data.data.meta?.current_page || 1,
+                    last_page: data.data.meta?.last_page || 1,
+                    per_page: data.data.meta?.per_page || 15,
+                    total: data.data.meta?.total || 0,
+                    from: data.data.meta?.from || 1,
+                    to: data.data.meta?.to || 0,
+                },
+            };
         }
 
-        return Array.isArray(data) ? data : [];
+        return {
+            data: Array.isArray(data) ? data : [],
+            pagination: {
+                current_page: 1,
+                last_page: 1,
+                per_page: 15,
+                total: Array.isArray(data) ? data.length : 0,
+                from: 1,
+                to: Array.isArray(data) ? data.length : 0,
+            },
+        };
     },
 
     /**
@@ -126,10 +167,16 @@ export const prestamoEventoService = {
         datos: {
             fecha_devolucion: string;
             monto_cobrado_daño_total?: number;
+            monto_garantia_devuelta_total?: number;
             observaciones?: string;
+            almacen_id?: Id;
             detalles: Array<{
                 prestamo_evento_detalle_id: Id;
                 cantidad_devuelta: number;
+                cantidad_dañada_parcial?: number;
+                cantidad_dañada_total?: number;
+                monto_cobrado_daño?: number;
+                monto_garantia_devuelta?: number;
             }>;
         }
     ): Promise<DevolucionEvento> {
@@ -149,6 +196,13 @@ export const prestamoEventoService = {
     },
 
     /**
+     * Alias para devolver (compatible con RegistrarDevolucionGenerico)
+     */
+    async registrarDevolucion(id: Id, payload: any): Promise<DevolucionEvento> {
+        return this.devolver(id, payload);
+    },
+
+    /**
      * Anular préstamo
      */
     async anular(id: Id, razon?: string): Promise<void> {
@@ -165,3 +219,5 @@ export const prestamoEventoService = {
         }
     },
 };
+
+export default prestamoEventoService;

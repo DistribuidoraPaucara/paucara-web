@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Listener que crea automáticamente CuentaPorCobrar cuando
- * una venta con política de crédito es creada desde proforma
+ * una venta es creada desde proforma con tipo_pago.es_credito=true
  */
 class CrearCuentaPorCobrarListener
 {
@@ -28,17 +28,20 @@ class CrearCuentaPorCobrarListener
             $venta = $event->venta;
             $proforma = $event->proforma;
 
-            Log::info('🔔 CrearCuentaPorCobrarListener - Verificando política de pago', [
+            Log::info('🔔 CrearCuentaPorCobrarListener - Verificando tipo de pago', [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
-                'politica_pago' => $venta->politica_pago,
+                'tipo_pago_id' => $venta->tipo_pago_id,
+                'tipo_pago' => $venta->tipoPago?->codigo,
             ]);
 
-            // Solo crear cuenta por cobrar si la política de pago es CREDITO
-            if ($venta->politica_pago !== 'CREDITO') {
+            // Solo crear cuenta por cobrar si el tipo de pago es crédito
+            if (!$venta->tipoPago || !$venta->tipoPago->es_credito) {
                 Log::info('ℹ️ Venta no es a crédito, omitiendo creación de cuenta por cobrar', [
                     'venta_id' => $venta->id,
-                    'politica_pago' => $venta->politica_pago,
+                    'tipo_pago_id' => $venta->tipo_pago_id,
+                    'tipo_pago' => $venta->tipoPago?->codigo,
+                    'es_credito' => $venta->tipoPago?->es_credito,
                 ]);
                 return;
             }

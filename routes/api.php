@@ -634,6 +634,8 @@ Route::group(['prefix' => 'inventario'], function () {
     Route::post('ajustes', [InventarioController::class, 'procesarAjusteApi']);
     // ✅ NUEVO: Endpoint mejorado para ajustes por tabla
     Route::post('ajuste', [InventarioController::class, 'procesarAjusteTabla']);
+    // ✅ NUEVO (2026-06-02): Recorrer stock desde un movimiento y calcular valores correctos
+    Route::post('recorrer-stock', [InventarioController::class, 'recorrerStock']);
     // ✅ NUEVO: Búsqueda de productos por almacén (incluye productos sin stock)
     Route::get('productos-almacen/{almacen_id}', [InventarioController::class, 'buscarProductosAlmacen']);
     // ✅ NUEVO: Crear stock_producto para producto nuevo
@@ -669,6 +671,7 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         Route::get('/', [ProductoController::class, 'indexApi']);
         Route::post('/', [ProductoController::class, 'storeApi']);
         Route::get('buscar', [ProductoController::class, 'buscarApi']);
+        Route::get('sin-restriccion', [ProductoController::class, 'obtenerTodosSinRestriccion']);
         Route::get('{producto}', [ProductoController::class, 'showApi']);
         Route::put('{producto}', [ProductoController::class, 'updateApi']);
         Route::delete('{producto}', [ProductoController::class, 'destroyApi']);
@@ -1675,6 +1678,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [PrestamoEventoController::class, 'index']);
         Route::post('/', [PrestamoEventoController::class, 'store']);
         Route::get('/{prestamo}', [PrestamoEventoController::class, 'show']);
+        Route::put('/{prestamo}', [PrestamoEventoController::class, 'update']);
         Route::post('/{prestamo}/devolver', [PrestamoEventoController::class, 'registrarDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoEventoController::class, 'anularPrestamo']);
     });

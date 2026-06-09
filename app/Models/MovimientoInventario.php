@@ -98,6 +98,14 @@ class MovimientoInventario extends Model
     const TIPO_LIBERACION_RESERVA = 'LIBERACION_RESERVA'; // ✅ NUEVO: Liberación de reserva
     const TIPO_CONSUMO_RESERVA = 'CONSUMO_RESERVA'; // ✅ NUEVO: Consumo de reserva al convertir a venta
 
+    // ✅ NUEVO (2026-06-02): Constantes para anulaciones (cuando anulado=true)
+    // Nota: El campo 'tipo' mantiene el valor original, 'anulado' marca si está anulado
+    // Estas constantes son para referencia lógica en validaciones
+    const TIPO_ANULACION_VENTA = 'ANULACION_VENTA';
+    const TIPO_ANULACION_COMPRA = 'ANULACION_COMPRA';
+    const TIPO_ANULACION_PROFORMA = 'ANULACION_PROFORMA';
+    const TIPO_ANULACION_CONSUMO_RESERVA = 'ANULACION_CONSUMO_RESERVA';
+
     /**
      * Relaciones
      */
@@ -125,6 +133,52 @@ class MovimientoInventario extends Model
     public function unidadBase(): BelongsTo
     {
         return $this->belongsTo(UnidadMedida::class, 'unidad_base_id');
+    }
+
+    /**
+     * ✅ NUEVO (2026-06-09): Validación automática antes de crear
+     * Verifica que los datos anteriores y posteriores cumplan la invariante: total = disponible + reservada
+     */
+    protected static function booting()
+    {
+        parent::booting();
+
+        static::creating(function ($model) {
+            // Solo validar si los campos están presentes
+            if (
+                $model->cantidad_total_anterior !== null &&
+                $model->cantidad_disponible_anterior !== null &&
+                $model->cantidad_reservada_anterior !== null
+            ) {
+                // Validar estado ANTERIOR: total_anterior = disponible_anterior + reservada_anterior
+                $sumaAnterior = (float)$model->cantidad_disponible_anterior + (float)$model->cantidad_reservada_anterior;
+                if (abs((float)$model->cantidad_total_anterior - $sumaAnterior) > 0.001) {
+                    throw new \Exception(
+                        "❌ INCONSISTENCIA EN MOVIMIENTO (ANTES): " .
+                        "cantidad_total_anterior({$model->cantidad_total_anterior}) ≠ " .
+                        "disponible_anterior({$model->cantidad_disponible_anterior}) + " .
+                        "reservada_anterior({$model->cantidad_reservada_anterior}) = {$sumaAnterior}"
+                    );
+                }
+            }
+
+            if (
+                $model->cantidad_total_posterior !== null &&
+                $model->cantidad_disponible_posterior !== null &&
+                $model->cantidad_reservada_posterior !== null
+            ) {
+                // Validar estado POSTERIOR: total_posterior = disponible_posterior + reservada_posterior
+                $sumaPostetrior = (float)$model->cantidad_disponible_posterior + (float)$model->cantidad_reservada_posterior;
+                if (abs((float)$model->cantidad_total_posterior - $sumaPostetrior) > 0.001) {
+                    throw new \Exception(
+                        "❌ INCONSISTENCIA EN MOVIMIENTO (DESPUÉS): " .
+                        "cantidad_total_posterior({$model->cantidad_total_posterior}) ≠ " .
+                        "disponible_posterior({$model->cantidad_disponible_posterior}) + " .
+                        "reservada_posterior({$model->cantidad_reservada_posterior}) = {$sumaPostetrior}"
+                    );
+                }
+            }
+        });
     }
 
     /**

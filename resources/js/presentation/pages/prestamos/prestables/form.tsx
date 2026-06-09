@@ -83,11 +83,20 @@ export default function PrestableForm({ prestable, isEdit = false }: PrestableFo
 
     const fetchProductos = async () => {
         try {
-            const response = await fetch('/api/productos?per_page=1000');
+            // ✅ NUEVO: Usar endpoint sin restricción de stock para formularios
+            const response = await fetch('/api/productos/sin-restriccion?per_page=1000');
             const data = await response.json();
-            setProductos(data.data?.data || data.data || []);
+
+            if (data.success) {
+                // Mapear estructura de respuesta paginada
+                const productosArray = data.data?.data || data.data || [];
+                setProductos(productosArray);
+                console.log('✅ Productos cargados sin restricción:', productosArray.length);
+            } else {
+                console.error('Error en respuesta:', data);
+            }
         } catch (error) {
-            console.error('Error cargando productos:', error);
+            console.error('❌ Error cargando productos:', error);
         }
     };
 

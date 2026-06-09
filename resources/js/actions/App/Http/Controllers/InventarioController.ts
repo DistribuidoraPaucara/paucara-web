@@ -894,6 +894,61 @@ procesarAjusteTabla.post = (options?: RouteQueryOptions): RouteDefinition<'post'
     
     procesarAjusteTabla.form = procesarAjusteTablaForm
 /**
+* @see \App\Http\Controllers\InventarioController::recorrerStock
+ * @see app/Http/Controllers/InventarioController.php:4255
+ * @route '/api/inventario/recorrer-stock'
+ */
+export const recorrerStock = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: recorrerStock.url(options),
+    method: 'post',
+})
+
+recorrerStock.definition = {
+    methods: ["post"],
+    url: '/api/inventario/recorrer-stock',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\InventarioController::recorrerStock
+ * @see app/Http/Controllers/InventarioController.php:4255
+ * @route '/api/inventario/recorrer-stock'
+ */
+recorrerStock.url = (options?: RouteQueryOptions) => {
+    return recorrerStock.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\InventarioController::recorrerStock
+ * @see app/Http/Controllers/InventarioController.php:4255
+ * @route '/api/inventario/recorrer-stock'
+ */
+recorrerStock.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: recorrerStock.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\InventarioController::recorrerStock
+ * @see app/Http/Controllers/InventarioController.php:4255
+ * @route '/api/inventario/recorrer-stock'
+ */
+    const recorrerStockForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: recorrerStock.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::recorrerStock
+ * @see app/Http/Controllers/InventarioController.php:4255
+ * @route '/api/inventario/recorrer-stock'
+ */
+        recorrerStockForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: recorrerStock.url(options),
+            method: 'post',
+        })
+    
+    recorrerStock.form = recorrerStockForm
+/**
 * @see \App\Http\Controllers\InventarioController::buscarProductosAlmacen
  * @see app/Http/Controllers/InventarioController.php:3397
  * @route '/api/inventario/productos-almacen/{almacen_id}'
@@ -3912,6 +3967,6 @@ imprimirMerma.head = (args: { id: string | number } | [id: string | number ] | s
         })
     
     imprimirMerma.form = imprimirMermaForm
-const InventarioController = { importarAjustesMasivos, listarCargosCsv, obtenerDetalleCargo, revertirCargo, prepararImpresionAjustes, anularAjuste, buscarProductos, stockProducto, apiStockFiltrado, apiLotes, procesarAjusteApi, procesarAjusteTabla, buscarProductosAlmacen, crearStockProducto, movimientosApi, movimientosParaImpresion, crearMovimiento, estadisticasApi, exportarExcel, exportarPdf, dashboard, stockBajo, proximosVencer, controlVencimientos, vencidos, movimientos, ajusteForm, procesarAjuste, ajusteMasivoForm, historialCargasForm, reportes, imprimirAjustes, mermaForm, transferencias, formularioCrearTransferencia, crearTransferencia, verTransferencia, editarTransferencia, actualizarTransferencia, enviarTransferencia, recibirTransferencia, cancelarTransferencia, mermas, formularioRegistrarMerma, registrarMerma, verMerma, aprobarMerma, rechazarMerma, imprimirMerma }
+const InventarioController = { importarAjustesMasivos, listarCargosCsv, obtenerDetalleCargo, revertirCargo, prepararImpresionAjustes, anularAjuste, buscarProductos, stockProducto, apiStockFiltrado, apiLotes, procesarAjusteApi, procesarAjusteTabla, recorrerStock, buscarProductosAlmacen, crearStockProducto, movimientosApi, movimientosParaImpresion, crearMovimiento, estadisticasApi, exportarExcel, exportarPdf, dashboard, stockBajo, proximosVencer, controlVencimientos, vencidos, movimientos, ajusteForm, procesarAjuste, ajusteMasivoForm, historialCargasForm, reportes, imprimirAjustes, mermaForm, transferencias, formularioCrearTransferencia, crearTransferencia, verTransferencia, editarTransferencia, actualizarTransferencia, enviarTransferencia, recibirTransferencia, cancelarTransferencia, mermas, formularioRegistrarMerma, registrarMerma, verMerma, aprobarMerma, rechazarMerma, imprimirMerma }
 
 export default InventarioController

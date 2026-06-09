@@ -5,11 +5,12 @@
         $prestamo = $documento;
         $totalMontoCobraDaño = $prestamo->devoluciones->sum('monto_cobrado_daño_total');
         $totalMontoGarantia = $prestamo->devoluciones->sum('monto_garantia_devuelta_total');
+        $totalExcedido = $prestamo->devoluciones->sum('monto_excedido_garantia');
     @endphp
 
     <div class="encabezado-documento">
         <div class="titulo-documento">
-            <h1>REGISTRO DE DEVOLUCIONES</h1>
+            <h1>📋 REGISTRO DE DEVOLUCIONES</h1>
             <p class="subtitulo">Préstamo #{{ $prestamo->id }}</p>
         </div>
     </div>
@@ -24,46 +25,72 @@
 
     {{-- INFORMACIÓN GENERAL --}}
     <div class="seccion">
-        <h2>INFORMACIÓN GENERAL</h2>
+        <h2>📌 INFORMACIÓN DEL PRÉSTAMO</h2>
         <table class="tabla-datos">
             <tr>
-                <td style="width: 25%;"><strong>Préstamo #:</strong></td>
-                <td style="width: 25%;">{{ $prestamo->id }}</td>
-                <td style="width: 25%;"><strong>Cliente:</strong></td>
-                <td style="width: 25%;">{{ $prestamo->cliente->nombre ?? $prestamo->cliente->razon_social }}</td>
+                <td style="width: 20%;"><strong>Préstamo #:</strong></td>
+                <td style="width: 20%;">{{ $prestamo->id }}</td>
+                <td style="width: 20%;"><strong>Fecha Préstamo:</strong></td>
+                <td style="width: 40%;">{{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y H:i') }}</td>
             </tr>
             <tr>
-                <td><strong>Fecha Préstamo:</strong></td>
-                <td>{{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}</td>
+                <td><strong>Garantía:</strong></td>
+                <td><strong>Bs {{ number_format($prestamo->monto_garantia, 2, ',', '.') }}</strong></td>
                 <td><strong>Total Devoluciones:</strong></td>
                 <td><strong>{{ count($prestamo->devoluciones) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Almacén:</strong></td>
+                <td>{{ $prestamo->almacen->nombre ?? 'N/D' }}</td>
+                <td><strong>Vehículo:</strong></td>
+                <td>{{ $prestamo->vehiculo->placa ?? 'N/D' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {{-- INFORMACIÓN DEL CLIENTE --}}
+    <div class="seccion">
+        <h2>👤 INFORMACIÓN DEL CLIENTE</h2>
+        <table class="tabla-datos">
+            <tr>
+                <td style="width: 20%;"><strong>Cliente:</strong></td>
+                <td style="width: 30%;">{{ $prestamo->cliente->nombre ?? $prestamo->cliente->razon_social }}</td>
+                <td style="width: 20%;"><strong>Código:</strong></td>
+                <td style="width: 30%;">{{ $prestamo->cliente->codigo_cliente ?? 'N/D' }}</td>
+            </tr>
+            <tr>
+                <td><strong>Razón Social:</strong></td>
+                <td>{{ $prestamo->cliente->razon_social ?? 'N/D' }}</td>
+                <td><strong>Localidad:</strong></td>
+                <td>{{ $prestamo->cliente->localidad->nombre ?? 'N/D' }}</td>
+            </tr>
+            <tr>
+                <td><strong>Teléfono:</strong></td>
+                <td colspan="3">{{ $prestamo->cliente->telefono ?? 'N/D' }}</td>
             </tr>
         </table>
     </div>
 
     {{-- TABLA CONSOLIDADA DE TODAS LAS DEVOLUCIONES --}}
     <div class="seccion">
-        <h2>DETALLE DE TODAS LAS DEVOLUCIONES</h2>
+        <h2>📦 DETALLE DE TODAS LAS DEVOLUCIONES</h2>
         <table class="tabla-detalle">
             <thead>
                 <tr>
-                    <th style="width: 15%; text-align: left;">Devolución</th>
-                    <th style="width: 20%; text-align: left;">Prestable</th>
-                    <th style="width: 12%; text-align: center;">Buenas</th>
-                    <th style="width: 12%; text-align: center;">Parcial</th>
-                    <th style="width: 12%; text-align: center;">Total</th>
-                    <th style="width: 14%; text-align: center;">Total Dev.</th>
+                    <th style="width: 10%; text-align: center;">Dev #</th>
+                    <th style="width: 25%; text-align: left;">Prestable</th>
+                    <th style="width: 10%; text-align: center;">Buenas</th>
+                    <th style="width: 10%; text-align: center;">Dañadas</th>
+                    <th style="width: 15%; text-align: right;">Monto Daño</th>
                     <th style="width: 15%; text-align: center;">Fecha</th>
+                    <th style="width: 15%; text-align: center;">Observación</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($prestamo->devoluciones as $devolucion)
                     @foreach ($devolucion->detalles as $detalle)
-                        @php
-                            $totalDev = $detalle->cantidad_devuelta + $detalle->cantidad_dañada_parcial + $detalle->cantidad_dañada_total;
-                        @endphp
                         <tr>
-                            <td style="text-align: center; font-weight: bold; font-size: 10px;">{{ $devolucion->id }}</td>
+                            <td style="text-align: center; font-weight: bold; font-size: 9px;">{{ $devolucion->id }}</td>
                             <td>
                                 <strong>{{ $detalle->detallePrestamoCliente?->prestable?->nombre ?? 'Prestable' }}</strong>
                                 <br/>
@@ -72,26 +99,30 @@
                             <td style="text-align: center; color: #10b981; font-weight: bold;">
                                 {{ $detalle->cantidad_devuelta }}
                             </td>
-                            <td style="text-align: center; color: #f59e0b; font-weight: bold;">
-                                {{ $detalle->cantidad_dañada_parcial }}
-                            </td>
                             <td style="text-align: center; color: #ef4444; font-weight: bold;">
                                 {{ $detalle->cantidad_dañada_total }}
                             </td>
-                            <td style="text-align: center; background-color: #f3f4f6; font-weight: bold;">
-                                {{ $totalDev }}
+                            <td style="text-align: right; font-weight: bold; color: #0066cc;">
+                                Bs {{ number_format($detalle->monto_cobrado_daño ?? 0, 2, ',', '.') }}
                             </td>
-                            <td style="text-align: center; font-size: 10px;">
+                            <td style="text-align: center; font-size: 9px;">
                                 {{ \Carbon\Carbon::parse($devolucion->fecha_devolucion)->format('d/m/Y') }}
+                            </td>
+                            <td style="text-align: center; font-size: 9px;">
+                                @if(($detalle->monto_cobrado_daño ?? 0) > 0)
+                                    <span style="color: #ef4444; font-weight: bold;">🚫 Daño</span>
+                                @else
+                                    <span style="color: #10b981;">✓ OK</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
                 @endforeach
 
                 {{-- FILA DE TOTALES --}}
-                <tr style="background-color: #e3f2fd; border-top: 2px solid #333;">
-                    <td colspan="2" style="text-align: right; font-weight: bold;">TOTALES</td>
-                    <td style="text-align: center; font-weight: bold;">
+                <tr style="background-color: #e3f2fd; border-top: 2px solid #333; font-weight: bold;">
+                    <td colspan="2" style="text-align: right;">TOTALES</td>
+                    <td style="text-align: center;">
                         @php
                             $totalBuenas = 0;
                             foreach ($prestamo->devoluciones as $dev) {
@@ -102,18 +133,7 @@
                         @endphp
                         {{ $totalBuenas }}
                     </td>
-                    <td style="text-align: center; font-weight: bold;">
-                        @php
-                            $totalParcial = 0;
-                            foreach ($prestamo->devoluciones as $dev) {
-                                foreach ($dev->detalles as $det) {
-                                    $totalParcial += $det->cantidad_dañada_parcial;
-                                }
-                            }
-                        @endphp
-                        {{ $totalParcial }}
-                    </td>
-                    <td style="text-align: center; font-weight: bold;">
+                    <td style="text-align: center;">
                         @php
                             $totalDaño = 0;
                             foreach ($prestamo->devoluciones as $dev) {
@@ -124,41 +144,55 @@
                         @endphp
                         {{ $totalDaño }}
                     </td>
-                    <td style="text-align: center; font-weight: bold;">
-                        @php
-                            $totalDevueltoGral = $totalBuenas + $totalParcial + $totalDaño;
-                        @endphp
-                        {{ $totalDevueltoGral }}
+                    <td style="text-align: right; color: #0066cc;">
+                        Bs {{ number_format($totalMontoCobraDaño, 2, ',', '.') }}
                     </td>
-                    <td></td>
+                    <td colspan="2"></td>
                 </tr>
             </tbody>
         </table>
         <p style="font-size: 9px; color: #666; margin-top: 8px;">
-            <strong>Leyenda:</strong> Buenas = En buen estado | Parcial = Daño parcial | Total = Daño total | Total Dev. = Total devuelto
+            <strong>Leyenda:</strong> Buenas = En buen estado | Dañadas = Daño total | Monto Daño = Costo del daño
         </p>
     </div>
 
     {{-- RESUMEN FINANCIERO POR DEVOLUCIÓN --}}
-    @if(count($prestamo->devoluciones) > 1)
+    @if(count($prestamo->devoluciones) > 0)
         <div class="seccion">
-            <h2>RESUMEN POR EVENTO DE DEVOLUCIÓN</h2>
+            <h2>💰 RESUMEN FINANCIERO POR DEVOLUCIÓN</h2>
             <table class="tabla-datos" style="font-size: 10px;">
-                <tr>
-                    <td style="width: 30%;"><strong>Devolución #</strong></td>
-                    <td style="width: 30%;"><strong>Fecha</strong></td>
-                    <td style="width: 20%;"><strong>Monto por Daño</strong></td>
-                    <td style="width: 20%;"><strong>Garantía Dev.</strong></td>
+                <tr style="background-color: #f3f4f6; font-weight: bold;">
+                    <td style="width: 12%;"><strong>Dev #</strong></td>
+                    <td style="width: 15%;"><strong>Fecha</strong></td>
+                    <td style="width: 18%; text-align: right;"><strong>Daño Cobrado</strong></td>
+                    <td style="width: 18%; text-align: right;"><strong>Garantía Dev.</strong></td>
+                    <td style="width: 18%; text-align: right;"><strong>Exceso</strong></td>
+                    <td style="width: 19%; text-align: center;"><strong>Estado</strong></td>
                 </tr>
                 @foreach ($prestamo->devoluciones as $devolucion)
                     <tr>
-                        <td>{{ $devolucion->id }}</td>
+                        <td style="text-align: center; font-weight: bold;">{{ $devolucion->id }}</td>
                         <td>{{ \Carbon\Carbon::parse($devolucion->fecha_devolucion)->format('d/m/Y') }}</td>
                         <td style="text-align: right; color: #0066cc; font-weight: bold;">
-                            Bs {{ number_format($devolucion->monto_cobrado_daño_total, 2, ',', '.') }}
+                            Bs {{ number_format($devolucion->monto_cobrado_daño_total ?? 0, 2, ',', '.') }}
                         </td>
-                        <td style="text-align: right; color: #059669;">
-                            Bs {{ number_format($devolucion->monto_garantia_devuelta_total, 2, ',', '.') }}
+                        <td style="text-align: right; color: #059669; font-weight: bold;">
+                            Bs {{ number_format($devolucion->monto_garantia_devuelta_total ?? 0, 2, ',', '.') }}
+                        </td>
+                        <td style="text-align: right; font-weight: bold;
+                            @if(($devolucion->monto_excedido_garantia ?? 0) > 0) color: #d00; @endif">
+                            @if(($devolucion->monto_excedido_garantia ?? 0) > 0)
+                                🚫 Bs {{ number_format($devolucion->monto_excedido_garantia, 2, ',', '.') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td style="text-align: center;">
+                            @if(($devolucion->monto_excedido_garantia ?? 0) > 0)
+                                <span style="color: #d00; font-weight: bold;">Pendiente</span>
+                            @else
+                                <span style="color: #10b981; font-weight: bold;">✓ OK</span>
+                            @endif
                         </td>
                     </tr>
                 @endforeach
@@ -168,29 +202,48 @@
 
     {{-- RESUMEN FINANCIERO TOTAL --}}
     <div class="seccion">
-        <h2>RESUMEN FINANCIERO TOTAL</h2>
-        <table class="tabla-datos">
+        <h2>🎯 RESUMEN FINANCIERO TOTAL</h2>
+        <table class="tabla-datos" style="border: 2px solid #333;">
             <tr style="background-color: #fff3cd;">
-                <td style="width: 60%;"><strong>TOTAL MONTO A COBRAR POR DAÑOS:</strong></td>
-                <td style="text-align: right; font-weight: bold; font-size: 14px; color: #0066cc;">
+                <td style="width: 50%;"><strong>Garantía Original del Préstamo:</strong></td>
+                <td style="text-align: right; font-weight: bold; font-size: 12px; color: #0066cc;">
+                    Bs {{ number_format($prestamo->monto_garantia, 2, ',', '.') }}
+                </td>
+            </tr>
+            <tr style="background-color: #ffe3e3;">
+                <td><strong>TOTAL MONTO A COBRAR POR DAÑOS:</strong></td>
+                <td style="text-align: right; font-weight: bold; font-size: 14px; color: #d00;">
                     Bs {{ number_format($totalMontoCobraDaño, 2, ',', '.') }}
                 </td>
             </tr>
-            <tr>
+            <tr style="background-color: #e3f2fd;">
                 <td><strong>Total Garantía Devuelta:</strong></td>
                 <td style="text-align: right; font-weight: bold; color: #059669;">
                     Bs {{ number_format($totalMontoGarantia, 2, ',', '.') }}
                 </td>
             </tr>
+            @if($totalExcedido > 0)
+                <tr style="background-color: #ffdddd; border-top: 2px solid #d00;">
+                    <td><strong>🚫 EXCESO PENDIENTE DE COBRO AL CLIENTE:</strong></td>
+                    <td style="text-align: right; font-weight: bold; font-size: 14px; color: #d00;">
+                        Bs {{ number_format($totalExcedido, 2, ',', '.') }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="font-size: 9px; color: #d00; padding: 8px;">
+                        <strong>⚠️ Nota:</strong> El cliente debe pagar el monto de exceso ya que los daños registrados superan la garantía original del préstamo.
+                    </td>
+                </tr>
+            @endif
         </table>
     </div>
 
-    <div class="pie-documento" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 20px;">
-        <p style="text-align: center; font-size: 11px; color: #666;">
+    <div class="pie-documento">
+        <p style="text-align: center; font-size: 11px; color: #666; margin-bottom: 5px;">
             Comprobante generado el {{ $fecha_impresion->format('d/m/Y H:i') }}
         </p>
         <p style="text-align: center; font-size: 10px; color: #999;">
-            Este documento es un comprobante de devolución de préstamo.
+            Este documento es un comprobante oficial de devolución de préstamo de canastillas/embases.
         </p>
     </div>
 
@@ -198,13 +251,13 @@
         .encabezado-documento {
             text-align: center;
             margin-bottom: 20px;
-            border-bottom: 2px solid #333;
+            border-bottom: 3px solid #333;
             padding-bottom: 10px;
         }
 
         .titulo-documento h1 {
             margin: 0;
-            font-size: 18px;
+            font-size: 20px;
             color: #333;
         }
 
@@ -226,17 +279,17 @@
         }
 
         .seccion {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             page-break-inside: avoid;
         }
 
         .seccion h2 {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             color: #333;
-            margin: 0 0 8px 0;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #ddd;
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #333;
         }
 
         .tabla-datos {
@@ -250,14 +303,18 @@
             border-bottom: 1px solid #eee;
         }
 
+        .tabla-datos tr:hover {
+            background-color: #f9f9f9;
+        }
+
         .tabla-datos td {
-            padding: 5px;
+            padding: 6px;
         }
 
         .tabla-detalle {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
+            font-size: 9px;
             margin-bottom: 8px;
         }
 
@@ -267,7 +324,7 @@
         }
 
         .tabla-detalle th {
-            padding: 6px;
+            padding: 7px;
             border: 1px solid #ddd;
         }
 
@@ -276,8 +333,14 @@
             border: 1px solid #ddd;
         }
 
+        .tabla-detalle tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
         .pie-documento {
-            margin-top: 20px;
+            margin-top: 25px;
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
         }
     </style>
 @endsection

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
 export const publicMethod = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ publicMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
 publicMethod.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ publicMethod.url = (args: { proforma: number | { id: number } } | [proforma: num
 
 /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
 publicMethod.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ publicMethod.get = (args: { proforma: number | { id: number } } | [proforma: num
 })
 /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
 publicMethod.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ publicMethod.head = (args: { proforma: number | { id: number } } | [proforma: nu
 
     /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
     const publicMethodForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ publicMethod.head = (args: { proforma: number | { id: number } } | [proforma: nu
 
             /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
         publicMethodForm.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ publicMethod.head = (args: { proforma: number | { id: number } } | [proforma: nu
         })
             /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
- * @see app/Http/Controllers/ProformaController.php:1258
+ * @see app/Http/Controllers/ProformaController.php:1293
  * @route '/api/proformas/{proforma}/descargar-imagen'
  */
         publicMethodForm.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

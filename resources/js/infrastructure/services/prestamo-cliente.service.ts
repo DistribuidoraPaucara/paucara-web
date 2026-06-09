@@ -38,8 +38,25 @@ export class PrestamoClienteService {
     // ========================================
 
     async registrarDevolucion(id: Id, payload: DatosDevolucionCliente) {
-        const { data } = await axios.post(`/api/prestamos-cliente/${id}/devolver`, payload);
-        return data.data as DevolucionCliente;
+        try {
+            const { data } = await axios.post(`/api/prestamos-cliente/${id}/devolver`, payload);
+            console.log('✅ RESPUESTA DEL BACKEND:', {
+                devolucion_id: data.data?.id,
+                monto_cobrado_daño_total: data.data?.monto_cobrado_daño_total,
+                monto_garantia_devuelta_total: data.data?.monto_garantia_devuelta_total,
+                monto_excedido_garantia: data.data?.monto_excedido_garantia,
+                respuesta_completa: data.data,
+            });
+            return data.data as DevolucionCliente;
+        } catch (error: any) {
+            console.error('❌ ERROR EN DEVOLUCIÓN:', {
+                status: error.response?.status,
+                mensaje: error.response?.data?.message,
+                errores: error.response?.data?.errores,
+                respuesta_completa: error.response?.data,
+            });
+            throw error;
+        }
     }
 
     // ========================================

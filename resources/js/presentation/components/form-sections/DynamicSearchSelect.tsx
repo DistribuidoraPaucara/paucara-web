@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface DynamicSearchSelectProps<T> {
     label: string;
@@ -94,6 +94,19 @@ export default function DynamicSearchSelect<T>({
                         <div className="absolute right-3 top-2.5">
                             <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500"></div>
                         </div>
+                    )}
+                    {showDropdown && !isLoading && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowDropdown(false);
+                                onSearch('');
+                            }}
+                            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                            title="Cerrar"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
                     )}
                 </div>
             )}

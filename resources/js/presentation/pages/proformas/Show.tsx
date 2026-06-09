@@ -1609,6 +1609,40 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                         </div>
                                     </div>
                                 )}
+
+                                {/* ✅ NUEVO: Tipo de Pago - Destacado cuando es CREDITO */}
+                                <div className={`flex items-center space-x-2 rounded-lg p-2 border ${
+                                    proforma.politica_pago === 'CREDITO'
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700'
+                                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                                }`}>
+                                    <div className="flex-shrink-0">
+                                        <div className={`flex items-center justify-center h-6 w-6 rounded-full ${
+                                            proforma.politica_pago === 'CREDITO'
+                                                ? 'bg-purple-200 dark:bg-purple-800'
+                                                : 'bg-slate-200 dark:bg-slate-700'
+                                        }`}>
+                                            <span className="text-sm">
+                                                {proforma.politica_pago === 'CREDITO' ? '💳' :
+                                                 proforma.politica_pago === 'ANTICIPADO_100' ? '💵' :
+                                                 proforma.politica_pago === 'CONTRA_ENTREGA' ? '📦' : '💰'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Forma de Pago</p>
+                                        <p className={`text-xs font-bold truncate ${
+                                            proforma.politica_pago === 'CREDITO'
+                                                ? 'text-purple-800 dark:text-purple-200'
+                                                : 'text-slate-900 dark:text-white'
+                                        }`}>
+                                            {proforma.politica_pago === 'CREDITO' ? '🔴 CRÉDITO' :
+                                             proforma.politica_pago === 'ANTICIPADO_100' ? 'ANTICIPADO 100%' :
+                                             proforma.politica_pago === 'CONTRA_ENTREGA' ? 'CONTRA ENTREGA' :
+                                             proforma.politica_pago}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1684,154 +1718,155 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 {/* Información adicional */}
                 {((proforma.fecha_entrega_solicitada || proforma.hora_entrega_solicitada) || proforma.estado === 'CONVERTIDA' || proforma.canal_origen) && (
                     <div className="space-y-4">
-                            {/* Card: Información del Cliente */}
-                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                {/* Header */}
-                                <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-4 py-3">
-                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                        <span className="text-lg">👤</span>
-                                        Información del Cliente
-                                    </h3>
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {/* Nombre del Cliente */}
-                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
-                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">📝 Nombre</span>
-                                        <span className="text-sm font-bold text-foreground block">{proforma.cliente.nombre}</span>
-                                    </div>
-
-                                    {/* Razón Social */}
-                                    {(proforma.cliente as any).razon_social && (
-                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
-                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">🏢 Razón Social</span>
-                                            <span className="text-sm font-medium text-foreground block">{(proforma.cliente as any).razon_social}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Email */}
-                                    {proforma.cliente.email && (
-                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
-                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">✉️ Email</span>
-                                            <span className="text-sm font-medium text-foreground truncate block">{proforma.cliente.email}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Teléfono */}
-                                    {proforma.cliente.telefono && (
-                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
-                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-2">📱 Teléfono</span>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-sm font-medium text-foreground flex-1">{proforma.cliente.telefono}</span>
-                                                <a
-                                                    href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    title="Abrir en WhatsApp"
-                                                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors flex-shrink-0"
-                                                >
-                                                    <MessageCircle className="h-4 w-4" />
-                                                </a>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Usuario Creador */}
-                                    {proforma.usuario_creador && (
-                                        <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
-                                            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">👨‍💼 Creado por</span>
-                                            <span className="text-sm font-medium text-foreground block">{proforma.usuario_creador.name}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Dirección Solicitada */}
-                                    {proforma.direccion_solicitada && (
-                                        <button
-                                            onClick={() => {
-                                                if (proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud) {
-                                                    setDireccionMapaResumen('solicitada')
-                                                    setShowMapaResumen(true)
-                                                }
-                                            }}
-                                            className={`text-left rounded-lg p-3 border transition-all cursor-pointer ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                                                : 'bg-white dark:bg-slate-950/40 border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                                                }`}
-                                            disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
-                                        >
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className={`text-xs font-semibold uppercase tracking-wide ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                    ? 'text-amber-700 dark:text-amber-300'
-                                                    : 'text-blue-600 dark:text-blue-400'
-                                                    }`}>📍 Dirección Solicitada</span>
-                                                {proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion && (
-                                                    <span className="text-xs bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
-                                                        ✅ Igual
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className={`text-sm font-medium block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                ? 'text-amber-800 dark:text-amber-300'
-                                                : 'text-foreground'
-                                                }`}>
-                                                {proforma.direccion_solicitada.observaciones}
-                                            </span>
-                                            {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
-                                                <span className={`text-xs font-semibold mt-2 inline-block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                    ? 'text-amber-700 dark:text-amber-400'
-                                                    : 'text-blue-600 dark:text-blue-400'
-                                                    }`}>
-                                                    🗺️ Ver en mapa
-                                                </span>
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
+                        {/* Card: Información del Cliente */}
+                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-4 py-3">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <span className="text-lg">👤</span>
+                                    Información del Cliente
+                                </h3>
                             </div>
 
-                            {/* Card: Límite de Crédito */}
-                            {proforma.politica_pago === 'CREDITO' && proforma.cliente?.puede_tener_credito && (
-                                <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-2xl">💳</span>
-                                        <div>
-                                            <p className="text-xs font-semibold text-purple-900 dark:text-purple-200 uppercase">Límite de Crédito</p>
-                                            <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
-                                                {proforma.moneda?.simbolo || 'Bs.'} {proforma.cliente.limite_credito?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                                            </p>
+                            {/* Content */}
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {/* Nombre del Cliente */}
+                                <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                    <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">📝 Nombre</span>
+                                    <span className="text-sm font-bold text-foreground block">{proforma.cliente.nombre}</span>
+                                </div>
+
+                                {/* Razón Social */}
+                                {(proforma.cliente as any).razon_social && (
+                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">🏢 Razón Social</span>
+                                        <span className="text-sm font-medium text-foreground block">{(proforma.cliente as any).razon_social}</span>
+                                    </div>
+                                )}
+
+                                {/* Email */}
+                                {proforma.cliente.email && (
+                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">✉️ Email</span>
+                                        <span className="text-sm font-medium text-foreground truncate block">{proforma.cliente.email}</span>
+                                    </div>
+                                )}
+
+                                {/* Teléfono */}
+                                {proforma.cliente.telefono && (
+                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-2">📱 Teléfono</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-foreground flex-1">{proforma.cliente.telefono}</span>
+                                            <a
+                                                href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Abrir en WhatsApp"
+                                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors flex-shrink-0"
+                                            >
+                                                <MessageCircle className="h-4 w-4" />
+                                            </a>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                )}
+                                )}
 
-                <div className="grid gap-[var(--space-lg)]">
-                    {/* Información principal */}
-                    <div className="lg:col-span-2 space-y-[var(--space-lg)]">
-                        {/* Advertencia sobre cambios locales */}
-                        {editableDetalles.length !== proforma.detalles.length && (
-                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex gap-2 text-sm">
-                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                                <div className="text-amber-900 dark:text-amber-100">
-                                    <p className="font-medium">Cambios no guardados</p>
-                                    <p className="text-xs mt-1">Los productos agregados/modificados solo existen localmente. Para guardarlos, debes aprobar la proforma.</p>
+                                {/* Usuario Creador */}
+                                {proforma.usuario_creador && (
+                                    <div className="bg-white dark:bg-slate-950/40 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide block mb-1">👨‍💼 Creado por</span>
+                                        <span className="text-sm font-medium text-foreground block">{proforma.usuario_creador.name}</span>
+                                    </div>
+                                )}
+
+                                {/* Dirección Solicitada */}
+                                {proforma.direccion_solicitada && (
+                                    <button
+                                        onClick={() => {
+                                            if (proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud) {
+                                                setDireccionMapaResumen('solicitada')
+                                                setShowMapaResumen(true)
+                                            }
+                                        }}
+                                        className={`text-left rounded-lg p-3 border transition-all cursor-pointer ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                            ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                                            : 'bg-white dark:bg-slate-950/40 border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                                            }`}
+                                        disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
+                                    >
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`text-xs font-semibold uppercase tracking-wide ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                ? 'text-amber-700 dark:text-amber-300'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                                }`}>📍 Dirección Solicitada</span>
+                                            {proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion && (
+                                                <span className="text-xs bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
+                                                    ✅ Igual
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className={`text-sm font-medium block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                            ? 'text-amber-800 dark:text-amber-300'
+                                            : 'text-foreground'
+                                            }`}>
+                                            {proforma.direccion_solicitada.observaciones}
+                                        </span>
+                                        {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
+                                            <span className={`text-xs font-semibold mt-2 inline-block ${proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
+                                                ? 'text-amber-700 dark:text-amber-400'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                                }`}>
+                                                🗺️ Ver en mapa
+                                            </span>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Card: Límite de Crédito */}
+                        {proforma.politica_pago === 'CREDITO' && proforma.cliente?.puede_tener_credito && (
+                            <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800 p-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl">💳</span>
+                                    <div>
+                                        <p className="text-xs font-semibold text-purple-900 dark:text-purple-200 uppercase">Límite de Crédito</p>
+                                        <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
+                                            {proforma.moneda?.simbolo || 'Bs.'} {proforma.cliente.limite_credito?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
 
-                        {/* Detalles de la proforma */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Package className="h-5 w-5" />
-                                    Detalles de la Proforma ({proforma.items_count} {(proforma.items_count ?? 0) !== 1 ? 'productos' : 'producto'})
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Separator />
+                {/* Información principal */}
+                <div className="lg:col-span-2 space-y-[var(--space-lg)]">
+                    {/* Advertencia sobre cambios locales */}
+                    {editableDetalles.length !== proforma.detalles.length && (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex gap-2 text-sm">
+                            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                            <div className="text-amber-900 dark:text-amber-100">
+                                <p className="font-medium">Cambios no guardados</p>
+                                <p className="text-xs mt-1">Los productos agregados/modificados solo existen localmente. Para guardarlos, debes aprobar la proforma.</p>
+                            </div>
+                        </div>
+                    )}
 
+                    {/* Detalles de la proforma */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Package className="h-5 w-5" />
+                                Detalles de la Proforma ({proforma.items_count} {(proforma.items_count ?? 0) !== 1 ? 'productos' : 'producto'})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Separator />
+
+                            {/* ✅ FIX (2026-06-09): Envolver tabla en contenedor sin scroll (ProductosTable maneja el suyo) */}
+                            <div className="w-full">
                                 {/* ✅ FIX (2026-02-18): Pasar productos extraídos de editableDetalles + callback memoizado */}
                                 <ProductosTable
                                     productos={productosParaTabla}
@@ -1850,166 +1885,166 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                     onDetallesActualizados={handleDetallesActualizadosPorRangos}
                                     proformaConvertida={proforma.estado === 'CONVERTIDA'}
                                 />
+                            </div>
 
-                                {/* Resumen de Totales en Tiempo Real */}
-                                <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
-                                    {/* Indicador de cálculo en progreso */}
-                                    {isCalculandoRangos && (
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 flex items-center gap-2">
-                                            <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                                            <p className="text-xs text-blue-700 dark:text-blue-200">Recalculando precios...</p>
-                                        </div>
-                                    )}
-
-                                    <div className="flex justify-end gap-12">
-                                        {/* Subtotal */}
-                                        <div className="space-y-2 text-right">
-                                            <p className="text-sm font-medium text-foreground">Subtotal:</p>
-                                            <p className="text-xl font-semibold text-muted-foreground">
-                                                Bs. {totales.subtotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
-
-                                        {/* Total */}
-                                        <div className="space-y-2 text-right">
-                                            <p className="text-sm font-medium text-foreground">Total:</p>
-                                            <p className="text-2xl font-bold text-[var(--brand-primary)]">
-                                                Bs. {totales.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
+                            {/* Resumen de Totales en Tiempo Real */}
+                            <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
+                                {/* Indicador de cálculo en progreso */}
+                                {isCalculandoRangos && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 flex items-center gap-2">
+                                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                                        <p className="text-xs text-blue-700 dark:text-blue-200">Recalculando precios...</p>
                                     </div>
-                                    {/* {totales.total !== proforma.subtotal && (
+                                )}
+
+                                <div className="flex justify-end gap-12">
+                                    {/* Subtotal */}
+                                    <div className="space-y-2 text-right">
+                                        <p className="text-sm font-medium text-foreground">Subtotal:</p>
+                                        <p className="text-xl font-semibold text-muted-foreground">
+                                            Bs. {totales.subtotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+
+                                    {/* Total */}
+                                    <div className="space-y-2 text-right">
+                                        <p className="text-sm font-medium text-foreground">Total:</p>
+                                        <p className="text-2xl font-bold text-[var(--brand-primary)]">
+                                            Bs. {totales.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* {totales.total !== proforma.subtotal && (
                                         <p className="text-xs text-amber-600 dark:text-amber-400 text-right italic">
                                             ℹ️ Total modificado desde: Bs. {proforma.subtotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                                         </p>
                                     )} */}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Observaciones */}
+                    {proforma.observaciones && (
+                        <ProformaCard variant="default" title="Observaciones">
+                            <p className="text-[var(--text-sm)] text-muted-foreground leading-relaxed">
+                                {proforma.observaciones}
+                            </p>
+                        </ProformaCard>
+                    )}
+
+                    {/* ✅ Card de Dirección - Se oculta completamente cuando showDireccionCard es false */}
+                    {proforma.direccion_solicitada && showDireccionCard && (
+                        <ProformaCard
+                            variant="info"
+                            title="Dirección de Entrega"
+                            // ✅ Botón toggle en el header para mostrar/ocultar
+                            headerAction={
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setShowDireccionCard(!showDireccionCard)}
+                                    className="h-6 w-6 p-0"
+                                >
+                                    <ChevronUp className="h-4 w-4" />
+                                </Button>
+                            }
+                        >
+                            <div className="space-y-[var(--space-sm)]">
+                                <div>
+                                    <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase">Dirección Solicitada</div>
+                                    <div className="text-[var(--text-sm)] mt-2 text-muted-foreground">
+                                        {proforma.direccion_solicitada.direccion}
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
 
-                        {/* Observaciones */}
-                        {proforma.observaciones && (
-                            <ProformaCard variant="default" title="Observaciones">
-                                <p className="text-[var(--text-sm)] text-muted-foreground leading-relaxed">
-                                    {proforma.observaciones}
-                                </p>
-                            </ProformaCard>
-                        )}
-
-                        {/* ✅ Card de Dirección - Se oculta completamente cuando showDireccionCard es false */}
-                        {proforma.direccion_solicitada && showDireccionCard && (
-                            <ProformaCard
-                                variant="info"
-                                title="Dirección de Entrega"
-                                // ✅ Botón toggle en el header para mostrar/ocultar
-                                headerAction={
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => setShowDireccionCard(!showDireccionCard)}
-                                        className="h-6 w-6 p-0"
-                                    >
-                                        <ChevronUp className="h-4 w-4" />
-                                    </Button>
-                                }
-                            >
-                                <div className="space-y-[var(--space-sm)]">
+                                {proforma.direccion_solicitada.observaciones && (
                                     <div>
-                                        <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase">Dirección Solicitada</div>
-                                        <div className="text-[var(--text-sm)] mt-2 text-muted-foreground">
-                                            {proforma.direccion_solicitada.direccion}
+                                        <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase">Observaciones</div>
+                                        <div className="text-[var(--text-sm)] mt-2 text-muted-foreground italic">
+                                            📝 {proforma.direccion_solicitada.observaciones}
                                         </div>
                                     </div>
+                                )}
 
-                                    {proforma.direccion_solicitada.observaciones && (
-                                        <div>
-                                            <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase">Observaciones</div>
-                                            <div className="text-[var(--text-sm)] mt-2 text-muted-foreground italic">
-                                                📝 {proforma.direccion_solicitada.observaciones}
-                                            </div>
+                                {proforma.direccion_solicitada.latitud && proforma.direccion_solicitada.longitud ? (
+                                    <>
+                                        {/* Mostrar coordenadas */}
+                                        <div className="text-[var(--text-xs)] text-muted-foreground">
+                                            <span className="font-medium">Coordenadas:</span> {proforma.direccion_solicitada.latitud.toFixed(4)}, {proforma.direccion_solicitada.longitud.toFixed(4)}
                                         </div>
-                                    )}
 
-                                    {proforma.direccion_solicitada.latitud && proforma.direccion_solicitada.longitud ? (
-                                        <>
-                                            {/* Mostrar coordenadas */}
-                                            <div className="text-[var(--text-xs)] text-muted-foreground">
-                                                <span className="font-medium">Coordenadas:</span> {proforma.direccion_solicitada.latitud.toFixed(4)}, {proforma.direccion_solicitada.longitud.toFixed(4)}
-                                            </div>
+                                        {/* Botón para mostrar mapa - LAZY LOAD */}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowMapaEntrega(true)}
+                                            className="w-full mt-2 text-sm"
+                                        >
+                                            <MapPin className="h-4 w-4 mr-1" />
+                                            Ver ubicación en mapa
+                                        </Button>
 
-                                            {/* Botón para mostrar mapa - LAZY LOAD */}
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => setShowMapaEntrega(true)}
-                                                className="w-full mt-2 text-sm"
-                                            >
-                                                <MapPin className="h-4 w-4 mr-1" />
-                                                Ver ubicación en mapa
-                                            </Button>
-
-                                            {/* Modal expandible con mapa - Optimizado para mobile */}
-                                            {showMapaEntrega && (
-                                                <div className="pt-[var(--space-sm)] border-t space-y-[var(--space-sm)] animate-in fade-in duration-200">
-                                                    <div className="text-[var(--text-xs)] font-medium text-muted-foreground mb-2">
-                                                        📍 Ubicación en el mapa:
-                                                    </div>
-
-                                                    {/* Contenedor responsive del mapa */}
-                                                    <div className="rounded-lg overflow-hidden border border-border/50">
-                                                        <MapViewWithFallback
-                                                            latitude={proforma.direccion_solicitada.latitud}
-                                                            longitude={proforma.direccion_solicitada.longitud}
-                                                            height="280px"
-                                                            zoom={16}
-                                                            markerTitle="Ubicación de entrega solicitada"
-                                                        />
-                                                    </div>
-
-                                                    {/* Botón para cerrar - Mobile optimizado */}
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setShowMapaEntrega(false)}
-                                                        className="w-full text-xs hover:bg-muted"
-                                                    >
-                                                        ✕ Cerrar mapa
-                                                    </Button>
+                                        {/* Modal expandible con mapa - Optimizado para mobile */}
+                                        {showMapaEntrega && (
+                                            <div className="pt-[var(--space-sm)] border-t space-y-[var(--space-sm)] animate-in fade-in duration-200">
+                                                <div className="text-[var(--text-xs)] font-medium text-muted-foreground mb-2">
+                                                    📍 Ubicación en el mapa:
                                                 </div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="text-[var(--text-xs)] text-amber-600 dark:text-amber-400">
-                                            No hay coordenadas disponibles para esta dirección
-                                        </div>
-                                    )}
 
-                                    {proforma.fecha_entrega_solicitada && (
-                                        <div className="pt-[var(--space-sm)] border-t">
-                                            <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase mb-1">Fecha Solicitada</div>
-                                            <div className="text-[var(--text-sm)] font-medium">
-                                                {proforma.fecha_entrega_solicitada.split('T')[0].split('-').reverse().join('-')}
+                                                {/* Contenedor responsive del mapa */}
+                                                <div className="rounded-lg overflow-hidden border border-border/50">
+                                                    <MapViewWithFallback
+                                                        latitude={proforma.direccion_solicitada.latitud}
+                                                        longitude={proforma.direccion_solicitada.longitud}
+                                                        height="280px"
+                                                        zoom={16}
+                                                        markerTitle="Ubicación de entrega solicitada"
+                                                    />
+                                                </div>
+
+                                                {/* Botón para cerrar - Mobile optimizado */}
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setShowMapaEntrega(false)}
+                                                    className="w-full text-xs hover:bg-muted"
+                                                >
+                                                    ✕ Cerrar mapa
+                                                </Button>
                                             </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="text-[var(--text-xs)] text-amber-600 dark:text-amber-400">
+                                        No hay coordenadas disponibles para esta dirección
+                                    </div>
+                                )}
+
+                                {proforma.fecha_entrega_solicitada && (
+                                    <div className="pt-[var(--space-sm)] border-t">
+                                        <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase mb-1">Fecha Solicitada</div>
+                                        <div className="text-[var(--text-sm)] font-medium">
+                                            {proforma.fecha_entrega_solicitada.split('T')[0].split('-').reverse().join('-')}
                                         </div>
-                                    )}
-                                    {proforma.hora_entrega_solicitada && (
-                                        <div>
-                                            <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase mb-1">Hora Solicitada</div>
-                                            <div className="text-[var(--text-sm)] font-medium">
-                                                {proforma.hora_entrega_solicitada}
-                                                {proforma.hora_entrega_solicitada_fin && (
-                                                    <span>
-                                                        {' - '}
-                                                        {proforma.hora_entrega_solicitada_fin}
-                                                    </span>
-                                                )}
-                                            </div>
+                                    </div>
+                                )}
+                                {proforma.hora_entrega_solicitada && (
+                                    <div>
+                                        <div className="text-[var(--text-xs)] font-medium text-muted-foreground uppercase mb-1">Hora Solicitada</div>
+                                        <div className="text-[var(--text-sm)] font-medium">
+                                            {proforma.hora_entrega_solicitada}
+                                            {proforma.hora_entrega_solicitada_fin && (
+                                                <span>
+                                                    {' - '}
+                                                    {proforma.hora_entrega_solicitada_fin}
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            </ProformaCard>
-                        )}
-                    </div>
+                                    </div>
+                                )}
+                            </div>
+                        </ProformaCard>
+                    )}
                 </div>
             </div>
 

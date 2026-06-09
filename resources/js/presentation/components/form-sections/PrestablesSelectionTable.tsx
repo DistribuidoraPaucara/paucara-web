@@ -6,7 +6,12 @@ interface PrestamoItem {
     prestable_id: number;
     cantidad: number;
     almacenes_ids: number[];
+    almacenes?: Array<{
+        almacenes_prestables_id: number;
+        cantidad: number;
+    }>;
     prestable?: Prestable;
+    isAutomaticEmbase?: boolean;
 }
 
 interface PrestablesSelectionTableProps {
@@ -14,9 +19,11 @@ interface PrestablesSelectionTableProps {
     placeholder?: string;
     prestables: Prestable[];
     items: PrestamoItem[];
+    almacenes?: Array<{ id: number; nombre: string; es_proveedor?: boolean }>;
     onSelectItem: (prestable: Prestable) => void;
     onDeleteItem: (prestableId: number) => void;
-    onUpdateCantidad?: (prestableId: number, cantidad: number) => void;
+    onUpdateCantidad?: (itemIndex: number, cantidad: number) => void;
+    onEditAlmacenes?: (item: PrestamoItem, index: number) => void;
     getStockDisponibleTotal: (prestable: Prestable) => number;
     loading?: boolean;
     emptyMessage?: string;
@@ -28,9 +35,11 @@ export default function PrestablesSelectionTable({
     placeholder = 'Busca por nombre o código...',
     prestables,
     items,
+    almacenes = [],
     onSelectItem,
     onDeleteItem,
     onUpdateCantidad,
+    onEditAlmacenes,
     getStockDisponibleTotal,
     loading = false,
     emptyMessage = 'Busca arriba para agregar prestables',
@@ -55,6 +64,62 @@ export default function PrestablesSelectionTable({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Helper: obtener nombres de almacenes
+    const getAlmacenesDisplay = (item: PrestamoItem) => {
+        const almacenesAMostrar = (item.almacenes && item.almacenes.length > 0)
+            ? item.almacenes
+            : (item.almacenes_ids || []).map(id => ({ almacenes_prestables_id: id, cantidad: item.cantidad }));
+
+        if (almacenesAMostrar.length === 0) {
+            return <span className="text-gray-500 text-xs">—</span>;
+        }
+
+        return (
+            <div className="flex flex-col gap-1">
+                {almacenesAMostrar.map((almData, idx) => {
+                    const almacenInfo = almacenes.find(a => a.id === almData.almacenes_prestables_id);
+                    const almacenNombre = almacenInfo?.nombre || `Almacén #${almData.almacenes_prestables_id}`;
+                    return (
+                        <div key={idx} className="text-xs bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-blue-700 dark:text-blue-300">
+                            {almacenNombre} ({almData.cantidad})
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    // Helper: Obtener stock total de almacenes seleccionados en el item
+    const getStockDisponibleDelItem = (prestable: Prestable, item: PrestamoItem) => {
+        // Si el item tiene almacenes seleccionados, calcular stock de esos almacenes
+        const almacenesDelItem = (item.almacenes && item.almacenes.length > 0)
+            ? item.almacenes
+            : [];
+
+        if (almacenesDelItem.length > 0) {
+            // Calcular stock total de los almacenes seleccionados
+            let stockTotal = 0;
+            almacenesDelItem.forEach(almData => {
+                const stock = prestable.stocks?.find(
+                    s => Number(s.almacenes_prestables_id) === almData.almacenes_prestables_id
+                );
+                stockTotal += stock ? Number(stock.cantidad_disponible || 0) : 0;
+            });
+            return stockTotal;
+        }
+
+        // Si no hay almacenes en el item y hay almacén de cabecera, usar ese
+        if (almacen_prestable_id) {
+            const stock = prestable.stocks?.find(
+                s => Number(s.almacenes_prestables_id) === almacen_prestable_id
+            );
+            return stock ? Number(stock.cantidad_disponible || 0) : 0;
+        }
+
+        // Si no hay nada, retornar 0
+        return 0;
+    };
 
     const handleSearchChange = (query: string) => {
         setSearchValue(query);
@@ -152,11 +217,17 @@ export default function PrestablesSelectionTable({
                                 Prestable
                             </th>
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                Tipo
+                            </th>
+                            <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 Cantidad
+                            </th>
+                            <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                🏭 Almacenes
                             </th>
                             {almacen_prestable_id && (
                                 <th className="px-2 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    📦 Stock en Almacén
+                                    📦 Disponibilidad
                                 </th>
                             )}
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -166,88 +237,406 @@ export default function PrestablesSelectionTable({
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {items.length > 0 ? (
-                            items.map((item) => {
-                                const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
-                                if (!prestable) return null;
+                            (() => {
+                                // Agrupar canastillas solo con sus embases automáticos relacionados
+                                const processedItems = new Set<string>();
+                                const rows: React.ReactNode[] = [];
 
-                                const isCanastilla = prestable.tipo === 'CANASTILLA';
-                                const icon = isCanastilla ? '📦' : '🔖';
-                                const bgColor = isCanastilla
-                                    ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30'
-                                    : 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30';
+                                console.log('📊 PrestablesSelectionTable - Items recibidos:', items.length);
+                                console.log('   Detalle:', items.map(i => ({
+                                    id: i.prestable_id,
+                                    tipo: prestables.find(p => p.id === i.prestable_id)?.tipo,
+                                    isAutomaticEmbase: i.isAutomaticEmbase
+                                })));
 
-                                return (
-                                    <tr
-                                        key={item.prestable_id}
-                                        className={`transition ${bgColor}`}
-                                    >
-                                        <td className="px-2 py-2 text-center">
-                                            <span className="text-lg">{icon}</span>
-                                        </td>
-                                        <td className="px-2 py-2">
-                                            <div>
-                                                <p className="font-medium text-slate-900 dark:text-slate-100">{prestable.nombre}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">{prestable.codigo}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-2 py-2 text-center">
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                value={item.cantidad}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val === '' || /^\d+$/.test(val)) {
-                                                        onUpdateCantidad?.(Number(prestable.id), val === '' ? 0 : parseInt(val));
-                                                    }
-                                                }}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
-                                            />
-                                        </td>
-                                        {almacen_prestable_id && (
-                                            <td className="px-2 py-2 text-right">
-                                                <div className="space-y-1">
-                                                    <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
-                                                        {(() => {
-                                                            const stockEnAlmacen = prestable.stocks?.find(
-                                                                (s: any) => Number(s.almacenes_prestables_id) === almacen_prestable_id
-                                                            )?.cantidad_disponible || 0;
-                                                            const disponible = stockEnAlmacen - item.cantidad;
-                                                            const isValido = disponible >= 0;
-                                                            return (
-                                                                <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                                                    {stockEnAlmacen.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
-                                                                </span>
-                                                            );
-                                                        })()}
+                                items.forEach((item) => {
+                                    // Usar clave única que incluya si es automático o no
+                                    const itemKey = `${item.prestable_id}-${item.isAutomaticEmbase === true ? 'auto' : 'manual'}`;
+                                    if (processedItems.has(itemKey)) {
+                                        console.log('⚠️  Item ya procesado:', itemKey);
+                                        return;
+                                    }
+
+                                    const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
+                                    if (!prestable) {
+                                        console.log('❌ Prestable no encontrado:', item.prestable_id);
+                                        return;
+                                    }
+
+                                    console.log(`\n🔷 Procesando: ${prestable.nombre} (${prestable.tipo}) - isAutomatic: ${item.isAutomaticEmbase}`);
+
+                                    // Si es canastilla, buscar sus embases automáticos relacionados
+                                    if (prestable.tipo === 'CANASTILLA') {
+                                        console.log('  → Es CANASTILLA');
+                                        const embasesRelacionados = items.filter(embaseItem => {
+                                            const embasePrestable = prestables.find(p => Number(p.id) === embaseItem.prestable_id);
+                                            // Solo agrupar si: es embase + es automático + pertenece a esta canastilla
+                                            return embasePrestable?.tipo === 'EMBASES' &&
+                                                   embaseItem.isAutomaticEmbase === true &&
+                                                   (embasePrestable as any).prestable_relacionado_id === prestable.id;
+                                        });
+
+                                        // Renderizar canastilla
+                                        const isCanastilla = true;
+                                        const icon = '📦';
+                                        const typeLabel = 'Canastilla';
+                                        const typeBgColor = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+                                        const bgColor = 'bg-blue-50 dark:bg-blue-900/20';
+
+                                        rows.push(
+                                            <tr key={`canastilla-${item.prestable_id}`} className={`transition ${bgColor} border-b-2 border-blue-200 dark:border-blue-800`}>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className="text-lg">{icon}</span>
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 dark:text-slate-100">{prestable.nombre}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">{prestable.codigo}</p>
+                                                        {embasesRelacionados.length > 0 && (
+                                                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                                + {embasesRelacionados.length} embase(s) relacionado(s)
+                                                            </p>
+                                                        )}
                                                     </div>
-                                                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {(() => {
-                                                            const stockEnAlmacen = prestable.stocks?.find(
-                                                                (s: any) => Number(s.almacenes_prestables_id) === almacen_prestable_id
-                                                            )?.cantidad_disponible || 0;
-                                                            const restante = stockEnAlmacen - item.cantidad;
-                                                            return `Restante: ${restante.toLocaleString('es-BO')}`;
-                                                        })()}
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${typeBgColor}`}>
+                                                        {typeLabel}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={item.cantidad}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === '' || /^\d+$/.test(val)) {
+                                                                const itemIndex = items.findIndex(i => i === item);
+                                                                onUpdateCantidad?.(itemIndex, val === '' ? 0 : parseInt(val));
+                                                            }
+                                                        }}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                            onEditAlmacenes?.(item, idx);
+                                                        }}
+                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                    >
+                                                        {getAlmacenesDisplay(item)}
+                                                    </button>
+                                                </td>
+                                                {almacen_prestable_id && (
+                                                    <td className="px-2 py-2 text-right">
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const disponible = stockDisponible - item.cantidad;
+                                                                    const isValido = disponible >= 0;
+                                                                    return (
+                                                                        <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const restante = stockDisponible - item.cantidad;
+                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        onClick={() => onDeleteItem(item.prestable_id)}
+                                                        className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+
+                                        processedItems.add(`${item.prestable_id}-auto`);
+
+                                        // Renderizar embases como sub-filas
+                                        embasesRelacionados.forEach((embaseItem) => {
+                                            const embasePrestable = prestables.find(p => Number(p.id) === embaseItem.prestable_id);
+                                            if (!embasePrestable) return;
+
+                                            const icon = '🔖';
+                                            const typeLabel = 'Embase';
+                                            const typeBgColor = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                                            const bgColor = 'bg-green-50 dark:bg-green-900/10';
+
+                                            rows.push(
+                                                <tr key={`embase-${embaseItem.prestable_id}`} className={`transition ${bgColor} border-l-4 border-green-300 dark:border-green-700`}>
+                                                    <td className="px-2 py-2 text-center pl-6">
+                                                        <span className="text-lg">{icon}</span>
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <div className="ml-2">
+                                                            <p className="font-medium text-slate-900 dark:text-slate-100">{embasePrestable.nombre}</p>
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400">{embasePrestable.codigo}</p>
+                                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">↳ Vinculado con canastilla</p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center">
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${typeBgColor}`}>
+                                                            {typeLabel}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={embaseItem.cantidad}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d+$/.test(val)) {
+                                                                    onUpdateCantidad?.(Number(embasePrestable.id), val === '' ? 0 : parseInt(val));
+                                                                }
+                                                            }}
+                                                            onFocus={(e) => e.target.select()}
+                                                            className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                        />
+                                                    </td>
+                                                    {almacen_prestable_id && (
+                                                        <td className="px-2 py-2 text-right">
+                                                            <div className="space-y-1">
+                                                                <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                                                    {(() => {
+                                                                        const stockDisponible = getStockDisponibleDelItem(embasePrestable, embaseItem);
+                                                                        const disponible = stockDisponible - embaseItem.cantidad;
+                                                                        const isValido = disponible >= 0;
+                                                                        return (
+                                                                            <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                                {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                            </span>
+                                                                        );
+                                                                    })()}
+                                                                </div>
+                                                                <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                                    {(() => {
+                                                                        const stockDisponible = getStockDisponibleDelItem(embasePrestable, embaseItem);
+                                                                        const restante = stockDisponible - embaseItem.cantidad;
+                                                                        return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    })()}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    )}
+                                                    <td className="px-2 py-2 text-center">
+                                                        <button
+                                                            onClick={() => onDeleteItem(embaseItem.prestable_id)}
+                                                            className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+
+                                            processedItems.add(`${embaseItem.prestable_id}-auto`);
+                                        });
+                                    } else if (prestable.tipo === 'EMBASES' && !item.isAutomaticEmbase) {
+                                        // Renderizar embases sueltos (no automáticos)
+                                        console.log('  → Es EMBASE SUELTO (NO automático)');
+                                        const icon = '🔖';
+                                        const typeLabel = 'Embase';
+                                        const typeBgColor = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
+                                        const bgColor = 'bg-orange-50 dark:bg-orange-900/20';
+
+                                        rows.push(
+                                            <tr key={`embase-suelto-${item.prestable_id}`} className={`transition ${bgColor}`}>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className="text-lg">{icon}</span>
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 dark:text-slate-100">{prestable.nombre}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">{prestable.codigo}</p>
+                                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Embase suelto</p>
                                                     </div>
-                                                </div>
-                                            </td>
-                                        )}
-                                        <td className="px-2 py-2 text-center">
-                                            <button
-                                                onClick={() => onDeleteItem(item.prestable_id)}
-                                                className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${typeBgColor}`}>
+                                                        {typeLabel}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={item.cantidad}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === '' || /^\d+$/.test(val)) {
+                                                                const itemIndex = items.findIndex(i => i === item);
+                                                                onUpdateCantidad?.(itemIndex, val === '' ? 0 : parseInt(val));
+                                                            }
+                                                        }}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                            onEditAlmacenes?.(item, idx);
+                                                        }}
+                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                    >
+                                                        {getAlmacenesDisplay(item)}
+                                                    </button>
+                                                </td>
+                                                {almacen_prestable_id && (
+                                                    <td className="px-2 py-2 text-right">
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const disponible = stockDisponible - item.cantidad;
+                                                                    const isValido = disponible >= 0;
+                                                                    return (
+                                                                        <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const restante = stockDisponible - item.cantidad;
+                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        onClick={() => onDeleteItem(item.prestable_id)}
+                                                        className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+
+                                        processedItems.add(`${item.prestable_id}-manual`);
+                                    } else if (prestable.tipo !== 'EMBASES') {
+                                        // Renderizar otros prestables (no canastilla ni embase ya procesados)
+                                        console.log('  → Es OTRO TIPO:', prestable.tipo);
+                                        const icon = '📦';
+                                        const typeLabel = prestable.tipo;
+                                        const typeBgColor = 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300';
+                                        const bgColor = 'bg-slate-50 dark:bg-slate-900/20';
+
+                                        rows.push(
+                                            <tr key={`item-${item.prestable_id}`} className={`transition ${bgColor}`}>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className="text-lg">{icon}</span>
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 dark:text-slate-100">{prestable.nombre}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">{prestable.codigo}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${typeBgColor}`}>
+                                                        {typeLabel}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={item.cantidad}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === '' || /^\d+$/.test(val)) {
+                                                                const itemIndex = items.findIndex(i => i === item);
+                                                                onUpdateCantidad?.(itemIndex, val === '' ? 0 : parseInt(val));
+                                                            }
+                                                        }}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                            onEditAlmacenes?.(item, idx);
+                                                        }}
+                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                    >
+                                                        {getAlmacenesDisplay(item)}
+                                                    </button>
+                                                </td>
+                                                {almacen_prestable_id && (
+                                                    <td className="px-2 py-2 text-right">
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const disponible = stockDisponible - item.cantidad;
+                                                                    const isValido = disponible >= 0;
+                                                                    return (
+                                                                        <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                                {(() => {
+                                                                    const stockDisponible = getStockDisponibleDelItem(prestable, item);
+                                                                    const restante = stockDisponible - item.cantidad;
+                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        onClick={() => onDeleteItem(item.prestable_id)}
+                                                        className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+
+                                        processedItems.add(`${item.prestable_id}-manual`);
+                                    }
+                                });
+
+                                return rows;
+                            })()
                         ) : (
                             <tr>
-                                <td colSpan={almacen_prestable_id ? 5 : 4} className="py-12 text-center">
+                                <td colSpan={almacen_prestable_id ? 6 : 5} className="py-12 text-center">
                                     <div className="flex flex-col items-center gap-2 text-slate-400">
                                         <AlertCircle size={24} />
                                         <p>{emptyMessage}</p>

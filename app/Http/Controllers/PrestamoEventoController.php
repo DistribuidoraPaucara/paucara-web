@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PrestamoEvento;
 use App\Services\ImpresionService;
 use App\Services\Prestamos\PrestamoEventoService;
+use App\Services\Prestamos\ValidacionPrestamosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,7 @@ class PrestamoEventoController extends Controller
     public function __construct(
         private PrestamoEventoService $prestamoService,
         private ImpresionService $impresionService,
+        private ValidacionPrestamosService $validacionService,
     ) {
     }
 
@@ -32,7 +34,8 @@ class PrestamoEventoController extends Controller
                 'detalles.prestable.precios',
                 'detalles.devoluciones',
                 'chofer',
-                'venta',
+                'almacen',
+                'ventas',
                 'devoluciones.detalles',
             ]);
 
@@ -96,7 +99,7 @@ class PrestamoEventoController extends Controller
                 $query->whereDate('fecha_esperada_devolucion', '<=', $request->string('fecha_hasta'));
             }
 
-            $prestamos = $query->orderByDesc('fecha_prestamo')->paginate($request->integer('per_page', 15));
+            $prestamos = $query->orderByDesc('id')->paginate($request->integer('per_page', 15));
 
             return response()->json([
                 'success' => true,
@@ -127,7 +130,9 @@ class PrestamoEventoController extends Controller
                 'direccion_evento' => 'nullable|string|max:255',
                 'telefono_uno' => 'nullable|string|max:25',
                 'telefono_dos' => 'nullable|string|max:25',
-                'venta_id' => 'nullable|exists:ventas,id',
+                'ventas_ids' => 'nullable|array',
+                'ventas_ids.*' => 'integer|exists:ventas,id',
+                'almacenes_prestables_id' => 'nullable|integer|exists:almacenes_prestables,id', // ✅ OPCIONAL (puede venir en detalles)
                 'chofer_id' => 'nullable|exists:users,id',
                 'fecha_prestamo' => 'required|date',
                 'fecha_entrega' => 'nullable|date|after_or_equal:fecha_prestamo',
@@ -136,9 +141,29 @@ class PrestamoEventoController extends Controller
                 'detalles' => 'required|array|min:1',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
                 'detalles.*.cantidad' => 'required|integer|min:1',
-                'detalles.*.almacenes_ids' => 'required|array|min:1',
+                'detalles.*.almacenes_ids' => 'nullable|array',
                 'detalles.*.almacenes_ids.*' => 'integer|exists:almacenes_prestables,id',
+                'detalles.*.almacenes' => 'nullable|array',
+                'detalles.*.almacenes.*.almacenes_prestables_id' => 'integer|exists:almacenes_prestables,id',
+                'detalles.*.almacenes.*.cantidad' => 'integer|min:1',
             ]);
+
+            // Validar que se especifique almacén en cabecera O en detalles
+            if (!$validated['almacenes_prestables_id']) {
+                $tieneAlmacenesEnDetalles = false;
+                foreach ($validated['detalles'] as $detalle) {
+                    if (!empty($detalle['almacenes']) || !empty($detalle['almacenes_ids'])) {
+                        $tieneAlmacenesEnDetalles = true;
+                        break;
+                    }
+                }
+                if (!$tieneAlmacenesEnDetalles) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Debes especificar un almacén en la cabecera O en los detalles',
+                    ], 422);
+                }
+            }
 
             Log::info('✅ Validación exitosa para préstamo de evento', [
                 'nombre_evento' => $validated['nombre_evento'],
@@ -149,11 +174,17 @@ class PrestamoEventoController extends Controller
             $detalles = $validated['detalles'] ?? [];
 
             foreach ($detalles as $i => $detalle) {
+                // ✅ CORREGIDO: Si no hay almacenes en detalle, usar almacén de cabecera
                 $almacenesIds = array_values(array_filter(array_map('intval', (array) ($detalle['almacenes_ids'] ?? []))));
-                if (count($almacenesIds) === 0) {
+
+                // Si detalle no especifica almacenes, usar almacén de cabecera
+                if (count($almacenesIds) === 0 && !empty($validated['almacenes_prestables_id'])) {
+                    $almacenesIds = [(int) $validated['almacenes_prestables_id']];
+                } elseif (count($almacenesIds) === 0) {
+                    // Solo error si no hay almacenes Y no hay almacén de cabecera
                     return response()->json([
                         'success' => false,
-                        'message' => "Detalle {$i}: Debes seleccionar al menos un almacén",
+                        'message' => "Detalle {$i}: Debes especificar almacenes en la cabecera O en los detalles",
                     ], 422);
                 }
 
@@ -189,7 +220,7 @@ class PrestamoEventoController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['cliente', 'detalles.prestable', 'detalles.prestable.condiciones', 'chofer', 'venta']),
+                'data' => $prestamo->load(['cliente', 'detalles.prestable', 'detalles.prestable.condiciones', 'chofer', 'almacen', 'ventas']),
                 'message' => 'Préstamo a evento creado exitosamente',
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -216,12 +247,14 @@ class PrestamoEventoController extends Controller
         try {
             $prestamo->load([
                 'cliente',
+                'almacen',
                 'detalles.prestable',
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
-                'detalles.devoluciones',
+                'detalles.almacenes.almacen',
+                'detalles.devoluciones.devolucionesAlmacenes.almacen',
                 'chofer',
-                'venta',
+                'ventas',
                 'devoluciones.detalles',
             ]);
             $resumen = $this->prestamoService->obtenerResumen($prestamo->id);
@@ -238,37 +271,99 @@ class PrestamoEventoController extends Controller
     }
 
     /**
+     * PUT /api/prestamos-evento/{prestamo}
+     * Actualizar préstamo a evento
+     */
+    public function update(Request $request, PrestamoEvento $prestamo): JsonResponse
+    {
+        try {
+            Log::info('📨 Actualizando préstamo a evento', ['prestamo_id' => $prestamo->id]);
+
+            // Validar datos
+            $validated = $request->validate([
+                'nombre_evento' => 'sometimes|required|string|max:255',
+                'encargado_evento' => 'nullable|string|max:255',
+                'vehiculo_asignado' => 'nullable|string|max:255',
+                'direccion_evento' => 'nullable|string|max:255',
+                'telefono_uno' => 'nullable|string|max:25',
+                'telefono_dos' => 'nullable|string|max:25',
+                'almacenes_prestables_id' => 'nullable|integer|exists:almacenes_prestables,id',
+                'chofer_id' => 'nullable|exists:users,id',
+                'fecha_prestamo' => 'sometimes|required|date',
+                'fecha_entrega' => 'nullable|date|after_or_equal:fecha_prestamo',
+                'fecha_esperada_devolucion' => 'nullable|date|after_or_equal:fecha_prestamo',
+                'monto_garantia' => 'nullable|numeric|min:0',
+                'ventas_ids' => 'nullable|array',
+                'ventas_ids.*' => 'integer|exists:ventas,id',
+            ]);
+
+            // Actualizar campos del préstamo
+            $prestamo->update(collect($validated)->except(['ventas_ids'])->toArray());
+
+            // Sincronizar ventas (many-to-many)
+            if (isset($validated['ventas_ids'])) {
+                $prestamo->ventas()->sync(array_filter($validated['ventas_ids']));
+                Log::info('✅ Ventas sincronizadas', [
+                    'prestamo_evento_id' => $prestamo->id,
+                    'ventas_ids' => $validated['ventas_ids'],
+                ]);
+            }
+
+            Log::info('✅ Préstamo a evento actualizado exitosamente', [
+                'prestamo_evento_id' => $prestamo->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $prestamo->load(['cliente', 'almacen', 'detalles.prestable', 'chofer', 'ventas']),
+                'message' => 'Préstamo actualizado exitosamente',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('⚠️ Validación fallida al actualizar préstamo', ['errores' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errores' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Error actualizando préstamo a evento', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
      * POST /api/prestamos-evento/{prestamo}/devolver
      * Registrar devolución del evento
      */
     public function registrarDevolucion(Request $request, PrestamoEvento $prestamo): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'fecha_devolucion' => 'required|date',
-                'monto_cobrado_daño_total' => 'nullable|numeric|min:0',
-                'observaciones' => 'nullable|string',
-                'detalles' => 'required|array|min:1',
-                'detalles.*.prestamo_evento_detalle_id' => 'required|exists:prestamo_evento_detalle,id',
-                'detalles.*.cantidad_devuelta' => 'required|integer|min:0',
+            // Preparar datos para validación y servicio
+            $datosValidacion = $request->all();
+            $datosValidacion['prestamo_evento_id'] = $prestamo->id;
+
+            Log::info('📨 INICIANDO DEVOLUCIÓN EVENTO', [
+                'prestamo_id' => $prestamo->id,
+                'fecha_devolucion' => $datosValidacion['fecha_devolucion'] ?? null,
+                'cantidad_detalles' => count($datosValidacion['detalles'] ?? []),
             ]);
 
-            // Validar que todos los detalles pertenecen a este préstamo
-            foreach ($validated['detalles'] as $detalleData) {
-                $detalle = \App\Models\PrestamoEventoDetalle::findOrFail($detalleData['prestamo_evento_detalle_id']);
-                if ($detalle->prestamo_evento_id !== $prestamo->id) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Uno o más detalles no pertenecen a este préstamo',
-                    ], 422);
-                }
+            // Validar datos de devolución
+            $validacion = $this->validacionService->datosDevolucion($datosValidacion);
+            if (!$validacion['valido']) {
+                Log::warning('⚠️ VALIDACIÓN FALLIDA EN DEVOLUCIÓN EVENTO', [
+                    'prestamo_id' => $prestamo->id,
+                    'errores' => $validacion['errores'],
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos de devolución inválidos',
+                    'errores' => $validacion['errores'],
+                ], 422);
             }
 
-            // Agregar prestamo_evento_id
-            $validated['prestamo_evento_id'] = $prestamo->id;
-
             // Registrar devolución
-            $devolución = $this->prestamoService->registrarDevolucion($validated);
+            $devolución = $this->prestamoService->registrarDevolucion($datosValidacion);
 
             if (!$devolución) {
                 return response()->json([
@@ -277,7 +372,10 @@ class PrestamoEventoController extends Controller
                 ], 500);
             }
 
-            $devolución->load(['detalles']);
+            $devolución->load([
+                'detalles.prestamoEventoDetalle.prestable',  // ✅ Nombre correcto de la relación
+                'detalles.devolucionesAlmacenes.almacen'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -358,13 +456,15 @@ class PrestamoEventoController extends Controller
         $accion  = $request->input('accion', 'download'); // download | stream
 
         // Cargar relaciones necesarias para la impresión
+        // ✅ NO cargar 'venta' - usar accessor getVentaAttribute() que devuelve ventas->first()
         $prestamo->load([
             'detalles.prestable',
             'detalles.prestable.condiciones',
             'detalles.devoluciones',
             'cliente',
             'chofer',
-            'venta',
+            'almacen',
+            'ventas', // ✅ Relación many-to-many
             'devoluciones.detalles',
         ]);
 
@@ -372,6 +472,35 @@ class PrestamoEventoController extends Controller
         $pdf = $this->impresionService->generarPDF('prestamo_evento', $prestamo, $formato);
 
         $nombreArchivo = "prestamo_evento_{$prestamo->id}_{$formato}.pdf";
+
+        return $accion === 'stream'
+            ? $pdf->stream($nombreArchivo)
+            : $pdf->download($nombreArchivo);
+    }
+
+    /**
+     * GET /prestamos/eventos/devoluciones/{devolucion}/imprimir
+     * Imprimir devolución de evento
+     */
+    public function imprimirDevolucion(\App\Models\DevolucionEvento $devolucion, Request $request)
+    {
+        $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
+        $accion  = $request->input('accion', 'download'); // download | stream
+
+        // Cargar relaciones necesarias para la impresión
+        $devolucion->load([
+            'prestamoEvento.cliente',
+            'prestamoEvento.almacen',
+            'prestamoEvento.ventas',
+            'prestamoEvento.chofer',
+            'prestamoEvento.detalles.prestable',
+            'detalles.prestamoEventoDetalle.prestable',
+        ]);
+
+        // Generar PDF usando el tipo de documento "devolucion_evento"
+        $pdf = $this->impresionService->generarPDF('devolucion_evento', $devolucion, $formato);
+
+        $nombreArchivo = "devolucion_evento_{$devolucion->id}_{$formato}.pdf";
 
         return $accion === 'stream'
             ? $pdf->stream($nombreArchivo)

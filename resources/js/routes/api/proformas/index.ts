@@ -3,7 +3,7 @@ import imprimir from './imprimir'
 import descargarImagen from './descargar-imagen'
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
- * @see app/Http/Controllers/Api/ApiProformaController.php:2500
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2583
  * @route '/api/proformas/{proforma}/confirmar'
  */
 export const confirmar = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -18,7 +18,7 @@ confirmar.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
- * @see app/Http/Controllers/Api/ApiProformaController.php:2500
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2583
  * @route '/api/proformas/{proforma}/confirmar'
  */
 confirmar.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ confirmar.url = (args: { proforma: number | { id: number } } | [proforma: number
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
- * @see app/Http/Controllers/Api/ApiProformaController.php:2500
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2583
  * @route '/api/proformas/{proforma}/confirmar'
  */
 confirmar.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -61,7 +61,7 @@ confirmar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
 
     /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
- * @see app/Http/Controllers/Api/ApiProformaController.php:2500
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2583
  * @route '/api/proformas/{proforma}/confirmar'
  */
     const confirmarForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -71,7 +71,7 @@ confirmar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
 
             /**
 * @see \App\Http\Controllers\Api\ApiProformaController::confirmar
- * @see app/Http/Controllers/Api/ApiProformaController.php:2500
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2583
  * @route '/api/proformas/{proforma}/confirmar'
  */
         confirmarForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -82,7 +82,7 @@ confirmar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
     confirmar.form = confirmarForm
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
- * @see app/Http/Controllers/Api/ApiProformaController.php:1710
+ * @see app/Http/Controllers/Api/ApiProformaController.php:1793
  * @route '/api/proformas/{proforma}/coordinar'
  */
 export const coordinar = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ coordinar.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
- * @see app/Http/Controllers/Api/ApiProformaController.php:1710
+ * @see app/Http/Controllers/Api/ApiProformaController.php:1793
  * @route '/api/proformas/{proforma}/coordinar'
  */
 coordinar.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ coordinar.url = (args: { proforma: number | { id: number } } | [proforma: number
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
- * @see app/Http/Controllers/Api/ApiProformaController.php:1710
+ * @see app/Http/Controllers/Api/ApiProformaController.php:1793
  * @route '/api/proformas/{proforma}/coordinar'
  */
 coordinar.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -140,7 +140,7 @@ coordinar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
 
     /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
- * @see app/Http/Controllers/Api/ApiProformaController.php:1710
+ * @see app/Http/Controllers/Api/ApiProformaController.php:1793
  * @route '/api/proformas/{proforma}/coordinar'
  */
     const coordinarForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ coordinar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
 
             /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
- * @see app/Http/Controllers/Api/ApiProformaController.php:1710
+ * @see app/Http/Controllers/Api/ApiProformaController.php:1793
  * @route '/api/proformas/{proforma}/coordinar'
  */
         coordinarForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -161,7 +161,7 @@ coordinar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
     coordinar.form = coordinarForm
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4776
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4610
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 export const actualizarDetalles = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -176,7 +176,7 @@ actualizarDetalles.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4776
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4610
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 actualizarDetalles.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -209,7 +209,7 @@ actualizarDetalles.url = (args: { proforma: number | { id: number } } | [proform
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4776
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4610
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 actualizarDetalles.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -219,7 +219,7 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
 
     /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4776
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4610
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
     const actualizarDetallesForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -229,7 +229,7 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
 
             /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4776
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4610
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
         actualizarDetallesForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -240,7 +240,7 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
     actualizarDetalles.form = actualizarDetallesForm
 /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
 export const preview = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -255,7 +255,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
 preview.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -288,7 +288,7 @@ preview.url = (args: { proforma: number | { id: number } } | [proforma: number |
 
 /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
 preview.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -297,7 +297,7 @@ preview.get = (args: { proforma: number | { id: number } } | [proforma: number |
 })
 /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
 preview.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -307,7 +307,7 @@ preview.head = (args: { proforma: number | { id: number } } | [proforma: number 
 
     /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
     const previewForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -317,7 +317,7 @@ preview.head = (args: { proforma: number | { id: number } } | [proforma: number 
 
             /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
         previewForm.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -326,7 +326,7 @@ preview.head = (args: { proforma: number | { id: number } } | [proforma: number 
         })
             /**
 * @see \App\Http\Controllers\ProformaController::preview
- * @see app/Http/Controllers/ProformaController.php:1053
+ * @see app/Http/Controllers/ProformaController.php:1088
  * @route '/api/proformas/{proforma}/preview'
  */
         previewForm.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

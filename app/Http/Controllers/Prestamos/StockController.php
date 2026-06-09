@@ -90,9 +90,10 @@ class StockController extends Controller
 
         $almacenIds = $almacenesClientes->pluck('id')->toArray();
 
-        // Obtener TODOS los prestables
-        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
-            ->where('activo', true)
+        // Obtener TODOS los prestables activos
+        $prestables = \App\Models\Prestable::where('activo', true)
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
 
@@ -101,6 +102,14 @@ class StockController extends Controller
             ->with(['prestable', 'almacenPrestable'])
             ->get()
             ->keyBy(fn($stock) => "{$stock->prestable_id}_{$stock->almacenes_prestables_id}");
+
+        // DEBUG: Verificar datos
+        \Log::info('📊 stockClientes DEBUG', [
+            'almacenes_clientes' => $almacenesClientes->pluck('nombre')->toArray(),
+            'prestables_activos' => $prestables->pluck('nombre')->toArray(),
+            'stock_existente_count' => $stockExistente->count(),
+            'esperados' => count($almacenesClientes) . ' almacenes × ' . count($prestables) . ' prestables = ' . (count($almacenesClientes) * count($prestables)) . ' items'
+        ]);
 
         // Generar todas las combinaciones de prestables + almacenes
         $items = [];
@@ -111,7 +120,6 @@ class StockController extends Controller
 
                 $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
                 $cantidadClienteDevuelto = $stock?->cantidad_cliente_devuelto ?? 0;
-
                 $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDevuelto;
 
                 $items[] = [
@@ -120,16 +128,21 @@ class StockController extends Controller
                     'prestable_nombre' => $prestable->nombre,
                     'prestable_codigo' => $prestable->codigo,
                     'prestable_tipo' => $prestable->tipo,
+                    'prestable_relacionado_id' => $prestable->prestable_relacionado_id,
+                    'embase_asociado_id' => $prestable->embase_asociado_id,
                     'almacen_nombre' => $almacen->nombre,
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
                     'cantidad_cliente_deudor' => $cantidadClienteDeudor,
                     'cantidad_cliente_devuelto' => $cantidadClienteDevuelto,
+                    'cantidad_cliente_dañada' => $stock?->cantidad_cliente_dañada ?? 0,
                     'cantidad_cliente_total' => $cantidadClienteTotal,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal,
                 ];
             }
         }
+
+        \Log::info('✅ Items generados: ' . count($items) . ' items totales');
 
         // Calcular resumen (solo clientes, sin eventos)
         $itemsCollection = collect($items);
@@ -162,9 +175,10 @@ class StockController extends Controller
 
         $almacenIds = $almacenesClientes->pluck('id')->toArray();
 
-        // Obtener TODOS los prestables
-        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
-            ->where('activo', true)
+        // Obtener TODOS los prestables activos (ordenar por tipo y nombre para agrupar canastillas y embases)
+        $prestables = \App\Models\Prestable::where('activo', true)
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
 
@@ -192,11 +206,14 @@ class StockController extends Controller
                     'prestable_nombre' => $prestable->nombre,
                     'prestable_codigo' => $prestable->codigo,
                     'prestable_tipo' => $prestable->tipo,
+                    'prestable_relacionado_id' => $prestable->prestable_relacionado_id,
+                    'embase_asociado_id' => $prestable->embase_asociado_id,
                     'almacen_nombre' => $almacen->nombre,
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
                     'cantidad_evento_deudor' => $cantidadEventoDeudor,
                     'cantidad_evento_devuelto' => $cantidadEventoDevuelto,
+                    'cantidad_evento_dañada' => $stock?->cantidad_evento_dañada ?? 0,
                     'cantidad_evento_total' => $cantidadEventoTotal,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadEventoTotal,
                 ];
@@ -234,9 +251,10 @@ class StockController extends Controller
 
         $almacenIds = $almacenesProveedores->pluck('id')->toArray();
 
-        // Obtener TODOS los prestables
-        $prestables = \App\Models\Prestable::select('id', 'nombre', 'codigo', 'tipo')
-            ->where('activo', true)
+        // Obtener TODOS los prestables activos (ordenar por tipo y nombre para agrupar canastillas y embases)
+        $prestables = \App\Models\Prestable::where('activo', true)
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
 
@@ -253,6 +271,7 @@ class StockController extends Controller
                 $key = "{$prestable->id}_{$almacen->id}";
                 $stock = $stockExistente->get($key);
 
+                $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
                 $cantidadProveedorAcreedor = $stock?->cantidad_proveedor_acreedor ?? 0;
                 $cantidadProveedorDevuelto = $stock?->cantidad_proveedor_devuelto ?? 0;
 
@@ -264,21 +283,30 @@ class StockController extends Controller
                     'prestable_nombre' => $prestable->nombre,
                     'prestable_codigo' => $prestable->codigo,
                     'prestable_tipo' => $prestable->tipo,
+                    'prestable_relacionado_id' => $prestable->prestable_relacionado_id,
+                    'embase_asociado_id' => $prestable->embase_asociado_id,
                     'almacen_nombre' => $almacen->nombre,
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_cliente_deudor' => $cantidadClienteDeudor,
                     'cantidad_proveedor_acreedor' => $cantidadProveedorAcreedor,
                     'cantidad_proveedor_devuelto' => $cantidadProveedorDevuelto,
+                    'cantidad_proveedor_dañada' => $stock?->cantidad_proveedor_dañada ?? 0,
                     'cantidad_proveedor_total' => $cantidadProveedorTotal,
+                    //cantidad evetos
+                    'cantidad_evento_deudor' => $stock?->cantidad_evento_deudor ?? 0,
+                    'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
+                    'cantidad_evento_dañada' => $stock?->cantidad_evento_dañada ?? 0,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadProveedorTotal,
                 ];
             }
         }
 
-        // Calcular resumen (solo proveedores, sin clientes/eventos)
+        // Calcular resumen (incluir clientes deudores + proveedores)
         $itemsCollection = collect($items);
         $resumen = [
             'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
+            'total_cliente_deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
             'total_proveedor_acreedor' => $itemsCollection->sum('cantidad_proveedor_acreedor'),
             'total_proveedor_devuelto' => $itemsCollection->sum('cantidad_proveedor_devuelto'),
             'total_proveedor' => $itemsCollection->sum('cantidad_proveedor_total'),
@@ -299,7 +327,7 @@ class StockController extends Controller
     public function ajuste($tipo, $prestable_id, $almacen_id)
     {
         // Validar tipo
-        if (!in_array($tipo, ['clientes', 'proveedores'])) {
+        if (!in_array($tipo, ['clientes', 'eventos', 'proveedores'])) {
             abort(404);
         }
 
@@ -313,10 +341,13 @@ class StockController extends Controller
                 'cantidad_disponible' => 0,
                 'cantidad_cliente_deudor' => 0,
                 'cantidad_cliente_devuelto' => 0,
+                'cantidad_cliente_dañada' => 0,
                 'cantidad_evento_deudor' => 0,
                 'cantidad_evento_devuelto' => 0,
+                'cantidad_evento_dañada' => 0,
                 'cantidad_proveedor_acreedor' => 0,
                 'cantidad_proveedor_devuelto' => 0,
+                'cantidad_proveedor_dañada' => 0,
             ]
         );
 
@@ -331,18 +362,22 @@ class StockController extends Controller
             'prestable_tipo' => $stock->prestable->tipo,
             'prestable_capacidad' => $stock->prestable->capacidad ?? null,
             'almacen_nombre' => $stock->almacenPrestable->nombre,
-            'almacen_tipo' => $stock->almacenPrestable->es_proveedor ? 'Proveedor' : 'Cliente',
+            'almacen_tipo' => $stock->almacenPrestable->es_proveedor ? 'Proveedor' : 'Distribuidora',
             'cantidad_disponible' => $stock->cantidad_disponible ?? 0,
         ];
 
         if ($tipo === 'clientes') {
             $item['cantidad_cliente_deudor'] = $stock->cantidad_cliente_deudor ?? 0;
             $item['cantidad_cliente_devuelto'] = $stock->cantidad_cliente_devuelto ?? 0;
+            $item['cantidad_cliente_dañada'] = $stock->cantidad_cliente_dañada ?? 0;
+        } elseif ($tipo === 'eventos') {
             $item['cantidad_evento_deudor'] = $stock->cantidad_evento_deudor ?? 0;
             $item['cantidad_evento_devuelto'] = $stock->cantidad_evento_devuelto ?? 0;
+            $item['cantidad_evento_dañada'] = $stock->cantidad_evento_dañada ?? 0;
         } else {
             $item['cantidad_proveedor_acreedor'] = $stock->cantidad_proveedor_acreedor ?? 0;
             $item['cantidad_proveedor_devuelto'] = $stock->cantidad_proveedor_devuelto ?? 0;
+            $item['cantidad_proveedor_dañada'] = $stock->cantidad_proveedor_dañada ?? 0;
         }
 
         // Si es CANASTILLA, buscar EMBASE que la tiene como relacionada
@@ -354,6 +389,7 @@ class StockController extends Controller
                 'almacen_id' => $almacen_id,
             ]);
 
+            // 1️⃣ PRIMERO: Buscar en PrestableStock
             $embaseStock = PrestableStock::whereHas('prestable', function ($q) use ($stock) {
                 $q->where('prestable_relacionado_id', $stock->prestable_id)
                   ->where('tipo', 'EMBASES');
@@ -363,7 +399,7 @@ class StockController extends Controller
                 ->first();
 
             if ($embaseStock) {
-                \Log::info('✅ Embase encontrado', [
+                \Log::info('✅ Embase encontrado en PrestableStock', [
                     'embase_id' => $embaseStock->prestable_id,
                     'embase_nombre' => $embaseStock->prestable->nombre,
                 ]);
@@ -374,29 +410,103 @@ class StockController extends Controller
                     'prestable_nombre' => $embaseStock->prestable->nombre,
                     'prestable_codigo' => $embaseStock->prestable->codigo,
                     'cantidad_disponible' => $embaseStock->cantidad_disponible ?? 0,
-                    'cantidad_cliente_deudor' => $embaseStock->cantidad_cliente_deudor ?? 0,
-                    'cantidad_cliente_devuelto' => $embaseStock->cantidad_cliente_devuelto ?? 0,
-                    'cantidad_evento_deudor' => $embaseStock->cantidad_evento_deudor ?? 0,
-                    'cantidad_evento_devuelto' => $embaseStock->cantidad_evento_devuelto ?? 0,
-                    'cantidad_proveedor_acreedor' => $embaseStock->cantidad_proveedor_acreedor ?? 0,
-                    'cantidad_proveedor_devuelto' => $embaseStock->cantidad_proveedor_devuelto ?? 0,
                 ];
+
+                // Agregar solo los campos del tipo correspondiente
+                if ($tipo === 'clientes') {
+                    $embaseRelacionado['cantidad_cliente_deudor'] = $embaseStock->cantidad_cliente_deudor ?? 0;
+                    $embaseRelacionado['cantidad_cliente_devuelto'] = $embaseStock->cantidad_cliente_devuelto ?? 0;
+                    $embaseRelacionado['cantidad_cliente_dañada'] = $embaseStock->cantidad_cliente_dañada ?? 0;
+                } elseif ($tipo === 'eventos') {
+                    $embaseRelacionado['cantidad_evento_deudor'] = $embaseStock->cantidad_evento_deudor ?? 0;
+                    $embaseRelacionado['cantidad_evento_devuelto'] = $embaseStock->cantidad_evento_devuelto ?? 0;
+                    $embaseRelacionado['cantidad_evento_dañada'] = $embaseStock->cantidad_evento_dañada ?? 0;
+                } else {
+                    $embaseRelacionado['cantidad_proveedor_acreedor'] = $embaseStock->cantidad_proveedor_acreedor ?? 0;
+                    $embaseRelacionado['cantidad_proveedor_devuelto'] = $embaseStock->cantidad_proveedor_devuelto ?? 0;
+                    $embaseRelacionado['cantidad_proveedor_dañada'] = $embaseStock->cantidad_proveedor_dañada ?? 0;
+                }
             } else {
-                \Log::warning('❌ Embase NO encontrado', [
+                \Log::warning('⚠️ Embase NO encontrado en PrestableStock, buscando en Prestable...', [
                     'canastilla_id' => $stock->prestable_id,
                     'almacen_id' => $almacen_id,
-                    'query_busca' => "prestable_relacionado_id = {$stock->prestable_id} AND tipo = 'EMBASE'",
                 ]);
+
+                // 2️⃣ FALLBACK: Buscar el embase en tabla Prestable
+                $embasePrestable = \App\Models\Prestable::where('prestable_relacionado_id', $stock->prestable_id)
+                    ->where('tipo', 'EMBASES')
+                    ->first();
+
+                if ($embasePrestable) {
+                    \Log::info('✅ Embase encontrado en Prestable, creando registro en PrestableStock', [
+                        'embase_id' => $embasePrestable->id,
+                        'embase_nombre' => $embasePrestable->nombre,
+                    ]);
+
+                    // 3️⃣ CREAR: Registro en PrestableStock con stock = 0
+                    $embaseStock = PrestableStock::firstOrCreate(
+                        [
+                            'prestable_id' => $embasePrestable->id,
+                            'almacenes_prestables_id' => $almacen_id,
+                        ],
+                        [
+                            'cantidad_disponible' => 0,
+                            'cantidad_cliente_deudor' => 0,
+                            'cantidad_cliente_devuelto' => 0,
+                            'cantidad_evento_deudor' => 0,
+                            'cantidad_evento_devuelto' => 0,
+                            'cantidad_proveedor_acreedor' => 0,
+                            'cantidad_proveedor_devuelto' => 0,
+                            'cantidad_cliente_dañada' => 0,
+                            'cantidad_evento_dañada' => 0,
+                            'cantidad_proveedor_dañada' => 0,
+                        ]
+                    );
+
+                    $embaseRelacionado = [
+                        'id' => $embaseStock->id,
+                        'prestable_id' => $embasePrestable->id,
+                        'prestable_nombre' => $embasePrestable->nombre,
+                        'prestable_codigo' => $embasePrestable->codigo,
+                        'cantidad_disponible' => 0,
+                    ];
+
+                    // Agregar solo los campos del tipo correspondiente
+                    if ($tipo === 'clientes') {
+                        $embaseRelacionado['cantidad_cliente_deudor'] = 0;
+                        $embaseRelacionado['cantidad_cliente_devuelto'] = 0;
+                        $embaseRelacionado['cantidad_cliente_dañada'] = 0;
+                    } elseif ($tipo === 'eventos') {
+                        $embaseRelacionado['cantidad_evento_deudor'] = 0;
+                        $embaseRelacionado['cantidad_evento_devuelto'] = 0;
+                        $embaseRelacionado['cantidad_evento_dañada'] = 0;
+                    } else {
+                        $embaseRelacionado['cantidad_proveedor_acreedor'] = 0;
+                        $embaseRelacionado['cantidad_proveedor_devuelto'] = 0;
+                        $embaseRelacionado['cantidad_proveedor_dañada'] = 0;
+                    }
+
+                    \Log::info('✅ Registro creado en PrestableStock', [
+                        'embase_nombre' => $embasePrestable->nombre,
+                        'almacen_id' => $almacen_id,
+                    ]);
+                } else {
+                    \Log::error('❌ Embase NO encontrado en Prestable tampoco', [
+                        'canastilla_id' => $stock->prestable_id,
+                    ]);
+                }
             }
         }
 
         // Opciones de motivos predefinidos
         $motivosOptions = [
+            'Ajuste por conteo físico',
+            'Ajuste administrativo',
+            'Ajuste inicial',
             'Discrepancia de inventario',
             'Daño o deterioro',
             'Pérdida',
             'Devolución incompleta',
-            'Ajuste administrativo',
             'Otro',
         ];
 

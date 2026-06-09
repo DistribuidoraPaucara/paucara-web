@@ -254,7 +254,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     preventistas.form = preventistasForm
 /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -284,7 +284,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -293,7 +293,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
     const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -302,7 +302,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
         logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -310,7 +310,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/api.php:1458
+ * @see routes/api.php:1461
  * @route '/api/logs'
  */
         logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

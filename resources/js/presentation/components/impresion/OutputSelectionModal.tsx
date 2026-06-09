@@ -32,6 +32,7 @@ export type TipoDocumento =
     | 'prestamo-proveedor'
     | 'devoluciones-proveedor'
     | 'prestamo-evento'
+    | 'devoluciones-evento'
     | 'prestamos-vendidos'
     | 'compras-prestables'
     | 'control-vencimientos';
@@ -143,6 +144,10 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     'prestamo-evento': [
+        { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
+        { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
+    ],
+    'devoluciones-evento': [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
@@ -279,6 +284,9 @@ export function OutputSelectionModal({
         } else if (tipoDocumento === 'prestamo-evento') {
             // Para préstamos a evento
             rutaBase = `/prestamos/eventos/${documentoId}`;
+        } else if (tipoDocumento === 'devoluciones-evento') {
+            // Para devoluciones de evento
+            rutaBase = `/prestamos/eventos/devoluciones/${documentoId}`;
         } else if (tipoDocumento === 'prestamos-vendidos') {
             // Para ventas de prestables
             rutaBase = `/api/prestamos-vendidos/${documentoId}`;
@@ -351,12 +359,15 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'devoluciones-cliente') {
                 // Para devoluciones de cliente
-                url = `/prestamos/clientes/${documentoId}/devoluciones/imprimir?formato=${formato}&accion=download`;
+                url = `/prestamos/clientes/${documentoId}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'prestamo-proveedor') {
                 // Para préstamos a proveedor
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'prestamo-evento') {
                 // Para préstamos a evento
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
+            } else if (tipoDocumento === 'devoluciones-evento') {
+                // Para devoluciones de evento
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'prestamos-vendidos') {
                 // Para ventas de prestables
@@ -430,12 +441,15 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'devoluciones-cliente') {
                 // Para devoluciones de cliente
-                url = `/prestamos/clientes/${documentoId}/devoluciones/imprimir?formato=${formato}&accion=${accionURL}`;
+                url = `/prestamos/clientes/${documentoId}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'prestamo-proveedor') {
                 // Para préstamos a proveedor
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'prestamo-evento') {
                 // Para préstamos a evento
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
+            } else if (tipoDocumento === 'devoluciones-evento') {
+                // Para devoluciones de evento
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'prestamos-vendidos') {
                 // Para ventas de prestables

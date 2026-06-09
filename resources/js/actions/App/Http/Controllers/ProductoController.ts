@@ -902,6 +902,84 @@ storeApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     storeApi.form = storeApiForm
 /**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+export const obtenerTodosSinRestriccion = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: obtenerTodosSinRestriccion.url(options),
+    method: 'get',
+})
+
+obtenerTodosSinRestriccion.definition = {
+    methods: ["get","head"],
+    url: '/api/productos/sin-restriccion',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+obtenerTodosSinRestriccion.url = (options?: RouteQueryOptions) => {
+    return obtenerTodosSinRestriccion.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+obtenerTodosSinRestriccion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: obtenerTodosSinRestriccion.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+obtenerTodosSinRestriccion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: obtenerTodosSinRestriccion.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+    const obtenerTodosSinRestriccionForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerTodosSinRestriccion.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+        obtenerTodosSinRestriccionForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerTodosSinRestriccion.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProductoController::obtenerTodosSinRestriccion
+ * @see app/Http/Controllers/ProductoController.php:4179
+ * @route '/api/productos/sin-restriccion'
+ */
+        obtenerTodosSinRestriccionForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerTodosSinRestriccion.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerTodosSinRestriccion.form = obtenerTodosSinRestriccionForm
+/**
 * @see \App\Http\Controllers\ProductoController::updateApi
  * @see app/Http/Controllers/ProductoController.php:2124
  * @route '/api/productos/{producto}'
@@ -2406,6 +2484,6 @@ destroy.delete = (args: { producto: number | { id: number } } | [producto: numbe
         })
     
     destroy.form = destroyForm
-const ProductoController = { indexApi, filtros, buscarApi, listarApi, showApi, obtenerStock, obtenerStockMultiples, storeApi, updateApi, destroyApi, historialPrecios, importarProductosMasivos, validarProductosCSV, listarCargasMasivas, verCargaMasiva, revertirCargaMasiva, createModerno, getPaginados, getFiltrosData, index, create, store, edit, update, destroy }
+const ProductoController = { indexApi, filtros, buscarApi, listarApi, showApi, obtenerStock, obtenerStockMultiples, storeApi, obtenerTodosSinRestriccion, updateApi, destroyApi, historialPrecios, importarProductosMasivos, validarProductosCSV, listarCargasMasivas, verCargaMasiva, revertirCargaMasiva, createModerno, getPaginados, getFiltrosData, index, create, store, edit, update, destroy }
 
 export default ProductoController

@@ -16,22 +16,28 @@ class PrestableStock extends Model
         // Préstamos a Clientes (salientes)
         'cantidad_cliente_deudor',           // Clientes que me deben devoluciones
         'cantidad_cliente_devuelto',         // Historial de devoluciones
+        'cantidad_cliente_dañada',           // Items dañados en devoluciones
         // Préstamos a Eventos (salientes)
         'cantidad_evento_deudor',            // Eventos que me deben devoluciones
         'cantidad_evento_devuelto',          // Historial de devoluciones
+        'cantidad_evento_dañada',            // Items dañados en devoluciones
         // Préstamos a Proveedores (entrantes)
         'cantidad_proveedor_acreedor',       // Yo le debo al proveedor
         'cantidad_proveedor_devuelto',       // Historial de devoluciones
+        'cantidad_proveedor_dañada',         // Items dañados en devoluciones
     ];
 
     protected $casts = [
         'cantidad_disponible' => 'integer',
         'cantidad_cliente_deudor' => 'integer',
         'cantidad_cliente_devuelto' => 'integer',
+        'cantidad_cliente_dañada' => 'integer',
         'cantidad_evento_deudor' => 'integer',
         'cantidad_evento_devuelto' => 'integer',
+        'cantidad_evento_dañada' => 'integer',
         'cantidad_proveedor_acreedor' => 'integer',
         'cantidad_proveedor_devuelto' => 'integer',
+        'cantidad_proveedor_dañada' => 'integer',
     ];
 
     public function prestable(): BelongsTo

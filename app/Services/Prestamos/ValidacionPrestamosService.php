@@ -287,14 +287,19 @@ class ValidacionPrestamosService
 
     /**
      * Validar datos para registrar devolución (por detalle)
+     * Soporta tanto PrestamoCliente como PrestamoEvento
      */
     public function datosDevolucion(array $datos): array
     {
         $errores = [];
 
-        // Validar prestamo_cliente_id (agregado en la llamada del controlador)
-        if (empty($datos['prestamo_cliente_id'])) {
-            $errores[] = 'prestamo_cliente_id requerido';
+        // Detectar si es EVENTO o CLIENTE basándose en qué campo está presente
+        $esEvento = !empty($datos['prestamo_evento_id']);
+        $esCliente = !empty($datos['prestamo_cliente_id']);
+
+        // Validar que hay un prestamo ID
+        if (!$esEvento && !$esCliente) {
+            $errores[] = 'prestamo_cliente_id o prestamo_evento_id requerido';
         }
 
         // Validar fecha
@@ -307,12 +312,26 @@ class ValidacionPrestamosService
             $errores[] = 'detalles requerido (al menos 1 ítem)';
         } else {
             foreach ($datos['detalles'] as $i => $detalle) {
-                // Validar detalle de préstamo
-                if (empty($detalle['prestamo_cliente_detalle_id'])) {
-                    $errores[] = "detalles[{$i}].prestamo_cliente_detalle_id requerido";
-                } else {
-                    if (!\App\Models\PrestamoClienteDetalle::find($detalle['prestamo_cliente_detalle_id'])) {
-                        $errores[] = "detalles[{$i}].prestamo_cliente_detalle_id: Detalle no encontrado";
+                // PARA EVENTOS
+                if ($esEvento) {
+                    // Validar detalle de préstamo evento
+                    if (empty($detalle['prestamo_evento_detalle_id'])) {
+                        $errores[] = "detalles[{$i}].prestamo_evento_detalle_id requerido";
+                    } else {
+                        if (!\App\Models\PrestamoEventoDetalle::find($detalle['prestamo_evento_detalle_id'])) {
+                            $errores[] = "detalles[{$i}].prestamo_evento_detalle_id: Detalle no encontrado";
+                        }
+                    }
+                }
+                // PARA CLIENTES
+                else {
+                    // Validar detalle de préstamo cliente
+                    if (empty($detalle['prestamo_cliente_detalle_id'])) {
+                        $errores[] = "detalles[{$i}].prestamo_cliente_detalle_id requerido";
+                    } else {
+                        if (!\App\Models\PrestamoClienteDetalle::find($detalle['prestamo_cliente_detalle_id'])) {
+                            $errores[] = "detalles[{$i}].prestamo_cliente_detalle_id: Detalle no encontrado";
+                        }
                     }
                 }
 
@@ -330,21 +349,42 @@ class ValidacionPrestamosService
                 }
 
                 // Validar que no devuelve más de lo permitido
-                $detalleId = $detalle['prestamo_cliente_detalle_id'] ?? null;
-                if ($detalleId) {
-                    $detallePrestamoCliente = \App\Models\PrestamoClienteDetalle::find($detalleId);
-                    if ($detallePrestamoCliente) {
-                        $cantidadDevuelta = $detalle['cantidad_devuelta'] ?? 0;
-                        $cantidadTotal = $cantidadDevuelta + $parcial + $total;
+                if ($esEvento) {
+                    $detalleId = $detalle['prestamo_evento_detalle_id'] ?? null;
+                    if ($detalleId) {
+                        $detallePrestamoEvento = \App\Models\PrestamoEventoDetalle::find($detalleId);
+                        if ($detallePrestamoEvento) {
+                            $cantidadDevuelta = $detalle['cantidad_devuelta'] ?? 0;
+                            $cantidadTotal = $cantidadDevuelta + $parcial + $total;
 
-                        // Calcular cuánto ya ha sido devuelto
-                        $cantidadYaDevuelta = $detallePrestamoCliente->devolucionDetalles()
-                            ->sum(\Illuminate\Support\Facades\DB::raw('cantidad_devuelta + cantidad_dañada_parcial + cantidad_dañada_total'));
+                            // Calcular cuánto ya ha sido devuelto
+                            $cantidadYaDevuelta = $detallePrestamoEvento->devolucionDetalles()
+                                ->sum(\Illuminate\Support\Facades\DB::raw('cantidad_devuelta + cantidad_dañada_total'));
 
-                        $cantidadRestante = $detallePrestamoCliente->cantidad_prestada - $cantidadYaDevuelta;
+                            $cantidadRestante = $detallePrestamoEvento->cantidad_prestada - $cantidadYaDevuelta;
 
-                        if ($cantidadTotal > $cantidadRestante) {
-                            $errores[] = "detalles[{$i}]: Cantidad a devolver ({$cantidadTotal}) excede restante ({$cantidadRestante}). Ya devuelto: {$cantidadYaDevuelta}";
+                            if ($cantidadTotal > $cantidadRestante) {
+                                $errores[] = "detalles[{$i}]: Cantidad a devolver ({$cantidadTotal}) excede restante ({$cantidadRestante}). Ya devuelto: {$cantidadYaDevuelta}";
+                            }
+                        }
+                    }
+                } else {
+                    $detalleId = $detalle['prestamo_cliente_detalle_id'] ?? null;
+                    if ($detalleId) {
+                        $detallePrestamoCliente = \App\Models\PrestamoClienteDetalle::find($detalleId);
+                        if ($detallePrestamoCliente) {
+                            $cantidadDevuelta = $detalle['cantidad_devuelta'] ?? 0;
+                            $cantidadTotal = $cantidadDevuelta + $parcial + $total;
+
+                            // Calcular cuánto ya ha sido devuelto
+                            $cantidadYaDevuelta = $detallePrestamoCliente->devolucionDetalles()
+                                ->sum(\Illuminate\Support\Facades\DB::raw('cantidad_devuelta + cantidad_dañada_total'));
+
+                            $cantidadRestante = $detallePrestamoCliente->cantidad_prestada - $cantidadYaDevuelta;
+
+                            if ($cantidadTotal > $cantidadRestante) {
+                                $errores[] = "detalles[{$i}]: Cantidad a devolver ({$cantidadTotal}) excede restante ({$cantidadRestante}). Ya devuelto: {$cantidadYaDevuelta}";
+                            }
                         }
                     }
                 }

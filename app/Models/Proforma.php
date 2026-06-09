@@ -500,11 +500,26 @@ class Proforma extends Model
 
                 // Usar el servicio para distribuir automáticamente entre lotes
                 // El servicio obtiene el almacén internamente de la empresa del usuario autenticado
+
+                // ✅ NUEVO (2026-06-09): Asegurar que fecha_vencimiento sea un datetime válido
+                // Si está casteado como 'date', convertir a datetime end-of-day
+                $fechaVencimientoConHora = \Carbon\Carbon::parse($this->fecha_vencimiento)
+                    ->endOfDay();  // Asignar al final del día (23:59:59)
+
+                \Illuminate\Support\Facades\Log::info('📅 Reservando stock con fecha de vencimiento', [
+                    'proforma_id' => $this->id,
+                    'proforma_numero' => $this->numero,
+                    'producto_id' => $productoId,
+                    'fecha_vencimiento_original' => $this->fecha_vencimiento?->format('Y-m-d H:i:s'),
+                    'fecha_vencimiento_con_hora' => $fechaVencimientoConHora->format('Y-m-d H:i:s'),
+                    'fecha_expiracion_iso8601' => $fechaVencimientoConHora->toIso8601String(),
+                ]);
+
                 $resultado = $distribucionService->distribuirReserva(
                     $this,
                     $productoId,
                     $cantidad,
-                    $this->fecha_vencimiento  // ✅ CORREGIDO (2026-04-05): Usar fecha de vencimiento de la proforma
+                    $fechaVencimientoConHora
                 );
 
                 // Validar resultado

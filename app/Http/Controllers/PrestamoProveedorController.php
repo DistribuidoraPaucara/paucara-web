@@ -26,7 +26,13 @@ class PrestamoProveedorController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = PrestamoProveedor::with(['detalles.prestable', 'proveedor', 'detalles.devolucionDetalles']);
+            $query = PrestamoProveedor::with([
+                'detalles.prestable',
+                'proveedor',
+                'detalles.devolucionDetalles',
+                'almacen',
+                'chofer',
+            ]);
 
             // Filtro por proveedor
             if ($request->has('proveedor_id')) {
@@ -64,7 +70,9 @@ class PrestamoProveedorController extends Controller
         try {
             $validated = $request->validate([
                 'proveedor_id' => 'required|exists:proveedores,id',
-                'almacen_prestable_id' => 'required|exists:almacenes_prestables,id',
+                'almacenes_prestables_id' => 'nullable|exists:almacenes_prestables,id',  // ✅ Ahora opcional
+                'chofer_id' => 'nullable|exists:users,id',
+                'vehiculo_asignado' => 'nullable|string|max:255',
                 'compra_id' => 'nullable|exists:compras,id',
                 'es_compra' => 'required|boolean',
                 'monto_garantia' => 'nullable|numeric|min:0',
@@ -74,11 +82,16 @@ class PrestamoProveedorController extends Controller
                 'detalles' => 'required|array|min:1',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
                 'detalles.*.cantidad' => 'required|integer|min:1',
+                'detalles.*.almacenes' => 'nullable|array',  // ✅ Múltiples almacenes
+                'detalles.*.almacenes.*.almacenes_prestables_id' => 'required_with:detalles.*.almacenes|exists:almacenes_prestables,id',
+                'detalles.*.almacenes.*.cantidad' => 'required_with:detalles.*.almacenes|integer|min:1',
             ]);
 
             Log::info('✅ Validación exitosa para préstamo de proveedor', [
                 'proveedor_id' => $validated['proveedor_id'],
-                'almacen_prestable_id' => $validated['almacen_prestable_id'],
+                'almacenes_prestables_id' => $validated['almacenes_prestables_id'],
+                'chofer_id' => $validated['chofer_id'] ?? 'N/A',
+                'vehiculo_asignado' => $validated['vehiculo_asignado'] ?? 'N/A',
                 'detalles_count' => count($validated['detalles']),
             ]);
 
@@ -112,7 +125,10 @@ class PrestamoProveedorController extends Controller
             $prestamo->load([
                 'detalles.prestable.precios',
                 'detalles.prestable.condiciones',
+                'detalles.almacenes.almacen',  // ✅ CORREGIDO: usar 'almacen' no 'almacen_prestable'
                 'proveedor',
+                'almacen',
+                'chofer',
                 'detalles.devolucionDetalles',
                 'devoluciones.detalles',
             ]);

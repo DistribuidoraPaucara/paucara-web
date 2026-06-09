@@ -352,7 +352,7 @@ export default function ProductosTable({
 
             {/* Lista de productos agregados */}
             {detalles.length > 0 ? (
-                <div className="overflow-x-auto relative">
+                <div className="w-full overflow-x-auto relative">
                     {/* Indicador de carga */}
                     {isCalculatingPrices && (
                         <div className="absolute top-0 right-0 flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-bl-lg border-l border-b border-blue-200 dark:border-blue-800 z-10">

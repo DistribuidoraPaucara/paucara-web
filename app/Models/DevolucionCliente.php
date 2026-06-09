@@ -15,6 +15,7 @@ class DevolucionCliente extends Model
         'fecha_devolucion',
         'monto_cobrado_daño_total',
         'monto_garantia_devuelta_total',
+        'monto_excedido_garantia',
         'observaciones',
         'chofer_id',
     ];
@@ -22,6 +23,7 @@ class DevolucionCliente extends Model
     protected $casts = [
         'monto_cobrado_daño_total'     => 'decimal:2',
         'monto_garantia_devuelta_total' => 'decimal:2',
+        'monto_excedido_garantia'       => 'decimal:2',
         'fecha_devolucion'              => 'date',
     ];
 

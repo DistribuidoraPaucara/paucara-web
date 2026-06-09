@@ -5,6 +5,7 @@ namespace App\Services\Prestamos;
 use App\Models\AlmacenPrestable;
 use App\Models\PrestamoProveedor;
 use App\Models\PrestamoProveedorDetalle;
+use App\Models\PrestamoProveedorAlmacen;
 use App\Models\DevolucionProveedor;
 use App\Models\DevolucionProveedorDetalle;
 use App\Services\MovimientoPrestableService;
@@ -158,10 +159,17 @@ class PrestamoProveedorService
     public function crearPrestamo(array $datos): PrestamoProveedor|false
     {
         try {
+            Log::info('📝 Iniciando creación de préstamo de proveedor', [
+                'datos_recibidos' => $datos,
+            ]);
+
             return DB::transaction(function () use ($datos) {
                 // ✅ NUEVO: Crear registro encabezado de préstamo (sin prestable_id ni cantidad)
                 $prestamo = PrestamoProveedor::create([
                     'proveedor_id' => $datos['proveedor_id'],
+                    'almacenes_prestables_id' => $datos['almacenes_prestables_id'],
+                    'chofer_id' => $datos['chofer_id'] ?? null,
+                    'vehiculo_asignado' => $datos['vehiculo_asignado'] ?? null,
                     'compra_id' => $datos['compra_id'] ?? null,
                     'es_compra' => $datos['es_compra'],
                     'monto_garantia' => $datos['monto_garantia'] ?? 0,
@@ -171,80 +179,113 @@ class PrestamoProveedorService
                     'estado' => 'ACTIVO',
                 ]);
 
-                // ✅ Procesar detalles (múltiples prestables, un único almacén)
-                $almacenId = $datos['almacen_prestable_id'];
+                Log::info('✅ Cabecera de préstamo creada', [
+                    'prestamo_id' => $prestamo->id,
+                    'almacenes_prestables_id' => $prestamo->almacenes_prestables_id,
+                    'chofer_id' => $prestamo->chofer_id,
+                    'vehiculo_asignado' => $prestamo->vehiculo_asignado,
+                ]);
+
+                // ✅ Procesar detalles (múltiples prestables, múltiples almacenes por detalle)
+                $almacenIdCabecera = $datos['almacenes_prestables_id'];
                 $detalles = $datos['detalles'] ?? [];
 
                 foreach ($detalles as $detalle) {
-                    // Obtener almacenes_ids si vienen en el detalle, sino usar el almacén global
-                    $almacenesIds = array_values(array_filter(array_map('intval', (array)($detalle['almacenes_ids'] ?? []))));
-                    if (empty($almacenesIds)) {
-                        $almacenesIds = [$almacenId];
-                    }
-
                     // Crear detalle del préstamo
-                    PrestamoProveedorDetalle::create([
+                    $detalleCreado = PrestamoProveedorDetalle::create([
                         'prestamo_proveedor_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
-                        'almacenes_ids' => $almacenesIds,
                         'estado' => 'ACTIVO',
                     ]);
 
-                    // Obtener stock ANTES de actualizar
-                    $stock = $this->stockService->obtenerStock($detalle['prestable_id'], $almacenId);
-                    $disponibleAntes = $stock->cantidad_disponible;
-                    $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
-                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
-                    $vendidaAntes = 0;
-
-                    // Actualizar stock según tipo de operación
-                    if ($datos['es_compra']) {
-                        // COMPRA: solo incrementa disponible (no es deuda)
-                        $this->stockService->incrementarStockInicial(
-                            $detalle['prestable_id'],
-                            $almacenId,
-                            $detalle['cantidad']
-                        );
-                    } else {
-                        // PRÉSTAMO: incrementa disponible y deuda activa con proveedor
-                        $this->stockService->recibirPrestamoProveedor(
-                            $detalle['prestable_id'],
-                            $almacenId,
-                            $detalle['cantidad']
-                        );
+                    // Determinar almacenes a procesar
+                    $almacenesAProcesar = [];
+                    if (!empty($detalle['almacenes']) && is_array($detalle['almacenes'])) {
+                        // Múltiples almacenes: procesar cada uno específico
+                        $almacenesAProcesar = $detalle['almacenes'];
+                    } elseif ($almacenIdCabecera) {
+                        // Solo cabecera: procesar cabecera
+                        $almacenesAProcesar = [
+                            ['almacenes_prestables_id' => $almacenIdCabecera, 'cantidad' => (int) $detalle['cantidad']]
+                        ];
                     }
 
-                    // Obtener stock DESPUÉS de actualizar
-                    $stock->refresh();
+                    // Procesar stock de cada almacén
+                    foreach ($almacenesAProcesar as $almacenData) {
+                        $almacenId = (int) $almacenData['almacenes_prestables_id'];
+                        $cantidad = (int) $almacenData['cantidad'];
 
-                    // Registrar movimiento de entrada
-                    $this->movimientoService->registrarMovimiento([
-                        'prestable_stock_id' => $stock->id,
-                        'almacenes_prestables_id' => $almacenId,
-                        'usuario_id' => Auth::id(),
-                        'tipo' => 'ENTRADA',
-                        'cantidad' => $detalle['cantidad'],
-                        'disponible_anterior' => $disponibleAntes,
-                        'prestamo_cliente_anterior' => $prestamoClienteAntes,
-                        'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
-                        'vendida_anterior' => $vendidaAntes,
-                        'disponible_posterior' => $stock->cantidad_disponible,
-                        'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
-                        'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
-                        'vendida_posterior' => 0,
-                        'categoria_afectada' => 'prestamo_proveedor',
-                        'motivo' => $datos['es_compra'] ? 'Compra de prestable' : 'Préstamo de proveedor',
-                        'numero_referencia' => $prestamo->id,
-                        'referencia_tipo' => 'PRESTAMO_PROVEEDOR',
-                        'referencia_id' => $prestamo->id,
-                    ]);
+                        // Obtener stock ANTES de actualizar
+                        $stock = $this->stockService->obtenerStock($detalle['prestable_id'], $almacenId);
+                        $disponibleAntes = $stock->cantidad_disponible;
+                        $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                        $vendidaAntes = 0;
+
+                        // Actualizar stock según tipo de operación
+                        if ($datos['es_compra']) {
+                            // COMPRA: solo incrementa disponible (no es deuda)
+                            $this->stockService->incrementarStockInicial(
+                                $detalle['prestable_id'],
+                                $almacenId,
+                                $cantidad
+                            );
+                        } else {
+                            // PRÉSTAMO: incrementa disponible y deuda activa con proveedor
+                            $this->stockService->recibirPrestamoProveedor(
+                                $detalle['prestable_id'],
+                                $almacenId,
+                                $cantidad
+                            );
+                        }
+
+                        // Obtener stock DESPUÉS de actualizar
+                        $stock->refresh();
+
+                        // Crear registro en PrestamoProveedorAlmacen
+                        PrestamoProveedorAlmacen::create([
+                            'prestamo_proveedor_detalle_id' => $detalleCreado->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'cantidad' => $cantidad,
+                            'es_proveedor' => true,
+                        ]);
+
+                        // Registrar movimiento de entrada
+                        $this->movimientoService->registrarMovimiento([
+                            'prestable_stock_id' => $stock->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'usuario_id' => Auth::id(),
+                            'tipo' => 'ENTRADA',
+                            'cantidad' => $cantidad,
+                            'disponible_anterior' => $disponibleAntes,
+                            'prestamo_cliente_anterior' => $prestamoClienteAntes,
+                            'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                            'vendida_anterior' => $vendidaAntes,
+                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                            'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                            'vendida_posterior' => 0,
+                            'categoria_afectada' => 'prestamo_proveedor',
+                            'motivo' => $datos['es_compra'] ? 'Compra de prestable' : 'Préstamo de proveedor',
+                            'numero_referencia' => $prestamo->id,
+                            'referencia_tipo' => 'PRESTAMO_PROVEEDOR',
+                            'referencia_id' => $prestamo->id,
+                        ]);
+
+                        Log::info('✅ Movimiento de stock registrado para proveedor', [
+                            'prestamo_id' => $prestamo->id,
+                            'prestable_id' => $detalle['prestable_id'],
+                            'almacen_id' => $almacenId,
+                            'cantidad' => $cantidad,
+                        ]);
+                    }
 
                     Log::info('✅ Detalle de préstamo de proveedor registrado', [
                         'prestamo_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
-                        'cantidad' => $detalle['cantidad'],
-                        'almacen_id' => $almacenId,
+                        'cantidad_total' => $detalle['cantidad'],
+                        'cantidad_almacenes' => count($almacenesAProcesar),
                     ]);
                 }
 
@@ -291,8 +332,8 @@ class PrestamoProveedorService
                     throw new \Exception('Préstamo de proveedor no encontrado');
                 }
 
-                // Usar un almacén de proveedor activo real
-                $almacenId = $this->obtenerAlmacenProveedorId();
+                // ✅ CORREGIDO: Usar el almacén del payload si viene especificado, sino usar el de la cabecera
+                $almacenId = $datos['almacenes_prestables_id'] ?? $prestamo->almacenes_prestables_id ?? $this->obtenerAlmacenProveedorId();
 
                 // Crear encabezado de devolución
                 $devolucion = DevolucionProveedor::create([
@@ -391,7 +432,7 @@ class PrestamoProveedorService
                             'prestamo_id' => $prestamo->id,
                             'prestable_id' => $detalle->prestable_id,
                             'cantidad_devuelta_total' => $cantidadDevuelta,
-                            'cantidad_dañada_información' => $cantidadDañadaTotal,
+                            'cantidad_dañada_total' => $cantidadDañadaTotal,  // ✅ Nombre correcto
                         ]);
                     }
 

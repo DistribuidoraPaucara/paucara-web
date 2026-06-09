@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PrestamoEvento extends Model
@@ -13,7 +14,7 @@ class PrestamoEvento extends Model
     protected $fillable = [
         'evento_id',
         'cliente_id',
-        'venta_id',
+        'almacenes_prestables_id',
         'nombre_evento',
         'encargado_evento',
         'vehiculo_asignado',
@@ -36,14 +37,34 @@ class PrestamoEvento extends Model
         'fecha_esperada_devolucion' => 'date',
     ];
 
+
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
-    public function venta(): BelongsTo
+    public function almacen(): BelongsTo
     {
-        return $this->belongsTo(Venta::class, 'venta_id');
+        return $this->belongsTo(AlmacenPrestable::class, 'almacenes_prestables_id');
+    }
+
+    /**
+     * ✅ Relación muchos-a-muchos con ventas
+     */
+    public function ventas(): BelongsToMany
+    {
+        return $this->belongsToMany(Venta::class, 'prestamo_evento_venta');
+    }
+
+    /**
+     * Accessor para compatibilidad: obtiene la primera venta
+     */
+    public function getVentaAttribute()
+    {
+        if ($this->relationLoaded('ventas')) {
+            return $this->ventas->first();
+        }
+        return null;
     }
 
     public function chofer(): BelongsTo

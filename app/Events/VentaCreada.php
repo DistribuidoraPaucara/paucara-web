@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
  *
  * ✅ Se dispara al finalizar la creación de una venta
  * ✅ Los listeners manejan:
- *    - Crear CuentaPorCobrar si politica_pago='CREDITO'
+ *    - Crear CuentaPorCobrar si tipo_pago.es_credito=true
  *    - Actualizar Cliente crédito disponible
  *    - Notificaciones
  */
@@ -26,6 +26,6 @@ class VentaCreada
         $this->venta = $venta;
 
         // Cargar relaciones necesarias
-        $this->venta->load(['cliente', 'detalles']);
+        $this->venta->load(['cliente', 'detalles', 'tipoPago']);
     }
 }

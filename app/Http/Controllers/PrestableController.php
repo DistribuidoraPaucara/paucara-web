@@ -1222,7 +1222,7 @@ class PrestableController extends Controller
                 $query->where('anulado', false);
             }
 
-            $movimientos = $query->orderBy('created_at', 'desc')->paginate(50);
+            $movimientos = $query->orderBy('id', 'desc')->paginate(50);
 
             return response()->json([
                 'success' => true,

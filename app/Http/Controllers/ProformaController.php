@@ -611,6 +611,41 @@ class ProformaController extends Controller
     }
 
     /**
+     * Obtener resumen de crédito del cliente
+     *
+     * GET /proformas/{proforma}/resumen-credito
+     *
+     * Devuelve:
+     * - Límite de crédito del cliente
+     * - Monto utilizado (desde cuentas_por_cobrar)
+     * - Proformas pendientes con política CRÉDITO
+     * - Disponible calculado
+     *
+     * ✅ RETORNA JSON con datos de crédito frescos
+     */
+    public function resumenCredito(string $id): JsonResponse
+    {
+        try {
+            $resumen = $this->proformaService->obtenerResumenCredito((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $resumen,
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener resumen de crédito', [
+                'proforma_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener resumen de crédito',
+            ], 500);
+        }
+    }
+
+    /**
      * Aprobar una proforma
      *
      * POST /proformas/{id}/aprobar

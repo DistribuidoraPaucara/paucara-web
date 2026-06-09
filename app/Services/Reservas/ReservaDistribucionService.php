@@ -35,6 +35,31 @@ class ReservaDistribucionService
         $fecha_vencimiento  // ✅ CORREGIDO (2026-04-05): Ahora recibe fecha completa, no días
     ) {
         try {
+            // ✅ NUEVO (2026-06-09): Validar que fecha_vencimiento sea válida
+            // Convertir a Carbon si es string, y asegurar que sea una fecha futura
+            if (is_string($fecha_vencimiento)) {
+                $fecha_vencimiento = \Carbon\Carbon::parse($fecha_vencimiento);
+            } elseif (!$fecha_vencimiento instanceof \Carbon\Carbon) {
+                $fecha_vencimiento = \Carbon\Carbon::parse($fecha_vencimiento);
+            }
+
+            // ✅ VALIDACIÓN: La fecha de vencimiento debe ser en el futuro o hoy
+            if ($fecha_vencimiento->isPast()) {
+                Log::warning('⚠️ Fecha de vencimiento está en el pasado', [
+                    'proforma_id' => $proforma->id,
+                    'producto_id' => $producto_id,
+                    'fecha_vencimiento' => $fecha_vencimiento->format('Y-m-d H:i:s'),
+                    'hoy' => now()->format('Y-m-d H:i:s'),
+                ]);
+
+                return [
+                    'success' => false,
+                    'reservas' => [],
+                    'error' => 'La fecha de vencimiento no puede estar en el pasado: ' . $fecha_vencimiento->format('Y-m-d H:i:s'),
+                    'distribucion' => [],
+                ];
+            }
+
             // 🔧 Obtener el almacén de la empresa del usuario autenticado
             $user = auth()->user();
             if (!$user || !$user->empresa) {
@@ -55,6 +80,13 @@ class ReservaDistribucionService
                     'distribucion' => [],
                 ];
             }
+
+            Log::info('✅ Fecha de vencimiento validada', [
+                'proforma_id' => $proforma->id,
+                'producto_id' => $producto_id,
+                'fecha_vencimiento' => $fecha_vencimiento->format('Y-m-d H:i:s'),
+                'es_datetime' => $fecha_vencimiento instanceof \Carbon\Carbon,
+            ]);
 
             // Obtener producto
             $producto = Producto::findOrFail($producto_id);
@@ -110,6 +142,9 @@ class ReservaDistribucionService
                     ->where('almacen_id', $almacen_id)
                     ->sum('cantidad_reservada');
 
+                // ✅ NUEVO (2026-06-09): Usar MovimientoStockService centralizado
+                $movimientoService = app(\App\Services\Stock\MovimientoStockService::class);
+
                 foreach ($lotes as $stock_producto) {
                     if ($cantidad_pendiente <= 0) {
                         break;  // Ya se distribuyó todo
@@ -118,17 +153,46 @@ class ReservaDistribucionService
                     // Calcular cuánto se puede tomar de este lote
                     $cantidad_a_reservar = (int) min($cantidad_pendiente, $stock_producto->cantidad_disponible);
 
-                    // ✅ Capturar valores ANTES de actualizar
-                    $cantidadTotalAntes = (float) $stock_producto->cantidad;
-                    $cantidadDisponibleAntes = (float) $stock_producto->cantidad_disponible;
-                    $cantidadReservadaAntes = (float) $stock_producto->cantidad_reservada;
+                    // ✅ REFACTORIZADO (2026-06-09): Usar MovimientoStockService en lugar de actualizar directamente
+                    // MovimientoStockService se encarga de:
+                    // 1. lockForUpdate() + validación pre
+                    // 2. Cálculo correcto según tipo
+                    // 3. Validación post
+                    // 4. Verificación BD post-actualización ✅ NUEVO
+                    // 5. Registrar movimiento con auditoría
 
-                    // Actualizar cantidades en stock
-                    $stock_producto->decrement('cantidad_disponible', $cantidad_a_reservar);
-                    $stock_producto->increment('cantidad_reservada', $cantidad_a_reservar);
+                    try {
+                        $movimientoService->registrarMovimientoYActualizar(
+                            stockProductoId: $stock_producto->id,
+                            cantidad: -$cantidad_a_reservar,  // Negativo = reserva (reduce disponible)
+                            tipo: \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
+                            referencia_tipo: 'proforma',
+                            referencia_id: $proforma->id,
+                            metadataAdicional: [
+                                'lote' => $stock_producto->lote,
+                                'proforma_numero' => $proforma->numero,
+                            ],
+                            numeroDocumento: $proforma->numero  // ✅ NUEVO (2026-06-09)
+                        );
 
-                    // ✅ Capturar DESPUÉS de actualizar
-                    $stock_producto->refresh();
+                        Log::info('✅ Reserva registrada con MovimientoStockService', [
+                            'stock_id' => $stock_producto->id,
+                            'lote' => $stock_producto->lote,
+                            'cantidad_reservada' => $cantidad_a_reservar,
+                            'proforma_id' => $proforma->id,
+                        ]);
+
+                    } catch (\Exception $e) {
+                        throw new \Exception(
+                            "Error registrando movimiento de reserva para lote {$stock_producto->lote}: " . $e->getMessage()
+                        );
+                    }
+
+                    // Re-obtener stock actualizado desde BD
+                    $stock_producto = \App\Models\StockProducto::find($stock_producto->id);
+                    $cantidadTotalAntes = null;  // Ya no lo usamos directamente
+                    $cantidadDisponibleAntes = null;
+                    $cantidadReservadaAntes = null;
                     $cantidadTotalDespues = (float) $stock_producto->cantidad;
                     $cantidadDisponibleDespues = (float) $stock_producto->cantidad_disponible;
                     $cantidadReservadaDespues = (float) $stock_producto->cantidad_reservada;
@@ -163,8 +227,8 @@ class ReservaDistribucionService
                         'stock_producto_id' => $stock_producto->id,
                         'lote' => $stock_producto->lote,
                         'cantidad_reservada' => $cantidad_a_reservar,
-                        'cantidad_disponible_antes' => $stock_producto->cantidad_disponible + $cantidad_a_reservar,
-                        'cantidad_disponible_ahora' => $stock_producto->cantidad_disponible,
+                        'cantidad_disponible_antes' => $cantidadDisponibleAntes,
+                        'cantidad_disponible_ahora' => $cantidadDisponibleDespues,
                     ];
 
                     $cantidad_pendiente -= $cantidad_a_reservar;
@@ -174,7 +238,8 @@ class ReservaDistribucionService
                         'proforma_id' => $proforma->id,
                         'producto_id' => $producto->id,
                         'lote' => $stock_producto->lote,
-                        'cantidad' => $cantidad_a_reservar,
+                        'cantidad_reservada' => $cantidad_a_reservar,
+                        'validacion_exitosa' => true,
                     ]);
                 }
 
@@ -191,37 +256,9 @@ class ReservaDistribucionService
                     ->where('almacen_id', $almacen_id)
                     ->sum('cantidad_reservada');
 
-                // ✅ NUEVO (2026-03-27): Registrar UN SOLO movimiento AGRUPADO con detalles por lote
-                $movimientoService = new \App\Services\Stock\MovimientoInventarioService();
-                // ✅ CORREGIDO (2026-04-05): Convertir a float para evitar type error
-                $movimientoService->registrarMovimientoAgrupado(
-                    $producto_id,
-                    $almacen_id,
-                    MovimientoInventario::TIPO_RESERVA_PROFORMA,
-                    'proforma',
-                    -(float)($cantidad_solicitada - $cantidad_pendiente),  // Negativo: reserva, convertir a float
-                    $proforma->numero,
-                    $detallesLotes,
-                    [
-                        'referencia_tipo' => 'proforma',
-                        'referencia_id' => $proforma->id,
-                        // ✅ CORREGIDO (2026-04-05): Pasar totales del PRODUCTO COMPLETO (usar variables, no sum() directo)
-                        'totales_previos' => [
-                            'cantidad_total_anterior' => $totalProductoAntes,
-                            'cantidad_disponible_anterior' => $totalDisponibleAntes,
-                            'cantidad_reservada_anterior' => $totalReservadoAntes,
-                        ],
-                        'totales_posteriores' => [
-                            'cantidad_total_posterior' => $totalProductoDespues,
-                            'cantidad_disponible_posterior' => $totalDisponibleDespues,
-                            'cantidad_reservada_posterior' => $totalReservadoDespues,
-                        ],
-                        'observacion_extra' => [
-                            'proforma_numero' => $proforma->numero,
-                            'fecha_vencimiento' => $fecha_vencimiento,  // ✅ CORREGIDO (2026-04-05): Usar fecha en lugar de días
-                        ]
-                    ]
-                );
+                // ✅ REFACTORIZADO (2026-06-09): Ya NO registrar movimiento agrupado
+                // MovimientoStockService ya registró movimientos individuales con auditoría completa
+                // Cada reserva tiene su propio movimiento con antes/después + verificación BD
             });
 
             return [
@@ -283,21 +320,51 @@ class ReservaDistribucionService
                     ->where('estado', ReservaProforma::ACTIVA)
                     ->get();
 
+                // ✅ NUEVO (2026-06-09): Usar MovimientoStockService centralizado
+                $movimientoService = app(\App\Services\Stock\MovimientoStockService::class);
+
                 foreach ($reservas as $reserva) {
                     $cantidad = $reserva->cantidad_reservada;
-                    $stock = $reserva->stockProducto;
 
-                    // ✅ NUEVO (2026-03-26): Capturar valores ANTES de actualizar
-                    $cantidadTotalAntes = (float) $stock->cantidad;
-                    $cantidadDisponibleAntes = (float) $stock->cantidad_disponible;
-                    $cantidadReservadaAntes = (float) $stock->cantidad_reservada;
+                    // ✅ REFACTORIZADO (2026-06-09): Usar MovimientoStockService en lugar de actualizar directamente
+                    // MovimientoStockService se encarga de:
+                    // 1. lockForUpdate() + validación pre
+                    // 2. Cálculo correcto según tipo
+                    // 3. Validación post
+                    // 4. Verificación BD post-actualización ✅ NUEVO
+                    // 5. Registrar movimiento con auditoría
 
-                    // Restaurar stock
-                    $stock->increment('cantidad_disponible', $cantidad);
-                    $stock->decrement('cantidad_reservada', $cantidad);
+                    try {
+                        $movimientoService->registrarMovimientoYActualizar(
+                            stockProductoId: $reserva->stock_producto_id,
+                            cantidad: $cantidad,  // Positivo = liberar (aumenta disponible)
+                            tipo: \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
+                            referencia_tipo: 'proforma',
+                            referencia_id: $proforma->id,
+                            metadataAdicional: [
+                                'motivo' => $motivo,
+                                'reserva_id' => $reserva->id,
+                                'proforma_numero' => $proforma->numero,
+                            ],
+                            numeroDocumento: $proforma->numero  // ✅ NUEVO (2026-06-09)
+                        );
 
-                    // ✅ NUEVO (2026-03-26): Capturar valores DESPUÉS de actualizar
-                    $stock->refresh();
+                        Log::info('✅ Liberación de reserva registrada con MovimientoStockService', [
+                            'reserva_id' => $reserva->id,
+                            'stock_id' => $reserva->stock_producto_id,
+                            'cantidad' => $cantidad,
+                            'motivo' => $motivo,
+                            'proforma_id' => $proforma->id,
+                        ]);
+
+                    } catch (\Exception $e) {
+                        throw new \Exception(
+                            "Error registrando movimiento de liberación: " . $e->getMessage()
+                        );
+                    }
+
+                    // Re-obtener stock actualizado desde BD
+                    $stock = \App\Models\StockProducto::find($reserva->stock_producto_id);
                     $cantidadTotalDespues = (float) $stock->cantidad;
                     $cantidadDisponibleDespues = (float) $stock->cantidad_disponible;
                     $cantidadReservadaDespues = (float) $stock->cantidad_reservada;
@@ -614,68 +681,15 @@ class ReservaDistribucionService
             ]);
 
             foreach ($reservasPorProducto as $producto_id => $reservasProducto) {
-                // Procesar cada producto (puede tener múltiples lotes)
-                $detallesLotes = [];
+                // ✅ REFACTORIZADO: Procesar cada reserva individualmente con MovimientoStockService
                 $cantidad_total_producto = 0;
-                $almacen_id = null;
-                $producto = null;
 
-                // ✅ CORREGIDO (2026-04-05): Capturar totales del PRODUCTO ANTES de hacer cualquier decrement
-                // Se obtiene en la primera iteración del lote
-                $totalProductoAntes = null;
-                $totalDisponibleAntes = null;
-                $totalReservadoAntes = null;
-
-                // Procesar todas las reservas de este producto
                 foreach ($reservasProducto as $reserva) {
                     $cantidad = $reserva->cantidad_reservada;
                     $stock = $reserva->stockProducto;
-                    $producto = $stock->producto;
-                    $almacen_id = $stock->almacen_id;
 
-                    // ✅ CORREGIDO (2026-04-05): Capturar totales del PRODUCTO en la PRIMERA iteración
-                    if ($totalProductoAntes === null) {
-                        $totalProductoAntes = (float) $producto->stock()
-                            ->where('almacen_id', $almacen_id)
-                            ->sum('cantidad');
-
-                        $totalDisponibleAntes = (float) $producto->stock()
-                            ->where('almacen_id', $almacen_id)
-                            ->sum('cantidad_disponible');
-
-                        $totalReservadoAntes = (float) $producto->stock()
-                            ->where('almacen_id', $almacen_id)
-                            ->sum('cantidad_reservada');
-                    }
-
-                    // ✅ Capturar ANTES de actualizar (por lote)
-                    $cantidadTotalAntes = (float) $stock->cantidad;
-                    $cantidadDisponibleAntes = (float) $stock->cantidad_disponible;
-                    $cantidadReservadaAntes = (float) $stock->cantidad_reservada;
-
-                    // Consumir stock: decrementar cantidad y cantidad_reservada
-                    $stock->decrement('cantidad', $cantidad);
-                    $stock->decrement('cantidad_reservada', $cantidad);
-                    // cantidad_disponible se mantiene igual (ya estaba descontada en reserva)
-
-                    // ✅ Capturar DESPUÉS de actualizar
-                    $stock->refresh();
-                    $cantidadTotalDespues = (float) $stock->cantidad;
-                    $cantidadDisponibleDespues = (float) $stock->cantidad_disponible;
-                    $cantidadReservadaDespues = (float) $stock->cantidad_reservada;
-
-                    // Guardar detalle por lote
-                    $detallesLotes[] = [
-                        'stock_producto_id' => $stock->id,
-                        'lote' => $stock->lote,
-                        'cantidad' => -$cantidad,  // Negativo: consumo (salida)
-                        'cantidad_total_anterior' => $cantidadTotalAntes,
-                        'cantidad_total_posterior' => $cantidadTotalDespues,
-                        'cantidad_disponible_anterior' => $cantidadDisponibleAntes,
-                        'cantidad_disponible_posterior' => $cantidadDisponibleDespues,
-                        'cantidad_reservada_anterior' => $cantidadReservadaAntes,
-                        'cantidad_reservada_posterior' => $cantidadReservadaDespues,
-                    ];
+                    // ✅ NUEVO: MovimientoStockService maneja la actualización y validación
+                    // Ya no necesitamos hacer decrement manual ni capturar antes/después
 
                     // Marcar reserva como consumida
                     $reserva->update(['estado' => ReservaProforma::CONSUMIDA]);
@@ -684,7 +698,7 @@ class ReservaDistribucionService
                     $cantidad_total_producto += $cantidad;
                     $reservas_consumidas++;
 
-                    Log::debug('📦 [ReservaDistribucionService] Lote consumido', [
+                    Log::debug('📦 [ReservaDistribucionService] Reserva marcada como consumida', [
                         'reserva_id' => $reserva->id,
                         'proforma_id' => $proforma->id,
                         'stock_producto_id' => $stock->id,
@@ -693,62 +707,67 @@ class ReservaDistribucionService
                     ]);
                 }
 
-                // ✅ NUEVO (2026-03-27): Registrar UN SOLO movimiento AGRUPADO con detalles por lote
-                if ($cantidad_total_producto > 0 && $producto && $almacen_id) {
-                    // ✅ CORREGIDO (2026-04-05): Obtener totales del PRODUCTO COMPLETO DESPUÉS (ahora)
-                    $totalProductoDespues = (float) $producto->stock()
-                        ->where('almacen_id', $almacen_id)
-                        ->sum('cantidad');
-
-                    $totalDisponibleDespues = (float) $producto->stock()
-                        ->where('almacen_id', $almacen_id)
-                        ->sum('cantidad_disponible');
-
-                    $totalReservadoDespues = (float) $producto->stock()
-                        ->where('almacen_id', $almacen_id)
-                        ->sum('cantidad_reservada');
-
-                    $movimientoService = new \App\Services\Stock\MovimientoInventarioService();
-                    // ✅ CORREGIDO (2026-04-05): Convertir a float explícitamente para evitar type error
-                    // $cantidad_total_producto puede ser string si viene de acumulación de strings
-                    $movimiento = $movimientoService->registrarMovimientoAgrupado(
-                        $producto->id,
-                        $almacen_id,
-                        MovimientoInventario::TIPO_CONSUMO_RESERVA,
-                        'proforma',
-                        -(float)$cantidad_total_producto,  // Negativo: consumo (salida), convertir a float
-                        $numeroVenta,
-                        $detallesLotes,
-                        [
-                            'referencia_tipo' => 'proforma',
-                            'referencia_id' => $proforma->id,
-                            // ✅ NUEVO (2026-04-05): Pasar totales del PRODUCTO COMPLETO
-                            'totales_previos' => [
-                                'cantidad_total_anterior' => $totalProductoAntes,
-                                'cantidad_disponible_anterior' => $totalDisponibleAntes,
-                                'cantidad_reservada_anterior' => $totalReservadoAntes,
-                            ],
-                            'totales_posteriores' => [
-                                'cantidad_total_posterior' => $totalProductoDespues,
-                                'cantidad_disponible_posterior' => $totalDisponibleDespues,
-                                'cantidad_reservada_posterior' => $totalReservadoDespues,
-                            ],
-                            'observacion_extra' => [
-                                'proforma_numero' => $proforma->numero,
-                                'venta_numero' => $numeroVenta,
-                                'motivo' => 'Consumo de reserva - Convertida a Venta',
-                            ]
-                        ]
+                // ✅ REFACTORIZADO (2026-06-08): Usar MovimientoStockService para cada lote con validaciones
+                // Iteramos por cada lote porque cada uno es un stock_producto único
+                if ($cantidad_total_producto > 0) {
+                    $movimientoService = new \App\Services\Stock\MovimientoStockService(
+                        app(\App\Services\Stock\StockValidationService::class)
                     );
 
-                    Log::info('✅ [ReservaDistribucionService] Movimiento agrupado registrado', [
-                        'proforma_id' => $proforma->id,
-                        'numero_venta' => $numeroVenta,
-                        'producto_id' => $producto->id,
-                        'movimiento_id' => $movimiento->id,
-                        'cantidad_lotes' => count($detallesLotes),
-                        'cantidad_total' => $cantidad_total_producto,
-                    ]);
+                    foreach ($reservasProducto as $reserva) {
+                        $cantidad = $reserva->cantidad_reservada;
+                        $stock = $reserva->stockProducto;
+
+                        try {
+                            // ✅ NUEVO: Usar MovimientoStockService que hace TODO con validaciones
+                            // Validaciones incluidas:
+                            // 1. lockForUpdate() previene race conditions
+                            // 2. Validación pre-actualización
+                            // 3. Validación post-actualización (sin negativos, suma correcta)
+                            // 4. Constraints en BD como segunda línea de defensa
+
+                            $movimientoService->registrarMovimientoYActualizar(
+                                stockProductoId: $stock->id,
+                                cantidad: -(int)$cantidad,  // Negativo: consumo
+                                tipo: MovimientoInventario::TIPO_CONSUMO_RESERVA,
+                                referencia_tipo: 'proforma_convertida',
+                                referencia_id: $proforma->id,
+                                metadataAdicional: [
+                                    'proforma_numero' => $proforma->numero,
+                                    'venta_numero' => $numeroVenta,
+                                    'reserva_id' => $reserva->id,
+                                    'lote' => $stock->lote,
+                                    'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
+                                ],
+                                numeroDocumento: $numeroVenta  // ✅ NUEVO (2026-06-09)
+                            );
+
+                            Log::info('✅ [ReservaDistribucionService] Movimiento registrado con validaciones', [
+                                'reserva_id' => $reserva->id,
+                                'proforma_numero' => $proforma->numero,
+                                'venta_numero' => $numeroVenta,
+                                'stock_producto_id' => $stock->id,
+                                'lote' => $stock->lote,
+                                'cantidad_consumida' => $cantidad,
+                                'validaciones' => [
+                                    'lock_pessimista' => true,
+                                    'pre_validacion' => true,
+                                    'post_validacion' => true,
+                                    'constraint_bd' => true,
+                                ],
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('❌ Error registrando movimiento por lote', [
+                                'reserva_id' => $reserva->id,
+                                'stock_producto_id' => $stock->id,
+                                'proforma_numero' => $proforma->numero,
+                                'venta_numero' => $numeroVenta,
+                                'error' => $e->getMessage(),
+                                'tipo_error' => get_class($e),
+                            ]);
+                            throw $e;
+                        }
+                    }
                 }
             }
 

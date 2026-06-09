@@ -79,6 +79,7 @@ export interface DevolucionClienteDetalle extends BaseEntity {
     cantidad_dañada_total: number;
     monto_cobrado_daño: number;
     monto_garantia_devuelta: number;
+    monto_excedido_detalle: number;
     // Relaciones
     detallePrestamoCliente?: {
         id: Id;
@@ -94,6 +95,7 @@ export interface DevolucionCliente extends BaseEntity {
     fecha_devolucion: string;
     monto_cobrado_daño_total: number;
     monto_garantia_devuelta_total: number;
+    monto_excedido_garantia: number;
     observaciones?: string | null;
     chofer_id?: Id | null;
     detalles: DevolucionClienteDetalle[];
@@ -159,31 +161,68 @@ export interface PrestamoCliente extends BaseEntity {
     } | null;
 }
 
+export interface DevolucionProveedorDetalle extends BaseEntity {
+    id: Id;
+    devolucion_proveedor_id: Id;
+    prestamo_proveedor_detalle_id: Id;
+    cantidad_devuelta: number;
+    cantidad_dañada_total?: number;
+}
+
 export interface DevolucionProveedor extends BaseEntity {
     id: Id;
     prestamo_proveedor_id: Id;
-    cantidad_devuelta: number;
     fecha_devolucion: string;
+    monto_cobrado_daño_total?: number;
     observaciones?: string | null;
+    detalles?: DevolucionProveedorDetalle[];
 }
 
 export interface PrestamoProveedor extends BaseEntity {
     id: Id;
-    prestable_id: Id;
     proveedor_id: Id;
-    cantidad: number;
+    almacenes_prestables_id?: Id | null;
+    chofer_id?: Id | null;
+    vehiculo_asignado?: string | null;
+    compra_id?: Id | null;
     es_compra: boolean;
-    precio_unitario?: number | null;
+    monto_garantia: number;
     fecha_prestamo: string;
-    numero_documento?: string | null;
+    fecha_esperada_devolucion?: string | null;
+    observaciones?: string | null;
     estado: EstadoPrestamo;
+    detalles: PrestamoProveedorDetalle[];
     devoluciones: DevolucionProveedor[];
     // Relaciones
-    prestable: Prestable;
-    proveedor: {
+    proveedor?: {
         id: Id;
         nombre: string;
+        razon_social?: string;
     };
+    almacen?: {
+        id: Id;
+        nombre: string;
+    } | null;
+    chofer?: {
+        id: Id;
+        name: string;
+    } | null;
+    compra?: {
+        id: Id;
+        numero: string;
+    } | null;
+}
+
+export interface PrestamoProveedorDetalle extends BaseEntity {
+    id: Id;
+    prestamo_proveedor_id: Id;
+    prestable_id: Id;
+    cantidad_prestada: number;
+    almacenes_ids?: Id[];
+    estado: EstadoPrestamo;
+    devolucionDetalles?: DevolucionProveedorDetalle[];
+    // Relaciones
+    prestable?: Prestable;
 }
 
 export interface ReporteResumen {
@@ -255,7 +294,9 @@ export interface NuevoPrestamoCliente extends BaseFormData {
 
 export interface NuevoPrestamoProveedor extends BaseFormData {
     proveedor_id: Id;
-    almacen_prestable_id: Id;
+    almacenes_prestables_id: Id;
+    chofer_id?: Id | null;
+    vehiculo_asignado?: string | null;
     compra_id?: Id;
     es_compra: boolean;
     monto_garantia?: number;
@@ -293,6 +334,7 @@ export interface DevolucionEvento extends BaseEntity {
 export interface PrestamoEvento extends BaseEntity {
     id: Id;
     cliente_id?: Id | null;
+    almacenes_prestables_id?: Id | null;
     nombre_evento: string;
     encargado_evento?: string | null;
     vehiculo_asignado?: string | null;
@@ -310,8 +352,10 @@ export interface PrestamoEvento extends BaseEntity {
     detalles: PrestamoEventoDetalle[];
     devoluciones: DevolucionEvento[];
     cliente?: { id: Id; nombre?: string; razon_social?: string } | null;
+    almacen?: { id: Id; nombre: string } | null;
     chofer?: { id: Id; nombre: string } | null;
     venta?: { id: Id; numero: string } | null;
+    ventas?: Array<{ id: Id; numero: string; cliente?: { id: Id; nombre: string } }>;
 }
 
 export interface NuevoPrestamoEventoDetalle {
@@ -327,7 +371,8 @@ export interface NuevoPrestamoEvento extends BaseFormData {
     direccion_evento?: string;
     telefono_uno?: string;
     telefono_dos?: string;
-    venta_id?: Id;
+    almacenes_prestables_id?: Id;
+    ventas_ids?: Id[];
     chofer_id?: Id;
     fecha_prestamo: string;
     fecha_esperada_devolucion?: string;
@@ -340,6 +385,7 @@ export interface DetalleDevolucionCliente {
     cantidad_devuelta: number;
     cantidad_dañada_parcial?: number;
     cantidad_dañada_total?: number;
+    monto_cobrado_daño?: number;
     embases_danados_parcial?: number;
     embases_danados_total?: number;
 }

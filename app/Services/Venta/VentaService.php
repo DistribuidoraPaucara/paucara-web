@@ -547,7 +547,7 @@ class VentaService
     public function obtener(int $ventaId): VentaResponseDTO
     {
         $venta = $this->read(fn() => Venta::with([
-            'detalles.producto', // ✅ Incluir productos de detalles
+            'detalles.producto.prestables', // ✅ ACTUALIZADO: Incluir prestables relacionados para cargar en préstamos
             'cliente',
             'usuario',
             'estadoDocumento',
