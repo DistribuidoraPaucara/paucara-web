@@ -103,7 +103,7 @@ class CajaController extends Controller
                 ->where('user_id', $usuarioDestino->id)
                 ->where('fecha', '>=', $cajaAbiertaHoy->fecha)
                 ->with(['tipoOperacion', 'tipoPago', 'comprobantes', 'usuario', 'venta' => function($q) {
-                    $q->select('id', 'numero', 'estado_documento_id', 'tipo_entrega', 'total', 'monto_pagado', 'monto_pendiente'); // ✅ Agregar campos de monto
+                    $q->select('id', 'numero', 'estado_documento_id', 'tipo_entrega', 'total', 'monto_pagado', 'monto_pendiente', 'requiere_envio'); // ✅ Agregar requiere_envio
                 }, 'venta.estadoDocumento']) // ✅ Cargar estado_documento con venta
                 ->orderBy('id', 'desc')  // ✅ ACTUALIZADO: Ordenar por ID descendente
                 ->get()

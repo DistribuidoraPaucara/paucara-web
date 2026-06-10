@@ -31,6 +31,10 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
         }
     };
 
+    const registrarDevolucionFn = async (prestamoId: number, payload: any) => {
+        return await prestamoClienteService.registrarDevolucion(prestamoId, payload);
+    };
+
     if (loading) {
         return (
             <AppLayout>
@@ -60,8 +64,8 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
             tipoDevolucion="cliente"
             prestamoId={prestamoId}
             rutaRetorno="/prestamos/clientes"
-            titulo="Registrares Devolución - Cliente"
-            breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Movimientos de Stock', href: '/prestamos/ajustes/movimientos' }]}
+            titulo="Registrar Devolución - Cliente"
+            registrarDevolucionFn={registrarDevolucionFn}
         />
     );
 }

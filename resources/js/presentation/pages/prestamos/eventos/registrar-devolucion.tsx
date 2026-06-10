@@ -31,6 +31,10 @@ export default function RegistrarDevolucionEvento({ prestamoId }: Props) {
         }
     };
 
+    const registrarDevolucionFn = async (prestamoId: number, payload: any) => {
+        return await prestamoEventoService.registrarDevolucion(prestamoId, payload);
+    };
+
     if (loading) {
         return (
             <AppLayout>
@@ -61,6 +65,7 @@ export default function RegistrarDevolucionEvento({ prestamoId }: Props) {
             prestamoId={prestamoId}
             rutaRetorno="/prestamos/eventos"
             titulo="Registrar Devolución - Evento"
+            registrarDevolucionFn={registrarDevolucionFn}
         />
     );
 }

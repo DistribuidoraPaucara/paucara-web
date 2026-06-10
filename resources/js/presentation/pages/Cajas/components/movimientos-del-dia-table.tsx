@@ -765,20 +765,20 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                     <div
                                         key={tipo}
                                         className={`rounded-lg p-4 cursor-pointer transition hover:shadow-md border-l-4 ${getTipoOperacionColor(codigo).includes('bg-green')
-                                                ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
-                                                : getTipoOperacionColor(codigo).includes('bg-red')
-                                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-400'
-                                                    : getTipoOperacionColor(codigo).includes('bg-blue')
-                                                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
-                                                        : getTipoOperacionColor(codigo).includes('bg-yellow')
-                                                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400'
-                                                            : getTipoOperacionColor(codigo).includes('bg-orange')
-                                                                ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400'
-                                                                : getTipoOperacionColor(codigo).includes('bg-purple')
-                                                                    ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400'
-                                                                    : getTipoOperacionColor(codigo).includes('bg-indigo')
-                                                                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400'
-                                                                        : 'bg-gray-50 dark:bg-gray-900/20 border-gray-400'
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
+                                            : getTipoOperacionColor(codigo).includes('bg-red')
+                                                ? 'bg-red-50 dark:bg-red-900/20 border-red-400'
+                                                : getTipoOperacionColor(codigo).includes('bg-blue')
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
+                                                    : getTipoOperacionColor(codigo).includes('bg-yellow')
+                                                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400'
+                                                        : getTipoOperacionColor(codigo).includes('bg-orange')
+                                                            ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400'
+                                                            : getTipoOperacionColor(codigo).includes('bg-purple')
+                                                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400'
+                                                                : getTipoOperacionColor(codigo).includes('bg-indigo')
+                                                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400'
+                                                                    : 'bg-gray-50 dark:bg-gray-900/20 border-gray-400'
                                             }`}
                                         onClick={() => setFiltroTipo(filtroTipo === tipo ? null : tipo)}
                                     >
@@ -800,13 +800,13 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                                 detalle.codigo === 'EFECTIVO' || detalle.codigo === 'TRANSFERENCIA/QR'
                                                             )
                                                             .map((detalle, idx) => (
-                                                            <div key={idx} className="flex justify-between items-center text-xs">
-                                                                <span className="text-gray-600 dark:text-gray-400">{detalle.tipo}</span>
-                                                                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                    {formatCurrency(detalle.total)}
-                                                                </span>
-                                                            </div>
-                                                        ))}
+                                                                <div key={idx} className="flex justify-between items-center text-xs">
+                                                                    <span className="text-gray-600 dark:text-gray-400">{detalle.tipo}</span>
+                                                                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                        {formatCurrency(detalle.total)}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
                                                     </div>
                                                 )}
 
@@ -889,12 +889,12 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         {movimiento.venta?.estado_documento ? (
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : movimiento.venta.estado_documento.codigo === 'ANULADO'
-                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                                        : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
-                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                : movimiento.venta.estado_documento.codigo === 'ANULADO'
+                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                    : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
+                                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
                                                 }`}>
                                                 {movimiento.venta.estado_documento.nombre}
                                             </span>
@@ -906,14 +906,14 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         {movimiento.tipo_pago?.nombre ? (
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.tipo_pago.nombre === 'EFECTIVO'
-                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-                                                    : movimiento.tipo_pago.nombre === 'TRANSFERENCIA'
-                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                                        : movimiento.tipo_pago.nombre === 'CHEQUE'
-                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                                                            : movimiento.tipo_pago.nombre === 'CREDITO'
-                                                                ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
-                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                                                : movimiento.tipo_pago.nombre === 'TRANSFERENCIA'
+                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                    : movimiento.tipo_pago.nombre === 'CHEQUE'
+                                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                                        : movimiento.tipo_pago.nombre === 'CREDITO'
+                                                            ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
+                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
                                                 }`}>
                                                 {movimiento.tipo_pago.nombre}
                                             </span>
@@ -921,16 +921,15 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                             <span className="text-gray-400 dark:text-gray-500">—</span>
                                         )}
                                     </td>
-                                    {/* ✅ NUEVA: Tipo de Entrega */}
+                                    {/* ✅ NUEVA: Tipo de Entrega basado en requiere_envio */}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {movimiento.venta?.tipo_entrega ? (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.tipo_entrega === 'DELIVERY'
+                                        {movimiento.venta ? (
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                movimiento.venta?.requiere_envio
                                                     ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-                                                    : movimiento.venta.tipo_entrega === 'PICKUP'
-                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                                                 }`}>
-                                                {movimiento.venta.tipo_entrega === 'DELIVERY' ? '🚚 Envío' : movimiento.venta.tipo_entrega === 'PICKUP' ? '🏪 Retiro' : movimiento.venta.tipo_entrega}
+                                                {movimiento.venta?.requiere_envio ? '🚚 DELIVERY' : '🏪 PRESENCIAL'}
                                             </span>
                                         ) : (
                                             <span className="text-gray-400 dark:text-gray-500">—</span>
@@ -948,11 +947,10 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                         setMovimientoVentaSeleccionado(movimiento);
                                                         setMostrarModalVenta(true);
                                                     }}
-                                                    className={`inline-flex items-center justify-center p-1.5 rounded-lg transition ${
-                                                        tieneDiscrepancia(movimiento)
+                                                    className={`inline-flex items-center justify-center p-1.5 rounded-lg transition ${tieneDiscrepancia(movimiento)
                                                             ? 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400'
                                                             : 'bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400'
-                                                    }`}
+                                                        }`}
                                                     title={tieneDiscrepancia(movimiento) ? '⚠️ Discrepancia detectada - Ver detalles' : 'Ver detalles de venta'}
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -1151,7 +1149,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                     : movimientoVentaSeleccionado.venta.estado_documento.codigo === 'ANULADO'
                                                         ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                                                         : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                }`}>
+                                                    }`}>
                                                     {movimientoVentaSeleccionado.venta.estado_documento.nombre}
                                                 </span>
                                             ) : '-'}

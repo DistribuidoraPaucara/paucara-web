@@ -104,7 +104,7 @@ class VentaController extends Controller
     public function searchWithPrestables(Request $request): JsonResponse
     {
         try {
-            $query = Venta::select('id', 'numero', 'fecha', 'cliente_id', 'total');
+            $query = Venta::select('id', 'numero', 'fecha', 'cliente_id', 'direccion_cliente_id', 'total');
 
             // Filtrar por búsqueda
             if ($request->filled('q')) {
@@ -133,6 +133,8 @@ class VentaController extends Controller
             // Cargar relaciones necesarias
             $query->with([
                 'cliente:id,nombre,razon_social',
+                'direccionCliente:id,direccion,localidad_id,latitud,longitud,es_principal,observaciones',
+                'direccionCliente.localidad:id,nombre',
                 'detalles.producto:id,nombre,sku',
                 'detalles.producto.prestables' // ✅ Incluir prestables relacionados
             ]);
@@ -152,10 +154,21 @@ class VentaController extends Controller
                 'numero' => $venta->numero,
                 'fecha' => $venta->fecha?->format('Y-m-d'),
                 'total' => floatval($venta->total),
+                'cliente_id' => $venta->cliente_id,
+                'direccion_cliente_id' => $venta->direccion_cliente_id,
                 'cliente' => [
                     'id' => $venta->cliente->id,
                     'nombre' => $venta->cliente->nombre,
-                ]
+                ],
+                'direccionCliente' => $venta->direccionCliente ? [
+                    'id' => $venta->direccionCliente->id,
+                    'direccion' => $venta->direccionCliente->direccion,
+                    'localidad' => $venta->direccionCliente->localidad?->nombre,
+                    'observaciones' => $venta->direccionCliente->observaciones,
+                    'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
+                    'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
+                    'es_principal' => (bool) $venta->direccionCliente->es_principal,
+                ] : null,
             ])->all();
 
             return response()->json([
@@ -635,63 +648,60 @@ class VentaController extends Controller
             $cajaId = $this->cajaAbiertaService->obtenerCajaIdAbierta();
 
             // 3. Delegar al Service (ÚNICA lógica de negocio)
+            // ✅ NOTA: El servicio ya usa DB::transaction() internamente
             $ventaDTO = $this->ventaService->crear($dto, $cajaId);
 
             // Obtener la venta creada
             $ventaCreada = Venta::findOrFail($ventaDTO->id);
 
-            // ✅ NUEVO: Registrar pago automático basado en tipo_pago
+            // ✅ MEJORADO: Registrar pagos (automático o desglosados)
             // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
-            if ($ventaCreada->tipoPago && strtoupper($ventaCreada->tipoPago->codigo) !== 'CREDITO') {
-                try {
-                    $this->pagoVentaService->registrarPagoAutomatico($ventaCreada);
+            $ventaCreada->refresh(); // Recargar para obtener tipoPago con tipo_pago_id actualizado
+            $esCredito = $ventaCreada->tipoPago && strtoupper($ventaCreada->tipoPago->codigo) === 'CREDITO';
 
-                    Log::info('✅ Pago automático registrado para venta', [
-                        'venta_id' => $ventaCreada->id,
-                        'venta_numero' => $ventaCreada->numero,
-                        'tipo_pago_id' => $ventaCreada->tipo_pago_id,
-                    ]);
-                } catch (\Exception $e) {
-                    // Log del error pero no fallar la creación de venta
-                    Log::error('⚠️ Error al registrar pago automático', [
-                        'venta_id' => $ventaDTO->id,
-                        'error' => $e->getMessage(),
-                    ]);
+            if (!$esCredito) {
+                // ✅ PRIORIDAD 1: Si vienen pagos desglosados en el request, registrar esos
+                if ($request->has('pagos') && is_array($request->input('pagos')) && !empty($request->input('pagos'))) {
+                    try {
+                        // Registrar los pagos desglosados (borra y recrea todos)
+                        $this->pagoVentaService->registrarPagos($ventaCreada, $request->input('pagos'));
+
+                        Log::info('✅ Pagos desglosados registrados para venta', [
+                            'venta_id' => $ventaCreada->id,
+                            'venta_numero' => $ventaCreada->numero,
+                            'cantidad_pagos' => count($request->input('pagos')),
+                        ]);
+                    } catch (\Exception $e) {
+                        // Log del error pero no fallar la creación de venta
+                        Log::error('⚠️ Error al registrar pagos desglosados para venta', [
+                            'venta_id' => $ventaDTO->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                } else {
+                    // ✅ PRIORIDAD 2: Si NO hay pagos desglosados, registrar pago automático simple
+                    try {
+                        $this->pagoVentaService->registrarPagoAutomatico($ventaCreada);
+
+                        Log::info('✅ Pago automático registrado para venta', [
+                            'venta_id' => $ventaCreada->id,
+                            'venta_numero' => $ventaCreada->numero,
+                            'tipo_pago_id' => $ventaCreada->tipo_pago_id,
+                        ]);
+                    } catch (\Exception $e) {
+                        // Log del error pero no fallar la creación de venta
+                        Log::error('⚠️ Error al registrar pago automático', [
+                            'venta_id' => $ventaDTO->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
             } else {
-                Log::info('⏭️ Pago automático OMITIDO: Venta a CREDITO', [
+                Log::info('⏭️ Pagos OMITIDOS: Venta a CREDITO', [
                     'venta_id' => $ventaCreada->id,
                     'venta_numero' => $ventaCreada->numero,
                     'tipo_pago_codigo' => $ventaCreada->tipoPago?->codigo ?? 'SIN TIPO PAGO',
-                ]);
-            }
-
-            // ✅ NUEVO (2026-04-21): Registrar múltiples pagos SI VIENEN EN EL REQUEST
-            // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pagos desglosados)
-            $esCredito = $ventaCreada->tipoPago && strtoupper($ventaCreada->tipoPago->codigo) === 'CREDITO';
-
-            if (!$esCredito && $request->has('pagos') && is_array($request->input('pagos')) && !empty($request->input('pagos'))) {
-                try {
-                    // Registrar los pagos en detalles_pago_venta
-                    $this->pagoVentaService->registrarPagos($ventaCreada, $request->input('pagos'));
-
-                    Log::info('✅ Pagos desglosados registrados para venta', [
-                        'venta_id' => $ventaCreada->id,
-                        'venta_numero' => $ventaCreada->numero,
-                        'cantidad_pagos' => count($request->input('pagos')),
-                    ]);
-                } catch (\Exception $e) {
-                    // Log del error pero no fallar la creación de venta
-                    Log::error('⚠️ Error al registrar pagos desglosados para venta', [
-                        'venta_id' => $ventaDTO->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            } elseif ($esCredito && $request->has('pagos') && !empty($request->input('pagos'))) {
-                Log::info('⏭️ Pagos desglosados OMITIDOS: Venta a CREDITO (ignorando pagos en request)', [
-                    'venta_id' => $ventaCreada->id,
-                    'venta_numero' => $ventaCreada->numero,
-                    'pagos_en_request' => count($request->input('pagos')),
+                    'pagos_en_request' => $request->has('pagos') ? count($request->input('pagos')) : 0,
                 ]);
             }
 
@@ -768,19 +778,65 @@ class VentaController extends Controller
     public function show(int $id): JsonResponse | InertiaResponse
     {
         try {
-            $ventaDTO = $this->ventaService->obtener($id);
+            $venta = Venta::with([
+                'cliente',
+                'direccionCliente.localidad',
+                'usuario',
+                'tipoPago',
+                'tipoDocumento',
+                'moneda',
+                'estadoDocumento',
+                'detalles.producto',
+            ])->findOrFail($id);
 
-            // Si es API, retornar JSON
+            // Si es API, retornar JSON con datos completos
             if ($this->isApiRequest()) {
                 return response()->json([
                     'success' => true,
-                    'data'    => $ventaDTO->toArray(),
+                    'data' => [
+                        'id' => $venta->id,
+                        'numero' => $venta->numero,
+                        'fecha' => $venta->fecha,
+                        'cliente_id' => $venta->cliente_id,
+                        'direccion_cliente_id' => $venta->direccion_cliente_id,
+                        'subtotal' => $venta->subtotal,
+                        'descuento' => $venta->descuento,
+                        'total' => $venta->total,
+                        'observaciones' => $venta->observaciones,
+                        'cliente' => $venta->cliente ? [
+                            'id' => $venta->cliente->id,
+                            'nombre' => $venta->cliente->nombre,
+                            'nit' => $venta->cliente->nit,
+                            'telefono' => $venta->cliente->telefono,
+                        ] : null,
+                        'direccionCliente' => $venta->direccionCliente ? [
+                            'id' => $venta->direccionCliente->id,
+                            'direccion' => $venta->direccionCliente->direccion,
+                            'localidad' => $venta->direccionCliente->localidad?->nombre,
+                            'observaciones' => $venta->direccionCliente->observaciones,
+                            'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
+                            'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
+                            'es_principal' => (bool) $venta->direccionCliente->es_principal,
+                        ] : null,
+                        'detalles' => $venta->detalles->map(fn($d) => [
+                            'id' => $d->id,
+                            'cantidad' => $d->cantidad,
+                            'precio_unitario' => $d->precio_unitario,
+                            'subtotal' => $d->subtotal,
+                            'producto' => $d->producto ? [
+                                'id' => $d->producto->id,
+                                'nombre' => $d->producto->nombre,
+                                'sku' => $d->producto->sku,
+                                'prestables' => $d->producto->prestables ?? [],
+                            ] : null,
+                        ])->toArray(),
+                    ],
                 ]);
             }
 
             // Si es web (Inertia), renderizar con el prop correcto
             return \Inertia\Inertia::render('ventas/show', [
-                'venta' => $ventaDTO->toArray(),
+                'venta' => $venta,
             ]);
 
         } catch (\Exception $e) {

@@ -3494,20 +3494,32 @@ class ApiProformaController extends Controller
                 // ✅ NUEVO: Disparar evento ProformaConvertida para notificar al cliente a través de WebSocket
                 event(new \App\Events\ProformaConvertida($proforma, $venta));
 
-                // ✅ NUEVO: Registrar pago automático basado en tipo_pago_id (igual que VentaController@store)
-                try {
-                    $this->pagoVentaService->registrarPagoAutomatico($venta);
+                // ✅ MEJORADO: Registrar pago automático basado en tipo_pago_id
+                // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
+                $venta->refresh(); // Recargar para obtener tipoPago con tipo_pago_id actualizado
+                $esCredito = $venta->tipoPago && strtoupper($venta->tipoPago->codigo) === 'CREDITO';
 
-                    Log::info('✅ [convertirAVenta] Pago automático registrado para venta', [
+                if (!$esCredito) {
+                    try {
+                        $this->pagoVentaService->registrarPagoAutomatico($venta);
+
+                        Log::info('✅ [convertirAVenta] Pago automático registrado para venta', [
+                            'venta_id' => $venta->id,
+                            'venta_numero' => $venta->numero,
+                            'tipo_pago_id' => $venta->tipo_pago_id,
+                        ]);
+                    } catch (\Exception $e) {
+                        // Log del error pero no fallar la conversión
+                        Log::error('⚠️ [convertirAVenta] Error al registrar pago automático', [
+                            'venta_id' => $venta->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                } else {
+                    Log::info('⏭️ [convertirAVenta] Pago automático OMITIDO: Venta a CREDITO', [
                         'venta_id' => $venta->id,
                         'venta_numero' => $venta->numero,
-                        'tipo_pago_id' => $venta->tipo_pago_id,
-                    ]);
-                } catch (\Exception $e) {
-                    // Log del error pero no fallar la conversión
-                    Log::error('⚠️ [convertirAVenta] Error al registrar pago automático', [
-                        'venta_id' => $venta->id,
-                        'error' => $e->getMessage(),
+                        'tipo_pago_codigo' => $venta->tipoPago?->codigo ?? 'SIN TIPO PAGO',
                     ]);
                 }
 

@@ -9,18 +9,21 @@ use Illuminate\Support\Facades\DB;
 class PagoVentaService
 {
     /**
-     * ✅ NUEVO: Registrar pago automático basado en tipo_pago de la venta
+     * ✅ MEJORADO: Registrar pago automático basado en tipo_pago de la venta
      *
      * Se llama automáticamente después de crear cada venta
-     * - Si la venta tiene tipo_pago_id, crea un registro en detalles_pago_venta
+     * - Si la venta no tiene tipo_pago_id, usa el tipo_pago_id=1 como defecto
+     * - Actualiza la venta con el tipo_pago_id si no lo tenía
+     * - Crea un registro en detalles_pago_venta
      * - Usa monto_pagado si existe, sino usa total
      * - Esto asegura que TODAS las ventas tengan al menos un registro
      */
     public function registrarPagoAutomatico(Venta $venta): ?DetallePagoVenta
     {
-        // Solo registrar si la venta tiene tipo_pago_id
+        // Si no tiene tipo_pago_id, usar el tipo_pago_id=1 como defecto
         if (!$venta->tipo_pago_id) {
-            return null;
+            $venta->update(['tipo_pago_id' => 1]);
+            $venta->refresh();
         }
 
         // Usar monto_pagado si existe y es > 0, sino usar total

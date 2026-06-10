@@ -47,6 +47,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         vehiculo_id: undefined as number | undefined,
         telefono_cliente_1: '',
         telefono_cliente_2: '',
+        direccion_cliente_id: undefined as number | undefined,
         tipo_prestamo: 'canastillas_embases' as 'canastillas' | 'embases' | 'canastillas_embases',
         es_venta: false,
         venta_id: undefined as number | undefined,
@@ -65,6 +66,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     const [ventasResults, setVentasResults] = useState<any[]>([]);
     const [ventasLoading, setVentasLoading] = useState(false);
     const [ventaSeleccionada, setVentaSeleccionada] = useState<any>(null);
+    const [direccionSeleccionada, setDireccionSeleccionada] = useState<any>(null);
 
     const [clientesSearch, setClientesSearch] = useState('');
     const [clientesFiltered, setClientesFiltered] = useState(clientes);
@@ -171,6 +173,12 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             const clienteId = ventaData.cliente_id;
             const telefonoVenta = (ventaData?.cliente?.telefono || '').trim();
             const telefonoCliente = telefonoVenta || obtenerTelefonoCliente(clienteId);
+            const direccion = ventaData.direccionCliente;
+
+            console.log('📍 DIRECCIÓN CAPTURADA:', {
+                direccion_cliente_id: ventaData.direccion_cliente_id,
+                direccionCliente: direccion,
+            });
 
             // Cargar prestables desde productos de la venta
             const nuevosPrestables: PrestamoItem[] = [];
@@ -209,7 +217,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 // 2️⃣ Agregar EMBASES automáticos relacionados
                                 const embasesRelacionados = prestables.filter(
                                     p => p.tipo === 'EMBASES' &&
-                                         (p as any).prestable_relacionado_id === canastilla.id
+                                        (p as any).prestable_relacionado_id === canastilla.id
                                 );
 
                                 embasesRelacionados.forEach(embase => {
@@ -233,8 +241,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 venta_id: venta.id,
                 cliente_id: clienteId,
                 telefono_cliente_1: telefonoCliente,
+                direccion_cliente_id: ventaData.direccion_cliente_id,
             });
             setClienteSeleccionado(clientes.find(c => c.id === clienteId));
+            setDireccionSeleccionada(direccion);
 
             // Agregar prestables cargados
             if (nuevosPrestables.length > 0) {
@@ -719,7 +729,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 onClear={() => {
                                     setVentaSeleccionada(null);
                                     setVentasSearch('');
-                                    setFormData({ ...formData, venta_id: undefined });
+                                    setDireccionSeleccionada(null);
+                                    setFormData({ ...formData, venta_id: undefined, direccion_cliente_id: undefined });
                                 }}
                                 renderItem={(venta) => (
                                     <div>
@@ -806,7 +817,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getDisplayValue={(vehiculo) => `${vehiculo.placa}${vehiculo.marca ? ` - ${vehiculo.marca} ${vehiculo.modelo}` : ''}`}
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 1 (Opcional)
@@ -844,7 +855,42 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                     placeholder="Ej: 76543210"
                                 />
                             </div>
+
+                            {/* 📍 Sección de Dirección del Cliente */}
+                            {direccionSeleccionada && (
+                                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-2xl">📍</span>
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                                                Dirección de Entrega
+                                            </h3>
+                                            {/* <p className="text-sm text-blue-800 dark:text-blue-200 mb-1">
+                                                <span className="font-medium">{direccionSeleccionada.direccion}</span>
+                                            </p> */}
+                                            {direccionSeleccionada.localidad && (
+                                                <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
+                                                    📌 {direccionSeleccionada.localidad}
+                                                </p>
+                                            )}
+                                            {direccionSeleccionada.observaciones && (
+                                                <p className="text-sm text-blue-700 dark:text-blue-300 italic border-l-2 border-blue-300 pl-2">
+                                                    💬 {direccionSeleccionada.observaciones}
+                                                </p>
+                                            )}
+                                            {/* {(direccionSeleccionada.latitud || direccionSeleccionada.longitud) && (
+                                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                    🗺️ {direccionSeleccionada.latitud?.toFixed(4)}, {direccionSeleccionada.longitud?.toFixed(4)}
+                                                </p>
+                                            )} */}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
+
+
                         <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -1010,7 +1056,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 if (esCanastilla && almacenesEmbase && embaseRelacionado) {
                                     const embaseIndex = nuevosItems.findIndex(
                                         item => item.prestable_id === embaseRelacionado?.id &&
-                                                 item.isAutomaticEmbase === true
+                                            item.isAutomaticEmbase === true
                                     );
 
                                     if (embaseIndex !== -1) {

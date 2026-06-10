@@ -350,9 +350,51 @@ export default function PrestamosClientesIndex() {
     // Calcular totales para cards
     const calcularTotales = () => {
         const activos = prestamos.filter(p => p.estado === 'ACTIVO').length;
+        const activosOParciales = prestamos.filter(p =>
+            p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO'
+        ).length;
+
         const garantiasEnJuego = prestamos
             .filter(p => p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO')
             .reduce((sum, p) => sum + (Number(p.monto_garantia) || 0), 0);
+
+        // Calcular totales de prestables
+        let totalCanastillasPrestadas = 0;
+        let totalCanastillasDevueltas = 0;
+        let totalEmbasesPrestadas = 0;
+        let totalEmbassesDevueltos = 0;
+        let totalItemsPrestados = 0;
+        let totalItemsDevueltos = 0;
+
+        prestamos.forEach(prestamo => {
+            // Contar por tipo de prestable
+            (prestamo.detalles || []).forEach(detalle => {
+                const cantidad = Number(detalle.cantidad_prestada) || 0;
+                totalItemsPrestados += cantidad;
+
+                const prestableType = detalle.prestable?.tipo;
+                if (prestableType === 'CANASTILLA') {
+                    totalCanastillasPrestadas += cantidad;
+                } else if (prestableType === 'EMBASES') {
+                    totalEmbasesPrestadas += cantidad;
+                }
+            });
+
+            // Contar devoluciones
+            (prestamo.devoluciones || []).forEach(devolucion => {
+                (devolucion.detalles || []).forEach(detalleDevol => {
+                    const cantidad = Number(detalleDevol.cantidad_devuelta) || 0;
+                    totalItemsDevueltos += cantidad;
+
+                    const prestableType = detalleDevol.prestable?.tipo;
+                    if (prestableType === 'CANASTILLA') {
+                        totalCanastillasDevueltas += cantidad;
+                    } else if (prestableType === 'EMBASES') {
+                        totalEmbassesDevueltos += cantidad;
+                    }
+                });
+            });
+        });
 
         const pendienteDevolución = prestamos.reduce((sum, p) => {
             const totalPrestado = (p.detalles || []).reduce((s, d) => s + (Number(d.cantidad_prestada) || 0), 0);
@@ -369,7 +411,28 @@ export default function PrestamosClientesIndex() {
             return new Date(p.fecha_esperada_devolucion) < new Date();
         }).length;
 
-        return { activos, garantiasEnJuego, pendienteDevolución, vencidos };
+        return {
+            activos,
+            activosOParciales,
+            garantiasEnJuego,
+            pendienteDevolución,
+            vencidos,
+            canastillas: {
+                prestadas: totalCanastillasPrestadas,
+                devueltas: totalCanastillasDevueltas,
+                pendientes: totalCanastillasPrestadas - totalCanastillasDevueltas,
+            },
+            embases: {
+                prestadas: totalEmbasesPrestadas,
+                devueltos: totalEmbassesDevueltos,
+                pendientes: totalEmbasesPrestadas - totalEmbassesDevueltos,
+            },
+            itemsTotales: {
+                prestados: totalItemsPrestados,
+                devueltos: totalItemsDevueltos,
+                pendientes: totalItemsPrestados - totalItemsDevueltos,
+            }
+        };
     };
 
     const totales = calcularTotales();
@@ -462,7 +525,7 @@ export default function PrestamosClientesIndex() {
                 </div>
 
                 {/* Cards de Resumen */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Préstamos Activos</p>
                         <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.activos}</p>
@@ -479,7 +542,106 @@ export default function PrestamosClientesIndex() {
                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">🔴 Vencidos</p>
                         <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.vencidos}</p>
                     </Card>
+                </div> */}
+
+                {/* Cards de Detalle: Canastillas y Embases */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {/* Card: Activos o Parcialmente Devueltos */}
+                    <Card className="p-4 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 border-cyan-200 dark:border-cyan-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            ⚡ Activos o Parciales
+                        </p>
+                        <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
+                            {totales.activosOParciales}
+                        </p>
+                        <p className="text-xs text-cyan-700 dark:text-cyan-300">
+                            Préstamos en gestión
+                        </p>
+                    </Card>
+
+                    {/* Card: Canastillas */}
+                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            🧺 Canastillas
+                        </p>
+                        <div className="space-y-1">
+                            <p className="text-sm">
+                                <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                    {totales.canastillas.prestadas}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Prestadas</span>
+                            </p>
+                            <p className="text-sm">
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                    {totales.canastillas.devueltas}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Devueltas</span>
+                            </p>
+                            <p className="text-sm border-t border-orange-200 dark:border-orange-700 pt-1 mt-1">
+                                <span className="font-bold text-orange-700 dark:text-orange-300">
+                                    {totales.canastillas.pendientes}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Pendientes</span>
+                            </p>
+                        </div>
+                    </Card>
+
+                    {/* Card: Embases */}
+                    <Card className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/30 dark:to-pink-800/30 border-pink-200 dark:border-pink-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            🥫 Embases
+                        </p>
+                        <div className="space-y-1">
+                            <p className="text-sm">
+                                <span className="font-semibold text-pink-600 dark:text-pink-400">
+                                    {totales.embases.prestadas}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Prestados</span>
+                            </p>
+                            <p className="text-sm">
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                    {totales.embases.devueltos}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Devueltos</span>
+                            </p>
+                            <p className="text-sm border-t border-pink-200 dark:border-pink-700 pt-1 mt-1">
+                                <span className="font-bold text-pink-700 dark:text-pink-300">
+                                    {totales.embases.pendientes}
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400"> Pendientes</span>
+                            </p>
+                        </div>
+                    </Card>
                 </div>
+
+                {/* Card: Resumen Total de Items */}
+                {/* <div className="grid grid-cols-1 gap-4 mb-6">
+                    <Card className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/30 border-slate-200 dark:border-slate-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            📊 Resumen Total de Ítems
+                        </p>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    {totales.itemsTotales.prestados}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Prestado</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {totales.itemsTotales.devueltos}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Devuelto</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                    {totales.itemsTotales.pendientes}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Falta por Recoger</p>
+                            </div>
+                        </div>
+                    </Card>
+                </div> */}
 
                 {/* Panel de Filtros */}
                 <div className="mb-6">
@@ -558,7 +720,7 @@ export default function PrestamosClientesIndex() {
                                 </div>
 
                                 {/* Fila 2: Fechas Préstamo */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             📅 Fecha Préstamo Desde
@@ -581,10 +743,6 @@ export default function PrestamosClientesIndex() {
                                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
                                     </div>
-                                </div>
-
-                                {/* Fila 3: Fechas Vencimiento */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             ⏰ Fecha Vencimiento Desde
@@ -680,43 +838,43 @@ export default function PrestamosClientesIndex() {
                                         return (
                                             <React.Fragment key={p.id}>
                                                 <TableRow key={`${p.id}-main`} className="border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                                                <TableCell className="text-gray-900 dark:text-gray-100 font-semibold cursor-pointer" onClick={() => toggleExpandedRow(p.id)}>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
-                                                        #{p.id}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-gray-900 dark:text-gray-100">{p.cliente?.nombre || p.cliente?.razon_social}</TableCell>
-                                                <TableCell className="text-center">
-                                                    {p.venta_id ? (
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                                                            #{p.venta_id}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-gray-400 dark:text-gray-500">-</span>
-                                                    )}
-                                                </TableCell>
-                                                {/* <TableCell className="text-gray-900 dark:text-gray-100 text-sm">{prestabesNombres}</TableCell> */}
-                                                {/* <TableCell className="text-center text-gray-900 dark:text-gray-100">{cantidadTotal || p.cantidad || 0}</TableCell> */}
-                                                <TableCell className="text-gray-900 dark:text-gray-100">Bs {p.monto_garantia}</TableCell>
-                                                {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold">{cantidadTotal}</TableCell> */}
-                                                {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold text-green-600 dark:text-green-400">{cantidadDevuelta}</TableCell> */}
-                                                {/* <TableCell className="text-center">
+                                                    <TableCell className="text-gray-900 dark:text-gray-100 font-semibold cursor-pointer" onClick={() => toggleExpandedRow(p.id)}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                                                            #{p.id}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-gray-900 dark:text-gray-100">{p.cliente?.nombre || p.cliente?.razon_social}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        {p.venta_id ? (
+                                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                                                #{p.venta_id}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400 dark:text-gray-500">-</span>
+                                                        )}
+                                                    </TableCell>
+                                                    {/* <TableCell className="text-gray-900 dark:text-gray-100 text-sm">{prestabesNombres}</TableCell> */}
+                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100">{cantidadTotal || p.cantidad || 0}</TableCell> */}
+                                                    <TableCell className="text-gray-900 dark:text-gray-100">Bs {p.monto_garantia}</TableCell>
+                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold">{cantidadTotal}</TableCell> */}
+                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold text-green-600 dark:text-green-400">{cantidadDevuelta}</TableCell> */}
+                                                    {/* <TableCell className="text-center">
                                                     <span className={`font-semibold ${cantidadFaltante === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                                                         {cantidadFaltante}
                                                     </span>
                                                 </TableCell> */}
-                                                <TableCell className="text-gray-900 dark:text-gray-100">
-                                                    {new Date(p.fecha_prestamo).toLocaleDateString('es-ES')}
-                                                </TableCell>
-                                                <TableCell className="text-gray-900 dark:text-gray-100">
-                                                    {p.fecha_esperada_devolucion
-                                                        ? new Date(p.fecha_esperada_devolucion).toLocaleDateString(
-                                                            'es-ES'
-                                                        )
-                                                        : 'S/P'}
-                                                </TableCell>
-                                                {/* <TableCell className="text-gray-900 dark:text-gray-100">
+                                                    <TableCell className="text-gray-900 dark:text-gray-100">
+                                                        {new Date(p.fecha_prestamo).toLocaleDateString('es-ES')}
+                                                    </TableCell>
+                                                    <TableCell className="text-gray-900 dark:text-gray-100">
+                                                        {p.fecha_esperada_devolucion
+                                                            ? new Date(p.fecha_esperada_devolucion).toLocaleDateString(
+                                                                'es-ES'
+                                                            )
+                                                            : 'S/P'}
+                                                    </TableCell>
+                                                    {/* <TableCell className="text-gray-900 dark:text-gray-100">
                                                     {diasVencidos !== null ? (
                                                         <span className="text-red-600 dark:text-red-400 font-semibold">
                                                             {diasVencidos}d
@@ -725,117 +883,117 @@ export default function PrestamosClientesIndex() {
                                                         '-'
                                                     )}
                                                 </TableCell> */}
-                                                <TableCell>{getEstadoBadge(p.estado)}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 p-0"
-                                                                aria-label="Abrir menú de acciones"
-                                                            >
-                                                                <MoreHorizontal size={16} />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-56">
-                                                            <DropdownMenuItem onSelect={() => abrirModalEdicion(p)}>
-                                                                <Edit size={16} />
-                                                                Editar
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem asChild>
-                                                                <a href={`/prestamos/clientes/${p.id}/devoluciones`}>
-                                                                    <History size={16} />
-                                                                    Ver devoluciones
-                                                                </a>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onSelect={async () => {
-                                                                    try {
-                                                                        const prestamoActualizado = await prestamoClienteService.getById(p.id);
-                                                                        setSelectedPrestamoDetalles(prestamoActualizado);
-                                                                        setShowDetallesModal(true);
-                                                                    } catch (error) {
-                                                                        console.error('Error cargando detalles:', error);
-                                                                        addToast('Error cargando detalles del préstamo', 'error');
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Eye size={16} />
-                                                                Ver detalles
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onSelect={() => {
-                                                                    setSelectedPrestamoForPrint(p);
-                                                                    setShowOutputModal(true);
-                                                                }}
-                                                            >
-                                                                <Printer size={16} />
-                                                                Imprimir
-                                                            </DropdownMenuItem>
-                                                            {(p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO') && (
+                                                    <TableCell>{getEstadoBadge(p.estado)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 p-0"
+                                                                    aria-label="Abrir menú de acciones"
+                                                                >
+                                                                    <MoreHorizontal size={16} />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-56">
+                                                                <DropdownMenuItem onSelect={() => abrirModalEdicion(p)}>
+                                                                    <Edit size={16} />
+                                                                    Editar
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem asChild>
+                                                                    <a href={`/prestamos/clientes/${p.id}/devoluciones`}>
+                                                                        <History size={16} />
+                                                                        Ver devoluciones
+                                                                    </a>
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onSelect={async () => {
                                                                         try {
-                                                                            console.group(`📥 Abrir modal devolución - préstamo #${p.id}`);
-                                                                            console.log('📋 préstamo desde listado (getAll):', p);
-                                                                            console.log('📋 detalles desde listado (getAll):', p.detalles);
-
-                                                                            const prestamoActualizado = await prestamoClienteService.getById(Number(p.id));
-                                                                            console.log('✅ préstamo recargado (getById):', prestamoActualizado);
-                                                                            console.log('✅ detalles recargados (getById):', (prestamoActualizado as any)?.detalles);
-                                                                            console.groupEnd();
-
-                                                                            window.location.href = `/prestamos/clientes/${p.id}/registrar-devolucion`;
+                                                                            const prestamoActualizado = await prestamoClienteService.getById(p.id);
+                                                                            setSelectedPrestamoDetalles(prestamoActualizado);
+                                                                            setShowDetallesModal(true);
                                                                         } catch (error) {
-                                                                            console.error('❌ Error recargando préstamo para devolución:', error);
-                                                                            addToast('Error cargando datos completos del préstamo', 'error');
+                                                                            console.error('Error cargando detalles:', error);
+                                                                            addToast('Error cargando detalles del préstamo', 'error');
                                                                         }
                                                                     }}
                                                                 >
-                                                                    <RotateCcw size={16} />
-                                                                    Registrar devolución
+                                                                    <Eye size={16} />
+                                                                    Ver detalles
                                                                 </DropdownMenuItem>
-                                                            )}
-                                                            {p.estado !== 'CANCELADO' && (
                                                                 <DropdownMenuItem
-                                                                    variant="destructive"
-                                                                    onSelect={() => abrirModalAnular(p)}
+                                                                    onSelect={() => {
+                                                                        setSelectedPrestamoForPrint(p);
+                                                                        setShowOutputModal(true);
+                                                                    }}
                                                                 >
-                                                                    <X size={16} />
-                                                                    Anular préstamo
+                                                                    <Printer size={16} />
+                                                                    Imprimir
                                                                 </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
+                                                                {(p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO') && (
+                                                                    <DropdownMenuItem
+                                                                        onSelect={async () => {
+                                                                            try {
+                                                                                console.group(`📥 Abrir modal devolución - préstamo #${p.id}`);
+                                                                                console.log('📋 préstamo desde listado (getAll):', p);
+                                                                                console.log('📋 detalles desde listado (getAll):', p.detalles);
 
-                                            {/* Expandable detail rows */}
-                                            {isExpanded && p.detalles && p.detalles.map((detalle: any, detalleIdx: number) => {
-                                                const totalDetalle = detalle.cantidad_prestada || 0;
-                                                const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + (dev.cantidad_devuelta || 0), 0) || 0;
-                                                const faltanteDetalle = p.estado === 'CANCELADO' ? 0 : Math.max(0, totalDetalle - devueltoDetalle);
-                                                const nombreDetalle = detalle.prestable?.nombre || 'N/D';
+                                                                                const prestamoActualizado = await prestamoClienteService.getById(Number(p.id));
+                                                                                console.log('✅ préstamo recargado (getById):', prestamoActualizado);
+                                                                                console.log('✅ detalles recargados (getById):', (prestamoActualizado as any)?.detalles);
+                                                                                console.groupEnd();
 
-                                                return (
-                                                    <TableRow key={`${p.id}-detail-${detalleIdx}`} className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700">
-                                                        <TableCell></TableCell>
-                                                        <TableCell className="pl-4 text-gray-700 dark:text-gray-300 text-sm">{nombreDetalle}</TableCell>
-                                                        <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm font-medium">Cantidad: {totalDetalle}</TableCell>
-                                                        <TableCell className="text-center text-green-600 dark:text-green-400 text-sm font-medium">Devuelto: {devueltoDetalle}</TableCell>
-                                                        <TableCell className="text-center">
-                                                            {/* <span className={`text-sm font-medium ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                                                                window.location.href = `/prestamos/clientes/${p.id}/registrar-devolucion`;
+                                                                            } catch (error) {
+                                                                                console.error('❌ Error recargando préstamo para devolución:', error);
+                                                                                addToast('Error cargando datos completos del préstamo', 'error');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RotateCcw size={16} />
+                                                                        Registrar devolución
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                                {p.estado !== 'CANCELADO' && (
+                                                                    <DropdownMenuItem
+                                                                        variant="destructive"
+                                                                        onSelect={() => abrirModalAnular(p)}
+                                                                    >
+                                                                        <X size={16} />
+                                                                        Anular préstamo
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+
+                                                {/* Expandable detail rows */}
+                                                {isExpanded && p.detalles && p.detalles.map((detalle: any, detalleIdx: number) => {
+                                                    const totalDetalle = detalle.cantidad_prestada || 0;
+                                                    const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + (dev.cantidad_devuelta || 0), 0) || 0;
+                                                    const faltanteDetalle = p.estado === 'CANCELADO' ? 0 : Math.max(0, totalDetalle - devueltoDetalle);
+                                                    const nombreDetalle = detalle.prestable?.nombre || 'N/D';
+
+                                                    return (
+                                                        <TableRow key={`${p.id}-detail-${detalleIdx}`} className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700">
+                                                            <TableCell></TableCell>
+                                                            <TableCell className="pl-4 text-gray-700 dark:text-gray-300 text-sm">{nombreDetalle}</TableCell>
+                                                            <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm font-medium">Cantidad: {totalDetalle}</TableCell>
+                                                            <TableCell className="text-center text-green-600 dark:text-green-400 text-sm font-medium">Devuelto: {devueltoDetalle}</TableCell>
+                                                            <TableCell className="text-center">
+                                                                {/* <span className={`text-sm font-medium ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                                                                 {faltanteDetalle}
                                                             </span> */}
-                                                        </TableCell>
-                                                        <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
-                                                        <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
-                                                        <TableCell></TableCell>
-                                                        <TableCell></TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
+                                                            </TableCell>
+                                                            <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
+                                                            <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
+                                                            <TableCell></TableCell>
+                                                            <TableCell></TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
                                             </React.Fragment>
                                         );
                                     })}
@@ -928,9 +1086,9 @@ export default function PrestamosClientesIndex() {
                 {selectedPrestamoDetalles && (
                     <Dialog open={showDetallesModal} onOpenChange={setShowDetallesModal}>
                         <DialogContent
-                                style={{ width: '90vw', maxWidth: '90vw' }}
-                                className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 p-2"
-                            >
+                            style={{ width: '90vw', maxWidth: '90vw' }}
+                            className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 p-2"
+                        >
                             <DialogHeader>
                                 <DialogTitle>Detalles del Préstamo #{selectedPrestamoDetalles.id}</DialogTitle>
                                 <DialogDescription>
@@ -1012,10 +1170,10 @@ export default function PrestamosClientesIndex() {
                                                                 </p>
                                                             </div>
                                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${detalle.estado === 'ACTIVO'
-                                                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                                                                    : detalle.estado === 'COMPLETAMENTE_DEVUELTO'
-                                                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                                                                : detalle.estado === 'COMPLETAMENTE_DEVUELTO'
+                                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                                                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                                                                 }`}>
                                                                 {detalle.estado.replace(/_/g, ' ')}
                                                             </span>
@@ -1053,10 +1211,10 @@ export default function PrestamosClientesIndex() {
                                                         {/* Tabla de Devoluciones Detalladas */}
                                                         {detalle.devolucion_detalles && detalle.devolucion_detalles.length > 0 ? (
                                                             <div className="overflow-x-auto">
-                                                                    <table className="w-full text-xs">
-                                                                        <thead>
-                                                                            <tr className="border-b border-gray-300 dark:border-gray-600">
-                                                                                <th className="text-left py-2 px-2 font-semibold text-gray-900 dark:text-white">Fecha</th>
+                                                                <table className="w-full text-xs">
+                                                                    <thead>
+                                                                        <tr className="border-b border-gray-300 dark:border-gray-600">
+                                                                            <th className="text-left py-2 px-2 font-semibold text-gray-900 dark:text-white">Fecha</th>
                                                                             <th className="text-center py-2 px-2 font-semibold text-gray-900 dark:text-white">Devuelto</th>
                                                                             <th className="text-center py-2 px-2 font-semibold text-gray-900 dark:text-white">Dañado Parcial</th>
                                                                             <th className="text-center py-2 px-2 font-semibold text-gray-900 dark:text-white">Dañado Total</th>
