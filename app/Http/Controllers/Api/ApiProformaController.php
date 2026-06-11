@@ -11,11 +11,11 @@ use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proforma;
 use App\Services\ComboStockService;
-use App\Services\Reservas\ReservaDistribucionService;
-use App\Services\Stock\MovimientoStockService;  // ✅ NUEVO: Servicio centralizado
-use App\Services\Stock\StockService; // ✅ CORREGIDO: namespace correcto
-use App\Services\Venta\PrecioRangoProductoService;
-use App\Services\PagoVentaService; // ✅ NUEVO: Para registrar detalles de pago
+use App\Services\PagoVentaService;
+use App\Services\Reservas\ReservaDistribucionService; // ✅ NUEVO: Servicio centralizado
+use App\Services\Stock\MovimientoStockService;        // ✅ CORREGIDO: namespace correcto
+use App\Services\Stock\StockService;
+use App\Services\Venta\PrecioRangoProductoService; // ✅ NUEVO: Para registrar detalles de pago
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,14 +27,32 @@ use Inertia\Response;
 class ApiProformaController extends Controller
 {
     public function __construct(
-        private MovimientoStockService $movimientoService,  // ✅ NUEVO: Servicio centralizado
-        private PagoVentaService $pagoVentaService, // ✅ NUEVO: Para registrar detalles de pago
+        private MovimientoStockService $movimientoService, // ✅ NUEVO: Servicio centralizado
+        private PagoVentaService $pagoVentaService,        // ✅ NUEVO: Para registrar detalles de pago
     ) {}
 
     public function store(Request $request)
     {
         // Primero normalizar los campos del Flutter ANTES de validar
         $requestData = $request->all();
+
+        // ✅ LOG: Mostrar exactamente qué llega del frontend
+        \Log::info('📨 [ApiProformaController@store] REQUEST RECIBIDO DEL FRONTEND', [
+            'cliente_id' => $requestData['cliente_id'] ?? null,
+            'tipo_entrega' => $requestData['tipo_entrega'] ?? null,
+            'politica_pago' => $requestData['politica_pago'] ?? null,
+            'fecha_entrega_solicitada' => $requestData['fecha_entrega_solicitada'] ?? null,
+            'hora_entrega_solicitada' => $requestData['hora_entrega_solicitada'] ?? null,
+            'hora_entrega_solicitada_fin' => $requestData['hora_entrega_solicitada_fin'] ?? null,
+            'fecha_vencimiento' => $requestData['fecha_vencimiento'] ?? null,
+            'direccion_entrega_solicitada_id' => $requestData['direccion_entrega_solicitada_id'] ?? null,
+            'productos_count' => count($requestData['productos'] ?? []),
+            'productos' => $requestData['productos'] ?? [],
+            // Alternativas (si vienen)
+            'fecha_programada' => $requestData['fecha_programada'] ?? null,
+            'hora_inicio_preferida' => $requestData['hora_inicio_preferida'] ?? null,
+            'hora_fin_preferida' => $requestData['hora_fin_preferida'] ?? null,
+        ]);
 
         // NUEVO: Normalizar tipo_entrega (default: DELIVERY si no viene)
         if (! isset($requestData['tipo_entrega'])) {
@@ -46,13 +64,13 @@ class ApiProformaController extends Controller
             try {
                 $requestData['fecha_entrega_solicitada'] = \Carbon\Carbon::parse($request->fecha_programada)->format('Y-m-d');
                 \Log::info('✅ Normalización fecha_programada → fecha_entrega_solicitada', [
-                    'fecha_programada' => $request->fecha_programada,
+                    'fecha_programada'         => $request->fecha_programada,
                     'fecha_entrega_solicitada' => $requestData['fecha_entrega_solicitada'],
                 ]);
             } catch (\Exception $e) {
                 \Log::error('❌ Error normalizando fecha_programada', [
                     'fecha_programada' => $request->fecha_programada,
-                    'error' => $e->getMessage(),
+                    'error'            => $e->getMessage(),
                 ]);
                 return response()->json([
                     'success' => false,
@@ -133,11 +151,11 @@ class ApiProformaController extends Controller
         try {
             // ✅ LOG: Comenzó creación de proforma
             \Log::info('🔄 Iniciando creación de proforma...', [
-                'cliente_id' => $requestData['cliente_id'],
-                'tipo_entrega' => $requestData['tipo_entrega'],
-                'fecha_entrega' => $requestData['fecha_entrega_solicitada'] ?? null,
-                'direccion_id' => $requestData['direccion_entrega_solicitada_id'] ?? null,
-                'politica_pago' => $requestData['politica_pago'],
+                'cliente_id'      => $requestData['cliente_id'],
+                'tipo_entrega'    => $requestData['tipo_entrega'],
+                'fecha_entrega'   => $requestData['fecha_entrega_solicitada'] ?? null,
+                'direccion_id'    => $requestData['direccion_entrega_solicitada_id'] ?? null,
+                'politica_pago'   => $requestData['politica_pago'],
                 'productos_count' => count($requestData['productos'] ?? []),
             ]);
 
@@ -167,7 +185,7 @@ class ApiProformaController extends Controller
 
             // ✅ NUEVO (2026-04-06): Obtener preventista_id si el usuario es preventista
             // Buscar en la tabla empleados si existe un preventista con este user_id
-            $preventistaId = null;
+            $preventistaId      = null;
             $usuarioAutenticado = auth()->user();
 
             try {
@@ -175,20 +193,20 @@ class ApiProformaController extends Controller
                 if ($empleado && $empleado->id) {
                     $preventistaId = $empleado->id;
                     \Log::info('✅ Usuario autenticado es empleado/preventista', [
-                        'user_id' => $usuarioCreador,
+                        'user_id'        => $usuarioCreador,
                         'preventista_id' => $preventistaId,
-                        'usuario_nick' => $usuarioAutenticado->usernick,
+                        'usuario_nick'   => $usuarioAutenticado->usernick,
                     ]);
                 } else {
                     \Log::info('ℹ️  Usuario autenticado NO está en tabla empleados', [
-                        'user_id' => $usuarioCreador,
+                        'user_id'      => $usuarioCreador,
                         'usuario_nick' => $usuarioAutenticado?->usernick ?? 'desconocido',
                     ]);
                 }
             } catch (\Exception $e) {
                 \Log::warning('⚠️  Error buscando empleado/preventista', [
                     'user_id' => $usuarioCreador,
-                    'error' => $e->getMessage(),
+                    'error'   => $e->getMessage(),
                 ]);
             }
 
@@ -267,18 +285,18 @@ class ApiProformaController extends Controller
                         $componentesSinStock = [];
 
                         foreach ($item['combo_items_seleccionados'] as $itemSeleccionado) {
-                            $comboItemId = $itemSeleccionado['combo_item_id'] ?? null;
+                            $comboItemId            = $itemSeleccionado['combo_item_id'] ?? null;
                             $productoIdSeleccionado = $itemSeleccionado['producto_id'] ?? null;
-                            $cantidadItemCombo = (float) ($itemSeleccionado['cantidad'] ?? 1);
+                            $cantidadItemCombo      = (float) ($itemSeleccionado['cantidad'] ?? 1);
 
                             // ✅ Validación 1: Que el combo_item_id pertenezca al combo
-                            if (!isset($productosEnCombo[$comboItemId])) {
+                            if (! isset($productosEnCombo[$comboItemId])) {
                                 throw new \Exception(json_encode([
                                     'success' => false,
                                     'message' => "El item #{$comboItemId} no pertenece al combo {$producto->nombre}",
-                                    'code' => 'COMBO_ITEM_NO_PERTENECE',
-                                    'status' => 422,
-                                    'combo_id' => $producto->id,
+                                    'code'          => 'COMBO_ITEM_NO_PERTENECE',
+                                    'status'        => 422,
+                                    'combo_id'      => $producto->id,
                                     'combo_item_id' => $comboItemId,
                                 ]));
                             }
@@ -286,11 +304,11 @@ class ApiProformaController extends Controller
                             // ✅ Validación 2: Que el producto_id coincida con el combo_item
                             if ($productosEnCombo[$comboItemId] !== $productoIdSeleccionado) {
                                 throw new \Exception(json_encode([
-                                    'success' => false,
-                                    'message' => "El producto seleccionado no coincide con el item del combo",
-                                    'code' => 'PRODUCTO_NO_COINCIDE',
-                                    'status' => 422,
-                                    'combo_item_id' => $comboItemId,
+                                    'success'           => false,
+                                    'message'           => "El producto seleccionado no coincide con el item del combo",
+                                    'code'              => 'PRODUCTO_NO_COINCIDE',
+                                    'status'            => 422,
+                                    'combo_item_id'     => $comboItemId,
                                     'producto_esperado' => $productosEnCombo[$comboItemId],
                                     'producto_recibido' => $productoIdSeleccionado,
                                 ]));
@@ -301,35 +319,35 @@ class ApiProformaController extends Controller
                             $stockComponente = $productoDeLista->stock()->sum('cantidad_disponible') ?? 0;
 
                             // Stock requerido = cantidad_combos × cantidad_del_item
-                            $comboItem = \App\Models\ComboItem::find($comboItemId);
+                            $comboItem                 = \App\Models\ComboItem::find($comboItemId);
                             $cantidadRequeridaPorCombo = $comboItem->cantidad ?? 1;
-                            $stockRequerido = $cantidad * $cantidadRequeridaPorCombo;
+                            $stockRequerido            = $cantidad * $cantidadRequeridaPorCombo;
 
                             if ($stockComponente < $stockRequerido) {
                                 $componentesSinStock[] = [
-                                    'combo_item_id'    => $comboItemId,
-                                    'componente'       => $productoDeLista->nombre,
+                                    'combo_item_id'      => $comboItemId,
+                                    'componente'         => $productoDeLista->nombre,
                                     'combos_solicitados' => (int) $cantidad,
                                     'cantidad_por_combo' => $cantidadRequeridaPorCombo,
-                                    'stock_requerido'  => $stockRequerido,
-                                    'stock_disponible' => $stockComponente,
-                                    'faltante'         => $stockRequerido - $stockComponente,
+                                    'stock_requerido'    => $stockRequerido,
+                                    'stock_disponible'   => $stockComponente,
+                                    'faltante'           => $stockRequerido - $stockComponente,
                                 ];
 
                                 \Log::warning('⚠️ Stock insuficiente en componente de combo', [
-                                    'combo_id'           => $producto->id,
-                                    'combo_nombre'       => $producto->nombre,
-                                    'combo_item_id'      => $comboItemId,
-                                    'componente_id'      => $productoIdSeleccionado,
-                                    'componente_nombre'  => $productoDeLista->nombre,
-                                    'stock_requerido'    => $stockRequerido,
-                                    'stock_disponible'   => $stockComponente,
+                                    'combo_id'          => $producto->id,
+                                    'combo_nombre'      => $producto->nombre,
+                                    'combo_item_id'     => $comboItemId,
+                                    'componente_id'     => $productoIdSeleccionado,
+                                    'componente_nombre' => $productoDeLista->nombre,
+                                    'stock_requerido'   => $stockRequerido,
+                                    'stock_disponible'  => $stockComponente,
                                 ]);
                             }
                         }
 
                         // Si hay componentes con stock insuficiente, agregar al error
-                        if (!empty($componentesSinStock)) {
+                        if (! empty($componentesSinStock)) {
                             $stockInsuficiente[] = [
                                 'producto'   => $producto->nombre . ' (COMBO)',
                                 'tipo_error' => 'COMPONENTES_SIN_STOCK',
@@ -425,7 +443,7 @@ class ApiProformaController extends Controller
             // Si hay productos con stock insuficiente, retornar error
             if (! empty($stockInsuficiente)) {
                 \Log::error('❌ VALIDACIÓN FALLIDA: Stock insuficiente', [
-                    'productos_sin_stock' => $stockInsuficiente,
+                    'productos_sin_stock'       => $stockInsuficiente,
                     'total_productos_sin_stock' => count($stockInsuficiente),
                 ]);
                 return response()->json([
@@ -451,17 +469,17 @@ class ApiProformaController extends Controller
                 : now()->addDays(7)->toDateString();
 
             \Log::info('📝 Datos preparados para crear proforma', [
-                'numero' => 'auto-generated',
-                'fecha' => now()->toDateTimeString(),
-                'fecha_vencimiento' => $fechaVencimiento,
-                'cliente_id' => $requestData['cliente_id'],
-                'tipo_entrega' => $requestData['tipo_entrega'],
-                'subtotal' => $subtotal,
-                'total' => $total,
-                'politica_pago' => $requestData['politica_pago'],
-                'fecha_entrega_solicitada' => $fechaEntrega,
-                'hora_entrega_solicitada' => $horaEntrega,
-                'hora_entrega_solicitada_fin' => $horaEntregaFin,
+                'numero'                          => 'auto-generated',
+                'fecha'                           => now()->toDateTimeString(),
+                'fecha_vencimiento'               => $fechaVencimiento,
+                'cliente_id'                      => $requestData['cliente_id'],
+                'tipo_entrega'                    => $requestData['tipo_entrega'],
+                'subtotal'                        => $subtotal,
+                'total'                           => $total,
+                'politica_pago'                   => $requestData['politica_pago'],
+                'fecha_entrega_solicitada'        => $fechaEntrega,
+                'hora_entrega_solicitada'         => $horaEntrega,
+                'hora_entrega_solicitada_fin'     => $horaEntregaFin,
                 'direccion_entrega_solicitada_id' => $requestData['tipo_entrega'] === 'DELIVERY' ? $requestData['direccion_entrega_solicitada_id'] : null,
             ]);
 
@@ -473,6 +491,7 @@ class ApiProformaController extends Controller
                 'estado_proforma_id'              => 1, // ID del estado PENDIENTE en estados_logistica
                 'canal_origen'                    => Proforma::CANAL_APP_EXTERNA,
                 'tipo_entrega'                    => $requestData['tipo_entrega'], // NUEVO: DELIVERY o PICKUP
+                'requiere_envio'                  => $requestData['tipo_entrega'] === 'DELIVERY', // ✅ NUEVO: true si DELIVERY, false si PICKUP
                 'subtotal'                        => $subtotal,
                 'impuesto'                        => $impuesto,
                 'total'                           => $total,
@@ -495,7 +514,7 @@ class ApiProformaController extends Controller
             ]);
 
             \Log::info('✅ Proforma creada en BD', [
-                'proforma_id' => $proforma->id,
+                'proforma_id'     => $proforma->id,
                 'proforma_numero' => $proforma->numero,
             ]);
 
@@ -588,13 +607,13 @@ class ApiProformaController extends Controller
             // ✅ LOG DETALLADO del error para debugging
             \Log::error('❌ ERROR CRÍTICO creando proforma', [
                 'error_message' => $e->getMessage(),
-                'error_code' => $e->getCode(),
-                'error_file' => $e->getFile(),
-                'error_line' => $e->getLine(),
-                'error_trace' => $e->getTraceAsString(),
-                'request_data' => [
-                    'cliente_id' => $request->cliente_id ?? null,
-                    'tipo_entrega' => $request->tipo_entrega ?? null,
+                'error_code'    => $e->getCode(),
+                'error_file'    => $e->getFile(),
+                'error_line'    => $e->getLine(),
+                'error_trace'   => $e->getTraceAsString(),
+                'request_data'  => [
+                    'cliente_id'      => $request->cliente_id ?? null,
+                    'tipo_entrega'    => $request->tipo_entrega ?? null,
                     'productos_count' => count($request->productos ?? []),
                 ],
             ]);
@@ -623,12 +642,12 @@ class ApiProformaController extends Controller
             'usuarioCreador',
             'usuarioAprobador',
             'estadoLogistica', // ✅ AGREGADO: Cargar relación de estado
-            // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
+                               // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
             'venta' => function ($q) {
                 $q->with([
-                    'estadoDocumento',      // Estado del documento (estados_documento)
-                    'estadoLogistica',      // Estado logístico (estados_logistica)
-                    'confirmaciones',       // Confirmaciones de entrega (entregas_venta_confirmaciones)
+                    'estadoDocumento', // Estado del documento (estados_documento)
+                    'estadoLogistica', // Estado logístico (estados_logistica)
+                    'confirmaciones',  // Confirmaciones de entrega (entregas_venta_confirmaciones)
                 ]);
             },
         ]);
@@ -638,7 +657,7 @@ class ApiProformaController extends Controller
 
         // Si tiene venta convertida, incluir observaciones
         if ($proforma->venta) {
-            if (!isset($responseData['venta'])) {
+            if (! isset($responseData['venta'])) {
                 $responseData['venta'] = [];
             }
             $responseData['venta']['observaciones'] = $proforma->venta->observaciones;
@@ -1142,30 +1161,30 @@ class ApiProformaController extends Controller
             // Usar CASE WHEN para scoring: así se filtran por ID/número primero en resultados
             $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
-                  ->orWhere('numero', 'like', "%{$search}%")
-                  ->orWhereHas('cliente', function ($q) use ($search) {
-                      $q->whereRaw('LOWER(nombre) like ?', ["%{$search}%"])
-                        ->orWhere('codigo_cliente', 'like', "%{$search}%")
-                        ->orWhere('nit', 'like', "%{$search}%")
-                        ->orWhere('telefono', 'like', "%{$search}%");
-                  });
+                    ->orWhere('numero', 'like', "%{$search}%")
+                    ->orWhereHas('cliente', function ($q) use ($search) {
+                        $q->whereRaw('LOWER(nombre) like ?', ["%{$search}%"])
+                            ->orWhere('codigo_cliente', 'like', "%{$search}%")
+                            ->orWhere('nit', 'like', "%{$search}%")
+                            ->orWhere('telefono', 'like', "%{$search}%");
+                    });
             })
             // Agregar orden de relevancia: ID exacto > número exacto > ID parcial > número parcial > cliente
-            ->orderByRaw(
-                "CASE
+                ->orderByRaw(
+                    "CASE
                     WHEN CAST(id AS VARCHAR) = ? THEN 1
                     WHEN numero = ? THEN 2
                     WHEN CAST(id AS VARCHAR) LIKE ? THEN 3
                     WHEN numero LIKE ? THEN 4
                     ELSE 5
                 END",
-                [
-                    $search,
-                    $search,
-                    "%{$search}%",
-                    "%{$search}%",
-                ]
-            );
+                    [
+                        $search,
+                        $search,
+                        "%{$search}%",
+                        "%{$search}%",
+                    ]
+                );
         }
 
         // Búsqueda por número de proforma
@@ -1201,7 +1220,7 @@ class ApiProformaController extends Controller
             } elseif ($request->filtro_vencidas === 'VIGENTES') {
                 $query->where(function ($q) use ($hoy) {
                     $q->whereDate('fecha_vencimiento', '>=', $hoy)
-                      ->orWhereNull('fecha_vencimiento');
+                        ->orWhereNull('fecha_vencimiento');
                 });
             }
         }
@@ -1233,16 +1252,16 @@ class ApiProformaController extends Controller
             // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
             'venta' => function ($q) {
                 $q->with([
-                    'estadoDocumento',      // Estado del documento (estados_documento)
-                    'estadoLogistica',      // Estado logístico (estados_logistica)
-                    'confirmaciones',       // Confirmaciones de entrega (entregas_venta_confirmaciones)
+                    'estadoDocumento', // Estado del documento (estados_documento)
+                    'estadoLogistica', // Estado logístico (estados_logistica)
+                    'confirmaciones',  // Confirmaciones de entrega (entregas_venta_confirmaciones)
                 ]);
             },
         ]);
 
         // ✅ Si hay búsqueda, ya se agregó orderByRaw para relevancia
         // Si no hay búsqueda, ordenar por fecha de creación descendente (más recientes primero)
-        if (!$request->filled('search')) {
+        if (! $request->filled('search')) {
             $query->orderBy('created_at', 'desc');
         } else {
             // Cuando hay búsqueda, el ordenamiento de relevancia ya está agregado
@@ -1310,28 +1329,28 @@ class ApiProformaController extends Controller
                         // ✅ NUEVO 2026-02-27: Si está convertida, agregar info de venta
                         if ($proforma->venta) {
                             $responseItem['venta'] = [
-                                'id'                    => $proforma->venta->id,
-                                'numero'                => $proforma->venta->numero,
-                                'fecha'                 => $proforma->venta->fecha?->format('Y-m-d'),
-                                'estado_documento'      => $proforma->venta->estadoDocumento ? [
-                                    'id'        => $proforma->venta->estadoDocumento->id,
-                                    'codigo'    => $proforma->venta->estadoDocumento->codigo,
-                                    'nombre'    => $proforma->venta->estadoDocumento->nombre,
-                                    'color'     => $proforma->venta->estadoDocumento->color,
+                                'id'                     => $proforma->venta->id,
+                                'numero'                 => $proforma->venta->numero,
+                                'fecha'                  => $proforma->venta->fecha?->format('Y-m-d'),
+                                'estado_documento'       => $proforma->venta->estadoDocumento ? [
+                                    'id'     => $proforma->venta->estadoDocumento->id,
+                                    'codigo' => $proforma->venta->estadoDocumento->codigo,
+                                    'nombre' => $proforma->venta->estadoDocumento->nombre,
+                                    'color'  => $proforma->venta->estadoDocumento->color,
                                 ] : null,
-                                'estado_logistica'      => $proforma->venta->estadoLogistica ? [
-                                    'id'        => $proforma->venta->estadoLogistica->id,
-                                    'codigo'    => $proforma->venta->estadoLogistica->codigo,
-                                    'nombre'    => $proforma->venta->estadoLogistica->nombre,
-                                    'color'     => $proforma->venta->estadoLogistica->color,
+                                'estado_logistica'       => $proforma->venta->estadoLogistica ? [
+                                    'id'     => $proforma->venta->estadoLogistica->id,
+                                    'codigo' => $proforma->venta->estadoLogistica->codigo,
+                                    'nombre' => $proforma->venta->estadoLogistica->nombre,
+                                    'color'  => $proforma->venta->estadoLogistica->color,
                                 ] : null,
                                 'confirmaciones_entrega' => $proforma->venta->confirmaciones ? $proforma->venta->confirmaciones->map(function ($confirmacion) {
                                     return [
-                                        'id'       => $confirmacion->id,
-                                        'estado'   => $confirmacion->estado ?? 'PENDIENTE',
-                                        'fecha'    => $confirmacion->fecha?->format('Y-m-d H:i:s'),
-                                        'chofer'   => $confirmacion->chofer ?? null,
-                                        'cliente'  => $confirmacion->cliente_confirmacion ?? null,
+                                        'id'      => $confirmacion->id,
+                                        'estado'  => $confirmacion->estado ?? 'PENDIENTE',
+                                        'fecha'   => $confirmacion->fecha?->format('Y-m-d H:i:s'),
+                                        'chofer'  => $confirmacion->chofer ?? null,
+                                        'cliente' => $confirmacion->cliente_confirmacion ?? null,
                                     ];
                                 })->toArray() : [],
                                 'observaciones'          => $proforma->venta->observaciones, // ✅ NUEVO 2026-02-27: Motivo de anulación
@@ -2943,7 +2962,7 @@ class ApiProformaController extends Controller
                         throw new \Exception(json_encode([
                             'success' => false,
                             'message' => "El cliente '{$cliente->nombre}' no tiene permiso para solicitar crédito",
-                            'code' => 'CLIENTE_SIN_PERMISO_CREDITO',
+                            'code'   => 'CLIENTE_SIN_PERMISO_CREDITO',
                             'status' => 422,
                         ]));
                     }
@@ -2957,7 +2976,7 @@ class ApiProformaController extends Controller
                         throw new \Exception(json_encode([
                             'success' => false,
                             'message' => "El cliente '{$cliente->nombre}' no tiene límite de crédito configurado",
-                            'code' => 'CLIENTE_SIN_LIMITE_CREDITO',
+                            'code'   => 'CLIENTE_SIN_LIMITE_CREDITO',
                             'status' => 422,
                         ]));
                     }
@@ -2997,10 +3016,10 @@ class ApiProformaController extends Controller
                         $datosCoordinacion['hora_entrega_confirmada_fin'] = $request->input('hora_entrega_confirmada_fin');
                     }
 
-                    if (!empty($datosCoordinacion)) {
+                    if (! empty($datosCoordinacion)) {
                         $proforma->update($datosCoordinacion);
                         Log::info('✅ [convertirAVenta] Proforma actualizada con datos de coordinación', [
-                            'proforma_id' => $proforma->id,
+                            'proforma_id'        => $proforma->id,
                             'datos_coordinacion' => $datosCoordinacion,
                         ]);
                     }
@@ -3014,15 +3033,15 @@ class ApiProformaController extends Controller
                         $proforma->refresh(); // Recargar para obtener nuevo estado
 
                         Log::info('✅ [convertirAVenta] Proforma aprobada automáticamente', [
-                            'proforma_id' => $proforma->id,
+                            'proforma_id'     => $proforma->id,
                             'proforma_numero' => $proforma->numero,
-                            'usuario_id' => $usuario->id,
-                            'nuevo_estado' => $proforma->estado,
+                            'usuario_id'      => $usuario->id,
+                            'nuevo_estado'    => $proforma->estado,
                         ]);
                     } catch (\Exception $e) {
                         Log::error('❌ [convertirAVenta] Error al aprobar automáticamente', [
                             'proforma_id' => $proforma->id,
-                            'error' => $e->getMessage(),
+                            'error'       => $e->getMessage(),
                         ]);
                         throw new \Exception("No se pudo aprobar la proforma automáticamente: " . $e->getMessage());
                     }
@@ -3038,290 +3057,8 @@ class ApiProformaController extends Controller
                     ]));
                 }
 
-                // Validación 2: Si hay reservas activas, verificar que no estén expiradas
-                $reservasActivas = $proforma->reservasActivas()->count();
-
-                // ✅ INICIALIZAR SERVICIOS para validaciones de stock (necesarios en ambos bloques)
-                $comboStockService = app(\App\Services\ComboStockService::class);
-                $stockService = app(\App\Services\Stock\StockService::class);
-                $almacenId = auth()->user()->almacen_id ?? 1;
-
-                if ($reservasActivas > 0) {
-                    // Hay reservas: verificar que NO estén expiradas
-                    if ($proforma->tieneReservasExpiradas()) {
-                        Log::error('❌ Reservas expiradas para proforma', [
-                            'proforma_id' => $proforma->id,
-                        ]);
-                        throw new \Exception(json_encode([
-                            'success' => false,
-                            'message' => 'Las reservas de stock han expirado',
-                            'status' => 422,
-                        ]));
-                    }
-
-                    // ✅ MEJORADO (2026-04-06): Incluso con reservas activas, validar que el stock real sea suficiente
-                    // Las reservas pueden quedar obsoletas si el stock se consume por otra venta
-                    Log::info('🔍 Validando que stock real sea suficiente incluso con reservas activas', [
-                        'proforma_id' => $proforma->id,
-                        'reservas_activas' => $reservasActivas,
-                    ]);
-
-                    $productosConStockInsuficiente = [];
-
-                    foreach ($proforma->detalles as $detalle) {
-                        $producto = $detalle->producto;
-                        $cantidad = $detalle->cantidad;
-
-                        if ($producto->es_combo) {
-                            // Para COMBOS: Validar COMPONENTES del combo, no el combo en sí
-                            // Las reservas están en los componentes, no en el combo padre
-                            $componentesCombo = $producto->comboItems()->get();
-
-                            foreach ($componentesCombo as $componenteItem) {
-                                $componenteProducto = $componenteItem->producto;
-                                // Cantidad del componente necesaria = cantidad_del_combo * cantidad_del_componente_en_combo
-                                $cantidadComponenteRequerida = $cantidad * $componenteItem->cantidad;
-
-                                // Buscar reservas del COMPONENTE en esta proforma
-                                $reservasDelComponente = $proforma->reservas()
-                                    ->whereHas('stockProducto', function ($q) use ($componenteProducto) {
-                                        $q->where('producto_id', $componenteProducto->id);
-                                    })
-                                    ->where('estado', 'ACTIVA')
-                                    ->sum('cantidad_reservada');
-
-                                if ($reservasDelComponente > 0) {
-                                    // Hay reservas: validar que sean suficientes
-                                    if ($reservasDelComponente < $cantidadComponenteRequerida) {
-                                        $productosConStockInsuficiente[] = [
-                                            'producto_id' => $componenteProducto->id,
-                                            'producto' => $componenteProducto->nombre . ' (componente de ' . $producto->nombre . ')',
-                                            'requerido' => $cantidadComponenteRequerida,
-                                            'disponible' => $reservasDelComponente,
-                                            'faltante' => $cantidadComponenteRequerida - $reservasDelComponente,
-                                            'tipo' => 'RESERVAS_INSUFICIENTES_COMBO',
-                                        ];
-                                        Log::warning('⚠️  Reservas insuficientes para COMPONENTE DE COMBO', [
-                                            'combo_id' => $producto->id,
-                                            'combo_nombre' => $producto->nombre,
-                                            'componente_id' => $componenteProducto->id,
-                                            'componente_nombre' => $componenteProducto->nombre,
-                                            'requerido' => $cantidadComponenteRequerida,
-                                            'reservado' => $reservasDelComponente,
-                                            'proforma_id' => $proforma->id,
-                                        ]);
-                                    }
-                                } else {
-                                    // NO hay reservas: validar stock disponible del componente
-                                    $stockDisponibleComponente = $componenteProducto->stock()->sum('cantidad_disponible');
-
-                                    if ($stockDisponibleComponente < $cantidadComponenteRequerida) {
-                                        $productosConStockInsuficiente[] = [
-                                            'producto_id' => $componenteProducto->id,
-                                            'producto' => $componenteProducto->nombre . ' (componente de ' . $producto->nombre . ')',
-                                            'requerido' => $cantidadComponenteRequerida,
-                                            'disponible' => $stockDisponibleComponente,
-                                            'faltante' => $cantidadComponenteRequerida - $stockDisponibleComponente,
-                                            'tipo' => 'STOCK_INSUFICIENTE_COMPONENTE_COMBO',
-                                        ];
-                                        Log::warning('⚠️  Stock insuficiente para COMPONENTE DE COMBO (sin reservas)', [
-                                            'combo_id' => $producto->id,
-                                            'combo_nombre' => $producto->nombre,
-                                            'componente_id' => $componenteProducto->id,
-                                            'componente_nombre' => $componenteProducto->nombre,
-                                            'requerido' => $cantidadComponenteRequerida,
-                                            'disponible' => $stockDisponibleComponente,
-                                            'proforma_id' => $proforma->id,
-                                        ]);
-                                    }
-                                }
-                            }
-                        } else {
-                            // Para PRODUCTOS SIMPLES con reservas activas:
-                            // Validar que las RESERVAS DE ESTA PROFORMA cubran la cantidad
-                            $reservasDelProducto = $proforma->reservas()
-                                ->whereHas('stockProducto', function ($q) use ($producto) {
-                                    $q->where('producto_id', $producto->id);
-                                })
-                                ->where('estado', 'ACTIVA')
-                                ->sum('cantidad_reservada');
-
-                            // ✅ MEJORADO: Si hay reservas, usar esas en lugar de cantidad_disponible
-                            if ($reservasDelProducto > 0) {
-                                // Hay reservas: validar que sean suficientes
-                                if ($reservasDelProducto < $cantidad) {
-                                    $productosConStockInsuficiente[] = [
-                                        'producto_id' => $producto->id,
-                                        'producto' => $producto->nombre,
-                                        'requerido' => $cantidad,
-                                        'disponible' => $reservasDelProducto,
-                                        'faltante' => $cantidad - $reservasDelProducto,
-                                        'tipo' => 'RESERVAS_INSUFICIENTES',
-                                    ];
-                                    Log::warning('⚠️  Reservas insuficientes para PRODUCTO SIMPLE', [
-                                        'producto_id' => $producto->id,
-                                        'nombre' => $producto->nombre,
-                                        'requerido' => $cantidad,
-                                        'reservado' => $reservasDelProducto,
-                                        'proforma_id' => $proforma->id,
-                                    ]);
-                                } else {
-                                    // ✅ Las reservas cubren la cantidad, permitir conversión
-                                    Log::info('✅ Reservas suficientes para PRODUCTO SIMPLE', [
-                                        'producto_id' => $producto->id,
-                                        'nombre' => $producto->nombre,
-                                        'requerido' => $cantidad,
-                                        'reservado' => $reservasDelProducto,
-                                        'proforma_id' => $proforma->id,
-                                    ]);
-                                }
-                            } else {
-                                // NO hay reservas: validar stock disponible
-                                $stockDisponible = $producto->stock()->sum('cantidad_disponible');
-
-                                if ($stockDisponible < $cantidad) {
-                                    $productosConStockInsuficiente[] = [
-                                        'producto_id' => $producto->id,
-                                        'producto' => $producto->nombre,
-                                        'requerido' => $cantidad,
-                                        'disponible' => $stockDisponible,
-                                        'faltante' => $cantidad - $stockDisponible,
-                                        'tipo' => 'STOCK_DISPONIBLE_INSUFICIENTE',
-                                    ];
-                                    Log::warning('⚠️  Stock real insuficiente para PRODUCTO SIMPLE (sin reservas)', [
-                                        'producto_id' => $producto->id,
-                                        'nombre' => $producto->nombre,
-                                        'requerido' => $cantidad,
-                                        'disponible' => $stockDisponible,
-                                        'proforma_id' => $proforma->id,
-                                    ]);
-                                }
-                            }
-                        }
-                    }
-
-                    // ❌ Si hay productos con stock insuficiente, rechazar
-                    if (! empty($productosConStockInsuficiente)) {
-                        Log::error('❌ [convertirAVenta] RECHAZADA: Stock real insuficiente (aunque tiene reservas)', [
-                            'proforma_id' => $proforma->id,
-                            'proforma_numero' => $proforma->numero,
-                            'productos_sin_stock' => $productosConStockInsuficiente,
-                        ]);
-
-                        throw new \Exception(json_encode([
-                            'success' => false,
-                            'message' => 'El stock real se agotó. Las reservas no pueden garantizar la venta.',
-                            'code' => 'STOCK_INSUFICIENTE_REAL',
-                            'status' => 422,
-                            'productos_sin_stock' => $productosConStockInsuficiente,
-                        ]));
-                    }
-
-                    Log::info('✅ Stock real validado, reservas activas vigentes, continuando conversión', [
-                        'proforma_id'      => $proforma->id,
-                        'reservas_activas' => $reservasActivas,
-                    ]);
-                } else {
-                    // NO hay reservas: VALIDAR STOCK DISPONIBLE ANTES DE INTENTAR CREAR
-                    Log::info('⚠️  No hay reservas para proforma ' . $proforma->numero . ', validando stock disponible...');
-
-                    // ✅ NUEVO (2026-04-06): Validación explícita de stock antes de convertir
-                    // Los servicios ya fueron inicializados arriba ($comboStockService, $almacenId, etc)
-                    $productosConStockInsuficiente = [];
-
-                    foreach ($proforma->detalles as $detalle) {
-                        $producto = $detalle->producto;
-                        $cantidad = $detalle->cantidad;
-
-                        if ($producto->es_combo) {
-                            // Para COMBOS: Validar COMPONENTES del combo, no el combo en sí
-                            $componentesCombo = $producto->comboItems()->get();
-
-                            foreach ($componentesCombo as $componenteItem) {
-                                $componenteProducto = $componenteItem->producto;
-                                // Cantidad del componente necesaria = cantidad_del_combo * cantidad_del_componente_en_combo
-                                $cantidadComponenteRequerida = $cantidad * $componenteItem->cantidad;
-
-                                // Validar stock disponible del componente
-                                $stockDisponibleComponente = $componenteProducto->stock()->sum('cantidad_disponible');
-
-                                if ($stockDisponibleComponente < $cantidadComponenteRequerida) {
-                                    $productosConStockInsuficiente[] = [
-                                        'producto_id' => $componenteProducto->id,
-                                        'producto' => $componenteProducto->nombre . ' (componente de ' . $producto->nombre . ')',
-                                        'requerido' => $cantidadComponenteRequerida,
-                                        'disponible' => $stockDisponibleComponente,
-                                        'faltante' => $cantidadComponenteRequerida - $stockDisponibleComponente,
-                                        'tipo' => 'STOCK_INSUFICIENTE_COMPONENTE_COMBO',
-                                    ];
-                                    Log::warning('⚠️  Stock insuficiente para COMPONENTE DE COMBO', [
-                                        'combo_id' => $producto->id,
-                                        'combo_nombre' => $producto->nombre,
-                                        'componente_id' => $componenteProducto->id,
-                                        'componente_nombre' => $componenteProducto->nombre,
-                                        'requerido' => $cantidadComponenteRequerida,
-                                        'disponible' => $stockDisponibleComponente,
-                                        'proforma_id' => $proforma->id,
-                                    ]);
-                                }
-                            }
-                        } else {
-                            // Para PRODUCTOS SIMPLES: Validar stock disponible
-                            $stockDisponible = $producto->stock()->sum('cantidad_disponible');
-
-                            if ($stockDisponible < $cantidad) {
-                                $productosConStockInsuficiente[] = [
-                                    'producto_id' => $producto->id,
-                                    'producto' => $producto->nombre,
-                                    'requerido' => $cantidad,
-                                    'disponible' => $stockDisponible,
-                                    'faltante' => $cantidad - $stockDisponible,
-                                ];
-                                Log::warning('⚠️  Stock insuficiente para PRODUCTO SIMPLE', [
-                                    'producto_id' => $producto->id,
-                                    'nombre' => $producto->nombre,
-                                    'requerido' => $cantidad,
-                                    'disponible' => $stockDisponible,
-                                    'proforma_id' => $proforma->id,
-                                ]);
-                            }
-                        }
-                    }
-
-                    // ❌ Si hay productos con stock insuficiente, rechazar la conversión
-                    if (! empty($productosConStockInsuficiente)) {
-                        Log::error('❌ [convertirAVenta] RECHAZADA: Stock insuficiente', [
-                            'proforma_id' => $proforma->id,
-                            'proforma_numero' => $proforma->numero,
-                            'productos_sin_stock' => $productosConStockInsuficiente,
-                        ]);
-
-                        throw new \Exception(json_encode([
-                            'success' => false,
-                            'message' => 'No hay stock disponible para convertir esta proforma a venta',
-                            'code' => 'STOCK_INSUFICIENTE',
-                            'status' => 422,
-                            'productos_sin_stock' => $productosConStockInsuficiente,
-                        ]));
-                    }
-
-                    // ✅ Stock validado, ahora intentar crear reservas
-                    $reservasCreadas = $proforma->reservarStock();
-
-                    if (! $reservasCreadas) {
-                        Log::error('❌ Error al crear reservas automáticamente', [
-                            'proforma_id' => $proforma->id,
-                            'proforma_numero' => $proforma->numero,
-                        ]);
-                        throw new \Exception(json_encode([
-                            'success' => false,
-                            'message' => 'No se pudieron crear reservas de stock. Verifique la disponibilidad de inventario.',
-                            'status' => 422,
-                        ]));
-                    }
-
-                    Log::info('✅ Reservas creadas automáticamente para proforma ' . $proforma->numero);
-                }
+                // ✅ NOTA: La validación y consumo de reservas se hacen DESPUÉS de crear la venta
+                // Se genera el número de venta primero, luego se valida y consume todo en UNA transacción
 
                 // ✅ MEJORADO: Calcular estado de pago según política
                 // Ahora considera todas las políticas: CONTRA_ENTREGA, ANTICIPADO_100, MEDIO_MEDIO, CREDITO
@@ -3388,14 +3125,27 @@ class ApiProformaController extends Controller
                         ->first();
                 }
 
-                $cajaIdParaGuardar = $cajaAbiertaParaRegistro?->caja_id ?? null;
-
-                // ✅ NUEVO: Calcular peso total desde detalles
-                // Fórmula: pesoTotal = Σ(cantidad × peso_producto)
+                // ✅ MEJORADO: Calcular peso total desde detalles (incluyendo componentes de combos)
+                // Fórmula: pesoTotal = Σ(cantidad × peso_producto) o Σ(cantidad_combo × cantidad_componente × peso_componente)
                 $pesoTotal = 0;
                 foreach ($proforma->detalles as $detalle) {
-                    $pesoProducto  = $detalle->producto?->peso ?? 0;
-                    $pesoTotal    += $detalle->cantidad * $pesoProducto;
+                    $producto = $detalle->producto;
+                    $cantidad = $detalle->cantidad;
+
+                    if ($producto->es_combo) {
+                        // Para COMBOS: sumar pesos de componentes
+                        $comboItems = $producto->comboItems()->get();
+                        foreach ($comboItems as $comboItem) {
+                            $pesoComponente = $comboItem->producto?->peso ?? 0;
+                            $cantidadComponente = $comboItem->cantidad;
+                            // Peso total = cantidad_combo × cantidad_componente × peso_componente
+                            $pesoTotal += $cantidad * $cantidadComponente * $pesoComponente;
+                        }
+                    } else {
+                        // Para productos normales: usar peso directo
+                        $pesoProducto = $producto->peso ?? 0;
+                        $pesoTotal += $cantidad * $pesoProducto;
+                    }
                 }
 
                 // Preparar datos para la venta desde la proforma
@@ -3469,42 +3219,24 @@ class ApiProformaController extends Controller
                     ]);
                 }
 
-                // 🔑 CRÍTICO: Obtener caja abierta para establecer en atributo especial
-                // El listener RegisterCajaMovementFromVentaListener requiere _caja_id para registrar en caja
-                $cajaAbiertaParaRegistro = \App\Models\AperturaCaja::where('user_id', request()->user()->id)
-                    ->delDia()
-                    ->abiertas()
-                    ->with('caja')
-                    ->latest()
-                    ->first();
-
-                // Si no hay caja de hoy, buscar la más reciente
-                if (! $cajaAbiertaParaRegistro) {
-                    $cajaAbiertaParaRegistro = \App\Models\AperturaCaja::where('user_id', request()->user()->id)
-                        ->abiertas()
-                        ->with('caja')
-                        ->latest('fecha')
-                        ->first();
-                }
-
                 // ✅ DISPARO MANUAL DEL EVENTO: VentaCreada (para que se registre en caja)
-                // caja_id ya fue asignado correctamente en $datosVenta, no se necesita atributo temporal
+                // caja_id ya fue asignado correctamente en $datosVenta (línea 3174)
                 event(new \App\Events\VentaCreada($venta));
 
                 // ✅ NUEVO: Disparar evento ProformaConvertida para notificar al cliente a través de WebSocket
                 event(new \App\Events\ProformaConvertida($proforma, $venta));
 
-                // ✅ MEJORADO: Registrar pago automático basado en tipo_pago_id
-                // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
+                                   // ✅ MEJORADO: Registrar pago automático basado en tipo_pago_id
+                                   // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
                 $venta->refresh(); // Recargar para obtener tipoPago con tipo_pago_id actualizado
                 $esCredito = $venta->tipoPago && strtoupper($venta->tipoPago->codigo) === 'CREDITO';
 
-                if (!$esCredito) {
+                if (! $esCredito) {
                     try {
                         $this->pagoVentaService->registrarPagoAutomatico($venta);
 
                         Log::info('✅ [convertirAVenta] Pago automático registrado para venta', [
-                            'venta_id' => $venta->id,
+                            'venta_id'     => $venta->id,
                             'venta_numero' => $venta->numero,
                             'tipo_pago_id' => $venta->tipo_pago_id,
                         ]);
@@ -3512,13 +3244,13 @@ class ApiProformaController extends Controller
                         // Log del error pero no fallar la conversión
                         Log::error('⚠️ [convertirAVenta] Error al registrar pago automático', [
                             'venta_id' => $venta->id,
-                            'error' => $e->getMessage(),
+                            'error'    => $e->getMessage(),
                         ]);
                     }
                 } else {
                     Log::info('⏭️ [convertirAVenta] Pago automático OMITIDO: Venta a CREDITO', [
-                        'venta_id' => $venta->id,
-                        'venta_numero' => $venta->numero,
+                        'venta_id'         => $venta->id,
+                        'venta_numero'     => $venta->numero,
                         'tipo_pago_codigo' => $venta->tipoPago?->codigo ?? 'SIN TIPO PAGO',
                     ]);
                 }
@@ -3555,66 +3287,9 @@ class ApiProformaController extends Controller
                     throw new \Exception('Error al marcar la proforma como convertida');
                 }
 
-                // ✅ CRÍTICO: Consumir reservas DIRECTAMENTE (no confiar en Observer en transacción)
-                // El Observer puede no dispararse dentro de una transacción en algunos casos
-                Log::info('🔄 [ApiProformaController::convertirAVenta] Consumiendo reservas después de convertida', [
-                    'proforma_id' => $proforma->id,
-                ]);
-
-                // 📊 NUEVO: Obtener detalles de reservas ANTES de consumir
-                // ✅ FIXED: Las reservas están relacionadas con proforma + stockProducto, no con detalleProforma
-                $reservasDetalles = [];
-                $reservasActivas  = $proforma->reservas()->where('estado', 'ACTIVA')->get();
-
-                if ($reservasActivas->isNotEmpty()) {
-                    // Agrupar reservas por producto
-                    $reservasPorProducto = $reservasActivas->groupBy(fn($r) => $r->stockProducto?->producto_id);
-
-                    foreach ($reservasPorProducto as $productoId => $reservasProducto) {
-                        $detalleProducto = $proforma->detalles->firstWhere('producto_id', $productoId);
-                        if ($detalleProducto) {
-                            $reservasDetalles[] = [
-                                'producto_id'         => $productoId,
-                                'producto_nombre'     => $detalleProducto->producto?->nombre,
-                                'producto_sku'        => $detalleProducto->producto?->codigoPrincipal?->codigo,
-                                'cantidad_solicitada' => $detalleProducto->cantidad,
-                                'cantidad_reservada'  => $reservasProducto->sum('cantidad_reservada'),
-                                'cantidad_lotes'      => $reservasProducto->count(),
-                                'lotes'               => $reservasProducto->map(fn($r) => [
-                                    'id'                => $r->id,
-                                    'cantidad'          => $r->cantidad_reservada,
-                                    'lote'              => $r->stockProducto?->lote,
-                                    'fecha_vencimiento' => $r->stockProducto?->fecha_vencimiento?->format('Y-m-d'),
-                                ])->toArray(),
-                            ];
-                        }
-                    }
-                }
-
-                try {
-                    // ✅ REFACTORIZADO (2026-03-27): Usar servicio centralizado para consumir reservas agrupadas
-                    $reservaService = new ReservaDistribucionService();
-                    $resultadoConsumo = $reservaService->consumirReservasAgrupadas($proforma, $numeroVenta);
-
-                    if (!$resultadoConsumo['success']) {
-                        throw new \Exception($resultadoConsumo['error'] ?? 'Error desconocido al consumir reservas');
-                    }
-
-                    Log::info('✅ [ApiProformaController::convertirAVenta] Reservas consumidas exitosamente (AGRUPADAS)', [
-                        'proforma_id'                    => $proforma->id,
-                        'numero_venta'                   => $numeroVenta,
-                        'cantidad_consumida'             => $resultadoConsumo['cantidad_consumida'],
-                        'reservas_consumidas'            => $resultadoConsumo['reservas_consumidas'],
-                        'cantidad_detalles_con_reservas' => count($reservasDetalles),
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('❌ [ApiProformaController::convertirAVenta] Error al consumir reservas', [
-                        'proforma_id'  => $proforma->id,
-                        'numero_venta' => $numeroVenta,
-                        'error'        => $e->getMessage(),
-                    ]);
-                    throw $e;
-                }
+                // ✅ COMPLETAMENTE ATÓMICO: Validar, crear reservas y consumir en una sola transacción
+                // Incluye: validación de expiración + validación de stock + creación de reservas + consumo + registro en movimientos_inventario
+                $this->validarYConsumirReservas($proforma, $numeroVenta);
 
                 // ✅ NUEVO: Registrar movimiento de caja para pagos inmediatos (anticipados) y créditos
                 // Se registra para políticas: ANTICIPADO_100, MEDIO_MEDIO, CREDITO
@@ -3693,7 +3368,7 @@ class ApiProformaController extends Controller
                     'monto_pagado'        => $montoPagado,
                     'monto_pendiente'     => (float) ($total - $montoPagado),
                     'requiere_envio'      => $venta->requiere_envio,
-                    'reservas_consumidas' => $reservasActivas,
+                    'cantidad_detalles'   => $proforma->detalles()->count(),
                 ]);
 
                 return response()->json([
@@ -3728,12 +3403,8 @@ class ApiProformaController extends Controller
                         ],
                         // ✅ NUEVO: Información detallada de reservas consumidas
                         'stock_consumido' => [
-                            'cantidad_productos'     => count($reservasDetalles),
-                            'cantidad_lotes_totales' => collect($reservasDetalles)->sum('cantidad_lotes'),
-                            'mensaje'                => count($reservasDetalles) === 0
-                                ? '✅ Venta creada sin reservas de stock'
-                                : '✅ ' . count($reservasDetalles) . ' producto(s) desreservado(s) - Stock consumido',
-                            'detalles'               => $reservasDetalles,
+                            'cantidad_productos' => $venta->detalles()->count(),
+                            'mensaje'            => '✅ Stock desreservado y consumido exitosamente',
                         ],
                     ],
                 ], 201);
@@ -3924,17 +3595,17 @@ class ApiProformaController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
-                  ->orWhere('numero', 'like', "%{$search}%")
-                  ->orWhereHas('cliente', function ($q) use ($search) {
-                      $q->whereRaw('LOWER(nombre) like ?', ["%{$search}%"]);
-                  });
+                    ->orWhere('numero', 'like', "%{$search}%")
+                    ->orWhereHas('cliente', function ($q) use ($search) {
+                        $q->whereRaw('LOWER(nombre) like ?', ["%{$search}%"]);
+                    });
             });
         }
 
         // Filtros por parámetros
         if ($request->filled('estado')) {
             $estadoCode = strtoupper($request->estado);
-            $estadoId = DB::table('estados_logistica')
+            $estadoId   = DB::table('estados_logistica')
                 ->where('codigo', $estadoCode)
                 ->where('categoria', 'proforma')
                 ->value('id');
@@ -3972,7 +3643,7 @@ class ApiProformaController extends Controller
             } elseif ($request->filtro_vencidas === 'VIGENTES') {
                 $query->where(function ($q) use ($hoy) {
                     $q->whereDate('fecha_vencimiento', '>=', $hoy)
-                      ->orWhereNull('fecha_vencimiento');
+                        ->orWhereNull('fecha_vencimiento');
                 });
             }
         }
@@ -4204,7 +3875,7 @@ class ApiProformaController extends Controller
                         $proforma,
                         $producto_id,
                         $diferencia,
-                        3// dias_vencimiento por defecto
+                        $proforma->fecha_vencimiento  // ✅ CORREGIDO: Pasar fecha de vencimiento, no días
                     );
 
                     if (! $resultado['success']) {
@@ -4245,7 +3916,7 @@ class ApiProformaController extends Controller
                         $proforma,
                         $producto_id,
                         $cantidad,
-                        3// dias_vencimiento por defecto
+                        $proforma->fecha_vencimiento  // ✅ CORREGIDO: Pasar fecha de vencimiento, no días
                     );
 
                     if (! $resultado['success']) {
@@ -4296,13 +3967,13 @@ class ApiProformaController extends Controller
 
             $this->movimientoService->registrarMovimientoYActualizar(
                 stockProductoId: $reserva->stock_producto_id,
-                cantidad: $cantidadALiberar,  // Positivo: libera
+                cantidad: $cantidadALiberar, // Positivo: libera
                 tipo: \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
                 referencia_tipo: 'proforma_liberada',
                 referencia_id: $reserva->proforma_id,
                 metadataAdicional: [
-                    'motivo' => $motivo,
-                    'reserva_id' => $reserva->id,
+                    'motivo'          => $motivo,
+                    'reserva_id'      => $reserva->id,
                     'numero_proforma' => $numeroProforma,
                 ]
             );
@@ -4353,37 +4024,37 @@ class ApiProformaController extends Controller
             // 4️⃣ Obtener valores DESPUÉS
             $stockProducto->refresh();
             $cantidadDisponiblePosterior = $stockProducto->cantidad_disponible;
-            $cantidadReservadaPosterior = $stockProducto->cantidad_reservada;
-            $cantidadTotalAntes = (float) $stockProducto->cantidad;  // Total no cambia en reducción
-            $cantidadTotalDespues = (float) $stockProducto->cantidad;
+            $cantidadReservadaPosterior  = $stockProducto->cantidad_reservada;
+            $cantidadTotalAntes          = (float) $stockProducto->cantidad; // Total no cambia en reducción
+            $cantidadTotalDespues        = (float) $stockProducto->cantidad;
 
             // 5️⃣ Registrar movimiento con cantidad_anterior y cantidad_posterior
             \App\Models\MovimientoInventario::create([
-                'stock_producto_id'  => $reserva->stock_producto_id,
-                'cantidad'           => $diferencia,                  // Positivo: liberado
-                'cantidad_anterior'  => $cantidadDisponibleAnterior,  // ✅ ANTES
-                'cantidad_posterior' => $cantidadDisponiblePosterior, // ✅ DESPUÉS
-                // ✅ NUEVO (2026-03-26): Registrar en columnas específicas también
-                'cantidad_total_anterior' => $cantidadTotalAntes,
-                'cantidad_total_posterior' => $cantidadTotalDespues,
-                'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
+                'stock_producto_id'             => $reserva->stock_producto_id,
+                'cantidad'                      => $diferencia,                  // Positivo: liberado
+                'cantidad_anterior'             => $cantidadDisponibleAnterior,  // ✅ ANTES
+                'cantidad_posterior'            => $cantidadDisponiblePosterior, // ✅ DESPUÉS
+                                                                                 // ✅ NUEVO (2026-03-26): Registrar en columnas específicas también
+                'cantidad_total_anterior'       => $cantidadTotalAntes,
+                'cantidad_total_posterior'      => $cantidadTotalDespues,
+                'cantidad_disponible_anterior'  => $cantidadDisponibleAnterior,
                 'cantidad_disponible_posterior' => $cantidadDisponiblePosterior,
-                'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                'fecha'              => now(),
-                'observacion'        => json_encode([
-                    'evento'                       => 'Reducción de cantidad de reserva',
-                    'reserva_id'                   => $reserva->id,
-                    'cantidad_reservada_anterior'  => $cantidadReservadaAnterior,
-                    'cantidad_reservada_posterior' => $cantidadNueva,
-                    'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
+                'cantidad_reservada_anterior'   => $cantidadReservadaAnterior,
+                'cantidad_reservada_posterior'  => $cantidadReservadaPosterior,
+                'fecha'                         => now(),
+                'observacion'                   => json_encode([
+                    'evento'                        => 'Reducción de cantidad de reserva',
+                    'reserva_id'                    => $reserva->id,
+                    'cantidad_reservada_anterior'   => $cantidadReservadaAnterior,
+                    'cantidad_reservada_posterior'  => $cantidadNueva,
+                    'cantidad_disponible_anterior'  => $cantidadDisponibleAnterior,
                     'cantidad_disponible_posterior' => $cantidadDisponiblePosterior,
                 ]),
-                'numero_documento'   => $reserva->proforma->numero ?? null,
-                'tipo'               => \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
-                'user_id'            => \Illuminate\Support\Facades\Auth::id(),
-                'referencia_tipo'    => 'proforma',
-                'referencia_id'      => $reserva->proforma_id,
+                'numero_documento'              => $reserva->proforma->numero ?? null,
+                'tipo'                          => \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
+                'user_id'                       => \Illuminate\Support\Facades\Auth::id(),
+                'referencia_tipo'               => 'proforma',
+                'referencia_id'                 => $reserva->proforma_id,
             ]);
 
             \Illuminate\Support\Facades\Log::info('✅ Reserva reducida correctamente', [
@@ -4411,13 +4082,13 @@ class ApiProformaController extends Controller
             // ✅ NUEVO: Usar MovimientoStockService que hace TODO en una transacción
             $this->movimientoService->registrarMovimientoYActualizar(
                 stockProductoId: $reserva->stock_producto_id,
-                cantidad: $exceso,  // Positivo: libera
+                cantidad: $exceso, // Positivo: libera
                 tipo: \App\Models\MovimientoInventario::TIPO_LIBERACION_RESERVA,
                 referencia_tipo: 'proforma_reducida',
                 referencia_id: $reserva->proforma_id,
                 metadataAdicional: [
-                    'motivo' => $motivo,
-                    'exceso' => $exceso,
+                    'motivo'          => $motivo,
+                    'exceso'          => $exceso,
                     'numero_proforma' => $numeroProforma,
                 ]
             );
@@ -4443,15 +4114,15 @@ class ApiProformaController extends Controller
             $diferencia = $cantidadNueva - $reserva->cantidad_reservada;
 
             $this->movimientoService->registrarMovimientoYActualizar(
-                stockProductoId: $reserva->stock_producto_id,
-                cantidad: -$diferencia,  // Negativo: reservar más
+                stockProductoId : $reserva->stock_producto_id,
+                cantidad: -$diferencia, // Negativo: reservar más
                 tipo: \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
                 referencia_tipo: 'proforma_ampliada',
                 referencia_id: $proforma?->id ?? $reserva->proforma_id,
                 metadataAdicional: [
                     'cantidad_anterior' => $reserva->cantidad_reservada,
-                    'cantidad_nueva' => $cantidadNueva,
-                    'numero_proforma' => $proforma?->numero,
+                    'cantidad_nueva'    => $cantidadNueva,
+                    'numero_proforma'   => $proforma?->numero,
                 ]
             );
 
@@ -4515,36 +4186,36 @@ class ApiProformaController extends Controller
             $stockProducto->refresh();
             $cantidadPosterior          = $stockProducto->cantidad_disponible;
             $cantidadReservadaPosterior = $stockProducto->cantidad_reservada;
-            $cantidadTotalAntes = (float) $stockProducto->cantidad;  // Total no cambia en reserva
-            $cantidadTotalDespues = (float) $stockProducto->cantidad;
+            $cantidadTotalAntes         = (float) $stockProducto->cantidad; // Total no cambia en reserva
+            $cantidadTotalDespues       = (float) $stockProducto->cantidad;
 
             // 6️⃣ Registrar movimiento en inventario con cantidad_anterior/posterior
             \App\Models\MovimientoInventario::create([
-                'stock_producto_id'  => $stock_producto_id,
-                'cantidad'           => -$cantidad,         // Negativo: reservar
-                'cantidad_anterior'  => $cantidadAnterior,  // ✅ ANTES
-                'cantidad_posterior' => $cantidadPosterior, // ✅ DESPUÉS
-                // ✅ NUEVO (2026-03-26): Registrar en columnas específicas también
-                'cantidad_total_anterior' => $cantidadTotalAntes,
-                'cantidad_total_posterior' => $cantidadTotalDespues,
-                'cantidad_disponible_anterior' => $cantidadAnterior,
+                'stock_producto_id'             => $stock_producto_id,
+                'cantidad'                      => -$cantidad,         // Negativo: reservar
+                'cantidad_anterior'             => $cantidadAnterior,  // ✅ ANTES
+                'cantidad_posterior'            => $cantidadPosterior, // ✅ DESPUÉS
+                                                                       // ✅ NUEVO (2026-03-26): Registrar en columnas específicas también
+                'cantidad_total_anterior'       => $cantidadTotalAntes,
+                'cantidad_total_posterior'      => $cantidadTotalDespues,
+                'cantidad_disponible_anterior'  => $cantidadAnterior,
                 'cantidad_disponible_posterior' => $cantidadPosterior,
-                'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                'fecha'              => now(),
-                'observacion'        => json_encode([
-                    'evento'                       => 'Nueva reserva adicional creada',
-                    'reserva_id'                   => $reserva->id,
-                    'cantidad_reservada_anterior'  => $cantidadReservadaAnterior,
-                    'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
-                    'cantidad_disponible_anterior' => $cantidadAnterior,
+                'cantidad_reservada_anterior'   => $cantidadReservadaAnterior,
+                'cantidad_reservada_posterior'  => $cantidadReservadaPosterior,
+                'fecha'                         => now(),
+                'observacion'                   => json_encode([
+                    'evento'                        => 'Nueva reserva adicional creada',
+                    'reserva_id'                    => $reserva->id,
+                    'cantidad_reservada_anterior'   => $cantidadReservadaAnterior,
+                    'cantidad_reservada_posterior'  => $cantidadReservadaPosterior,
+                    'cantidad_disponible_anterior'  => $cantidadAnterior,
                     'cantidad_disponible_posterior' => $cantidadPosterior,
                 ]),
-                'numero_documento'   => $proforma->numero,
-                'tipo'               => \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
-                'user_id'            => \Illuminate\Support\Facades\Auth::id(),
-                'referencia_tipo'    => 'proforma',
-                'referencia_id'      => $proforma->id,
+                'numero_documento'              => $proforma->numero,
+                'tipo'                          => \App\Models\MovimientoInventario::TIPO_RESERVA_PROFORMA,
+                'user_id'                       => \Illuminate\Support\Facades\Auth::id(),
+                'referencia_tipo'               => 'proforma',
+                'referencia_id'                 => $proforma->id,
             ]);
 
             \Illuminate\Support\Facades\Log::info('✅ Reserva adicional creada correctamente', [
@@ -4773,7 +4444,7 @@ class ApiProformaController extends Controller
                         $almacenId = auth()->user()?->empresa?->almacen_id ?? 2;
 
                         // Expandir combos para validación
-                        $stockService = new \App\Services\Stock\StockService();
+                        $stockService           = new \App\Services\Stock\StockService();
                         $detallesParaValidacion = $stockService->expandirCombos($detallesGuardados);
 
                         // Validar stock disponible
@@ -4786,14 +4457,14 @@ class ApiProformaController extends Controller
                             return response()->json([
                                 'success' => false,
                                 'message' => '❌ No hay stock suficiente para cambiar a PENDIENTE',
-                                'errors' => $validacion->detalles,
+                                'errors'  => $validacion->detalles,
                                 'errores' => $validacion->errores,
                             ], 422);
                         }
 
                         Log::info("✅ Stock validado para cambio BORRADOR → PENDIENTE", [
                             'proforma_id' => $proforma->id,
-                            'numero' => $proforma->numero,
+                            'numero'      => $proforma->numero,
                         ]);
                     }
 
@@ -4818,7 +4489,7 @@ class ApiProformaController extends Controller
                     // 🎯 CREAR nuevas reservas (no existían en BORRADOR)
                     Log::info('🔄 Creando reservas por cambio BORRADOR → PENDIENTE', [
                         'proforma_id' => $proforma->id,
-                        'numero' => $proforma->numero,
+                        'numero'      => $proforma->numero,
                     ]);
 
                     try {
@@ -4828,12 +4499,12 @@ class ApiProformaController extends Controller
 
                         Log::info('✅ Reservas creadas exitosamente', [
                             'proforma_id' => $proforma->id,
-                            'numero' => $proforma->numero,
+                            'numero'      => $proforma->numero,
                         ]);
                     } catch (\Exception $e) {
                         Log::error('❌ Error al crear reservas', [
                             'proforma_id' => $proforma->id,
-                            'error' => $e->getMessage(),
+                            'error'       => $e->getMessage(),
                         ]);
                         throw $e;
                     }
@@ -5019,7 +4690,7 @@ class ApiProformaController extends Controller
         string $politica,
         float $montoPagado,
         \App\Models\User $usuario
-    ) : void {
+    ): void {
         // 📊 LOG: INICIO DEL REGISTRO EN CAJA
         Log::info('🏪 [registrarMovimientoCajaParaPago] INICIANDO REGISTRO EN CAJA', [
             'venta_id'       => $venta->id,
@@ -5565,7 +5236,7 @@ class ApiProformaController extends Controller
 
         if (! empty($filtros['filtroEstado']) && $filtros['filtroEstado'] !== 'TODOS') {
             $estadoCode = strtoupper($filtros['filtroEstado']);
-            $estadoId = DB::table('estados_logistica')
+            $estadoId   = DB::table('estados_logistica')
                 ->where('codigo', $estadoCode)
                 ->where('categoria', 'proforma')
                 ->value('id');
@@ -5659,8 +5330,8 @@ class ApiProformaController extends Controller
                         ->orWhere('numero', 'ilike', "%{$search}%")
                         ->orWhereHas('cliente', function ($q) use ($search) {
                             $q->where('nombre', 'ilike', "%{$search}%")
-                              ->orWhere('nit', 'ilike', "%{$search}%")
-                              ->orWhere('telefono', 'ilike', "%{$search}%");
+                                ->orWhere('nit', 'ilike', "%{$search}%")
+                                ->orWhere('telefono', 'ilike', "%{$search}%");
                         });
                 });
             }
@@ -5668,7 +5339,7 @@ class ApiProformaController extends Controller
             // Filtro por estado
             if ($request->filled('estado')) {
                 $estadoCode = strtoupper($request->input('estado'));
-                $estadoId = DB::table('estados_logistica')
+                $estadoId   = DB::table('estados_logistica')
                     ->where('codigo', $estadoCode)
                     ->where('categoria', 'proforma')
                     ->value('id');
@@ -5708,7 +5379,7 @@ class ApiProformaController extends Controller
             if ($proformas->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontraron proformas con los filtros especificados'
+                    'message' => 'No se encontraron proformas con los filtros especificados',
                 ], 404);
             }
 
@@ -5724,8 +5395,8 @@ class ApiProformaController extends Controller
             // Renderizar HTML
             $html = view($vista, [
                 'proformas' => $proformas,
-                'filtros' => $request->all(),
-                'titulo' => 'Reporte de Proformas',
+                'filtros'   => $request->all(),
+                'titulo'    => 'Reporte de Proformas',
             ])->render();
 
             // Convertir a PDF usando DomPDF
@@ -5743,7 +5414,7 @@ class ApiProformaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al generar el PDF: ' . $e->getMessage()
+                'message' => 'Error al generar el PDF: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -5757,8 +5428,8 @@ class ApiProformaController extends Controller
     {
         try {
             // Obtener filtros
-            $filtros = $request->input('filtros', []);
-            $formato = $request->input('formato', 'A4');
+            $filtros  = $request->input('filtros', []);
+            $formato  = $request->input('formato', 'A4');
             $idsParam = $request->input('ids');
 
             // Obtener IDs desde parámetro
@@ -5773,7 +5444,7 @@ class ApiProformaController extends Controller
             if (empty($proformaIds)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No hay proformas para descargar'
+                    'message' => 'No hay proformas para descargar',
                 ], 400);
             }
 
@@ -5793,7 +5464,7 @@ class ApiProformaController extends Controller
             if ($proformas->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontraron proformas con los IDs especificados'
+                    'message' => 'No se encontraron proformas con los IDs especificados',
                 ], 404);
             }
 
@@ -5809,8 +5480,8 @@ class ApiProformaController extends Controller
             // Renderizar HTML
             $html = view($vista, [
                 'proformas' => $proformas,
-                'filtros' => $filtros,
-                'titulo' => 'Reporte de Proformas',
+                'filtros'   => $filtros,
+                'titulo'    => 'Reporte de Proformas',
             ])->render();
 
             // Convertir a PDF usando DomPDF
@@ -5828,8 +5499,246 @@ class ApiProformaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al generar el PDF: ' . $e->getMessage()
+                'message' => 'Error al generar el PDF: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * ✅ COMPLETAMENTE ATÓMICO: Validar, crear reservas y consumir en una sola transacción
+     *
+     * Garantiza que:
+     * 1. Las reservas no expiren durante el proceso
+     * 2. No haya race conditions entre proformas concurrentes
+     * 3. Stock reservado sea exclusivo para esta proforma
+     * 4. Validación + Creación de reservas + Consumo todo en una transacción
+     * 5. Se registran correctamente en movimientos_inventario
+     */
+    private function validarYConsumirReservas(Proforma $proforma, string $numeroVenta): void
+    {
+        // ✅ CRÍTICO: Usar transacción + lock para evitar race conditions
+        DB::transaction(function () use ($proforma, $numeroVenta) {
+            // 1️⃣ LOCK las reservas de esta proforma
+            $reservasActivas = $proforma->reservas()
+                ->where('estado', 'ACTIVA')
+                ->lockForUpdate()
+                ->get();
+
+            $tieneReservas = $reservasActivas->isNotEmpty();
+
+            // 2️⃣ Validar que las reservas NO estén expiradas
+            if ($tieneReservas && $proforma->tieneReservasExpiradas()) {
+                Log::error('❌ Reservas expiradas para proforma', [
+                    'proforma_id' => $proforma->id,
+                ]);
+                throw new \Exception(json_encode([
+                    'success' => false,
+                    'message' => 'Las reservas de stock han expirado',
+                    'status'  => 422,
+                ]));
+            }
+
+            // 3️⃣ Validar stock suficiente para TODOS los detalles
+            $productosConStockInsuficiente = $this->validarStockProductos($proforma, $tieneReservas);
+
+            if (!empty($productosConStockInsuficiente)) {
+                Log::error('❌ [validarYConsumirReservas] Stock insuficiente', [
+                    'proforma_id'         => $proforma->id,
+                    'proforma_numero'     => $proforma->numero,
+                    'productos_sin_stock' => $productosConStockInsuficiente,
+                ]);
+
+                throw new \Exception(json_encode([
+                    'success'             => false,
+                    'message'             => $tieneReservas
+                        ? 'El stock real se agotó. Las reservas no pueden garantizar la venta.'
+                        : 'No hay stock disponible para convertir esta proforma a venta',
+                    'code'                => $tieneReservas ? 'STOCK_INSUFICIENTE_REAL' : 'STOCK_INSUFICIENTE',
+                    'status'              => 422,
+                    'productos_sin_stock' => $productosConStockInsuficiente,
+                ]));
+            }
+
+            // 4️⃣ Si no hay reservas activas, crearlas ahora (dentro de la transacción)
+            if (!$tieneReservas) {
+                $reservasCreadas = $proforma->reservarStock();
+
+                if (!$reservasCreadas) {
+                    Log::error('❌ Error al crear reservas automáticamente', [
+                        'proforma_id'     => $proforma->id,
+                        'proforma_numero' => $proforma->numero,
+                    ]);
+                    throw new \Exception(json_encode([
+                        'success' => false,
+                        'message' => 'No se pudieron crear reservas de stock. Verifique la disponibilidad de inventario.',
+                        'status'  => 422,
+                    ]));
+                }
+
+                Log::info('✅ Reservas creadas automáticamente para proforma ' . $proforma->numero);
+            }
+
+            // 5️⃣ CONSUMIR RESERVAS INMEDIATAMENTE (dentro de la misma transacción)
+            // Esto garantiza atomicidad: validación + consumo = operación única
+            $reservaService = new ReservaDistribucionService();
+            $resultadoConsumo = $reservaService->consumirReservasAgrupadas($proforma, $numeroVenta);
+
+            if (!$resultadoConsumo['success']) {
+                Log::error('❌ [validarYConsumirReservas] Error al consumir reservas', [
+                    'proforma_id'  => $proforma->id,
+                    'numero_venta' => $numeroVenta,
+                    'error'        => $resultadoConsumo['error'] ?? 'Error desconocido',
+                ]);
+                throw new \Exception($resultadoConsumo['error'] ?? 'Error desconocido al consumir reservas');
+            }
+
+            Log::info('✅ [validarYConsumirReservas] Operación completada exitosamente (ATÓMICA)', [
+                'proforma_id'                    => $proforma->id,
+                'proforma_numero'                => $proforma->numero,
+                'numero_venta'                   => $numeroVenta,
+                'cantidad_consumida'             => $resultadoConsumo['cantidad_consumida'] ?? 0,
+                'reservas_consumidas'            => $resultadoConsumo['reservas_consumidas'] ?? 0,
+                'movimientos_registrados'        => 'automáticamente en movimientos_inventario',
+            ]);
+        });
+    }
+
+    /**
+     * ✅ Validar stock de TODOS los productos/componentes de una proforma
+     *
+     * Retorna array de productos con stock insuficiente, o array vacío si todo está ok
+     */
+    private function validarStockProductos(Proforma $proforma, bool $tieneReservas): array
+    {
+        $productosConStockInsuficiente = [];
+
+        foreach ($proforma->detalles as $detalle) {
+            $producto = $detalle->producto;
+            $cantidad = $detalle->cantidad;
+
+            if ($producto->es_combo) {
+                // Para COMBOS: Validar COMPONENTES del combo
+                $this->validarComponentesCombo($proforma, $producto, $cantidad, $tieneReservas, $productosConStockInsuficiente);
+            } else {
+                // Para PRODUCTOS SIMPLES
+                $this->validarProductoSimple($proforma, $producto, $cantidad, $tieneReservas, $productosConStockInsuficiente);
+            }
+        }
+
+        return $productosConStockInsuficiente;
+    }
+
+    /**
+     * Validar componentes de un combo
+     */
+    private function validarComponentesCombo(Proforma $proforma, $producto, int $cantidad, bool $tieneReservas, array &$productosConStockInsuficiente): void
+    {
+        $componentesCombo = $producto->comboItems()->get();
+
+        foreach ($componentesCombo as $componenteItem) {
+            $componenteProducto = $componenteItem->producto;
+            $cantidadComponenteRequerida = $cantidad * $componenteItem->cantidad;
+
+            if ($tieneReservas) {
+                // Validar RESERVAS del componente
+                $reservasDelComponente = $proforma->reservas()
+                    ->whereHas('stockProducto', function ($q) use ($componenteProducto) {
+                        $q->where('producto_id', $componenteProducto->id);
+                    })
+                    ->where('estado', 'ACTIVA')
+                    ->sum('cantidad_reservada');
+
+                if ($reservasDelComponente < $cantidadComponenteRequerida) {
+                    $productosConStockInsuficiente[] = [
+                        'producto_id' => $componenteProducto->id,
+                        'producto'    => $componenteProducto->nombre . ' (componente de ' . $producto->nombre . ')',
+                        'requerido'   => $cantidadComponenteRequerida,
+                        'disponible'  => $reservasDelComponente,
+                        'faltante'    => $cantidadComponenteRequerida - $reservasDelComponente,
+                        'tipo'        => 'RESERVAS_INSUFICIENTES_COMBO',
+                    ];
+                    Log::warning('⚠️ Reservas insuficientes para COMPONENTE DE COMBO', [
+                        'combo_id'          => $producto->id,
+                        'componente_id'     => $componenteProducto->id,
+                        'requerido'         => $cantidadComponenteRequerida,
+                        'reservado'         => $reservasDelComponente,
+                        'proforma_id'       => $proforma->id,
+                    ]);
+                }
+            } else {
+                // Validar STOCK DISPONIBLE del componente
+                $stockDisponibleComponente = $componenteProducto->stock()->sum('cantidad_disponible');
+
+                if ($stockDisponibleComponente < $cantidadComponenteRequerida) {
+                    $productosConStockInsuficiente[] = [
+                        'producto_id' => $componenteProducto->id,
+                        'producto'    => $componenteProducto->nombre . ' (componente de ' . $producto->nombre . ')',
+                        'requerido'   => $cantidadComponenteRequerida,
+                        'disponible'  => $stockDisponibleComponente,
+                        'faltante'    => $cantidadComponenteRequerida - $stockDisponibleComponente,
+                        'tipo'        => 'STOCK_INSUFICIENTE_COMPONENTE_COMBO',
+                    ];
+                    Log::warning('⚠️ Stock insuficiente para COMPONENTE DE COMBO', [
+                        'combo_id'      => $producto->id,
+                        'componente_id' => $componenteProducto->id,
+                        'requerido'     => $cantidadComponenteRequerida,
+                        'disponible'    => $stockDisponibleComponente,
+                        'proforma_id'   => $proforma->id,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validar producto simple (no combo)
+     */
+    private function validarProductoSimple(Proforma $proforma, $producto, int $cantidad, bool $tieneReservas, array &$productosConStockInsuficiente): void
+    {
+        if ($tieneReservas) {
+            // Validar RESERVAS del producto
+            $reservasDelProducto = $proforma->reservas()
+                ->whereHas('stockProducto', function ($q) use ($producto) {
+                    $q->where('producto_id', $producto->id);
+                })
+                ->where('estado', 'ACTIVA')
+                ->sum('cantidad_reservada');
+
+            if ($reservasDelProducto < $cantidad) {
+                $productosConStockInsuficiente[] = [
+                    'producto_id' => $producto->id,
+                    'producto'    => $producto->nombre,
+                    'requerido'   => $cantidad,
+                    'disponible'  => $reservasDelProducto,
+                    'faltante'    => $cantidad - $reservasDelProducto,
+                    'tipo'        => 'RESERVAS_INSUFICIENTES',
+                ];
+                Log::warning('⚠️ Reservas insuficientes para PRODUCTO SIMPLE', [
+                    'producto_id' => $producto->id,
+                    'requerido'   => $cantidad,
+                    'reservado'   => $reservasDelProducto,
+                    'proforma_id' => $proforma->id,
+                ]);
+            }
+        } else {
+            // Validar STOCK DISPONIBLE del producto
+            $stockDisponible = $producto->stock()->sum('cantidad_disponible');
+
+            if ($stockDisponible < $cantidad) {
+                $productosConStockInsuficiente[] = [
+                    'producto_id' => $producto->id,
+                    'producto'    => $producto->nombre,
+                    'requerido'   => $cantidad,
+                    'disponible'  => $stockDisponible,
+                    'faltante'    => $cantidad - $stockDisponible,
+                ];
+                Log::warning('⚠️ Stock insuficiente para PRODUCTO SIMPLE', [
+                    'producto_id' => $producto->id,
+                    'requerido'   => $cantidad,
+                    'disponible'  => $stockDisponible,
+                    'proforma_id' => $proforma->id,
+                ]);
+            }
         }
     }
 }

@@ -176,59 +176,8 @@ class ProformaResponseDTO extends BaseDTO
                         : [],
                     // ✅ CRÍTICO: Campos de combo DENTRO del objeto producto
                     'es_combo' => (bool) ($det->producto->es_combo ?? false),
-                    'combo_items' => $det->producto->relationLoaded('comboItems') && $det->producto->comboItems
-                        ? (function() use ($det, $almacenId) {
-                            // Calcular capacidad UNA vez para obtener es_cuello_botella y combos_posibles
-                            $capacidadInfo = null;
-                            if ($almacenId) {
-                                try {
-                                    $capacidadInfo = \App\Services\ComboStockService::calcularCapacidadConDetalles(
-                                        $det->producto_id,
-                                        $almacenId
-                                    );
-                                } catch (\Exception $e) {
-                                    \Log::warning('No se pudo calcular capacidad combo: ' . $e->getMessage());
-                                }
-                            }
-
-                            return $det->producto->comboItems->map(function($combo) use ($capacidadInfo, $almacenId) {
-                                // Buscar datos de capacidad para este item específico
-                                $detalleCapacidad = null;
-                                if ($capacidadInfo) {
-                                    $detalleCapacidad = collect($capacidadInfo['detalles'] ?? [])
-                                        ->firstWhere('producto_id', $combo->producto_id);
-                                }
-
-                                // Stock del ingrediente en el almacén
-                                $stockItem = null;
-                                if ($almacenId && $combo->producto) {
-                                    $stockItem = $combo->producto->stock()
-                                        ->where('almacen_id', $almacenId)
-                                        ->first();
-                                }
-
-                                return [
-                                    'id'                    => $combo->id,
-                                    'combo_id'              => $combo->combo_id ?? $combo->producto_id,
-                                    'producto_id'           => $combo->producto_id,
-                                    'producto_nombre'       => $combo->producto?->nombre ?? 'N/A',
-                                    'producto_sku'          => $combo->producto?->sku ?? null,
-                                    'producto_codigo_barras'=> $combo->producto?->codigo_barras ?? null,
-                                    'cantidad'              => (float) $combo->cantidad,
-                                    'precio_unitario'       => (float) ($combo->precio_unitario ?? 0),
-                                    'tipo_precio_id'        => $combo->tipo_precio_id ?? null,
-                                    'tipo_precio_nombre'    => $combo->relationLoaded('tipoPrecio') ? ($combo->tipoPrecio?->nombre ?? null) : null,
-                                    'unidad_medida_id'      => $combo->producto?->unidad_medida_id ?? null,
-                                    'unidad_medida_nombre'  => $combo->producto?->unidad?->nombre ?? null,
-                                    'stock_disponible'      => (int) ($stockItem?->cantidad_disponible ?? 0),
-                                    'stock_total'           => (int) ($stockItem?->cantidad ?? 0),
-                                    'es_obligatorio'        => (bool) $combo->es_obligatorio,
-                                    'es_cuello_botella'     => (bool) ($detalleCapacidad['es_cuello_botella'] ?? false),
-                                    'combos_posibles'       => (int) ($detalleCapacidad['combos_posibles'] ?? 0),
-                                ];
-                            })->toArray();
-                        })()
-                        : [],
+                    // ✅ NUEVO: Usar ComboResponseService para construir combo_items (centralizado)
+                    'combo_items' => $almacenId ? \App\Services\ComboResponseService::construirComboItems($det->producto, $almacenId) : [],
                 ];
 
                 return [

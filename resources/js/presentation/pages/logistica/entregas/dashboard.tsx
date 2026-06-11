@@ -97,13 +97,13 @@ export default function DashboardEntregas() {
                 />
 
                 {/* Cards de Estados */}
-                <DashboardEntregasStats
+                {/* <DashboardEntregasStats
                     estados={stats.estados}
                     estadosTotal={stats.estados_total}
                     loading={loading}
                     lastUpdate={lastUpdate}
                     onRefresh={refresh}
-                />
+                /> */}
 
                 {/* Gráficos */}
                 <div className="grid gap-6 lg:grid-cols-2">

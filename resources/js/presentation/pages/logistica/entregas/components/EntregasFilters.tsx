@@ -1,10 +1,9 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
-import { useDebouncedValue } from '@/application/hooks/use-debounce';
 
 /**
  * Estado de filtros avanzados
@@ -61,6 +60,9 @@ export function EntregasFilters({
     // ✅ Estado para controlar visibilidad de filtros
     const [filtrosVisibles, setFiltrosVisibles] = useState(false);
 
+    const floatingInputClassName = 'peer w-full rounded-lg border bg-background px-3 pb-2 pt-5 text-sm outline-none transition-colors placeholder:text-transparent focus:border-primary';
+    const floatingLabelClassName = 'absolute left-3 top-0 z-10 -translate-y-1/2 bg-background px-1 origin-left text-xs font-medium text-muted-foreground transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:bg-transparent peer-placeholder-shown:px-0 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:bg-background peer-focus:px-1 peer-focus:text-xs peer-focus:text-primary';
+
 
     // Calcular cuántos filtros están activos
     const filtrosActivos = useMemo(() => {
@@ -95,58 +97,36 @@ export function EntregasFilters({
         onFilterChange(key, key === 'estado' ? 'TODOS' : '');
     };
 
-    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            // ✅ Pasar los filtros actualizados directamente a onApply para evitar timing issues
-            const filtrosActualizados = { ...filtros, busqueda: busquedaLocal };
-            onApply?.(filtrosActualizados);
-        }
-    };
-
     return (
         <div className="space-y-4">
             {/* Búsqueda Separada: Entrega vs Ventas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Búsqueda en ENTREGA (ID, placa, chofer) */}
                 <div className="flex gap-2 items-end">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
                             placeholder="Entrega: ID, placa, chofer..."
                             value={filtros.busqueda_entrega || ''}
                             onChange={(e) => onFilterChange('busqueda_entrega', e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    const filtrosActualizados = { ...filtros, busqueda_entrega: e.currentTarget.value };
-                                    onApply?.(filtrosActualizados);
-                                }
-                            }}
-                            className="pl-10 bg-background"
+                            className={`${floatingInputClassName} pl-3`}
                             disabled={isLoading}
                         />
+                        <label className={floatingLabelClassName}>
+                            Entrega: ID, placa, chofer
+                        </label>
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     </div>
-                    <Button
-                        size="sm"
-                        onClick={() => {
-                            const filtrosActualizados = { ...filtros, busqueda_entrega: filtros.busqueda_entrega || '' };
-                            onApply?.(filtrosActualizados);
-                        }}
-                        disabled={isLoading}
-                        className="whitespace-nowrap"
-                    >
-                        Buscar
-                    </Button>
                     {filtros.busqueda_entrega && (
                         <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                                const filtrosLimpios = { ...filtros, busqueda_entrega: '' };
-                                onApply?.(filtrosLimpios);
+                                onFilterChange('busqueda_entrega', '');
                             }}
                             disabled={isLoading}
                             className="whitespace-nowrap"
+                            title="Limpiar búsqueda de entrega"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -156,81 +136,70 @@ export function EntregasFilters({
                 {/* Búsqueda en VENTAS (ID venta, cliente, número venta) */}
                 <div className="flex gap-2 items-end">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
                             placeholder="Ventas: ID, cliente, número..."
                             value={filtros.busqueda_ventas || ''}
                             onChange={(e) => onFilterChange('busqueda_ventas', e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    const filtrosActualizados = { ...filtros, busqueda_ventas: e.currentTarget.value };
-                                    onApply?.(filtrosActualizados);
-                                }
-                            }}
-                            className="pl-10 bg-background"
+                            className={`${floatingInputClassName} pl-3`}
                             disabled={isLoading}
                         />
+                        <label className={floatingLabelClassName}>
+                            Ventas: ID, cliente, número
+                        </label>
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground py-2" />
                     </div>
-                    <Button
-                        size="sm"
-                        onClick={() => {
-                            const filtrosActualizados = { ...filtros, busqueda_ventas: filtros.busqueda_ventas || '' };
-                            onApply?.(filtrosActualizados);
-                        }}
-                        disabled={isLoading}
-                        className="whitespace-nowrap"
-                    >
-                        Buscar
-                    </Button>
                     {filtros.busqueda_ventas && (
                         <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                                const filtrosLimpios = { ...filtros, busqueda_ventas: '' };
-                                onApply?.(filtrosLimpios);
+                                onFilterChange('busqueda_ventas', '');
                             }}
                             disabled={isLoading}
                             className="whitespace-nowrap"
+                            title="Limpiar búsqueda de ventas"
                         >
                             <X className="h-4 w-4" />
                         </Button>
                     )}
                 </div>
-            </div>
-            {/* Header de filtros con contador - CLICKEABLE */}
-            <button
-                onClick={() => setFiltrosVisibles(!filtrosVisibles)}
-                className="w-full flex items-center justify-between p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-            >
-                <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Filtros</span>
-                    {filtrosActivos.length > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                            {filtrosActivos.length} activo{filtrosActivos.length !== 1 ? 's' : ''}
-                        </Badge>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                        onClick={() => setFiltrosVisibles(!filtrosVisibles)}
+                        className="w-full flex items-center justify-between px-2 bg-background border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Filter className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">Filtros</span>
+                            {filtrosActivos.length > 0 && (
+                                <Badge variant="secondary" className="ml-2">
+                                    {filtrosActivos.length} activo{filtrosActivos.length !== 1 ? 's' : ''}
+                                </Badge>
+                            )}
+                        </div>
+                        <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${filtrosVisibles ? 'rotate-180' : ''
+                                }`}
+                        />
+                    </button>
+
+                    {/* ✅ ÚNICO BOTÓN: Aplicar todos los filtros */}
+                    {onApply && (
+                        <Button
+                            onClick={onApply}
+                            disabled={isLoading}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                            size="lg"
+                        >
+                            <Filter className="h-4 w-4 mr-2" />
+                            Aplicar Filtros
+                        </Button>
                     )}
                 </div>
-                <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${filtrosVisibles ? 'rotate-180' : ''
-                        }`}
-                />
-            </button>
 
-            {/* Botón Limpiar (se muestra cuando hay filtros activos) */}
-            {filtrosActivos.length > 0 && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onReset}
-                    className="w-full text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                >
-                    <X className="h-4 w-4 mr-2" />
-                    Limpiar todos los filtros ({filtrosActivos.length})
-                </Button>
-            )}
+            </div>
 
             {/* Grid de filtros - COLAPSABLE */}
             {filtrosVisibles && (
@@ -326,88 +295,87 @@ export function EntregasFilters({
                         />
                     </div>
 
-                    {/* ✅ NUEVO: Selector de tipo de fecha */}
-                    <div className="p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
-                        <label className="text-sm font-medium mb-3 block">Tipo de Fecha</label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="tipo_fecha"
-                                    value="fecha_programada"
-                                    checked={filtros.tipo_fecha !== 'created_at'}
-                                    onChange={() => onFilterChange('tipo_fecha', 'fecha_programada')}
-                                    disabled={isLoading}
-                                    className="w-4 h-4"
-                                />
-                                <span className="text-sm">📅 Fecha Programada</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="tipo_fecha"
-                                    value="created_at"
-                                    checked={filtros.tipo_fecha === 'created_at'}
-                                    onChange={() => onFilterChange('tipo_fecha', 'created_at')}
-                                    disabled={isLoading}
-                                    className="w-4 h-4"
-                                />
-                                <span className="text-sm">📝 Creación</span>
-                            </label>
-                        </div>
-                    </div>
 
-                    {/* ✅ NUEVO: Botones rápidos de fecha (Ayer, Hoy, Mañana) */}
-                    <div className="p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
-                        <label className="text-sm font-medium mb-3 block">Fechas Rápidas</label>
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
-                                onClick={() => {
-                                    const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
-                                    onFilterChange('fecha_desde', ayer);
-                                    onFilterChange('fecha_hasta', ayer);
-                                    onApply?.({ ...filtros, fecha_desde: ayer, fecha_hasta: ayer });
-                                }}
-                                disabled={isLoading}
-                            >
-                                ← Ayer
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant={filtros.fecha_desde === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
-                                onClick={() => {
-                                    const hoy = new Date().toISOString().split('T')[0];
-                                    onFilterChange('fecha_desde', hoy);
-                                    onFilterChange('fecha_hasta', hoy);
-                                    onApply?.({ ...filtros, fecha_desde: hoy, fecha_hasta: hoy });
-                                }}
-                                disabled={isLoading}
-                            >
-                                Hoy
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
-                                onClick={() => {
-                                    const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
-                                    onFilterChange('fecha_desde', manana);
-                                    onFilterChange('fecha_hasta', manana);
-                                    onApply?.({ ...filtros, fecha_desde: manana, fecha_hasta: manana });
-                                }}
-                                disabled={isLoading}
-                            >
-                                Mañana →
-                            </Button>
-                        </div>
-                    </div>
 
                     {/* Filtros de fechas */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
-                        {/* Filtro por Fecha Desde */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
+                        {/* ✅ NUEVO: Selector de tipo de fecha */}
                         <div>
-                            <label className="text-sm font-medium mb-2 block">Desde</label>
+                            <label className="text-sm font-medium mb-3 block">Tipo de Fecha</label>
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="tipo_fecha"
+                                        value="fecha_programada"
+                                        checked={filtros.tipo_fecha !== 'created_at'}
+                                        onChange={() => onFilterChange('tipo_fecha', 'fecha_programada')}
+                                        disabled={isLoading}
+                                        className="w-4 h-4"
+                                    />
+                                    <span className="text-sm">📅 Fecha Programada</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="tipo_fecha"
+                                        value="created_at"
+                                        checked={filtros.tipo_fecha === 'created_at'}
+                                        onChange={() => onFilterChange('tipo_fecha', 'created_at')}
+                                        disabled={isLoading}
+                                        className="w-4 h-4"
+                                    />
+                                    <span className="text-sm">📝 Creación</span>
+                                </label>
+                            </div>
+                        </div>
+                        {/* ✅ NUEVO: Botones rápidos de fecha (Ayer, Hoy, Mañana) */}
+                        <div>
+                            <label className="text-sm font-medium mb-3 block">Fechas Rápidas</label>
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
+                                    onClick={() => {
+                                        const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+                                        onFilterChange('fecha_desde', ayer);
+                                        onFilterChange('fecha_hasta', ayer);
+                                        onApply?.({ ...filtros, fecha_desde: ayer, fecha_hasta: ayer });
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    ← Ayer
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={filtros.fecha_desde === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
+                                    onClick={() => {
+                                        const hoy = new Date().toISOString().split('T')[0];
+                                        onFilterChange('fecha_desde', hoy);
+                                        onFilterChange('fecha_hasta', hoy);
+                                        onApply?.({ ...filtros, fecha_desde: hoy, fecha_hasta: hoy });
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    Hoy
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
+                                    onClick={() => {
+                                        const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
+                                        onFilterChange('fecha_desde', manana);
+                                        onFilterChange('fecha_hasta', manana);
+                                        onApply?.({ ...filtros, fecha_desde: manana, fecha_hasta: manana });
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    Mañana →
+                                </Button>
+                            </div>
+                        </div>
+                        {/* Filtro por Fecha Desde */}
+                        <div className="relative">
                             <Input
                                 type="date"
                                 value={filtros.fecha_desde || ''}
@@ -417,14 +385,16 @@ export function EntregasFilters({
                                         onApply?.();
                                     }
                                 }}
-                                className="bg-background"
+                                className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
                                 disabled={isLoading}
                             />
+                            <label className={floatingLabelClassName}>
+                                Desde
+                            </label>
                         </div>
 
                         {/* Filtro por Fecha Hasta */}
-                        <div>
-                            <label className="text-sm font-medium mb-2 block">Hasta</label>
+                        <div className="relative">
                             <Input
                                 type="date"
                                 value={filtros.fecha_hasta || ''}
@@ -434,56 +404,15 @@ export function EntregasFilters({
                                         onApply?.();
                                     }
                                 }}
-                                className="bg-background"
+                                className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
                                 disabled={isLoading}
                             />
+                            <label className={floatingLabelClassName}>
+                                Hasta
+                            </label>
                         </div>
                     </div>
 
-                    {/* ✅ NUEVO: Selector de turno (Mañana / Tarde) */}
-                    <div className="p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
-                        <label className="text-sm font-medium mb-3 block">Turno</label>
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant={filtros.turno === 'manana' ? 'default' : 'outline'}
-                                onClick={() => {
-                                    const nuevoTurno = filtros.turno === 'manana' ? '' : 'manana';
-                                    onFilterChange('turno', nuevoTurno);
-                                    onApply?.({ ...filtros, turno: nuevoTurno });
-                                }}
-                                disabled={isLoading}
-                                className="flex-1"
-                            >
-                                ☀ Mañana (08:00-12:00)
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant={filtros.turno === 'tarde' ? 'default' : 'outline'}
-                                onClick={() => {
-                                    const nuevoTurno = filtros.turno === 'tarde' ? '' : 'tarde';
-                                    onFilterChange('turno', nuevoTurno);
-                                    onApply?.({ ...filtros, turno: nuevoTurno });
-                                }}
-                                disabled={isLoading}
-                                className="flex-1"
-                            >
-                                🌇 Tarde (14:00-18:00)
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Botón Aplicar Filtros */}
-                    {onApply && (
-                        <Button
-                            onClick={onApply}
-                            disabled={isLoading}
-                            className="w-full"
-                        >
-                            <Filter className="h-4 w-4 mr-2" />
-                            Aplicar Filtros
-                        </Button>
-                    )}
                 </div>
             )}
 
@@ -520,10 +449,25 @@ export function EntregasFilters({
                 </div>
             )}
 
+            {/* Botón Limpiar (se muestra cuando hay filtros activos) */}
+            {filtrosActivos.length > 0 && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onReset}
+                    className="w-full text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                >
+                    <X className="h-4 w-4 mr-2" />
+                    Limpiar todos los filtros ({filtrosActivos.length})
+                </Button>
+            )}
+
             {/* Separador visual */}
             {filtrosActivos.length > 0 && (
                 <div className="h-px bg-border" />
             )}
+
+
         </div>
     );
 }

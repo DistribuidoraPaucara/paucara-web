@@ -3,10 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
-import { Eye, Truck, User, Plus, Route, XCircle, FileText, Pencil, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Eye, Truck, User, Route, XCircle, FileText, Pencil, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import type { Entrega } from '@/domain/entities/entregas';
 import type { Pagination } from '@/domain/entities/shared';
-import { getEstadoBadgeVariant, getEstadoLabel, formatearFecha } from '@/lib/entregas.utils';
 import { useEntregas } from '@/application/hooks/use-entregas';
 import { useEstadosEntregas } from '@/application/hooks';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -15,9 +14,10 @@ import { useQueryParam } from '@/application/hooks/use-query-param';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import EstadoEntregaBadge from '@/presentation/components/logistica/EstadoEntregaBadge';
 
-// Importar componente de filtros
+// Importar componente de filtros y modal
 import { EntregasFilters, type FiltrosEntregas } from './EntregasFilters';
 import { CancelarEntregaModal } from './CancelarEntregaModal';
+import { UbicacionesMultiplesModal } from './UbicacionesMultiplesModal';
 
 interface Props {
     entregas: Pagination<Entrega>;
@@ -87,6 +87,10 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
     const [entregaSeleccionadaParaOutput, setEntregaSeleccionadaParaOutput] = useState<number | null>(null);
     // ✅ NUEVO: Estado para filas expandidas (mostrar ventas)
     const [entregasExpandidas, setEntregasExpandidas] = useState<Set<number>>(new Set());
+
+    // ✅ NUEVO (2026-06-11): Estado para modal de ubicaciones múltiples
+    const [mostrarUbicaciones, setMostrarUbicaciones] = useState(false);
+    const [entregaSeleccionadaParaUbicaciones, setEntregaSeleccionadaParaUbicaciones] = useState<Entrega | null>(null);
 
     // Handler para cambiar filtros (SOLO ESTADO LOCAL, sin refetch)
     const handleFilterChange = useCallback((key: keyof FiltrosEntregas, value: string) => {
@@ -195,6 +199,12 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
         setMostrarOutputSelection(true);
     }, []);
 
+    // ✅ NUEVO (2026-06-11): Handler para abrir modal de ubicaciones múltiples
+    const handleAbrirUbicaciones = useCallback((entrega: Entrega) => {
+        setEntregaSeleccionadaParaUbicaciones(entrega);
+        setMostrarUbicaciones(true);
+    }, []);
+
     // ✅ NUEVO: Auto-activar "Todas las fechas" si hay parámetros de fecha en URL
     useEffect(() => {
         if (fechaDesdeURL || fechaHastaURL) {
@@ -205,24 +215,17 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
     // ✅ SIMPLIFICADO: El backend ya filtra TODO, aquí solo usamos los datos ya filtrados
     const entregasFiltradas = useMemo(() => {
         // El backend ya aplicó todos los filtros (estado, fechas, chofer, vehículo, localidad, estado_logística, búsqueda)
-        // Solo filtrar localmente si es necesario mostrar "Solo Hoy" Y NO hay búsqueda específica
-        if (!mostrarTodasLasFechas && !filtros.fecha_desde && !filtros.fecha_hasta && !filtros.busqueda_entrega && !filtros.busqueda_ventas) {
-            // Si está en "Solo Hoy" y no hay parámetros de fecha ni búsqueda, filtrar por created_at
+        // Solo filtrar localmente si es necesario mostrar "Solo Hoy" Y NO hay parámetros específicos
+        if (!mostrarTodasLasFechas && !filtros.fecha_desde && !filtros.fecha_hasta && !filtros.busqueda_entrega && !filtros.busqueda_ventas && !filtros.estado_logistica_id) {
+            // Si está en "Solo Hoy" y no hay parámetros de fecha, búsqueda o filtros específicos, filtrar por created_at
             return entregas.data.filter(entrega =>
                 entrega.created_at &&
                 new Date(entrega.created_at).toDateString() === new Date().toDateString()
             );
         }
-        // Si hay parámetros de fecha o búsqueda, el backend ya filtró - devolver datos tal cual
+        // Si hay parámetros de fecha, búsqueda o filtros específicos, el backend ya filtró - devolver datos tal cual
         return entregas.data;
     }, [entregas.data, filtros, mostrarTodasLasFechas]);
-
-    // Selección múltiple
-    const toggleSeleccion = (id: number) => {
-        setEntregasSeleccionadas(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        );
-    };
 
     // ✅ NUEVO: Toglear expansión de fila
     const toggleExpandirEntrega = (entregaId: number) => {
@@ -237,14 +240,6 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
         });
     };
 
-    const toggleSeleccionTodos = () => {
-        if (entregasSeleccionadas.length === entregasFiltradas.length) {
-            setEntregasSeleccionadas([]);
-        } else {
-            setEntregasSeleccionadas(entregasFiltradas.map(e => Number(e.id)));
-        }
-    };
-
     // ✅ Función para calcular el total de una entrega (suma de subtotales de todas las ventas)
     const calcularTotalEntrega = (entrega: Entrega): number => {
         return entrega.ventas?.reduce((total, venta) => {
@@ -253,7 +248,6 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
         }, 0) ?? 0;
     };
 
-    const entregasProgramadas = entregasFiltradas.filter(e => e.estado === 'PROGRAMADO' || e.estado === 'PENDIENTE');
     const puedeOptimizar = entregasSeleccionadas.length >= 2 &&
         entregasSeleccionadas.every(id => {
             const entrega = entregas.data.find(e => Number(e.id) === id);
@@ -262,33 +256,6 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
 
     return (
         <div className="space-y-6">
-            {/* Acciones rápidas */}
-            <div className="flex gap-2">
-                {entregasSeleccionadas.length > 0 && (
-                    <Button
-                        variant="outline"
-                        onClick={() => setEntregasSeleccionadas([])}
-                    >
-                        Limpiar selección ({entregasSeleccionadas.length})
-                    </Button>
-                )}
-                {puedeOptimizar && (
-                    <Button
-                        variant="default"
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => setMostrarOptimizacion(true)}
-                    >
-                        <Route className="h-4 w-4 mr-2" />
-                        Optimizar Rutas ({entregasSeleccionadas.length})
-                    </Button>
-                )}
-                <Link href="/logistica/entregas/create" className="ml-auto">
-                    <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Crear Entrega
-                    </Button>
-                </Link>
-            </div>
 
             {/* ✅ COMPONENTE DE FILTROS MEJORADO */}
             <EntregasFilters
@@ -303,19 +270,6 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                 estadosLogisticos={estadosLogisticos}
                 isLoading={estadosLoading}
             />
-
-            {/* ✅ NUEVO: Toggle para ver "Todas las fechas" */}
-            <div className="flex items-center gap-2 mb-4">
-                <Button
-                    variant={mostrarTodasLasFechas ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setMostrarTodasLasFechas(!mostrarTodasLasFechas)}
-                    className="gap-2"
-                >
-                    <Calendar className="h-4 w-4" />
-                    {mostrarTodasLasFechas ? '📅 Todas las Fechas' : '📅 Solo Hoy'}
-                </Button>
-            </div>
 
             <Card>
                 <CardHeader>
@@ -470,6 +424,20 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                 <Eye className="h-4 w-4 mr-1" />
                                                                 Ver
                                                             </Button>
+
+                                                            {/* ✅ NUEVO (2026-06-11): Botón para ver ubicaciones */}
+                                                            {entrega.ventas && entrega.ventas.length > 0 && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => handleAbrirUbicaciones(entrega)}
+                                                                    title={`Ver ${entrega.ventas.length} ubicación${entrega.ventas.length !== 1 ? 'es' : ''}`}
+                                                                >
+                                                                    <MapPin className="h-4 w-4 mr-1" />
+                                                                    Ubicaciones
+                                                                </Button>
+                                                            )}
+
                                                             <Link href={`/logistica/entregas/${entrega.id}/edit`}>
                                                                 <Button
                                                                     size="sm"
@@ -622,6 +590,32 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                 vehiculos={vehiculos}
                 choferes={choferes}
             />
+
+            {/* ✅ NUEVO (2026-06-11): Modal de ubicaciones múltiples */}
+            {entregaSeleccionadaParaUbicaciones && (
+                <UbicacionesMultiplesModal
+                    isOpen={mostrarUbicaciones}
+                    onClose={() => {
+                        setMostrarUbicaciones(false);
+                        setEntregaSeleccionadaParaUbicaciones(null);
+                    }}
+                    ubicaciones={
+                        entregaSeleccionadaParaUbicaciones.ventas?.map(venta => ({
+                            id: venta.direccion_cliente?.id || venta.id,
+                            venta_id: venta.id,
+                            venta_numero: venta.numero,
+                            cliente_nombre: venta.cliente?.nombre || 'Cliente desconocido',
+                            cliente_telefono: venta.cliente?.telefono,
+                            direccion: venta.direccion_cliente?.direccion || 'Sin dirección',
+                            observaciones: venta.direccion_cliente?.observaciones,
+                            latitud: venta.direccion_cliente?.latitud,
+                            longitud: venta.direccion_cliente?.longitud,
+                            estado: entregaSeleccionadaParaUbicaciones.estado_entrega?.nombre,
+                        })) || []
+                    }
+                    titulo={`Ubicaciones de Entrega ${entregaSeleccionadaParaUbicaciones.numero_entrega || ''}`}
+                />
+            )}
         </div>
     );
 }

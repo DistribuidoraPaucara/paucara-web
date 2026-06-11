@@ -337,21 +337,23 @@ export default function ProductoTableRow({
                             ) : null;
                         }
 
-                        const valorInicial = (manuallySelectedTipoPrecio?.[index] && selectedTipoPrecio[index])
-                            ? selectedTipoPrecio[index]
-                            : (
-                                detalle.tipo_precio_id
-                                    ? String(detalle.tipo_precio_id)
-                                    : (
-                                        detalle.tipo_precio_id_recomendado
+                        // ✅ PRIORIDAD:
+                        // 1. Si usuario seleccionó algo explícitamente → mantenerlo
+                        // 2. Si tipo_precio_id === null → mostrar "OTROS"
+                        // 3. Si tiene tipo_precio_id → usarlo (del detalle del backend)
+                        // 4. Fallback: tipo_precio_id_recomendado o default
+                        const valorInicial =
+                            selectedTipoPrecio[index] !== undefined
+                                ? String(selectedTipoPrecio[index]) // Usuario seleccionó algo
+                                : detalle.tipo_precio_id === null
+                                    ? 'otros' // Mostrar "OTROS" si es null
+                                    : detalle.tipo_precio_id
+                                        ? String(detalle.tipo_precio_id) // ✅ Usar siempre el del detalle si existe
+                                        : detalle.tipo_precio_id_recomendado
                                             ? String(detalle.tipo_precio_id_recomendado)
-                                            : (
-                                                default_tipo_precio_id
-                                                    ? String(default_tipo_precio_id)
-                                                    : (preciosVenta[0]?.tipo_precio_id ? String(preciosVenta[0].tipo_precio_id) : '')
-                                            )
-                                    )
-                            );
+                                            : default_tipo_precio_id
+                                                ? String(default_tipo_precio_id)
+                                                : '';
 
                         return (
                             <select
@@ -359,6 +361,24 @@ export default function ProductoTableRow({
                                 value={valorInicial}
                                 onChange={(e) => {
                                     const tipoPrecioIdSeleccionado = e.target.value;
+
+                                    // ✅ NUEVO: Manejar opción "OTROS"
+                                    if (tipoPrecioIdSeleccionado === 'otros') {
+                                        if (onManualTipoPrecioChange) {
+                                            onManualTipoPrecioChange(index);
+                                        }
+
+                                        setSelectedTipoPrecio(prev => ({
+                                            ...prev,
+                                            [index]: 'otros'
+                                        }));
+
+                                        // Limpiar tipo_precio pero mantener el precio actual
+                                        onUpdateDetail(index, 'tipo_precio_id', null);
+                                        onUpdateDetail(index, 'tipo_precio_nombre', null);
+                                        return;
+                                    }
+
                                     const precioSeleccionado = preciosVenta.find(p => String(p.tipo_precio_id) === String(tipoPrecioIdSeleccionado));
 
                                     if (precioSeleccionado) {
@@ -384,6 +404,10 @@ export default function ProductoTableRow({
                                         {precio.nombre || `Tipo ${precio.tipo_precio_id}`} - {formatCurrencyWith2Decimals(precio.precio || 0)}
                                     </option>
                                 ))}
+                                {/* ✅ NUEVO: Opción OTROS para precios personalizados */}
+                                <option value="otros">
+                                    ➕ OTROS (Precio Personalizado)
+                                </option>
                             </select>
                         );
                     })()}

@@ -2606,76 +2606,9 @@ class ProductoController extends Controller
                 $almacenNombre = $stockAlmacen?->almacen?->nombre ?? 'Almacén Principal';
                 $segundoCodigoBarra = CodigoBarra::obtenerSegundoCodigoActivo($producto->id) ?? $producto->codigo_barras ?? '';
 
-                // ✅ NUEVO: Preparar items del combo si es_combo = true
-                $comboItems = [];
-                if ($producto->es_combo && $producto->comboItems->count() > 0) {
-                    // ✅ CORREGIDO: Usar ComboStockService para obtener stock correcto del almacén
-                    $capacidadInfo = \App\Services\ComboStockService::calcularCapacidadConDetalles($producto->id, $almacenId);
-
-                    $comboItems = $producto->comboItems
-                        ->map(function($item) use ($capacidadInfo, $almacenId, $producto) {
-                            // ✅ MEJORADO: Sumar stock de TODOS los lotes del almacén (no solo el primero)
-                            // Puede haber múltiples registros por lote/fecha_vencimiento
-                            $stockParaAlmacen = $item->producto?->stock
-                                ? collect($item->producto->stock)->where('almacen_id', $almacenId)
-                                : collect();
-
-                            $stockDisponible = (int) $stockParaAlmacen->sum('cantidad_disponible');
-                            $stockTotal = (int) $stockParaAlmacen->sum('cantidad');
-
-                            // ✅ DEBUG: Log detallado del stock de cada item
-                            Log::debug('📦 [mapearProductos] Stock de item del combo', [
-                                'combo_id' => $producto->id,
-                                'item_id' => $item->id,
-                                'producto_id' => $item->producto_id,
-                                'producto_nombre' => $item->producto?->nombre,
-                                'almacen_id' => $almacenId,
-                                'stock_relationship_loaded' => $item->producto?->stock !== null,
-                                'stock_records_para_almacen' => $stockParaAlmacen->count(),
-                                'stock_details' => $stockParaAlmacen->map(fn($s) => [
-                                    'almacen_id' => $s->almacen_id,
-                                    'cantidad' => $s->cantidad,
-                                    'cantidad_disponible' => $s->cantidad_disponible,
-                                ])->all(),
-                                'stock_disponible_calculado' => $stockDisponible,
-                                'stock_total_calculado' => $stockTotal,
-                            ]);
-
-                            // Obtener información del detalle de capacidad (incluye cuello de botella)
-                            $detalle = collect($capacidadInfo['detalles'])
-                                ->firstWhere('producto_id', $item->producto_id);
-
-                            return [
-                                'id'                    => $item->id,
-                                'combo_id'              => $item->combo_id,
-                                'producto_id'           => $item->producto_id,
-                                'producto_nombre'       => $item->producto?->nombre ?? '',
-                                'producto_sku'          => $item->producto?->sku ?? '',
-                                'producto_codigo_barras'=> $item->producto?->codigo_barras ?? '',
-                                'cantidad'              => (float) $item->cantidad,
-                                'precio_unitario'       => (float) $item->precio_unitario,
-                                'tipo_precio_id'        => $item->tipo_precio_id,
-                                'tipo_precio_nombre'    => $item->tipoPrecio?->nombre ?? '',
-                                'unidad_medida_id'      => $item->producto?->unidad_medida_id,
-                                'unidad_medida_nombre'  => $item->producto?->unidad?->nombre ?? null,
-                                'stock_disponible'      => (int) $stockDisponible,
-                                'stock_total'           => (int) $stockTotal,
-                                'es_obligatorio'        => (bool) $item->es_obligatorio,
-                                'es_cuello_botella'     => $detalle['es_cuello_botella'] ?? false, // ✅ NUEVO: Indica si limita la capacidad
-                                'combos_posibles'       => $detalle['combos_posibles'] ?? 0, // ✅ NUEVO: Cuántos combos se pueden hacer
-                            ];
-                        })
-                        ->values()
-                        ->all();
-
-                    // ✅ DEBUG: Log detallado del combo
-                    Log::info('📦 [mapearProductos] Combo cargado', [
-                        'combo_id' => $producto->id,
-                        'combo_nombre' => $producto->nombre,
-                        'cantidad_items' => count($comboItems),
-                        'items_detalle' => $comboItems
-                    ]);
-                }
+                // ✅ NUEVO: Usar ComboResponseService para construir combo_items
+                // Centraliza la lógica en un servicio reutilizable
+                $comboItems = \App\Services\ComboResponseService::construirComboItems($producto, $almacenId);
 
                 return [
                     'id'               => $producto->id,

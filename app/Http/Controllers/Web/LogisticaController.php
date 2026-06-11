@@ -98,7 +98,19 @@ class LogisticaController extends Controller
 
         // ✅ Filtro por estado logístico
         if (request()->has('estado_logistica_id') && request('estado_logistica_id') !== '' && request('estado_logistica_id') !== '0') {
-            $query->where('estado_proforma_id', request('estado_logistica_id'));
+            $estadoId = request('estado_logistica_id');
+            \Log::info('🔍 [LogisticaController] Filtrando por estado_logistica_id', [
+                'estado_logistica_id_recibido' => $estadoId,
+                'buscando_en_columna' => 'estado_proforma_id',
+                'total_proformas_antes_filtro' => $query->count(),
+            ]);
+
+            $query->where('estado_proforma_id', $estadoId);
+
+            \Log::info('📊 [LogisticaController] Resultado después del filtro', [
+                'estado_logistica_id' => $estadoId,
+                'total_proformas_encontradas' => $query->count(),
+            ]);
         }
 
         // ✅ Filtro por coordinación completada

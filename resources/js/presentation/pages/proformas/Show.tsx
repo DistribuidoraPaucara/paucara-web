@@ -458,8 +458,31 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 stock_total_en_producto: (d.producto as any)?.stock_total
             });
 
+            // ✅ NUEVO: Actualizar combo_items con stock actual del producto
+            // El backend devuelve stock antiguo en combo_items, necesitamos reemplazarlo
+            let detalleActualizado = { ...d };
+
+            if (d.es_combo && Array.isArray(d.combo_items)) {
+                detalleActualizado.combo_items = d.combo_items.map((item: any) => {
+                    // Buscar el producto del item en el detalle principal
+                    const productoDelItem = (d.producto as any)?.combo_items?.find(
+                        (ci: any) => ci.producto_id === item.producto_id
+                    );
+
+                    if (productoDelItem && productoDelItem.stock_disponible !== undefined) {
+                        console.log(`🔄 [Actualizando stock combo] Producto ${item.producto_id}: ${item.stock_disponible} → ${productoDelItem.stock_disponible}`);
+                        return {
+                            ...item,
+                            stock_disponible: productoDelItem.stock_disponible,
+                            stock_total: productoDelItem.stock_total
+                        };
+                    }
+                    return item;
+                });
+            }
+
             return {
-                ...d,
+                ...detalleActualizado,
                 // ✅ NUEVO: Preservar unidad_medida_nombre desde el detalle
                 unidad_medida_id: d.unidad_medida_id || (d.producto as any)?.unidad_medida_id,
                 unidad_medida_nombre: d.unidad_medida_nombre || (d.producto as any)?.unidad_medida_nombre,
@@ -496,6 +519,8 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
         })
     )
     const [preciosEditadosManualmente, setPreciosEditadosManualmente] = useState<Set<number>>(new Set())
+    // ✅ NUEVO: Track cambios en detalles que no han sido guardados
+    const [haysCambiosSinGuardar, setHaysCambiosSinGuardar] = useState(false)
     const [showAgregarProductoDialog, setShowAgregarProductoDialog] = useState(false)
 
     // Estados para búsqueda rápida de productos
@@ -592,10 +617,10 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
 
             setEditableDetalles(prevDetalles => {
                 const detallesActualizados = prevDetalles.map(detalle => {
-                    // ✅ NO sobrescribir precios editados manualmente por el usuario
-                    if (preciosEditadosManualmente.has(detalle.id)) {
-                        console.log(`⏸️ Precio manual detectado para detalle ${detalle.id}, NO sobrescribir`)
-                        return detalle
+                    // ✅ NO sobrescribir si tipo_precio_id === null (usuario seleccionó "OTROS")
+                    if (detalle.tipo_precio_id === null) {
+                        console.log(`🔒 [PROTEGIDO] Detalle ${detalle.id} tiene OTROS seleccionado - Ignorando respuesta del carrito`)
+                        return detalle; // Mantener el precio manual
                     }
 
                     // Obtener el detalle calculado del hook
@@ -738,7 +763,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             cantidad: d.cantidad,
             tipo_precio_id: d.tipo_precio_id // ✅ NUEVO: Respetar tipo_precio_id seleccionado
         }))
-        calcularCarritoDebounced(itemsParaCalcular)
+        calcularCarritoConRespeto(itemsParaCalcular)
     }
 
     // ✅ NUEVO: Handler para editar precio manualmente
@@ -785,11 +810,44 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             tipo_precio_id: d.tipo_precio_id
         }))
         console.log('🏷️ Tipo de precio cambiado - Detalle:', index, 'De:', tipoAnterior, 'A:', tipoPrecioId, '- Recalculando...')
-        calcularCarritoDebounced(itemsParaCalcular)
+        calcularCarritoConRespeto(itemsParaCalcular)
     }
 
     // ✅ NUEVO: Handlers para ProductosTable (centralizados)
+    // ✅ NUEVO: Función wrapper para calcular carrito SIN enviar items con tipo_precio_id = null (OTROS)
+    const calcularCarritoConRespeto = (items: any[]) => {
+        // Filtrar items donde tipo_precio_id === null (usuario seleccionó "OTROS")
+        const itemsFiltrados = items.filter(item => {
+            const tieneOtros = item.tipo_precio_id === null;
+            if (tieneOtros) {
+                console.log(`🔒 [calcularCarritoConRespeto] IGNORANDO producto ${item.producto_id} - tipo_precio_id = null (OTROS seleccionado)`);
+            }
+            return !tieneOtros; // Solo incluir si NO es null
+        });
+
+        // Si quedan items por calcular, enviar al backend
+        if (itemsFiltrados.length > 0) {
+            console.log(`📤 [calcularCarritoConRespeto] Enviando ${itemsFiltrados.length} items al backend`, itemsFiltrados);
+            calcularCarritoDebounced(itemsFiltrados);
+        } else {
+            console.log('⏹️ [calcularCarritoConRespeto] TODOS los items tienen OTROS seleccionado, NO enviar al backend');
+        }
+    }
+
     const handleAgregarProducto = (producto: Producto) => {
+        const precioRecomendado = (producto.precio_venta as number) ?? (producto.precio_base as number) ?? 0;
+
+        // ✅ NUEVO: Buscar tipo_precio_nombre desde precios_venta del producto
+        let tipo_precio_nombre = null;
+        if ((producto as any).precios_venta && Array.isArray((producto as any).precios_venta)) {
+            const precioCoincidente = (producto as any).precios_venta.find((p: any) =>
+                Math.abs(p.precio - precioRecomendado) < 0.01
+            );
+            if (precioCoincidente) {
+                tipo_precio_nombre = precioCoincidente.tipo_precio_nombre;
+            }
+        }
+
         const nuevoDetalle: any = {
             id: Math.random(),
             producto,
@@ -797,13 +855,15 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             producto_nombre: producto.nombre,
             sku: producto.sku,
             cantidad: 1,
-            precio_unitario: (producto.precio_venta as number) ?? (producto.precio_base as number) ?? 0,
-            subtotal: (producto.precio_venta as number) ?? (producto.precio_base as number) ?? 0,
+            precio_unitario: precioRecomendado,
+            subtotal: precioRecomendado,
             stock_disponible: (producto as any).stock_disponible || 0,
             peso: (producto as any).peso || 0,
             categoria: (producto as any).categoria || undefined,
             limite_venta: (producto as any).limite_venta || null,
             tipo_precio_id: (producto as any).tipo_precio_id_recomendado || null,
+            // ✅ NUEVO: Incluir tipo_precio_nombre
+            tipo_precio_nombre: tipo_precio_nombre || (producto as any).tipo_precio_nombre_recomendado || null,
         }
 
         const nuevosDetalles = [...editableDetalles, nuevoDetalle]
@@ -814,36 +874,60 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             cantidad: d.cantidad,
             tipo_precio_id: d.tipo_precio_id
         }))
-        calcularCarritoDebounced(itemsParaCalcular)
+
+        // ✅ NUEVO: Marcar que hay cambios sin guardar
+        setHaysCambiosSinGuardar(true)
+        console.log('🔄 [handleAgregarProducto] Cambios detectados - Deshabilitando botón Aprobar')
+
+        calcularCarritoConRespeto(itemsParaCalcular)
     }
 
     const handleUpdateDetalle = (index: number, field: keyof DetalleProducto, value: number | string) => {
         const nuevosDetalles = [...editableDetalles]
         const detalle = nuevosDetalles[index]
 
+        // ✅ NUEVO: Flag para controlar si debemos recalcular el carrito
+        let debeRecalcular = true
+        // ✅ NUEVO: Flag para saber si es cambio de cantidad o precio
+        let escambioSignificativo = false
+
         if (field === 'cantidad') {
             const cantidadValida = Math.max(0.01, isNaN(value as any) ? 0.01 : (value as number))
             detalle.cantidad = cantidadValida
             detalle.subtotal = cantidadValida * detalle.precio_unitario
+            escambioSignificativo = true // Cambio de cantidad requiere guardar
         } else if (field === 'precio_unitario') {
+            // ✅ IMPORTANTE: Cuando se edita precio manualmente, DETENER el cálculo automático
             detalle.precio_unitario = value as number
             detalle.subtotal = detalle.cantidad * (value as number)
+            escambioSignificativo = true // Cambio de precio requiere guardar
             const detalleId = detalle.id
             if (detalleId) {
                 setPreciosEditadosManualmente(prev => new Set(prev).add(detalleId))
+                console.log(`🔒 [handleUpdateDetalle] Precio editado manualmente - ID: ${detalleId}, NO recalcular carrito`);
+                debeRecalcular = false // ✅ NO RECALCULAR cuando el usuario edita manualmente
             }
         } else {
             (detalle as any)[field] = value
         }
 
+        // ✅ NUEVO: Marcar cambios sin guardar si se modificó cantidad o precio
+        if (escambioSignificativo) {
+            setHaysCambiosSinGuardar(true)
+            console.log(`🔄 [handleUpdateDetalle] Campo '${field}' modificado - Cambios sin guardar activado`)
+        }
+
         setEditableDetalles(nuevosDetalles)
 
-        const itemsParaCalcular = nuevosDetalles.map(d => ({
-            producto_id: d.producto_id,
-            cantidad: d.cantidad,
-            tipo_precio_id: d.tipo_precio_id
-        }))
-        calcularCarritoDebounced(itemsParaCalcular)
+        // ✅ NUEVO: Solo recalcular si no es una edición manual de precio
+        if (debeRecalcular) {
+            const itemsParaCalcular = nuevosDetalles.map(d => ({
+                producto_id: d.producto_id,
+                cantidad: d.cantidad,
+                tipo_precio_id: d.tipo_precio_id
+            }))
+            calcularCarritoConRespeto(itemsParaCalcular)
+        }
     }
 
     const handleRemoveDetalle = (index: number) => {
@@ -865,8 +949,9 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
         if (detalle && (detalle.producto as any)?.es_combo) {
             // Convertir items actualizados a combo_items_seleccionados
             // Solo incluir los que tienen _isChecked = true
+            // ✅ IMPORTANTE: Incluir SIEMPRE items obligatorios + items opcionales seleccionados
             const comboItemsSeleccionados = updatedItems
-                .filter((item: any) => item._isChecked === true)
+                .filter((item: any) => item.es_obligatorio === true || item._isChecked === true)
                 .map((item: any) => ({
                     id: item.id,
                     combo_item_id: item.id,
@@ -880,6 +965,8 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             // Actualizar el detalle con los nuevos combo_items_seleccionados
             detalle.combo_items_seleccionados = comboItemsSeleccionados;
 
+            console.log(`✅ [handleComboItemsChange] Combo ${detalle.producto_id}: ${comboItemsSeleccionados.length} items incluidos (obligatorios + opcionales seleccionados)`, comboItemsSeleccionados);
+
             setEditableDetalles(nuevosDetalles);
             console.log(`✅ combo_items_seleccionados actualizado con ${comboItemsSeleccionados.length} items`);
         }
@@ -890,6 +977,17 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
     // Esto hacía que el useEffect de ProductosTable se disparara infinitamente
     const handleDetallesActualizadosPorRangos = useCallback((nuevosDetalles: any) => {
         console.log('🔄 [proformas/Show.tsx] ProductosTable notificó cambios en detalles por rangos');
+
+        // ✅ NUEVO: DEBUG para verificar si combo_items_seleccionados se preserva
+        nuevosDetalles.forEach((d: any) => {
+            if (d.es_combo) {
+                console.log(`🎁 [handleDetallesActualizadosPorRangos] Combo ${d.producto_id}:`, {
+                    combo_items_seleccionados_count: d.combo_items_seleccionados?.length ?? 0,
+                    combo_items_seleccionados: d.combo_items_seleccionados
+                });
+            }
+        });
+
         setEditableDetalles(nuevosDetalles);
     }, []); // ✅ EMPTY deps: Callback nunca cambia, perfectamente seguro
 
@@ -1090,14 +1188,28 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
         try {
             console.log('%c📤 Enviando detalles actualizados al servidor...', 'color: blue;');
 
+            // ✅ DEBUG: Ver si editableDetalles tiene combo_items_seleccionados ANTES de construir payload
+            editableDetalles.forEach((d, idx) => {
+                if (d.es_combo) {
+                    console.log(`🎁 [actualizarDetallesProforma] Detalle ${idx} (Combo ${d.producto_id}):`, {
+                        combo_items_seleccionados_count: d.combo_items_seleccionados?.length ?? 0,
+                        combo_items_seleccionados: d.combo_items_seleccionados
+                    });
+                }
+            });
+
             // Preparar detalles para enviar
             const detallesParaGuardar = editableDetalles.map(d => ({
                 producto_id: d.producto_id,
                 cantidad: d.cantidad,
                 precio_unitario: d.precio_unitario,
                 subtotal: d.subtotal,
-                // ✅ NUEVO: Incluir combo_items_seleccionados para combos
-                ...(d.combo_items_seleccionados && {
+                // ✅ NUEVO: Incluir tipo_precio_id y tipo_precio_nombre (pueden ser null)
+                tipo_precio_id: d.tipo_precio_id ?? null,
+                tipo_precio_nombre: d.tipo_precio_nombre ?? null,
+                // ✅ CORREGIDO: SIEMPRE incluir combo_items_seleccionados (incluso si es un array vacío)
+                // Un array vacío es "falsy" en JS, así que necesitamos verificar !== undefined
+                ...(d.combo_items_seleccionados !== undefined && {
                     combo_items_seleccionados: d.combo_items_seleccionados
                 })
             }));
@@ -1136,6 +1248,10 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
             if (mostrarNotificaciones) {
                 toast.success('✅ Detalles actualizados correctamente');
             }
+
+            // ✅ NUEVO: Limpiar el flag de cambios sin guardar
+            setHaysCambiosSinGuardar(false)
+            console.log('✅ [actualizarDetallesProforma] Cambios guardados exitosamente - Botón Aprobar habilitado')
 
             return true;
 
@@ -1271,20 +1387,15 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
 
             // ✅ NUEVO: Mostrar detalles del stock consumido
             const stockConsumido = convertirData.data?.stock_consumido;
-            if (stockConsumido && stockConsumido.detalles.length > 0) {
-                // Toast con información detallada de stock consumido
-                const productosConsumidos = stockConsumido.detalles.map((p: any) =>
-                    `${p.producto_nombre} (${p.cantidad_reservada} unidades de ${p.cantidad_lotes} lote(s))`
-                ).join(', ');
-
+            if (stockConsumido) {
                 toast.success(
-                    `✅ Stock Consumido: ${productosConsumidos}`,
+                    `✅ ${stockConsumido.mensaje}`,
                     {
-                        description: `Venta ${convertirData.data.venta.numero} - Total: $${convertirData.data.venta.total}`
+                        description: `Venta ${convertirData.data.venta.numero} - Total: Bs. ${convertirData.data.venta.total} (${stockConsumido.cantidad_productos} producto(s))`
                     }
                 );
 
-                console.log('%c📦 Stock Consumido - Detalles Completos:', 'color: green; font-weight: bold;', stockConsumido);
+                console.log('%c📦 Stock Consumido - Resumen:', 'color: green; font-weight: bold;', stockConsumido);
             } else {
                 toast.success('✅ Proforma convertida a venta exitosamente');
             }
@@ -1634,35 +1745,32 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                 )}
 
                                 {/* ✅ NUEVO: Tipo de Pago - Destacado cuando es CREDITO */}
-                                <div className={`flex items-center space-x-2 rounded-lg p-2 border ${
-                                    proforma.politica_pago === 'CREDITO'
+                                <div className={`flex items-center space-x-2 rounded-lg p-2 border ${proforma.politica_pago === 'CREDITO'
                                         ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700'
                                         : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-                                }`}>
+                                    }`}>
                                     <div className="flex-shrink-0">
-                                        <div className={`flex items-center justify-center h-6 w-6 rounded-full ${
-                                            proforma.politica_pago === 'CREDITO'
+                                        <div className={`flex items-center justify-center h-6 w-6 rounded-full ${proforma.politica_pago === 'CREDITO'
                                                 ? 'bg-purple-200 dark:bg-purple-800'
                                                 : 'bg-slate-200 dark:bg-slate-700'
-                                        }`}>
+                                            }`}>
                                             <span className="text-sm">
                                                 {proforma.politica_pago === 'CREDITO' ? '💳' :
-                                                 proforma.politica_pago === 'ANTICIPADO_100' ? '💵' :
-                                                 proforma.politica_pago === 'CONTRA_ENTREGA' ? '📦' : '💰'}
+                                                    proforma.politica_pago === 'ANTICIPADO_100' ? '💵' :
+                                                        proforma.politica_pago === 'CONTRA_ENTREGA' ? '📦' : '💰'}
                                             </span>
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Forma de Pago</p>
-                                        <p className={`text-xs font-bold truncate ${
-                                            proforma.politica_pago === 'CREDITO'
+                                        <p className={`text-xs font-bold truncate ${proforma.politica_pago === 'CREDITO'
                                                 ? 'text-purple-800 dark:text-purple-200'
                                                 : 'text-slate-900 dark:text-white'
-                                        }`}>
+                                            }`}>
                                             {proforma.politica_pago === 'CREDITO' ? '🔴 CRÉDITO' :
-                                             proforma.politica_pago === 'ANTICIPADO_100' ? 'ANTICIPADO 100%' :
-                                             proforma.politica_pago === 'CONTRA_ENTREGA' ? 'CONTRA ENTREGA' :
-                                             proforma.politica_pago}
+                                                proforma.politica_pago === 'ANTICIPADO_100' ? 'ANTICIPADO 100%' :
+                                                    proforma.politica_pago === 'CONTRA_ENTREGA' ? 'CONTRA ENTREGA' :
+                                                        proforma.politica_pago}
                                         </p>
                                     </div>
                                 </div>
@@ -1689,7 +1797,9 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                             <Button
                                 variant="default"
                                 onClick={() => setShowAprobarDialog(true)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={haysCambiosSinGuardar}
+                                title={haysCambiosSinGuardar ? 'Debes guardar los cambios en detalles antes de aprobar' : 'Aprobar proforma'}
+                                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Check className="mr-2 h-4 w-4" />
                                 Aprobar
@@ -1733,7 +1843,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                             variant="outline"
                         >
                             <FileText className="mr-2 h-4 w-4" />
-                            Exportar
+                            Imprimir
                         </Button>
                     </div>
                 </div>
@@ -1920,12 +2030,12 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 {/* Información principal */}
                 <div className="lg:col-span-2 space-y-[var(--space-lg)]">
                     {/* Advertencia sobre cambios locales */}
-                    {editableDetalles.length !== proforma.detalles.length && (
+                    {haysCambiosSinGuardar && (
                         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex gap-2 text-sm">
                             <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                             <div className="text-amber-900 dark:text-amber-100">
-                                <p className="font-medium">Cambios no guardados</p>
-                                <p className="text-xs mt-1">Los productos agregados/modificados solo existen localmente. Para guardarlos, debes aprobar la proforma.</p>
+                                <p className="font-medium">⚠️ Cambios sin guardar</p>
+                                <p className="text-xs mt-1">Has realizado cambios en los detalles. Debes presionar <strong>"Guardar Cambios"</strong> antes de poder aprobar la proforma.</p>
                             </div>
                         </div>
                     )}

@@ -787,6 +787,9 @@ class VentaController extends Controller
                 'moneda',
                 'estadoDocumento',
                 'detalles.producto',
+                'proforma',
+                'entrega',
+                'confirmaciones',
             ])->findOrFail($id);
 
             // Si es API, retornar JSON con datos completos

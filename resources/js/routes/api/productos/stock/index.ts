@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProductoController::multiples
- * @see app/Http/Controllers/ProductoController.php:4057
+ * @see app/Http/Controllers/ProductoController.php:3990
  * @route '/api/productos/stock/multiples'
  */
 export const multiples = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ multiples.definition = {
 
 /**
 * @see \App\Http\Controllers\ProductoController::multiples
- * @see app/Http/Controllers/ProductoController.php:4057
+ * @see app/Http/Controllers/ProductoController.php:3990
  * @route '/api/productos/stock/multiples'
  */
 multiples.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ multiples.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProductoController::multiples
- * @see app/Http/Controllers/ProductoController.php:4057
+ * @see app/Http/Controllers/ProductoController.php:3990
  * @route '/api/productos/stock/multiples'
  */
 multiples.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ multiples.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\ProductoController::multiples
- * @see app/Http/Controllers/ProductoController.php:4057
+ * @see app/Http/Controllers/ProductoController.php:3990
  * @route '/api/productos/stock/multiples'
  */
     const multiplesForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ multiples.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\ProductoController::multiples
- * @see app/Http/Controllers/ProductoController.php:4057
+ * @see app/Http/Controllers/ProductoController.php:3990
  * @route '/api/productos/stock/multiples'
  */
         multiplesForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

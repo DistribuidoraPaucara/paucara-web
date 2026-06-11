@@ -1,15 +1,23 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency, formatCurrencyWith2Decimals } from '@/lib/utils';
+import { formatCurrencyWith2Decimals } from '@/lib/utils';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { User, Edit, AlertCircle, Printer, Package } from 'lucide-react';
+import { User, Edit, AlertCircle, Printer, Package, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/application/hooks/use-auth';
 import { toast } from 'react-toastify';
-import type { VentaShow, EstadoDocumento } from '@/domain/entities/ventas';
+import type { VentaShow } from '@/domain/entities/ventas';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import AnularVentaModal from '@/presentation/components/ventas/AnularVentaModal';
 import ConfirmacionEntregaModal from '@/presentation/components/ventas/confirmacion-entrega-modal';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/presentation/components/ui/dialog';
+import MapViewWithFallback from '@/presentation/components/maps/MapViewWithFallback';
 
 interface PageProps extends InertiaPageProps {
     venta: VentaShow;
@@ -26,6 +34,12 @@ export default function VentaShow() {
     const [confirmacionEntregaModal, setConfirmacionEntregaModal] = useState<{ isOpen: boolean }>({ isOpen: false });
     // ✅ NUEVO (2026-06-02): Estado para modo de reporte en modal de impresión
     const [modoReporte, setModoReporte] = useState<string>('');
+    // ✅ NUEVO: Estado para modal de ubicación de entrega
+    const [showMapaUbicacion, setShowMapaUbicacion] = useState(false);
+    // ✅ NUEVO: Estado para modal de confirmaciones de entrega
+    const [showConfirmacionesModal, setShowConfirmacionesModal] = useState(false);
+    // ✅ NUEVO: Estado para modal de imagen ampliada del cliente
+    const [showImagenModal, setShowImagenModal] = useState(false);
 
     // Verificar si la venta está APROBADA
     const esAprobada = venta.estado_documento?.nombre?.toLowerCase() === 'aprobada' || venta.estado_documento?.codigo === 'APROBADO';
@@ -66,27 +80,11 @@ export default function VentaShow() {
     console.log('🚀 VentaShow - Props recibidos:', venta);
     console.log('🔍 VentaShow - Venta cargada:', venta.numero);
     console.log('📦 TODOS LOS DATOS DE LA VENTA:', JSON.stringify(venta, null, 2));
-    console.log('  requiere_envio:', venta.requiere_envio, '(tipo:', typeof venta.requiere_envio + ')');
-    console.log('  estado_logistico:', venta.estado_logistico);
-    console.log('  canal_origen:', venta.canal_origen);
-    console.log('  ⏳ estado_pago:', venta.estado_pago);
-    console.log('  💳 politica_pago:', venta.politica_pago);
-
-    const getEstadoColor = (estado: EstadoDocumento) => {
-        switch (estado.nombre.toLowerCase()) {
-            case 'pendiente':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-            case 'completada':
-            case 'pagada':
-                return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-            case 'cancelada':
-                return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-            case 'facturada':
-                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-            default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-        }
-    };
+    // console.log('  requiere_envio:', venta.requiere_envio, '(tipo:', typeof venta.requiere_envio + ')');
+    // console.log('  estado_logistico:', venta.estado_logistico);
+    // console.log('  canal_origen:', venta.canal_origen);
+    // console.log('  ⏳ estado_pago:', venta.estado_pago);
+    // console.log('  💳 politica_pago:', venta.politica_pago);
 
     const getCuentaEstadoColor = (estado: string) => {
         switch (estado.toLowerCase()) {
@@ -113,6 +111,18 @@ export default function VentaShow() {
                     Venta {venta.numero}
                 </h1>
                 <div className="flex space-x-3">
+                    {/* Botón Ver Confirmaciones - Solo si hay confirmaciones */}
+                    {venta.confirmaciones && venta.confirmaciones.length > 0 && (
+                        <button
+                            onClick={() => setShowConfirmacionesModal(true)}
+                            className="inline-flex items-center px-4 py-2 bg-cyan-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-cyan-700 focus:bg-cyan-700 active:bg-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
+                            title="Ver confirmaciones de entrega"
+                        >
+                            <Package className="h-4 w-4 mr-2" />
+                            Ver Confirmaciones
+                        </button>
+                    )}
+
                     {/* Botón Reporte de Entrega - Solo si hay confirmación */}
                     {venta.entregaConfirmacion && (
                         <button
@@ -165,14 +175,14 @@ export default function VentaShow() {
                     )}
 
                     {/* Botón Crear Devolución - Solo si está APROBADO */}
-                    {esAprobada && (
+                    {/* {esAprobada && (
                         <Link
                             href={`/ventas/${venta.id}/devoluciones/create`}
                             className="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700 focus:bg-orange-700 active:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
                         >
                             ↩️ Devolución
                         </Link>
-                    )}
+                    )} */}
                 </div>
             </div>
 
@@ -217,21 +227,6 @@ export default function VentaShow() {
                                             </p>
                                         </div>
                                     </div>
-
-                                    {/* Actualizado */}
-                                    {/* <div className="flex items-center space-x-3">
-                                        <div className="flex-shrink-0">
-                                            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30">
-                                                <span className="text-lg">🔄</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actualizado</p>
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                {new Date(venta.updated_at).toLocaleDateString('es-ES')}
-                                            </p>
-                                        </div>
-                                    </div> */}
                                     {/* Estado */}
                                     <div className="flex items-center space-x-3">
                                         <div className="flex-shrink-0">
@@ -257,16 +252,17 @@ export default function VentaShow() {
                         {/* Foto y datos del cliente + Tipo de Pago y Entrega + Proforma */}
                         <div className="mb-2 pb-2 border-b border-gray-200 dark:border-zinc-700">
                             <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Cliente</h3>
-                            <div className={`grid gap-6 ${venta.proforma ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                                 {/* Columna 1: Foto y datos del cliente */}
                                 <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-1 border border-gray-200 dark:border-zinc-700">
                                     <div className="flex gap-2">
                                         {/* Foto de perfil */}
                                         <div className="flex-shrink-0">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 flex items-center justify-center bg-gray-100 dark:bg-zinc-700">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 flex items-center justify-center bg-gray-100 dark:bg-zinc-700 cursor-pointer hover:opacity-80 transition-opacity"
+                                                onClick={() => venta.cliente.foto_perfil && setShowImagenModal(true)}>
                                                 {venta.cliente.foto_perfil && typeof venta.cliente.foto_perfil === 'string' && imagenCargada ? (
                                                     <img
-                                                        src={venta.cliente.foto_perfil as string}
+                                                        src={`/storage/${venta.cliente.foto_perfil}`}
                                                         alt={venta.cliente.nombre}
                                                         className="w-full h-full object-cover"
                                                         onError={() => setImagenCargada(false)}
@@ -299,38 +295,78 @@ export default function VentaShow() {
                                                     <p className="text-xs text-gray-900 dark:text-white">{venta.cliente.telefono}</p>
                                                 </div>
                                             )}
+                                            {venta.requiere_envio && venta.direccion_cliente && (
+                                                <button
+                                                    onClick={() => setShowMapaUbicacion(true)}
+                                                    className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 px-2 py-1 rounded transition-colors"
+                                                    title="Ver ubicación en el mapa"
+                                                >
+                                                    <MapPin className="h-3 w-3" />
+                                                    Ver Ubicación
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Columna 2: Tipo de Pago */}
-                                {venta.tipo_pago && (
-                                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 border border-blue-200 dark:border-blue-800">
-                                        <label className="block text-xs font-bold text-blue-900 dark:text-blue-200 uppercase mb-2">💳 Tipo de Pago</label>
-                                        <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{venta.tipo_pago.nombre}</p>
-                                    </div>
-                                )}
+                                <div>
+                                    {/* Columna 2: Tipo de Pago */}
+                                    {venta.tipo_pago && (
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 border border-blue-200 dark:border-blue-800">
+                                            <label className="block text-xs font-bold text-blue-900 dark:text-blue-200 uppercase mb-2">💳 Tipo de Pago</label>
+                                            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{venta.tipo_pago.nombre}</p>
+                                        </div>
+                                    )}
+                                    {/* Columna 4: Proforma (si existe) */}
+                                    {venta.proforma && (
+                                        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 border border-purple-200 dark:border-purple-800 mt-2">
+                                            <label className="block text-xs font-bold text-purple-900 dark:text-purple-200 uppercase">📋 Proforma</label>
+                                            <Link
+                                                href={`/proformas/${venta.proforma.id}`}
+                                                className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
+                                            >
+                                                {venta.proforma.numero}
+                                            </Link>
+                                            {/* <p>{venta.proforma.estado}</p> */}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Columna 3: Tipo de Entrega */}
                                 <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2 border border-orange-200 dark:border-orange-800">
-                                    <label className="block text-xs font-bold text-orange-900 dark:text-orange-200 uppercase mb-2">🚚 Tipo de Entrega</label>
-                                    <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
-                                        {venta.requiere_envio ? 'Envío a Domicilio' : 'Retiro en Local'}
-                                    </p>
-                                </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {/* Columna 5: Entrega (si existe) */}
+                                        {venta.entrega && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase">🚚 Entrega</label>
+                                                <Link
+                                                    href={`/logistica/entregas/${venta.entrega.id}`}
+                                                    className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 transition-colors"
+                                                >
+                                                    {venta.entrega.numero_entrega || `ENT-${venta.entrega.id}`}
+                                                </Link>
+                                            </div>
+                                        )}
 
-                                {/* Columna 4: Proforma (si existe) */}
-                                {venta.proforma && (
-                                    <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 border border-purple-200 dark:border-purple-800">
-                                        <label className="block text-xs font-bold text-purple-900 dark:text-purple-200 uppercase mb-2">📋 Proforma</label>
-                                        <Link
-                                            href={`/proformas/${venta.proforma.id}`}
-                                            className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
-                                        >
-                                            Folio: {venta.proforma.id}
-                                        </Link>
+                                        <div>
+                                            <label className="block text-xs font-bold text-orange-900 dark:text-orange-200 uppercase mt-2 sm:mt-0">🚚 Tipo de Entrega</label>
+                                            <div className="space-y-3">
+                                                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                                                    {venta.requiere_envio ? 'Envío a Domicilio' : 'Retiro en Local'}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
+                                    {/* Mostrar tipo_entrega de la ÚLTIMA confirmación */}
+                                    {venta.confirmaciones && venta.confirmaciones.length > 0 && (
+                                        <div className={`px-3 py-1 rounded-full text-sm font-semibold text-center mt-2 ${venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                            }`}>
+                                            Entrega: {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA' ? '✅ COMPLETA' : '⚠️ CON_NOVEDAD'}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -961,6 +997,318 @@ export default function VentaShow() {
                 ventaNumero={venta.numero}
                 onClose={() => setConfirmacionEntregaModal({ isOpen: false })}
             />
+
+            {/* ✅ Modal de Ubicación de Entrega */}
+            <Dialog open={showMapaUbicacion} onOpenChange={setShowMapaUbicacion}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MapPin className="h-5 w-5 text-blue-600" />
+                            Ubicación de Entrega - Mapa
+                        </DialogTitle>
+                        <DialogDescription>
+                            {venta.direccion_cliente?.direccion}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Datos de dirección */}
+                        <div className="rounded-lg p-4 border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                            <div className="space-y-2">
+                                <div>
+                                    <p className="text-xs font-medium uppercase mb-1 text-blue-600 dark:text-blue-300">Dirección</p>
+                                    <p className="text-sm font-medium text-foreground">
+                                        {venta.direccion_cliente?.direccion}
+                                    </p>
+                                </div>
+
+                                {venta.direccion_cliente?.observaciones && (
+                                    <div>
+                                        <p className="text-xs font-medium uppercase mb-1 text-blue-600 dark:text-blue-300">Observaciones</p>
+                                        <p className="text-sm italic text-foreground">
+                                            📝 {venta.direccion_cliente?.observaciones}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {venta.direccion_cliente?.latitud && venta.direccion_cliente?.longitud && (
+                                    <div>
+                                        <p className="text-xs font-medium uppercase mb-1 text-blue-600 dark:text-blue-300">Coordenadas</p>
+                                        <p className="text-sm font-mono text-foreground">
+                                            {venta.direccion_cliente.latitud.toFixed(6)}, {venta.direccion_cliente.longitud.toFixed(6)}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Mapa */}
+                        {venta.direccion_cliente?.latitud && venta.direccion_cliente?.longitud && (
+                            <div className="rounded-lg overflow-hidden border border-border/50 h-96">
+                                <MapViewWithFallback
+                                    latitude={venta.direccion_cliente.latitud}
+                                    longitude={venta.direccion_cliente.longitud}
+                                    height="100%"
+                                    zoom={16}
+                                    markerTitle="Dirección de entrega"
+                                />
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ✅ Modal de Confirmaciones de Entrega */}
+            <Dialog open={showConfirmacionesModal} onOpenChange={setShowConfirmacionesModal}>
+                <DialogContent className="w-full max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-cyan-600" />
+                            Confirmaciones de Entrega
+                        </DialogTitle>
+                        <DialogDescription>
+                            Total de {venta.confirmaciones?.length || 0} confirmación(es)
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                        {venta.confirmaciones && venta.confirmaciones.length > 0 ? (
+                            venta.confirmaciones.map((confirmacion: any, idx: number) => (
+                                <div key={confirmacion.id} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 space-y-4">
+                                    {/* Encabezado de la confirmación */}
+                                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-zinc-700">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                Confirmación #{idx + 1}
+                                            </h3>
+                                            {confirmacion.confirmado_en && (
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                    {new Date(confirmacion.confirmado_en).toLocaleDateString('es-ES', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${confirmacion.tipo_entrega === 'COMPLETA'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                            }`}>
+                                            {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ Completa' : '⚠️ Con Novedad'}
+                                        </div>
+                                    </div>
+
+                                    {/* Grid de información general */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
+                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Tienda</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {confirmacion.tienda_abierta ? '🟢 Abierta' : '🔴 Cerrada'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
+                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Cliente</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {confirmacion.cliente_presente ? '👤 Presente' : '👻 Ausente'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
+                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Problemas</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {confirmacion.tuvo_problema ? '❌ Sí' : '✅ No'}
+                                            </p>
+                                        </div>
+                                        {confirmacion.tipo_novedad && (
+                                            <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
+                                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Tipo Novedad</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {confirmacion.tipo_novedad}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Información de Pago */}
+                                    {(confirmacion.estado_pago || confirmacion.total_dinero_recibido) && (
+                                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                            <h4 className="font-semibold text-green-900 dark:text-green-200 mb-3">💰 Información de Pago</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {confirmacion.estado_pago && (
+                                                    <div>
+                                                        <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Estado</p>
+                                                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                                            {confirmacion.estado_pago === 'PAGADO' && '✅ Pagado'}
+                                                            {confirmacion.estado_pago === 'PARCIAL' && '⚠️ Parcial'}
+                                                            {confirmacion.estado_pago === 'CREDITO' && '💳 Crédito'}
+                                                            {confirmacion.estado_pago === 'NO_PAGADO' && '❌ No Pagado'}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {confirmacion.total_dinero_recibido && (
+                                                    <div>
+                                                        <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Recibido</p>
+                                                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                                            {formatCurrencyWith2Decimals(confirmacion.total_dinero_recibido || 0, venta.moneda.codigo)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {confirmacion.monto_pendiente && (
+                                                    <div>
+                                                        <p className="text-xs font-medium text-green-700 dark:text-green-300 uppercase">Pendiente</p>
+                                                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                                                            {formatCurrencyWith2Decimals(confirmacion.monto_pendiente || 0, venta.moneda.codigo)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Desglose de Pagos */}
+                                    {confirmacion.desglose_pagos && confirmacion.desglose_pagos.length > 0 && (
+                                        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                                            <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-3">📊 Desglose de Pagos</h4>
+                                            <div className="space-y-2">
+                                                {confirmacion.desglose_pagos.map((pago: any, pidx: number) => (
+                                                    <div key={pidx} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-2 rounded">
+                                                        <span className="text-sm text-purple-700 dark:text-purple-300">
+                                                            {pago.tipo_pago_nombre || 'Desconocido'}
+                                                        </span>
+                                                        <span className="font-bold text-purple-900 dark:text-purple-100">
+                                                            {formatCurrencyWith2Decimals(pago.monto || 0, venta.moneda.codigo)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Productos Devueltos */}
+                                    {confirmacion.productos_devueltos && confirmacion.productos_devueltos.length > 0 && (
+                                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                                            <h4 className="font-semibold text-orange-900 dark:text-orange-200 mb-3">
+                                                🔄 Productos Devueltos ({confirmacion.productos_devueltos.length})
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {confirmacion.productos_devueltos.map((prod: any, pidx: number) => (
+                                                    <div key={pidx} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                                                                {prod.producto_nombre || 'Producto desconocido'}
+                                                            </p>
+                                                            <p className="text-xs text-orange-700 dark:text-orange-300">
+                                                                Cantidad: {prod.cantidad}
+                                                            </p>
+                                                        </div>
+                                                        <span className="font-bold text-orange-900 dark:text-orange-100">
+                                                            {formatCurrencyWith2Decimals(prod.subtotal || 0, venta.moneda.codigo)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Observaciones */}
+                                    {confirmacion.observaciones_logistica && (
+                                        <div className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📝 Observaciones</h4>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                                {confirmacion.observaciones_logistica}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Evidencia Fotográfica */}
+                                    {(confirmacion.fotos?.length > 0 || confirmacion.firma_digital_url || confirmacion.foto_comprobante) && (
+                                        <div className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">📸 Evidencia Fotográfica</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {confirmacion.fotos?.map((foto: string, fidx: number) => (
+                                                    <div key={`foto-${fidx}`} className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                                        <img
+                                                            src={foto}
+                                                            alt={`Foto entrega ${fidx + 1}`}
+                                                            className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                            onClick={() => window.open(foto, '_blank')}
+                                                        />
+                                                        <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                            📷 {fidx + 1}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {confirmacion.firma_digital_url && (
+                                                    <div className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                                        <img
+                                                            src={confirmacion.firma_digital_url}
+                                                            alt="Firma digital"
+                                                            className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                            onClick={() => window.open(confirmacion.firma_digital_url, '_blank')}
+                                                        />
+                                                        <div className="absolute top-2 left-2 bg-blue-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                            ✍️ Firma
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {confirmacion.foto_comprobante && (
+                                                    <div className="relative bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+                                                        <img
+                                                            src={confirmacion.foto_comprobante}
+                                                            alt="Comprobante de pago"
+                                                            className="w-full h-48 object-cover hover:scale-105 transition-transform cursor-pointer"
+                                                            onClick={() => window.open(confirmacion.foto_comprobante, '_blank')}
+                                                        />
+                                                        <div className="absolute top-2 left-2 bg-green-600/80 text-white text-xs font-semibold px-2 py-1 rounded">
+                                                            🧾 Comprobante
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-8">
+                                <p className="text-gray-500 dark:text-gray-400">No hay confirmaciones registradas para esta venta</p>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ✅ Modal de Imagen Ampliada del Cliente */}
+            <Dialog open={showImagenModal} onOpenChange={setShowImagenModal}>
+                <DialogContent className="w-screen h-screen max-w-full p-0 rounded-none">
+                    <div className="relative bg-black w-full h-full flex items-center justify-center overflow-hidden">
+                        {venta.cliente.foto_perfil && (
+                            <img
+                                src={`/storage/${venta.cliente.foto_perfil}`}
+                                alt={venta.cliente.nombre}
+                                className="max-w-full max-h-full object-contain"
+                            />
+                        )}
+                        <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
+                            <div className="bg-black/70 text-white px-3 py-2 rounded-lg">
+                                <p className="font-semibold">{venta.cliente.nombre}</p>
+                                {venta.cliente.telefono && (
+                                    <p className="text-xs opacity-90">{venta.cliente.telefono}</p>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setShowImagenModal(false)}
+                                className="bg-black/70 hover:bg-black text-white rounded-full p-2 transition-colors"
+                                title="Cerrar"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

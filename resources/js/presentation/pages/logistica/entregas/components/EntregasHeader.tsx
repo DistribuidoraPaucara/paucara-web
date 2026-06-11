@@ -1,6 +1,8 @@
 import { Button } from '@/presentation/components/ui/button';
 import { BarChart3, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 
 interface Props {
     view: 'simple' | 'dashboard';
@@ -55,7 +57,15 @@ export function EntregasHeader({ view, onChangeView }: Props) {
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Dashboard
                 </Button>
+                <Link href="/logistica/entregas/create" className="ml-auto">
+                    <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Crear Entrega
+                    </Button>
+                </Link>
             </div>
+
+
         </div>
     );
 }

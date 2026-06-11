@@ -22,12 +22,25 @@ import type {
 import { MOTIVOS_RECHAZO_PROFORMA } from '@/lib/proformas.utils';
 
 interface DashboardProps extends DashboardLogisticaProps {
-    localidades: Array<{id: number; nombre: string}>;
-    usuariosAprobadores: Array<{id: number; name: string}>;
-    estadosLogistica: Array<{id: number; nombre: string; codigo: string}>;
+    localidades: Array<{ id: number; nombre: string }>;
+    usuariosAprobadores: Array<{ id: number; name: string }>;
+    estadosLogistica: Array<{ id: number; nombre: string; codigo: string }>;
+    // ✅ NUEVO (2026-06-11): Datos dinámicos de estadísticas
+    dashboardStats?: {
+        estadisticas_por_estado: Array<{
+            estado_id: number;
+            estado_codigo: string;
+            estado_nombre: string;
+            estado_color: string;
+            estado_icono: string;
+            cantidad: number;
+        }>;
+        total_entregas: number;
+        estados_disponibles: Array<{ id: number; nombre: string; codigo: string }>;
+    } | null;
 }
 
-export default function LogisticaDashboard({ estadisticas, proformasRecientes, localidades, usuariosAprobadores, estadosLogistica }: DashboardProps) {
+export default function LogisticaDashboard({ estadisticas, proformasRecientes, localidades, usuariosAprobadores, estadosLogistica, dashboardStats }: DashboardProps) {
     // ✅ OPTIMIZADO: Reducir logs de debug en producción
     if (process.env.NODE_ENV === 'development') {
         console.log('📊 Dashboard cargado:', { proformasTotal: proformasRecientes.total });
@@ -147,18 +160,18 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
             <Head title="Dashboard de Logística" />
 
             <div className="space-y-6 p-4 bg-white dark:bg-slate-950 min-h-screen">
-                {/* Estadísticas */}
-                {/* <DashboardStats
-                    logisticaStats={logisticaStats}
-                    proformaStats={proformaStats}
-                    stats={dashboardMetricas || stats}
-                    loadingLogisticaStats={loadingLogisticaStats}
-                    logisticaLastUpdate={logisticaLastUpdate}
-                    refreshLogisticaStats={refreshLogisticaStats}
-                    dashboardLastUpdate={dashboardLastUpdate}
-                    dashboardIsRefreshing={dashboardIsRefreshing}
-                    refreshDashboard={refreshDashboard}
-                /> */}
+                {/* ✅ NUEVO (2026-06-11): Estadísticas Dinámicas */}
+                {/* {dashboardStats && (
+                    <DashboardStats
+                        logisticaStats={null}
+                        proformaStats={null}
+                        stats={stats}
+                        loadingLogisticaStats={false}
+                        logisticaLastUpdate={new Date()}
+                        refreshLogisticaStats={() => {}}
+                        dashboardStats={dashboardStats}
+                    />
+                )} */}
 
                 {/* Sección de Proformas */}
                 <ProformasSection

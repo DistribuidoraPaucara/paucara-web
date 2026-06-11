@@ -25,6 +25,19 @@ interface DashboardStatsProps {
     dashboardLastUpdate?: Date | null;
     dashboardIsRefreshing?: boolean;
     refreshDashboard?: () => void;
+    // ✅ NUEVO (2026-06-11): Props dinámicas para estadísticas de entrega
+    dashboardStats?: {
+        estadisticas_por_estado: Array<{
+            estado_id: number;
+            estado_codigo: string;
+            estado_nombre: string;
+            estado_color: string;
+            estado_icono: string;
+            cantidad: number;
+        }>;
+        total_entregas: number;
+        estados_disponibles: Array<{id: number; nombre: string; codigo: string}>;
+    } | null;
 }
 
 export function DashboardStats({
@@ -165,47 +178,37 @@ export function DashboardStats({
                 </Card>
             )} */}
 
-            {/* Estadísticas de Envíos */}
-            {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="dark:bg-slate-900 dark:border-slate-700">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium dark:text-gray-300">Envíos Programados</CardTitle>
-                        <Package className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold dark:text-white">
-                            {loadingLogisticaStats ? '...' : stats?.entregas_programadas ?? 0}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Listos para despacho</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="dark:bg-slate-900 dark:border-slate-700">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium dark:text-gray-300">En Tránsito</CardTitle>
-                        <Truck className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold dark:text-white">
-                            {loadingLogisticaStats ? '...' : stats?.entregas_en_transito ?? 0}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">En camino</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="dark:bg-slate-900 dark:border-slate-700">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium dark:text-gray-300">Entregados Hoy</CardTitle>
-                        <CheckCircle className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold dark:text-white">
-                            {loadingLogisticaStats ? '...' : stats?.entregas_entregadas_hoy ?? 0}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Completados</p>
-                    </CardContent>
-                </Card>
-            </div> */}
+            {/* ✅ NUEVO: Estadísticas de Entregas DINÁMICAS por Estado */}
+            {dashboardStats && dashboardStats.estadisticas_por_estado.length > 0 && (
+                <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        📦 Entregas por Estado ({dashboardStats.total_entregas} total)
+                    </h2>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {dashboardStats.estadisticas_por_estado.map((stat) => (
+                            <Card
+                                key={stat.estado_id}
+                                className="dark:bg-slate-900 dark:border-slate-700 border-l-4"
+                                style={{ borderLeftColor: stat.estado_color || '#cccccc' }}
+                            >
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium dark:text-gray-300">
+                                        {stat.estado_icono} {stat.estado_nombre}
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold dark:text-white">
+                                        {stat.cantidad}
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {stat.estado_codigo}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
         </>
     );
 }

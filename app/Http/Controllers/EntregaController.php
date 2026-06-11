@@ -106,12 +106,13 @@ class EntregaController extends Controller
         ]);
 
         $entregas = \App\Models\Entrega::query()
-            ->with(['ventas.cliente', 'vehiculo', 'chofer', 'entregador', 'localidad'])
-            // ✅ CORRECCIÓN: Si hay rango de fechas O búsqueda específica, no filtrar por "hoy"
+            // ✅ NUEVO (2026-06-11): Agregar direccion_cliente y estadoEntrega para modal de ubicaciones
+            ->with(['ventas.cliente', 'ventas.direccionCliente', 'vehiculo', 'chofer', 'entregador', 'localidad', 'estadoEntrega'])
+            // ✅ CORRECCIÓN: Si hay rango de fechas O búsqueda O filtro específico, no filtrar por "hoy"
             ->when(
-                !$filtros['fecha_desde'] && !$filtros['fecha_hasta'] && !$filtros['search_entrega'] && !$filtros['search_ventas'] && !$filtros['turno'],
+                !$filtros['fecha_desde'] && !$filtros['fecha_hasta'] && !$filtros['search_entrega'] && !$filtros['search_ventas'] && !$filtros['turno'] && !$filtros['estado_logistica_id'],
                 fn($q) => $q->whereDate('created_at', today()),  // Default: solo entregas creadas HOY (solo si NO hay búsqueda)
-                fn($q) => $q  // Si hay fechas, turno o búsqueda, continuar sin filtro de created_at
+                fn($q) => $q  // Si hay fechas, turno, búsqueda o filtro de estado, continuar sin límite de created_at
             )
             ->when($filtros['estado'], fn($q, $estado) => $q->where('estado', $estado))
             // ✅ NUEVO: Filtrado por tipo_fecha (created_at o fecha_programada)
@@ -159,7 +160,14 @@ class EntregaController extends Controller
             ->when($filtros['chofer_id'], fn($q, $choferId) => $q->where('chofer_id', $choferId))
             ->when($filtros['vehiculo_id'], fn($q, $vehiculoId) => $q->where('vehiculo_id', $vehiculoId))
             ->when($filtros['localidad_id'], fn($q, $localidadId) => $q->where('zona_id', $localidadId))
-            ->when($filtros['estado_logistica_id'], fn($q, $estadoId) => $q->where('estado_entrega_id', $estadoId))
+            ->when($filtros['estado_logistica_id'], function ($q, $estadoId) {
+                \Log::info('🔍 [EntregaController::index] Filtrando por estado_entrega_id', [
+                    'estado_logistica_id_recibido' => $estadoId,
+                    'buscando_en_columna' => 'estado_entrega_id',
+                    'total_entregas_antes_filtro' => $q->count(),
+                ]);
+                return $q->where('estado_entrega_id', $estadoId);
+            })
             // 🔍 BÚSQUEDA EN DATOS DE LA ENTREGA (ID, placa, chofer)
             ->when($filtros['search_entrega'], function ($q, $search) {
                 $searchLower = strtolower($search);
@@ -252,6 +260,43 @@ class EntregaController extends Controller
             ->get(['id', 'codigo', 'nombre', 'color', 'icono'])
             ->toArray();
 
+        // ✅ NUEVO (2026-06-11): Si view=dashboard, agregar estadísticas dinámicas por estado
+        $dashboardStats = null;
+        if ($view === 'dashboard') {
+            $baseQuery = \App\Models\Entrega::query();
+
+            // Aplicar mismos filtros que a la query principal
+            if ($filtros['estado']) {
+                $baseQuery->where('estado', $filtros['estado']);
+            }
+            if ($filtros['estado_logistica_id']) {
+                $baseQuery->where('estado_entrega_id', $filtros['estado_logistica_id']);
+            }
+
+            // Estadísticas dinámicas agrupadas por estado de entrega
+            $estadisticasPorEstado = $baseQuery
+                ->selectRaw('estado_entrega_id, COUNT(*) as cantidad')
+                ->groupBy('estado_entrega_id')
+                ->with('estadoEntrega:id,codigo,nombre,color,icono')
+                ->get()
+                ->map(fn($item) => [
+                    'estado_id' => $item->estado_entrega_id,
+                    'estado_codigo' => $item->estadoEntrega?->codigo ?? 'DESCONOCIDO',
+                    'estado_nombre' => $item->estadoEntrega?->nombre ?? 'Desconocido',
+                    'estado_color' => $item->estadoEntrega?->color ?? '#cccccc',
+                    'estado_icono' => $item->estadoEntrega?->icono ?? '📦',
+                    'cantidad' => $item->cantidad,
+                ])
+                ->sortBy('estado_id')
+                ->values()
+                ->all();
+
+            $dashboardStats = [
+                'estadisticas_por_estado' => $estadisticasPorEstado,
+                'total_entregas' => array_sum(array_column($estadisticasPorEstado, 'cantidad')),
+                'estados_disponibles' => $estadosLogisticos,
+            ];
+        }
 
         return Inertia::render('logistica/entregas/index', [
             'entregas'          => $entregas,
@@ -260,6 +305,7 @@ class EntregaController extends Controller
             'choferes'          => $choferes,
             'localidades'       => $localidades,
             'estadosLogisticos' => $estadosLogisticos,
+            'dashboardStats'    => $dashboardStats, // ✅ NUEVO: Datos para view=dashboard
         ]);
     }
 
@@ -1875,13 +1921,13 @@ class EntregaController extends Controller
             ])->get();
 
             // ✅ MEJORA 1: Obtener códigos de estados FINALES dinámicamente desde BD
-            $estadosFinales = \App\Models\EstadoLogistica::where('categoria', 'entrega')
+            $estadosFinales = \App\Models\EstadoLogistica::where('categoria', 'entregas')
                 ->where('es_estado_final', true)
                 ->pluck('codigo')
                 ->toArray();
 
             // 1. CONTAR POR ESTADO (dinámico desde estados_logistica tabla)
-            $estadosLogistica = \App\Models\EstadoLogistica::where('categoria', 'entrega')
+            $estadosLogistica = \App\Models\EstadoLogistica::where('categoria', 'entregas')
                 ->orderBy('orden')
                 ->get();
 
