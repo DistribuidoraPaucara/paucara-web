@@ -580,7 +580,7 @@ class VentaService
                 'usuario',
                 'moneda',
                 'direccionCliente.localidad', // ✅ Cargar localidad de la dirección para mapas
-                'estadoLogistica',            // ✅ NUEVO: Para mostrar estado logístico en tabla
+                'estadoLogistica',            // ✅ Estado logístico de la VENTA (via estado_logistico_id, NO de la entrega)
                 'detalles.producto',          // ✅ RECOMENDADO: Para verificar peso_total_estimado si es necesario
                 'proforma',                   // ✅ NUEVO: Cargar relación de proforma (si existe)
                 'confirmaciones',             // ✅ NUEVO: Cargar confirmación de entrega (entregas_venta_confirmaciones)

@@ -31,6 +31,7 @@ import AlmacenPrestableController from './AlmacenPrestableController'
 import ChoferGastoController from './ChoferGastoController'
 import AdminCajaApiController from './AdminCajaApiController'
 import EstadoLogisticoController from './EstadoLogisticoController'
+import EstadoDocumentoController from './EstadoDocumentoController'
 import VisitaPreventistaController from './VisitaPreventistaController'
 import StockApiController from './StockApiController'
 import ApiReporteVentasController from './ApiReporteVentasController'
@@ -70,6 +71,7 @@ AlmacenPrestableController,
 ChoferGastoController,
 AdminCajaApiController,
 EstadoLogisticoController,
+EstadoDocumentoController,
 VisitaPreventistaController,
 StockApiController,
 ApiReporteVentasController,

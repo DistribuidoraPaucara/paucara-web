@@ -331,7 +331,8 @@ export default function ProductosTable({
     // ✅ Handler para actualizar detalle (con lógica de combos)
     const handleUpdateDetail = (index: number, field: keyof DetalleProducto, value: number | string) => {
         // ✅ NUEVO: Si se actualiza precio_unitario, validar si corresponde a un tipo de precio
-        if (field === 'precio_unitario') {
+        // ✅ IMPORTANTE (2026-06-15): En modo COMPRA, permitir edición libre del precio sin validaciones de tipos de precios
+        if (field === 'precio_unitario' && tipo === 'venta') {
             const precioUnitario = typeof value === 'string' ? parseFloat(value) : value;
             const detalle = detalles[index];
             const producto = detalle?.producto;

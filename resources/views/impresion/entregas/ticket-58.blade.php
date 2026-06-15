@@ -51,7 +51,7 @@
 
     <div style="border-top: 1px dashed #000; padding: 1px 0; margin-bottom: 3px; font-size: 5px;">
         <div style="text-align: right; font-weight: bold;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
-        <div style="font-size: 4px; color: #666;">{{ $estadisticas['total_productos'] }} items | {{ $estadisticas['total_clientes'] }} clientes</div>
+        <div style="font-size: 4px; color: #666;">{{ $estadisticas['total_productos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
     </div>
 
     <div class="separador"></div>

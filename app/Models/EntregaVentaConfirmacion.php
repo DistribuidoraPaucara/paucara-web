@@ -12,12 +12,11 @@ class EntregaVentaConfirmacion extends Model
     protected $fillable = [
         'entrega_id',
         'venta_id',
-        'tipo_entrega',        // ✅ NUEVO: COMPLETA o CON_NOVEDAD
-        'tipo_novedad',        // ✅ NUEVO: CLIENTE_CERRADO, DEVOLUCION_PARCIAL, RECHAZADO, NO_CONTACTADO
-        'tuvo_problema',       // ✅ NUEVO: Flag para reportes
+        'tipo_entrega',        // ✅ COMPLETA o CON_NOVEDAD
+        'tuvo_problema',       // ✅ Flag para reportes
         'firma_digital_url',
         'fotos',
-        'observaciones_logistica',  // ✅ 2026-02-12: Renombrado de observaciones
+        'observaciones_logistica',
         'tienda_abierta',
         'cliente_presente',
         'motivo_rechazo',
@@ -31,14 +30,15 @@ class EntregaVentaConfirmacion extends Model
         'confirmado_por',
         'confirmado_en',
         // ✅ FASE 3: Múltiples Formas de Pago (2026-02-12)
-        'desglose_pagos',           // JSON array de pagos: [{tipo_pago_id, tipo_pago_nombre, monto, referencia}, ...]
-        'total_dinero_recibido',    // Total de dinero en efectivo/transferencia recibido
+        'desglose_pagos',           // JSON array de pagos
+        'total_dinero_recibido',    // Total de dinero recibido
         'monto_pendiente',          // Dinero pendiente si fue pago parcial o crédito
-        'tipo_confirmacion',        // COMPLETA, CON_NOVEDAD
+        'tipo_confirmacion',        // ✅ REFACTORIZADO: COMPLETA, RECHAZADO, CLIENTE_CERRADO, DEVOLUCION_PARCIAL, NO_CONTACTADO
         // ✅ FASE 4: Devoluciones Parciales (2026-02-15)
         'productos_devueltos',      // JSON array de productos rechazados
         'monto_devuelto',           // Total del monto devuelto
         'monto_aceptado',           // Total del monto aceptado
+        'tipo_novedad',             // ⚠️ DEPRECADO: usar tipo_confirmacion en su lugar
     ];
 
     protected $casts = [
@@ -95,11 +95,11 @@ class EntregaVentaConfirmacion extends Model
     // ===== HELPERS =====
 
     /**
-     * ¿Fue entregada exitosamente?
+     * ¿Es entrega completa?
      */
-    public function fueEntregada(): bool
+    public function esCompleta(): bool
     {
-        return $this->confirmado_en !== null && $this->motivo_rechazo === null;
+        return $this->tipo_entrega === 'COMPLETA' && $this->tipo_confirmacion === 'COMPLETA';
     }
 
     /**
@@ -107,11 +107,59 @@ class EntregaVentaConfirmacion extends Model
      */
     public function fueRechazada(): bool
     {
-        return $this->motivo_rechazo !== null;
+        return $this->tipo_confirmacion === 'RECHAZADO';
     }
 
     /**
-     * Obtener descripción legible del rechazo
+     * ¿Cliente cerrado?
+     */
+    public function esClienteCerrado(): bool
+    {
+        return $this->tipo_confirmacion === 'CLIENTE_CERRADO';
+    }
+
+    /**
+     * ¿Devolución parcial?
+     */
+    public function esDevolucionParcial(): bool
+    {
+        return $this->tipo_confirmacion === 'DEVOLUCION_PARCIAL';
+    }
+
+    /**
+     * ¿No contactado?
+     */
+    public function esNoContactado(): bool
+    {
+        return $this->tipo_confirmacion === 'NO_CONTACTADO';
+    }
+
+    /**
+     * Obtener descripción legible de la confirmación
+     */
+    public function obtenerDescripcionConfirmacion(): string
+    {
+        return match ($this->tipo_confirmacion) {
+            'COMPLETA' => '✅ Completa',
+            'RECHAZADO' => '⚠️ Con Novedad → Rechazado',
+            'CLIENTE_CERRADO' => '⚠️ Con Novedad → Cliente Cerrado',
+            'DEVOLUCION_PARCIAL' => '⚠️ Con Novedad → Devolución Parcial',
+            'NO_CONTACTADO' => '⚠️ Con Novedad → No Contactado',
+            default => 'Desconocido',
+        };
+    }
+
+    /**
+     * ¿Fue entregada exitosamente? (método legacy)
+     */
+    public function fueEntregada(): bool
+    {
+        return $this->confirmado_en !== null && $this->tipo_confirmacion === 'COMPLETA';
+    }
+
+    /**
+     * ⚠️ DEPRECADO: Obtener descripción legible del rechazo
+     * Usar obtenerDescripcionConfirmacion() en su lugar
      */
     public function obtenerDescripcionRechazo(): string
     {

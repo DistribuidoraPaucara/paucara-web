@@ -1147,4 +1147,29 @@ class Venta extends Model
     {
         return $this->hasMany(EntregaVentaConfirmacion::class);
     }
+
+    /**
+     * ✅ NUEVO: Accessor para obtener la ÚLTIMA confirmación de entrega
+     *
+     * Uso en controlador:
+     *   $venta->confirmacion_entrega  // Retorna la última confirmación o null
+     *
+     * Se carga automáticamente del eager loading si está disponible,
+     * o consulta la BD si no está cargado.
+     */
+    protected function confirmacionEntrega(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->relationLoaded('confirmaciones') && $this->confirmaciones->count() > 0) {
+                    return $this->confirmaciones->first();
+                }
+
+                // Fallback si no está cargado (usa la relación)
+                return $this->confirmaciones()
+                    ->orderByDesc('id')
+                    ->first();
+            }
+        );
+    }
 }

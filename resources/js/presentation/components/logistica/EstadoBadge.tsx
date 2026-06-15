@@ -51,12 +51,11 @@ export default function EstadoBadge({ entrega, className = '' }: EstadoBadgeProp
 
     return (
         <Badge
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-medium transition-colors ${
-                estadoColor ? '' : fallbackStyles
-            } ${className}`}
+            className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium transition-colors ${estadoColor ? '' : fallbackStyles
+                } ${className}`}
             style={dynamicStyles}
         >
-            {estadoIcono && <span className="text-lg">{estadoIcono}</span>}
+            {estadoIcono && <span className="text-sm">{estadoIcono}</span>}
             <span>{estadoNombre}</span>
         </Badge>
     );

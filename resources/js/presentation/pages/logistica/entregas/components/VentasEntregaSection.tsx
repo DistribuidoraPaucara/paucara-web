@@ -43,9 +43,50 @@ const getTipoPagoColor = (codigo?: string) => {
     return tipoPagoMap[codigo || ''] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100';
 };
 
+const getEstadoDocumentoColor = (codigo?: string) => {
+    const estadoDocumentoMap: Record<string, { clase: string; emoji: string; nombre: string }> = {
+        'BORRADOR': {
+            clase: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+            emoji: '📝',
+            nombre: 'Borrador'
+        },
+        'PENDIENTE': {
+            clase: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
+            emoji: '⏳',
+            nombre: 'Pendiente'
+        },
+        'APROBADO': {
+            clase: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200',
+            emoji: '✅',
+            nombre: 'Aprobado'
+        },
+        'FACTURADO': {
+            clase: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+            emoji: '📄',
+            nombre: 'Facturado'
+        },
+        'ANULADO': {
+            clase: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
+            emoji: '❌',
+            nombre: 'Anulado'
+        },
+        'CANCELADO': {
+            clase: 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-100',
+            emoji: '🚫',
+            nombre: 'Cancelado'
+        },
+    };
+
+    const estado = estadoDocumentoMap[codigo || ''] || {
+        clase: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100',
+        emoji: '❓',
+        nombre: 'Desconocido'
+    };
+
+    return { ...estado };
+};
+
 export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, onConfirmarEntrega }: VentasEntregaSectionProps) {
-    console.log('VentasEntregaSection render with ventas:', ventas);
-    console.log('🔍 Verificando tipo_pago en ventas:', ventas.map(v => ({ id: v.id, tipo_pago: v.tipo_pago, numero: v.numero })));
     const [expandedVentaId, setExpandedVentaId] = useState<number | null>(null);
     const [reasignarModalOpen, setReasignarModalOpen] = useState(false);
     const [ventaAReasignar, setVentaAReasignar] = useState<VentaEntrega | undefined>(undefined);
@@ -78,17 +119,84 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
     }
     pesoTotal = Number(pesoTotal) || 0;
 
+    // 🔍 Console logs para debug
+    console.log('='.repeat(80));
+    console.log('📊 VentasEntregaSection - INFORMACIÓN RENDERIZADA');
+    console.log('='.repeat(80));
+
+    console.log('\n🔹 ENTREGA DATA:');
+    console.log({
+        entrega_id: entrega?.id,
+        peso_kg: entrega?.peso_kg,
+        confirmacionesVentas: entrega?.confirmacionesVentas?.length || 0
+    });
+
+    console.log('\n🔹 VENTAS TOTALES:', ventas.length);
+
+    console.log('\n🔹 DETALLES DE CADA VENTA:');
+    ventas.forEach((venta, idx) => {
+        const confirmacion = entrega?.confirmacionesVentas?.find((c: any) => c.venta_id === venta.id);
+        console.group(`📦 Venta ${idx + 1} (ID: ${venta.id})`);
+        console.log('Folio:', venta.id);
+        console.log('Número:', venta.numero);
+        console.log('Cliente:', venta.cliente?.nombre);
+        console.log('Peso estimado:', venta.peso_total_estimado, 'kg');
+        console.log('Subtotal:', venta.subtotal);
+        console.log('Total:', venta.total);
+        console.log('Tipo Pago:', { codigo: venta.tipo_pago?.codigo, nombre: venta.tipo_pago?.nombre });
+        console.log('Estado Documento:', venta.estado_documento);
+        console.log('Estado Logístico:', venta.estado_logistica?.codigo);
+        console.log('Fecha Entrega Comprometida:', venta.fecha_entrega_comprometida);
+        console.log('Dirección Entrega:', venta.direccion_entrega);
+        console.log('Detalles (Productos):', venta.detalles?.length || 0);
+        console.log('Desglose Pagos:', venta.desglose_pagos || []);
+        console.log('\n  🔗 CONFIRMACIÓN ASOCIADA:');
+        if (confirmacion) {
+            console.log('  Tipo Entrega:', confirmacion.tipo_entrega);
+            console.log('  Tipo Confirmación:', confirmacion.tipo_confirmacion);
+            console.log('  Estado Pago:', confirmacion.estado_pago);
+        } else {
+            console.log('  ❌ Sin confirmación');
+        }
+
+        if (venta.detalles && venta.detalles.length > 0) {
+            console.log('\n  📋 PRODUCTOS DETALLADOS:');
+            venta.detalles.forEach((detalle, didx) => {
+                console.log(`    Producto ${didx + 1}:`, {
+                    id: detalle.id,
+                    nombre: detalle.producto?.nombre,
+                    codigo: detalle.producto?.codigo,
+                    peso_unitario: detalle.producto?.peso,
+                    cantidad: detalle.cantidad,
+                    precio_unitario: detalle.precio_unitario,
+                    subtotal: detalle.subtotal,
+                    peso_total: ((detalle.producto?.peso || 0) * detalle.cantidad).toFixed(2)
+                });
+            });
+        }
+        console.groupEnd();
+    });
+
+    console.log('\n🔹 MÉTRICAS CALCULADAS:');
+    console.log({
+        total_ventas: ventas.length,
+        monto_total: montoTotal.toFixed(2),
+        peso_total: pesoTotal.toFixed(2),
+        fuente_peso: entrega?.peso_kg ? 'desde entrega' : 'calculado desde ventas'
+    });
+    console.log('='.repeat(80) + '\n');
+
     return (
         <div className="bg-white dark:bg-slate-950 rounded-lg border border-gray-200 dark:border-slate-800 p-6 space-y-6">
             {/* Header */}
             <div>
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
                     <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    Ventas en esta Entrega
+                    Ventas asignadas
                 </h2>
 
                 {/* Resumen de métricas */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-slate-800 dark:to-slate-800/70 rounded-lg p-4 border border-blue-200 dark:border-slate-700">
                         <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">Total Ventas</p>
                         <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{ventas.length}</p>
@@ -105,12 +213,12 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                             {pesoTotal.toFixed(2)} kg
                         </p>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-50/50 dark:from-slate-800 dark:to-slate-800/70 rounded-lg p-4 border border-orange-200 dark:border-slate-700">
+                    {/* <div className="bg-gradient-to-br from-orange-50 to-orange-50/50 dark:from-slate-800 dark:to-slate-800/70 rounded-lg p-4 border border-orange-200 dark:border-slate-700">
                         <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">Promedio</p>
                         <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
                             Bs. {(montoTotal / ventas.length).toFixed(2)}
                         </p>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
@@ -122,13 +230,10 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                         <thead>
                             <tr className="bg-gray-50 dark:bg-slate-900/80 border-b border-gray-200 dark:border-slate-800">
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                    Venta
+                                    Folio
                                 </th>
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                     Cliente
-                                </th>
-                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                    Items
                                 </th>
                                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                     Peso
@@ -137,13 +242,13 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                     Monto
                                 </th>
                                 <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                    Tipo de Pago
+                                    Estado Documento
+                                </th>
+                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                    Estado Logistico
                                 </th>
                                 <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
                                     Tipo Entrega
-                                </th>
-                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                    Estado
                                 </th>
                                 <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-12">
                                     Detalles
@@ -165,10 +270,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="font-medium text-gray-900 dark:text-white">
-                                                        Folio: {venta.id}
-                                                    </p>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        {venta.numero}
+                                                        {venta.id}
                                                     </p>
                                                 </div>
                                             </td>
@@ -177,34 +279,23 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     {venta.cliente?.nombre || 'N/A'}
                                                 </p>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-900 dark:text-blue-200 text-xs font-semibold">
-                                                    {venta.detalles?.length || 0}
-                                                </span>
-                                            </td>
                                             <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
                                                 {pesoVenta} kg
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                                <p><span className="font-semibold text-green-600 dark:text-green-400">
                                                     Bs. {ventaTotal.toFixed(2)}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
+                                                </span></p>
                                                 <Badge className={getTipoPagoColor(venta.tipo_pago?.codigo)}>
                                                     💳 {venta.tipo_pago?.nombre || 'N/A'}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {(() => {
-                                                    const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
-                                                    if (!confirmacion) {
-                                                        return <span className="text-gray-500 dark:text-gray-400 text-sm">Sin confirmar</span>;
-                                                    }
-                                                    const isTipoEntregaCompleta = confirmacion.tipo_entrega === 'COMPLETA';
+                                                    const estado = getEstadoDocumentoColor(venta.estado_documento?.codigo);
                                                     return (
-                                                        <Badge className={isTipoEntregaCompleta ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}>
-                                                            {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ ' : '⚠️ '}{confirmacion.tipo_entrega || 'N/A'}
+                                                        <Badge className={estado.clase}>
+                                                            {estado.emoji} {estado.nombre}
                                                         </Badge>
                                                     );
                                                 })()}
@@ -215,6 +306,31 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-center">
+                                                {(() => {
+                                                    const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
+                                                    if (!confirmacion) {
+                                                        return <span className="text-gray-500 dark:text-gray-400 text-sm">Sin confirmar</span>;
+                                                    }
+                                                    const isTipoEntregaCompleta = confirmacion.tipo_entrega === 'COMPLETA';
+                                                    return (
+                                                        <div>
+                                                            <p>
+                                                                <Badge className={isTipoEntregaCompleta ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}>
+                                                                    {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ ' : '⚠️ '}{confirmacion.tipo_entrega || 'N/A'}
+                                                                </Badge>
+                                                            </p>
+                                                            <p>
+                                                                <Badge className={isTipoEntregaCompleta ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}>
+                                                                    {confirmacion.tipo_confirmacion === 'COMPLETA' ? '✅ ' : '⚠️ '}{confirmacion.tipo_confirmacion || 'N/A'}
+                                                                </Badge>
+                                                            </p>
+                                                        </div>
+
+                                                    );
+                                                })()}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-center">
                                                 {venta.detalles && venta.detalles.length > 0 && (
                                                     <button
                                                         onClick={() => setExpandedVentaId(isExpanded ? null : Number(venta.id))}
@@ -222,9 +338,8 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                         title={isExpanded ? 'Ocultar' : 'Ver detalles'}
                                                     >
                                                         <ChevronDown
-                                                            className={`w-5 h-5 text-gray-600 dark:text-slate-400 transition-transform ${
-                                                                isExpanded ? 'rotate-180' : ''
-                                                            }`}
+                                                            className={`w-5 h-5 text-gray-600 dark:text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''
+                                                                }`}
                                                         />
                                                     </button>
                                                 )}
@@ -266,6 +381,22 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                     </div>
                                                                 </div>
                                                             )}
+
+                                                            {(() => {
+                                                                const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
+                                                                if (!confirmacion) return null;
+                                                                return (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <CheckCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-1 flex-shrink-0" />
+                                                                        <div>
+                                                                            <p className="text-sm text-gray-500 dark:text-gray-400">Tipo Confirmación</p>
+                                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                {confirmacion.tipo_confirmacion || 'N/A'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
 
                                                         {/* Tabla de productos */}
@@ -345,11 +476,10 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                     size="sm"
                                                                     variant="default"
                                                                     onClick={() => onConfirmarEntrega(venta)}
-                                                                    className={`gap-2 ${
-                                                                        venta.estado_logistica?.codigo === 'ENTREGADA'
-                                                                            ? 'bg-blue-600 hover:bg-blue-700'
-                                                                            : 'bg-green-600 hover:bg-green-700'
-                                                                    }`}
+                                                                    className={`gap-2 ${venta.estado_logistica?.codigo === 'ENTREGADA'
+                                                                        ? 'bg-blue-600 hover:bg-blue-700'
+                                                                        : 'bg-green-600 hover:bg-green-700'
+                                                                        }`}
                                                                 >
                                                                     <Truck className="h-4 w-4" />
                                                                     {venta.estado_logistica?.codigo === 'ENTREGADA' ? '✏️ Editar Entrega' : '✅ Confirmar Entrega'}

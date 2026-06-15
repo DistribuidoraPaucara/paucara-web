@@ -981,6 +981,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             Route::get('/', [\App\Http\Controllers\ReporteCargoListController::class, 'index'])
                 ->middleware('permission:reportes-carga.index')
                 ->name('index');
+
+            // ✅ NUEVO (2026-06-14): Reporte de entregas por chofer
+            Route::get('chofer-entregas', [\App\Http\Controllers\EntregaController::class, 'reporteChoferEntregas'])
+                ->name('chofer-entregas');
         });
     });
 

@@ -214,7 +214,7 @@
             <!-- Resumen Lista -->
             <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 10px;">
                 <div style="text-align: right; font-weight: bold;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
-                <div>{{ $estadisticas['total_items_unicos'] }} items | {{ $estadisticas['total_clientes'] }} clientes</div>
+                <div>{{ $estadisticas['total_items_unicos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
             </div>
 
             <!-- Resumen Chofer -->
@@ -440,7 +440,7 @@
             <!-- Resumen Lista -->
             <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 10px;">
                 <div style="text-align: right; font-weight: bold;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
-                <div>{{ $estadisticas['total_items_unicos'] }} items | {{ $estadisticas['total_clientes'] }} clientes</div>
+                <div>{{ $estadisticas['total_items_unicos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
             </div>
 
             <!-- Resumen Chofer -->

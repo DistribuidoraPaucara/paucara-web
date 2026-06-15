@@ -56,7 +56,7 @@ testNotificacionVenta.post = (options?: RouteQueryOptions): RouteDefinition<'pos
     testNotificacionVenta.form = testNotificacionVentaForm
 /**
 * @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1198
+ * @see app/Http/Controllers/EntregaController.php:1314
  * @route '/api/entregas'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1198
+ * @see app/Http/Controllers/EntregaController.php:1314
  * @route '/api/entregas'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1198
+ * @see app/Http/Controllers/EntregaController.php:1314
  * @route '/api/entregas'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -90,7 +90,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1198
+ * @see app/Http/Controllers/EntregaController.php:1314
  * @route '/api/entregas'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -100,7 +100,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1198
+ * @see app/Http/Controllers/EntregaController.php:1314
  * @route '/api/entregas'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

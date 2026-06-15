@@ -99,16 +99,58 @@ export default function VentaShow() {
         }
     };
 
+    const getEstadoLogisticoColor = (codigo?: string) => {
+        const estadoMap: Record<string, { clase: string; emoji: string; nombre: string }> = {
+            'PROGRAMADO': {
+                clase: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
+                emoji: '📅',
+                nombre: 'Programada'
+            },
+            'EN_PREPARACION': {
+                clase: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+                emoji: '📦',
+                nombre: 'En Preparación'
+            },
+            'EN_TRANSITO': {
+                clase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
+                emoji: '🚚',
+                nombre: 'En Tránsito'
+            },
+            'ENTREGADA': {
+                clase: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+                emoji: '✅',
+                nombre: 'Entregada'
+            },
+            'PROBLEMAS': {
+                clase: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
+                emoji: '⚠️',
+                nombre: 'Problemas'
+            },
+            'CANCELADA': {
+                clase: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+                emoji: '❌',
+                nombre: 'Cancelada'
+            },
+        };
+
+        return estadoMap[codigo || ''] || {
+            clase: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+            emoji: '❓',
+            nombre: codigo || 'Desconocido'
+        };
+    };
+
     return (
         <AppLayout breadcrumbs={[
             { title: 'Ventas', href: '/ventas' },
-            { title: `Venta ${venta.numero}`, href: '#' }
+            { title: `Venta ${venta.id}`, href: '#' }
         ]}>
-            <Head title={`Venta ${venta.numero}`} />
+            <Head title={`Venta ${venta.id}`} />
 
             <div className="flex items-center justify-between mb-2 px-6 pt-6">
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Venta {venta.numero}
+                    <p>{venta.numero}</p>
+                    <p className='text-sm text-gray-500 dark:text-gray-400'>Folio: {venta.id}</p>
                 </h1>
                 <div className="flex space-x-3">
                     {/* Botón Ver Confirmaciones - Solo si hay confirmaciones */}
@@ -192,15 +234,9 @@ export default function VentaShow() {
                     {/* Información de la venta + Cliente */}
                     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-3">
                         <div className="grid grid-cols-3 gap-6">
-                            {/* Título */}
-                            <div className="flex items-center">
-                                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                                    Información de la venta
-                                </h2>
-                            </div>
                             {/* Datos secundarios - Card unificado */}
                             <div className="col-span-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-zinc-800 dark:to-zinc-900 rounded-lg p-4 border border-slate-200 dark:border-zinc-700">
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-4 gap-2">
                                     <div className="flex items-center space-x-3">
                                         <div className="flex-shrink-0">
                                             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30">
@@ -245,128 +281,49 @@ export default function VentaShow() {
                                             </p>
                                         </div>
                                     </div>
+                                    {/* Proforma */}
+                                    {venta.proforma && (
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex-shrink-0">
+                                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                                                    <span className="text-lg">📋</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Proforma</p>
+                                                <Link
+                                                    href={`/proformas/${venta.proforma.id}`}
+                                                    className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
+                                                >
+                                                    {venta.proforma.id}
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Foto y datos del cliente + Tipo de Pago y Entrega + Proforma */}
-                        <div className="mb-2 pb-2 border-b border-gray-200 dark:border-zinc-700">
-                            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Cliente</h3>
-                            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                                {/* Columna 1: Foto y datos del cliente */}
-                                <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-1 border border-gray-200 dark:border-zinc-700">
-                                    <div className="flex gap-2">
-                                        {/* Foto de perfil */}
-                                        <div className="flex-shrink-0">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 flex items-center justify-center bg-gray-100 dark:bg-zinc-700 cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => venta.cliente.foto_perfil && setShowImagenModal(true)}>
-                                                {venta.cliente.foto_perfil && typeof venta.cliente.foto_perfil === 'string' && imagenCargada ? (
-                                                    <img
-                                                        src={`/storage/${venta.cliente.foto_perfil}`}
-                                                        alt={venta.cliente.nombre}
-                                                        className="w-full h-full object-cover"
-                                                        onError={() => setImagenCargada(false)}
-                                                    />
-                                                ) : (
-                                                    <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                                                )}
-                                            </div>
-                                        </div>
+                        <div className="mb-2 pb-2 border-b border-gray-200 dark:border-zinc-700 mt-2">
+                            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase mb-3">Cliente y Entrega</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Cliente */}
+                                <ClienteInfo
+                                    venta={venta}
+                                    imagenCargada={imagenCargada}
+                                    setImagenCargada={setImagenCargada}
+                                    setShowImagenModal={setShowImagenModal}
+                                    setShowMapaUbicacion={setShowMapaUbicacion}
+                                />
 
-                                        {/* Datos del cliente */}
-                                        <div className="flex-1 space-y-1">
-                                            <div>
-                                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</p>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                                                    {venta.cliente.nombre}
-                                                </p>
-                                            </div>
+                                {/* Pago y entrega */}
+                                <TipoPagoProforma venta={venta} />
 
-                                            {venta.cliente.nit && (
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">NIT</p>
-                                                    <p className="text-xs text-gray-900 dark:text-white">{venta.cliente.nit}</p>
-                                                </div>
-                                            )}
-
-                                            {venta.cliente.telefono && (
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tel.</p>
-                                                    <p className="text-xs text-gray-900 dark:text-white">{venta.cliente.telefono}</p>
-                                                </div>
-                                            )}
-                                            {venta.requiere_envio && venta.direccion_cliente && (
-                                                <button
-                                                    onClick={() => setShowMapaUbicacion(true)}
-                                                    className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 px-2 py-1 rounded transition-colors"
-                                                    title="Ver ubicación en el mapa"
-                                                >
-                                                    <MapPin className="h-3 w-3" />
-                                                    Ver Ubicación
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    {/* Columna 2: Tipo de Pago */}
-                                    {venta.tipo_pago && (
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 border border-blue-200 dark:border-blue-800">
-                                            <label className="block text-xs font-bold text-blue-900 dark:text-blue-200 uppercase mb-2">💳 Tipo de Pago</label>
-                                            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{venta.tipo_pago.nombre}</p>
-                                        </div>
-                                    )}
-                                    {/* Columna 4: Proforma (si existe) */}
-                                    {venta.proforma && (
-                                        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 border border-purple-200 dark:border-purple-800 mt-2">
-                                            <label className="block text-xs font-bold text-purple-900 dark:text-purple-200 uppercase">📋 Proforma</label>
-                                            <Link
-                                                href={`/proformas/${venta.proforma.id}`}
-                                                className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
-                                            >
-                                                {venta.proforma.numero}
-                                            </Link>
-                                            {/* <p>{venta.proforma.estado}</p> */}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Columna 3: Tipo de Entrega */}
-                                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2 border border-orange-200 dark:border-orange-800">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {/* Columna 5: Entrega (si existe) */}
-                                        {venta.entrega && (
-                                            <div>
-                                                <label className="block text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase">🚚 Entrega</label>
-                                                <Link
-                                                    href={`/logistica/entregas/${venta.entrega.id}`}
-                                                    className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 transition-colors"
-                                                >
-                                                    {venta.entrega.numero_entrega || `ENT-${venta.entrega.id}`}
-                                                </Link>
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-orange-900 dark:text-orange-200 uppercase mt-2 sm:mt-0">🚚 Tipo de Entrega</label>
-                                            <div className="space-y-3">
-                                                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
-                                                    {venta.requiere_envio ? 'Envío a Domicilio' : 'Retiro en Local'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Mostrar tipo_entrega de la ÚLTIMA confirmación */}
-                                    {venta.confirmaciones && venta.confirmaciones.length > 0 && (
-                                        <div className={`px-3 py-1 rounded-full text-sm font-semibold text-center mt-2 ${venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                                            }`}>
-                                            Entrega: {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA' ? '✅ COMPLETA' : '⚠️ CON_NOVEDAD'}
-                                        </div>
-                                    )}
-                                </div>
+                                <EstadoLogisticoConfirmacion
+                                    venta={venta}
+                                    getEstadoLogisticoColor={getEstadoLogisticoColor}
+                                />
                             </div>
                         </div>
                     </div>
@@ -412,9 +369,9 @@ export default function VentaShow() {
                                 </thead>
                                 <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
                                     {venta.detalles.map((detalle) => {
-                                        // ✅ NUEVO: Detectar si es combo y tiene items
                                         const esCombo = (detalle.producto as any)?.es_combo === true;
-                                        const comboItems = detalle.combo_items_seleccionados || [];
+                                        const comboItems = (detalle.producto as any)?.combo_items || [];
+
                                         const codigosBarraStr = (detalle.producto as any).codigos_barra && (detalle.producto as any).codigos_barra.length > 0
                                             ? (detalle.producto as any).codigos_barra.map((cb: any) => `${cb.codigo}${cb.es_principal ? ' ★' : ''}`).join(', ')
                                             : '-';
@@ -473,6 +430,7 @@ export default function VentaShow() {
                                                             const subtotal = cantidadTotal * precioUnitario;
                                                             return (
                                                                 <tr key={`${detalle.id}-item-${idx}`} className="bg-gray-50 dark:bg-zinc-800">
+                                                                    <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">{item.producto?.id}</td>
                                                                     <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">
                                                                         {item.producto ? (
                                                                             <>
@@ -486,7 +444,7 @@ export default function VentaShow() {
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                         {item.producto?.sku || '-'}
                                                                     </td>
-                                                                    <td colSpan={3}></td>
+                                                                    <td colSpan={2}></td>
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                         {formatCurrencyWith2Decimals(cantidadTotal)}
                                                                     </td>
@@ -1093,46 +1051,24 @@ export default function VentaShow() {
                                                 </p>
                                             )}
                                         </div>
-                                        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${confirmacion.tipo_entrega === 'COMPLETA'
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                                            }`}>
-                                            {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ Completa' : '⚠️ Con Novedad'}
-                                        </div>
-                                    </div>
-
-                                    {/* Grid de información general */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
-                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Tienda</p>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {confirmacion.tienda_abierta ? '🟢 Abierta' : '🔴 Cerrada'}
-                                            </p>
-                                        </div>
-                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
-                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Cliente</p>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {confirmacion.cliente_presente ? '👤 Presente' : '👻 Ausente'}
-                                            </p>
-                                        </div>
-                                        <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
-                                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Problemas</p>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {confirmacion.tuvo_problema ? '❌ Sí' : '✅ No'}
-                                            </p>
-                                        </div>
-                                        {confirmacion.tipo_novedad && (
-                                            <div className="bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
-                                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">Tipo Novedad</p>
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                    {confirmacion.tipo_novedad}
-                                                </p>
+                                        <div>
+                                            <div className={`px-3 py-1 rounded-full text-sm font-semibold ${confirmacion.tipo_entrega === 'COMPLETA'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                                }`}>
+                                                {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ Completa' : '⚠️ Con Novedad'}
                                             </div>
-                                        )}
+                                            <div className={`px-3 py-1 rounded-full text-sm font-semibold mt-1 ${confirmacion.tipo_confirmacion === 'COMPLETA'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                                }`}>
+                                                {confirmacion.tipo_confirmacion}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Información de Pago */}
-                                    {(confirmacion.estado_pago || confirmacion.total_dinero_recibido) && (
+                                    {(confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && (confirmacion.estado_pago || confirmacion.total_dinero_recibido) && (
                                         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                                             <h4 className="font-semibold text-green-900 dark:text-green-200 mb-3">💰 Información de Pago</h4>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1168,7 +1104,7 @@ export default function VentaShow() {
                                     )}
 
                                     {/* Desglose de Pagos */}
-                                    {confirmacion.desglose_pagos && confirmacion.desglose_pagos.length > 0 && (
+                                    {(confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && confirmacion.desglose_pagos && confirmacion.desglose_pagos.length > 0 && (
                                         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                                             <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-3">📊 Desglose de Pagos</h4>
                                             <div className="space-y-2">
@@ -1187,7 +1123,7 @@ export default function VentaShow() {
                                     )}
 
                                     {/* Productos Devueltos */}
-                                    {confirmacion.productos_devueltos && confirmacion.productos_devueltos.length > 0 && (
+                                    {confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' && confirmacion.productos_devueltos && confirmacion.productos_devueltos.length > 0 && (
                                         <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
                                             <h4 className="font-semibold text-orange-900 dark:text-orange-200 mb-3">
                                                 🔄 Productos Devueltos ({confirmacion.productos_devueltos.length})
@@ -1310,5 +1246,160 @@ export default function VentaShow() {
                 </DialogContent>
             </Dialog>
         </AppLayout>
+    );
+}
+
+/**
+ * ✅ COMPONENTE: Información del Cliente
+ * Muestra foto, nombre, NIT, teléfono y botón de ubicación
+ */
+function ClienteInfo({ venta, imagenCargada, setImagenCargada, setShowImagenModal, setShowMapaUbicacion }: any) {
+    return (
+        <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-zinc-700">
+            <div className="flex gap-3">
+                {/* Foto de perfil */}
+                <div className="flex-shrink-0">
+                    <div
+                        className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 flex items-center justify-center bg-gray-100 dark:bg-zinc-700 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => venta.cliente.foto_perfil && setShowImagenModal(true)}
+                    >
+                        {venta.cliente.foto_perfil && typeof venta.cliente.foto_perfil === 'string' && imagenCargada ? (
+                            <img
+                                src={`/storage/${venta.cliente.foto_perfil}`}
+                                alt={venta.cliente.nombre}
+                                className="w-full h-full object-cover"
+                                onError={() => setImagenCargada(false)}
+                            />
+                        ) : (
+                            <User className="w-7 h-7 text-gray-400 dark:text-gray-500" />
+                        )}
+                    </div>
+                </div>
+
+                {/* Datos del cliente */}
+                <div className="flex-1 space-y-2">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{venta.cliente.nombre}</p>
+                    </div>
+
+                    {venta.cliente.nit && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">NIT: {venta.cliente.nit}</p>
+                    )}
+
+                    {venta.cliente.telefono && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {venta.cliente.telefono}</p>
+                    )}
+
+                    {venta.requiere_envio && venta.direccion_cliente && (
+                        <button
+                            onClick={() => setShowMapaUbicacion(true)}
+                            className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 px-2 py-1 rounded transition-colors"
+                            title="Ver ubicación en el mapa"
+                        >
+                            <MapPin className="h-3 w-3" />
+                            Ver Ubicación
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * ✅ COMPONENTE: Información de Pago y Proforma
+ */
+function TipoPagoProforma({ venta }: any) {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
+            {/* Tipo de Pago */}
+            {venta.tipo_pago && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                    <label className="block text-xs font-bold text-blue-900 dark:text-blue-200 uppercase mb-2">
+                        💳 Tipo de Pago
+                    </label>
+                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{venta.tipo_pago.nombre}</p>
+                </div>
+            )}
+
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200 dark:border-orange-800">
+                <label className="block text-xs font-bold text-orange-900 dark:text-orange-200 uppercase mb-2">
+                    🚚 Tipo de Entrega
+                </label>
+                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                    {venta.requiere_envio ? 'Envío a Domicilio' : 'Retiro en Local'}
+                </p>
+            </div>
+
+
+        </div>
+    );
+}
+
+/**
+ * ✅ COMPONENTE: Estado Logístico y Última Confirmación
+ */
+function EstadoLogisticoConfirmacion({ venta, getEstadoLogisticoColor }: any) {
+    const ultimaConfirmacion = venta.confirmaciones && venta.confirmaciones.length > 0
+        ? venta.confirmaciones[venta.confirmaciones.length - 1]
+        : null;
+
+    return (
+        <div className="space-y-3 rounded-lg border border-gray-200 dark:border-zinc-700 p-3">
+            {/* Estado Logístico */}
+            {venta.entrega != null && venta.estado_logistica && (
+                <div>
+                    <Link
+                        href={`/logistica/entregas/${venta.entrega.id}`}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 transition-colors"
+                    >
+                        📍 Folio Entrega: {venta.entrega.id}
+                    </Link>
+                    {(() => {
+                        const estado = getEstadoLogisticoColor(venta.estado_logistica.codigo);
+                        return (
+                            <div className={`px-4 py-2 mt-2 rounded-full text-sm font-semibold text-center ${estado.clase}`}>
+                                {estado.emoji} {estado.nombre}
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
+
+
+
+            {/* Última Confirmación */}
+            {ultimaConfirmacion && (
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                            Tipo Entrega
+                        </label>
+                        <div
+                            className={`px-3 py-2 rounded-full text-sm font-semibold text-center ${ultimaConfirmacion.tipo_entrega === 'COMPLETA'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                }`}
+                        >
+                            {ultimaConfirmacion.tipo_entrega === 'COMPLETA' ? '✅ Completa' : '⚠️ Novedad'}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                            Tipo Confirmación
+                        </label>
+                        <div
+                            className={`px-3 py-2 rounded-full text-sm font-semibold text-center ${ultimaConfirmacion.tipo_confirmacion === 'COMPLETA'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                }`}
+                        >
+                            {ultimaConfirmacion.tipo_confirmacion}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

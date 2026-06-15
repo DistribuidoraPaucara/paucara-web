@@ -4,6 +4,7 @@ import { Package, AlertCircle, Loader, ChevronDown, ChevronUp } from 'lucide-rea
 interface ProductoAgrupado {
     producto_id: number;
     producto_nombre: string;
+    sku: string;
     codigo_producto: string;
     cantidad_total: number;
     precio_unitario: number;
@@ -162,8 +163,14 @@ export default function ProductosAgrupados({
                         {/* Header de tabla */}
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-12">
+                                    #
+                                </th>
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                     Producto
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    SKU
                                 </th>
                                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                     Cantidad
@@ -185,30 +192,33 @@ export default function ProductosAgrupados({
                         {/* Body de tabla */}
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {/* Filas de productos */}
-                            {productos.productos.map((producto) => (
+                            {productos.productos.map((producto, index) => (
                                 <React.Fragment key={`producto-${producto.producto_id}`}>
                                     {/* Fila principal del producto */}
                                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
+                                        <td className="px-4 py-4 text-center font-semibold text-gray-900 dark:text-white">
+                                            {index + 1}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div>
                                                 <p className="font-medium text-gray-900 dark:text-white">
                                                     {producto.producto_nombre}
                                                 </p>
-                                                {producto.codigo_producto && (
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        Código: {producto.codigo_producto}
-                                                    </p>
-                                                )}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-left text-gray-900 dark:text-white">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {producto.sku}
+                                            </p>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end items-center gap-2">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
                                                     {producto.cantidad_total.toFixed(2)}
                                                 </span>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     {producto.unidad_medida}
-                                                </span>
+                                                </p>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
@@ -287,7 +297,9 @@ export default function ProductosAgrupados({
 
                             {/* Fila de totales */}
                             <tr className="bg-gray-100 dark:bg-gray-800 font-semibold border-t-2 border-gray-200 dark:border-gray-700">
+                                <td></td>
                                 <td className="px-6 py-4 text-gray-900 dark:text-white">TOTAL</td>
+                                <td></td>
                                 <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
                                     {productos.cantidad_total.toFixed(2)}
                                 </td>

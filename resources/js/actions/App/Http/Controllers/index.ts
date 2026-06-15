@@ -20,6 +20,7 @@ import CreditoImportController from './CreditoImportController'
 import CreditoController from './CreditoController'
 import LocalidadController from './LocalidadController'
 import CategoriaClienteController from './CategoriaClienteController'
+import EntregaReporteController from './EntregaReporteController'
 import EntregaController from './EntregaController'
 import EntregaPdfController from './EntregaPdfController'
 import ReporteCargaPdfController from './ReporteCargaPdfController'
@@ -124,6 +125,7 @@ CreditoImportController,
 CreditoController,
 LocalidadController,
 CategoriaClienteController,
+EntregaReporteController,
 EntregaController,
 EntregaPdfController,
 ReporteCargaPdfController,

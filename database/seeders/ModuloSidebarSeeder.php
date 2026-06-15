@@ -158,6 +158,7 @@ class ModuloSidebarSeeder extends Seeder
                     // ['titulo' => 'Entregas en Tránsito', 'ruta' => '/logistica/entregas/en-transito', 'icono' => 'TrendingUp', 'orden' => 5, 'permisos' => ['entregas.tracking']],
                     ['titulo' => 'Vehículos', 'ruta' => '/inventario/vehiculos', 'icono' => 'Truck', 'orden' => 4, 'permisos' => ['inventario.vehiculos.index']],
                     ['titulo' => 'Crear Vehículo', 'ruta' => '/inventario/vehiculos/create', 'icono' => 'Plus', 'orden' => 5, 'permisos' => ['inventario.vehiculos.create']],
+                    ['titulo' => 'Reporte Entregas Chofer', 'ruta' => '/logistica/reportes/chofer-entregas', 'icono' => 'FileText', 'orden' => 6, 'permisos' => ['entregas.index']],
                 ],
             ],
 

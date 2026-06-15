@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
-import { Eye, Truck, User, Route, XCircle, FileText, Pencil, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Eye, Truck, User, XCircle, FileText, Pencil, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import type { Entrega } from '@/domain/entities/entregas';
 import type { Pagination } from '@/domain/entities/shared';
 import { useEntregas } from '@/application/hooks/use-entregas';
@@ -479,40 +479,95 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                 <h4 className="font-semibold text-sm">Ventas en esta entrega:</h4>
                                                                 <div className="space-y-2">
                                                                     {entrega.ventas.map((venta) => (
-                                                                        <div key={venta.id} className="border-l-2 border-blue-400 pl-3 py-2">
-                                                                            <div className="flex items-start justify-between">
-                                                                                <div>
-                                                                                    <div className="font-medium">Folio: {venta.id}</div>
-                                                                                    <div className="text-sm text-muted-foreground">{venta.cliente?.nombre || '-'}</div>
-                                                                                </div>
-                                                                                <div className="text-right">
-                                                                                    <div className="font-semibold">
-                                                                                        {(typeof venta.total === 'string' ? parseFloat(venta.total) : venta.total || 0).toLocaleString('es-BO', {
-                                                                                            style: 'currency',
-                                                                                            currency: 'BOB',
-                                                                                            minimumFractionDigits: 2
-                                                                                        })}
+                                                                        <>
+                                                                            {(() => {
+                                                                                // ✅ DEBUG: Mostrar datos que llegan del backend
+                                                                                console.log('🔍 Venta completa:', {
+                                                                                    venta_id: venta.id,
+                                                                                    venta_numero: venta.numero,
+                                                                                    confirmacion_entrega: venta.confirmacion_entrega,
+                                                                                    tipo_entrega: venta.confirmacion_entrega?.tipo_entrega,
+                                                                                    tipo_confirmacion: venta.confirmacion_entrega?.tipo_confirmacion,
+                                                                                    todas_las_propiedades: venta
+                                                                                });
+                                                                                return null;
+                                                                            })()}
+                                                                            <div key={venta.id} className="border-l-2 border-blue-400 pl-3 py-2">
+                                                                                <div className="flex items-start justify-between gap-4">
+                                                                                    <div className="flex-1">
+                                                                                        <div className="font-medium">Folio: {venta.id}</div>
+                                                                                        <div className="text-sm text-muted-foreground">{venta.cliente?.nombre || '-'}</div>
+                                                                                        {/* ✅ NUEVO: Mostrar tipo_entrega y tipo_confirmacion */}
+                                                                                        {venta.confirmacion_entrega && (
+                                                                                            <div className="text-xs mt-2 space-y-1">
+                                                                                                {venta.confirmacion_entrega.tipo_entrega && (
+                                                                                                    <div>
+                                                                                                        <Badge
+                                                                                                            variant="outline"
+                                                                                                            className={
+                                                                                                                venta.confirmacion_entrega.tipo_entrega === 'COMPLETA'
+                                                                                                                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-700'
+                                                                                                                    : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-700'
+                                                                                                            }
+                                                                                                        >
+                                                                                                            📦 {venta.confirmacion_entrega.tipo_entrega}
+                                                                                                        </Badge>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                                {venta.confirmacion_entrega.tipo_confirmacion && (
+                                                                                                    <div>
+                                                                                                        <Badge
+                                                                                                            variant="outline"
+                                                                                                            className={
+                                                                                                                venta.confirmacion_entrega.tipo_confirmacion === 'COMPLETA'
+                                                                                                                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-700'
+                                                                                                                    : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-700'
+                                                                                                            }
+                                                                                                        >
+                                                                                                            ✓ {venta.confirmacion_entrega.tipo_confirmacion}
+                                                                                                        </Badge>
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
-                                                                                    {venta.peso_total_estimado && (
-                                                                                        <div className="text-xs text-muted-foreground">
-                                                                                            {venta.peso_total_estimado} kg
+                                                                                    {/* ✅ NUEVO: Línea divisoria en el medio */}
+                                                                                    <div className="border-l border-gray-300 dark:border-gray-700"></div>
+                                                                                    <div className="text-right">
+                                                                                        <div className="font-semibold">
+                                                                                            {(typeof venta.total === 'string' ? parseFloat(venta.total) : venta.total || 0).toLocaleString('es-BO', {
+                                                                                                style: 'currency',
+                                                                                                currency: 'BOB',
+                                                                                                minimumFractionDigits: 2
+                                                                                            })}
                                                                                         </div>
-                                                                                    )}
+                                                                                        {venta.peso_total_estimado && (
+                                                                                            <div className="text-xs text-muted-foreground">
+                                                                                                {venta.peso_total_estimado} kg
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {/* ✅ NUEVO: Mostrar tipo de pago debajo del total */}
+                                                                                        {venta.tipo_pago && (
+                                                                                            <div className="text-xs mt-2">
+                                                                                                <Badge
+                                                                                                    variant="outline"
+                                                                                                    className={
+                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
+                                                                                                            ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-700'
+                                                                                                            : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-700'
+                                                                                                    }
+                                                                                                >
+                                                                                                    💳 {venta.tipo_pago?.nombre}
+                                                                                                </Badge>
+                                                                                            </div>
+                                                                                        )}
+
+
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
-                                                                            {venta.detalles && venta.detalles.length > 0 && (
-                                                                                <div className="mt-2 text-xs">
-                                                                                    <div className="text-muted-foreground">
-                                                                                        {venta.detalles.length} producto{venta.detalles.length !== 1 ? 's' : ''}:
-                                                                                    </div>
-                                                                                    {venta.detalles.map((detalle) => (
-                                                                                        <div key={detalle.id} className="ml-2">
-                                                                                            • {detalle.producto?.nombre || 'Producto'} x{detalle.cantidad}
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
+                                                                        </>
                                                                     ))}
                                                                 </div>
                                                             </div>

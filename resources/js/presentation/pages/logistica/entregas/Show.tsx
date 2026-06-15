@@ -2,11 +2,10 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/presentation/components/ui/tabs';
-import { ArrowLeft, Package, Wifi, WifiOff, CheckCircle2, Navigation, Flag } from 'lucide-react';
+import { ArrowLeft, Package, CheckCircle2, Navigation, Flag, Printer } from 'lucide-react';
 import { router } from '@inertiajs/react';
-import type { Entrega, VehiculoCompleto, EstadoEntrega } from '@/domain/entities/entregas';
+import type { Entrega, VehiculoCompleto } from '@/domain/entities/entregas';
 
-import EntregaFlujoCarga from './components/EntregaFlujoCarga';
 import VentasEntregaSection from './components/VentasEntregaSection';
 import ProductosAgrupados from './components/ProductosAgrupados';
 import ResumenPagosEntrega from './components/ResumenPagosEntrega';
@@ -14,8 +13,6 @@ import ConfirmacionesEntregaSection from './components/ConfirmacionesEntregaSect
 import { CorregirPagoModal } from './components/CorregirPagoModal';
 import { EntregaActionsModal } from '@/presentation/components/logistica/entrega-actions-modal';
 import EstadoBadge from '@/presentation/components/logistica/EstadoBadge';
-import EstregaMap from '@/presentation/components/logistica/EstregaMap';
-import EntregaHistorialCambios from '@/presentation/components/logistica/EntregaHistorialCambios';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { useState, useEffect } from 'react';
 import { useEntregaNotifications } from '@/application/hooks/use-entrega-notifications';
@@ -42,20 +39,8 @@ interface ShowProps {
     tiposPago: TipoPago[];
 }
 
-/* const estadoBadgeColor: Record<string, string> = {
-    PROGRAMADO: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
-    ASIGNADA: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
-    EN_CAMINO: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
-    ENTREGADO: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
-    RECHAZADO: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
-    LLEGO: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200',
-    NOVEDAD: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200',
-    CANCELADA: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100',
-}; */
-
 export default function EntregaShow({ entrega: initialEntrega, tiposPago }: ShowProps) {
     const [entrega, setEntrega] = useState<Entrega>(initialEntrega);
-    const [isLive, setIsLive] = useState(false);
     const [isOutputModalOpen, setIsOutputModalOpen] = useState(false);
     const [isMarking, setIsMarking] = useState(false);
     const [isInitiatingRoute, setIsInitiatingRoute] = useState(false);
@@ -68,12 +53,20 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
 
     // ✅ DEBUG: Ver qué datos llegan del backend
     useEffect(() => {
-        console.log('📦 [ENTREGA RECIBIDA DEL BACKEND]', initialEntrega);
-        /* console.log('🔍 [DEBUG] confirmacionesVentas:', {
-            existe: !!initialEntrega?.confirmacionesVentas,
-            cantidad: initialEntrega?.confirmacionesVentas?.length ?? 0,
-            datos: initialEntrega?.confirmacionesVentas,
-        }); */
+        console.log('📦 [SHOW] Datos de entrega recibida del backend:', {
+            entrega_id: initialEntrega.id,
+            numero_entrega: initialEntrega.numero_entrega,
+            estado: initialEntrega.estado_entrega_codigo,
+            total_ventas: initialEntrega.ventas?.length,
+            confirmaciones_entregas: initialEntrega.confirmacionesVentas?.length,
+            ventas_con_detalles: initialEntrega.ventas?.map((v: any) => ({
+                venta_id: v.id,
+                venta_numero: v.numero,
+                confirmacion_entrega: v.confirmacion_entrega,
+                todas_propiedades: v
+            })),
+            todo_entrega: initialEntrega
+        });
     }, [initialEntrega]);
 
     // ✅ Cargar confirmación existente cuando se selecciona una venta
@@ -158,7 +151,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 // Recargar la página para ver el cambio de estado
                 console.log('[SHOW] ⏳ Recargando página en 1.5 segundos...');
                 setTimeout(() => {
-                    router.reload();
+                    window.location.reload();
                 }, 1500);
             } else {
                 console.log('[SHOW] ❌ Error en respuesta:', data);
@@ -215,7 +208,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 // Recargar la página para ver el cambio de estado
                 console.log('[SHOW] ⏳ Recargando página en 1.5 segundos...');
                 setTimeout(() => {
-                    router.reload();
+                    window.location.reload();
                 }, 1500);
             } else {
                 console.log('[SHOW] ❌ Error en respuesta:', data);
@@ -272,7 +265,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 // Recargar la página para ver el cambio de estado
                 console.log('[SHOW] ⏳ Recargando página en 1.5 segundos...');
                 setTimeout(() => {
-                    router.reload();
+                    window.location.reload();
                 }, 1500);
             } else {
                 console.log('[SHOW] ❌ Error en respuesta:', data);
@@ -299,18 +292,8 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
     // const cliente: ClienteEntrega | undefined = entrega.venta?.cliente || entrega.proforma?.cliente;
     const numero: string = String(entrega.proforma?.numero || entrega.venta?.numero || entrega.numero || `#${entrega.id}`);
 
-    // Estados del nuevo flujo de carga
-    const cargoFlowStates = [
-        'PREPARACION_CARGA',
-        'EN_CARGA',
-        'LISTO_PARA_ENTREGA',
-        'EN_TRANSITO',
-        'ENTREGADO',
-    ];
-
     // Usar estado_entrega_codigo (más confiable) o caer a estado como fallback
     const estadoActualParaValidar = entrega.estado_entrega_codigo ?? entrega.estado;
-    const isInCargoFlow = cargoFlowStates.includes(estadoActualParaValidar);
 
     return (
         <AppLayout>
@@ -321,28 +304,20 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     {/* Título y Info */}
                     <div className="flex items-start gap-3 sm:gap-4">
-                        <button
-                            onClick={() => router.visit('/logistica/entregas')}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition flex-shrink-0 mt-1"
-                        >
-                            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                        </button>
                         <div className="min-w-0">
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">
-                                Entrega Folio: {numero}
+                                Folio: {numero}
                             </h1>
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 truncate">{entrega.numero_entrega}</p>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">Detalles de la entrega</p>
+                        </div>
+                        {/* Estado Badge - Oculto en móvil */}
+                        <div className="hidden sm:block">
+                            <EstadoBadge entrega={entrega} />
                         </div>
                     </div>
 
                     {/* Estado Badge - Visible en móvil arriba */}
                     <div className="sm:hidden">
-                        <EstadoBadge entrega={entrega} />
-                    </div>
-
-                    {/* Estado Badge - Oculto en móvil */}
-                    <div className="hidden sm:block">
                         <EstadoBadge entrega={entrega} />
                     </div>
 
@@ -393,7 +368,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             variant="outline"
                             className="w-full text-sm sm:text-base"
                         >
-                            <Package className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <Printer className="w-4 h-4 mr-2 flex-shrink-0" />
                             <span className="truncate">Imprimir</span>
                         </Button>
                     </div>
@@ -446,48 +421,47 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
 
                 {/* Información del Lote - Entregas con mismo chofer y vehículo */}
                 {entrega.chofer && entrega.vehiculo && (
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-4 sm:p-6">
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-2 sm:p-6">
                         <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-purple-900 dark:text-purple-200">
                             <Package className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                             <span>Contexto del Lote</span>
                         </h2>
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Chofer Asignado</p>
-                                    <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100 truncate">{entrega.chofer.name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Vehículo</p>
-                                    <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
-                                        {entrega.vehiculo.placa}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Fecha Programada</p>
-                                    <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
-                                        {new Date(entrega.fecha_programada).toLocaleDateString('es-ES', {
-                                            weekday: 'short',
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                        })}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Peso Entrega</p>
-                                    <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
-                                        {entrega.peso_kg ? `${entrega.peso_kg} kg` : 'N/A'}
-                                    </p>
-                                </div>
-                                {/* ✅ NUEVO (2026-02-12): Mostrar entregador */}
-                                {entrega.entregador && (
-                                    <div>
-                                        <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Entregador</p>
-                                        <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100 truncate">{entrega.entregador.name}</p>
-                                    </div>
-                                )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                            <div>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Chofer Asignado</p>
+                                <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100 truncate">{entrega.chofer.name}</p>
                             </div>
+                            {/* ✅ NUEVO (2026-02-12): Mostrar entregador */}
+                            {entrega.entregador && (
+                                <div>
+                                    <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Entregador</p>
+                                    <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100 truncate">{entrega.entregador.name}</p>
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Vehículo</p>
+                                <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
+                                    {entrega.vehiculo.placa}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Fecha Programada</p>
+                                <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
+                                    {new Date(entrega.fecha_programada).toLocaleDateString('es-ES', {
+                                        weekday: 'short',
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                    })}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Peso Entrega</p>
+                                <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
+                                    {entrega.peso_kg ? `${entrega.peso_kg} kg` : 'N/A'}
+                                </p>
+                            </div>
+
                         </div>
                     </div>
                 )}
@@ -553,9 +527,6 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                         </TabsContent>
                     </Tabs>
                 )}
-
-                {/* Historial de Cambios de Estado */}
-                {/* <EntregaHistorialCambios entrega={entrega} /> */}
 
                 {/* Actions */}
                 <div className="flex gap-3 justify-end pt-4">

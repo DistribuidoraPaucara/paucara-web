@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Entrega;
+use App\Models\Producto;
 use App\Services\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -169,6 +170,34 @@ class EntregaPdfController extends Controller
                 ], JSON_UNESCAPED_UNICODE) : 'null',
             ]);
 
+            // ✅ NUEVO (2026-06-14): Calcular sumatoria de cantidades y clientes únicos
+            // Cargar relaciones necesarias para expandir combos
+            $entrega->load([
+                'ventas.detalles.producto',
+                'ventas.detalles.producto.comboItems',
+            ]);
+
+            $totalProductos = 0;
+            $clientesUnicos = [];
+            foreach ($entrega->ventas as $venta) {
+                $clientesUnicos[$venta->cliente_id] = $venta->cliente_id;
+                foreach ($venta->detalles as $detalle) {
+                    // Verificar si es un combo
+                    if ($detalle->producto?->es_combo) {
+                        // Expandir combo: sumar cantidades de componentes
+                        $comboItemsSeleccionados = $detalle->combo_items_seleccionados ?? [];
+                        foreach ($comboItemsSeleccionados as $comboItem) {
+                            $cantidadComponente = (float) ($comboItem['cantidad'] ?? 1);
+                            $totalProductos += (float) $detalle->cantidad * $cantidadComponente;
+                        }
+                    } else {
+                        // Producto normal
+                        $totalProductos += (float) $detalle->cantidad;
+                    }
+                }
+            }
+            $cantidadClientes = count($clientesUnicos);
+
             $data = [
                 'entrega' => $entrega,
                 'fecha_generacion' => now()->format('d/m/Y H:i'),
@@ -181,6 +210,8 @@ class EntregaPdfController extends Controller
                 'localidades' => $localidades,              // ✅ NUEVO
                 'localidades_resumen' => $localidadesResumen,  // ✅ NUEVO
                 'resumen_pagos' => $resumenPagos,           // ✅ NUEVA 2026-02-12: Resumen de pagos
+                'total_productos' => $totalProductos,       // ✅ NUEVA 2026-06-14: Total cantidades
+                'cantidad_clientes' => $cantidadClientes,   // ✅ NUEVA 2026-06-14: Cantidad clientes únicos
             ];
 
             // Crear PDF con configuración según formato
@@ -287,6 +318,34 @@ class EntregaPdfController extends Controller
                 ], JSON_UNESCAPED_UNICODE) : 'null',
             ]);
 
+            // ✅ NUEVO (2026-06-14): Calcular sumatoria de cantidades y clientes únicos
+            // Cargar relaciones necesarias para expandir combos
+            $entrega->load([
+                'ventas.detalles.producto',
+                'ventas.detalles.producto.comboItems',
+            ]);
+
+            $totalProductos = 0;
+            $clientesUnicos = [];
+            foreach ($entrega->ventas as $venta) {
+                $clientesUnicos[$venta->cliente_id] = $venta->cliente_id;
+                foreach ($venta->detalles as $detalle) {
+                    // Verificar si es un combo
+                    if ($detalle->producto?->es_combo) {
+                        // Expandir combo: sumar cantidades de componentes
+                        $comboItemsSeleccionados = $detalle->combo_items_seleccionados ?? [];
+                        foreach ($comboItemsSeleccionados as $comboItem) {
+                            $cantidadComponente = (float) ($comboItem['cantidad'] ?? 1);
+                            $totalProductos += (float) $detalle->cantidad * $cantidadComponente;
+                        }
+                    } else {
+                        // Producto normal
+                        $totalProductos += (float) $detalle->cantidad;
+                    }
+                }
+            }
+            $cantidadClientes = count($clientesUnicos);
+
             $data = [
                 'entrega' => $entrega,
                 'fecha_generacion' => now()->format('d/m/Y H:i'),
@@ -299,6 +358,8 @@ class EntregaPdfController extends Controller
                 'localidades' => $localidades,              // ✅ NUEVO
                 'localidades_resumen' => $localidadesResumen,  // ✅ NUEVO
                 'resumen_pagos' => $resumenPagos,           // ✅ NUEVA 2026-02-12: Resumen de pagos
+                'total_productos' => $totalProductos,       // ✅ NUEVA 2026-06-14: Total cantidades
+                'cantidad_clientes' => $cantidadClientes,   // ✅ NUEVA 2026-06-14: Cantidad clientes únicos
             ];
 
             // Crear PDF
@@ -560,7 +621,7 @@ class EntregaPdfController extends Controller
                 'ventas.detalles.producto.unidad',
             ]);
 
-            // Agrupar productos consolidando cantidades
+            // Agrupar productos consolidando cantidades (SIN expandir combos)
             $productosAgrupados = [];
             $cantidadTotal = 0;
 
@@ -589,6 +650,7 @@ class EntregaPdfController extends Controller
                         $productosAgrupados[$productoId] = [
                             'producto_id' => $productoId,
                             'producto_nombre' => $detalle->producto?->nombre ?? 'Producto desconocido',
+                            'sku' => $detalle->producto?->sku ?? '',
                             'codigo_producto' => $detalle->producto?->codigo_barras ?? '',
                             'cantidad_total' => (float) $detalle->cantidad,
                             'precio_unitario' => (float) $detalle->precio_unitario,

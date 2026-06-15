@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
 export const descargar = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ descargar.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
 descargar.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ descargar.url = (args: { entrega: number | { id: number } } | [entrega: number |
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
 descargar.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ descargar.get = (args: { entrega: number | { id: number } } | [entrega: number |
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
 descargar.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ descargar.head = (args: { entrega: number | { id: number } } | [entrega: number 
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
     const descargarForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ descargar.head = (args: { entrega: number | { id: number } } | [entrega: number 
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
         descargarForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ descargar.head = (args: { entrega: number | { id: number } } | [entrega: number 
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::descargar
- * @see app/Http/Controllers/EntregaPdfController.php:59
+ * @see app/Http/Controllers/EntregaPdfController.php:60
  * @route '/api/entregas/{entrega}/descargar'
  */
         descargarForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ descargar.head = (args: { entrega: number | { id: number } } | [entrega: number 
     descargar.form = descargarForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
 export const preview = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ preview.url = (args: { entrega: number | { id: number } } | [entrega: number | {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -160,7 +160,7 @@ preview.get = (args: { entrega: number | { id: number } } | [entrega: number | {
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -170,7 +170,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
     const previewForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -180,7 +180,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
         previewForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -189,7 +189,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:223
+ * @see app/Http/Controllers/EntregaPdfController.php:254
  * @route '/api/entregas/{entrega}/preview'
  */
         previewForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -205,7 +205,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
     preview.form = previewForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 export const exportarExcel = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -220,7 +220,7 @@ exportarExcel.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -253,7 +253,7 @@ exportarExcel.url = (args: { entrega: number | { id: number } } | [entrega: numb
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -262,7 +262,7 @@ exportarExcel.get = (args: { entrega: number | { id: number } } | [entrega: numb
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -272,7 +272,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
     const exportarExcelForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -282,7 +282,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
         exportarExcelForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -291,7 +291,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:643
+ * @see app/Http/Controllers/EntregaPdfController.php:705
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
         exportarExcelForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -307,7 +307,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
     exportarExcel.form = exportarExcelForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
 export const debug = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -322,7 +322,7 @@ debug.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
 debug.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -355,7 +355,7 @@ debug.url = (args: { entrega: number | { id: number } } | [entrega: number | { i
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
 debug.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -364,7 +364,7 @@ debug.get = (args: { entrega: number | { id: number } } | [entrega: number | { i
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
 debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -374,7 +374,7 @@ debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { 
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
     const debugForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -384,7 +384,7 @@ debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { 
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
         debugForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -393,7 +393,7 @@ debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { 
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::debug
- * @see app/Http/Controllers/EntregaPdfController.php:24
+ * @see app/Http/Controllers/EntregaPdfController.php:25
  * @route '/api/entregas/{entrega}/debug'
  */
         debugForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -409,7 +409,7 @@ debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { 
     debug.form = debugForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 export const obtenerProductosAgrupados = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -424,7 +424,7 @@ obtenerProductosAgrupados.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 obtenerProductosAgrupados.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -457,7 +457,7 @@ obtenerProductosAgrupados.url = (args: { entrega: number | { id: number } } | [e
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 obtenerProductosAgrupados.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -466,7 +466,7 @@ obtenerProductosAgrupados.get = (args: { entrega: number | { id: number } } | [e
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 obtenerProductosAgrupados.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -476,7 +476,7 @@ obtenerProductosAgrupados.head = (args: { entrega: number | { id: number } } | [
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
     const obtenerProductosAgrupadosForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -486,7 +486,7 @@ obtenerProductosAgrupados.head = (args: { entrega: number | { id: number } } | [
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
         obtenerProductosAgrupadosForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -495,7 +495,7 @@ obtenerProductosAgrupados.head = (args: { entrega: number | { id: number } } | [
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::obtenerProductosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:554
+ * @see app/Http/Controllers/EntregaPdfController.php:615
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
         obtenerProductosAgrupadosForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

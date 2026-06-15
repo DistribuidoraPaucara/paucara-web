@@ -177,29 +177,56 @@ class EntregaController extends Controller
                 'entregas_por_estado' => $todasEntregas->groupBy('estado')->map(fn($grupo) => count($grupo))->toArray(),
             ]);
 
-            // Obtener entregas asignadas al chofer (user actual)
-            // Parámetros opcionales:
-            // - fecha_asignacion: filtro de UN DÍA específico (legacy)
-            // - created_desde: rango desde (created_at) - si no se proporciona, usa hoy
-            // - created_hasta: rango hasta (created_at) - si no se proporciona, usa hoy
-            $fechaFiltro = $request->fecha_asignacion;
-            $search      = $request->search;       // ✅ NUEVO: búsqueda case-insensitive
-            $localidadId = $request->localidad_id; // ✅ NUEVO: filtro por localidad
-
-                                                                                // ✅ NUEVO: Filtro por rango de created_at (fecha de creación)
-            $createdDesde = $request->created_desde ?? today()->toDateString(); // Por defecto: hoy
-            $createdHasta = $request->created_hasta ?? today()->toDateString(); // Por defecto: hoy
+                                                      // Obtener entregas asignadas al chofer (user actual)
+                                                      // Parámetros opcionales:
+                                                      // - entrega_id: filtro exacto por ID de entrega
+                                                      // - search_venta: búsqueda inteligente (ID exacto si es numérico, o nombre cliente case-insensitive si es texto)
+                                                      // - fecha_asignacion: filtro de UN DÍA específico (legacy)
+                                                      // - created_desde: rango desde (created_at) - SOLO si se proporciona
+                                                      // - created_hasta: rango hasta (created_at) - SOLO si se proporciona
+            $entregaId      = $request->entrega_id;   // ✅ NUEVO: filtro exacto por ID de entrega
+            $searchVenta    = $request->search_venta; // ✅ NUEVO: búsqueda inteligente (ID o nombre cliente)
+            $fechaFiltro    = $request->fecha_asignacion;
+            $search         = $request->search;        // ✅ NUEVO: búsqueda case-insensitive
+            $localidadId    = $request->localidad_id;  // ✅ NUEVO: filtro por localidad
+            $createdDesde   = $request->created_desde; // Sin valor por defecto
+            $createdHasta   = $request->created_hasta; // Sin valor por defecto
+            $hayFiltroFecha = ! empty($createdDesde) || ! empty($createdHasta);
 
             // Seleccionar solo campos necesarios para la lista
             $entregas = Entrega::where('chofer_id', $user->id)
+                ->when($entregaId, function ($q) use ($entregaId) {
+                    return $q->where('id', $entregaId);
+                })
+                ->when($searchVenta, function ($q) use ($searchVenta) {
+                    $isNumeric = is_numeric($searchVenta);
+
+                    if ($isNumeric) {
+                        // Si es número: búsqueda exacta por ID de venta
+                        return $q->whereHas('ventas', function ($query) use ($searchVenta) {
+                            $query->where('id', (int) $searchVenta);
+                        });
+                    } else {
+                        // Si es texto: búsqueda case-insensitive por nombre del cliente
+                        $nombreLower = strtolower($searchVenta);
+                        return $q->whereHas('ventas.cliente', function ($query) use ($nombreLower) {
+                            $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$nombreLower}%"]);
+                        });
+                    }
+                })
                 ->when($fechaFiltro, function ($q) use ($fechaFiltro) {
                     return $q->whereDate('fecha_asignacion', $fechaFiltro); // ✅ FILTRA SOLO SI SE PROPORCIONA FECHA
                 })
-            // ✅ NUEVO: Filtro por rango de created_at (fecha de creación de la entrega)
-                ->whereBetween('created_at', [
-                    Carbon::parse($createdDesde)->startOfDay(),
-                    Carbon::parse($createdHasta)->endOfDay(),
-                ])
+            // ✅ CORREGIDO: Filtro por rango de created_at SOLO SI se proporcionan fechas explícitamente
+                ->when($hayFiltroFecha, function ($q) use ($createdDesde, $createdHasta) {
+                    $desde = $createdDesde ?? today()->toDateString();
+                    $hasta = $createdHasta ?? today()->toDateString();
+
+                    return $q->whereBetween('created_at', [
+                        Carbon::parse($desde)->startOfDay(),
+                        Carbon::parse($hasta)->endOfDay(),
+                    ]);
+                })
                 ->when($estado, function ($q) use ($estado) {
                     return $q->where('estado', $estado);
                 })
@@ -561,9 +588,9 @@ class EntregaController extends Controller
             $entregas = Entrega::where('chofer_id', $user->id)
                 ->with([
                     'ventas.cliente',
-                    'ventas.direccionCliente', // NUEVO: Cargar ubicación de entrega desde venta
-                    'ventas.estadoLogistica',  // NUEVO: Cargar estado logístico de venta (tabla estados_logistica)
-                    'ventas.confirmaciones.tipoPago',  // ✅ NUEVO 2026-03-05: Cargar confirmación de entrega con tipo de pago
+                    'ventas.direccionCliente',        // NUEVO: Cargar ubicación de entrega desde venta
+                    'ventas.estadoLogistica',         // NUEVO: Cargar estado logístico de venta (tabla estados_logistica)
+                    'ventas.confirmaciones.tipoPago', // ✅ NUEVO 2026-03-05: Cargar confirmación de entrega con tipo de pago
                     'vehiculo',
                 ])
                 ->when($request->estado, function ($q) use ($request) {
@@ -594,17 +621,13 @@ class EntregaController extends Controller
         try {
             $user    = Auth::user();
             $entrega = Entrega::with([
-                'ventas.cliente',
-                'ventas.direccionCliente',         // NUEVO: Cargar ubicación de entrega desde venta
-                'ventas.estadoLogistica',          // NUEVO: Cargar estado logístico de venta (tabla estados_logistica)
-                'ventas.tipoPago',                 // ✅ NUEVO: Cargar tipo de pago de venta para mostrar en Flutter
-                'ventas.detalles.producto.unidad', // ✅ ACTUALIZADO: Incluir unidad (correcta relación) para obtenerProductosGenerico()
-                'ventas.cliente.localidad',        // ✅ NUEVO: Cargar localidad del cliente
-                'ventas.confirmaciones.tipoPago',  // ✅ NUEVO 2026-03-05: Cargar confirmación de entrega con tipo de pago
-                'chofer',                          // FASE 3: chofer apunta a users.id, no a empleados.id
-                'vehiculo',
-                'ubicaciones',
-                'estadoEntrega', // NUEVO: Cargar estado logístico de entrega desde table estados_logistica
+                'chofer',                           // Chofer asignado
+                'vehiculo',                         // Vehículo usado
+                'estadoEntrega',                    // Estado logístico de la entrega
+                'ventas.direccionCliente.localidad', // ✅ Ventas con direcciones de cliente
+                'ventas.cliente',                   // ✅ Cliente de cada venta
+                'ventas.estadoLogistica',           // ✅ Estado logístico de cada venta
+                'ventas.confirmaciones',            // ✅ Confirmaciones de cada venta
             ])->findOrFail($id);
 
             // Verificar autorización
@@ -616,16 +639,6 @@ class EntregaController extends Controller
                     'message' => 'No autorizado',
                 ], 403);
             }
-
-            // ✅ NUEVO: Obtener lista genérica de productos de la entrega
-            $productosGenerico = $this->impresionService->obtenerProductosGenerico($entrega);
-
-            // 🔍 DEBUG: Verificar que los productos se están obteniendo
-            Log::info('📦 [API_SHOWENTREGA] Obteniendo productos genéricos', [
-                'entrega_id'         => $entrega->id,
-                'cantidad_productos' => $productosGenerico->count(),
-                'ventas_asignadas'   => $entrega->ventas->count(),
-            ]);
 
             // ✅ NUEVO: Obtener localidades de la entrega usando el servicio
             $localidadesService = new EntregaLocalidadesService();
@@ -640,8 +653,7 @@ class EntregaController extends Controller
             return response()->json([
                 'success'     => true,
                 'data'        => $entrega,
-                'productos'   => $productosGenerico->toArray(), // ✅ Productos genéricos
-                'localidades' => $localidades,                  // ✅ NUEVO: Incluir localidades
+                'localidades' => $localidades, // ✅ NUEVO: Incluir localidades
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
@@ -954,6 +966,20 @@ class EntregaController extends Controller
     public function confirmarVentaEntregada(Request $request, $id, $venta_id)
     {
         try {
+            // ✅ VALIDACIÓN: Rechazar IDs inválidos (0 o negativos)
+            if (!$id || $id <= 0) {
+                \Log::error('❌ Error en confirmarVentaEntregada', [
+                    'entrega_id' => $id,
+                    'venta_id'   => $venta_id,
+                    'error'      => 'entrega_id inválido (debe ser > 0)',
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El ID de la entrega es inválido',
+                    'entrega_id' => $id,
+                ], 400);
+            }
+
             // ✅ MEJORADO: Soporta múltiples formas de pago + productos rechazados
             $validated = $request->validate([
                 'fotos'                                  => 'nullable|array',
@@ -963,8 +989,8 @@ class EntregaController extends Controller
                 'tienda_abierta'                         => 'nullable|boolean',
                 'cliente_presente'                       => 'nullable|boolean',
                 'motivo_rechazo'                         => 'nullable|string|in:TIENDA_CERRADA,CLIENTE_AUSENTE,CLIENTE_RECHAZA,DIRECCION_INCORRECTA,CLIENTE_NO_IDENTIFICADO,OTRO',
-                // ✅ NUEVA 2026-03-05: Validación para tipo_novedad
-                'tipo_novedad'                           => 'nullable|in:DEVOLUCION_PARCIAL,RECHAZADO,NO_CONTACTADO,CLIENTE_CERRADO',
+                // ✅ REFACTORIZADO 2026-06-13: Usar tipo_confirmacion en lugar de tipo_novedad
+                'tipo_confirmacion'                      => 'nullable|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
 
                 // ✅ OPCIÓN A: Múltiples pagos (nuevo)
                 'pagos'                                  => 'nullable|array',
@@ -978,7 +1004,8 @@ class EntregaController extends Controller
 
                 // ✅ CAMBIO: Soporte para crédito como boolean (promesa de pago)
                 'es_credito'                             => 'nullable|boolean',
-                'tipo_confirmacion'                      => 'nullable|in:COMPLETA,CON_NOVEDAD',
+                // ⚠️ DEPRECADO: tipo_novedad - mantener solo para compatibilidad temporal
+                'tipo_novedad'                           => 'nullable|in:DEVOLUCION_PARCIAL,RECHAZADO,NO_CONTACTADO,CLIENTE_CERRADO',
 
                 // ✅ NUEVO: Productos rechazados/devueltos (devolución parcial)
                 'productos_rechazados'                   => 'nullable|array',
@@ -1118,9 +1145,18 @@ class EntregaController extends Controller
                 $observacionesFinales = $confirmacionExistente->observaciones_logistica;
             }
 
-            // ✅ CAMBIAR VENTA A ENTREGADA
+            // ✅ CAMBIAR ESTADO LOGÍSTICO DE VENTA basado en tipo_confirmacion
+            // Si COMPLETA → ENTREGADA (13)
+            // Si RECHAZADO|CLIENTE_CERRADO|DEVOLUCION_PARCIAL|NO_CONTACTADO → PROBLEMAS (14)
+            $tipoConfirmacion = $validated['tipo_confirmacion'] ?? null;
+            $nuevoEstadoLogisticoId = 13; // Default: ENTREGADA
+
+            if ($tipoConfirmacion && in_array($tipoConfirmacion, ['RECHAZADO', 'CLIENTE_CERRADO', 'DEVOLUCION_PARCIAL', 'NO_CONTACTADO'])) {
+                $nuevoEstadoLogisticoId = 14; // PROBLEMAS
+            }
+
             $datosActualizacion = [
-                'estado_logistico_id'     => $estadoEntregada->id,
+                'estado_logistico_id'     => $nuevoEstadoLogisticoId,
                 'observaciones_logistica' => $observacionesFinales,
             ];
 
@@ -1134,10 +1170,16 @@ class EntregaController extends Controller
 
             $venta->update($datosActualizacion);
 
-            // ✅ MEJORADO: Usar tipo_confirmacion y tipo_novedad del frontend (no derivar de observaciones)
-            $tipoEntrega  = $validated['tipo_confirmacion'] ?? 'COMPLETA';
-            $tipoNovedad  = $validated['tipo_novedad'] ?? null;
+            // ✅ REFACTORIZADO 2026-06-13: Mapear tipo_confirmacion a tipo_entrega
+            $tipoConfirmacion = $validated['tipo_confirmacion'] ?? 'COMPLETA';
+
+            // tipo_entrega solo puede ser COMPLETA o CON_NOVEDAD
+            // tipo_confirmacion tiene valores específicos: COMPLETA, RECHAZADO, CLIENTE_CERRADO, DEVOLUCION_PARCIAL, NO_CONTACTADO
+            $tipoEntrega  = $tipoConfirmacion === 'COMPLETA' ? 'COMPLETA' : 'CON_NOVEDAD';
             $tuvoProblema = $tipoEntrega === 'CON_NOVEDAD'; // Hay problema si no es COMPLETA
+
+            // ⚠️ DEPRECADO: tipo_novedad solo para backward compatibility
+            $tipoNovedad = $validated['tipo_novedad'] ?? null;
 
             // ✅ NUEVA 2026-03-05: Si es COMPLETA, eliminar fotos (no son necesarias para entregas completas)
             if ($tipoEntrega === 'COMPLETA') {
@@ -1145,51 +1187,36 @@ class EntregaController extends Controller
                 \Log::info('📸 [FOTOS ELIMINADAS] Cambio a COMPLETA - fotos limpiadas');
             }
 
-            // ✅ FIX 2026-03-05: ELIMINAR y CREAR de nuevo (updateOrCreate no actualiza correctamente)
-            $confirmacionExistente = EntregaVentaConfirmacion::where('entrega_id', $id)
-                ->where('venta_id', $venta_id)
-                ->first();
-
-            if ($confirmacionExistente) {
-                $confirmacionExistente->delete();
-                \Log::info('🗑️ [CONFIRMAR_VENTA] Registro anterior eliminado para recreación', [
-                    'entrega_id'               => $id,
-                    'venta_id'                 => $venta_id,
-                    'confirmacion_id_eliminada' => $confirmacionExistente->id,
-                    'tipo_entrega_anterior'    => $confirmacionExistente->tipo_entrega,
-                    'tipo_novedad_anterior'    => $confirmacionExistente->tipo_novedad,
-                ]);
-            }
-
-            // ✅ CREAR nuevo registro con datos actualizados
+            // ✅ CREAR nuevo registro (sin eliminar anterior - mantener historial)
             $confirmacion = EntregaVentaConfirmacion::create([
-                'entrega_id'            => $id,
-                'venta_id'              => $venta_id,
-                'tipo_entrega'          => $tipoEntrega,
-                'tipo_novedad'          => $tipoNovedad,
-                'tuvo_problema'         => $tuvoProblema,
+                'entrega_id'              => $id,
+                'venta_id'                => $venta_id,
+                'tipo_entrega'            => $tipoEntrega,
+                'tipo_novedad'            => $tipoNovedad,
+                'tuvo_problema'           => $tuvoProblema,
                 // ✅ FIX 2026-03-05: Proteger contra count() en null cuando tipo_entrega es COMPLETA
-                'fotos'                 => (is_array($fotosUrls) && count($fotosUrls) > 0) ? $fotosUrls : null,
+                'fotos'                   => (is_array($fotosUrls) && count($fotosUrls) > 0) ? $fotosUrls : null,
                 'observaciones_logistica' => $observacionesFinales,
-                'observaciones'         => $validated['observaciones'] ?? null,
-                'tienda_abierta'        => $validated['tienda_abierta'] ?? null,
-                'cliente_presente'      => $validated['cliente_presente'] ?? null,
-                'motivo_rechazo'        => $validated['motivo_rechazo'] ?? null,
-                // ✅ NUEVO: Desglose de múltiples pagos
-                'desglose_pagos'        => $desglosePagos,       // Array JSON de pagos
-                'total_dinero_recibido' => $totalDineroRecibido, // Total en efectivo/transferencia
-                'monto_pendiente'       => $montoPendiente,      // Dinero pendiente de cobro
-                'tipo_confirmacion'     => $validated['tipo_confirmacion'] ?? 'COMPLETA',
-                // ✅ NUEVO: Productos rechazados (devolución parcial)
-                'productos_devueltos'   => $productosDevueltos,                        // Array JSON de productos rechazados
-                'monto_devuelto'        => $montoDevuelto > 0 ? $montoDevuelto : null, // Total devuelto
-                'monto_aceptado'        => $montoAceptado,                             // Total aceptado por cliente
-                // Backward compatibility: guardar también el primer pago en campos antiguos
-                'monto_recibido'        => $totalDineroRecibido > 0 ? $totalDineroRecibido : null,
-                'tipo_pago_id'          => $desglosePagos ? $desglosePagos[0]['tipo_pago_id'] : null,
-                'estado_pago'           => $estadoPago,
-                'confirmado_por'        => Auth::id(),
-                'confirmado_en'         => now(),
+                'observaciones'           => $validated['observaciones'] ?? null,
+                'tienda_abierta'          => $validated['tienda_abierta'] ?? null,
+                'cliente_presente'        => $validated['cliente_presente'] ?? null,
+                'motivo_rechazo'          => $validated['motivo_rechazo'] ?? null,
+                                                                   // ✅ NUEVO: Desglose de múltiples pagos
+                'desglose_pagos'          => $desglosePagos,       // Array JSON de pagos
+                'total_dinero_recibido'   => $totalDineroRecibido, // Total en efectivo/transferencia
+                'monto_pendiente'         => $montoPendiente,      // Dinero pendiente de cobro
+                                                                   // ✅ REFACTORIZADO 2026-06-13: Usar tipo_confirmacion específico
+                'tipo_confirmacion'       => $tipoConfirmacion,
+                                                                                         // ✅ NUEVO: Productos rechazados (devolución parcial)
+                'productos_devueltos'     => $productosDevueltos,                        // Array JSON de productos rechazados
+                'monto_devuelto'          => $montoDevuelto > 0 ? $montoDevuelto : null, // Total devuelto
+                'monto_aceptado'          => $montoAceptado,                             // Total aceptado por cliente
+                                                                                         // Backward compatibility: guardar también el primer pago en campos antiguos
+                'monto_recibido'          => $totalDineroRecibido > 0 ? $totalDineroRecibido : null,
+                'tipo_pago_id'            => $desglosePagos ? $desglosePagos[0]['tipo_pago_id'] : null,
+                'estado_pago'             => $estadoPago,
+                'confirmado_por'          => Auth::id(),
+                'confirmado_en'           => now(),
             ]);
 
             // ✅ SIMPLIFICADO: SIN LÓGICA DE PAGO NI MOVIMIENTOS DE CAJA
@@ -1304,8 +1331,9 @@ class EntregaController extends Controller
                 'monto_recibido'                        => 'nullable|numeric|min:0',
                 'tipo_pago_id'                          => 'nullable|exists:tipos_pago,id',
 
-                // ✅ Tipo de confirmación
-                'tipo_confirmacion'                     => 'nullable|in:COMPLETA,CON_NOVEDAD',
+                // ✅ REFACTORIZADO 2026-06-13: Tipo de confirmación específico
+                'tipo_confirmacion'                     => 'nullable|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
+                // ⚠️ DEPRECADO: tipo_novedad solo para compatibility
                 'tipo_novedad'                          => 'nullable|string|in:CLIENTE_CERRADO,DEVOLUCION_PARCIAL,RECHAZADO,NO_CONTACTADO',
 
                 // ✅ Productos devueltos (devolución parcial)
@@ -1415,13 +1443,18 @@ class EntregaController extends Controller
                 }
             }
 
-            // ✅ Determinar tipo_entrega basado en tipo_confirmacion
+            // ✅ REFACTORIZADO 2026-06-13: Mapear tipo_confirmacion a tipo_entrega correctamente
             $tipoConfirmacionActualizado = $validated['tipo_confirmacion'] ?? $confirmacion->tipo_confirmacion ?? 'COMPLETA';
-            $tipoNovedadActualizado      = $validated['tipo_novedad'] ?? $confirmacion->tipo_novedad;
+
+            // Mapear: COMPLETA → COMPLETA, cualquier otro → CON_NOVEDAD
+            $tipoEntregaActualizado = $tipoConfirmacionActualizado === 'COMPLETA' ? 'COMPLETA' : 'CON_NOVEDAD';
+
+            // ⚠️ DEPRECADO: tipo_novedad solo para backward compatibility
+            $tipoNovedadActualizado  = $validated['tipo_novedad'] ?? $confirmacion->tipo_novedad;
 
             // ✅ Actualizar la confirmación
             $confirmacion->update([
-                'tipo_entrega'            => $tipoConfirmacionActualizado, // ✅ COMPLETA o CON_NOVEDAD
+                'tipo_entrega'            => $tipoEntregaActualizado,
                 'tipo_confirmacion'       => $tipoConfirmacionActualizado,
                 'tipo_novedad'            => $tipoNovedadActualizado,
                 'tienda_abierta'          => $validated['tienda_abierta'] ?? $confirmacion->tienda_abierta,
@@ -1507,30 +1540,15 @@ class EntregaController extends Controller
 
             $entrega = Entrega::with('estadoEntrega', 'ventas.estadoLogistica')->findOrFail($id);
 
-            // ✅ Validar que la entrega esté en estado permitido
-            $estadosPermitidos = ['EN_CAMINO', 'EN_TRANSITO', 'LLEGO'];
-            if (! $entrega->estadoEntrega || ! in_array($entrega->estadoEntrega->codigo, $estadosPermitidos)) {
-                return response()->json([
-                    'success'       => false,
-                    'message'       => 'La entrega no está en estado para ser finalizada',
-                    'estado_actual' => $entrega->estadoEntrega?->codigo ?? $entrega->estado,
-                ], 422);
-            }
+            // ✅ Construir observaciones con estado logístico de cada venta
+            $estadosPorVenta = $entrega->ventas->map(function ($venta) {
+                return "Venta #{$venta->id} ({$venta->numero}): " . ($venta->estadoLogistica?->nombre ?? 'Sin estado');
+            })->join(' | ');
 
-            // ✅ Verificar que TODAS las ventas estén entregadas o canceladas
-            $ventasNoCompletadas = $entrega->ventas()
-                ->whereHas('estadoLogistica', function ($query) {
-                    $query->where('categoria', 'venta_logistica')
-                        ->whereNotIn('codigo', ['ENTREGADA', 'CANCELADA']);
-                })
-                ->count();
-
-            if ($ventasNoCompletadas > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Hay {$ventasNoCompletadas} venta(s) aún no entregada(s)",
-                    'ventas_pendientes' => $ventasNoCompletadas,
-                ], 422);
+            // ✅ Combinar observaciones del usuario con estados de ventas
+            $observacionesCompletas = trim((string) ($validated['observaciones'] ?? '') . ' | ' . $estadosPorVenta);
+            if (str_starts_with($observacionesCompletas, '|')) {
+                $observacionesCompletas = $estadosPorVenta;
             }
 
             // ✅ Obtener estados
@@ -1557,7 +1575,7 @@ class EntregaController extends Controller
                 'fecha_firma_entrega' => now(),
                 'firma_digital_url'   => $firmaUrl,
                 'foto_entrega_url'    => $fotoUrl,
-                'observaciones'       => $validated['observaciones'] ?? null,
+                'observaciones'       => $observacionesCompletas,
                 // ✅ Aquí podría guardar monto_recolectado si existe la columna
             ]);
 
@@ -1575,19 +1593,6 @@ class EntregaController extends Controller
                 'estado_nuevo'  => $entrega->estado,
                 'fecha_entrega' => $entrega->fecha_entrega,
             ]);
-
-            // ✅ NUEVO: Notificar a admin/cajeros que la entrega fue finalizada
-            try {
-                $wsService = app(EntregaWebSocketService::class);
-                $wsService->notifyAdminsEntregaFinalizada($entrega, $entrega->ventas);
-                Log::info('✅ Notificación WebSocket enviada a admins/cajeros sobre entrega finalizada');
-            } catch (\Exception $e) {
-                Log::warning('⚠️ No se pudo enviar notificación WebSocket sobre entrega finalizada', [
-                    'entrega_id' => $id,
-                    'error'      => $e->getMessage(),
-                ]);
-                // No interrumpir el flujo si falla la notificación WebSocket
-            }
 
             return response()->json([
                 'success'  => true,
@@ -1677,7 +1682,7 @@ class EntregaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Entrega confirmada',
-                'data'    => $entregaFresh,
+                'data'    => [],
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -2081,15 +2086,46 @@ class EntregaController extends Controller
     public function marcarListoParaEntrega(int $id)
     {
         try {
+            // ✅ Verificar que la entrega existe
+            $entrega = Entrega::findOrFail($id);
+
+            Log::info('📦 [LISTO_PARA_ENTREGA] Iniciando marcado', [
+                'entrega_id'    => $id,
+                'estado_actual' => $entrega->estado,
+                'user_id'       => auth()->id(),
+            ]);
+
             $entregaService = app(\App\Services\Logistica\EntregaService::class);
             $dto            = $entregaService->marcarListoParaEntrega($id);
+
+            Log::info('✅ [LISTO_PARA_ENTREGA] Entrega marcada como lista', [
+                'entrega_id'   => $id,
+                'nuevo_estado' => $dto->estado ?? null,
+            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Entrega marcada como lista para partida',
                 'data'    => $dto,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('❌ [LISTO_PARA_ENTREGA] Entrega no encontrada', [
+                'entrega_id' => $id,
+                'error'      => $e->getMessage(),
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega no encontrada',
+            ], 404);
         } catch (\Exception $e) {
+            Log::error('❌ [LISTO_PARA_ENTREGA] Error al marcar como listo', [
+                'entrega_id' => $id,
+                'error'      => $e->getMessage(),
+                'exception'  => get_class($e),
+                'trace'      => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error marcando como listo: ' . $e->getMessage(),
@@ -3728,6 +3764,989 @@ class EntregaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al reasignar la venta: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/ventas/{venta_id}/entregas-confirmaciones
+     *
+     * ✅ NUEVO: Obtener TODAS las confirmaciones de entrega de una venta
+     * Retorna el historial completo de intentos de entrega
+     *
+     * RELACIONES:
+     * - Venta → EntregasVentaConfirmaciones (N)
+     * - EntregasVentaConfirmaciones → Entrega
+     * - EntregasVentaConfirmaciones → TipoPago (opcional)
+     *
+     * @param int $venta_id ID de la venta
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function obtenerConfirmacionesVenta(int $venta_id)
+    {
+        try {
+            // ✅ Obtener venta
+            $venta = Venta::where('id', $venta_id)
+                ->select(['id', 'numero', 'cliente_id', 'total', 'tipo_pago_id', 'entrega_id', 'estado_logistico_id'])
+                ->with([
+                    'cliente:id,nombre,telefono,foto_perfil',
+                    'tipoPago:id,nombre,codigo',
+                    'estadoLogistica:id,codigo,nombre,color,icono',
+                ])
+                ->firstOrFail();
+
+            // ✅ Obtener TODAS las confirmaciones de esta venta (ordenadas por fecha DESC)
+            $confirmaciones = EntregaVentaConfirmacion::where('venta_id', $venta_id)
+                ->select([
+                    'id', 'entrega_id', 'venta_id', 'estado_pago', 'monto_recibido',
+                    'tipo_pago_id', 'total_dinero_recibido', 'monto_pendiente',
+                    'desglose_pagos', 'motivo_rechazo', 'observaciones_logistica',
+                    'confirmado_en', 'tipo_confirmacion', 'tipo_novedad',
+                    'productos_devueltos', 'monto_devuelto', 'monto_aceptado',
+                    'tuvo_problema', 'cliente_presente', 'tienda_abierta',
+                    'fotos', 'firma_digital_url',
+                ])
+                ->with([
+                    'entrega:id,numero_entrega,estado,estado_entrega_id',
+                    'entrega.estadoEntrega:id,codigo,nombre,color,icono',
+                    'entrega.chofer:id,name,nombre',
+                ])
+                ->orderByDesc('confirmado_en') // Más recientes primero
+                ->get();
+
+            // ✅ Transformar confirmaciones a estructura legible
+            $confirmacionesFormateadas = $confirmaciones->map(function ($confirmacion) {
+                $efectivo = 0;
+                $qr       = 0;
+
+                // Procesar desglose de pagos si existe
+                if ($confirmacion->desglose_pagos && is_array($confirmacion->desglose_pagos)) {
+                    foreach ($confirmacion->desglose_pagos as $pago) {
+                        $nombre = $pago['tipo_pago_nombre'] ?? '';
+                        $monto  = (float) ($pago['monto'] ?? 0);
+
+                        if (stripos($nombre, 'efectivo') !== false || stripos($nombre, 'cash') !== false) {
+                            $efectivo += $monto;
+                        } else if (stripos($nombre, 'qr') !== false || stripos($nombre, 'transferencia') !== false) {
+                            $qr += $monto;
+                        } else {
+                            $efectivo += $monto;
+                        }
+                    }
+                } else {
+                    $efectivo = (float) ($confirmacion->monto_recibido ?? 0);
+                }
+
+                return [
+                    'id'                      => $confirmacion->id,
+                    'numero_intento'          => $confirmacion->id, // Para identificar el intento
+                    'estado'                  => $confirmacion->estado_pago,
+                    'tipo_confirmacion'       => $confirmacion->tipo_confirmacion,
+                    'tipo_novedad'            => $confirmacion->tipo_novedad,
+                    'tuvo_problema'           => $confirmacion->tuvo_problema ?? false,
+                    // ✅ PAGOS
+                    'pagos'                   => [
+                        'efectivo'       => round($efectivo, 2),
+                        'qr'             => round($qr, 2),
+                        'total_recibido' => round((float) ($confirmacion->total_dinero_recibido ?? 0), 2),
+                        'pendiente'      => round((float) ($confirmacion->monto_pendiente ?? 0), 2),
+                        'desglose'       => $confirmacion->desglose_pagos ?? [],
+                    ],
+                    // ✅ INFORMACIÓN DE ENTREGA
+                    'entrega'                 => $confirmacion->entrega ? [
+                        'id'             => $confirmacion->entrega->id,
+                        'numero_entrega' => $confirmacion->entrega->numero_entrega,
+                        'estado'         => $confirmacion->entrega->estado,
+                        'estado_entrega' => $confirmacion->entrega->estadoEntrega ? [
+                            'id'     => $confirmacion->entrega->estadoEntrega->id,
+                            'codigo' => $confirmacion->entrega->estadoEntrega->codigo,
+                            'nombre' => $confirmacion->entrega->estadoEntrega->nombre,
+                            'color'  => $confirmacion->entrega->estadoEntrega->color,
+                            'icono'  => $confirmacion->entrega->estadoEntrega->icono,
+                        ] : null,
+                        'chofer'         => $confirmacion->entrega->chofer ? [
+                            'id'     => $confirmacion->entrega->chofer->id,
+                            'nombre' => $confirmacion->entrega->chofer->name ?? $confirmacion->entrega->chofer->nombre,
+                        ] : null,
+                    ] : null,
+                    // ✅ OBSERVACIONES Y RECHAZO
+                    'observaciones_logistica' => $confirmacion->observaciones_logistica,
+                    'motivo_rechazo'          => $confirmacion->motivo_rechazo,
+                    'cliente_presente'        => $confirmacion->cliente_presente,
+                    'tienda_abierta'          => $confirmacion->tienda_abierta,
+                    // ✅ DEVOLUCIONES
+                    'productos_devueltos'     => $confirmacion->productos_devueltos ?? [],
+                    'monto_devuelto'          => round((float) ($confirmacion->monto_devuelto ?? 0), 2),
+                    'monto_aceptado'          => round((float) ($confirmacion->monto_aceptado ?? 0), 2),
+                    // ✅ COMPROBANTES
+                    'fotos'                   => $confirmacion->fotos ?? [],
+                    'firma_digital_url'       => $confirmacion->firma_digital_url,
+                    // ✅ TIMESTAMP
+                    'confirmado_en'           => $confirmacion->confirmado_en?->toIso8601String(),
+                    'hace'                    => $confirmacion->confirmado_en ? $confirmacion->confirmado_en->diffForHumans() : null,
+                ];
+            });
+
+            Log::info('✅ [CONFIRMACIONES_VENTA] Obtenidas ' . $confirmacionesFormateadas->count() . ' confirmaciones', [
+                'venta_id'             => $venta_id,
+                'total_confirmaciones' => $confirmacionesFormateadas->count(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'venta'                => [
+                        'id'               => $venta->id,
+                        'numero'           => $venta->numero,
+                        'total'            => (float) $venta->total,
+                        'cliente'          => $venta->cliente ? [
+                            'id'          => $venta->cliente->id,
+                            'nombre'      => $venta->cliente->nombre,
+                            'telefono'    => $venta->cliente->telefono,
+                            'foto_perfil' => $venta->cliente->foto_perfil,
+                        ] : null,
+                        'tipo_pago'        => $venta->tipoPago ? [
+                            'id'     => $venta->tipoPago->id,
+                            'nombre' => $venta->tipoPago->nombre,
+                            'codigo' => $venta->tipoPago->codigo,
+                        ] : null,
+                        'estado_logistica' => $venta->estadoLogistica ? [
+                            'id'     => $venta->estadoLogistica->id,
+                            'codigo' => $venta->estadoLogistica->codigo,
+                            'nombre' => $venta->estadoLogistica->nombre,
+                        ] : null,
+                    ],
+                    'confirmaciones'       => $confirmacionesFormateadas->values()->all(),
+                    'total_confirmaciones' => $confirmacionesFormateadas->count(),
+                    'resumen'              => [
+                        'intentos_exitosos'   => $confirmacionesFormateadas->filter(fn($c) => $c['estado'] === 'PAGADO')->count(),
+                        'intentos_rechazados' => $confirmacionesFormateadas->filter(fn($c) => $c['estado'] === 'RECHAZADO')->count(),
+                        'intentos_parciales'  => $confirmacionesFormateadas->filter(fn($c) => $c['estado'] === 'PARCIAL')->count(),
+                        'ultimo_intento'      => $confirmacionesFormateadas->first(),
+                    ],
+                ],
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success'  => false,
+                'message'  => 'Venta no encontrada',
+                'venta_id' => $venta_id,
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en obtenerConfirmacionesVenta', [
+                'venta_id' => $venta_id,
+                'error'    => $e->getMessage(),
+                'trace'    => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener confirmaciones',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/entregas/{id}/ventas-resumidas
+     *
+     * ✅ NUEVO: Endpoint optimizado para obtener resumen de ventas de una entrega
+     * Retorna toda la información relevante para el dashboard de entregas:
+     * - Cliente con foto de perfil y localidad
+     * - Estado logístico de cada venta
+     * - Dirección del cliente con localidad
+     * - Resumen de pagos desde confirmaciones de entrega
+     *
+     * RELACIONES CARGADAS (eager loading optimizado):
+     * - Entrega → Ventas → Cliente → Localidad
+     * - Entrega → Ventas → DireccionCliente → Localidad
+     * - Entrega → Ventas → EstadoLogistica
+     * - Entrega → Ventas → EntregaVentaConfirmacion
+     *
+     * @param int $id ID de la entrega
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function ventasResumidas($id)
+    {
+        try {
+            // ✅ Obtener entrega con todas sus relaciones (eager loading optimizado)
+            $entrega = Entrega::where('id', $id)
+                ->select(['id', 'numero_entrega', 'estado', 'estado_entrega_id', 'fecha_asignacion', 'fecha_entrega'])
+                ->with([
+                    // Ventas con información esencial (ordenadas ascendentemente por ID)
+                    'ventas'                            => function ($q) {
+                        $q->select([
+                            'id', 'numero', 'cliente_id', 'total', 'estado_logistico_id',
+                            'direccion_cliente_id', 'entrega_id', 'subtotal', 'impuesto',
+                            'tipo_pago_id', // ✅ FK para relación
+                        ])
+                            ->orderBy('id', 'asc'); // ✅ NUEVO: Ordenar por ID ascendente
+                    },
+                    // ✅ Cargar tipo de pago completo (nombre, código, id)
+                    'ventas.tipoPago'                   => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo', 'activo']);
+                    },
+                    // Cliente con localidad y direcciones
+                    'ventas.cliente'                    => function ($q) {
+                        $q->select(['id', 'nombre', 'telefono', 'foto_perfil', 'localidad_id', 'nit']);
+                    },
+                    'ventas.cliente.localidad'          => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo']);
+                    },
+                    // ✅ Direcciones del cliente (relación cliente -> direcciones)
+                    'ventas.cliente.direcciones'        => function ($q) {
+                        $q->select(['id', 'cliente_id', 'direccion', 'localidad_id', 'observaciones', 'es_principal', 'activa', 'latitud', 'longitud']);
+                    },
+                    'ventas.cliente.direcciones.localidad' => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo']);
+                    },
+                    // Dirección de entrega (venta.direccionCliente)
+                    'ventas.direccionCliente'           => function ($q) {
+                        $q->select(['id', 'direccion', 'localidad_id', 'observaciones', 'cliente_id', 'latitud', 'longitud']);
+                    },
+                    'ventas.direccionCliente.localidad' => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo']);
+                    },
+                    // Estado logístico
+                    'ventas.estadoLogistica'            => function ($q) {
+                        $q->select(['id', 'codigo', 'nombre', 'color', 'icono', 'categoria']);
+                    },
+                    // ✅ TODAS las confirmaciones de entrega (historial completo de intentos) - SIN RESTRICCIONES
+                    // ⚠️ IMPORTANTE: Ordenadas DESC por ID, así first() retorna la MÁS RECIENTE (registrada último)
+                    'ventas.confirmaciones'             => function ($q) {
+                        $q->orderByDesc('id'); // DESC por ID: más alta = más reciente en BD
+                    },
+                ])
+                ->firstOrFail();
+
+            // ✅ SIMPLIFICADO: Convertir directamente a array sin mapeo personalizado
+            $ventasResumidas = $entrega->ventas->map(function ($venta) {
+                // ✅ Cliente con direcciones anidadas
+                $clienteArray = $venta->cliente?->toArray();
+
+                // ✅ Agregar direcciones del cliente dentro del objeto cliente
+                if ($clienteArray && $venta->cliente && $venta->cliente->relationLoaded('direcciones')) {
+                    $clienteArray['direccion_cliente'] = $venta->cliente->direcciones->map(function ($dir) {
+                        return [
+                            'id'            => $dir->id,
+                            'cliente_id'    => $dir->cliente_id,
+                            'direccion'     => $dir->direccion,
+                            'localidad_id'  => $dir->localidad_id,
+                            'observaciones' => $dir->observaciones,
+                            'es_principal'  => $dir->es_principal ?? false,
+                            'activa'        => $dir->activa ?? true,
+                            'latitud'       => $dir->latitud,
+                            'longitud'      => $dir->longitud,
+                            'localidad'     => $dir->localidad ? [
+                                'id'     => $dir->localidad->id,
+                                'nombre' => $dir->localidad->nombre,
+                                'codigo' => $dir->localidad->codigo,
+                            ] : null,
+                        ];
+                    })->toArray();
+                }
+
+                return [
+                    'id'                            => $venta->id,
+                    'numero'                        => $venta->numero,
+                    'tipo_pago_id'                  => $venta->tipo_pago_id,
+                    'tipoPago'                      => $venta->tipoPago?->toArray(),
+                    'cliente'                       => $clienteArray,
+                    'direccion_cliente'             => $venta->direccionCliente ? [
+                        'id'            => $venta->direccionCliente->id,
+                        'cliente_id'    => $venta->direccionCliente->cliente_id,
+                        'direccion'     => $venta->direccionCliente->direccion,
+                        'localidad_id'  => $venta->direccionCliente->localidad_id,
+                        'observaciones' => $venta->direccionCliente->observaciones,
+                        'es_principal'  => false,
+                        'activa'        => true,
+                        'latitud'       => $venta->direccionCliente->latitud,
+                        'longitud'      => $venta->direccionCliente->longitud,
+                        'localidad'     => $venta->direccionCliente->localidad ? [
+                            'id'     => $venta->direccionCliente->localidad->id,
+                            'nombre' => $venta->direccionCliente->localidad->nombre,
+                            'codigo' => $venta->direccionCliente->localidad->codigo,
+                        ] : null,
+                    ] : null,
+                    'estadoLogistica'               => $venta->estadoLogistica?->toArray(),
+                    'total'                         => $venta->total,
+                    'subtotal'                      => $venta->subtotal,
+                    'impuesto'                      => $venta->impuesto,
+                    'entregas_venta_confirmaciones' => $venta->confirmaciones->map(fn($c) => $c->toArray())->values()->all(),
+                ];
+            });
+
+            // ✅ Cálculo de totales desde las confirmaciones
+            $totalVentas = $ventasResumidas->count();
+            $montoTotal  = $ventasResumidas->sum('total');
+
+            // ✅ Calcular resumen desde confirmaciones
+            $efectivoRegistrado = 0;
+            $qrRegistrado       = 0;
+            $totalPendiente     = 0;
+            $totalRechazado     = 0;
+
+            foreach ($entrega->ventas as $venta) {
+                $confirmacionReciente = $venta->confirmaciones->first();
+
+                if ($confirmacionReciente) {
+                    // Procesar desglose de pagos para separar efectivo y QR
+                    if ($confirmacionReciente->desglose_pagos && is_array($confirmacionReciente->desglose_pagos)) {
+                        foreach ($confirmacionReciente->desglose_pagos as $pago) {
+                            $nombre = $pago['tipo_pago_nombre'] ?? '';
+                            $monto  = (float) ($pago['monto'] ?? 0);
+
+                            if (stripos($nombre, 'efectivo') !== false || stripos($nombre, 'cash') !== false) {
+                                $efectivoRegistrado += $monto;
+                            } elseif (stripos($nombre, 'qr') !== false || stripos($nombre, 'transferencia') !== false) {
+                                $qrRegistrado += $monto;
+                            }
+                        }
+                    }
+
+                    // Acumular pendiente
+                    $totalPendiente += (float) ($confirmacionReciente->monto_pendiente ?? 0);
+
+                    // ✅ Monto rechazado = rechazadas completamente + devoluciones parciales
+                    if ($confirmacionReciente->tipo_confirmacion === 'RECHAZADO') {
+                        // Venta completamente rechazada
+                        $totalRechazado += $venta->total;
+                    } elseif ($confirmacionReciente->tipo_confirmacion === 'DEVOLUCION_PARCIAL') {
+                        // Devolución parcial: agregar lo que se devolvió
+                        $totalRechazado += (float) ($confirmacionReciente->monto_devuelto ?? 0);
+                    }
+                }
+            }
+
+            Log::info('✅ [VENTAS_RESUMIDAS] Resumen de entrega obtenido', [
+                'entrega_id'           => $id,
+                'total_ventas'         => $totalVentas,
+                'monto_total'          => $montoTotal,
+                'efectivo_registrado'  => $efectivoRegistrado,
+                'qr_registrado'        => $qrRegistrado,
+                'total_pendiente'      => $totalPendiente,
+                'total_rechazado'      => $totalRechazado,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'entrega_id'     => (int) $entrega->id,
+                    'numero_entrega' => $entrega->numero_entrega,
+                    'estado_entrega' => $entrega->estado,
+                    'ventas'         => $ventasResumidas->values()->all(),
+                    'resumen_total'  => [
+                        'total_ventas'         => $totalVentas,
+                        'monto_total'          => round($montoTotal, 2),
+                        'efectivo_registrado'  => round($efectivoRegistrado, 2),
+                        'qr_registrado'        => round($qrRegistrado, 2),
+                        'total_pendiente'      => round($totalPendiente, 2),
+                        'total_rechazado'      => round($totalRechazado, 2),
+                    ],
+                ],
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success'    => false,
+                'message'    => 'Entrega no encontrada',
+                'entrega_id' => $id,
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en ventasResumidas', [
+                'entrega_id' => $id,
+                'error'      => $e->getMessage(),
+                'trace'      => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener resumen de ventas',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO 2026-06-13: Actualizar confirmación de entrega solo por su ID
+     * PUT /api/confirmaciones/{confirmacion_id}
+     *
+     * Versión simplificada que solo requiere el ID de la confirmación
+     * No necesita pasar entrega_id ni venta_id en la ruta
+     */
+    public function actualizarConfirmacionPorId(Request $request, $confirmacion_id)
+    {
+        try {
+            $validated = $request->validate([
+                'fotos'                                 => 'nullable|array',
+                'fotos.*'                               => 'string',
+                'observaciones'                         => 'nullable|string|max:500',
+                'observaciones_logistica'               => 'nullable|string|max:1000',
+                'tienda_abierta'                        => 'nullable|boolean',
+                'cliente_presente'                      => 'nullable|boolean',
+                'motivo_rechazo'                        => 'nullable|string|in:TIENDA_CERRADA,CLIENTE_AUSENTE,CLIENTE_RECHAZA,DIRECCION_INCORRECTA,CLIENTE_NO_IDENTIFICADO,OTRO',
+                'tipo_confirmacion'                     => 'nullable|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
+                'pagos'                                 => 'nullable|array',
+                'pagos.*.tipo_pago_id'                  => 'required_with:pagos|exists:tipos_pago,id',
+                'pagos.*.monto'                         => 'required_with:pagos|numeric|min:0',
+                'pagos.*.referencia'                    => 'nullable|string|max:100',
+                'monto_recibido'                        => 'nullable|numeric|min:0',
+                'tipo_pago_id'                          => 'nullable|exists:tipos_pago,id',
+                'productos_devueltos'                   => 'nullable|array',
+                'productos_devueltos.*.producto_id'     => 'required_with:productos_devueltos|integer',
+                'productos_devueltos.*.producto_nombre' => 'required_with:productos_devueltos|string|max:255',
+                'productos_devueltos.*.cantidad'        => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.precio_unitario' => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.subtotal'        => 'required_with:productos_devueltos|numeric|min:0',
+            ]);
+
+            // Obtener confirmación por ID
+            $confirmacion = EntregaVentaConfirmacion::findOrFail($confirmacion_id);
+            $venta        = $confirmacion->venta;
+
+            if (! $venta) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Venta no encontrada para esta confirmación',
+                ], 422);
+            }
+
+            // Procesar múltiples pagos
+            $desglosePagos       = null;
+            $totalDineroRecibido = 0;
+            $montoPendiente      = 0;
+
+            if (isset($validated['pagos']) && ! empty($validated['pagos'])) {
+                $desglosePagos = [];
+                foreach ($validated['pagos'] as $pago) {
+                    $tipoPago         = \App\Models\TipoPago::find($pago['tipo_pago_id']);
+                    $desglosePagos[]  = [
+                        'tipo_pago_id'     => $pago['tipo_pago_id'],
+                        'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                        'monto'            => (float) $pago['monto'],
+                        'referencia'       => $pago['referencia'] ?? null,
+                    ];
+                    $totalDineroRecibido += (float) $pago['monto'];
+                }
+            } elseif (isset($validated['monto_recibido']) && $validated['monto_recibido'] > 0) {
+                $tipoPago      = \App\Models\TipoPago::find($validated['tipo_pago_id']);
+                $desglosePagos = [[
+                    'tipo_pago_id'     => $validated['tipo_pago_id'],
+                    'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                    'monto'            => (float) $validated['monto_recibido'],
+                    'referencia'       => null,
+                ]];
+                $totalDineroRecibido = (float) $validated['monto_recibido'];
+            }
+
+            // Calcular monto pendiente
+            $montoAjustado = $venta->total;
+            if (isset($validated['productos_devueltos']) && ! empty($validated['productos_devueltos'])) {
+                foreach ($validated['productos_devueltos'] as $producto) {
+                    $montoAjustado -= (float) $producto['subtotal'];
+                }
+            }
+            $montoPendiente = max(0, $montoAjustado - $totalDineroRecibido);
+
+            // Determinar estado de pago
+            $estadoPago = 'NO_PAGADO';
+            if ($totalDineroRecibido >= $montoAjustado) {
+                $estadoPago = 'PAGADO';
+            } elseif ($totalDineroRecibido > 0) {
+                $estadoPago = 'PARCIAL';
+            }
+
+            // Procesar productos devueltos
+            $productosDevueltos = null;
+            $montoDevuelto      = 0;
+            $montoAceptado      = $venta->total;
+
+            if (isset($validated['productos_devueltos']) && ! empty($validated['productos_devueltos'])) {
+                $productosDevueltos = [];
+                foreach ($validated['productos_devueltos'] as $producto) {
+                    $productosDevueltos[]  = [
+                        'producto_id'     => (int) $producto['producto_id'],
+                        'producto_nombre' => $producto['producto_nombre'],
+                        'cantidad'        => (float) $producto['cantidad'],
+                        'precio_unitario' => (float) $producto['precio_unitario'],
+                        'subtotal'        => (float) $producto['subtotal'],
+                    ];
+                    $montoDevuelto += (float) $producto['subtotal'];
+                }
+                $montoAceptado = max(0, $venta->total - $montoDevuelto);
+            }
+
+            // Procesar fotos
+            $fotosUrls = $confirmacion->fotos ?? [];
+            if (! empty($validated['fotos'])) {
+                $fotosUrls = [];
+                foreach ($validated['fotos'] as $foto) {
+                    if (strpos($foto, 'http') === 0) {
+                        $fotosUrls[] = $foto;
+                    } else {
+                        $fotoUrl = $this->guardarArchivoBase64($foto, 'entregas');
+                        if ($fotoUrl) {
+                            $fotosUrls[] = $fotoUrl;
+                        }
+                    }
+                }
+            }
+
+            // Mapear tipo_confirmacion a tipo_entrega
+            $tipoConfirmacionActualizado = $validated['tipo_confirmacion'] ?? $confirmacion->tipo_confirmacion ?? 'COMPLETA';
+            $tipoEntregaActualizado      = $tipoConfirmacionActualizado === 'COMPLETA' ? 'COMPLETA' : 'CON_NOVEDAD';
+
+            // Actualizar confirmación
+            $confirmacion->update([
+                'tipo_entrega'            => $tipoEntregaActualizado,
+                'tipo_confirmacion'       => $tipoConfirmacionActualizado,
+                'tienda_abierta'          => $validated['tienda_abierta'] ?? $confirmacion->tienda_abierta,
+                'cliente_presente'        => $validated['cliente_presente'] ?? $confirmacion->cliente_presente,
+                'motivo_rechazo'          => $validated['motivo_rechazo'] ?? $confirmacion->motivo_rechazo,
+                'observaciones_logistica' => $validated['observaciones_logistica'] ?? $confirmacion->observaciones_logistica,
+                'observaciones'           => $validated['observaciones'] ?? $confirmacion->observaciones,
+                'desglose_pagos'          => $desglosePagos ?? $confirmacion->desglose_pagos,
+                'total_dinero_recibido'   => $totalDineroRecibido ?: $confirmacion->total_dinero_recibido,
+                'monto_pendiente'         => $montoPendiente,
+                'estado_pago'             => $estadoPago,
+                'tipo_pago_id'            => $desglosePagos ? $desglosePagos[0]['tipo_pago_id'] : $confirmacion->tipo_pago_id,
+                'monto_recibido'          => $totalDineroRecibido ?: $confirmacion->monto_recibido,
+                'productos_devueltos'     => $productosDevueltos ?? $confirmacion->productos_devueltos,
+                'monto_devuelto'          => $montoDevuelto > 0 ? $montoDevuelto : $confirmacion->monto_devuelto,
+                'monto_aceptado'          => $montoAceptado,
+                'fotos'                   => ! empty($fotosUrls) ? $fotosUrls : null,
+            ]);
+
+            Log::info('✅ Confirmación actualizada por ID', [
+                'confirmacion_id'   => $confirmacion->id,
+                'venta_id'          => $venta->id,
+                'tipo_confirmacion' => $tipoConfirmacionActualizado,
+                'estado_pago'       => $estadoPago,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Confirmación actualizada exitosamente',
+                'data'    => $confirmacion->fresh(),
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Confirmación no encontrada',
+            ], 404);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en actualizarConfirmacionPorId', [
+                'confirmacion_id' => $confirmacion_id,
+                'error'           => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar confirmación',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO 2026-06-13: Crear confirmación de entrega (SIN eliminar la anterior)
+     * POST /api/entregas/{id}/ventas/{venta_id}/crear-confirmacion
+     *
+     * Diferencia con confirmarVentaEntregada:
+     * - confirmarVentaEntregada: ELIMINA la anterior y crea una nueva
+     * - crearConfirmacion: SOLO CREA un nuevo registro (true create)
+     *
+     * Uso: Para crear múltiples registros de confirmación sin perder historial
+     */
+    public function crearConfirmacion(Request $request, $id, $venta_id)
+    {
+        try {
+            $validated = $request->validate([
+                'fotos'                                 => 'nullable|array',
+                'fotos.*'                               => 'string',
+                'observaciones'                         => 'nullable|string|max:500',
+                'observaciones_logistica'               => 'nullable|string|max:1000',
+                'tienda_abierta'                        => 'nullable|boolean',
+                'cliente_presente'                      => 'nullable|boolean',
+                'motivo_rechazo'                        => 'nullable|string|in:TIENDA_CERRADA,CLIENTE_AUSENTE,CLIENTE_RECHAZA,DIRECCION_INCORRECTA,CLIENTE_NO_IDENTIFICADO,OTRO',
+                'tipo_confirmacion'                     => 'required|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
+                'pagos'                                 => 'nullable|array',
+                'pagos.*.tipo_pago_id'                  => 'required_with:pagos|exists:tipos_pago,id',
+                'pagos.*.monto'                         => 'required_with:pagos|numeric|min:0',
+                'pagos.*.referencia'                    => 'nullable|string|max:100',
+                'monto_recibido'                        => 'nullable|numeric|min:0',
+                'tipo_pago_id'                          => 'nullable|exists:tipos_pago,id',
+                'es_credito'                            => 'nullable|boolean',
+                'productos_devueltos'                   => 'nullable|array',
+                'productos_devueltos.*.producto_id'     => 'required_with:productos_devueltos|integer',
+                'productos_devueltos.*.producto_nombre' => 'required_with:productos_devueltos|string|max:255',
+                'productos_devueltos.*.cantidad'        => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.precio_unitario' => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.subtotal'        => 'required_with:productos_devueltos|numeric|min:0',
+            ]);
+
+            $entrega = Entrega::with('estadoEntrega')->findOrFail($id);
+            $venta   = Venta::with('estadoLogistica')
+                ->where('entrega_id', $id)
+                ->findOrFail($venta_id);
+
+            // ✅ Procesar múltiples pagos
+            $desglosePagos       = null;
+            $totalDineroRecibido = 0;
+            $montoPendiente      = 0;
+
+            if (isset($validated['pagos']) && ! empty($validated['pagos'])) {
+                $desglosePagos = [];
+                foreach ($validated['pagos'] as $pago) {
+                    $tipoPago         = \App\Models\TipoPago::find($pago['tipo_pago_id']);
+                    $desglosePagos[]  = [
+                        'tipo_pago_id'     => $pago['tipo_pago_id'],
+                        'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                        'monto'            => (float) $pago['monto'],
+                        'referencia'       => $pago['referencia'] ?? null,
+                    ];
+                    $totalDineroRecibido += (float) $pago['monto'];
+                }
+            } elseif (isset($validated['monto_recibido']) && $validated['monto_recibido'] > 0) {
+                $tipoPago      = \App\Models\TipoPago::find($validated['tipo_pago_id']);
+                $desglosePagos = [[
+                    'tipo_pago_id'     => $validated['tipo_pago_id'],
+                    'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                    'monto'            => (float) $validated['monto_recibido'],
+                    'referencia'       => null,
+                ]];
+                $totalDineroRecibido = (float) $validated['monto_recibido'];
+            }
+
+            // Calcular monto pendiente
+            $montoPendiente = max(0, $venta->total - $totalDineroRecibido);
+
+            // Determinar estado de pago
+            $estadoPago = 'NO_PAGADO';
+            if (isset($validated['es_credito']) && $validated['es_credito']) {
+                $estadoPago          = 'CREDITO';
+                $totalDineroRecibido = 0;
+            } elseif ($totalDineroRecibido >= $venta->total) {
+                $estadoPago = 'PAGADO';
+            } elseif ($totalDineroRecibido > 0) {
+                $estadoPago = 'PARCIAL';
+            }
+
+            // Procesar productos devueltos
+            $productosDevueltos = null;
+            $montoDevuelto      = 0;
+            $montoAceptado      = $venta->total;
+
+            if (isset($validated['productos_devueltos']) && ! empty($validated['productos_devueltos'])) {
+                $productosDevueltos = [];
+                foreach ($validated['productos_devueltos'] as $producto) {
+                    $productosDevueltos[]  = [
+                        'producto_id'     => (int) $producto['producto_id'],
+                        'producto_nombre' => $producto['producto_nombre'],
+                        'cantidad'        => (float) $producto['cantidad'],
+                        'precio_unitario' => (float) $producto['precio_unitario'],
+                        'subtotal'        => (float) $producto['subtotal'],
+                    ];
+                    $montoDevuelto += (float) $producto['subtotal'];
+                }
+                $montoAceptado = max(0, $venta->total - $montoDevuelto);
+            }
+
+            // Procesar fotos
+            $fotosUrls = [];
+            if (! empty($validated['fotos'])) {
+                foreach ($validated['fotos'] as $foto) {
+                    if (strpos($foto, 'http') === 0) {
+                        $fotosUrls[] = $foto;
+                    } else {
+                        $fotoUrl = $this->guardarArchivoBase64($foto, 'entregas');
+                        if ($fotoUrl) {
+                            $fotosUrls[] = $fotoUrl;
+                        }
+                    }
+                }
+            }
+
+            // Mapear tipo_confirmacion a tipo_entrega
+            $tipoConfirmacion = $validated['tipo_confirmacion'];
+            $tipoEntrega      = $tipoConfirmacion === 'COMPLETA' ? 'COMPLETA' : 'CON_NOVEDAD';
+
+            // ✅ CREAR nuevo registro (historial de intentos - SIN ACTUALIZAR)
+            // Cada intento de entrega genera un nuevo registro con su propio ID
+            $confirmacion = EntregaVentaConfirmacion::create([
+                'entrega_id'              => $id,
+                'venta_id'                => $venta_id,
+                'tipo_entrega'            => $tipoEntrega,
+                'tipo_confirmacion'       => $tipoConfirmacion,
+                'tuvo_problema'           => $tipoEntrega === 'CON_NOVEDAD',
+                'fotos'                   => ! empty($fotosUrls) ? $fotosUrls : null,
+                'observaciones_logistica' => $validated['observaciones_logistica'] ?? null,
+                'observaciones'           => $validated['observaciones'] ?? null,
+                'tienda_abierta'          => $validated['tienda_abierta'] ?? null,
+                'cliente_presente'        => $validated['cliente_presente'] ?? null,
+                'motivo_rechazo'          => $validated['motivo_rechazo'] ?? null,
+                'desglose_pagos'          => $desglosePagos,
+                'total_dinero_recibido'   => $totalDineroRecibido,
+                'monto_pendiente'         => $montoPendiente,
+                'estado_pago'             => $estadoPago,
+                'tipo_pago_id'            => $desglosePagos ? $desglosePagos[0]['tipo_pago_id'] : null,
+                'monto_recibido'          => $totalDineroRecibido > 0 ? $totalDineroRecibido : null,
+                'productos_devueltos'     => $productosDevueltos,
+                'monto_devuelto'          => $montoDevuelto > 0 ? $montoDevuelto : null,
+                'monto_aceptado'          => $montoAceptado,
+                'confirmado_por'          => Auth::id(),
+                'confirmado_en'           => now(),
+            ]);
+
+            // ✅ ACTUALIZAR estado logístico de la venta basado en tipo_confirmacion
+            $nuevoEstadoLogisticoId = null;
+            if ($tipoConfirmacion === 'COMPLETA') {
+                $nuevoEstadoLogisticoId = 13; // ENTREGADA
+            } elseif (in_array($tipoConfirmacion, ['RECHAZADO', 'CLIENTE_CERRADO', 'DEVOLUCION_PARCIAL', 'NO_CONTACTADO'])) {
+                $nuevoEstadoLogisticoId = 14; // PROBLEMAS
+            }
+
+            // Actualizar la venta con el nuevo estado logístico y observaciones
+            if ($nuevoEstadoLogisticoId) {
+                $venta->update([
+                    'estado_logistico_id'        => $nuevoEstadoLogisticoId,
+                    'observaciones_logistica'    => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+                ]);
+
+                Log::info('✅ Estado logístico de venta actualizado', [
+                    'venta_id'              => $venta_id,
+                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
+                    'tipo_confirmacion'     => $tipoConfirmacion,
+                ]);
+            }
+
+            Log::info('✅ Confirmación creada (nuevo intento de entrega)', [
+                'confirmacion_id'   => $confirmacion->id,
+                'entrega_id'        => $id,
+                'venta_id'          => $venta_id,
+                'tipo_confirmacion' => $tipoConfirmacion,
+                'estado_pago'       => $estadoPago,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Confirmación creada exitosamente',
+                'data'    => $confirmacion->fresh()->load('confirmadobPor', 'tipoPago'),
+            ], 201);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega o venta no encontrada',
+            ], 404);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en crearConfirmacion', [
+                'entrega_id' => $id,
+                'venta_id'   => $venta_id,
+                'error'      => $e->getMessage(),
+                'trace'      => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear confirmación',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ ACTUALIZAR confirmación existente (sin eliminar anterior)
+     * PUT /api/chofer/entregas/confirmaciones/{confirmacion_id}
+     */
+    public function actualizarConfirmacion(Request $request, $confirmacion_id)
+    {
+        try {
+            // ✅ VALIDACIÓN: Rechazar IDs inválidos
+            if (!$confirmacion_id || $confirmacion_id <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El ID de la confirmación es inválido',
+                ], 400);
+            }
+
+            $confirmacion = EntregaVentaConfirmacion::findOrFail($confirmacion_id);
+            $venta = $confirmacion->venta; // ✅ Cargar venta relacionada
+
+            $validated = $request->validate([
+                'fotos'                                  => 'nullable|array',
+                'fotos.*'                                => 'string',
+                'observaciones'                          => 'nullable|string|max:500',
+                'observaciones_logistica'                => 'nullable|string|max:1000',
+                'tienda_abierta'                         => 'nullable|boolean',
+                'cliente_presente'                       => 'nullable|boolean',
+                'motivo_rechazo'                         => 'nullable|string|in:TIENDA_CERRADA,CLIENTE_AUSENTE,CLIENTE_RECHAZA,DIRECCION_INCORRECTA,CLIENTE_NO_IDENTIFICADO,OTRO',
+                'tipo_confirmacion'                      => 'nullable|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
+                'pagos'                                  => 'nullable|array',
+                'pagos.*.tipo_pago_id'                   => 'required_with:pagos|exists:tipos_pago,id',
+                'pagos.*.monto'                          => 'required_with:pagos|numeric|min:0',
+                'pagos.*.referencia'                     => 'nullable|string|max:100',
+                'monto_recibido'                         => 'nullable|numeric|min:0',
+                'tipo_pago_id'                           => 'nullable|exists:tipos_pago,id',
+                'es_credito'                             => 'nullable|boolean',
+                'productos_devueltos'                    => 'nullable|array',
+                'productos_devueltos.*.producto_id'      => 'required_with:productos_devueltos|integer',
+                'productos_devueltos.*.producto_nombre'  => 'required_with:productos_devueltos|string|max:255',
+                'productos_devueltos.*.cantidad'         => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.precio_unitario'  => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.subtotal'         => 'required_with:productos_devueltos|numeric|min:0',
+            ]);
+
+            // ✅ PROCESAR PAGOS
+            $desglosePagos       = null;
+            $totalDineroRecibido = 0;
+            $montoPendiente      = 0;
+
+            if (isset($validated['pagos']) && !empty($validated['pagos'])) {
+                $desglosePagos = [];
+                foreach ($validated['pagos'] as $pago) {
+                    $tipoPago         = \App\Models\TipoPago::find($pago['tipo_pago_id']);
+                    $desglosePagos[]  = [
+                        'tipo_pago_id'     => $pago['tipo_pago_id'],
+                        'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                        'monto'            => (float) $pago['monto'],
+                        'referencia'       => $pago['referencia'] ?? null,
+                    ];
+                    $totalDineroRecibido += (float) $pago['monto'];
+                }
+            } elseif (isset($validated['monto_recibido']) && $validated['monto_recibido'] > 0) {
+                $tipoPago      = \App\Models\TipoPago::find($validated['tipo_pago_id']);
+                $desglosePagos = [[
+                    'tipo_pago_id'     => $validated['tipo_pago_id'],
+                    'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                    'monto'            => (float) $validated['monto_recibido'],
+                    'referencia'       => null,
+                ]];
+                $totalDineroRecibido = (float) $validated['monto_recibido'];
+            }
+
+            // Calcular monto pendiente
+            $montoPendiente = max(0, $venta->total - $totalDineroRecibido);
+
+            // Determinar estado de pago
+            $estadoPago = 'NO_PAGADO';
+            if (isset($validated['es_credito']) && $validated['es_credito']) {
+                $estadoPago          = 'CREDITO';
+                $totalDineroRecibido = 0;
+            } elseif ($totalDineroRecibido >= $venta->total) {
+                $estadoPago = 'PAGADO';
+            } elseif ($totalDineroRecibido > 0) {
+                $estadoPago = 'PARCIAL';
+            }
+
+            // ✅ PROCESAR PRODUCTOS DEVUELTOS
+            $productosDevueltos = null;
+            $montoDevuelto      = 0;
+            $montoAceptado      = $venta->total;
+
+            if (isset($validated['productos_devueltos']) && !empty($validated['productos_devueltos'])) {
+                $productosDevueltos = [];
+                foreach ($validated['productos_devueltos'] as $producto) {
+                    $productosDevueltos[] = [
+                        'producto_id'     => (int) $producto['producto_id'],
+                        'producto_nombre' => $producto['producto_nombre'],
+                        'cantidad'        => (float) $producto['cantidad'],
+                        'precio_unitario' => (float) $producto['precio_unitario'],
+                        'subtotal'        => (float) $producto['subtotal'],
+                    ];
+                    $montoDevuelto += (float) $producto['subtotal'];
+                }
+                $montoAceptado = max(0, $venta->total - $montoDevuelto);
+            }
+
+            // ✅ PROCESAR FOTOS
+            $fotosUrls = $confirmacion->fotos ?? [];
+            if (!empty($validated['fotos'])) {
+                foreach ($validated['fotos'] as $foto) {
+                    if (strpos($foto, 'http') === 0) {
+                        if (!in_array($foto, $fotosUrls)) {
+                            $fotosUrls[] = $foto;
+                        }
+                    } else {
+                        $fotoUrl = $this->guardarArchivoBase64($foto, 'entregas');
+                        if ($fotoUrl && !in_array($fotoUrl, $fotosUrls)) {
+                            $fotosUrls[] = $fotoUrl;
+                        }
+                    }
+                }
+            }
+
+            // ✅ ACTUALIZAR (no eliminar)
+            $tipoConfirmacion = $validated['tipo_confirmacion'] ?? $confirmacion->tipo_confirmacion;
+            $tipoEntrega      = $tipoConfirmacion === 'COMPLETA' ? 'COMPLETA' : 'CON_NOVEDAD';
+
+            $confirmacion->update([
+                'tipo_entrega'            => $tipoEntrega,
+                'tipo_confirmacion'       => $tipoConfirmacion,
+                'tuvo_problema'           => $tipoEntrega === 'CON_NOVEDAD',
+                'fotos'                   => !empty($fotosUrls) ? $fotosUrls : null,
+                'observaciones_logistica' => $validated['observaciones_logistica'] ?? $confirmacion->observaciones_logistica,
+                'observaciones'           => $validated['observaciones'] ?? $confirmacion->observaciones,
+                'tienda_abierta'          => $validated['tienda_abierta'] ?? $confirmacion->tienda_abierta,
+                'cliente_presente'        => $validated['cliente_presente'] ?? $confirmacion->cliente_presente,
+                'motivo_rechazo'          => $validated['motivo_rechazo'] ?? $confirmacion->motivo_rechazo,
+                'desglose_pagos'          => $desglosePagos ?? $confirmacion->desglose_pagos,
+                'total_dinero_recibido'   => $totalDineroRecibido > 0 ? $totalDineroRecibido : $confirmacion->total_dinero_recibido,
+                'monto_pendiente'         => $montoPendiente,
+                'estado_pago'             => $estadoPago,
+                'tipo_pago_id'            => $desglosePagos ? $desglosePagos[0]['tipo_pago_id'] : $confirmacion->tipo_pago_id,
+                'monto_recibido'          => $totalDineroRecibido > 0 ? $totalDineroRecibido : $confirmacion->monto_recibido,
+                'productos_devueltos'     => $productosDevueltos ?? $confirmacion->productos_devueltos,
+                'monto_devuelto'          => $montoDevuelto > 0 ? $montoDevuelto : $confirmacion->monto_devuelto,
+                'monto_aceptado'          => $montoAceptado,
+            ]);
+
+            // ✅ ACTUALIZAR estado logístico de la venta
+            $nuevoEstadoLogisticoId = 13; // Default: ENTREGADA
+            if ($tipoConfirmacion && in_array($tipoConfirmacion, ['RECHAZADO', 'CLIENTE_CERRADO', 'DEVOLUCION_PARCIAL', 'NO_CONTACTADO'])) {
+                $nuevoEstadoLogisticoId = 14; // PROBLEMAS
+            }
+
+            $venta->update([
+                'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                'observaciones_logistica' => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+            ]);
+
+            Log::info('✅ Confirmación actualizada', [
+                'confirmacion_id'   => $confirmacion->id,
+                'venta_id'          => $venta->id,
+                'tipo_confirmacion' => $tipoConfirmacion,
+                'estado_logistico'  => $nuevoEstadoLogisticoId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Confirmación actualizada exitosamente',
+                'data'    => $confirmacion->fresh()->load('confirmadobPor', 'tipoPago'),
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Confirmación no encontrada',
+            ], 404);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en actualizarConfirmacion', [
+                'confirmacion_id' => $confirmacion_id,
+                'error'           => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar confirmación',
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

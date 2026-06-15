@@ -107,7 +107,22 @@ class EntregaController extends Controller
 
         $entregas = \App\Models\Entrega::query()
             // ✅ NUEVO (2026-06-11): Agregar direccion_cliente y estadoEntrega para modal de ubicaciones
-            ->with(['ventas.cliente', 'ventas.direccionCliente', 'vehiculo', 'chofer', 'entregador', 'localidad', 'estadoEntrega'])
+            // ✅ NUEVO (2026-06-12): Agregar tipoPago para mostrar tipo de pago en tabla
+            // ✅ NUEVO (2026-06-14): Cargar confirmaciones de entrega (última confirmación por venta)
+            ->with([
+                'ventas.cliente',
+                'ventas.direccionCliente',
+                'ventas.tipoPago',
+                'ventas.confirmaciones' => function ($q) {
+                    // Ordenar DESC para que first() retorne la más reciente
+                    $q->orderByDesc('id');
+                },
+                'vehiculo',
+                'chofer',
+                'entregador',
+                'localidad',
+                'estadoEntrega'
+            ])
             // ✅ CORRECCIÓN: Si hay rango de fechas O búsqueda O filtro específico, no filtrar por "hoy"
             ->when(
                 !$filtros['fecha_desde'] && !$filtros['fecha_hasta'] && !$filtros['search_entrega'] && !$filtros['search_ventas'] && !$filtros['turno'] && !$filtros['estado_logistica_id'],
@@ -298,8 +313,109 @@ class EntregaController extends Controller
             ];
         }
 
+        // ✅ NUEVO: Transformar entregas usando Resource para incluir tipoPago completo
+        $entregasTransformadas = $entregas->through(function ($entrega) {
+            return [
+                'id' => $entrega->id,
+                'numero_entrega' => $entrega->numero_entrega,
+                'numero_envio' => $entrega->numero_envio,
+                'estado' => $entrega->estado,
+                'estado_entrega_id' => $entrega->estado_entrega_id,
+                'estado_entrega' => $entrega->estadoEntrega ? [
+                    'id' => $entrega->estadoEntrega->id,
+                    'codigo' => $entrega->estadoEntrega->codigo,
+                    'nombre' => $entrega->estadoEntrega->nombre,
+                    'color' => $entrega->estadoEntrega->color,
+                    'icono' => $entrega->estadoEntrega->icono,
+                ] : null,
+                'chofer' => $entrega->chofer ? [
+                    'id' => $entrega->chofer->id,
+                    'name' => $entrega->chofer->name,
+                    'nombre' => $entrega->chofer->nombre,
+                ] : null,
+                'vehiculo' => $entrega->vehiculo ? [
+                    'id' => $entrega->vehiculo->id,
+                    'placa' => $entrega->vehiculo->placa,
+                    'marca' => $entrega->vehiculo->marca,
+                    'modelo' => $entrega->vehiculo->modelo,
+                ] : null,
+                // ✅ NUEVO: Incluir ventas con tipoPago completo (sin tipo_pago_id)
+                'ventas' => $entrega->ventas ? $entrega->ventas->map(function ($venta) {
+                    // ✅ USAR ACCESSOR: confirmacion_entrega retorna automáticamente la última
+                    $confirmacion = $venta->confirmacion_entrega;
+
+                    return [
+                        'id' => $venta->id,
+                        'numero' => $venta->numero,
+                        'cliente' => $venta->cliente ? [
+                            'id' => $venta->cliente->id,
+                            'nombre' => $venta->cliente->nombre,
+                            'telefono' => $venta->cliente->telefono,
+                            'foto_perfil' => $venta->cliente->foto_perfil,
+                        ] : null,
+                        'total' => (float) $venta->total,
+                        'subtotal' => (float) $venta->subtotal,
+                        'impuesto' => (float) $venta->impuesto,
+                        'peso_total_estimado' => $venta->peso_total_estimado,
+                        'estado_logistico_id' => $venta->estado_logistico_id,
+                        'direccion_cliente_id' => $venta->direccion_cliente_id,
+                        // ✅ NUEVO: tipoPago completo (nombre, código) - NO incluir tipo_pago_id
+                        'tipo_pago' => $venta->tipoPago ? [
+                            'id' => $venta->tipoPago->id,
+                            'nombre' => $venta->tipoPago->nombre,
+                            'codigo' => $venta->tipoPago->codigo,
+                        ] : null,
+                        'direccion_cliente' => $venta->direccionCliente ? [
+                            'direccion' => $venta->direccionCliente->direccion,
+                            'observaciones' => $venta->direccionCliente->observaciones,
+                            'localidad' => $venta->direccionCliente->localidad ? [
+                                'id' => $venta->direccionCliente->localidad->id,
+                                'nombre' => $venta->direccionCliente->localidad->nombre,
+                                'codigo' => $venta->direccionCliente->localidad->codigo,
+                            ] : null,
+                        ] : null,
+                        'estado_logistica' => $venta->estadoLogistica ? [
+                            'id' => $venta->estadoLogistica->id,
+                            'codigo' => $venta->estadoLogistica->codigo,
+                            'nombre' => $venta->estadoLogistica->nombre,
+                            'color' => $venta->estadoLogistica->color,
+                            'icono' => $venta->estadoLogistica->icono,
+                        ] : null,
+                        // ✅ NUEVO: Última confirmación de entrega (via accessor)
+                        'confirmacion_entrega' => $confirmacion ? [
+                            'id' => $confirmacion->id,
+                            'tipo_entrega' => $confirmacion->tipo_entrega,
+                            'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+                            'tuvo_problema' => $confirmacion->tuvo_problema,
+                            'estado_pago' => $confirmacion->estado_pago,
+                            'total_dinero_recibido' => (float) ($confirmacion->total_dinero_recibido ?? 0),
+                            'monto_pendiente' => (float) ($confirmacion->monto_pendiente ?? 0),
+                            'observaciones_logistica' => $confirmacion->observaciones_logistica,
+                            'confirmado_en' => $confirmacion->confirmado_en,
+                        ] : null,
+                        'detalles' => $venta->detalles ? $venta->detalles->map(function ($detalle) {
+                            return [
+                                'id' => $detalle->id,
+                                'producto' => $detalle->producto ? [
+                                    'id' => $detalle->producto->id,
+                                    'nombre' => $detalle->producto->nombre,
+                                ] : null,
+                                'cantidad' => $detalle->cantidad,
+                                'precio_unitario' => (float) $detalle->precio_unitario,
+                                'subtotal' => (float) $detalle->subtotal,
+                            ];
+                        })->toArray() : [],
+                    ];
+                })->toArray() : [],
+                'fecha_asignacion' => $entrega->fecha_asignacion,
+                'fecha_entrega' => $entrega->fecha_entrega,
+                'created_at' => $entrega->created_at,
+                'peso_kg' => $entrega->peso_kg,
+            ];
+        });
+
         return Inertia::render('logistica/entregas/index', [
-            'entregas'          => $entregas,
+            'entregas'          => $entregasTransformadas,
             'filtros'           => $filtros,
             'vehiculos'         => $vehiculos,
             'choferes'          => $choferes,
@@ -1350,9 +1466,14 @@ class EntregaController extends Controller
             'estadoEntrega', // ✅ NUEVO: Para acceder a estado_entrega_codigo
             'ventas.cliente',
             'ventas.tipoPago',                 // ✅ NUEVO: Mostrar tipo de pago en la tabla
+            'ventas.estadoDocumento',          // ✅ NUEVO (2026-06-14): Estado documento de cada venta
             'ventas.direccionCliente',         // ✅ NUEVO: Para coordenadas del mapa
             'ventas.estadoLogistica',          // ✅ NUEVO: Estado logístico de cada venta
             'ventas.detalles.producto.unidad', // ✅ ACTUALIZADO: Incluir unidad (correcta relación) para obtenerProductosGenerico()
+            // ✅ NUEVO (2026-06-14): Cargar confirmaciones de cada venta (para el accessor confirmacion_entrega)
+            'ventas.confirmaciones' => function ($q) {
+                $q->orderByDesc('id'); // Ordenar DESC para que first() retorne la más reciente
+            },
             'chofer',
             'entregador',      // ✅ NUEVO (2026-02-12): Mostrar entregador en show
             'vehiculo',
@@ -2218,5 +2339,30 @@ class EntregaController extends Controller
                 'message' => 'Error al desvincular la venta: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Reporte de entregas por chofer (vista web)
+     * GET /logistica/reportes/chofer
+     */
+    public function reporteChoferEntregas()
+    {
+        // Obtener lista de choferes (usuarios con rol chofer)
+        $choferes = \App\Models\User::where('activo', true)
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'chofer');
+            })
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($user) => [
+                'id' => $user->id,
+                'nombre' => $user->name,
+                'email' => $user->email,
+            ]);
+
+        return \Inertia\Inertia::render('logistica/reportes/ChoferEntregasReporte', [
+            'choferes' => $choferes,
+        ]);
     }
 }

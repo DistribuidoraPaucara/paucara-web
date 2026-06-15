@@ -181,10 +181,34 @@ class ImpresionEntregaService
     {
         $productosGenerico = $this->obtenerProductosGenerico($entrega);
 
+        // ✅ CORREGIDO (2026-06-14): Contar items sin expandir combos, pero expandir cantidades
+        // Filtrar solo los productos que NO son componentes de un combo
+        $productosSinComponentes = $productosGenerico->filter(function($p) {
+            return !($p['es_de_combo'] ?? false);
+        });
+
+        // Calcular cantidades expandidas manualmente
+        $totalCantidad = 0;
+        foreach ($entrega->ventas as $venta) {
+            foreach ($venta->detalles as $detalle) {
+                if ($detalle->producto->es_combo === true || $detalle->producto->es_combo === 1) {
+                    // Expandir cantidad del combo
+                    if ($detalle->producto->comboItems && $detalle->producto->comboItems->count() > 0) {
+                        foreach ($detalle->producto->comboItems as $comboItem) {
+                            $totalCantidad += (float) $detalle->cantidad * (float) $comboItem->cantidad;
+                        }
+                    }
+                } else {
+                    // Producto normal
+                    $totalCantidad += (float) $detalle->cantidad;
+                }
+            }
+        }
+
         return [
-            'total_productos' => $productosGenerico->count(),
-            'total_items_unicos' => $productosGenerico->groupBy('producto_id')->count(),
-            'total_cantidad' => $productosGenerico->sum('cantidad'),
+            'total_productos' => $productosSinComponentes->count(),
+            'total_items_unicos' => $productosSinComponentes->groupBy('producto_id')->count(),
+            'total_cantidad' => $totalCantidad,
             'total_subtotal' => $productosGenerico->sum('subtotal'),
             'total_clientes' => $entrega->ventas->pluck('cliente_id')->unique()->count(),
             'total_ventas' => $entrega->ventas->count(),

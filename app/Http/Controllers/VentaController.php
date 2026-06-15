@@ -14,11 +14,12 @@ use App\Models\Moneda;
 use App\Models\Producto;
 use App\Models\TipoDocumento;
 use App\Models\TipoPago;
+use App\Models\TipoPrecio;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\ComboStockService;
-use App\Services\Venta\VentaService;
 use App\Services\PagoVentaService;
+use App\Services\Venta\VentaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Models\TipoPrecio;
+
 /**
  * VentaController - REFACTORIZADO (THIN Controller Pattern)
  *
@@ -136,56 +137,56 @@ class VentaController extends Controller
                 'direccionCliente:id,direccion,localidad_id,latitud,longitud,es_principal,observaciones',
                 'direccionCliente.localidad:id,nombre',
                 'detalles.producto:id,nombre,sku',
-                'detalles.producto.prestables' // ✅ Incluir prestables relacionados
+                'detalles.producto.prestables', // ✅ Incluir prestables relacionados
             ]);
 
             // Ordenamiento
-            $sortBy = $request->input('sort_by', 'created_at');
+            $sortBy    = $request->input('sort_by', 'created_at');
             $sortOrder = $request->input('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
 
             // Paginación
             $perPage = $request->input('per_page', 20);
-            $ventas = $query->paginate($perPage);
+            $ventas  = $query->paginate($perPage);
 
             // Formatear respuesta simplificada para el frontend
             $data = $ventas->map(fn($venta) => [
-                'id' => $venta->id,
-                'numero' => $venta->numero,
-                'fecha' => $venta->fecha?->format('Y-m-d'),
-                'total' => floatval($venta->total),
-                'cliente_id' => $venta->cliente_id,
+                'id'                   => $venta->id,
+                'numero'               => $venta->numero,
+                'fecha'                => $venta->fecha?->format('Y-m-d'),
+                'total'                => floatval($venta->total),
+                'cliente_id'           => $venta->cliente_id,
                 'direccion_cliente_id' => $venta->direccion_cliente_id,
-                'cliente' => [
-                    'id' => $venta->cliente->id,
+                'cliente'              => [
+                    'id'     => $venta->cliente->id,
                     'nombre' => $venta->cliente->nombre,
                 ],
-                'direccionCliente' => $venta->direccionCliente ? [
-                    'id' => $venta->direccionCliente->id,
-                    'direccion' => $venta->direccionCliente->direccion,
-                    'localidad' => $venta->direccionCliente->localidad?->nombre,
+                'direccionCliente'     => $venta->direccionCliente ? [
+                    'id'            => $venta->direccionCliente->id,
+                    'direccion'     => $venta->direccionCliente->direccion,
+                    'localidad'     => $venta->direccionCliente->localidad?->nombre,
                     'observaciones' => $venta->direccionCliente->observaciones,
-                    'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
-                    'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
-                    'es_principal' => (bool) $venta->direccionCliente->es_principal,
+                    'latitud'       => (float) ($venta->direccionCliente->latitud ?? 0),
+                    'longitud'      => (float) ($venta->direccionCliente->longitud ?? 0),
+                    'es_principal'  => (bool) $venta->direccionCliente->es_principal,
                 ] : null,
             ])->all();
 
             return response()->json([
-                'success' => true,
-                'data' => $data,
+                'success'    => true,
+                'data'       => $data,
                 'pagination' => [
                     'current_page' => $ventas->currentPage(),
-                    'per_page' => $ventas->perPage(),
-                    'total' => $ventas->total(),
-                    'last_page' => $ventas->lastPage(),
-                ]
+                    'per_page'     => $ventas->perPage(),
+                    'total'        => $ventas->total(),
+                    'last_page'    => $ventas->lastPage(),
+                ],
             ]);
         } catch (\Exception $e) {
             \Log::error('Error searching ventas with prestables: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al buscar ventas con prestables'
+                'message' => 'Error al buscar ventas con prestables',
             ], 500);
         }
     }
@@ -213,22 +214,22 @@ class VentaController extends Controller
             // ✅ NUEVO: Si es API request, filtrar por cliente autenticado
             $isApiRequest = $request->expectsJson() || str_starts_with($request->path(), 'api/');
 
-            // ✅ NUEVO: Extraer parámetros de ordenamiento PRIMERO
-            $sortBy = $request->input('sort_by', 'id');           // Campo por el que ordenar (default: id)
-            $sortOrder = $request->input('sort_order', 'desc');   // Orden ascendente o descendente (default: desc)
+                                                                // ✅ NUEVO: Extraer parámetros de ordenamiento PRIMERO
+            $sortBy    = $request->input('sort_by', 'id');      // Campo por el que ordenar (default: id)
+            $sortOrder = $request->input('sort_order', 'desc'); // Orden ascendente o descendente (default: desc)
 
             // Extraer filtros del request
             $filtros = [
                 'id'                  => $request->input('id'),
-                'id_desde'            => $request->input('id_desde'),      // ✅ NUEVO: Rango de ID desde
-                'id_hasta'            => $request->input('id_hasta'),      // ✅ NUEVO: Rango de ID hasta
+                'id_desde'            => $request->input('id_desde'), // ✅ NUEVO: Rango de ID desde
+                'id_hasta'            => $request->input('id_hasta'), // ✅ NUEVO: Rango de ID hasta
                 'estado'              => $request->input('estado'),
                 'estado_documento_id' => $request->input('estado_documento_id'),
-                'cliente_id'          => $request->input('cliente_id'),  // ✅ ACTUALIZADO: Acepta ID, código_cliente, nombre, NIT, teléfono
-                'busqueda_cliente'    => $request->input('busqueda_cliente'),  // ✅ NUEVO: Búsqueda alternativa de cliente
+                'cliente_id'          => $request->input('cliente_id'),       // ✅ ACTUALIZADO: Acepta ID, código_cliente, nombre, NIT, teléfono
+                'busqueda_cliente'    => $request->input('busqueda_cliente'), // ✅ NUEVO: Búsqueda alternativa de cliente
                 'usuario_id'          => $request->input('usuario_id'),
-                'tipo_pago_id'        => $request->input('tipo_pago_id'),      // ✅ NUEVO: Filtro por tipo de pago
-                'preventista_id'      => $request->input('preventista_id'),    // ✅ NUEVO (2026-03-01): Filtro por preventista
+                'tipo_pago_id'        => $request->input('tipo_pago_id'),   // ✅ NUEVO: Filtro por tipo de pago
+                'preventista_id'      => $request->input('preventista_id'), // ✅ NUEVO (2026-03-01): Filtro por preventista
                 'fecha_desde'         => $request->input('fecha_desde'),
                 'fecha_hasta'         => $request->input('fecha_hasta'),
                 'numero'              => $request->input('numero'),
@@ -239,7 +240,7 @@ class VentaController extends Controller
                 'tipo_venta'          => $request->input('tipo_venta'),
                 'estado_pago'         => $request->input('estado_pago'),      // ✅ NUEVO: Para filtro de estado de pago
                 'estado_logistico'    => $request->input('estado_logistico'), // ✅ NUEVO: Para filtro de estado logístico
-                // ✅ AGREGAR: Parámetros de ordenamiento para que se envíen al frontend y al botón de impresión
+                                                                              // ✅ AGREGAR: Parámetros de ordenamiento para que se envíen al frontend y al botón de impresión
                 'sort_by'             => $sortBy,
                 'sort_order'          => $sortOrder,
             ];
@@ -316,18 +317,18 @@ class VentaController extends Controller
                     'tipo_pago_id'               => $venta->tipo_pago_id,  // ✅ NUEVO
                     'estado_pago'                => $venta->estado_pago,   // ✅ NUEVO: Estado de pago
                     'estado'                     => $venta->estado,
-                    'estado_logistico'           => $venta->estado_logistico,
-                    'estado_logistico_id'        => $venta->estado_logistico_id,
+                    'estado_logistico'           => $venta->estado_logistico,    // ✅ Estado logístico de la VENTA
+                    'estado_logistico_id'        => $venta->estado_logistico_id, // ✅ FK a la venta (no de la entrega)
                     'fecha_entrega_comprometida' => $venta->fecha_entrega_comprometida,
                     'hora_entrega_comprometida'  => $venta->hora_entrega_comprometida,
                     'cliente_id'                 => $venta->cliente_id,
                     'usuario_id'                 => $venta->usuario_id,
                     'estado_documento_id'        => $venta->estado_documento_id,
                     'moneda_id'                  => $venta->moneda_id,
-                    'caja_id'                    => $venta->caja_id,  // ✅ NUEVO: ID de caja para indicador
+                    'caja_id'                    => $venta->caja_id, // ✅ NUEVO: ID de caja para indicador
                     'direccion_cliente_id'       => $venta->direccion_cliente_id,
                     'proforma_id'                => $venta->proforma_id,
-                    'entrega_id'                 => $venta->entrega_id,  // ✅ NUEVO (2026-03-03): ID de entrega asignada
+                    'entrega_id'                 => $venta->entrega_id, // ✅ NUEVO (2026-03-03): ID de entrega asignada
                     'created_at'                 => $venta->created_at,
                     'updated_at'                 => $venta->updated_at,
                     // ✅ RELACIONES - Incluir explícitamente
@@ -354,18 +355,18 @@ class VentaController extends Controller
                         'nombre' => $venta->moneda->nombre,
                     ] : null,
                     'direccionCliente'           => $venta->direccionCliente ? [
-                        'id'           => $venta->direccionCliente->id,
-                        'direccion'    => $venta->direccionCliente->direccion,
-                        'referencias'  => $venta->direccionCliente->observaciones,
-                        'observaciones' => $venta->direccionCliente->observaciones,  // ✅ NUEVO (2026-03-03): Campo explícito de observaciones
-                        'localidad_id' => $venta->direccionCliente->localidad_id,
-                        'localidad'    => $venta->direccionCliente->localidad?->nombre ?? null,
-                        'latitud'      => (float) ($venta->direccionCliente->latitud ?? 0),
-                        'longitud'     => (float) ($venta->direccionCliente->longitud ?? 0),
-                        'es_principal' => $venta->direccionCliente->es_principal,
-                        'activa'       => $venta->direccionCliente->activa,
+                        'id'            => $venta->direccionCliente->id,
+                        'direccion'     => $venta->direccionCliente->direccion,
+                        'referencias'   => $venta->direccionCliente->observaciones,
+                        'observaciones' => $venta->direccionCliente->observaciones, // ✅ NUEVO (2026-03-03): Campo explícito de observaciones
+                        'localidad_id'  => $venta->direccionCliente->localidad_id,
+                        'localidad'     => $venta->direccionCliente->localidad?->nombre ?? null,
+                        'latitud'       => (float) ($venta->direccionCliente->latitud ?? 0),
+                        'longitud'      => (float) ($venta->direccionCliente->longitud ?? 0),
+                        'es_principal'  => $venta->direccionCliente->es_principal,
+                        'activa'        => $venta->direccionCliente->activa,
                     ] : null,
-                    'estadoLogistica'            => $venta->estadoLogistica ? [
+                    'estadoLogistica'            => $venta->estadoLogistica ? [ // ✅ Relación de la VENTA (via estado_logistico_id)
                         'id'        => $venta->estadoLogistica->id,
                         'codigo'    => $venta->estadoLogistica->codigo,
                         'nombre'    => $venta->estadoLogistica->nombre,
@@ -378,21 +379,21 @@ class VentaController extends Controller
                     ] : null,
                     // ✅ NUEVO: Relación con proforma (si existe)
                     'proforma'                   => $venta->proforma ? [
-                        'id'           => $venta->proforma->id,
-                        'numero'       => $venta->proforma->numero,
-                        'fecha'        => $venta->proforma->created_at,
-                        'cliente_id'   => $venta->proforma->cliente_id,
+                        'id'                 => $venta->proforma->id,
+                        'numero'             => $venta->proforma->numero,
+                        'fecha'              => $venta->proforma->created_at,
+                        'cliente_id'         => $venta->proforma->cliente_id,
                         'usuario_creador_id' => $venta->proforma->usuario_creador_id,
-                        'total'        => $venta->proforma->total,
-                        'estado'       => $venta->proforma->estado,
-                        'observaciones' => $venta->proforma->observaciones,
+                        'total'              => $venta->proforma->total,
+                        'estado'             => $venta->proforma->estado,
+                        'observaciones'      => $venta->proforma->observaciones,
                     ] : null,
                     // ✅ NUEVO: Relación con entregas_venta_confirmaciones (si existe)
                     'entregaConfirmacion'        => (function () use ($venta) {
                         // Obtener el primer registro de confirmaciones (más reciente)
                         $firstConfirmacion = $venta->confirmaciones?->first();
 
-                        if (!$firstConfirmacion) {
+                        if (! $firstConfirmacion) {
                             return null;
                         }
 
@@ -433,9 +434,9 @@ class VentaController extends Controller
                             'name' => $venta->entrega->chofer->name ?? $venta->entrega->chofer->nombre,
                         ] : null,
                         'vehiculo'          => $venta->entrega->vehiculo ? [
-                            'id'    => $venta->entrega->vehiculo->id,
-                            'placa' => $venta->entrega->vehiculo->placa,
-                            'marca' => $venta->entrega->vehiculo->marca,
+                            'id'     => $venta->entrega->vehiculo->id,
+                            'placa'  => $venta->entrega->vehiculo->placa,
+                            'marca'  => $venta->entrega->vehiculo->marca,
                             'modelo' => $venta->entrega->vehiculo->modelo,
                         ] : null,
                     ] : null,
@@ -470,8 +471,8 @@ class VentaController extends Controller
                     'estados_documento' => EstadoDocumento::select('id', 'nombre', 'codigo')->get(),
                     'usuarios'          => User::select('id', 'name')->orderBy('name')->get(),
                     'monedas'           => Moneda::activos()->select('id', 'codigo', 'nombre')->get(),
-                    'tipos_pago'        => TipoPago::activos()->select('id', 'nombre')->get(),  // ✅ NUEVO: Tipos de pago
-                    // ✅ NUEVO (2026-03-01): Preventistas (usuarios con rol preventista)
+                    'tipos_pago'        => TipoPago::activos()->select('id', 'nombre')->get(), // ✅ NUEVO: Tipos de pago
+                                                                                               // ✅ NUEVO (2026-03-01): Preventistas (usuarios con rol preventista)
                     'preventistas'      => User::role('preventista')->select('id', 'name')->orderBy('name')->get(),
                 ],
             ]);
@@ -504,7 +505,7 @@ class VentaController extends Controller
         // Forzar consulta directa a BD para obtener valor actual de es_farmacia
         $empresaPrincipal = \App\Models\Empresa::where('es_principal', true)
             ->where('activo', true)
-            ->first(); // Sin Cache::remember para obtener valor actual
+            ->first();                                                       // Sin Cache::remember para obtener valor actual
         $almacenIdEmpresa = (int) ($empresaPrincipal?->almacen_id ?? 1); // ✅ Cast a int explícito
 
         Log::info('📦 VentaController::create - Obteniendo productos con stock', [
@@ -514,10 +515,10 @@ class VentaController extends Controller
 
         // ✅ DEBUG: Log de es_farmacia y logistica_envios para verificar que consulta fresco
         Log::info('🏥 VentaController::create - Consultando VALORES FRESCOS de BD', [
-            'es_farmacia' => (bool) $empresaPrincipal?->es_farmacia,
+            'es_farmacia'      => (bool) $empresaPrincipal?->es_farmacia,
             'logistica_envios' => (bool) $empresaPrincipal?->logistica_envios,
-            'empresa_id' => $empresaPrincipal?->id,
-            'empresa_nombre' => $empresaPrincipal?->nombre,
+            'empresa_id'       => $empresaPrincipal?->id,
+            'empresa_nombre'   => $empresaPrincipal?->nombre,
         ]);
 
                                   // ✅ MODIFICADO: NO cargar productos en la página
@@ -534,18 +535,18 @@ class VentaController extends Controller
         $tiposPrecio = TipoPrecio::activos()->select('id', 'codigo', 'nombre')->get();
 
         return Inertia::render('ventas/create', [
-            'clientes'           => Cliente::activos()->select('id', 'nombre', 'nit', 'codigo_cliente', 'email', 'telefono')->get(), // ✅ AGREGADO: codigo_cliente para búsqueda automática de GENERAL
-            'productos'          => $productos, // ✅ MODIFICADO: Solo productos con stock en almacén
-            'almacenes'          => Almacen::activos()->select('id', 'nombre')->get(),
-            'monedas'            => Moneda::activos()->select('id', 'codigo', 'nombre', 'simbolo')->get(),
-            'tipos_documento'    => TipoDocumento::activos()->select('id', 'codigo', 'nombre')->get(),
-            'tipos_pago'         => $tiposPago,
-            'tipos_precio'       => $tiposPrecio, // ✅ NUEVO: Tipos de precio para asignar por defecto
-            'estados_documento'  => EstadoDocumento::where('activo', true)->select('id', 'codigo', 'nombre')->get(), // ✅ NUEVO: Estados de documento
-            'almacen_id_empresa' => $almacenIdEmpresa,                                                               // ✅ NUEVO: Almacén de la empresa
-            'es_farmacia'        => (bool) $empresaPrincipal?->es_farmacia,                                          // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
-            'logistica_envios'   => (bool) $empresaPrincipal?->logistica_envios,                                     // ✅ NUEVO: Indicador para mostrar/ocultar logística de envíos
-            // ✅ NUEVO (2026-03-03): Direcciones de clientes con observaciones para mostrar en formulario
+            'clientes'             => Cliente::activos()->select('id', 'nombre', 'nit', 'codigo_cliente', 'email', 'telefono')->get(), // ✅ AGREGADO: codigo_cliente para búsqueda automática de GENERAL
+            'productos'            => $productos,                                                                                      // ✅ MODIFICADO: Solo productos con stock en almacén
+            'almacenes'            => Almacen::activos()->select('id', 'nombre')->get(),
+            'monedas'              => Moneda::activos()->select('id', 'codigo', 'nombre', 'simbolo')->get(),
+            'tipos_documento'      => TipoDocumento::activos()->select('id', 'codigo', 'nombre')->get(),
+            'tipos_pago'           => $tiposPago,
+            'tipos_precio'         => $tiposPrecio,                                                                    // ✅ NUEVO: Tipos de precio para asignar por defecto
+            'estados_documento'    => EstadoDocumento::where('activo', true)->select('id', 'codigo', 'nombre')->get(), // ✅ NUEVO: Estados de documento
+            'almacen_id_empresa'   => $almacenIdEmpresa,                                                               // ✅ NUEVO: Almacén de la empresa
+            'es_farmacia'          => (bool) $empresaPrincipal?->es_farmacia,                                          // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
+            'logistica_envios'     => (bool) $empresaPrincipal?->logistica_envios,                                     // ✅ NUEVO: Indicador para mostrar/ocultar logística de envíos
+                                                                                                                       // ✅ NUEVO (2026-03-03): Direcciones de clientes con observaciones para mostrar en formulario
             'direcciones_clientes' => \App\Models\DireccionCliente::where('activa', true)
                 ->with('cliente:id,nombre')
                 ->select('id', 'cliente_id', 'direccion', 'observaciones', 'localidad_id', 'latitud', 'longitud', 'es_principal')
@@ -654,28 +655,28 @@ class VentaController extends Controller
             // Obtener la venta creada
             $ventaCreada = Venta::findOrFail($ventaDTO->id);
 
-            // ✅ MEJORADO: Registrar pagos (automático o desglosados)
-            // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
+                                     // ✅ MEJORADO: Registrar pagos (automático o desglosados)
+                                     // ⚠️ NO registrar si es CREDITO (ventas a crédito no tienen pago en detalles_pago_venta)
             $ventaCreada->refresh(); // Recargar para obtener tipoPago con tipo_pago_id actualizado
             $esCredito = $ventaCreada->tipoPago && strtoupper($ventaCreada->tipoPago->codigo) === 'CREDITO';
 
-            if (!$esCredito) {
+            if (! $esCredito) {
                 // ✅ PRIORIDAD 1: Si vienen pagos desglosados en el request, registrar esos
-                if ($request->has('pagos') && is_array($request->input('pagos')) && !empty($request->input('pagos'))) {
+                if ($request->has('pagos') && is_array($request->input('pagos')) && ! empty($request->input('pagos'))) {
                     try {
                         // Registrar los pagos desglosados (borra y recrea todos)
                         $this->pagoVentaService->registrarPagos($ventaCreada, $request->input('pagos'));
 
                         Log::info('✅ Pagos desglosados registrados para venta', [
-                            'venta_id' => $ventaCreada->id,
-                            'venta_numero' => $ventaCreada->numero,
+                            'venta_id'       => $ventaCreada->id,
+                            'venta_numero'   => $ventaCreada->numero,
                             'cantidad_pagos' => count($request->input('pagos')),
                         ]);
                     } catch (\Exception $e) {
                         // Log del error pero no fallar la creación de venta
                         Log::error('⚠️ Error al registrar pagos desglosados para venta', [
                             'venta_id' => $ventaDTO->id,
-                            'error' => $e->getMessage(),
+                            'error'    => $e->getMessage(),
                         ]);
                     }
                 } else {
@@ -684,7 +685,7 @@ class VentaController extends Controller
                         $this->pagoVentaService->registrarPagoAutomatico($ventaCreada);
 
                         Log::info('✅ Pago automático registrado para venta', [
-                            'venta_id' => $ventaCreada->id,
+                            'venta_id'     => $ventaCreada->id,
                             'venta_numero' => $ventaCreada->numero,
                             'tipo_pago_id' => $ventaCreada->tipo_pago_id,
                         ]);
@@ -692,14 +693,14 @@ class VentaController extends Controller
                         // Log del error pero no fallar la creación de venta
                         Log::error('⚠️ Error al registrar pago automático', [
                             'venta_id' => $ventaDTO->id,
-                            'error' => $e->getMessage(),
+                            'error'    => $e->getMessage(),
                         ]);
                     }
                 }
             } else {
                 Log::info('⏭️ Pagos OMITIDOS: Venta a CREDITO', [
-                    'venta_id' => $ventaCreada->id,
-                    'venta_numero' => $ventaCreada->numero,
+                    'venta_id'         => $ventaCreada->id,
+                    'venta_numero'     => $ventaCreada->numero,
                     'tipo_pago_codigo' => $ventaCreada->tipoPago?->codigo ?? 'SIN TIPO PAGO',
                     'pagos_en_request' => $request->has('pagos') ? count($request->input('pagos')) : 0,
                 ]);
@@ -786,53 +787,121 @@ class VentaController extends Controller
                 'tipoDocumento',
                 'moneda',
                 'estadoDocumento',
-                'detalles.producto',
+                'estadoLogistica',                                // ✅ Estado logístico de la VENTA (via estado_logistico_id)
+                'detalles.producto.imagenes',                     // ✅ NUEVO: Cargar imágenes del producto (relación correcta: imagenes, no imagenesProducto)
+                'detalles.producto.comboItems.producto.imagenes', // ✅ NUEVO: Cargar productos dentro de combos
                 'proforma',
-                'entrega',
+                'entrega.estadoEntrega', // ✅ Estado logístico de la entrega (relación separada si se necesita)
                 'confirmaciones',
             ])->findOrFail($id);
+
+            // ✅ DEBUG: Verificar estado logístico de la venta
+            \Log::debug('📦 VentaController::show - Cargando venta', [
+                'venta_id'                 => $venta->id,
+                'numero'                   => $venta->numero,
+                'estado_logistico_id'      => $venta->estado_logistico_id,
+                'estadoLogistica.id'       => $venta->estadoLogistica?->id,
+                'estadoLogistica.nombre'   => $venta->estadoLogistica?->nombre,
+                'entrega_id'               => $venta->entrega_id,
+                'entrega.estadoEntrega.id' => $venta->entrega?->estadoEntrega?->id,
+            ]);
 
             // Si es API, retornar JSON con datos completos
             if ($this->isApiRequest()) {
                 return response()->json([
                     'success' => true,
-                    'data' => [
-                        'id' => $venta->id,
-                        'numero' => $venta->numero,
-                        'fecha' => $venta->fecha,
-                        'cliente_id' => $venta->cliente_id,
-                        'direccion_cliente_id' => $venta->direccion_cliente_id,
-                        'subtotal' => $venta->subtotal,
-                        'descuento' => $venta->descuento,
-                        'total' => $venta->total,
-                        'observaciones' => $venta->observaciones,
-                        'cliente' => $venta->cliente ? [
-                            'id' => $venta->cliente->id,
-                            'nombre' => $venta->cliente->nombre,
-                            'nit' => $venta->cliente->nit,
-                            'telefono' => $venta->cliente->telefono,
+                    'data'    => [
+                        'id'                            => $venta->id,
+                        'numero'                        => $venta->numero,
+                        'fecha'                         => $venta->fecha,
+                        'entrega_id'                    => $venta->entrega_id, // ✅ ID de la entrega asignada
+                        'cliente_id'                    => $venta->cliente_id,
+                        'direccion_cliente_id'          => $venta->direccion_cliente_id,
+                        'subtotal'                      => $venta->subtotal,
+                        'descuento'                     => $venta->descuento,
+                        'total'                         => $venta->total,
+                        'observaciones'                 => $venta->observaciones,
+                        'canal_origen'                  => $venta->canal_origen,
+                        'politica_pago'                 => $venta->politica_pago, // ✅ NUEVO
+                        'tipo_pago_id'                  => $venta->tipo_pago_id,
+                        // ✅ NUEVO: Tipo de pago completo
+                        'tipoPago'                      => $venta->tipoPago?->toArray() ?? null,
+                        // ✅ NUEVO: Estado del documento y estado logístico
+                        'estado_documento'              => $venta->estadoDocumento ? [
+                            'id'          => $venta->estadoDocumento->id,
+                            'codigo'      => $venta->estadoDocumento->codigo,
+                            'nombre'      => $venta->estadoDocumento->nombre,
+                            'descripcion' => $venta->estadoDocumento->descripcion ?? null,
                         ] : null,
-                        'direccionCliente' => $venta->direccionCliente ? [
-                            'id' => $venta->direccionCliente->id,
-                            'direccion' => $venta->direccionCliente->direccion,
-                            'localidad' => $venta->direccionCliente->localidad?->nombre,
+                        'estado_logistica'              => $venta->estadoLogistica ? [ // ✅ De la VENTA (via estado_logistico_id)
+                            'id'          => $venta->estadoLogistica->id,
+                            'codigo'      => $venta->estadoLogistica->codigo,
+                            'nombre'      => $venta->estadoLogistica->nombre,
+                            'descripcion' => $venta->estadoLogistica->descripcion ?? null,
+                        ] : null,
+                        'cliente'                       => $venta->cliente ? [
+                            'id'           => $venta->cliente->id,
+                            'nombre'       => $venta->cliente->nombre,
+                            'nit'          => $venta->cliente->nit,
+                            'telefono'     => $venta->cliente->telefono,
+                            'foto_perfil'  => $venta->cliente->foto_perfil,  // ✅ NUEVO: Foto del cliente
+                            'razon_social' => $venta->cliente->razon_social, // ✅ NUEVO: Razón social para clientes empresa
+                        ] : null,
+                        'direccion_cliente'             => $venta->direccionCliente ? [
+                            'id'            => $venta->direccionCliente->id,
+                            'direccion'     => $venta->direccionCliente->direccion,
+                            'localidad'     => $venta->direccionCliente->localidad,
                             'observaciones' => $venta->direccionCliente->observaciones,
-                            'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
-                            'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
-                            'es_principal' => (bool) $venta->direccionCliente->es_principal,
+                            'latitud'       => (float) ($venta->direccionCliente->latitud ?? 0),
+                            'longitud'      => (float) ($venta->direccionCliente->longitud ?? 0),
+                            'es_principal'  => (bool) $venta->direccionCliente->es_principal,
                         ] : null,
-                        'detalles' => $venta->detalles->map(fn($d) => [
-                            'id' => $d->id,
-                            'cantidad' => $d->cantidad,
+                        'detalles'                      => $venta->detalles->map(fn($d) => [
+                            'id'              => $d->id,
+                            'cantidad'        => $d->cantidad,
                             'precio_unitario' => $d->precio_unitario,
-                            'subtotal' => $d->subtotal,
-                            'producto' => $d->producto ? [
-                                'id' => $d->producto->id,
-                                'nombre' => $d->producto->nombre,
-                                'sku' => $d->producto->sku,
+                            'subtotal'        => $d->subtotal,
+                            'producto'        => $d->producto ? [
+                                'id'         => $d->producto->id,
+                                'nombre'     => $d->producto->nombre,
+                                'sku'        => $d->producto->sku,
+                                'es_combo'   => (bool) $d->producto->es_combo,
                                 'prestables' => $d->producto->prestables ?? [],
+                                // ✅ NUEVO: Primera imagen del producto
+                                'imagen'     => $d->producto->imagenes && count($d->producto->imagenes) > 0 ? [
+                                    'id'           => $d->producto->imagenes[0]->id,
+                                    'url'          => $d->producto->imagenes[0]->url,
+                                    'es_principal' => $d->producto->imagenes[0]->es_principal ?? false,
+                                ] : null,
+                                // ✅ NUEVO: Incluir comboItems si es combo (cargados con eager loading)
+                                'comboItems' => (bool) $d->producto->es_combo ? $d->producto->comboItems->map(function ($item) {
+                                    return [
+                                        'id'              => $item->id,
+                                        'combo_id'        => $item->combo_id,
+                                        'producto_id'     => $item->producto_id,
+                                        'cantidad'        => (float) $item->cantidad,
+                                        'precio_unitario' => (float) $item->precio_unitario,
+                                        'tipo_precio_id'  => $item->tipo_precio_id,
+                                        'es_obligatorio'  => (bool) $item->es_obligatorio,
+                                        'grupo_opcional'  => $item->grupo_opcional,
+                                        'created_at'      => $item->created_at,
+                                        'updated_at'      => $item->updated_at,
+                                        'producto'        => $item->producto ? [
+                                            'id'     => $item->producto->id,
+                                            'nombre' => $item->producto->nombre,
+                                            'sku'    => $item->producto->sku,
+                                            'imagen' => $item->producto->imagenes && count($item->producto->imagenes) > 0 ? [
+                                                'id'           => $item->producto->imagenes[0]->id,
+                                                'url'          => $item->producto->imagenes[0]->url,
+                                                'es_principal' => $item->producto->imagenes[0]->es_principal ?? false,
+                                            ] : null,
+                                        ] : null,
+                                    ];
+                                })->toArray() : [],
                             ] : null,
                         ])->toArray(),
+                        // ✅ NUEVO: Incluir entregas_venta_confirmaciones (modelo completo)
+                        'entregas_venta_confirmaciones' => $venta->confirmaciones?->toArray() ?? [],
                     ],
                 ]);
             }
@@ -845,7 +914,7 @@ class VentaController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Venta no encontrada'
+                'message' => 'Venta no encontrada',
             ], 404);
         }
     }
@@ -946,17 +1015,17 @@ class VentaController extends Controller
     {
         try {
             Log::info('🔴 [ANULAR VENTA] INICIO - Intentando anular venta', [
-                'venta_id' => $id,
-                'usuario_id' => auth()->id(),
+                'venta_id'       => $id,
+                'usuario_id'     => auth()->id(),
                 'usuario_nombre' => auth()->user()?->name,
             ]);
 
             // Verificar permiso
             if (! auth()->user()->hasRole(['admin', 'Admin'])) {
                 Log::warning('🔴 [ANULAR VENTA] PERMISO DENEGADO', [
-                    'venta_id' => $id,
+                    'venta_id'   => $id,
                     'usuario_id' => auth()->id(),
-                    'roles' => auth()->user()?->getRoleNames(),
+                    'roles'      => auth()->user()?->getRoleNames(),
                 ]);
                 return $this->respondForbidden('No tienes permiso para anular ventas');
             }
@@ -971,8 +1040,8 @@ class VentaController extends Controller
             ])->findOrFail($id);
 
             Log::info('🔴 [ANULAR VENTA] VENTA ENCONTRADA', [
-                'venta_id' => $venta->id,
-                'venta_numero' => $venta->numero,
+                'venta_id'      => $venta->id,
+                'venta_numero'  => $venta->numero,
                 'estado_actual' => $venta->estado,
             ]);
 
@@ -988,7 +1057,7 @@ class VentaController extends Controller
             if (in_array($venta->estado, ['Facturado', 'Cancelado'])) {
                 Log::warning('🔴 [ANULAR VENTA] ESTADO NO PERMITIDO', [
                     'venta_id' => $venta->id,
-                    'estado' => $venta->estado,
+                    'estado'   => $venta->estado,
                 ]);
                 return $this->respondError(
                     "No se puede anular una venta con estado {$venta->estado}. Contacta con administración.",
@@ -998,15 +1067,15 @@ class VentaController extends Controller
 
             // ✅ NUEVO: Validación - No permitir anular si la CxC tiene pagos registrados
             if ($venta->politica_pago === 'CREDITO' && $venta->cuentaPorCobrar) {
-                $cxc = $venta->cuentaPorCobrar;
+                $cxc        = $venta->cuentaPorCobrar;
                 $totalPagos = $cxc->pagos()->sum('monto');
 
                 if ($totalPagos > 0) {
                     Log::warning('🔴 [ANULAR VENTA] CXC CON PAGOS REGISTRADOS', [
-                        'venta_id' => $venta->id,
+                        'venta_id'             => $venta->id,
                         'cuenta_por_cobrar_id' => $cxc->id,
-                        'total_pagos' => $totalPagos,
-                        'monto_original' => $cxc->monto_original,
+                        'total_pagos'          => $totalPagos,
+                        'monto_original'       => $cxc->monto_original,
                     ]);
                     return $this->respondError(
                         "No se puede anular esta venta porque su cuenta por cobrar tiene pagos registrados ($totalPagos). " .
@@ -1067,14 +1136,14 @@ class VentaController extends Controller
 
                     if ($cantidadDetallesBorrados > 0) {
                         Log::info('✅ Detalles de pago eliminados al anular venta', [
-                            'venta_id' => $venta->id,
+                            'venta_id'                   => $venta->id,
                             'cantidad_detalles_borrados' => $cantidadDetallesBorrados,
                         ]);
                     }
                 } catch (\Exception $e) {
                     Log::warning('⚠️ No se pudo eliminar detalles_pago_venta al anular venta', [
                         'venta_id' => $venta->id,
-                        'error' => $e->getMessage(),
+                        'error'    => $e->getMessage(),
                     ]);
                 }
 
@@ -1084,15 +1153,15 @@ class VentaController extends Controller
                         $cxc = $venta->cuentaPorCobrar;
                         // ✅ NUEVO: Cambiar estado de CxC a 'anulado' cuando se anula la venta
                         $cxc->update([
-                            'estado' => 'anulado',
+                            'estado'        => 'anulado',
                             'observaciones' => ($cxc->observaciones ?? '') . "\n[ANULADO] Venta #{$venta->numero} anulada el " . now()->toDateTimeString(),
                         ]);
 
                         Log::info('✅ Cuenta por cobrar anulada automáticamente', [
-                            'venta_id'              => $venta->id,
-                            'cuenta_por_cobrar_id'  => $cxc->id,
-                            'monto_original'        => $cxc->monto_original,
-                            'motivo'                => 'Venta anulada',
+                            'venta_id'             => $venta->id,
+                            'cuenta_por_cobrar_id' => $cxc->id,
+                            'monto_original'       => $cxc->monto_original,
+                            'motivo'               => 'Venta anulada',
                         ]);
                     } catch (\Exception $e) {
                         Log::warning('⚠️ No se pudo anular cuenta por cobrar al anular venta', [
@@ -1114,7 +1183,7 @@ class VentaController extends Controller
 
                 // 4️⃣ Cambiar estado de la venta a ANULADO
                 Log::info('🔴 [ANULAR VENTA] PASO 4 - Actualizando estado', [
-                    'venta_id' => $venta->id,
+                    'venta_id'        => $venta->id,
                     'estado_anterior' => $estadoAnterior,
                 ]);
 
@@ -1127,20 +1196,20 @@ class VentaController extends Controller
                 }
 
                 // ✅ CORRECCIÓN: Usar variables locales para evitar problemas en closure del transaction
-                $usuarioNombre = auth()->user()->name ?? 'Sistema';
-                $fechaActual = now()->toDateTimeString();
+                $usuarioNombre           = auth()->user()->name ?? 'Sistema';
+                $fechaActual             = now()->toDateTimeString();
                 $observacionesExistentes = $venta->observaciones ?? '';
 
                 $observacionesFinal = $observacionesExistentes;
-                if (!empty($observacionesExistentes)) {
+                if (! empty($observacionesExistentes)) {
                     $observacionesFinal .= "\n";
                 }
                 $observacionesFinal .= "[ANULADO] Motivo: {$motivo} - Anulado por: {$usuarioNombre} - {$fechaActual}";
 
                 Log::info('🔴 [ANULAR VENTA] DEBUG - Construcción de observaciones', [
-                    'observaciones_existentes' => substr($observacionesExistentes, 0, 100),
-                    'usuario_nombre' => $usuarioNombre,
-                    'fecha_actual' => $fechaActual,
+                    'observaciones_existentes'    => substr($observacionesExistentes, 0, 100),
+                    'usuario_nombre'              => $usuarioNombre,
+                    'fecha_actual'                => $fechaActual,
                     'observaciones_final_preview' => substr($observacionesFinal, 0, 200),
                 ]);
 
@@ -1160,24 +1229,24 @@ class VentaController extends Controller
                 ]);
 
                 Log::info('🔴 [ANULAR VENTA] PASO 4 - Update completado', [
-                    'venta_id' => $venta->id,
-                    'actualizado' => $actualizado,
-                    'estado_nuevo' => $venta->fresh()->estado,
+                    'venta_id'                => $venta->id,
+                    'actualizado'             => $actualizado,
+                    'estado_nuevo'            => $venta->fresh()->estado,
                     'observaciones_guardadas' => substr($venta->fresh()->observaciones ?? '', 0, 300),
-                    'observaciones_length' => strlen($venta->fresh()->observaciones ?? ''),
+                    'observaciones_length'    => strlen($venta->fresh()->observaciones ?? ''),
                 ]);
 
                 // 5️⃣ Registrar auditoria
                 Log::info('🔴 [ANULAR VENTA] PASO 5 - Auditoria registrada', [
-                    'venta_id'                      => $venta->id,
-                    'venta_numero'                  => $venta->numero,
-                    'venta_estado_anterior'         => $estadoAnterior,
-                    'usuario_id'                    => auth()->id(),
-                    'usuario_nombre'                => auth()->user()->name,
-                    'motivo'                        => $motivo,
-                    'stock_revertido'               => $stockRevertido,
-                    'movimiento_caja_revertido'     => $cajaAnotada,
-                    'asiento_requiere_revision'     => $asientoAnotado,
+                    'venta_id'                  => $venta->id,
+                    'venta_numero'              => $venta->numero,
+                    'venta_estado_anterior'     => $estadoAnterior,
+                    'usuario_id'                => auth()->id(),
+                    'usuario_nombre'            => auth()->user()->name,
+                    'motivo'                    => $motivo,
+                    'stock_revertido'           => $stockRevertido,
+                    'movimiento_caja_revertido' => $cajaAnotada,
+                    'asiento_requiere_revision' => $asientoAnotado,
                 ]);
             });
 
@@ -1198,18 +1267,18 @@ class VentaController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error('🔴 [ANULAR VENTA] VENTA NO ENCONTRADA', [
                 'venta_id' => $id,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
             return $this->respondError('Venta no encontrada', 404);
         } catch (\Exception $e) {
             Log::error('🔴 [ANULAR VENTA] ERROR EN TRANSACCIÓN', [
-                'venta_id' => $id,
-                'error' => $e->getMessage(),
+                'venta_id'        => $id,
+                'error'           => $e->getMessage(),
                 'exception_class' => get_class($e),
-                'trace' => $e->getTraceAsString(),
-                'venta_id' => $id,
-                'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString(),
+                'trace'           => $e->getTraceAsString(),
+                'venta_id'        => $id,
+                'error'           => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
             ]);
             return $this->respondError('Error al anular venta: ' . $e->getMessage(), 500);
         }
@@ -1381,12 +1450,12 @@ class VentaController extends Controller
             $esFarmacia = (bool) auth()->user()?->empresa?->es_farmacia;
 
             Log::info('🔍 [VentaController::verificarStock] Iniciando validación', [
-                'usuario_id' => auth()->id(),
-                'empresa_id' => auth()->user()?->empresa_id,
-                'es_farmacia' => $esFarmacia,
+                'usuario_id'         => auth()->id(),
+                'empresa_id'         => auth()->user()?->empresa_id,
+                'es_farmacia'        => $esFarmacia,
                 'cantidad_productos' => count($productos),
-                'almacen_id' => $almacenId,
-                'productos_ids' => array_map(fn($p) => $p['producto_id'] ?? null, $productos),
+                'almacen_id'         => $almacenId,
+                'productos_ids'      => array_map(fn($p) => $p['producto_id'] ?? null, $productos),
             ]);
 
             $errores  = [];
@@ -1402,19 +1471,19 @@ class VentaController extends Controller
                 $cantidadSolicitada = $producto['cantidad'];
 
                 Log::info('🔍 [VentaController::verificarStock] Validando producto', [
-                    'producto_id' => $producto['producto_id'],
-                    'producto_nombre' => $productoData->nombre,
-                    'permite_venta_sin_stock_raw' => $productoData->permite_venta_sin_stock,
+                    'producto_id'                  => $producto['producto_id'],
+                    'producto_nombre'              => $productoData->nombre,
+                    'permite_venta_sin_stock_raw'  => $productoData->permite_venta_sin_stock,
                     'permite_venta_sin_stock_type' => gettype($productoData->permite_venta_sin_stock),
-                    'es_farmacia' => $esFarmacia,
-                    'es_farmacia_type' => gettype($esFarmacia),
+                    'es_farmacia'                  => $esFarmacia,
+                    'es_farmacia_type'             => gettype($esFarmacia),
                     'puedeVenderseSinStock_result' => $productoData->puedeVenderseSinStock($esFarmacia),
                 ]);
 
                 // ✅ NUEVO (2026-05-08): Permitir venta sin stock para farmacias si producto lo permite
                 if ($esFarmacia && $productoData->puedeVenderseSinStock($esFarmacia)) {
                     Log::info('✅ [VentaController::verificarStock] Venta sin stock permitida', [
-                        'producto_id' => $producto['producto_id'],
+                        'producto_id'     => $producto['producto_id'],
                         'producto_nombre' => $productoData->nombre,
                     ]);
 
@@ -1427,7 +1496,7 @@ class VentaController extends Controller
                         'permitido_sin_stock' => true,
                         'diferencia'          => 0,
                     ];
-                    continue;  // Saltarse validación de stock
+                    continue; // Saltarse validación de stock
                 }
 
                 // ✅ COMBOS: Validar capacidad en lugar de stock directo
@@ -1505,9 +1574,9 @@ class VentaController extends Controller
     {
         // ✅ DEBUG: Verificar que el método se está llamando
         Log::info('🖨️ [VentaController::imprimir] Método llamado', [
-            'venta_id' => $venta->id,
-            'user_id'  => auth()->id(),
-            'formato'  => $request->input('formato'),
+            'venta_id'    => $venta->id,
+            'user_id'     => auth()->id(),
+            'formato'     => $request->input('formato'),
             'tipoReporte' => $request->input('tipoReporte'),
         ]);
 
@@ -1533,9 +1602,9 @@ class VentaController extends Controller
             'venta_id' => $venta->id,
         ]);
 
-        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58
-        $accion  = $request->input('accion', 'download'); // download | stream
-        $tipoReporte = $request->input('tipoReporte');    // 'entrega' | null
+        $formato     = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58
+        $accion      = $request->input('accion', 'download'); // download | stream
+        $tipoReporte = $request->input('tipoReporte');        // 'entrega' | null
 
         // ✅ Cargar relaciones necesarias para impresión
         $venta->load('detallesPagoVenta.tipoPago');
@@ -1557,14 +1626,14 @@ class VentaController extends Controller
 
         try {
             // ✅ NUEVO: Obtener empresa del usuario autenticado y detectar si es farmacia
-            $empresa = auth()->user()?->empresa ?? \App\Models\Empresa::principal();
+            $empresa    = auth()->user()?->empresa ?? \App\Models\Empresa::principal();
             $esFarmacia = $empresa?->es_farmacia ?? false;
 
             \Log::info('📋 [VentaController::imprimir] Detección de tipo de empresa', [
-                'venta_id'     => $venta->id,
-                'empresa_id'   => $empresa?->id,
+                'venta_id'       => $venta->id,
+                'empresa_id'     => $empresa?->id,
                 'empresa_nombre' => $empresa?->nombre,
-                'es_farmacia'  => $esFarmacia,
+                'es_farmacia'    => $esFarmacia,
             ]);
 
             // Llamar al método apropiado según el tipo de empresa y reporte
@@ -1900,7 +1969,7 @@ class VentaController extends Controller
 
             // ✅ CRÍTICO: Excluir parámetros de paginación y especiales
             $parametrosExcluir = ['page', 'per_page', 'sort', 'order', 'all', 'print'];
-            $filtros = array_diff_key($filtros, array_flip($parametrosExcluir));
+            $filtros           = array_diff_key($filtros, array_flip($parametrosExcluir));
 
             \Log::info('📋 [ventasParaImpresion] Todos los filtros recibidos (ANTES):', array_filter($request->all(), fn($v) => $v !== '' && $v !== null));
             \Log::info('📋 [ventasParaImpresion] Filtros LIMPIOS (DESPUÉS):', array_filter($filtros, fn($v) => $v !== '' && $v !== null));
@@ -1919,64 +1988,64 @@ class VentaController extends Controller
 
             // ✅ Aplicar filtros dinámicamente
             // Búsqueda por ID de venta
-            if (!empty($filtros['id'])) {
+            if (! empty($filtros['id'])) {
                 $query->where('id', $filtros['id']);
             }
 
             // Búsqueda por número de venta
-            if (!empty($filtros['numero'])) {
+            if (! empty($filtros['numero'])) {
                 $query->where('numero', 'like', '%' . $filtros['numero'] . '%');
             }
 
             // Filtro por cliente
-            if (!empty($filtros['cliente_id'])) {
+            if (! empty($filtros['cliente_id'])) {
                 $query->where('cliente_id', $filtros['cliente_id']);
             }
 
             // Filtro por estado documento
-            if (!empty($filtros['estado_documento_id'])) {
+            if (! empty($filtros['estado_documento_id'])) {
                 $query->where('estado_documento_id', $filtros['estado_documento_id']);
             }
 
             // Filtro por usuario
-            if (!empty($filtros['usuario_id'])) {
+            if (! empty($filtros['usuario_id'])) {
                 $query->where('usuario_id', $filtros['usuario_id']);
             }
 
             // Filtro por moneda
-            if (!empty($filtros['moneda_id'])) {
+            if (! empty($filtros['moneda_id'])) {
                 $query->where('moneda_id', $filtros['moneda_id']);
             }
 
             // Filtro por tipo de pago
-            if (!empty($filtros['tipo_pago_id'])) {
+            if (! empty($filtros['tipo_pago_id'])) {
                 $query->where('tipo_pago_id', $filtros['tipo_pago_id']);
             }
 
             // Filtro por estado de pago
-            if (!empty($filtros['estado_pago'])) {
+            if (! empty($filtros['estado_pago'])) {
                 $query->where('estado_pago', $filtros['estado_pago']);
             }
 
             // Filtro por estado logístico
-            if (!empty($filtros['estado_logistico'])) {
+            if (! empty($filtros['estado_logistico'])) {
                 $query->where('estado_logistico', $filtros['estado_logistico']);
             }
 
             // Filtro por rango de fechas (usando created_at - fecha de creación)
             // ✅ ACTUALIZADO: Cambió de 'fecha' a 'created_at' para consistencia con GET /ventas
-            if (!empty($filtros['fecha_desde'])) {
+            if (! empty($filtros['fecha_desde'])) {
                 $query->whereDate('created_at', '>=', $filtros['fecha_desde']);
             }
-            if (!empty($filtros['fecha_hasta'])) {
+            if (! empty($filtros['fecha_hasta'])) {
                 $query->whereDate('created_at', '<=', $filtros['fecha_hasta']);
             }
 
             // Filtro por rango de montos
-            if (!empty($filtros['monto_min'])) {
+            if (! empty($filtros['monto_min'])) {
                 $query->where('total', '>=', (float) $filtros['monto_min']);
             }
-            if (!empty($filtros['monto_max'])) {
+            if (! empty($filtros['monto_max'])) {
                 $query->where('total', '<=', (float) $filtros['monto_max']);
             }
 
@@ -1984,11 +2053,11 @@ class VentaController extends Controller
             $query->orderByDesc('fecha')->orderByDesc('id');
 
             \Log::info('📋 [ventasParaImpresion] Query generada:', [
-                'sql' => $query->toSql(),
-                'bindings_count' => count($query->getBindings()),
-                'bindings' => $query->getBindings(),
-                'filtros_recibidos' => $filtros,  // ✅ NUEVO: Log de todos los filtros
-                'request_all_parameter' => request()->input('all'),  // ✅ NUEVO: Log del parámetro 'all'
+                'sql'                   => $query->toSql(),
+                'bindings_count'        => count($query->getBindings()),
+                'bindings'              => $query->getBindings(),
+                'filtros_recibidos'     => $filtros,                // ✅ NUEVO: Log de todos los filtros
+                'request_all_parameter' => request()->input('all'), // ✅ NUEVO: Log del parámetro 'all'
             ]);
 
             $ventas = $query->get();
@@ -1996,20 +2065,20 @@ class VentaController extends Controller
             // 🔍 DEBUG: Mostrar IDs de ventas retornadas
             \Log::info('📋 [ventasParaImpresion] IDs de ventas retornadas:', [
                 'cantidad' => $ventas->count(),
-                'ids' => $ventas->pluck('id')->toArray(),
-                'modo' => request()->input('all') === 'true' ? 'SIN PAGINACION' : 'CON PAGINACION',  // ✅ NUEVO
+                'ids'      => $ventas->pluck('id')->toArray(),
+                'modo'     => request()->input('all') === 'true' ? 'SIN PAGINACION' : 'CON PAGINACION', // ✅ NUEVO
             ]);
 
             \Log::info('📋 [ventasParaImpresion] Ventas obtenidas para impresión:', [
-                'cantidad' => $ventas->count(),
-                'filtros_activos' => count(array_filter($filtros, fn($v) => $v !== '' && $v !== null))
+                'cantidad'        => $ventas->count(),
+                'filtros_activos' => count(array_filter($filtros, fn($v) => $v !== '' && $v !== null)),
             ]);
 
             return response()->json([
                 'success' => true,
-                'data' => $ventas,
+                'data'    => $ventas,
                 'message' => "Se obtuvieron {$ventas->count()} ventas para imprimir",
-                'filtros_aplicados' => array_filter($filtros, fn($v) => $v !== '' && $v !== null)
+                'filtros_aplicados' => array_filter($filtros, fn($v) => $v !== '' && $v !== null),
             ]);
 
         } catch (\Exception $e) {
@@ -2017,7 +2086,7 @@ class VentaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener ventas',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -2071,7 +2140,7 @@ class VentaController extends Controller
             ])->toArray();
 
             // Validar que cada movimiento original tenga su correspondiente reversión
-            $detalles = [];
+            $detalles             = [];
             $reversionesCompletas = true;
 
             foreach ($movimientosOriginales as $original) {
@@ -2081,53 +2150,53 @@ class VentaController extends Controller
 
                 $match = $reverso && abs($original->cantidad) === $reverso->cantidad;
 
-                if (!$match) {
+                if (! $match) {
                     $reversionesCompletas = false;
                 }
 
                 $detalles[] = [
-                    'stock_producto_id' => $original->stock_producto_id,
-                    'producto_nombre' => $original->stockProducto?->producto?->nombre ?? 'N/A',
-                    'cantidad_original' => $original->cantidad,
+                    'stock_producto_id'  => $original->stock_producto_id,
+                    'producto_nombre'    => $original->stockProducto?->producto?->nombre ?? 'N/A',
+                    'cantidad_original'  => $original->cantidad,
                     'cantidad_revercion' => $reverso?->cantidad ?? null,
-                    'match' => $match,
-                    'estado' => $match ? '✅ Completa' : '❌ Incompleta',
+                    'match'              => $match,
+                    'estado'             => $match ? '✅ Completa' : '❌ Incompleta',
                 ];
             }
 
             // Determinar estado general
             $estado = match (true) {
                 $movimientosOriginales->isEmpty() => 'sin_movimientos',
-                $movimientosRevercion->isEmpty() => 'sin_reversiones',
-                $reversionesCompletas => 'completa',
-                default => 'incompleta',
+                $movimientosRevercion->isEmpty()  => 'sin_reversiones',
+                $reversionesCompletas             => 'completa',
+                default                           => 'incompleta',
             };
 
             Log::info('✅ Verificación de reversión de stock completada', [
-                'venta_id' => $venta->id,
-                'venta_numero' => $venta->numero,
-                'estado' => $estado,
-                'reversiones_completas' => $reversionesCompletas,
+                'venta_id'               => $venta->id,
+                'venta_numero'           => $venta->numero,
+                'estado'                 => $estado,
+                'reversiones_completas'  => $reversionesCompletas,
                 'movimientos_originales' => $movimientosOriginales->count(),
-                'movimientos_revercion' => $movimientosRevercion->count(),
+                'movimientos_revercion'  => $movimientosRevercion->count(),
             ]);
 
             return response()->json([
-                'success' => true,
-                'venta_id' => $venta->id,
-                'venta_numero' => $venta->numero,
-                'venta_estado' => $venta->estado,
-                'reversión_completa' => $reversionesCompletas,
-                'estado' => $estado,
-                'movimientos_original' => $tiposOriginales,
+                'success'               => true,
+                'venta_id'              => $venta->id,
+                'venta_numero'          => $venta->numero,
+                'venta_estado'          => $venta->estado,
+                'reversión_completa'    => $reversionesCompletas,
+                'estado'                => $estado,
+                'movimientos_original'  => $tiposOriginales,
                 'movimientos_revercion' => $tiposRevercion,
-                'detalles' => $detalles,
+                'detalles'              => $detalles,
             ], 200);
 
         } catch (\Exception $e) {
             Log::error('❌ Error verificando reversión de stock', [
                 'venta_id' => $id,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
 
             return response()->json([
@@ -2164,9 +2233,9 @@ class VentaController extends Controller
             // Validar que la venta esté anulada
             if ($venta->estado_documento_id !== $estadoAnuladoId) {
                 Log::warning('❌ Intento de ejecutar reversión en venta no anulada', [
-                    'venta_id' => $id,
+                    'venta_id'            => $id,
                     'estado_documento_id' => $venta->estado_documento_id,
-                    'estado_esperado_id' => $estadoAnuladoId,
+                    'estado_esperado_id'  => $estadoAnuladoId,
                 ]);
                 return response()->json([
                     'success' => false,
@@ -2192,7 +2261,7 @@ class VentaController extends Controller
                 ->get();
 
             $movimientosCreados = 0;
-            $detalles = [];
+            $detalles           = [];
 
             // Para cada movimiento original, crear reversión si no existe
             foreach ($movimientosOriginales as $original) {
@@ -2201,27 +2270,27 @@ class VentaController extends Controller
                     ->where('stock_producto_id', $original->stock_producto_id)
                     ->first();
 
-                if (!$reversioExistente || abs($original->cantidad) !== $reversioExistente->cantidad) {
+                if (! $reversioExistente || abs($original->cantidad) !== $reversioExistente->cantidad) {
                     // Crear movimiento de reversión
                     $cantidadRevercion = abs($original->cantidad);
 
                     \App\Models\MovimientoInventario::create([
-                        'stock_producto_id' => $original->stock_producto_id,
-                        'tipo' => 'ENTRADA_AJUSTE',
-                        'cantidad' => $cantidadRevercion,
-                        'cantidad_anterior' => $original->stockProducto?->cantidad ?? 0,
+                        'stock_producto_id'  => $original->stock_producto_id,
+                        'tipo'               => 'ENTRADA_AJUSTE',
+                        'cantidad'           => $cantidadRevercion,
+                        'cantidad_anterior'  => $original->stockProducto?->cantidad ?? 0,
                         'cantidad_posterior' => ($original->stockProducto?->cantidad ?? 0) + $cantidadRevercion,
-                        'numero_documento' => $venta->numero . '-REV',
-                        'motivo_anulacion' => 'ANULACION',
-                        'user_id' => Auth::id() ?? 1,
-                        'observacion' => json_encode([
-                            'evento' => 'Reversión manual de stock',
-                            'venta_id' => $venta->id,
-                            'venta_numero' => $venta->numero,
-                            'cantidad_original' => $original->cantidad,
+                        'numero_documento'   => $venta->numero . '-REV',
+                        'motivo_anulacion'   => 'ANULACION',
+                        'user_id'            => Auth::id() ?? 1,
+                        'observacion'        => json_encode([
+                            'evento'             => 'Reversión manual de stock',
+                            'venta_id'           => $venta->id,
+                            'venta_numero'       => $venta->numero,
+                            'cantidad_original'  => $original->cantidad,
                             'cantidad_revercion' => $cantidadRevercion,
-                            'ejecutada_por' => Auth::user()?->name ?? 'Sistema',
-                            'fecha_ejecucion' => now()->toIso8601String(),
+                            'ejecutada_por'      => Auth::user()?->name ?? 'Sistema',
+                            'fecha_ejecucion'    => now()->toIso8601String(),
                         ]),
                     ]);
 
@@ -2233,19 +2302,19 @@ class VentaController extends Controller
                     $movimientosCreados++;
 
                     $detalles[] = [
-                        'stock_producto_id' => $original->stock_producto_id,
-                        'producto_nombre' => $original->stockProducto?->producto?->nombre ?? 'N/A',
+                        'stock_producto_id'  => $original->stock_producto_id,
+                        'producto_nombre'    => $original->stockProducto?->producto?->nombre ?? 'N/A',
                         'cantidad_revertida' => $cantidadRevercion,
-                        'estado' => '✅ Reversión ejecutada',
+                        'estado'             => '✅ Reversión ejecutada',
                     ];
                 }
             }
 
             Log::info('✅ Reversión de stock ejecutada manualmente', [
-                'venta_id' => $venta->id,
-                'venta_numero' => $venta->numero,
+                'venta_id'            => $venta->id,
+                'venta_numero'        => $venta->numero,
                 'movimientos_creados' => $movimientosCreados,
-                'usuario' => Auth::user()?->name ?? 'Sistema',
+                'usuario'             => Auth::user()?->name ?? 'Sistema',
             ]);
 
             return response()->json([
@@ -2254,14 +2323,14 @@ class VentaController extends Controller
                     ? "Reversión de stock ejecutada exitosamente. {$movimientosCreados} movimiento(s) creado(s)"
                     : 'No hay reversiones pendientes para esta venta',
                 'movimientos_creados' => $movimientosCreados,
-                'detalles' => $detalles,
+                'detalles'            => $detalles,
             ], 200);
 
         } catch (\Exception $e) {
             Log::error('❌ Error ejecutando reversión de stock', [
                 'venta_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'    => $e->getMessage(),
+                'trace'    => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -2290,7 +2359,7 @@ class VentaController extends Controller
             if ($query) {
                 $ventas->where(function ($q) use ($query) {
                     $q->where('numero', 'ilike', "%{$query}%")
-                      ->orWhere('id', 'ilike', "%{$query}%");
+                        ->orWhere('id', 'ilike', "%{$query}%");
                 });
             }
 
@@ -2298,11 +2367,11 @@ class VentaController extends Controller
                 ->limit(20)
                 ->get()
                 ->map(fn($venta) => [
-                    'id' => $venta->id,
-                    'numero' => $venta->numero,
+                    'id'         => $venta->id,
+                    'numero'     => $venta->numero,
                     'cliente_id' => $venta->cliente_id,
-                    'nombre' => "Venta {$venta->numero}",
-                    'descripcion' => $venta->cliente?->nombre ?? 'Sin cliente',
+                    'nombre'     => "Venta {$venta->numero}",
+                    'descripcion'    => $venta->cliente?->nombre ?? 'Sin cliente',
                 ]);
 
             return response()->json($resultado);

@@ -486,6 +486,11 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         Route::get('/{ventaId}/entrega', [\App\Http\Controllers\Api\EntregaController::class, 'obtenerEntregaPorVenta'])->name('api.ventas.obtener-entrega');  // ✅ NUEVO (2026-02-17): Obtener entrega para Flutter app
     });
 
+    // ✅ NUEVO: Historial de intentos de entrega por venta
+    Route::get('/ventas/{venta_id}/entregas-confirmaciones', [\App\Http\Controllers\Api\EntregaController::class, 'obtenerConfirmacionesVenta'])
+        ->middleware('auth:sanctum')
+        ->name('api.ventas.entregas-confirmaciones');
+
     // DEPRECATED: Seguimiento de envíos desde la app
     // Reemplazado por: /api/entregas/{entrega}/seguimiento
     // (Las rutas de entregas están en routes/api.php dentro de EntregaController)
@@ -821,6 +826,12 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         Route::get('/{ruta}/detalles', [\App\Http\Controllers\Api\RutaApiController::class, 'obtenerDetalles']);
         Route::post('/{ruta}/detalles/{detalle}/completar', [\App\Http\Controllers\Api\RutaApiController::class, 'completarDetalle']);
     });
+
+    // ✅ NUEVO 2026-06-13: Actualizar confirmación solo por ID (fuera del prefijo chofer)
+    Route::put('/confirmaciones/{confirmacion_id}', [EntregaController::class, 'actualizarConfirmacionPorId']);
+
+    // ✅ NUEVO (2026-06-14): Reporte de entregas por chofer
+    Route::get('/choferes/{chofer}/entregas-reporte', [\App\Http\Controllers\EntregaReporteController::class, 'choferEntregas']);
 });
 
 // CHOFER - Entregas y tracking
@@ -841,8 +852,18 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         // ✅ NUEVO: Confirmar una VENTA específica (con validación de todas entregadas)
         // ✅ Confirmar venta individual (venta por venta)
         Route::post('/entregas/{id}/ventas/{venta_id}/confirmar-entrega', [EntregaController::class, 'confirmarVentaEntregada']);
+
+        // ✅ NUEVO 2026-06-13: Crear confirmación (SIN eliminar anterior) - true create
+        Route::post('/entregas/{id}/ventas/{venta_id}/crear-confirmacion', [EntregaController::class, 'crearConfirmacion']);
+
+        // ✅ ACTUALIZAR confirmación existente por ID (SIN eliminar anterior)
+        Route::put('/entregas/confirmaciones/{confirmacion_id}', [EntregaController::class, 'actualizarConfirmacion']);
+
         // ✅ NUEVO: Actualizar una confirmación existente (editar confirmación)
         Route::put('/entregas/{id}/ventas/{venta_id}/confirmaciones/{confirmacion_id}', [EntregaController::class, 'actualizarConfirmacionVenta']);
+
+        // ✅ REFACTORIZADO 2026-06-13: Actualizar confirmación solo por ID (simplificado)
+        Route::put('/confirmaciones/{confirmacion_id}', [EntregaController::class, 'actualizarConfirmacionPorId']);
 
         // ✅ NUEVA RUTA: Finalizar entrega (después de todas las ventas entregadas)
         Route::post('/entregas/{id}/finalizar-entrega', [EntregaController::class, 'finalizarEntrega']);
@@ -1093,6 +1114,12 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         Route::patch('/{entrega}/ventas/{venta}/cambiar-tipo-entrega', [EntregaController::class, 'cambiarTipoEntrega'])
             ->middleware('permission:entregas.update')
             ->name('entregas.cambiar-tipo-entrega');
+
+        // ✅ NUEVO: Obtener resumen optimizado de ventas de una entrega (para dashboard)
+        // Incluye: cliente, estado logístico, dirección, resumen de pagos
+        Route::get('/{id}/ventas-resumidas', [EntregaController::class, 'ventasResumidas'])
+            ->middleware('permission:entregas.show')
+            ->name('entregas.ventas-resumidas');
     });
 
     // ✅ PHASE 3: REPORTES DE CARGA (Gestión de cargas en vehículos)
@@ -1531,6 +1558,9 @@ Route::prefix('estados')->group(function () {
 Route::prefix('mapeos')->group(function () {
     Route::get('/{categoriaOrigen}/{codigoOrigen}/{categoriaDestino}', [EstadoLogisticoController::class, 'obtenerMapeo']);
 });
+
+// Estados de documento
+Route::get('/estados-documento', [\App\Http\Controllers\Api\EstadoDocumentoController::class, 'index']);
 
 // ==========================================
 // 📋 VISITAS DE PREVENTISTAS

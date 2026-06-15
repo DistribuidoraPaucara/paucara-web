@@ -79,6 +79,30 @@ const EstadoPagoBadge = ({ estado }: { estado?: string }) => {
     );
 };
 
+const TipoConfirmacionBadge = ({ tipo }: { tipo?: string }) => {
+    const clases: Record<string, string> = {
+        COMPLETA: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+        CLIENTE_CERRADO: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
+        RECHAZADO: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
+        DEVOLUCION_PARCIAL: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200',
+    };
+
+    const etiquetas: Record<string, string> = {
+        COMPLETA: '🚚 Completa',
+        CLIENTE_CERRADO: '🔄 Cliente Cerrado',
+        RECHAZADO: '❌ Rechazado',
+        DEVOLUCION_PARCIAL: '📦 Devolución Parcial',
+    };
+
+    const clase = clases[tipo || ''] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+
+    return (
+        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${clase}`}>
+            {etiquetas[tipo || ''] || 'Desconocido'}
+        </span>
+    );
+};
+
 const ImageViewerModal = ({ imagenes, indiceInicial, onClose }: ImageViewerModalProps) => {
     const [indiceActual, setIndiceActual] = useState(indiceInicial);
 
@@ -230,15 +254,18 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                             <div className="flex-1 flex items-center gap-3">
                                 <ChevronDown
                                     size={20}
-                                    className={`text-gray-600 dark:text-gray-400 transition-transform ${
-                                        expandedConfirmaciones[confirmacion.id as number] ? 'rotate-180' : ''
-                                    }`}
+                                    className={`text-gray-600 dark:text-gray-400 transition-transform ${expandedConfirmaciones[confirmacion.id as number] ? 'rotate-180' : ''
+                                        }`}
                                 />
+                                {/* ID DE ENTREG */}
+                                <div className="flex items-center gap-1 px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-xs font-mono text-gray-800 dark:text-gray-200">
+                                    #{confirmacion.id}
+                                </div>
 
                                 {/* Venta Número y Cliente */}
                                 <div className="flex-1">
                                     <p className="font-medium text-gray-900 dark:text-gray-100">
-                                        {confirmacion.venta?.numero || 'Venta Desconocida'}
+                                        Folio: #{confirmacion.venta?.id || 'Venta Desconocida'}
                                     </p>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
                                         {confirmacion.venta?.cliente?.nombre || 'Cliente desconocido'}
@@ -251,7 +278,9 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                         tipo={confirmacion.tipo_entrega}
                                         tipoNovedad={confirmacion.tipo_novedad}
                                     />
-                                    <EstadoPagoBadge estado={confirmacion.estado_pago} />
+                                    {/* <EstadoPagoBadge estado={confirmacion.estado_pago} /> */}
+                                    <TipoConfirmacionBadge tipo={confirmacion.tipo_confirmacion} />
+
                                 </div>
                             </div>
                         </button>
@@ -260,7 +289,7 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                         {expandedConfirmaciones[confirmacion.id as number] && (
                             <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900/50 space-y-4">
                                 {/* 1️⃣ Estado de Entrega */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                                             Tipo de Entrega
@@ -270,6 +299,14 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                                 tipo={confirmacion.tipo_entrega}
                                                 tipoNovedad={confirmacion.tipo_novedad}
                                             />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                            Tipo de Confirmacion
+                                        </p>
+                                        <div className="mt-2">
+                                            <TipoConfirmacionBadge tipo={confirmacion.tipo_confirmacion} />
                                         </div>
                                     </div>
 
@@ -285,31 +322,8 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                     )}
                                 </div>
 
-                                {/* 2️⃣ Validación en Punto de Entrega */}
-                                {(confirmacion.tienda_abierta !== null || confirmacion.cliente_presente !== null) && (
-                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                            Validación en Punto
-                                        </p>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded">
-                                                <p className="text-xs text-gray-600 dark:text-gray-400">Tienda Abierta</p>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
-                                                    {confirmacion.tienda_abierta ? '✅ Sí' : '❌ No'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded">
-                                                <p className="text-xs text-gray-600 dark:text-gray-400">Cliente Presente</p>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
-                                                    {confirmacion.cliente_presente ? '✅ Sí' : '❌ No'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* 3️⃣ Información de Pago */}
-                                {confirmacion.estado_pago && (
+                                {(confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && confirmacion.estado_pago && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                                         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                                             Información de Pago
@@ -367,7 +381,7 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                 )}
 
                                 {/* 4️⃣ Devoluciones Parciales */}
-                                {confirmacion.productos_devueltos && confirmacion.productos_devueltos.length > 0 && (
+                                {confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' && confirmacion.productos_devueltos && confirmacion.productos_devueltos.length > 0 && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                                         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                                             🔄 Productos Devueltos ({confirmacion.productos_devueltos.length})
@@ -403,7 +417,6 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                         </div>
                                     </div>
                                 )}
-
                                 {/* 5️⃣ Observaciones */}
                                 {confirmacion.observaciones_logistica && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -419,9 +432,6 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                 {/* 6️⃣ Evidencia (Fotos y Firma) */}
                                 {(confirmacion.fotos?.length || confirmacion.firma_digital_url || confirmacion.foto_comprobante) && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                            📸 Evidencia
-                                        </p>
                                         <div className="space-y-4">
                                             {/* Galería de Fotos de Entrega */}
                                             {confirmacion.fotos && confirmacion.fotos.length > 0 && (
