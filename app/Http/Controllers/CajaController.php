@@ -305,16 +305,47 @@ class CajaController extends Controller
             $desgloseIngresos = $cierreCajaService->obtenerDesgloseIngresos($cajaAbiertaHoy);
             $desgloseEgresos = $cierreCajaService->obtenerDesgloseEgresos($cajaAbiertaHoy);
 
+            // ✅ REFACTORIZADO (2026-06-20): Recalcular totalIngresos y totalEgresos sumando dinámicamente desde desgloses
+            // Esto asegura que DEVOLUCION-INGRESO y otros tipos se incluyan automáticamente
+            $totalIngresosCalculado = 0;
+            foreach ($desgloseIngresos as $ingreso) {
+                $totalIngresosCalculado += (float) ($ingreso['total'] ?? 0);
+            }
+
+            $totalEgresosCalculado = 0;
+            foreach ($desgloseEgresos as $egreso) {
+                $totalEgresosCalculado += (float) ($egreso['total'] ?? 0);
+            }
+
+            // ✅ Usar los totales recalculados dinámicamente
+            $totalIngresosFinal = $totalIngresosCalculado;
+            $totalEgresosFinal = $totalEgresosCalculado;
+
+            // Recalcular efectivoEsperado usando los totales dinámicos
+            $efectivoEsperadoFinal = $montoApertura + $totalIngresosFinal - $totalEgresosFinal;
+
+            Log::info('💰 [CajaController] Totales recalculados dinámicamente', [
+                'apertura_id'           => $cajaAbiertaHoy->id,
+                'totalIngresos_anterior' => $totalIngresos,
+                'totalIngresos_nuevo'   => $totalIngresosFinal,
+                'totalEgresos_anterior' => $totalEgresos,
+                'totalEgresos_nuevo'    => $totalEgresosFinal,
+                'efectivoEsperado_anterior' => $efectivoEsperado,
+                'efectivoEsperado_nuevo' => $efectivoEsperadoFinal,
+                'desgloseIngresos_count' => count($desgloseIngresos),
+                'desgloseEgresos_count' => count($desgloseEgresos),
+            ]);
+
             $datosResumen = [
                 'apertura'              => $montoApertura,
                 'totalVentas'           => $totalVentas,           // Suma TODAS las ventas aprobadas
                 'ventasAnuladas'        => $ventasAnuladas,        // Suma separada de anuladas (referencial)
                 'pagosCredito'          => $pagosCredito,          // Suma de pagos de CxC
                 'ventasCreditoTotales'  => $ventasCreditoTotales,  // ✅ NUEVO: TODAS las ventas a crédito (histórico)
-                'totalSalidas'          => $totalEgresos,          // Suma TODAS las salidas (GASTOS + SUELDOS + ANTICIPOS)
-                'totalIngresos'         => $totalIngresos,         // Ventas + Pagos CxC
-                'totalEgresos'          => $totalEgresos,          // GASTOS + PAGO_SUELDO + ANTICIPO + COMPRA
-                'efectivoEsperado'      => $efectivoEsperado,      // Apertura + Ingresos - Egresos
+                'totalSalidas'          => $totalEgresosFinal,     // ✅ REFACTORIZADO: Usa total dinámico
+                'totalIngresos'         => $totalIngresosFinal,    // ✅ REFACTORIZADO: Usa total dinámico (incluye DEVOLUCION-INGRESO)
+                'totalEgresos'          => $totalEgresosFinal,     // ✅ REFACTORIZADO: Usa total dinámico
+                'efectivoEsperado'      => $efectivoEsperadoFinal, // ✅ REFACTORIZADO: Usa total dinámico
                 'ventasPorTipoPago'     => $detallesPagoDesglosado, // ✅ ACTUALIZADO: Ahora usa detalles_pago_venta (datos REALES)
                 'pagosCreditoPorTipoPago' => $sumatoriaPagosCreditoPorTipo,  // Desglose de pagos de crédito por tipo de pago
                 'totalPagosCreditoPorTipos' => (float) $totalPagosCreditoPorTipos,  // ✅ NUEVO: Sumatoria total de pagos por tipos
@@ -335,13 +366,16 @@ class CajaController extends Controller
                 'desgloseEgresos'       => $desgloseEgresos,       // Egresos agrupados por tipo_operacion.codigo
             ];
 
-            Log::info('💰 [CajaController] Resumen de caja calculado', [
-                'apertura_id'       => $cajaAbiertaHoy->id,
-                'totalVentas'       => $totalVentas,
-                'ventasAnuladas'    => $ventasAnuladas,
-                'pagosCredito'      => $pagosCredito,
-                'totalEgresos'      => $totalEgresos,
-                'efectivoEsperado'  => $efectivoEsperado,
+            Log::info('💰 [CajaController] Resumen de caja calculado (con totales dinámicos)', [
+                'apertura_id'               => $cajaAbiertaHoy->id,
+                'totalVentas'               => $totalVentas,
+                'ventasAnuladas'            => $ventasAnuladas,
+                'pagosCredito'              => $pagosCredito,
+                'totalEgresos'              => $totalEgresosFinal,
+                'totalIngresos'             => $totalIngresosFinal,
+                'efectivoEsperado'          => $efectivoEsperadoFinal,
+                'desgloseIngresos_count'    => count($desgloseIngresos),
+                'desgloseEgresos_count'     => count($desgloseEgresos),
             ]);
         }
 
