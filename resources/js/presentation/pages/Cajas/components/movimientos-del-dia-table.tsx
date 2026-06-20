@@ -9,11 +9,13 @@
  * ✅ Resumen de totales por tipo
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { AperturaCaja, MovimientoCaja } from '@/domain/entities/cajas';
 import { formatCurrency, formatDateTime, getMovimientoIcon, getMovimientoColor, toNumber } from '@/lib/cajas.utils';
 import { ComprobantesMovimiento } from '@/presentation/components/ComprobantesMovimiento';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Printer } from 'lucide-react';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -133,6 +135,15 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
     const [eliminandoMovimiento, setEliminandoMovimiento] = useState(false);
     const [mostrarModalVenta, setMostrarModalVenta] = useState(false);
     const [movimientoVentaSeleccionado, setMovimientoVentaSeleccionado] = useState<MovimientoCaja | null>(null);
+    const [movimientosExpandidos, setMovimientosExpandidos] = useState<Set<number>>(() => {
+        const expandidos = new Set<number>();
+        movimientosHoy.forEach(mov => {
+            if (mov.venta) {
+                expandidos.add(mov.id);
+            }
+        });
+        return expandidos;
+    });
 
 
     if (!cajaAbiertaHoy || movimientosHoy.length === 0) {
@@ -406,6 +417,17 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
         link.setAttribute('href', url);
         link.setAttribute('download', `movimientos-caja-${new Date().toISOString().split('T')[0]}.csv`);
         link.click();
+    };
+
+    // ✅ NUEVO: Función para toggle expandir/contraer movimiento
+    const toggleMovimientoExpandido = (movimientoId: number) => {
+        const nuevoExpandidos = new Set(movimientosExpandidos);
+        if (nuevoExpandidos.has(movimientoId)) {
+            nuevoExpandidos.delete(movimientoId);
+        } else {
+            nuevoExpandidos.add(movimientoId);
+        }
+        setMovimientosExpandidos(nuevoExpandidos);
     };
 
     // ✅ NUEVO: Función para eliminar movimiento
@@ -809,16 +831,6 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                             ))}
                                                     </div>
                                                 )}
-
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                                    <span className="inline-block bg-white dark:bg-gray-800 px-2 py-1 rounded">
-                                                        {/* ✅ ACTUALIZADO (2026-05-03): Si es VENTA, mostrar solo pagos de efectivo+transferencia */}
-                                                        {mostrarDesglose
-                                                            ? `${detallesPagoDesglosado.filter(d => d.codigo === 'EFECTIVO' || d.codigo === 'TRANSFERENCIA/QR').length} pagos`
-                                                            : `${count} mov.`
-                                                        }
-                                                    </span>
-                                                </p>
                                             </div>
                                             <div className={`text-2xl ${esIngreso ? '📈' : '📉'}`}></div>
                                         </div>
@@ -833,168 +845,218 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Informacion
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Id
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Operación
+                                </th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                     Descripcion
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                     Estado
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Tipo Pago
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Pago
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Tipo Entrega
-                                </th>
-                                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Comprobantes
-                                </th> */}
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                     Monto
+                                </th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    Fecha
+                                </th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    -
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {movimientosAMostrar.map((movimiento) => (
-                                <tr key={movimiento.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {formatDateTime(movimiento.fecha)}
-                                        <br />
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}>
-                                            {movimiento.tipo_operacion.nombre}
-                                        </span>
-                                        <br />
-                                        {movimiento.numero_documento}
-                                        {(movimiento.venta_id || movimiento.pago_id) && (
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                {movimiento.venta_id && (
-                                                    <span className="inline-block mr-2">
-                                                        ID Venta: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.venta_id}</span>
-                                                    </span>
-                                                )}
-                                                {movimiento.pago_id && (
-                                                    <span className="inline-block">
-                                                        ID Pago: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.pago_id}</span>
-                                                    </span>
-                                                )}
+                                <React.Fragment key={movimiento.id}>
+                                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td className="px-1 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                            <div className="flex items-center gap-2">
+                                                {/* {movimiento.venta && (
+                                                    <button
+                                                        onClick={() => toggleMovimientoExpandido(movimiento.id)}
+                                                        className="inline-flex items-center justify-center w-5 h-5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+                                                        title={movimientosExpandidos.has(movimiento.id) ? 'Contraer detalles' : 'Ver detalles de venta'}
+                                                    >
+                                                        <svg className={`w-4 h-4 transition transform ${movimientosExpandidos.has(movimiento.id) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
+                                                )} */}
+
                                             </div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {movimiento.observaciones}
-                                    </td>
-                                    {/* ✅ NUEVA: Estado de la Venta */}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {movimiento.venta?.estado_documento ? (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                : movimiento.venta.estado_documento.codigo === 'ANULADO'
-                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                                    : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
-                                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                }`}>
-                                                {movimiento.venta.estado_documento.nombre}
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                #{movimiento.id}
+                                            </p>
+                                        </td>
+                                        <td className="px-1 py-4 text-sm">
+                                            <span className={`px-1 py-1 rounded-full text-xs font-medium ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}>
+                                                {movimiento.tipo_operacion.nombre}
                                             </span>
-                                        ) : (
-                                            <span className="text-gray-400 dark:text-gray-500">—</span>
-                                        )}
-                                    </td>
-                                    {/* ✅ NUEVA: Tipo de Pago */}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {movimiento.tipo_pago?.nombre ? (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.tipo_pago.nombre === 'EFECTIVO'
-                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-                                                : movimiento.tipo_pago.nombre === 'TRANSFERENCIA'
-                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                                    : movimiento.tipo_pago.nombre === 'CHEQUE'
-                                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                                                        : movimiento.tipo_pago.nombre === 'CREDITO'
-                                                            ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
+                                            {(movimiento.venta_id || movimiento.pago_id) && (
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    {movimiento.venta_id && (
+                                                        <span className="inline-block mr-2">
+                                                            Folio: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.venta_id}</span>
+                                                        </span>
+                                                    )}
+                                                    {movimiento.pago_id && (
+                                                        <span className="inline-block">
+                                                            Pago: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.pago_id}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        <td className="px-1 py-4 text-xs text-gray-900 dark:text-gray-100">
+                                            {movimiento.observaciones}
+                                        </td>
+                                        <td className="px-1 py-4 text-sm">
+                                            {movimiento.venta?.estado_documento ? (
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                    : movimiento.venta.estado_documento.codigo === 'ANULADO'
+                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                        : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
+                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                                                             : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                }`}>
-                                                {movimiento.tipo_pago.nombre}
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-400 dark:text-gray-500">—</span>
-                                        )}
-                                    </td>
-                                    {/* ✅ NUEVA: Tipo de Entrega basado en requiere_envio */}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {movimiento.venta ? (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                movimiento.venta?.requiere_envio
-                                                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                }`}>
-                                                {movimiento.venta?.requiere_envio ? '🚚 DELIVERY' : '🏪 PRESENCIAL'}
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-400 dark:text-gray-500">—</span>
-                                        )}
-                                    </td>
-                                    {/*  <td className="px-6 py-4 text-sm">
-                                        <ComprobantesMovimiento comprobantes={movimiento.comprobantes} />
-                                    </td> */}
-                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {/* ✅ NUEVO: Botón Ver Detalles de Venta */}
-                                            {movimiento.venta && (
-                                                <button
-                                                    onClick={() => {
-                                                        setMovimientoVentaSeleccionado(movimiento);
-                                                        setMostrarModalVenta(true);
-                                                    }}
-                                                    className={`inline-flex items-center justify-center p-1.5 rounded-lg transition ${tieneDiscrepancia(movimiento)
-                                                            ? 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400'
-                                                            : 'bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400'
-                                                        }`}
-                                                    title={tieneDiscrepancia(movimiento) ? '⚠️ Discrepancia detectada - Ver detalles' : 'Ver detalles de venta'}
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
+                                                    }`}>
+                                                    {movimiento.venta.estado_documento.nombre}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400 dark:text-gray-500">—</span>
                                             )}
-
-                                            {/* Botón Imprimir Movimiento Individual */}
-                                            <button
-                                                onClick={() => {
-                                                    setMovimientoSeleccionado(movimiento);
-                                                    setMostrarModalMovimientoIndividual(true);
-                                                }}
-                                                className="inline-flex items-center justify-center p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition"
-                                                title="Imprimir este movimiento"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4H9a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2m-6-4V9m0 0V5a2 2 0 012-2h.5a2 2 0 011.961 1.561l2.286 9.144a2 2 0 01-1.961 2.561H7.5a2 2 0 01-1.961-2.561l2.286-9.144A2 2 0 019.5 5H10a2 2 0 012 2v4m0 0h4" />
-                                                </svg>
-                                            </button>
-
-                                            {/* ✅ NUEVO: Botón Eliminar (solo para GASTOS, PAGO_SUELDO, ANTICIPO) */}
-                                            {['GASTOS', 'PAGO_SUELDO', 'ANTICIPO'].includes(movimiento.tipo_operacion.codigo) && (
-                                                <button
-                                                    onClick={() => {
-                                                        setMovimientoAEliminar(movimiento);
-                                                        setMostrarDialogoEliminacion(true);
-                                                    }}
-                                                    className="inline-flex items-center justify-center p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition"
-                                                    title="Eliminar este movimiento"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                        </td>
+                                        <td className="px-1 py-4 text-sm">
+                                            {movimiento.tipo_pago?.nombre ? (
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.tipo_pago.nombre === 'EFECTIVO'
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                                                    : movimiento.tipo_pago.nombre === 'TRANSFERENCIA/QR'
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                        : movimiento.tipo_pago.nombre === 'CHEQUE'
+                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                                            : movimiento.tipo_pago.nombre === 'CREDITO'
+                                                                ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
+                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}>
+                                                    {movimiento.tipo_pago.nombre}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400 dark:text-gray-500">—</span>
                                             )}
-
+                                        </td>
+                                        <td className="px-1 py-4 text-sm">
                                             {/* Monto */}
                                             <div className="flex items-center">
                                                 {getMovimientoIcon(toNumber(movimiento.monto))}
-                                                <span className={`ml-2 text-sm font-medium ${getMovimientoColor(toNumber(movimiento.monto))}`}>
+                                                <span className={`ml-1 text-sm font-medium ${getMovimientoColor(toNumber(movimiento.monto))}`}>
                                                     {formatCurrency(Math.abs(toNumber(movimiento.monto)))}
                                                 </span>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                        <td className="px-1 py-4 text-xs text-gray-500 dark:text-gray-400 text-left">
+                                            {formatDateTime(movimiento.fecha)}
+                                        </td>
+                                        <td className="px-1 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* ✅ NUEVO: Botón Ver Detalles de Venta */}
+                                                {movimiento.venta && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setMovimientoVentaSeleccionado(movimiento);
+                                                            setMostrarModalVenta(true);
+                                                        }}
+                                                        className={`inline-flex items-center justify-center p-1.5 rounded-lg transition ${tieneDiscrepancia(movimiento)
+                                                            ? 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+                                                            : 'bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400'
+                                                            }`}
+                                                        title={tieneDiscrepancia(movimiento) ? '⚠️ Discrepancia detectada - Ver detalles' : 'Ver detalles de venta'}
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                )}
+
+                                                {/* Botón Imprimir Movimiento Individual */}
+                                                <button
+                                                    onClick={() => {
+                                                        setMovimientoSeleccionado(movimiento);
+                                                        setMostrarModalMovimientoIndividual(true);
+                                                    }}
+                                                    className="inline-flex items-center justify-center p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition"
+                                                    title="Imprimir este movimiento"
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </button>
+
+                                                {/* ✅ NUEVO: Botón Eliminar (para cualquier movimiento menos VENTA) */}
+                                                {movimiento.tipo_operacion.codigo !== 'VENTA' || movimiento.tipo_operacion.codigo === 'PAGO' && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setMovimientoAEliminar(movimiento);
+                                                            setMostrarDialogoEliminacion(true);
+                                                        }}
+                                                        className="inline-flex items-center justify-center p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition"
+                                                        title="Eliminar este movimiento"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {/* ✅ NUEVA: Sub-fila de detalles de venta */}
+                                    {/* {movimiento.venta && movimientosExpandidos.has(movimiento.id) && (
+                                        <tr className="bg-gray-50 dark:bg-gray-700/50">
+                                            <td colSpan={6} className="px-6 py-4">
+                                                <div className="ml-8 space-y-3 border-l-2 border-blue-300 dark:border-blue-500 pl-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                            📋 Detalles de Venta #{movimiento.venta.id}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                                                                Estado de Venta
+                                                            </div>
+                                                            {movimiento.venta.estado_documento ? (
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
+                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                                    : movimiento.venta.estado_documento.codigo === 'ANULADO'
+                                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                                        : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
+                                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                                    }`}>
+                                                                    {movimiento.venta.estado_documento.nombre}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-sm text-gray-500 dark:text-gray-400">—</span>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                                                                Tipo de Entrega
+                                                            </div>
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta?.requiere_envio
+                                                                ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+                                                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                                }`}>
+                                                                {movimiento.venta?.requiere_envio ? '🚚 DELIVERY' : '🏪 PRESENCIAL'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )} */}
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>

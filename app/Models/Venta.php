@@ -862,7 +862,7 @@ class Venta extends Model
                 'venta_id'            => $this->id,
             ]);
 
-            Log::info('Movimiento de caja revertido por anulación de venta', [
+            Log::info('✅ Movimiento de caja de reversión (ANULACION) creado', [
                 'venta'                  => $this->numero,
                 'movimiento_original_id' => $movimientoOriginal->id,
                 'monto_original'         => $movimientoOriginal->monto,
@@ -893,7 +893,7 @@ class Venta extends Model
                         'venta_id'            => $this->id,
                     ]);
 
-                    Log::info('✅ Movimiento de vuelto anulado al anular venta', [
+                    Log::info('✅ Movimiento de vuelto de anulación creado', [
                         'venta'                  => $this->numero,
                         'movimiento_vuelto_id'   => $vueltoOriginal->id,
                         'monto_vuelto_original'  => $vueltoOriginal->monto,

@@ -229,12 +229,12 @@ export default function Index(props: CajasIndexProps) {
                     />
 
                     {/* ✅ NUEVO: Resumen de Caja con datos refactorizados */}
-                    {cajaAbiertaHoy && (
+                    {/* {cajaAbiertaHoy && (
                         <ResumenCajaCard
                             datosResumen={props.datosResumen}
                             cargando={false}
                         />
-                    )}
+                    )} */}
 
                     {/* ✅ NUEVO: Desglose de Pagos por Tipo de Pago (detalles_pago_venta) */}
                     {/* {cajaAbiertaHoy && (

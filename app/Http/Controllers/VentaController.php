@@ -1111,18 +1111,73 @@ class VentaController extends Controller
                     }
                 }
 
-                // 2️⃣ Revertir movimiento de caja si existe
+                // 2️⃣ Actualizar movimiento de caja existente si existe
+                if ($venta->movimientoCaja) {
+                    try {
+                        // Obtener el tipo_operacion_id para ANULADO-VENTA
+                        $tipoOperacionAnuladoVenta = DB::table('tipo_operacion_caja')
+                            ->where('codigo', 'ANULADO-VENTA')
+                            ->first();
+
+                        if ($tipoOperacionAnuladoVenta) {
+                            // 1️⃣ PRIMERO: Actualizar el movimiento existente para marcar la venta como anulada
+                            $venta->movimientoCaja->update([
+                                'tipo_operacion_id' => $tipoOperacionAnuladoVenta->id,
+                            ]);
+
+                            Log::info('✅ Movimiento de venta actualizado a ANULADO-VENTA', [
+                                'venta_id'           => $venta->id,
+                                'movimiento_caja_id' => $venta->movimientoCaja->id,
+                                'tipo_operacion_id'  => $tipoOperacionAnuladoVenta->id,
+                                'monto'              => $venta->movimientoCaja->monto,
+                            ]);
+
+                            // 2️⃣ Actualizar movimientos de VUELTO si existen
+                            $movimientosVuelto = DB::table('movimientos_caja')
+                                ->join('tipo_operacion_caja', 'movimientos_caja.tipo_operacion_id', '=', 'tipo_operacion_caja.id')
+                                ->where('movimientos_caja.venta_id', $venta->id)
+                                ->where('tipo_operacion_caja.codigo', 'VUELTO')
+                                ->select('movimientos_caja.*')
+                                ->get();
+
+                            if ($movimientosVuelto->isNotEmpty()) {
+                                foreach ($movimientosVuelto as $vuelto) {
+                                    DB::table('movimientos_caja')
+                                        ->where('id', $vuelto->id)
+                                        ->update(['tipo_operacion_id' => $tipoOperacionAnuladoVenta->id]);
+
+                                    Log::info('✅ Movimiento de vuelto actualizado a ANULADO-VENTA', [
+                                        'venta_id'              => $venta->id,
+                                        'movimiento_vuelto_id'  => $vuelto->id,
+                                        'monto'                 => $vuelto->monto,
+                                    ]);
+                                }
+                            }
+                        } else {
+                            Log::warning('⚠️ Tipo de operación ANULADO-VENTA no encontrado', [
+                                'venta_id' => $venta->id,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('⚠️ No se pudo actualizar movimiento de caja al anular venta', [
+                            'venta_id' => $venta->id,
+                            'error'    => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                // 2️⃣.3️⃣ LUEGO: Crear movimientos de ANULACION (reversión) como antes
                 if ($venta->movimientoCaja) {
                     try {
                         $venta->revertirMovimientoCaja();
                         $cajaAnotada = true;
-                        Log::info('✅ Movimiento de caja revertido automáticamente', [
+                        Log::info('✅ Movimiento de caja de reversión (ANULACION) creado', [
                             'venta_id'           => $venta->id,
                             'movimiento_caja_id' => $venta->movimientoCaja->id,
                             'monto'              => $venta->movimientoCaja->monto,
                         ]);
                     } catch (\Exception $e) {
-                        Log::warning('⚠️ No se pudo revertir movimiento de caja al anular venta', [
+                        Log::warning('⚠️ No se pudo crear movimiento de reversión al anular venta', [
                             'venta_id' => $venta->id,
                             'error'    => $e->getMessage(),
                         ]);
