@@ -180,25 +180,27 @@ export default function CierreCajaModal({ show, onClose, cajaAbierta, montoEsper
         total: cajaAbierta?.monto_apertura || 0,
     };
 
-    // Totales de ingresos y egresos (desde servidor)
+    // ✅ REFACTORIZADO (2026-06-20): Usar desgloses dinámicos en lugar de valores hardcodeados
+    // Esto permite que nuevos tipos como DEVOLUCION-INGRESO se incluyan automáticamente
+    const desgloseIngresos = datosCierre?.desglose_ingresos || [];
+    const desgloseEgresos = datosCierre?.desglose_egresos || [];
+
+    // Calcular dinámicamente sumando todos los tipos desde los desgloses
+    const ingresos = desgloseIngresos.reduce((sum: number, ingreso: any) => sum + (ingreso.total || 0), 0);
+    const egresos = desgloseEgresos.reduce((sum: number, egreso: any) => sum + (egreso.total || 0), 0);
+    const apertura = datosCierre?.apertura || cajaAbierta?.monto_apertura || 0;
+
+    // ✅ REFACTORIZADO (2026-06-20): Total Esperado = Apertura + Ingresos (dinámicos) - Egresos (dinámicos)
+    const totalEsperadoMejorado = apertura + ingresos - egresos;
+
+    // Mantener referencias a valores individuales para compatibilidad con templates
     const ventasTotales = datosCierre?.sumatoria_ventas_total || 0;
     const ventasEnEfectivo = datosCierre?.sumatoria_ventas_efectivo || 0;
     const ventasCredito = datosCierre?.sumatoria_ventas_credito || 0;
     const pagosDeCredito = datosCierre?.monto_pagos_creditos || 0;
     const gastosTotales = datosCierre?.sumatoria_gastos || 0;
-
-    // ✅ ACTUALIZADO (2026-03-09): Incluir Servicios en los ingresos y Devoluciones en los egresos
     const serviciosTotales = datosCierre?.sumatoria_servicio || 0;
     const devolucionesTotales = datosCierre?.sumatoria_devoluciones || 0;
-
-    // ✅ CORREGIDO (2026-02-20): Total Ingresos = Ventas Efectivo + Pagos de Crédito + Servicios (dinero que realmente entra)
-    const ingresos = ventasEnEfectivo + pagosDeCredito + ventasCredito + serviciosTotales;
-    const egresos = datosCierre?.total_egresos || 0;
-    const apertura = datosCierre?.apertura || cajaAbierta?.monto_apertura || 0;
-
-    // ✅ ACTUALIZADO (2026-03-09): Total Esperado = Apertura + Ventas Efectivo + Pagos Crédito + Servicios - Total Egresos
-    // Es la cantidad TOTAL de dinero que debería haber en caja al cierre
-    const totalEsperadoMejorado = apertura + ventasEnEfectivo + pagosDeCredito + serviciosTotales - egresos;
 
     // ✅ DEBUG: Log de cómo se calcula Total Esperado (ACTUALIZADO 2026-03-09)
     console.log('💰 [CierreCajaModal] TOTAL ESPERADO CORRECTO:', {
