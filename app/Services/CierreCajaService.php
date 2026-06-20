@@ -335,36 +335,41 @@ class CierreCajaService
     }
 
     /**
-     * ✅ Calcular SALIDAS REALES (dinero que realmente sale de la caja)
+     * ✅ REFACTORIZADO (2026-06-20): Calcular SALIDAS REALES (dinero que realmente sale de la caja)
+     * Usa dirección='SALIDA' dinámicamente en lugar de hardcodear códigos específicos
+     *
      * Incluye TODOS los tipos con dirección='SALIDA' que son dinero real:
-     * - GASTOS: Gastos operacionales ✓
-     * - PAGO_SUELDO: Pago de nómina ✓
-     * - ANTICIPO: Anticipos a empleados ✓
-     * - COMPRA: Compras a proveedores (dinero que sale) ✓
+     * - GASTOS, PAGO_SUELDO, ANTICIPO, COMPRA, DEVOLUCION, etc. ✓
      *
      * Excluye:
      * - ANULACION: Ventas anuladas (transacción que nunca pasó) ❌
+     * - VUELTO: Cambio dado al cliente (informativo solamente) ❌
      *
      * ✅ NOTA: Este es el dinero que REALMENTE afecta el efectivo en caja
+     * ✅ BENEFICIO: Nuevos tipos de operación se incluyen automáticamente sin cambiar código
      */
     private function calcularSalidasReales($movimientos): float
     {
         try {
-            // ✅ Restar todos los tipos que son dinero real que sale
-            // INCLUYE: GASTOS, PAGO_SUELDO, ANTICIPO, COMPRA
-            // EXCLUYE: ANULACION (transacción cancelada, nunca pasó)
+            // ✅ REFACTORIZADO: Usar dirección dinámicamente, EXCLUIR solo ANULACION y VUELTO
             $salidas = abs((float) $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
-                ->filter(fn($m) => $this->esPagoValido($m) && in_array($m->tipoOperacion?->codigo, ['GASTOS', 'PAGO_SUELDO', 'ANTICIPO', 'COMPRA']))
+                ->filter(fn($m) =>
+                    $this->esPagoValido($m) &&
+                    !in_array($m->tipoOperacion?->codigo, ['ANULACION', 'VUELTO'])
+                )
                 ->sum('monto'));
 
             // Desglose por tipo para logging
             $desglose = $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
-                ->filter(fn($m) => $this->esPagoValido($m) && in_array($m->tipoOperacion?->codigo, ['GASTOS', 'PAGO_SUELDO', 'ANTICIPO', 'COMPRA']))
+                ->filter(fn($m) =>
+                    $this->esPagoValido($m) &&
+                    !in_array($m->tipoOperacion?->codigo, ['ANULACION', 'VUELTO'])
+                )
                 ->groupBy(fn($m) => $m->tipoOperacion?->codigo)
                 ->map(fn($grupo) => abs((float) $grupo->sum('monto')))
                 ->toArray();
 
-            Log::info('💸 [calcularSalidasReales]:', [
+            Log::info('💸 [calcularSalidasReales] (dirección=SALIDA, excluye ANULACION/VUELTO):', [
                 'total' => $salidas,
                 'desglose' => $desglose,
             ]);
