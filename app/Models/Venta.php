@@ -850,6 +850,7 @@ class Venta extends Model
 
             // 1️⃣ Crear movimiento de reversión con monto negativo (para el movimiento principal de la venta)
             MovimientoCaja::create([
+                'apertura_caja_id'    => $movimientoOriginal->apertura_caja_id,  // ✅ NUEVO (2026-06-20)
                 'caja_id'             => $movimientoOriginal->caja_id,
                 'user_id'             => Auth::id(),
                 'fecha'               => now(),
