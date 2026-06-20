@@ -673,6 +673,11 @@ class CajaController extends Controller
             $cierreCajaService = new CierreCajaService();
             $datos             = $cierreCajaService->calcularDatos($aperturaCaja);
 
+            // ✅ NUEVO (2026-06-20): Obtener desgloses dinámicos para el modal
+            // Esto permite mostrar automáticamente nuevos tipos como DEVOLUCION-INGRESO
+            $desgloseIngresos = $cierreCajaService->obtenerDesgloseIngresos($aperturaCaja);
+            $desgloseEgresos = $cierreCajaService->obtenerDesgloseEgresos($aperturaCaja);
+
             Log::info('🟦 [obtenerDatosCierre] Datos calculados correctamente');
 
             return response()->json([
@@ -705,6 +710,11 @@ class CajaController extends Controller
                     'sumatoria_devoluciones'    => (float) ($datos['sumatorialDevoluciones'] ?? 0),
                     'sumatoria_servicio'        => (float) ($datos['sumatorialServicio'] ?? 0),
                     'sumatoria_anulaciones'     => (float) ($datos['sumatorialAnulaciones'] ?? 0),
+
+                    // ✅ NUEVO (2026-06-20): Desgloses dinámicos de ingresos y egresos
+                    // Permite al modal mostrar automáticamente nuevos tipos sin hardcoding
+                    'desglose_ingresos'         => $desgloseIngresos,
+                    'desglose_egresos'          => $desgloseEgresos,
 
                     // ✅ Datos adicionales para CierreCajaModal
                     'movimientos_agrupados'     => collect($datos['movimientosAgrupados'])
