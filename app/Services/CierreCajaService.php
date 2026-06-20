@@ -518,10 +518,10 @@ class CierreCajaService
     /**
      * ✅ NUEVO (2026-06-20): Obtener desglose dinámico de INGRESOS (ENTRADA)
      * Agrupa por tipo_operacion.codigo automáticamente
-     * Útil para mostrar dinámicamente en frontend
+     * Retorna ARRAY indexado (no objeto) para que el frontend pueda iterar con .map()
      *
      * @param AperturaCaja $aperturaCaja
-     * @return array Desglose de [codigo => ['codigo', 'nombre', 'total', 'cantidad']]
+     * @return array Array de objetos ['codigo', 'nombre', 'total', 'cantidad']
      */
     public function obtenerDesgloseIngresos(AperturaCaja $aperturaCaja): array
     {
@@ -530,7 +530,7 @@ class CierreCajaService
 
         $movimientos = $this->obtenerMovimientos($aperturaCaja);
 
-        return $this->obtenerMovimientosPorDireccion($movimientos, 'ENTRADA')
+        $desglose = $this->obtenerMovimientosPorDireccion($movimientos, 'ENTRADA')
             ->filter(fn($m) => $this->esPagoValido($m))
             ->groupBy(fn($m) => $m->tipoOperacion?->codigo)
             ->map(fn($grupo) => [
@@ -540,16 +540,20 @@ class CierreCajaService
                 'cantidad' => $grupo->count(),
             ])
             ->toArray();
+
+        // ✅ REFACTORIZADO (2026-06-20): Convertir a array indexado (no objeto asociativo)
+        // Esto asegura que el frontend reciba un array que pueda iterar con .map()
+        return array_values($desglose);
     }
 
     /**
      * ✅ NUEVO (2026-06-20): Obtener desglose dinámico de EGRESOS (SALIDA)
      * Agrupa por tipo_operacion.codigo automáticamente
      * Excluye ANULACION y VUELTO (transacciones especiales)
-     * Útil para mostrar dinámicamente en frontend
+     * Retorna ARRAY indexado (no objeto) para que el frontend pueda iterar con .map()
      *
      * @param AperturaCaja $aperturaCaja
-     * @return array Desglose de [codigo => ['codigo', 'nombre', 'total', 'cantidad']]
+     * @return array Array de objetos ['codigo', 'nombre', 'total', 'cantidad']
      */
     public function obtenerDesgloseEgresos(AperturaCaja $aperturaCaja): array
     {
@@ -558,7 +562,7 @@ class CierreCajaService
 
         $movimientos = $this->obtenerMovimientos($aperturaCaja);
 
-        return $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
+        $desglose = $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
             ->filter(fn($m) =>
                 $this->esPagoValido($m) &&
                 !in_array($m->tipoOperacion?->codigo, ['ANULACION', 'VUELTO'])
@@ -571,6 +575,10 @@ class CierreCajaService
                 'cantidad' => $grupo->count(),
             ])
             ->toArray();
+
+        // ✅ REFACTORIZADO (2026-06-20): Convertir a array indexado (no objeto asociativo)
+        // Esto asegura que el frontend reciba un array que pueda iterar con .map()
+        return array_values($desglose);
     }
 
     /**
