@@ -216,6 +216,8 @@ export default function Index(props: CajasIndexProps) {
                         datosActualizados={props.datosResumen}
                         cargandoDatos={false}
                         ventasCreditoTotales={ventasCreditoTotales}
+                        desgloseIngresos={props.desgloseIngresos}  // ✅ NUEVO (2026-06-20)
+                        desgloseEgresos={props.desgloseEgresos}   // ✅ NUEVO (2026-06-20)
                         onAbrirClick={handleAbrirModal}
                         onCerrarClick={handleAbrirCierreModal}
                         onGastoClick={() => setShowMovimientoModal(true)}
