@@ -1650,6 +1650,7 @@ class CajaController extends Controller
 
             // Crear movimiento
             $movimiento = MovimientoCaja::create([
+                'apertura_caja_id'  => $cajaAbierta->id,  // ✅ NUEVO (2026-06-20): Relación con apertura
                 'caja_id'           => $cajaAbierta->caja_id,
                 'tipo_operacion_id' => $request->tipo_operacion_id,
                 'tipo_pago_id'      => $request->tipo_pago_id,
@@ -1768,6 +1769,7 @@ class CajaController extends Controller
 
             // Crear movimiento
             $movimiento = MovimientoCaja::create([
+                'apertura_caja_id'  => $cajaAbierta->id,  // ✅ NUEVO (2026-06-20): Relación con apertura
                 'caja_id'           => $cajaAbierta->caja_id,
                 'tipo_operacion_id' => $request->tipo_operacion_id,
                 'tipo_pago_id'      => $request->tipo_pago_id,
