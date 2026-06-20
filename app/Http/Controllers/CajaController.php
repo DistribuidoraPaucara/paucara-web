@@ -167,10 +167,12 @@ class CajaController extends Controller
         $tiposOperacionClasificados = TipoOperacionCaja::obtenerTiposClasificados();
 
         // Para compatibilidad: mantener array plano de todos los tipos
-        $tiposOperacion = collect($tiposOperacionClasificados)
-            ->flatten()
-            ->values()
-            ->all();
+        $tiposOperacion = [];
+        foreach ($tiposOperacionClasificados as $direccion => $tipos) {
+            foreach ($tipos as $tipo) {
+                $tiposOperacion[] = $tipo;
+            }
+        }
 
         // ✅ NUEVO: Obtener tipos de pago disponibles
         $tiposPago = \App\Models\TipoPago::all(['id', 'codigo', 'nombre']);
@@ -297,6 +299,12 @@ class CajaController extends Controller
             // Se obtienen del servicio pero no se restan ni se suman a nada
             $sumatorialVueltos = (float) ($datosCalculados['sumatorialVueltos'] ?? 0);
 
+            // ✅ NUEVO (2026-06-20): Obtener desglose DINÁMICO de ingresos y egresos
+            // Esto permite mostrar automáticamente nuevos tipos como DEVOLUCION-INGRESO sin cambiar código
+            $cierreCajaService = app(CierreCajaService::class);
+            $desgloseIngresos = $cierreCajaService->obtenerDesgloseIngresos($cajaAbiertaHoy);
+            $desgloseEgresos = $cierreCajaService->obtenerDesgloseEgresos($cajaAbiertaHoy);
+
             $datosResumen = [
                 'apertura'              => $montoApertura,
                 'totalVentas'           => $totalVentas,           // Suma TODAS las ventas aprobadas
@@ -322,6 +330,9 @@ class CajaController extends Controller
                 // ✅ NUEVO: Desglose de pagos desglosados por tipo de pago
                 'detallesPagoDesglosado' => $detallesPagoDesglosado,
                 'totalDetallesPago'     => (float) $totalDetallesPago,
+                // ✅ NUEVO (2026-06-20): Desglose DINÁMICO de ingresos y egresos por tipo
+                'desgloseIngresos'      => $desgloseIngresos,      // Ingresos agrupados por tipo_operacion.codigo
+                'desgloseEgresos'       => $desgloseEgresos,       // Egresos agrupados por tipo_operacion.codigo
             ];
 
             Log::info('💰 [CajaController] Resumen de caja calculado', [
@@ -361,6 +372,9 @@ class CajaController extends Controller
             // ✅ NUEVO: Desglose de pagos por tipo de pago (detalles_pago_venta)
             'detallesPagoDesglosado'    => $datosResumen ? $datosResumen['detallesPagoDesglosado'] ?? [] : [],
             'totalDetallesPago'         => $datosResumen ? $datosResumen['totalDetallesPago'] ?? 0 : 0,
+            // ✅ NUEVO (2026-06-20): Desglose dinámico de ingresos y egresos
+            'desgloseIngresos'          => $datosResumen ? $datosResumen['desgloseIngresos'] ?? [] : [],
+            'desgloseEgresos'           => $datosResumen ? $datosResumen['desgloseEgresos'] ?? [] : [],
         ]);
     }
 
@@ -1575,12 +1589,13 @@ class CajaController extends Controller
 
             $tipoOperacion = TipoOperacionCaja::findOrFail($request->tipo_operacion_id);
 
-            // ✅ Determinar el signo del monto según el tipo de operación
+            // ✅ Determinar el signo del monto según la DIRECCIÓN del tipo de operación
+            // ENTRADA = ingreso (positivo) | SALIDA/AJUSTE = egreso (negativo)
             $monto = $request->monto;
-            if (in_array($tipoOperacion->codigo, ['GASTOS', 'COMPRA', 'PAGO_SUELDO', 'ANTICIPO', 'ANULACION'])) {
+            if ($tipoOperacion->direccion === 'SALIDA') {
                 $monto = -abs($monto); // Egresos son negativos
             } else {
-                $monto = abs($monto); // Ingresos son positivos
+                $monto = abs($monto); // Ingresos (ENTRADA) y ajustes son positivos
             }
 
             // ✅ Construir observaciones con categoría según tipo de operación
@@ -1692,12 +1707,13 @@ class CajaController extends Controller
 
             $tipoOperacion = TipoOperacionCaja::findOrFail($request->tipo_operacion_id);
 
-            // ✅ Determinar el signo del monto según el tipo de operación
+            // ✅ Determinar el signo del monto según la DIRECCIÓN del tipo de operación
+            // ENTRADA = ingreso (positivo) | SALIDA/AJUSTE = egreso (negativo)
             $monto = $request->monto;
-            if (in_array($tipoOperacion->codigo, ['GASTOS', 'COMPRA', 'PAGO_SUELDO', 'ANTICIPO', 'ANULACION'])) {
+            if ($tipoOperacion->direccion === 'SALIDA') {
                 $monto = -abs($monto); // Egresos son negativos
             } else {
-                $monto = abs($monto); // Ingresos son positivos
+                $monto = abs($monto); // Ingresos (ENTRADA) y ajustes son positivos
             }
 
             // ✅ Construir observaciones con categoría según tipo de operación

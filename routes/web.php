@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\TipoOperacionCajaController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -54,10 +55,12 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('search', [App\Http\Controllers\ClienteController::class, 'search'])->name('api.clientes.search');
     });
 
-    // Incluir rutas de roles
+    // Incluir rutas de roles y permisos
     require __DIR__ . '/roles.php';
+    require __DIR__ . '/permisos.php';
 
     Route::resource('categorias', CategoriaController::class)->middleware('permission:categorias.manage');
+    Route::resource('tipo-operacion-caja', TipoOperacionCajaController::class);
     Route::resource('marcas', \App\Http\Controllers\MarcaController::class)->middleware('permission:marcas.manage');
     Route::resource('almacenes', \App\Http\Controllers\AlmacenController::class)->middleware('permission:almacenes.manage');
     Route::resource('almacenes-prestables', \App\Http\Controllers\AlmacenPrestableController::class)->middleware('permission:almacenes.manage');
@@ -239,19 +242,6 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::post('usuarios/{usuario}/assign-permission', [\App\Http\Controllers\UserController::class, 'assignPermission'])->name('usuarios.assign-permission');
     Route::delete('usuarios/{usuario}/remove-permission', [\App\Http\Controllers\UserController::class, 'removePermission'])->name('usuarios.remove-permission');
     Route::patch('usuarios/{usuario}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
-
-    Route::resource('roles', \App\Http\Controllers\RoleController::class);
-    Route::post('roles/{role}/assign-permission', [\App\Http\Controllers\RoleController::class, 'assignPermission'])->name('roles.assign-permission');
-    Route::delete('roles/{role}/remove-permission', [\App\Http\Controllers\RoleController::class, 'removePermission'])->name('roles.remove-permission');
-
-    // Rutas avanzadas de Roles - Sistema C
-    Route::get('roles-data/templates', [\App\Http\Controllers\RoleController::class, 'getTemplates'])->name('roles.templates');
-    Route::post('roles-data/templates', [\App\Http\Controllers\RoleController::class, 'createTemplate'])->name('roles.create-template');
-    Route::post('roles/{role}/apply-template', [\App\Http\Controllers\RoleController::class, 'applyTemplate'])->name('roles.apply-template');
-    Route::post('roles/{role}/copy-from', [\App\Http\Controllers\RoleController::class, 'copyFromRole'])->name('roles.copy-from');
-    Route::post('roles-data/compare', [\App\Http\Controllers\RoleController::class, 'compareRoles'])->name('roles.compare');
-    Route::get('roles/{role}/audit', [\App\Http\Controllers\RoleController::class, 'getAudit'])->name('roles.audit');
-    Route::get('roles-data/permissions-grouped', [\App\Http\Controllers\RoleController::class, 'getPermissionsGrouped'])->name('roles.permissions-grouped');
 
     // ✅ PANEL DE GESTIÓN DE PERMISOS
     Route::prefix('permisos')->name('permisos.')->group(function () {

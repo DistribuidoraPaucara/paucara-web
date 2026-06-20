@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 export const listado = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ listado.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ listado.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
     const listadoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
         listadoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:820
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
         listadoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -71,7 +71,7 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     listado.form = listadoForm
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 export const crear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -85,7 +85,7 @@ crear.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.url = (options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ crear.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +101,7 @@ crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -110,7 +110,7 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
     const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -119,7 +119,7 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
         crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -127,7 +127,7 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
         crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -14,18 +14,54 @@ class PermissionController extends Controller
 {
     public function __construct(
         private PermissionService $permissionService
-    ) {}
+    ) {
+        // Middlewares para acciones de CRUD
+        $this->middleware('permission:permissions.create')->only(['create', 'store']);
+        $this->middleware('permission:permissions.edit')->only(['edit', 'update']);
+        $this->middleware('permission:permissions.delete')->only('destroy');
+    }
 
     /**
      * ✅ PANEL UNIFICADO: Centro de permisos y roles
      * Renderiza el nuevo panel con tabs para usuarios y roles
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('permissions.index');
 
-        // El nuevo componente React carga los datos dinámicamente via API
-        return Inertia::render('admin/permisos/index');
+        // Obtener permisos con paginación
+        $query = Permission::query();
+
+        // Búsqueda
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+
+        // Filtrar por módulo
+        if ($request->has('modulo') && $request->modulo) {
+            $modulo = $request->modulo;
+            $query->where('name', 'like', "{$modulo}.%");
+        }
+
+        $permissions = $query->orderBy('name', 'asc')->paginate(25);
+
+        // Obtener módulos únicos
+        $modulos = Permission::pluck('name')
+            ->map(fn($name) => explode('.', $name)[0])
+            ->unique()
+            ->sort()
+            ->values();
+
+        return Inertia::render('admin/permisos/index', [
+            'permissions' => $permissions,
+            'modulos'     => $modulos,
+            'filters'     => [
+                'search' => $request->search ?? '',
+                'modulo' => $request->modulo ?? '',
+            ],
+        ]);
     }
 
     /**
@@ -653,5 +689,94 @@ class PermissionController extends Controller
             'message' => "Plantilla '{$template->label}' aplicada al rol {$role->name}",
             'capabilities' => $this->permissionService->getRoleCapabilities($role),
         ]);
+    }
+
+    /**
+     * ✅ CRUD: Mostrar formulario de creación
+     */
+    public function create()
+    {
+        $this->authorize('permissions.create');
+
+        // Obtener módulos existentes para sugerencias
+        $modulosSugeridos = Permission::pluck('name')
+            ->map(fn($name) => explode('.', $name)[0])
+            ->unique()
+            ->sort()
+            ->values();
+
+        return Inertia::render('admin/permisos/create', [
+            'modulosSugeridos' => $modulosSugeridos,
+        ]);
+    }
+
+    /**
+     * ✅ CRUD: Almacenar nuevo permiso
+     */
+    public function store(Request $request)
+    {
+        $this->authorize('permissions.create');
+
+        $validated = $request->validate([
+            'name'        => ['required', 'string', 'max:255', 'unique:permissions'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'guard_name'  => ['required', 'string', 'in:web,api,sanctum'],
+        ]);
+
+        Permission::create([
+            'name'        => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'guard_name'  => $validated['guard_name'],
+        ]);
+
+        return redirect()->route('permissions.index')
+            ->with('success', 'Permiso creado exitosamente.');
+    }
+
+    /**
+     * ✅ CRUD: Mostrar formulario de edición
+     */
+    public function edit(Permission $permission)
+    {
+        $this->authorize('permissions.edit');
+
+        return Inertia::render('admin/permisos/edit', [
+            'permission' => $permission,
+        ]);
+    }
+
+    /**
+     * ✅ CRUD: Actualizar permiso
+     */
+    public function update(Request $request, Permission $permission)
+    {
+        $this->authorize('permissions.edit');
+
+        $validated = $request->validate([
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $permission->update($validated);
+
+        return redirect()->route('permissions.index')
+            ->with('success', 'Permiso actualizado exitosamente.');
+    }
+
+    /**
+     * ✅ CRUD: Eliminar permiso
+     */
+    public function destroy(Permission $permission)
+    {
+        $this->authorize('permissions.delete');
+
+        // No permitir eliminar permisos si están asignados a roles
+        if ($permission->roles()->count() > 0) {
+            return back()->with('error', 'No se puede eliminar un permiso que está asignado a roles.');
+        }
+
+        $permission->delete();
+
+        return redirect()->route('permissions.index')
+            ->with('success', 'Permiso eliminado exitosamente.');
     }
 }

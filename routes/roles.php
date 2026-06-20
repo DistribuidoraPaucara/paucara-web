@@ -10,15 +10,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ⚠️ IMPORTANTE: Las rutas estáticas DEBEN ir ANTES del Route::resource()
 
     // Rutas para vistas avanzadas de gestión de roles (Sistema C)
-    Route::get('roles/templates', fn() => Inertia::render('roles/templates'))->name('roles.templates.page');
-    Route::get('roles/compare', fn() => Inertia::render('roles/compare'))->name('roles.compare.page');
+    // TODO: Crear páginas de templates y compare
+    // Route::get('admin/permisos/roles/templates', fn() => Inertia::render('admin/permisos/roles/templates'))->name('roles.templates.page');
+    // Route::get('admin/permisos/roles/compare', fn() => Inertia::render('admin/permisos/roles/compare'))->name('roles.compare.page');
 
     // Ruta adicional para crear funcionalidad (trait) para un rol existente
-    Route::post('roles/{role}/crear-funcionalidad', [RoleController::class, 'crearFuncionalidad'])
+    Route::post('admin/permisos/roles/{role}/crear-funcionalidad', [RoleController::class, 'crearFuncionalidad'])
         ->name('roles.crear-funcionalidad')
         ->middleware('permission:roles.edit');
 
     // Rutas de gestión de roles (esto va AL FINAL para no interferir con rutas estáticas)
-    Route::resource('roles', RoleController::class);
+    Route::resource('admin/permisos/roles', RoleController::class);
 
 });

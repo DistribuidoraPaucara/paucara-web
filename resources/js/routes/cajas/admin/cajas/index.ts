@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
 export const detalle = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ detalle.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
 detalle.url = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ detalle.url = (args: { userId: string | number } | [userId: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
 detalle.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ detalle.get = (args: { userId: string | number } | [userId: string | number ] | 
 })
 /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
 detalle.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ detalle.head = (args: { userId: string | number } | [userId: string | number ] |
 
     /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
     const detalleForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ detalle.head = (args: { userId: string | number } | [userId: string | number ] |
 
             /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
         detalleForm.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ detalle.head = (args: { userId: string | number } | [userId: string | number ] |
         })
             /**
 * @see \App\Http\Controllers\CajaController::detalle
- * @see app/Http/Controllers/CajaController.php:942
+ * @see app/Http/Controllers/CajaController.php:956
  * @route '/cajas/admin/cajas/{userId}'
  */
         detalleForm.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -98,7 +98,7 @@ detalle.head = (args: { userId: string | number } | [userId: string | number ] |
     detalle.form = detalleForm
 /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
 export const movimientos = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ movimientos.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
 movimientos.url = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ movimientos.url = (args: { userId: string | number } | [userId: string | number 
 
 /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
 movimientos.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -150,7 +150,7 @@ movimientos.get = (args: { userId: string | number } | [userId: string | number 
 })
 /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
 movimientos.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -160,7 +160,7 @@ movimientos.head = (args: { userId: string | number } | [userId: string | number
 
     /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
     const movimientosForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -170,7 +170,7 @@ movimientos.head = (args: { userId: string | number } | [userId: string | number
 
             /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
         movimientosForm.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -179,7 +179,7 @@ movimientos.head = (args: { userId: string | number } | [userId: string | number
         })
             /**
 * @see \App\Http\Controllers\CajaController::movimientos
- * @see app/Http/Controllers/CajaController.php:731
+ * @see app/Http/Controllers/CajaController.php:745
  * @route '/cajas/admin/cajas/{userId}/movimientos'
  */
         movimientosForm.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -195,7 +195,7 @@ movimientos.head = (args: { userId: string | number } | [userId: string | number
     movimientos.form = movimientosForm
 /**
 * @see \App\Http\Controllers\CajaController::abrir
- * @see app/Http/Controllers/CajaController.php:371
+ * @see app/Http/Controllers/CajaController.php:385
  * @route '/cajas/admin/cajas/{userId}/abrir'
  */
 export const abrir = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -210,7 +210,7 @@ abrir.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::abrir
- * @see app/Http/Controllers/CajaController.php:371
+ * @see app/Http/Controllers/CajaController.php:385
  * @route '/cajas/admin/cajas/{userId}/abrir'
  */
 abrir.url = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -238,7 +238,7 @@ abrir.url = (args: { userId: string | number } | [userId: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\CajaController::abrir
- * @see app/Http/Controllers/CajaController.php:371
+ * @see app/Http/Controllers/CajaController.php:385
  * @route '/cajas/admin/cajas/{userId}/abrir'
  */
 abrir.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -248,7 +248,7 @@ abrir.post = (args: { userId: string | number } | [userId: string | number ] | s
 
     /**
 * @see \App\Http\Controllers\CajaController::abrir
- * @see app/Http/Controllers/CajaController.php:371
+ * @see app/Http/Controllers/CajaController.php:385
  * @route '/cajas/admin/cajas/{userId}/abrir'
  */
     const abrirForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -258,7 +258,7 @@ abrir.post = (args: { userId: string | number } | [userId: string | number ] | s
 
             /**
 * @see \App\Http\Controllers\CajaController::abrir
- * @see app/Http/Controllers/CajaController.php:371
+ * @see app/Http/Controllers/CajaController.php:385
  * @route '/cajas/admin/cajas/{userId}/abrir'
  */
         abrirForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -269,7 +269,7 @@ abrir.post = (args: { userId: string | number } | [userId: string | number ] | s
     abrir.form = abrirForm
 /**
 * @see \App\Http\Controllers\CajaController::cerrar
- * @see app/Http/Controllers/CajaController.php:467
+ * @see app/Http/Controllers/CajaController.php:481
  * @route '/cajas/admin/cajas/{userId}/cerrar'
  */
 export const cerrar = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -284,7 +284,7 @@ cerrar.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::cerrar
- * @see app/Http/Controllers/CajaController.php:467
+ * @see app/Http/Controllers/CajaController.php:481
  * @route '/cajas/admin/cajas/{userId}/cerrar'
  */
 cerrar.url = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -312,7 +312,7 @@ cerrar.url = (args: { userId: string | number } | [userId: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\CajaController::cerrar
- * @see app/Http/Controllers/CajaController.php:467
+ * @see app/Http/Controllers/CajaController.php:481
  * @route '/cajas/admin/cajas/{userId}/cerrar'
  */
 cerrar.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -322,7 +322,7 @@ cerrar.post = (args: { userId: string | number } | [userId: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\CajaController::cerrar
- * @see app/Http/Controllers/CajaController.php:467
+ * @see app/Http/Controllers/CajaController.php:481
  * @route '/cajas/admin/cajas/{userId}/cerrar'
  */
     const cerrarForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -332,7 +332,7 @@ cerrar.post = (args: { userId: string | number } | [userId: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\CajaController::cerrar
- * @see app/Http/Controllers/CajaController.php:467
+ * @see app/Http/Controllers/CajaController.php:481
  * @route '/cajas/admin/cajas/{userId}/cerrar'
  */
         cerrarForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -343,7 +343,7 @@ cerrar.post = (args: { userId: string | number } | [userId: string | number ] | 
     cerrar.form = cerrarForm
 /**
 * @see \App\Http\Controllers\CajaController::consolidar
- * @see app/Http/Controllers/CajaController.php:1103
+ * @see app/Http/Controllers/CajaController.php:1117
  * @route '/cajas/admin/cajas/{userId}/consolidar'
  */
 export const consolidar = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -358,7 +358,7 @@ consolidar.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::consolidar
- * @see app/Http/Controllers/CajaController.php:1103
+ * @see app/Http/Controllers/CajaController.php:1117
  * @route '/cajas/admin/cajas/{userId}/consolidar'
  */
 consolidar.url = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -386,7 +386,7 @@ consolidar.url = (args: { userId: string | number } | [userId: string | number ]
 
 /**
 * @see \App\Http\Controllers\CajaController::consolidar
- * @see app/Http/Controllers/CajaController.php:1103
+ * @see app/Http/Controllers/CajaController.php:1117
  * @route '/cajas/admin/cajas/{userId}/consolidar'
  */
 consolidar.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -396,7 +396,7 @@ consolidar.post = (args: { userId: string | number } | [userId: string | number 
 
     /**
 * @see \App\Http\Controllers\CajaController::consolidar
- * @see app/Http/Controllers/CajaController.php:1103
+ * @see app/Http/Controllers/CajaController.php:1117
  * @route '/cajas/admin/cajas/{userId}/consolidar'
  */
     const consolidarForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ consolidar.post = (args: { userId: string | number } | [userId: string | number 
 
             /**
 * @see \App\Http\Controllers\CajaController::consolidar
- * @see app/Http/Controllers/CajaController.php:1103
+ * @see app/Http/Controllers/CajaController.php:1117
  * @route '/cajas/admin/cajas/{userId}/consolidar'
  */
         consolidarForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

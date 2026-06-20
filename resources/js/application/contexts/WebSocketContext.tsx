@@ -82,8 +82,12 @@ export function WebSocketProvider({
       // console.log('✅ [WebSocketContext] Usando token de:', token ? 'parámetro directo' : 'localStorage');
 
       // Crear promesa de conexión y almacenarla
-      // Note: websocketService.connect() automatically resolves the URL from runtime config
+      // Pass URL explicitly to avoid fallback to localhost
+      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3001';
+      console.log('🔌 WebSocket URL desde config:', wsUrl);
+
       connectionPromiseRef.current = websocketService.connect({
+        url: wsUrl,
         auth: {
           token: authToken,
           userId: userId,

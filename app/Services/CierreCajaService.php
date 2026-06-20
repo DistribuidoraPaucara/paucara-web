@@ -516,6 +516,64 @@ class CierreCajaService
     }
 
     /**
+     * ✅ NUEVO (2026-06-20): Obtener desglose dinámico de INGRESOS (ENTRADA)
+     * Agrupa por tipo_operacion.codigo automáticamente
+     * Útil para mostrar dinámicamente en frontend
+     *
+     * @param AperturaCaja $aperturaCaja
+     * @return array Desglose de [codigo => ['codigo', 'nombre', 'total', 'cantidad']]
+     */
+    public function obtenerDesgloseIngresos(AperturaCaja $aperturaCaja): array
+    {
+        $this->fechaInicio = $aperturaCaja->fecha;
+        $this->fechaFin = $aperturaCaja->cierre?->created_at ?? now();
+
+        $movimientos = $this->obtenerMovimientos($aperturaCaja);
+
+        return $this->obtenerMovimientosPorDireccion($movimientos, 'ENTRADA')
+            ->filter(fn($m) => $this->esPagoValido($m))
+            ->groupBy(fn($m) => $m->tipoOperacion?->codigo)
+            ->map(fn($grupo) => [
+                'codigo' => $grupo->first()?->tipoOperacion?->codigo ?? 'DESCONOCIDO',
+                'nombre' => $grupo->first()?->tipoOperacion?->nombre ?? 'Tipo desconocido',
+                'total' => (float) abs((float) $grupo->sum('monto')),
+                'cantidad' => $grupo->count(),
+            ])
+            ->toArray();
+    }
+
+    /**
+     * ✅ NUEVO (2026-06-20): Obtener desglose dinámico de EGRESOS (SALIDA)
+     * Agrupa por tipo_operacion.codigo automáticamente
+     * Excluye ANULACION y VUELTO (transacciones especiales)
+     * Útil para mostrar dinámicamente en frontend
+     *
+     * @param AperturaCaja $aperturaCaja
+     * @return array Desglose de [codigo => ['codigo', 'nombre', 'total', 'cantidad']]
+     */
+    public function obtenerDesgloseEgresos(AperturaCaja $aperturaCaja): array
+    {
+        $this->fechaInicio = $aperturaCaja->fecha;
+        $this->fechaFin = $aperturaCaja->cierre?->created_at ?? now();
+
+        $movimientos = $this->obtenerMovimientos($aperturaCaja);
+
+        return $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
+            ->filter(fn($m) =>
+                $this->esPagoValido($m) &&
+                !in_array($m->tipoOperacion?->codigo, ['ANULACION', 'VUELTO'])
+            )
+            ->groupBy(fn($m) => $m->tipoOperacion?->codigo)
+            ->map(fn($grupo) => [
+                'codigo' => $grupo->first()?->tipoOperacion?->codigo ?? 'DESCONOCIDO',
+                'nombre' => $grupo->first()?->tipoOperacion?->nombre ?? 'Tipo desconocido',
+                'total' => (float) abs((float) $grupo->sum('monto')),
+                'cantidad' => $grupo->count(),
+            ])
+            ->toArray();
+    }
+
+    /**
      * ✅ NUEVO: Obtener movimientos por dirección
      */
     private function obtenerMovimientosPorDireccion($movimientos, string $direccion)

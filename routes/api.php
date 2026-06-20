@@ -57,6 +57,7 @@ use App\Http\Controllers\PrestamoClienteController;
 use App\Http\Controllers\PrestamoProveedorController;
 use App\Http\Controllers\PrestamoEventoController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\TipoOperacionCajaController;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
@@ -92,6 +93,14 @@ Route::get('/tipos-pago', function () {
     return response()->json([
         'success' => true,
         'data' => \App\Models\TipoPago::where('activo', true)->get()
+    ]);
+});
+
+// ✅ NUEVO: Endpoint para cargar tipos de operación de caja
+Route::get('/tipos-operacion-caja', function () {
+    return response()->json([
+        'success' => true,
+        'data' => \App\Models\TipoOperacionCaja::where('activo', true)->get()
     ]);
 });
 
@@ -315,6 +324,16 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     // Tipos activos: GET /api/tipos-pago/activos/listar
     Route::apiResource('tipos-pago', TipoPagoController::class)->names('api.tipos-pago');
     Route::get('/tipos-pago/activos/listar', [TipoPagoController::class, 'activos'])->name('api.tipos-pago.activos');
+
+    // ==========================================
+    // 💰 TIPOS DE OPERACIÓN DE CAJA (API CRUD)
+    // ==========================================
+    // Listar tipos de operación: GET /api/tipo-operacion-caja
+    // Obtener tipo de operación: GET /api/tipo-operacion-caja/{id}
+    // Crear tipo de operación: POST /api/tipo-operacion-caja
+    // Actualizar tipo de operación: PUT /api/tipo-operacion-caja/{id}
+    // Eliminar tipo de operación: DELETE /api/tipo-operacion-caja/{id}
+    Route::apiResource('tipo-operacion-caja', TipoOperacionCajaController::class)->names('api.tipo-operacion-caja');
 
     // ==========================================
     // 🏢 SECTORES DE ALMACÉN (API CRUD)

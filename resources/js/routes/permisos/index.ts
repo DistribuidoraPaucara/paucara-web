@@ -3,7 +3,7 @@ import usuario from './usuario'
 import rol from './rol'
 /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -18,7 +18,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -27,7 +27,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -36,7 +36,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -46,7 +46,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PermissionController::index
- * @see app/Http/Controllers/PermissionController.php:23
+ * @see app/Http/Controllers/PermissionController.php:28
  * @route '/permisos'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

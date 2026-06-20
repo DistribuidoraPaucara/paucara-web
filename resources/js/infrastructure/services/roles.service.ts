@@ -40,7 +40,7 @@ export class RolesService extends GenericService<Role, RoleFormData> {
    * URL para ver los detalles de un rol
    */
   showUrl(id: Id): string {
-    return `/roles/${id}`;
+    return `/admin/permisos/roles/${id}`;
   }
 
   /**
@@ -61,66 +61,66 @@ export class RolesService extends GenericService<Role, RoleFormData> {
    * URL para mostrar el formulario de editar un rol
    */
   editUrl(id: Id) {
-    return `/roles/${id}/edit`;
+    return `/admin/permisos/roles/${id}/edit`;
   }
 
   /**
    * URL para guardar un nuevo rol (POST)
    */
   storeUrl() {
-    return '/roles';
+    return '/admin/permisos/roles';
   }
 
   /**
    * URL para actualizar un rol (PUT/PATCH)
    */
   updateUrl(id: Id) {
-    return `/roles/${id}`;
+    return `/admin/permisos/roles/${id}`;
   }
 
   /**
    * URL para eliminar un rol (DELETE)
    */
   destroyUrl(id: Id) {
-    return `/roles/${id}`;
+    return `/admin/permisos/roles/${id}`;
   }
 
   /**
    * URLs para acciones específicas de roles
    */
   assignPermissionUrl(id: Id) {
-    return `/roles/${id}/assign-permission`;
+    return `/admin/permisos/roles/${id}/assign-permission`;
   }
 
   removePermissionUrl(id: Id) {
-    return `/roles/${id}/remove-permission`;
+    return `/admin/permisos/roles/${id}/remove-permission`;
   }
 
   applyTemplateUrl(id: Id) {
-    return `/roles/${id}/apply-template`;
+    return `/admin/permisos/roles/${id}/apply-template`;
   }
 
   copyFromUrl(id: Id) {
-    return `/roles/${id}/copy-from`;
+    return `/admin/permisos/roles/${id}/copy-from`;
   }
 
   createFunctionalityUrl(id: Id) {
-    return `/roles/${id}/crear-funcionalidad`;
+    return `/admin/permisos/roles/${id}/crear-funcionalidad`;
   }
 
   auditUrl(id: Id) {
-    return `/roles/${id}/audit`;
+    return `/admin/permisos/roles/${id}/audit`;
   }
 
   /**
    * URLs para vistas avanzadas
    */
   templatesUrl() {
-    return '/roles/templates';
+    return '/admin/permisos/roles/templates';
   }
 
   compareUrl() {
-    return '/roles/compare';
+    return '/admin/permisos/roles/compare';
   }
 
   /**

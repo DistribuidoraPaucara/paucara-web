@@ -30,7 +30,7 @@ class RoleController extends Controller
 
         $roles = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return Inertia::render('roles/index', [
+        return Inertia::render('admin/permisos/roles/index', [
             'roles'   => $roles,
             'filters' => [
                 'search' => $request->search,

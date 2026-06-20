@@ -30,12 +30,21 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
       try {
         // Priority: config.url > runtime config > env variable > fallback
+        const appConfig = (window as any).__APP_CONFIG__ || {};
         const baseUrl = config.url ||
-                        (window as any).__APP_CONFIG__?.websocketUrl ||
+                        appConfig.websocketUrl ||
                         import.meta.env.VITE_WEBSOCKET_URL ||
                         'http://localhost:3001';
 
-        console.log('🔌 WebSocket URL:', baseUrl);
+        console.log('🔌 WebSocket URL (resolved):', baseUrl);
+        console.log('🔍 Debug info:');
+        console.log('  - config.url:', config.url);
+        console.log('  - window.__APP_CONFIG__:', appConfig);
+        console.log('  - appConfig.websocketUrl:', appConfig.websocketUrl);
+        console.log('  - import.meta.env.VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL);
+        if (!config.url && !appConfig.websocketUrl && !import.meta.env.VITE_WEBSOCKET_URL) {
+          console.warn('⚠️  WARNING: No WebSocket URL configured, falling back to localhost:3001');
+        }
 
         this.socket = io(baseUrl, {
           reconnection: config.reconnection !== false,

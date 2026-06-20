@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,13 +15,32 @@ class TipoOperacionCaja extends Model
     protected $fillable = [
         'codigo',
         'nombre',
-        'direccion',  // ✅ NUEVO: ENTRADA, SALIDA, AJUSTE, ESPECIAL
+        'descripcion',
+        'direccion',
+        'activo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+        ];
+    }
 
     // Relaciones
     public function movimientos()
     {
         return $this->hasMany(MovimientoCaja::class, 'tipo_operacion_id');
+    }
+
+    // Scopes
+    public function scopeSearchByName($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->whereRaw('nombre ilike ?', ['%' . $search . '%'])
+              ->orWhereRaw('codigo ilike ?', ['%' . $search . '%'])
+              ->orWhereRaw('descripcion ilike ?', ['%' . $search . '%']);
+        });
     }
 
     // Constantes para los tipos
@@ -38,68 +56,43 @@ class TipoOperacionCaja extends Model
 
     const INGRESO_EXTRA = 'INGRESO_EXTRA';
 
-    const CREDITO = 'CREDITO';  // ✅ Tipo de operación para créditos otorgados
+    const CREDITO = 'CREDITO'; // ✅ Tipo de operación para créditos otorgados
 
-    const PAGO_SUELDO = 'PAGO_SUELDO';  // ✅ NUEVO: Tipo de operación para pagos de sueldo
+    const PAGO_SUELDO = 'PAGO_SUELDO'; // ✅ NUEVO: Tipo de operación para pagos de sueldo
 
-    const ANTICIPO = 'ANTICIPO';  // ✅ NUEVO: Tipo de operación para anticipos
+    const ANTICIPO = 'ANTICIPO'; // ✅ NUEVO: Tipo de operación para anticipos
 
     /**
      * ✅ Obtener tipos de operación clasificados por dirección (ENTRADA/SALIDA/AJUSTE)
-     * Agrupa los tipos para mejor presentación en UI
+     * Agrupa los tipos directamente desde la columna 'direccion' de la BD
      *
      * @return array Array con estructura: ['ENTRADA' => [...], 'SALIDA' => [...], 'AJUSTE' => [...]]
      */
     public static function obtenerTiposClasificados(): array
     {
-        $todos = self::all(['id', 'codigo', 'nombre']);
-
-        // Clasificación de tipos según dirección del flujo de dinero
-        $clasificacion = [
-            'ENTRADA' => [
-                'VENTA',     // Cliente compra
-                'PAGO',      // Cliente paga deuda
-                'SERVICIO',  // Servicio prestado
-            ],
-            'SALIDA' => [
-                'COMPRA',    // Compra a proveedor
-                'GASTOS',    // Gasto operacional
-                'PAGO_SUELDO', // Pago a empleados
-                'ANTICIPO',  // Anticipo a empleados
-                'ANULACION', // Devolución/anulación
-                'DEVOLUCION', // Devolución de producto
-            ],
-            'AJUSTE' => [
-                'AJUSTE',    // Ajuste manual
-                'CREDITO',   // Otorgamiento de crédito
-            ],
-        ];
-
-        // Excluir del modal (tienen sus propios diálogos)
+        // Tipos especiales que se excluyen (tienen sus propios diálogos)
         $excluidos = ['APERTURA', 'CIERRE'];
 
-        // Agrupar por clasificación
-        $resultado = [
-            'ENTRADA' => [],
-            'SALIDA' => [],
-            'AJUSTE' => [],
+        // Obtener todos los tipos excepto los especiales y agrupar por dirección
+        $resultado = self::whereNotIn('codigo', $excluidos)
+            ->get(['id', 'codigo', 'nombre', 'direccion'])
+            ->groupBy('direccion')
+            ->map(function ($grupo) {
+                return $grupo->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'codigo' => $item->codigo,
+                        'nombre' => $item->nombre,
+                    ];
+                })->values()->all();
+            })
+            ->all();
+
+        // Asegurar que existan las tres direcciones aunque estén vacías
+        return [
+            'ENTRADA' => $resultado['ENTRADA'] ?? [],
+            'SALIDA' => $resultado['SALIDA'] ?? [],
+            'AJUSTE' => $resultado['AJUSTE'] ?? [],
         ];
-
-        foreach ($todos as $tipo) {
-            // Excluir tipos especiales
-            if (in_array($tipo->codigo, $excluidos)) {
-                continue;
-            }
-
-            // Encontrar la clasificación del tipo
-            foreach ($clasificacion as $clase => $codigos) {
-                if (in_array($tipo->codigo, $codigos)) {
-                    $resultado[$clase][] = $tipo;
-                    break;
-                }
-            }
-        }
-
-        return $resultado;
     }
 }

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
 export const editar = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ editar.definition = {
 
 /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
 editar.url = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ editar.url = (args: { role: number | { id: number } } | [role: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
 editar.get = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ editar.get = (args: { role: number | { id: number } } | [role: number | { id: nu
 })
 /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
 editar.head = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ editar.head = (args: { role: number | { id: number } } | [role: number | { id: n
 
     /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
     const editarForm = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ editar.head = (args: { role: number | { id: number } } | [role: number | { id: n
 
             /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
         editarForm.get = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ editar.head = (args: { role: number | { id: number } } | [role: number | { id: n
         })
             /**
 * @see \App\Http\Controllers\PermissionController::editar
- * @see app/Http/Controllers/PermissionController.php:123
+ * @see app/Http/Controllers/PermissionController.php:159
  * @route '/permisos/rol/{role}/editar'
  */
         editarForm.head = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ editar.head = (args: { role: number | { id: number } } | [role: number | { id: n
     editar.form = editarForm
 /**
 * @see \App\Http\Controllers\PermissionController::actualizar
- * @see app/Http/Controllers/PermissionController.php:139
+ * @see app/Http/Controllers/PermissionController.php:175
  * @route '/permisos/rol/{role}'
  */
 export const actualizar = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -118,7 +118,7 @@ actualizar.definition = {
 
 /**
 * @see \App\Http\Controllers\PermissionController::actualizar
- * @see app/Http/Controllers/PermissionController.php:139
+ * @see app/Http/Controllers/PermissionController.php:175
  * @route '/permisos/rol/{role}'
  */
 actualizar.url = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ actualizar.url = (args: { role: number | { id: number } } | [role: number | { id
 
 /**
 * @see \App\Http\Controllers\PermissionController::actualizar
- * @see app/Http/Controllers/PermissionController.php:139
+ * @see app/Http/Controllers/PermissionController.php:175
  * @route '/permisos/rol/{role}'
  */
 actualizar.patch = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -161,7 +161,7 @@ actualizar.patch = (args: { role: number | { id: number } } | [role: number | { 
 
     /**
 * @see \App\Http\Controllers\PermissionController::actualizar
- * @see app/Http/Controllers/PermissionController.php:139
+ * @see app/Http/Controllers/PermissionController.php:175
  * @route '/permisos/rol/{role}'
  */
     const actualizarForm = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -176,7 +176,7 @@ actualizar.patch = (args: { role: number | { id: number } } | [role: number | { 
 
             /**
 * @see \App\Http\Controllers\PermissionController::actualizar
- * @see app/Http/Controllers/PermissionController.php:139
+ * @see app/Http/Controllers/PermissionController.php:175
  * @route '/permisos/rol/{role}'
  */
         actualizarForm.patch = (args: { role: number | { id: number } } | [role: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

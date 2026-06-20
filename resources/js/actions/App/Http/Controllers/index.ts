@@ -4,6 +4,7 @@ import InventarioController from './InventarioController'
 import ModuloSidebarController from './ModuloSidebarController'
 import Auth from './Auth'
 import PermissionController from './PermissionController'
+import TipoOperacionCajaController from './TipoOperacionCajaController'
 import ProductoController from './ProductoController'
 import ComboController from './ComboController'
 import VentaController from './VentaController'
@@ -109,6 +110,7 @@ InventarioController,
 ModuloSidebarController,
 Auth,
 PermissionController,
+TipoOperacionCajaController,
 ProductoController,
 ComboController,
 VentaController,

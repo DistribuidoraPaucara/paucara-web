@@ -9,8 +9,11 @@
 
     {{-- Application Configuration (Runtime) --}}
     <script>
+        // Get WebSocket URL: prioritize WEBSOCKET_URL, fallback to VITE_WEBSOCKET_URL
+        const wsUrl = "{{ env('WEBSOCKET_URL') }}" || "{{ env('VITE_WEBSOCKET_URL', 'http://localhost:3001') }}";
+
         window.__APP_CONFIG__ = {
-            websocketUrl: "{{ env('VITE_WEBSOCKET_URL', 'http://localhost:3001') }}",
+            websocketUrl: wsUrl,
             apiUrl: "{{ env('VITE_API_URL', '/api') }}"
         };
         window.__APP_NAME__ = "{{ config('app.name', 'Laravel') }}";

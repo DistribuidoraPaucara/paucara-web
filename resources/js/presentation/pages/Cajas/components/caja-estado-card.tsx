@@ -11,7 +11,7 @@
  */
 
 import type { AperturaCaja } from '@/domain/entities/cajas';
-import { formatCurrency, formatTime, getMovimientoColor } from '@/lib/cajas.utils';
+import { formatCurrency, formatTime } from '@/lib/cajas.utils';
 import EstadoCierreBadge from '@/presentation/components/cajas/EstadoCierreBadge';
 
 interface Cierre {
@@ -24,6 +24,20 @@ interface Cierre {
     monto_real: number;
 }
 
+interface DesgloseIngreso {
+    codigo: string;
+    nombre: string;
+    total: number;
+    cantidad: number;
+}
+
+interface DesgloseEgreso {
+    codigo: string;
+    nombre: string;
+    total: number;
+    cantidad: number;
+}
+
 interface Props {
     cajaAbiertaHoy: AperturaCaja | null;
     totalMovimientos: number;
@@ -31,6 +45,8 @@ interface Props {
     datosActualizados?: any; // ✅ NUEVO: Datos frescos del servidor
     cargandoDatos?: boolean; // ✅ NUEVO: Indicador de carga
     ventasCreditoTotales?: number; // ✅ NUEVO: Sumatoria de ventas a crédito de esta caja
+    desgloseIngresos?: DesgloseIngreso[]; // ✅ NUEVO (2026-06-20): Desglose dinámico de ingresos
+    desgloseEgresos?: DesgloseEgreso[]; // ✅ NUEVO (2026-06-20): Desglose dinámico de egresos
     onAbrirClick: () => void;
     onCerrarClick: () => void;
     onGastoClick?: () => void;
@@ -44,11 +60,11 @@ interface Props {
 
 export function CajaEstadoCard({
     cajaAbiertaHoy,
-    totalMovimientos,
     efectivoEsperado,
     datosActualizados,
     cargandoDatos = false,
-    ventasCreditoTotales = 0,
+    desgloseIngresos = [],
+    desgloseEgresos = [],
     onAbrirClick,
     onCerrarClick,
     onGastoClick,
@@ -243,29 +259,14 @@ export function CajaEstadoCard({
                             </label>
                             {datosActualizados ? (
                                 <>
-                                    {/* ✅ CORREGIDO (2026-05-03): Mostrar SOLO EFECTIVO y TRANSFERENCIA en desglose */}
-                                    {datosActualizados.ventasPorTipoPago && datosActualizados.ventasPorTipoPago.length > 0 ? (
+                                    {/* ✅ REFACTORIZADO (2026-06-20): Mostrar dinámicamente todos los ingresos (ENTRADA) */}
+                                    {desgloseIngresos && desgloseIngresos.length > 0 ? (
                                         <div className="space-y-1">
-                                            {datosActualizados.ventasPorTipoPago
-                                                .filter((tipoPago: any) =>
-                                                    tipoPago.codigo === 'EFECTIVO' || tipoPago.codigo === 'TRANSFERENCIA/QR'
-                                                )
-                                                .map((tipoPago: any, idx: number) => (
+                                            {desgloseIngresos.map((ingreso: DesgloseIngreso, idx: number) => (
                                                 <p key={idx} className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {tipoPago.tipo}: {formatCurrency(tipoPago.total)}
+                                                    {ingreso.nombre}: {formatCurrency(ingreso.total)}
                                                 </p>
                                             ))}
-                                            {/* ✅ MOSTRAR Pagos de Crédito - ES dinero real que entra cuando se cobra deuda anterior */}
-                                            {(datosActualizados?.pagosCredito || 0) > 0 && (
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Pagos de Crédito: {formatCurrency(datosActualizados.pagosCredito)}
-                                                </p>
-                                            )}
-                                            {(datosActualizados?.sumatorialServicio || 0) > 0 && (
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Servicios: {formatCurrency(datosActualizados.sumatorialServicio)}
-                                                </p>
-                                            )}
                                             <p className="text-lg font-semibold text-green-600 dark:text-green-400 mt-1 border-t border-gray-300 pt-1">
                                                 +{formatCurrency(datosActualizados.totalIngresos || 0)}
                                             </p>
@@ -294,83 +295,49 @@ export function CajaEstadoCard({
                             </div>
                             {datosActualizados ? (
                                 <div className="mt-2 space-y-2">
-                                    {/* Gastos */}
-                                    {(datosActualizados?.sumatorialGastos ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-red-50 dark:bg-red-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Gastos</span>
-                                            <span className="font-semibold text-red-600 dark:text-red-400">
-                                                {formatCurrency(datosActualizados.sumatorialGastos)}
-                                            </span>
-                                        </div>
-                                    )}
+                                    {/* ✅ REFACTORIZADO (2026-06-20): Mostrar dinámicamente todos los egresos (SALIDA) */}
+                                    {desgloseEgresos && desgloseEgresos.length > 0 ? (
+                                        <>
+                                            {desgloseEgresos.map((egreso: DesgloseEgreso, idx: number) => (
+                                                <div key={idx} className="flex justify-between items-center text-sm p-2 bg-red-50 dark:bg-red-900/10 rounded">
+                                                    <span className="text-gray-700 dark:text-gray-300">• {egreso.nombre}</span>
+                                                    <span className="font-semibold text-red-600 dark:text-red-400">
+                                                        {formatCurrency(egreso.total)}
+                                                    </span>
+                                                </div>
+                                            ))}
 
-                                    {/* Pagos de Sueldo */}
-                                    {(datosActualizados?.sumatorialPagosSueldo ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-red-50 dark:bg-red-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Pagos de Sueldo</span>
-                                            <span className="font-semibold text-red-600 dark:text-red-400">
-                                                {formatCurrency(datosActualizados.sumatorialPagosSueldo)}
-                                            </span>
-                                        </div>
-                                    )}
+                                            {/* ✅ Anulaciones - dato referencial */}
+                                            {(datosActualizados?.sumatorialAnulaciones ?? 0) > 0 && (
+                                                <div className="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-900/10 rounded">
+                                                    <span className="text-gray-700 dark:text-gray-300">• Anulaciones (Referencial)</span>
+                                                    <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                                        {formatCurrency(datosActualizados.sumatorialAnulaciones)}
+                                                    </span>
+                                                </div>
+                                            )}
 
-                                    {/* Anticipos */}
-                                    {(datosActualizados?.sumatorialAnticipos ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-red-50 dark:bg-red-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Anticipos</span>
-                                            <span className="font-semibold text-red-600 dark:text-red-400">
-                                                {formatCurrency(datosActualizados.sumatorialAnticipos)}
-                                            </span>
-                                        </div>
-                                    )}
+                                            {/* ✅ Vueltos - dato informativo */}
+                                            {(datosActualizados?.sumatorialVueltos ?? 0) > 0 && (
+                                                <div className="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-900/10 rounded">
+                                                    <span className="text-gray-700 dark:text-gray-300">• Vueltos / Cambio (Informativo)</span>
+                                                    <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                                        {formatCurrency(datosActualizados.sumatorialVueltos)}
+                                                    </span>
+                                                </div>
+                                            )}
 
-                                    {/* Compras */}
-                                    {(datosActualizados?.sumatorialCompras ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-orange-50 dark:bg-orange-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Compras a Proveedores</span>
-                                            <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                                {formatCurrency(datosActualizados.sumatorialCompras)}
-                                            </span>
-                                        </div>
+                                            {/* Total Egresos */}
+                                            <div className="flex justify-between items-center text-sm p-2 bg-red-100 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700 font-bold">
+                                                <span className="text-red-800 dark:text-red-200">Total Egresos</span>
+                                                <span className="text-red-700 dark:text-red-300">
+                                                    -{formatCurrency(totalEgresos)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Sin egresos</p>
                                     )}
-
-                                    {/* Anulaciones */}
-                                    {(datosActualizados?.sumatorialAnulaciones ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Anulaciones</span>
-                                            <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                                {formatCurrency(datosActualizados.sumatorialAnulaciones)}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Devoluciones */}
-                                    {(datosActualizados?.sumatorialDevoluciones ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-orange-50 dark:bg-orange-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Devoluciones</span>
-                                            <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                                {formatCurrency(datosActualizados.sumatorialDevoluciones)}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* ✅ NUEVO (2026-05-05): Vueltos / Cambio - Solo Informativo */}
-                                    {(datosActualizados?.sumatorialVueltos ?? 0) > 0 && (
-                                        <div className="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-900/10 rounded">
-                                            <span className="text-gray-700 dark:text-gray-300">• Vueltos / Cambio</span>
-                                            <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                                {formatCurrency(datosActualizados.sumatorialVueltos)}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Total Egresos */}
-                                    <div className="flex justify-between items-center text-sm p-2 bg-red-100 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700 font-bold">
-                                        <span className="text-red-800 dark:text-red-200">Total Egresos</span>
-                                        <span className="text-red-700 dark:text-red-300">
-                                            -{formatCurrency(totalEgresos)}
-                                        </span>
-                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">
