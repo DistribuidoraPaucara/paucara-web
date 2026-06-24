@@ -229,6 +229,20 @@ export interface PrestamoProveedor extends BaseEntity {
     } | null;
 }
 
+// ✅ NUEVO: Almacenes en los que se distribuyó un préstamo de proveedor
+export interface PrestamoProveedorAlmacen extends BaseEntity {
+    id: Id;
+    prestamo_proveedor_detalle_id: Id;
+    almacenes_prestables_id: Id;
+    cantidad: number;
+    es_proveedor: boolean;
+    // Relaciones
+    almacen?: {
+        id: Id;
+        nombre: string;
+    };
+}
+
 export interface PrestamoProveedorDetalle extends BaseEntity {
     id: Id;
     prestamo_proveedor_id: Id;
@@ -237,6 +251,8 @@ export interface PrestamoProveedorDetalle extends BaseEntity {
     almacenes_ids?: Id[];
     estado: EstadoPrestamo;
     devolucionDetalles?: DevolucionProveedorDetalle[];
+    // ✅ NUEVO: Almacenes en los que se distribuyó este préstamo
+    almacenes?: PrestamoProveedorAlmacen[];
     // Relaciones
     prestable?: Prestable;
 }
@@ -325,6 +341,20 @@ export interface NuevoPrestamoProveedor extends BaseFormData {
     }>;
 }
 
+// ✅ NUEVO: Almacenes en los que se distribuyó un préstamo de evento
+export interface PrestamoEventoAlmacen extends BaseEntity {
+    id: Id;
+    prestamo_evento_detalle_id: Id;
+    almacenes_prestables_id: Id;
+    cantidad: number;
+    es_proveedor: boolean;
+    // Relaciones
+    almacen?: {
+        id: Id;
+        nombre: string;
+    };
+}
+
 export interface PrestamoEventoDetalle extends BaseEntity {
     id: Id;
     prestamo_evento_id: Id;
@@ -333,6 +363,8 @@ export interface PrestamoEventoDetalle extends BaseEntity {
     monto_garantia: number;
     estado: EstadoPrestamo;
     devoluciones?: Array<any>;
+    // ✅ NUEVO: Almacenes en los que se distribuyó este préstamo
+    almacenes?: PrestamoEventoAlmacen[];
     prestable?: Prestable;
 }
 
@@ -416,9 +448,22 @@ export interface DatosDevolucionCliente extends BaseFormData {
 }
 
 export interface DatosDevolucionProveedor extends BaseFormData {
-    cantidad_devuelta: number;
+    prestamo_proveedor_id?: Id;
+    cantidad_devuelta?: number;
     observaciones?: string;
     fecha_devolucion: string;
+    monto_cobrado_daño_total?: number;
+    devolucion_automatica?: boolean;
+    detalles?: Array<{
+        prestamo_proveedor_detalle_id: Id;
+        cantidad_devuelta: number;
+        cantidad_dañada_total?: number;
+        devolucion_almacenes?: Array<{
+            almacenes_prestables_id: Id;
+            cantidad_devuelta: number;
+            cantidad_dañada_total: number;
+        }>;
+    }>;
 }
 
 // ============================================

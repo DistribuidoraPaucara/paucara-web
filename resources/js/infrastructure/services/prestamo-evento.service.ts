@@ -170,6 +170,7 @@ export const prestamoEventoService = {
             monto_garantia_devuelta_total?: number;
             observaciones?: string;
             almacen_id?: Id;
+            devolucion_automatica?: boolean;
             detalles: Array<{
                 prestamo_evento_detalle_id: Id;
                 cantidad_devuelta: number;
@@ -177,6 +178,12 @@ export const prestamoEventoService = {
                 cantidad_dañada_total?: number;
                 monto_cobrado_daño?: number;
                 monto_garantia_devuelta?: number;
+                // ✅ NUEVO: Almacenes específicos para este detalle
+                devolucion_almacenes?: Array<{
+                    almacenes_prestables_id: Id;
+                    cantidad_devuelta: number;
+                    cantidad_dañada_total: number;
+                }>;
             }>;
         }
     ): Promise<DevolucionEvento> {
