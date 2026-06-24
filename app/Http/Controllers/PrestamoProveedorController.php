@@ -28,6 +28,7 @@ class PrestamoProveedorController extends Controller
         try {
             $query = PrestamoProveedor::with([
                 'detalles.prestable',
+                'detalles.almacenes',
                 'proveedor',
                 'detalles.devolucionDetalles',
                 'almacen',
@@ -152,6 +153,37 @@ class PrestamoProveedorController extends Controller
     public function registrarDevolucion(Request $request, PrestamoProveedor $prestamo): JsonResponse
     {
         try {
+            $usuario = auth()->user();
+
+            // ✅ NUEVO: Validar permisos de acceso
+            $tienePermiso = false;
+
+            // Admin, Manager: permiso total
+            if ($usuario->hasRole(['admin', 'Admin', 'manager', 'Manager', 'ADMIN', 'MANAGER'])) {
+                $tienePermiso = true;
+            }
+            // Chofer: solo puede registrar devoluciones de sus propios préstamos
+            elseif ($usuario->hasRole(['chofer', 'Chofer', 'CHOFER'])) {
+                if ($prestamo->chofer_id === $usuario->id) {
+                    $tienePermiso = true;
+                }
+            }
+
+            if (!$tienePermiso) {
+                Log::warning('⚠️ ACCESO DENEGADO - Intento de registrar devolución proveedor sin permisos', [
+                    'usuario_id' => $usuario->id,
+                    'usuario_nombre' => $usuario->name,
+                    'prestamo_id' => $prestamo->id,
+                    'chofer_asignado_id' => $prestamo->chofer_id,
+                    'roles_usuario' => $usuario->getRoleNames()->toArray(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para registrar devoluciones de este préstamo',
+                ], 403);
+            }
+
             // ✅ SIMPLIFICADO: cantidad_devuelta es el TOTAL, cantidad_dañada_total es solo información
             $validated = $request->validate([
                 'fecha_devolucion' => 'required|date',

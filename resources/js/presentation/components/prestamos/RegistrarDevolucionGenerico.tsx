@@ -392,6 +392,43 @@ export function RegistrarDevolucionGenerico({
         }
     }, [devolucionData.detalles, prestamo]);
 
+    // ✅ NUEVO: Helper para distribuir cantidad secuencialmente entre almacenes (FIFO)
+    const distribuirSecuencialmente = (
+        almacenesDelDetalle: any[],
+        cantidadDevuelta: number,
+        cantidadDanada: number
+    ): DevolucionAlmacen[] => {
+        if (!almacenesDelDetalle || almacenesDelDetalle.length === 0) {
+            return [];
+        }
+
+        const devolucionAlmacenes: DevolucionAlmacen[] = [];
+        let cantidadRestante = cantidadDevuelta;
+
+        // Distribuir cantidad a devolver SECUENCIALMENTE entre almacenes (FIFO)
+        for (const almacen of almacenesDelDetalle) {
+            if (cantidadRestante <= 0) break;
+
+            const cantidadPrestada = almacen.cantidad as number;
+            const cantidadDeEsteAlmacen = Math.min(cantidadRestante, cantidadPrestada);
+
+            devolucionAlmacenes.push({
+                almacenes_prestables_id: almacen.almacenes_prestables_id,
+                cantidad_devuelta: cantidadDeEsteAlmacen,
+                cantidad_dañada_total: 0, // Se asignará al último almacén
+            });
+
+            cantidadRestante -= cantidadDeEsteAlmacen;
+        }
+
+        // ✅ Asignar dañadas al ÚLTIMO almacén que recibió devoluciones
+        if (cantidadDanada > 0 && devolucionAlmacenes.length > 0) {
+            devolucionAlmacenes[devolucionAlmacenes.length - 1].cantidad_dañada_total = cantidadDanada;
+        }
+
+        return devolucionAlmacenes;
+    };
+
     const handleRegistrarDevolucion = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prestamo || devolucionData.detalles.length === 0) return;
@@ -421,9 +458,27 @@ export function RegistrarDevolucionGenerico({
                         detallePrestamo_almacenes: detallePrestamo?.almacenes,
                     });
 
-                    // ✅ MODIFICADO: Incluir almacenes de devolución solo si el usuario los seleccionó explícitamente
+                    // ✅ MODIFICADO: Si el usuario seleccionó almacenes manualmente, usar esos
                     let almacenesDev = devolucionesAlmacenes.get(d[detalleIdKey]);
                     const dañadosDev = devolucionesDanados.get(d[detalleIdKey]);
+
+                    // Si el usuario NO seleccionó almacenes manualmente pero HAY múltiples almacenes en el detalle
+                    // Hacer distribución secuencial automática (FIFO)
+                    if (!almacenesDev && detallePrestamo?.almacenes && detallePrestamo.almacenes.length > 0) {
+                        if (cantidadDevuelta > 0 || cantidadDanada > 0) {
+                            almacenesDev = distribuirSecuencialmente(
+                                detallePrestamo.almacenes,
+                                cantidadDevuelta,
+                                cantidadDanada
+                            );
+
+                            console.log(`✅ [FIFO Automático] Detalle ${d[detalleIdKey]}:`, {
+                                almacenes_distribuidos: almacenesDev,
+                                cantidad_devuelta: cantidadDevuelta,
+                                cantidad_dañada: cantidadDanada,
+                            });
+                        }
+                    }
 
                     // Si hay dañados por almacén, combinar con almacenes de devolución
                     if (dañadosDev && dañadosDev.length > 0 && almacenesDev) {
@@ -443,9 +498,6 @@ export function RegistrarDevolucionGenerico({
                             cantidad_dañada_total: dañoAlm.cantidad_dañada_total,
                         }));
                     }
-                    // ✅ MODIFICADO: SI NO hay almacenes especificados, enviar [] (VACÍO)
-                    // El backend usará el almacén de la cabecera si es necesario
-                    // No hacer distribución automática
 
                     return {
                         [detalleIdKey]: d[detalleIdKey],  // ✅ DINÁMICO

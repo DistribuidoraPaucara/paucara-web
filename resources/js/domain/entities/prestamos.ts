@@ -106,6 +106,20 @@ export interface DevolucionCliente extends BaseEntity {
     };
 }
 
+// ✅ NUEVO: Almacenes en los que se distribuyó un préstamo
+export interface PrestamoClienteAlmacen extends BaseEntity {
+    id: Id;
+    prestamo_cliente_detalle_id: Id;
+    almacenes_prestables_id: Id;
+    cantidad: number;
+    es_proveedor: boolean;
+    // Relaciones
+    almacen?: {
+        id: Id;
+        nombre: string;
+    };
+}
+
 export interface PrestamoClienteDetalle extends BaseEntity {
     id: Id;
     prestamo_cliente_id: Id;
@@ -117,6 +131,8 @@ export interface PrestamoClienteDetalle extends BaseEntity {
     devolucion_detalles: DevolucionClienteDetalle[];
     // Legacy compatibility
     devoluciones?: DevolucionClienteDetalle[];
+    // ✅ NUEVO: Almacenes en los que se distribuyó este préstamo
+    almacenes?: PrestamoClienteAlmacen[];
     // Relaciones
     prestable: Prestable;
 }
