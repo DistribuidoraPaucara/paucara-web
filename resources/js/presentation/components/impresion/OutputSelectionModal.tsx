@@ -261,11 +261,11 @@ export function OutputSelectionModal({
             // Para pagos
             rutaBase = `/compras/pagos/${documentoId}`;
         } else if (tipoDocumento === 'cuenta-por-cobrar') {
-            // Para cuentas por cobrar
-            rutaBase = `/cuentas-por-cobrar/${documentoId}`;
+            // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - incluir prefijo /ventas
+            rutaBase = `/ventas/cuentas-por-cobrar/${documentoId}`;
         } else if (tipoDocumento === 'cuenta-por-pagar') {
-            // Para cuentas por pagar
-            rutaBase = `/cuentas-por-pagar/${documentoId}`;
+            // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - incluir prefijo /compras
+            rutaBase = `/compras/cuentas-por-pagar/${documentoId}`;
         } else if (tipoDocumento === 'stock') {
             // Para stock - no requiere documentoId
             rutaBase = '/stock';
@@ -328,11 +328,11 @@ export function OutputSelectionModal({
                 // Para cajas (cierre y movimientos)
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'cuenta-por-cobrar') {
-                // Para cuentas por cobrar
-                url = `${rutaBase}/imprimir-ticket-80`;
+                // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - usar endpoint correcto
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'cuenta-por-pagar') {
-                // Para cuentas por pagar
-                url = `${rutaBase}/imprimir-${formato.toLowerCase().replace(/_/g, '-')}`;
+                // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - usar endpoint correcto
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'stock') {
                 // Para stock
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
@@ -410,11 +410,11 @@ export function OutputSelectionModal({
                 // Para compras - usar nuevo endpoint HTML-based
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'cuenta-por-cobrar') {
-                // Para cuentas por cobrar - ruta específica para ticket-80
-                url = `/ventas${rutaBase}/imprimir-${formato.toLowerCase().replace(/_/g, '-')}`;
+                // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - usar endpoint correcto con query params
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'cuenta-por-pagar') {
-                // Para cuentas por pagar - ruta específica para ticket-80
-                url = `/compras${rutaBase}/imprimir-${formato.toLowerCase().replace(/_/g, '-')}`;
+                // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - usar endpoint correcto con query params
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'stock') {
                 // Para stock
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
