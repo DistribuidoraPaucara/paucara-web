@@ -37,6 +37,16 @@
 
 <div class="separador"></div>
 
+{{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
+@if($documento->estadoDocumento && strtoupper($documento->estadoDocumento->codigo ?? '') === 'ANULADO' && $documento->observaciones)
+<div style="padding: 3px; background-color: #ffcccc; border-left: 2px solid #cc0000; margin: 3px 0; font-size: 5px; line-height: 1.1;">
+    <p style="margin: 1px 0; color: #cc0000; font-weight: bold;">⚠️ ANULADA</p>
+    <p style="margin: 1px 0; color: #cc0000; word-break: break-word;">
+        {{ $documento->observaciones }}
+    </p>
+</div>
+@endif
+
 {{-- ==================== CLIENTE (muy compacto) ==================== --}}
 <div style="font-size: 6px;">
     <p><strong>{{ $documento->cliente->nombre }}</strong></p>

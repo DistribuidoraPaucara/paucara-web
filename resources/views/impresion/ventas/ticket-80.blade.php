@@ -1,6 +1,6 @@
 @extends('impresion.layouts.base-ticket')
 
-@section('titulo', 'Venta Folio' . $documento->id)
+@section('titulo', 'Folio #' . $documento->id)
 
 @section('contenido')
 
@@ -22,6 +22,16 @@
 </div>
 
 <div class="separador"></div>
+
+{{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
+@if($documento->estadoDocumento && strtoupper($documento->estadoDocumento->codigo ?? '') === 'ANULADO' && $documento->observaciones)
+<div style="padding: 5px; background-color: #ffcccc; border-left: 3px solid #cc0000; margin: 5px 0; font-size: 10px;">
+    <p style="margin: 2px 0; color: #cc0000; font-weight: bold;">⚠️ VENTA ANULADA</p>
+    <p style="margin: 2px 0; color: #cc0000; line-height: 1.2;">
+        {{ $documento->observaciones }}
+    </p>
+</div>
+@endif
 
 {{-- ==================== INFO DEL CLIENTE ==================== --}}
 <div class="documento-info" style="font-size:12px;">
