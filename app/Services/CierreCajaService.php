@@ -898,25 +898,8 @@ class CierreCajaService
     {
         $montoApertura = $aperturaCaja->monto_apertura ?? 0;
 
-        // ✅ Ventas en efectivo (EFECTIVO + TRANSFERENCIA/QR)
-        $ventasEfectivo = $this->calcularVentasPorTipoPagoEspecifico($aperturaCaja, ['EFECTIVO', 'TRANSFERENCIA/QR']);
-
-        // Ventas anuladas (TODOS los tipos excepto crédito)
-        $ventasAnuladas = $movimientos
-            ->filter(fn($m) =>
-                $m->tipoOperacion?->codigo === 'VENTA' &&
-                $m->tipoPago?->codigo !== 'CREDITO' &&
-                $this->esVentaAnulada($m)
-            )
-            ->sum('monto');
-
-        // Pagos de crédito (TODOS los tipos de pago: efectivo, transferencia, tarjeta, etc.)
-        $pagosCreditoTotal = $movimientos
-            ->filter(fn($m) => $m->tipoOperacion?->codigo === 'PAGO')
-            ->sum('monto');
-
-        // ✅ REFACTORIZADO (2026-06-20): Usar dirección dinámicamente para SALIDA
-        // Agrupa todos los movimientos SALIDA por tipo_operacion.codigo para desglose individual
+        // ✅ REFACTORIZADO (2026-06-27): Usar dirección dinámicamente para SALIDA
+        // Agrupa TODOS los movimientos SALIDA por tipo_operacion.codigo para desglose individual
         $desgloseEgresos = $this->obtenerMovimientosPorDireccion($movimientos, 'SALIDA')
             ->filter(fn($m) =>
                 $this->esPagoValido($m) &&
@@ -926,27 +909,33 @@ class CierreCajaService
             ->map(fn($grupo) => abs((float) $grupo->sum('monto')))
             ->toArray();
 
-        // Extraer valores del desglose (si no existen, son 0)
-        // ✅ BENEFICIO: Nuevos códigos aparecerán automáticamente en $desgloseEgresos
-        $gastos = $desgloseEgresos['GASTOS'] ?? 0;
-        $pagosSueldo = $desgloseEgresos['PAGO_SUELDO'] ?? 0;
-        $anticipos = $desgloseEgresos['ANTICIPO'] ?? 0;
-        $compras = $desgloseEgresos['COMPRA'] ?? 0;
-        $devoluciones = $desgloseEgresos['DEVOLUCION'] ?? 0;
-
-        // ✅ REFACTORIZADO (2026-06-20): Usar dirección dinámicamente para ENTRADA
-        // Agrupa todos los movimientos ENTRADA por tipo_operacion.codigo para desglose
+        // ✅ REFACTORIZADO (2026-06-27): Usar dirección dinámicamente para ENTRADA
+        // Agrupa TODOS los movimientos ENTRADA por tipo_operacion.codigo para desglose
         $desgloseIngresos = $this->obtenerMovimientosPorDireccion($movimientos, 'ENTRADA')
             ->filter(fn($m) => $this->esPagoValido($m))
             ->groupBy(fn($m) => $m->tipoOperacion?->codigo)
             ->map(fn($grupo) => abs((float) $grupo->sum('monto')))
             ->toArray();
 
-        // Extraer valores del desglose (si no existen, son 0)
-        // ✅ Servicios está en ENTRADA (si existen, se suman automáticamente)
+        // Extraer valores del desglose para detalle (para mantener compatibilidad con retorno)
+        // ✅ BENEFICIO: Nuevos códigos aparecerán automáticamente sin necesidad de hardcodear
+        $gastos = $desgloseEgresos['GASTOS'] ?? 0;
+        $pagosSueldo = $desgloseEgresos['PAGO_SUELDO'] ?? 0;
+        $anticipos = $desgloseEgresos['ANTICIPO'] ?? 0;
+        $compras = $desgloseEgresos['COMPRA'] ?? 0;
+        $devoluciones = $desgloseEgresos['DEVOLUCION'] ?? 0;
         $servicio = $desgloseIngresos['SERVICIO'] ?? 0;
 
-        // ✅ ANULACIONES: Se mantienen separadas como dato referencial (no dinámico aún)
+        // Ventas anuladas (TODOS los tipos excepto crédito) - REFERENCIAL
+        $ventasAnuladas = $movimientos
+            ->filter(fn($m) =>
+                $m->tipoOperacion?->codigo === 'VENTA' &&
+                $m->tipoPago?->codigo !== 'CREDITO' &&
+                $this->esVentaAnulada($m)
+            )
+            ->sum('monto');
+
+        // ✅ ANULACIONES: Se mantienen separadas como dato referencial
         $anulaciones = abs((float) $movimientos
             ->filter(fn($m) => $m->tipoOperacion?->codigo === 'ANULACION')
             ->sum('monto'));
@@ -954,48 +943,50 @@ class CierreCajaService
         // ✅ Vueltos (cambio dado al cliente - INFORMATIVO SOLAMENTE)
         $vueltos = $this->calcularVueltos($aperturaCaja);
 
-        // ✅ REFACTORIZADO (2026-06-20): Totales usando dirección dinámicamente
-        $totalEgresos = $gastos + $pagosSueldo + $anticipos + $compras + $devoluciones;
-        $totalIngresos = $ventasEfectivo + $pagosCreditoTotal + $servicio;
+        // ✅ REFACTORIZADO (2026-06-27): Totales usando SUMA DINÁMICA de dirección
+        // Suma TODOS los movimientos SALIDA (excepto ANULACION y VUELTO) sin hardcodear códigos
+        $totalEgresos = array_sum($desgloseEgresos);
 
-        // ✅ ACTUALIZADO (2026-05-04): Vueltos NO se restan (informativo solamente)
-        // La fórmula es: Apertura + Ingresos - Egresos
+        // Suma TODOS los movimientos ENTRADA dinámicamente (incluye DEVOLUCION-INGRESO, SERVICIO, etc.)
+        $totalIngresos = array_sum($desgloseIngresos);
+
+        // ✅ ACTUALIZADO (2026-06-27): Vueltos NO se restan (informativo solamente)
+        // La fórmula es: Apertura + Ingresos(dinámico por dirección) - Egresos(dinámico por dirección)
         $efectivoEsperado = $montoApertura + $totalIngresos - $totalEgresos;
 
-        // ✅ REFACTORIZADO (2026-06-20): Logs detallados con desglose dinámico
+        // ✅ REFACTORIZADO (2026-06-27): Logs detallados con suma DINÁMICA por dirección
         Log::info('═══════════════════════════════════════════════════════════');
-        Log::info('💰 CÁLCULO DE EFECTIVO ESPERADO (REFACTORIZADO)');
+        Log::info('💰 CÁLCULO DE EFECTIVO ESPERADO (DINÁMICO POR DIRECCIÓN)');
         Log::info('═══════════════════════════════════════════════════════════');
-        Log::info('📊 ENTRADAS (dirección=ENTRADA + dinámico):');
+        Log::info('📊 ENTRADAS (dirección=ENTRADA - SUMA DINÁMICA):');
         Log::info('  - Monto Apertura: Bs. ' . number_format($montoApertura, 2));
-        Log::info('  - Ventas Efectivo (EFECTIVO + TRANSFERENCIA/QR): Bs. ' . number_format($ventasEfectivo, 2));
-        Log::info('  - Pagos de Crédito (TODOS los tipos): Bs. ' . number_format($pagosCreditoTotal, 2));
         Log::info('  - Desglose ENTRADA dinámico: ' . json_encode($desgloseIngresos));
-        Log::info('  - Total ENTRADA por dirección: Bs. ' . number_format(array_sum($desgloseIngresos), 2));
+        Log::info('  - Total ENTRADA (suma dinámica de TODOS los tipos): Bs. ' . number_format($totalIngresos, 2));
+        Log::info('    ✅ Incluye automáticamente: VENTA, PAGO, SERVICIO, DEVOLUCION-INGRESO, etc.');
         Log::info('  - Ventas Anuladas (no incluidas): Bs. ' . number_format($ventasAnuladas, 2));
         Log::info('───────────────────────────────────────────────────────────');
-        Log::info('💸 SALIDAS (dirección=SALIDA, excluye ANULACION/VUELTO, dinámico):');
+        Log::info('💸 SALIDAS (dirección=SALIDA - SUMA DINÁMICA):');
         Log::info('  - Desglose SALIDA dinámico: ' . json_encode($desgloseEgresos));
-        Log::info('  - Total SALIDA por dirección: Bs. ' . number_format($totalEgresos, 2));
-        Log::info('  - Gastos: Bs. ' . number_format($gastos, 2));
-        Log::info('  - Pagos de Sueldo: Bs. ' . number_format($pagosSueldo, 2));
-        Log::info('  - Anticipos: Bs. ' . number_format($anticipos, 2));
-        Log::info('  - Compras: Bs. ' . number_format($compras, 2));
-        Log::info('  - Devoluciones: Bs. ' . number_format($devoluciones, 2));
-        Log::info('  - Vueltos (Cambios): Bs. ' . number_format($vueltos, 2));
-        Log::info('  - Anulaciones (EXCLUIDAS): Bs. ' . number_format($anulaciones, 2));
+        Log::info('  - Total SALIDA (suma dinámica de TODOS los tipos): Bs. ' . number_format($totalEgresos, 2));
+        Log::info('    ✅ Incluye automáticamente: GASTOS, PAGO_SUELDO, ANTICIPO, COMPRA, DEVOLUCION, etc.');
+        Log::info('  - Detalles por tipo:');
+        Log::info('    - Gastos: Bs. ' . number_format($gastos, 2));
+        Log::info('    - Pagos de Sueldo: Bs. ' . number_format($pagosSueldo, 2));
+        Log::info('    - Anticipos: Bs. ' . number_format($anticipos, 2));
+        Log::info('    - Compras: Bs. ' . number_format($compras, 2));
+        Log::info('    - Devoluciones: Bs. ' . number_format($devoluciones, 2));
         Log::info('───────────────────────────────────────────────────────────');
         Log::info('📋 DATOS INFORMATIVOS (no afectan totales):');
         Log::info('  - Vueltos (Cambios): Bs. ' . number_format($vueltos, 2) . ' [INFORMATIVO]');
         Log::info('  - Anulaciones: Bs. ' . number_format($anulaciones, 2) . ' [REFERENCIAL]');
         Log::info('───────────────────────────────────────────────────────────');
-        Log::info('✅ FÓRMULA: Apertura + Ingresos(dirección=ENTRADA) - Egresos(dirección=SALIDA)');
+        Log::info('✅ FÓRMULA: Apertura + Σ(dirección=ENTRADA) - Σ(dirección=SALIDA)');
         Log::info('✅ CÁLCULO: ' . number_format($montoApertura, 2) . ' + ' . number_format($totalIngresos, 2) . ' - ' . number_format($totalEgresos, 2));
         Log::info('═══════════════════════════════════════════════════════════');
         Log::info('💵 EFECTIVO ESPERADO EN CAJA: Bs. ' . number_format($efectivoEsperado, 2));
         Log::info('═══════════════════════════════════════════════════════════');
-        Log::info('✅ NOTA (2026-06-20): DEVOLUCION-INGRESO (dirección=ENTRADA) se suma automáticamente en ingresos');
-        Log::info('✅ NOTA (2026-06-20): Nuevos tipos de operación se incluyen automáticamente sin cambio de código');
+        Log::info('✅ NOTA (2026-06-27): SUMA COMPLETAMENTE DINÁMICA - incluye TODOS los tipos de operación');
+        Log::info('✅ NOTA (2026-06-27): DEVOLUCION-INGRESO y nuevos tipos se incluyen SIN cambios de código');
 
         return [
             'apertura' => $montoApertura,
@@ -1011,9 +1002,11 @@ class CierreCajaService
             'servicio' => $servicio,  // ✅ NUEVO (2026-03-09)
             'vueltos' => $vueltos,  // ✅ NUEVO (2026-05-03): Cambios dados al cliente
             'anulaciones' => $anulaciones,
-            'total_egresos' => $totalEgresos,
-            // ✅ ACTUALIZADO (2026-05-03): monto_esperado = Apertura + Entradas - Salidas - Vueltos
-            // Es la cantidad TOTAL de dinero que debería haber en caja al cierre
+            'total_ingresos' => $totalIngresos,  // ✅ ACTUALIZADO (2026-06-27): Suma dinámica de ENTRADA
+            'total_egresos' => $totalEgresos,   // ✅ ACTUALIZADO (2026-06-27): Suma dinámica de SALIDA
+            // ✅ ACTUALIZADO (2026-06-27): efectivoEsperado = Apertura + Σ(ENTRADA) - Σ(SALIDA)
+            // Suma DINÁMICAMENTE todos los tipos de operación sin hardcodear códigos
+            // Incluye automáticamente: DEVOLUCION-INGRESO, DEVOLUCION-SALIDA, y nuevos tipos
             'total' => $efectivoEsperado,
         ];
     }
