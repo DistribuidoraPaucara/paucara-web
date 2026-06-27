@@ -261,8 +261,8 @@ export function OutputSelectionModal({
             // Para pagos
             rutaBase = `/compras/pagos/${documentoId}`;
         } else if (tipoDocumento === 'cuenta-por-cobrar') {
-            // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - usar endpoint existente /compras/pagos
-            rutaBase = `/compras/pagos/${documentoId}`;
+            // ✅ NUEVO (2026-06-27): Para cuentas por cobrar - usar endpoint dedicado
+            rutaBase = `/ventas/cuentas-por-cobrar/${documentoId}`;
         } else if (tipoDocumento === 'cuenta-por-pagar') {
             // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - incluir prefijo /compras
             rutaBase = `/compras/cuentas-por-pagar/${documentoId}`;

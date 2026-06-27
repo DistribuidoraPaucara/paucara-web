@@ -545,6 +545,31 @@ class ImpresionService
             $datos['pago']['id'] = $documento->id;
         }
 
+        // ✅ NUEVO (2026-06-27): Transformar datos específicos para CuentaPorCobrar
+        if ($documento instanceof \App\Models\CuentaPorCobrar) {
+            $cliente = $documento->cliente ?: $documento->venta?->cliente;
+            $datos = array_merge($datos, [
+                'cuenta' => [
+                    'id' => $documento->id,
+                    'monto_original' => $documento->monto_original,
+                    'saldo_anterior' => $documento->saldo_pendiente + 0, // Ya es el saldo pendiente
+                    'saldo_pendiente' => $documento->saldo_pendiente,
+                    'fecha_vencimiento' => $documento->fecha_vencimiento,
+                    'estado' => $documento->estado,
+                ],
+                'cliente' => $cliente ? [
+                    'nombre' => $cliente->nombre,
+                    'nit' => $cliente->nit ?? '',
+                    'codigo_cliente' => $cliente->codigo_cliente ?? '',
+                ] : [],
+                'venta' => $documento->venta ? [
+                    'numero' => $documento->venta->numero,
+                    'fecha' => $documento->venta->created_at,
+                ] : null,
+                'usuario' => $documento->usuario,
+            ]);
+        }
+
         return $datos;
     }
 

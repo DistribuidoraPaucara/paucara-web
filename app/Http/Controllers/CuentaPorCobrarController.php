@@ -121,37 +121,34 @@ class CuentaPorCobrarController extends Controller
     }
 
     /**
-     * ✅ NUEVO: Imprimir cuenta por cobrar usando ImpresionService
+     * ✅ NUEVO (2026-06-27): Imprimir cuenta por cobrar con formato genérico
      * Soporta múltiples formatos: A4, TICKET_80, TICKET_58
      */
-    public function imprimirTicket80(CuentaPorCobrar $cuentaPorCobrar, Request $request)
+    public function imprimir(CuentaPorCobrar $cuentaPorCobrar, Request $request)
     {
         $formato = $request->input('formato', 'TICKET_80');      // A4, TICKET_80, TICKET_58
         $accion  = $request->input('accion', 'stream');          // download | stream
 
-        Log::info('🖨️ [CuentaPorCobrarController::imprimirTicket80] INICIANDO', [
+        Log::info('🖨️ [CuentaPorCobrarController::imprimir] INICIANDO', [
             'cuenta_id'         => $cuentaPorCobrar->id,
-            'cuenta_numero'     => "Cuenta #{$cuentaPorCobrar->id}",
             'cliente_id'        => $cuentaPorCobrar->cliente_id,
             'saldo_pendiente'   => $cuentaPorCobrar->saldo_pendiente,
             'formato'           => $formato,
             'accion'            => $accion,
             'user_id'           => auth()->id(),
-            'url_completa'      => $request->fullUrl(),
         ]);
 
         try {
-            Log::info('📝 [CuentaPorCobrarController::imprimirTicket80] Llamando ImpresionService', [
+            Log::info('📝 [CuentaPorCobrarController::imprimir] Llamando ImpresionService', [
                 'cuenta_id' => $cuentaPorCobrar->id,
                 'formato' => $formato,
             ]);
 
             $pdf = $this->impresionService->imprimirCuentaPorCobrar($cuentaPorCobrar, $formato);
 
-            Log::info('✅ [CuentaPorCobrarController::imprimirTicket80] PDF generado exitosamente', [
+            Log::info('✅ [CuentaPorCobrarController::imprimir] PDF generado exitosamente', [
                 'cuenta_id' => $cuentaPorCobrar->id,
                 'formato' => $formato,
-                'accion' => $accion,
             ]);
 
             $nombreArchivo = "cuenta_por_cobrar_{$cuentaPorCobrar->id}_{$formato}.pdf";
@@ -160,19 +157,27 @@ class CuentaPorCobrarController extends Controller
                 ? $pdf->stream($nombreArchivo)
                 : $pdf->download($nombreArchivo);
         } catch (\Exception $e) {
-            Log::error('❌ [CuentaPorCobrarController::imprimirTicket80] ERROR CRÍTICO', [
+            Log::error('❌ [CuentaPorCobrarController::imprimir] ERROR CRÍTICO', [
                 'cuenta_id'      => $cuentaPorCobrar->id,
                 'formato'        => $formato,
                 'accion'         => $accion,
                 'user_id'        => auth()->id(),
                 'error_message'  => $e->getMessage(),
-                'error_file'     => $e->getFile(),
-                'error_line'     => $e->getLine(),
-                'error_trace'    => $e->getTraceAsString(),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
             ]);
 
             return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * ✅ DEPRECADO: Imprimir cuenta por cobrar - método legado
+     * Usar imprimir() en su lugar
+     */
+    public function imprimirTicket80(CuentaPorCobrar $cuentaPorCobrar, Request $request)
+    {
+        return $this->imprimir($cuentaPorCobrar, $request);
     }
 
     public function checkCajaAbierta(Request $request): JsonResponse
