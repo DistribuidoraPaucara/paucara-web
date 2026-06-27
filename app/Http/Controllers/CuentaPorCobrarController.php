@@ -320,9 +320,11 @@ class CuentaPorCobrarController extends Controller
                     'pago_id'      => $pago->id, // ✅ Registrar el ID del pago
                 ]);
 
-                // Actualizar saldo pendiente
+                // Actualizar saldo pendiente y monto pagado
                 $nuevoSaldo = $cuentaPorCobrar->saldo_pendiente - $validated['monto'];
+                $nuevoMontoPagado = ($cuentaPorCobrar->monto_pagado ?? 0) + $validated['monto'];
                 $cuentaPorCobrar->update([
+                    'monto_pagado'    => $nuevoMontoPagado,
                     'saldo_pendiente' => max(0, $nuevoSaldo),
                     'estado'          => $nuevoSaldo <= 0 ? 'PAGADO' : 'PARCIAL',
                 ]);
@@ -404,9 +406,11 @@ class CuentaPorCobrarController extends Controller
                     ]);
                 }
 
-                // Actualizar saldo de la cuenta (restaurar lo que se restó)
+                // Actualizar saldo de la cuenta (restaurar lo que se restó) y monto pagado
                 $nuevoSaldo = $cuentaPorCobrar->saldo_pendiente + $pago->monto;
+                $nuevoMontoPagado = max(0, ($cuentaPorCobrar->monto_pagado ?? 0) - $pago->monto);
                 $cuentaPorCobrar->update([
+                    'monto_pagado'    => $nuevoMontoPagado,
                     'saldo_pendiente' => $nuevoSaldo,
                     'estado' => $nuevoSaldo >= $cuentaPorCobrar->monto_original ? 'PENDIENTE' : 'PARCIAL',
                 ]);

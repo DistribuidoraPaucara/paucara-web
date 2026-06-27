@@ -1354,7 +1354,10 @@ class ClienteController extends Controller
                 'estado'               => 'REGISTRADO', // ✅ Estado inicial
             ]);
 
+            // ✅ NUEVO (2026-06-27): Actualizar también monto_pagado de la cuenta por cobrar
+            $nuevoMontoPagado = ($cuenta->monto_pagado ?? 0) + $validated['monto'];
             $cuenta->update([
+                'monto_pagado'    => $nuevoMontoPagado,
                 'saldo_pendiente' => $nuevoSaldo,
                 'estado'          => $nuevoEstado,
             ]);
