@@ -271,11 +271,12 @@ class CuentaPorCobrarController extends Controller
                 $nuevoSaldoPendiente = $cuentaPorCobrar->saldo_pendiente - $validated['monto'];
 
                 // ✅ NUEVO (2026-06-27): Mejorar observaciones con monto, venta y saldo
+                $numeroVenta = $cuentaPorCobrar->venta?->numero ?? 'N/A';
                 $observacionesFormateadas = $validated['observaciones'] ?? '';
                 if (!empty($observacionesFormateadas)) {
                     $observacionesFormateadas .= " | ";
                 }
-                $observacionesFormateadas .= "Monto: {$validated['monto']} | Venta: {$cuentaPorCobrar->venta?->numero ?? 'N/A'} | Saldo anterior: {$cuentaPorCobrar->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldoPendiente);
+                $observacionesFormateadas .= "Monto: {$validated['monto']} | Venta: {$numeroVenta} | Saldo anterior: {$cuentaPorCobrar->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldoPendiente);
 
                 // Crear registro de pago
                 $pago = Pago::create([
@@ -298,12 +299,15 @@ class CuentaPorCobrarController extends Controller
                 $tipoOperacion = TipoOperacionCaja::where('codigo', 'PAGO')->firstOrFail();
                 $tipoPago      = TipoPago::find($validated['tipo_pago_id']);
 
+                // ✅ NUEVO (2026-06-27): Extraer numero_venta para usar en observaciones (evitar nullsafe en string)
+                $numeroVentaMov = $cuentaPorCobrar->venta?->numero ?? 'N/A';
+
                 MovimientoCaja::create([
                     'apertura_caja_id'  => $apertura->id, // ✅ NUEVO (2026-06-27): Guardar apertura_caja_id para filtrado en reportes
                     'caja_id'           => $apertura->caja_id,
                     'tipo_operacion_id' => $tipoOperacion->id,
                     'numero_documento'  => $pago->numero_pago, // ✅ MEJORADO (2026-06-27): Usar numero_pago en lugar de numero_venta
-                    'observaciones' => "Pago de CxC | Venta: {$cuentaPorCobrar->venta?->numero ?? 'N/A'} | Monto: {$validated['monto']}", // ✅ MEJORADO (2026-06-27): Agregar referencias
+                    'observaciones' => "Pago de CxC | Venta: {$numeroVentaMov} | Monto: {$validated['monto']}", // ✅ MEJORADO (2026-06-27): Agregar referencias
                     'monto'        => $validated['monto'], // POSITIVO para ingresos
                     'fecha'        => now(),  // ✅ CORREGIDO (2026-02-11): Usar NOW() para que se registre en el momento actual, no en la fecha_pago
                     'user_id'      => Auth::id(),

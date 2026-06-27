@@ -1329,11 +1329,12 @@ class ClienteController extends Controller
             $nuevoEstado = $nuevoSaldo > 0 ? 'PARCIAL' : 'PAGADO';
 
             // ✅ NUEVO (2026-06-27): Mejorar observaciones con monto, venta y saldo
+            $numeroVenta = $cuenta->venta?->numero ?? 'N/A';
             $observacionesFormateadas = $validated['observaciones'] ?? '';
             if (!empty($observacionesFormateadas)) {
                 $observacionesFormateadas .= " | ";
             }
-            $observacionesFormateadas .= "Monto: {$validated['monto']} | Venta: {$cuenta->venta?->numero ?? 'N/A'} | Saldo anterior: {$cuenta->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldo);
+            $observacionesFormateadas .= "Monto: {$validated['monto']} | Venta: {$numeroVenta} | Saldo anterior: {$cuenta->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldo);
 
             // ✅ Crear el pago con ambos campos de fecha y moneda
             $pago = \App\Models\Pago::create([
