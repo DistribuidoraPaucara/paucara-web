@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/presentation/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/presentation/components/ui/dialog';
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import SearchSelect from '@/presentation/components/ui/search-select'; // ✅ NUEVO
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
 import { Eye, CreditCard, AlertTriangle, Plus, ChevronDown, ChevronUp, Trash2, Printer, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, CheckCheck, MoreVertical } from 'lucide-react';
 import RegistrarPagoModal from '@/presentation/components/clientes/RegistrarPagoModal';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
@@ -719,35 +720,19 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Estado</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {/* Opción: Todos */}
-                                    <button
-                                        onClick={() => handleFiltroChange('estado', '')}
-                                        className={`px-3 py-2 rounded-lg font-medium text-sm transition-all ${!filtros.estado
-                                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white ring-2 ring-gray-400'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                            }`}
-                                    >
-                                        Todos
-                                    </button>
-
-                                    {/* Opciones de estados */}
-                                    {estadosDisponibles.map((estado) => {
-                                        const info = getEstadoBadgeInfo(estado.valor);
-                                        return (
-                                            <button
-                                                key={estado.valor}
-                                                onClick={() => handleFiltroChange('estado', estado.valor)}
-                                                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all border-2 ${filtros.estado === estado.valor
-                                                    ? `${info.bgColor} ${info.textColor} ${info.borderColor} ring-2 ring-offset-1 dark:ring-offset-0`
-                                                    : `${info.bgColor} ${info.textColor} ${info.borderColor} hover:opacity-80`
-                                                    }`}
-                                            >
+                                <Select value={filtros.estado || ''} onValueChange={(value) => handleFiltroChange('estado', value)}>
+                                    <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                        <SelectValue placeholder="Seleccionar estado..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Todos</SelectItem>
+                                        {estadosDisponibles.map((estado) => (
+                                            <SelectItem key={estado.valor} value={estado.valor}>
                                                 {estado.etiqueta}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
@@ -864,6 +849,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                             <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
                                 <tr>
                                     <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        ID
+                                    </th>
+                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Venta
                                     </th>
                                     <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -893,11 +881,12 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 {cuentasPorCobrar.cuentas_por_cobrar.data.map((cuenta) => (
                                     <React.Fragment key={cuenta.id}>
                                         <tr className={`${getRowColorClass(cuenta.dias_vencido, cuenta.estado)} transition-colors duration-200`}>
+                                            <td className="px-2 py-2 whitespace-nowrap">{cuenta.id}</td>
                                             <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900 dark:text-white">
-                                                    <p>Folio CxC:  #{cuenta.id}</p>
+                                                    {/* <p>Folio CxC:  #{cuenta.id}</p> */}
                                                     {cuenta.venta && (
-                                                        <p>Folio Venta: {cuenta.venta?.id}</p>
+                                                        <p>V: {cuenta.venta?.id}</p>
                                                     )}
                                                     <p>{cuenta?.referencia_documento}</p>
                                                 </div>
