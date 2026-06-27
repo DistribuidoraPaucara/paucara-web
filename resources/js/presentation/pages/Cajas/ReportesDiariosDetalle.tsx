@@ -199,6 +199,9 @@ export default function ReportesDiariosDetalle({
   const [isOutputModalOpen, setIsOutputModalOpen] = useState(false);
   const [movimientoSeleccionado, setMovimientoSeleccionado] = useState<Movimiento | null>(null);
 
+  // ===== MODAL DE IMPRESIÓN DEL CIERRE =====
+  const [isImpresionCierreAbierto, setIsImpresionCierreAbierto] = useState(false);
+
   // ===== MODAL DE DETALLES DE VENTA =====
   const [isVentaModalOpen, setIsVentaModalOpen] = useState(false);
   const [ventaSeleccionada, setVentaSeleccionada] = useState<Movimiento['venta'] | null>(null);
@@ -426,31 +429,30 @@ export default function ReportesDiariosDetalle({
       <div className="py-12">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => router.visit('/cajas/admin/reportes-diarios')}
-              className="dark:hover:bg-slate-700"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Cierre de Caja #{cierre.id}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {cierre.caja.nombre}
+                {cierre.caja.nombre} • Apertura #{cierre.apertura_caja_id}
               </p>
             </div>
+            <Button
+              onClick={() => setIsImpresionCierreAbierto(true)}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white transition"
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir Cierre
+            </Button>
           </div>
 
           {/* Información General */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Apertura */}
             <Card className="p-6 dark:bg-slate-800 border dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Apertura
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Apertura #{cierre.apertura_caja_id}
               </h3>
               <div className="space-y-3">
                 <div>
@@ -958,6 +960,19 @@ export default function ReportesDiariosDetalle({
           {/* Botones de descarga */}
         </div>
       </div>
+
+      {/* Modal de Impresión del Cierre */}
+      <OutputSelectionModal
+        isOpen={isImpresionCierreAbierto}
+        onClose={() => setIsImpresionCierreAbierto(false)}
+        documentoId={cierre.apertura_caja_id}
+        tipoDocumento="caja"
+        printType="cierre"
+        documentoInfo={{
+          numero: `Cierre #${cierre.id}`,
+          fecha: format(parseISO(cierre.fecha_cierre), 'dd/MM/yyyy HH:mm', { locale: es }),
+        }}
+      />
 
       {/* Modal de Salida/Impresión para cada movimiento */}
       {movimientoSeleccionado && (
