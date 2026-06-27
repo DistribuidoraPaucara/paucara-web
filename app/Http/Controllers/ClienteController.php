@@ -1324,6 +1324,17 @@ class ClienteController extends Controller
                 return ApiResponse::error('El monto no puede exceder el saldo pendiente', 400);
             }
 
+            // ✅ NUEVO (2026-06-27): Calcular nuevo saldo para incluir en observaciones
+            $nuevoSaldo  = $cuenta->saldo_pendiente - $validated['monto'];
+            $nuevoEstado = $nuevoSaldo > 0 ? 'PARCIAL' : 'PAGADO';
+
+            // ✅ NUEVO (2026-06-27): Mejorar observaciones con monto, venta y saldo
+            $observacionesFormateadas = $validated['observaciones'] ?? '';
+            if (!empty($observacionesFormateadas)) {
+                $observacionesFormateadas .= " | ";
+            }
+            $observacionesFormateadas .= "Monto: {$validated['monto']} | Venta: {$cuenta->venta?->numero ?? 'N/A'} | Saldo anterior: {$cuenta->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldo);
+
             // ✅ Crear el pago con ambos campos de fecha y moneda
             $pago = \App\Models\Pago::create([
                 'numero_pago'          => \App\Models\Pago::generarNumeroPago(), // ✅ NUEVO: Número único de pago
@@ -1336,15 +1347,11 @@ class ClienteController extends Controller
                 'numero_recibo'        => $validated['numero_recibo'] ?? null,
                 'numero_transferencia' => $validated['numero_transferencia'] ?? null,
                 'numero_cheque'        => $validated['numero_cheque'] ?? null,
-                'observaciones'        => $validated['observaciones'] ?? null,
+                'observaciones'        => $observacionesFormateadas, // ✅ MEJORADO (2026-06-27): Incluir monto, venta y saldo
                 'usuario_id'           => Auth::id(),
                 'moneda_id'            => $validated['moneda_id'] ?? 1, // ✅ Por defecto: BOB (id=1)
                 'estado'               => 'REGISTRADO', // ✅ Estado inicial
             ]);
-
-            // Actualizar el saldo pendiente de la cuenta
-            $nuevoSaldo  = $cuenta->saldo_pendiente - $validated['monto'];
-            $nuevoEstado = $nuevoSaldo > 0 ? 'PARCIAL' : 'PAGADO';
 
             $cuenta->update([
                 'saldo_pendiente' => $nuevoSaldo,
