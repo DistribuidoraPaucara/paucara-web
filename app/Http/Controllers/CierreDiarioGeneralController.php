@@ -259,9 +259,14 @@ class CierreDiarioGeneralController extends Controller
                 ] : null,
             ])->toArray();
 
-            // ✅ Obtener tipos de operación disponibles para filtros
+            // ✅ ACTUALIZADO (2026-06-27): Obtener tipos de operación con dirección incluida
             $tiposOperacionDisponibles = \App\Models\TipoOperacionCaja::obtenerTiposClasificados();
-            $tiposOperacionFlat = collect($tiposOperacionDisponibles)->flatten(1)->values()->all();
+            $tiposOperacionFlat = [];
+            foreach ($tiposOperacionDisponibles as $direccion => $tipos) {
+                foreach ($tipos as $tipo) {
+                    $tiposOperacionFlat[] = array_merge($tipo, ['direccion' => $direccion]);
+                }
+            }
 
             // ✅ NUEVO: Obtener tipos de pago disponibles
             $tiposPago = \App\Models\TipoPago::activos()

@@ -12,9 +12,6 @@ import { type BreadcrumbItem } from '@/types';
 import {
   ArrowLeft,
   Download,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   Search,
   X,
   Printer,
@@ -45,6 +42,7 @@ interface TipoOperacion {
   id: number;
   codigo: string;
   nombre: string;
+  direccion?: 'ENTRADA' | 'SALIDA' | 'AJUSTE';
 }
 
 interface TipoPago {
@@ -644,11 +642,10 @@ export default function ReportesDiariosDetalle({
                   )}
                   {filtroEstadoVenta && (
                     <Badge
-                      className={`py-2 px-3 cursor-pointer transition border ${
-                        filtroEstadoVenta === 'aprobadas'
+                      className={`py-2 px-3 cursor-pointer transition border ${filtroEstadoVenta === 'aprobadas'
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50'
                           : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-900/50'
-                      }`}
+                        }`}
                       onClick={() => setFiltroEstadoVenta('')}
                     >
                       {filtroEstadoVenta === 'aprobadas' ? '✅ Aprobadas' : '❌ Anuladas'}
@@ -676,54 +673,58 @@ export default function ReportesDiariosDetalle({
               </div>
 
               {/* Filtro por tipo de operación */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                  Tipo de Operación
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {tipos_operacion.map((tipo) => {
-                    const isSelected = tiposSeleccionados.includes(tipo.codigo);
-                    return (
-                      <button
-                        key={tipo.codigo}
-                        onClick={() => toggleTipo(tipo.codigo)}
-                        className={`px-3 py-1.5 rounded-full border transition text-xs font-medium whitespace-nowrap ${isSelected
-                          ? 'border-blue-500 dark:border-blue-400 bg-blue-500 dark:bg-blue-600 text-white'
-                          : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-blue-400'
-                          }`}
-                      >
-                        {tipo.nombre}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Filtro por tipo de pago */}
-              {tipos_pago.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                    💳 Tipo de Pago
+                    Tipo de Operación
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {tipos_pago.map((tipo) => {
-                      const isSelected = tiposPagoSeleccionados.includes(tipo.id);
-                      return (
-                        <button
-                          key={tipo.id}
-                          onClick={() => toggleTipoPago(tipo.id)}
-                          className={`px-3 py-1.5 rounded-full border transition text-xs font-medium whitespace-nowrap ${isSelected
-                            ? 'border-purple-500 dark:border-purple-400 bg-purple-500 dark:bg-purple-600 text-white'
-                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-purple-400 dark:hover:border-purple-400'
-                            }`}
-                        >
-                          {tipo.nombre}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <select
+                    multiple
+                    value={tiposSeleccionados}
+                    onChange={(e) => {
+                      const valores = Array.from(e.target.selectedOptions, (option) => option.value);
+                      setTiposSeleccionados(valores);
+                    }}
+                    className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
+                  >
+                    {tipos_operacion.map((tipo) => (
+                      <option key={tipo.codigo} value={tipo.codigo}>
+                        {tipo.nombre} {tipo.direccion ? `(${tipo.direccion})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Mantén Ctrl/Cmd para seleccionar múltiples
+                  </p>
                 </div>
-              )}
+
+                {/* Filtro por tipo de pago */}
+                {tipos_pago.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
+                      💳 Tipo de Pago
+                    </label>
+                    <select
+                      multiple
+                      value={tiposPagoSeleccionados.map(String)}
+                      onChange={(e) => {
+                        const valores = Array.from(e.target.selectedOptions, (option) => Number(option.value));
+                        setTiposPagoSeleccionados(valores);
+                      }}
+                      className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition"
+                    >
+                      {tipos_pago.map((tipo) => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Mantén Ctrl/Cmd para seleccionar múltiples
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* Filtro por estado de venta */}
               <div>
@@ -733,31 +734,28 @@ export default function ReportesDiariosDetalle({
                 <div className="flex gap-3">
                   <button
                     onClick={() => setFiltroEstadoVenta('')}
-                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${
-                      !filtroEstadoVenta
+                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${!filtroEstadoVenta
                         ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
                         : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-slate-500'
-                    }`}
+                      }`}
                   >
                     📋 Todas
                   </button>
                   <button
                     onClick={() => setFiltroEstadoVenta('aprobadas')}
-                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${
-                      filtroEstadoVenta === 'aprobadas'
+                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${filtroEstadoVenta === 'aprobadas'
                         ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                         : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-slate-500'
-                    }`}
+                      }`}
                   >
                     ✅ Aprobadas
                   </button>
                   <button
                     onClick={() => setFiltroEstadoVenta('anuladas')}
-                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${
-                      filtroEstadoVenta === 'anuladas'
+                    className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${filtroEstadoVenta === 'anuladas'
                         ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                         : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-slate-500'
-                    }`}
+                      }`}
                   >
                     ❌ Anuladas
                   </button>
@@ -861,11 +859,10 @@ export default function ReportesDiariosDetalle({
                   movimientosFiltrados.map((mov) => (
                     <TableRow
                       key={mov.id}
-                      className={`dark:border-slate-700 transition-colors ${
-                        tieneDiscrepancia(mov)
+                      className={`dark:border-slate-700 transition-colors ${tieneDiscrepancia(mov)
                           ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border-l-4 border-l-red-500'
                           : 'dark:hover:bg-slate-700'
-                      }`}
+                        }`}
                     >
                       <TableCell className="dark:text-gray-300 text-sm">
                         {mov.id}
@@ -914,7 +911,7 @@ export default function ReportesDiariosDetalle({
                         {mov.monto > 0 ? '+' : ''}
                         Bs. {Number(mov.monto).toFixed(2)}
                       </TableCell>
-                      
+
                       {/* ✅ NUEVO: Total Venta */}
                       <TableCell className="text-right dark:text-gray-300 text-sm font-semibold">
                         {mov.venta?.total ? `Bs. ${Number(mov.venta.total).toFixed(2)}` : '-'}
