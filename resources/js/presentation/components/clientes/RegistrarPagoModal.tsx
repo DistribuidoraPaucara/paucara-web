@@ -7,6 +7,7 @@ import { Label } from '@/presentation/components/ui/label';
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal'; // ✅ NUEVO (2026-06-27)
 
 interface CuentaPendiente {
     id: number;
@@ -70,6 +71,10 @@ export default function RegistrarPagoModal({
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // ✅ NUEVO (2026-06-27): Estados para modal de impresión
+    const [mostrarModalImpresion, setMostrarModalImpresion] = useState(false);
+    const [pagoRegistrado, setPagoRegistrado] = useState<any>(null);
 
     // Estados para validación de caja abierta
     interface CajaInfo {
@@ -271,9 +276,15 @@ export default function RegistrarPagoModal({
                 );
             }
 
+            // ✅ NUEVO (2026-06-27): Abrir modal de impresión en lugar de cerrar directamente
             setTimeout(() => {
-                onPagoRegistrado();
-                onHide();
+                if (response.data.success && response.data.data?.pago) {
+                    setPagoRegistrado(response.data.data.pago);
+                    setMostrarModalImpresion(true);
+                } else {
+                    onPagoRegistrado();
+                    onHide();
+                }
             }, 1500);
         } catch (err: any) {
             const message = err.response?.data?.message || 'Error al registrar el pago';
@@ -332,13 +343,14 @@ export default function RegistrarPagoModal({
     };
 
     return (
-        <Dialog open={show} onOpenChange={onHide}>
-            <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 max-h-[90vh] flex flex-col">
-                <DialogHeader className="border-b border-gray-200 dark:border-gray-800 pb-4 flex-shrink-0">
-                    <DialogTitle className="text-gray-900 dark:text-white">Registrar Pago de Crédito</DialogTitle>
-                </DialogHeader>
+        <>
+            <Dialog open={show} onOpenChange={onHide}>
+                <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 max-h-[90vh] flex flex-col">
+                    <DialogHeader className="border-b border-gray-200 dark:border-gray-800 pb-4 flex-shrink-0">
+                        <DialogTitle className="text-gray-900 dark:text-white">Registrar Pago de Crédito</DialogTitle>
+                    </DialogHeader>
 
-                <div className="space-y-4 flex-1 overflow-y-auto pr-2">
+                    <div className="space-y-4 flex-1 overflow-y-auto pr-2">
                     {/* Indicador de verificación de caja */}
                     {cargandoCaja && (
                         <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200">
@@ -608,8 +620,26 @@ export default function RegistrarPagoModal({
                             'Registrar Pago'
                         )}
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ✅ NUEVO (2026-06-27): Modal de impresión del pago registrado */}
+            <OutputSelectionModal
+                isOpen={mostrarModalImpresion}
+                onClose={() => {
+                    setMostrarModalImpresion(false);
+                    setPagoRegistrado(null);
+                    onPagoRegistrado();
+                    onHide();
+                }}
+                documentoId={pagoRegistrado?.id || 0}
+                tipoDocumento="cuenta-por-cobrar"
+                documentoInfo={{
+                    numero: pagoRegistrado?.numero_pago,
+                    monto: pagoRegistrado?.monto,
+                }}
+            />
+        </>
     );
 }
