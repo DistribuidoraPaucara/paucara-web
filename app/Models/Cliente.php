@@ -37,7 +37,13 @@ class Cliente extends Model
         'fecha_actualizacion',      // ← NUEVO
     ];
 
-    protected $appends = ['credito_utilizado', 'categorias_ids'];
+    protected $appends = [
+        'cuentas_por_cobrar_activas',
+        'cuentas_por_cobrar_por_aprobar',
+        'credito_total_comprometido',
+        'credito_disponible',
+        'categorias_ids',
+    ];
 
     protected function casts(): array
     {
@@ -326,36 +332,51 @@ class Cliente extends Model
     }
 
     /**
-     * ✅ CRÉDITO: Calcular crédito utilizado = sum(saldo_pendiente de cuentas pendientes)
-     *
-     * @return float Crédito actualmente utilizado
+     * ✅ CRÉDITO: Cuentas por cobrar ACTIVAS
+     * = suma saldo_pendiente donde estado IN ('PENDIENTE', 'PARCIAL')
      */
-    public function calcularCreditoUtilizado(): float
+    public function getCuentasPorCobrarActivasAttribute(): float
     {
-        // Si el cliente no está habilitado para crédito, retorna 0
-        if (!$this->puede_tener_credito) {
-            return 0.0;
-        }
-
-        // Si la relación cuentasPorCobrar está precargada, usar esos datos en memoria
         if ($this->relationLoaded('cuentasPorCobrar')) {
-            return (float)$this->cuentasPorCobrar
-                ->where('estado', 'pendiente')
+            $activas = (float)$this->cuentasPorCobrar
+                ->whereIn('estado', ['pendiente', 'parcial'])
                 ->sum('saldo_pendiente');
+
+            return $activas;
         }
 
-        // Si no está precargada, hacer el query a la base de datos
-        return (float)$this->cuentasPorCobrar()
-            ->where('estado', 'pendiente')
+        $activas = (float)$this->cuentasPorCobrar()
+            ->whereIn('estado', ['pendiente', 'parcial'])
             ->sum('saldo_pendiente');
+
+        return $activas;
     }
 
     /**
-     * ✅ CRÉDITO: Accessor para obtener crédito utilizado
+     * ✅ CRÉDITO: Cuentas por cobrar POR APROBAR
+     * = suma total de proformas con estado_logistica.codigo = PENDIENTE Y politica_pago = CREDITO
      */
-    public function getCreditoUtilizadoAttribute(): float
+    public function getCuentasPorCobrarPorAprobarAttribute(): float
     {
-        return $this->calcularCreditoUtilizado();
+        if ($this->relationLoaded('proformas')) {
+            $porAprobar = (float)$this->proformas
+                ->where('politica_pago', 'CREDITO')
+                ->filter(function ($p) {
+                    return $p->estadoLogistica?->codigo === 'PENDIENTE';
+                })
+                ->sum('total');
+
+            return $porAprobar;
+        }
+
+        $porAprobar = (float)$this->proformas()
+            ->where('politica_pago', 'CREDITO')
+            ->whereHas('estadoLogistica', function ($q) {
+                $q->where('codigo', 'PENDIENTE');
+            })
+            ->sum('total');
+
+        return $porAprobar;
     }
 
     /**
@@ -364,5 +385,40 @@ class Cliente extends Model
     public function getCategoriasIdsAttribute(): array
     {
         return $this->categorias()->pluck('categorias_cliente.id')->toArray();
+    }
+
+    /**
+     * ✅ CRÉDITO: Crédito total comprometido
+     * = cuentas_por_cobrar_activas + cuentas_por_cobrar_por_aprobar
+     */
+    public function getCreditoTotalComprometidoAttribute(): float
+    {
+        $activas = $this->cuentas_por_cobrar_activas;
+        $porAprobar = $this->cuentas_por_cobrar_por_aprobar;
+        $total = $activas + $porAprobar;
+
+        return $total;
+    }
+
+    /**
+     * ✅ CRÉDITO: Disponibilidad de crédito
+     * = limite_credito - credito_total_comprometido
+     * Validación: cuentas_por_cobrar_activas + cuentas_por_cobrar_por_aprobar < limite_credito
+     */
+    public function getCreditoDisponibleAttribute(): float
+    {
+        $limite = (float) ($this->limite_credito ?? 0);
+        $comprometido = $this->credito_total_comprometido;
+        $disponible = max(0, $limite - $comprometido);
+
+        \Log::debug('✅ [credito_disponible]', [
+            'cliente_id' => $this->id,
+            'limite_credito' => $limite,
+            'credito_total_comprometido' => $comprometido,
+            'credito_disponible' => $disponible,
+            'validacion_cumplida' => $comprometido < $limite,
+        ]);
+
+        return $disponible;
     }
 }

@@ -290,16 +290,6 @@ class VentaController extends Controller
                 sortOrder: $sortOrder
             );
 
-            // ✅ NUEVO: Transformar datos para asegurar que Inertia tenga acceso a todas las relaciones
-            // Convertir modelos a arrays incluyendo explícitamente las relaciones
-            Log::debug('📦 VentaController::index - Transformando ventas', [
-                'total'                         => $ventasPaginadas->total(),
-                'primera_venta_id'              => $ventasPaginadas->first()?->id,
-                'primera_venta_tiene_direccion' => $ventasPaginadas->first()?->direccionCliente ? 'SÍ' : 'NO',
-                'primera_venta_direccion'       => $ventasPaginadas->first()?->direccionCliente?->direccion ?? 'N/A',
-                'primera_venta_latitud'         => $ventasPaginadas->first()?->direccionCliente?->latitud ?? 'N/A',
-            ]);
-
             $ventasPaginadas->getCollection()->transform(function ($venta) {
                 return [
                     'id'                         => $venta->id,
@@ -1037,6 +1027,7 @@ class VentaController extends Controller
                 'movimientoCaja',
                 'asientoContable',
                 'pagos',
+                'proforma',  // ✅ NUEVO (2026-06-27): Cargar proforma asociada
             ])->findOrFail($id);
 
             Log::info('🔴 [ANULAR VENTA] VENTA ENCONTRADA', [
@@ -1050,7 +1041,7 @@ class VentaController extends Controller
                 Log::warning('🔴 [ANULAR VENTA] YA ESTA ANULADA', [
                     'venta_id' => $venta->id,
                 ]);
-                return $this->respondError('Esta venta ya está anulada', 422);
+                return $this->respondError('Esta venta ya está anulada', statusCode: 422);
             }
 
             // No permitir anular ventas en ciertos estados (Facturado, Cancelado, etc)
@@ -1061,7 +1052,7 @@ class VentaController extends Controller
                 ]);
                 return $this->respondError(
                     "No se puede anular una venta con estado {$venta->estado}. Contacta con administración.",
-                    422
+                    statusCode: 422
                 );
             }
 
@@ -1080,7 +1071,7 @@ class VentaController extends Controller
                     return $this->respondError(
                         "No se puede anular esta venta porque su cuenta por cobrar tiene pagos registrados ($totalPagos). " .
                         "Contacta con administración para reversar los pagos primero.",
-                        422
+                        statusCode: 422
                     );
                 }
             }
@@ -1094,6 +1085,10 @@ class VentaController extends Controller
                 $stockRevertido = false;
                 $cajaAnotada    = false;
                 $asientoAnotado = false;
+
+                // ✅ NUEVO (2026-06-27): Definir variables de usuario y fecha al inicio para usarlas en toda la transacción
+                $usuarioNombre           = auth()->user()->name ?? 'Sistema';
+                $fechaActual             = now()->toDateTimeString();
 
                 // 1️⃣ Revertir movimientos de stock si la venta fue aprobada
                 if ($venta->estado === 'Aprobado') {
@@ -1167,14 +1162,17 @@ class VentaController extends Controller
                 }
 
                 // 2️⃣.3️⃣ LUEGO: Crear movimientos de ANULACION (reversión) como antes
+                // ✅ MEJORADO (2026-06-27): Pasar motivo y usuario para incluir en observaciones
                 if ($venta->movimientoCaja) {
                     try {
-                        $venta->revertirMovimientoCaja();
+                        $usuarioNombre = auth()->user()->name ?? 'Sistema';
+                        $venta->revertirMovimientoCaja($motivo, $usuarioNombre);
                         $cajaAnotada = true;
                         Log::info('✅ Movimiento de caja de reversión (ANULACION) creado', [
                             'venta_id'           => $venta->id,
                             'movimiento_caja_id' => $venta->movimientoCaja->id,
                             'monto'              => $venta->movimientoCaja->monto,
+                            'motivo'             => $motivo,
                         ]);
                     } catch (\Exception $e) {
                         Log::warning('⚠️ No se pudo crear movimiento de reversión al anular venta', [
@@ -1226,6 +1224,67 @@ class VentaController extends Controller
                     }
                 }
 
+                // ✅ NUEVO (2026-06-27): Anular Proforma + Registrar en entregas_venta_confirmaciones
+                // 🔴 SIN VALIDACIONES - Directo y seguro
+                if ($venta->proforma) {
+                    $proforma = $venta->proforma;
+                    $estadoProformaAnterior = $proforma->estado;
+
+                    // 1️⃣ Anular proforma SIN IMPORTAR ESTADO
+                    $estadoRechazada = \App\Models\EstadoLogistica::where('codigo', 'RECHAZADA')
+                        ->where('categoria', 'proforma')
+                        ->first();
+
+                    if ($estadoRechazada) {
+                        $proforma->update([
+                            'estado_proforma_id' => $estadoRechazada->id,
+                            'observaciones' => ($proforma->observaciones ?? '') .
+                                             "\n[ANULADO] Por anulación de venta #{$venta->numero} - Motivo: {$motivo} - Anulado por: {$usuarioNombre} - " . now()->toDateTimeString(),
+                        ]);
+
+                        Log::info('✅ Proforma anulada automáticamente al anular venta', [
+                            'venta_id'        => $venta->id,
+                            'proforma_id'     => $proforma->id,
+                            'proforma_numero' => $proforma->numero,
+                            'estado_anterior' => $estadoProformaAnterior,
+                            'estado_nuevo'    => 'RECHAZADA',
+                            'motivo'          => $motivo,
+                        ]);
+                    }
+
+                    // 2️⃣ Registrar en entregas_venta_confirmaciones (SIN FALLAR)
+                    try {
+                        $clienteNombre = $venta->cliente?->nombre ?? 'N/A';
+                        $observacionesConfirmacion = "ANULACIÓN DE VENTA - Motivo: {$motivo}\n";
+                        $observacionesConfirmacion .= "Venta: #{$venta->numero} | Proforma: #{$proforma->numero}\n";
+                        $observacionesConfirmacion .= "Cliente: {$clienteNombre}\n";
+                        $observacionesConfirmacion .= "Monto: Bs {$venta->total}\n";
+                        $observacionesConfirmacion .= "Anulado por: {$usuarioNombre} - {$fechaActual}";
+
+                        \App\Models\EntregaVentaConfirmacion::create([
+                            'venta_id'                => $venta->id,
+                            'entrega_id'              => $venta->entrega_id,
+                            'tipo_entrega'            => 'CON_NOVEDAD',
+                            'tipo_novedad'            => 'RECHAZADO',
+                            'tipo_confirmacion'       => 'RECHAZADO',
+                            'tuvo_problema'           => true,
+                            'observaciones_logistica' => $observacionesConfirmacion,
+                            'confirmado_por'          => auth()->id(),
+                            'confirmado_en'           => now(),
+                        ]);
+
+                        Log::info('✅ Registro en entregas_venta_confirmaciones creado', [
+                            'venta_id'    => $venta->id,
+                            'proforma_id' => $proforma->id,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::warning('⚠️ No se pudo crear registro en entregas_venta_confirmaciones', [
+                            'venta_id' => $venta->id,
+                            'error'    => $e->getMessage(),
+                        ]);
+                    }
+                }
+
                 // 3️⃣ Registrar en observaciones sobre asiento contable si existe
                 if ($venta->asientoContable) {
                     $asientoAnotado = true;
@@ -1250,9 +1309,7 @@ class VentaController extends Controller
                     $observacionesAdicionales[] = "[ATENCIÓN] Asiento contable asociado - Requiere reversión manual en contabilidad";
                 }
 
-                // ✅ CORRECCIÓN: Usar variables locales para evitar problemas en closure del transaction
-                $usuarioNombre           = auth()->user()->name ?? 'Sistema';
-                $fechaActual             = now()->toDateTimeString();
+                // ✅ Las variables $usuarioNombre y $fechaActual ya están definidas al inicio de la transacción
                 $observacionesExistentes = $venta->observaciones ?? '';
 
                 $observacionesFinal = $observacionesExistentes;
@@ -1272,10 +1329,11 @@ class VentaController extends Controller
                     $observacionesFinal .= "\n" . implode("\n", $observacionesAdicionales);
                 }
 
+                // ✅ CORREGIDO (2026-06-27): Usar codigo en lugar de nombre para mayor confiabilidad
                 // Obtener el ID del estado Anulado
-                $estadoAnulado = EstadoDocumento::where('nombre', 'Anulado')->first();
+                $estadoAnulado = EstadoDocumento::where('codigo', 'ANULADO')->first();
                 if (! $estadoAnulado) {
-                    throw new \Exception('Estado "Anulado" no encontrado en la base de datos');
+                    throw new \Exception('Estado "ANULADO" no encontrado en la base de datos');
                 }
 
                 $actualizado = $venta->update([
@@ -1324,7 +1382,7 @@ class VentaController extends Controller
                 'venta_id' => $id,
                 'error'    => $e->getMessage(),
             ]);
-            return $this->respondError('Venta no encontrada', 404);
+            return $this->respondError('Venta no encontrada', statusCode: 404);
         } catch (\Exception $e) {
             Log::error('🔴 [ANULAR VENTA] ERROR EN TRANSACCIÓN', [
                 'venta_id'        => $id,
@@ -1335,7 +1393,7 @@ class VentaController extends Controller
                 'error'           => $e->getMessage(),
                 'trace'           => $e->getTraceAsString(),
             ]);
-            return $this->respondError('Error al anular venta: ' . $e->getMessage(), 500);
+            return $this->respondError('Error al anular venta: ' . $e->getMessage(), statusCode: 500);
         }
     }
 

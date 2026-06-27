@@ -696,19 +696,6 @@ class VentaService
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate($perPage);
 
-            // ✅ DEBUG: Verificar que las relaciones se cargaron correctamente
-            Log::debug('📦 VentaService::listar - Primeras ventas cargadas', [
-                'total'                   => $resultado->total(),
-                'primera_venta_id'        => $resultado->first()?->id ?? 'N/A',
-                'tiene_direccion_cliente' => $resultado->first()?->direccionCliente ? 'SÍ' : 'NO',
-                'tiene_estadoLogistica'   => $resultado->first()?->estadoLogistica ? 'SÍ' : 'NO',
-                'tiene_entrega'           => $resultado->first()?->entrega ? 'SÍ' : 'NO',  // ✅ NUEVO (2026-03-03)
-                'latitud'                 => $resultado->first()?->direccionCliente?->latitud ?? 'N/A',
-                'longitud'                => $resultado->first()?->direccionCliente?->longitud ?? 'N/A',
-                'sort_by'                 => $sortBy,
-                'sort_order'              => $sortOrder,
-            ]);
-
             return $resultado;
         });
     }
