@@ -46,6 +46,10 @@
     @if($pago['numero_cheque'])
     <p style="margin: 2px 0;"><strong>Cheque:</strong> {{ $pago['numero_cheque'] }}</p>
     @endif
+    {{-- ✅ NUEVO (2026-06-27): Mostrar usuario que realizó el pago --}}
+    @if($usuario)
+    <p style="margin: 2px 0;"><strong>Registrado por:</strong> {{ $usuario->name ?? $usuario }}</p>
+    @endif
 </div>
 
 <div class="separador"></div>
@@ -54,28 +58,28 @@
 @if($cuenta)
 <div>
     <p style="margin: 3px 0; font-weight: bold;">ESTADO DE CUENTA</p>
-    <table style="width: 100%; >
+    <table style="width: 100%;">
         <tr>
-            <td>Saldo Anterior:</td>
-            <td style="text-align: right;">{{ $pago['moneda']['simbolo'] }} {{ number_format($cuenta['saldo_anterior'], 2) }}</td>
+            <td><strong>Saldo Anterior:</strong></td>
+            <td style=" text-align: right;">{{ $pago['moneda']['simbolo'] }} {{ number_format($cuenta['saldo_anterior'], 2) }}</td>
         </tr>
         <tr style="color: #090909;">
             <td><strong>Pago:</strong></td>
-            <td style="text-align: right;"><strong>({{ $pago['moneda']['simbolo'] }} {{ number_format($pago['monto'], 2) }})</strong></td>
+            <td style="text-align: right;">({{ $pago['moneda']['simbolo'] }} {{ number_format($pago['monto'], 2) }})</td>
         </tr>
         <tr style="border-top: 1px solid #ccc;">
             <td><strong>Nuevo Saldo:</strong></td>
-            <td style="text-align: right;"><strong>{{ $pago['moneda']['simbolo'] }} {{ number_format($cuenta['saldo_pendiente'], 2) }}</strong></td>
+            <td style="text-align: right;">{{ $pago['moneda']['simbolo'] }} {{ number_format($cuenta['saldo_pendiente'], 2) }}</td>
         </tr>
         <tr>
             <td colspan="2" style="text-align: center; padding-top: 3px;">
+                <strong>Estado:</strong>
                 @if($cuenta['saldo_pendiente'] == 0)
-                    <span style="padding: 2px 4px; border-radius: 2px;">PAGADO</span>
-                @elseif($cuenta['saldo_pendiente'] < $cuenta['monto_original'])
-                    <span style="padding: 2px 4px; border-radius: 2px;">PARCIAL</span>
-                @else
+                <span style="padding: 2px 4px; border-radius: 2px;">PAGADO</span>
+                @elseif($cuenta['saldo_pendiente'] < $cuenta['monto_original']) <span style="padding: 2px 4px; border-radius: 2px;">PARCIAL</span>
+                    @else
                     <span style="padding: 2px 4px; border-radius: 2px;">PENDIENTE</span>
-                @endif
+                    @endif
             </td>
         </tr>
     </table>
@@ -95,7 +99,7 @@
 {{-- Observaciones compactadas --}}
 @if($pago['observaciones'])
 <div style="margin: 5px 0; padding: 3px; background: #f0f0f0; border-radius: 2px;">
-    <strong>Obs:</strong> {{ substr($pago['observaciones'], 0, 50) }}{{ strlen($pago['observaciones']) > 50 ? '...' : '' }}
+    <strong>Obs:</strong> {{ $pago['observaciones'] }}
 </div>
 @endif
 
@@ -103,7 +107,7 @@
 
 {{-- Confirmación y footer --}}
 <div class="center" style="font-weight: bold; margin: 5px 0;">
-    ✓ PAGO REGISTRADO
+    PAGO REGISTRADO
 </div>
 
 <div style="text-align: center; color: #666; margin-top: 5px;">

@@ -28,6 +28,10 @@
 <div style="font-size: 6px;">
     <p style="margin: 1px 0;"><strong>{{ substr($cliente['nombre'], 0, 25) }}</strong></p>
     <p style="margin: 1px 0;">{{ $pago['tipo_pago'] }}</p>
+    {{-- ✅ NUEVO (2026-06-27): Usuario que realizó el pago --}}
+    @if($usuario)
+    <p style="margin: 1px 0;">Por: {{ is_string($usuario) ? substr($usuario, 0, 20) : substr($usuario->name ?? 'Sistema', 0, 20) }}</p>
+    @endif
 </div>
 
 <div class="separador"></div>
