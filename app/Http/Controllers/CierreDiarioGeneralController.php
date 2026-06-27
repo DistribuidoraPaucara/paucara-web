@@ -27,17 +27,18 @@ class CierreDiarioGeneralController extends Controller
         $query = \App\Models\CierreCaja::with(['usuario', 'caja', 'apertura'])
             ->orderBy('fecha', 'desc');
 
-        // Filtro por fecha
-        if ($request->filled('fecha')) {
-            $query->whereDate('fecha', $request->fecha);
-        }
-
-        // Filtro por rango de fechas
+        // Filtro por rango de fechas (Desde - Hasta)
         if ($request->filled('desde') && $request->filled('hasta')) {
             $query->whereBetween('fecha', [
                 $request->desde . ' 00:00:00',
                 $request->hasta . ' 23:59:59'
             ]);
+        } elseif ($request->filled('desde')) {
+            // Si solo está "Desde", incluir desde esa fecha hacia adelante
+            $query->where('fecha', '>=', $request->desde . ' 00:00:00');
+        } elseif ($request->filled('hasta')) {
+            // Si solo está "Hasta", incluir hasta esa fecha hacia atrás
+            $query->where('fecha', '<=', $request->hasta . ' 23:59:59');
         }
 
         // Filtro por usuario
@@ -100,7 +101,6 @@ class CierreDiarioGeneralController extends Controller
             'estadisticas' => $estadisticas,
             'usuarios' => $usuarios,
             'filtros' => [
-                'fecha' => $request->fecha,
                 'desde' => $request->desde,
                 'hasta' => $request->hasta,
                 'usuario_id' => $request->usuario_id,

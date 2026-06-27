@@ -60,7 +60,6 @@ interface Usuario {
 }
 
 interface Filtros {
-  fecha?: string;
   desde?: string;
   hasta?: string;
   usuario_id?: string;
@@ -113,8 +112,6 @@ export default function ReportesDiarios({
   usuarios,
   filtros,
 }: Props) {
-  const [busqueda, setBusqueda] = useState('');
-  const [fecha, setFecha] = useState(filtros.fecha || '');
   const [desde, setDesde] = useState(filtros.desde || '');
   const [hasta, setHasta] = useState(filtros.hasta || '');
   const [usuarioId, setUsuarioId] = useState(filtros.usuario_id || '');
@@ -122,7 +119,6 @@ export default function ReportesDiarios({
 
   const aplicarFiltros = () => {
     const params = new URLSearchParams();
-    if (fecha) params.append('fecha', fecha);
     if (desde) params.append('desde', desde);
     if (hasta) params.append('hasta', hasta);
     if (usuarioId) params.append('usuario_id', usuarioId);
@@ -132,7 +128,6 @@ export default function ReportesDiarios({
   };
 
   const limpiarFiltros = () => {
-    setFecha('');
     setDesde('');
     setHasta('');
     setUsuarioId('');
@@ -144,7 +139,6 @@ export default function ReportesDiarios({
     if (url) {
       // Mantener los filtros actuales al cambiar de página
       const params = new URLSearchParams();
-      if (fecha) params.append('fecha', fecha);
       if (desde) params.append('desde', desde);
       if (hasta) params.append('hasta', hasta);
       if (usuarioId) params.append('usuario_id', usuarioId);
@@ -243,19 +237,7 @@ export default function ReportesDiarios({
           <Card className="p-4 dark:bg-slate-800 border dark:border-slate-700">
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filtros</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
-                    Fecha
-                  </label>
-                  <input
-                    type="date"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
-                    className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Desde
