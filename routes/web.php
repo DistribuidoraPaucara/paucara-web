@@ -419,6 +419,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         // Gestión de Cuentas por Cobrar
         Route::get('cuentas-por-cobrar', [\App\Http\Controllers\CuentaPorCobrarController::class, 'index'])->name('cuentas-por-cobrar.index');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/show', [\App\Http\Controllers\CuentaPorCobrarController::class, 'show'])->name('cuentas-por-cobrar.show');
+        Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimir'])->name('cuentas-por-cobrar.imprimir');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimirTicket80'])->name('cuentas-por-cobrar.imprimir-ticket-80');
         Route::put('cuentas-por-cobrar/{cuentaPorCobrar}/actualizar-fecha-vencimiento', [\App\Http\Controllers\CuentaPorCobrarController::class, 'actualizarFechaVencimiento'])->name('cuentas-por-cobrar.actualizar-fecha-vencimiento');
         // ✅ NUEVO: Anular cuenta por cobrar
@@ -819,6 +820,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('clientes', [\App\Http\Controllers\PrestamosInertiaController::class, 'clientesIndex'])->name('clientes.index');
         Route::get('clientes/crear', [\App\Http\Controllers\PrestamosInertiaController::class, 'clientesCrear'])->name('clientes.crear');
         Route::post('clientes', [\App\Http\Controllers\PrestamosInertiaController::class, 'clientesStore'])->name('clientes.store');
+        Route::get('clientes/{prestamo}', fn() => Inertia::render('prestamos/clientes/show'))->name('clientes.show')->where('prestamo', '[0-9]+');
 
         // Impresión de préstamos de cliente (similar a ventas/{venta}/imprimir)
         Route::get('clientes/{prestamo}/imprimir', [\App\Http\Controllers\PrestamoClienteController::class, 'imprimir'])
@@ -863,6 +865,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
 
         // POST es igual para ambos (se diferencia por es_compra en los datos)
         Route::post('proveedores', [\App\Http\Controllers\PrestamosInertiaController::class, 'proveedoresStore'])->name('proveedores.store');
+        Route::get('proveedores/{prestamo}', fn() => Inertia::render('prestamos/proveedores/show'))->name('proveedores.show')->where('prestamo', '[0-9]+');
 
         // Impresión de préstamos de proveedor
         Route::get('proveedores/{prestamo}/imprimir', [\App\Http\Controllers\PrestamoProveedorController::class, 'imprimir'])
