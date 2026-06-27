@@ -188,7 +188,7 @@
         </tr>
         <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold;">
             <td style="text-align: left; padding: 1px 0; ">Eftvo Esperado Caja:</td>
-            <td style="text-align: right; padding: 1px 0; ">{{ number_format(($apertura->monto_apertura ?? 0) + ($sumatorialVentasEfectivo ?? 0) + ($montoPagosCreditos ?? 0) + ($sumatorialServicio ?? 0) - ($totalEgresos ?? 0), 2) }}</td>
+            <td style="text-align: right; padding: 1px 0; ">{{ number_format(($efectivoEsperado['total'] ?? 0), 2) }}</td>
         </tr>
         <tr style="border-bottom: 1px solid #000; font-weight: bold;">
             <td style="text-align: left; padding: 1px 0; ">Eftvo Neto Caja:</td>

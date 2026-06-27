@@ -49,7 +49,7 @@
         </tr>
         <tr class="total-final">
             <td><strong>Esperado:</strong></td>
-            <td class="right"><strong>{{ number_format(($sumatorialVentasEfectivo ?? 0) + ($montoPagosCreditos ?? 0) - ($totalEgresos ?? 0), 2) }}</strong></td>
+            <td class="right"><strong>{{ number_format(($efectivoEsperado['total'] ?? 0), 2) }}</strong></td>
         </tr>
         <tr style="border-top: 1px solid #000;">
             <td><strong>Contado:</strong></td>
