@@ -395,11 +395,11 @@ export default function ReportesDiariosDetalle({
     // Construir los parámetros de query
     const params = new URLSearchParams();
 
-    if (tiposSeleccionados.length > 0) {
-      params.append('tipos', tiposSeleccionados.join(','));
+    if (tipoSeleccionado) {
+      params.append('tipos', tipoSeleccionado);
     }
-    if (tiposPagoSeleccionados.length > 0) {
-      params.append('tipos_pago', tiposPagoSeleccionados.join(','));
+    if (tipoPagoSeleccionado !== '') {
+      params.append('tipos_pago', tipoPagoSeleccionado.toString());
     }
     if (busqueda.trim()) {
       params.append('busqueda', busqueda.trim());
@@ -561,7 +561,7 @@ export default function ReportesDiariosDetalle({
                   de {movimientos.length} movimientos
                 </p>
               </div>
-              {(tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda || montoMin !== null || montoMax !== null || filtroEstadoVenta) && (
+              {tieneFiltrantes && (
                 <Button
                   onClick={limpiarFiltros}
                   size="sm"
@@ -733,11 +733,11 @@ export default function ReportesDiariosDetalle({
           </Card>
 
           {/* Botones de Descarga */}
-          {(tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda || montoMin !== null || montoMax !== null) && (
+          {tieneFiltrantes && (
             <Card className="p-4 dark:bg-slate-800 border dark:border-slate-700">
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Botón de descarga filtrada - solo si hay filtros aplicados */}
-                {(tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda || montoMin !== null || montoMax !== null) && (
+                {tieneFiltrantes && (
                   <Button
                     onClick={descargarFiltrado}
                     className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition flex-1"
@@ -761,7 +761,7 @@ export default function ReportesDiariosDetalle({
           )}
 
           {/* Totales Filtrados */}
-          {(tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda || montoMin !== null || montoMax !== null || filtroEstadoVenta) && (
+          {tieneFiltrantes && (
             <Card className="p-6 dark:bg-slate-800 border dark:border-slate-700">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
