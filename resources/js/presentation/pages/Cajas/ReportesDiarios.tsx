@@ -60,6 +60,7 @@ interface Usuario {
 }
 
 interface Filtros {
+  busqueda?: string;
   desde?: string;
   hasta?: string;
   usuario_id?: string;
@@ -112,6 +113,7 @@ export default function ReportesDiarios({
   usuarios,
   filtros,
 }: Props) {
+  const [busqueda, setBusqueda] = useState(filtros.busqueda || '');
   const [desde, setDesde] = useState(filtros.desde || '');
   const [hasta, setHasta] = useState(filtros.hasta || '');
   const [usuarioId, setUsuarioId] = useState(filtros.usuario_id || '');
@@ -119,6 +121,7 @@ export default function ReportesDiarios({
 
   const aplicarFiltros = () => {
     const params = new URLSearchParams();
+    if (busqueda.trim()) params.append('busqueda', busqueda.trim());
     if (desde) params.append('desde', desde);
     if (hasta) params.append('hasta', hasta);
     if (usuarioId) params.append('usuario_id', usuarioId);
@@ -128,6 +131,7 @@ export default function ReportesDiarios({
   };
 
   const limpiarFiltros = () => {
+    setBusqueda('');
     setDesde('');
     setHasta('');
     setUsuarioId('');
@@ -139,6 +143,7 @@ export default function ReportesDiarios({
     if (url) {
       // Mantener los filtros actuales al cambiar de página
       const params = new URLSearchParams();
+      if (busqueda.trim()) params.append('busqueda', busqueda.trim());
       if (desde) params.append('desde', desde);
       if (hasta) params.append('hasta', hasta);
       if (usuarioId) params.append('usuario_id', usuarioId);
@@ -237,6 +242,30 @@ export default function ReportesDiarios({
           <Card className="p-4 dark:bg-slate-800 border dark:border-slate-700">
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filtros</h3>
+
+              {/* Búsqueda general */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                  Buscar (ID, Apertura, Usuario)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: 123 o #456 o Juan"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      aplicarFiltros();
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Busca en ID del cierre, ID de apertura o nombre de usuario
+                </p>
+              </div>
+
+              {/* Otros filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">

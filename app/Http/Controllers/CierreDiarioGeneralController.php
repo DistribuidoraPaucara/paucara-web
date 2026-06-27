@@ -27,6 +27,21 @@ class CierreDiarioGeneralController extends Controller
         $query = \App\Models\CierreCaja::with(['usuario', 'caja', 'apertura'])
             ->orderBy('fecha', 'desc');
 
+        // ✅ NUEVO (2026-06-27): Búsqueda por ID, apertura_caja_id o usuario
+        if ($request->filled('busqueda')) {
+            $busqueda = $request->busqueda;
+            $query->where(function ($q) use ($busqueda) {
+                // Buscar en ID del cierre
+                $q->where('id', 'like', "%{$busqueda}%")
+                  // Buscar en apertura_caja_id
+                  ->orWhere('apertura_caja_id', 'like', "%{$busqueda}%")
+                  // Buscar en nombre del usuario
+                  ->orWhereHas('usuario', function ($subQuery) use ($busqueda) {
+                      $subQuery->where('name', 'like', "%{$busqueda}%");
+                  });
+            });
+        }
+
         // Filtro por rango de fechas (Desde - Hasta)
         if ($request->filled('desde') && $request->filled('hasta')) {
             $query->whereBetween('fecha', [
@@ -101,6 +116,7 @@ class CierreDiarioGeneralController extends Controller
             'estadisticas' => $estadisticas,
             'usuarios' => $usuarios,
             'filtros' => [
+                'busqueda' => $request->busqueda,
                 'desde' => $request->desde,
                 'hasta' => $request->hasta,
                 'usuario_id' => $request->usuario_id,
