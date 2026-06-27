@@ -587,7 +587,7 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                             <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
                                 {/* Búsqueda por documento */}
                                 <div>
-                                    <label className="mb-3 block flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <label className="mb-2 block flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         <Search className="h-4 w-4 text-blue-500" />
                                         Buscar por Documento
                                     </label>
@@ -596,9 +596,10 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                         placeholder="Ej: FA-001, PC-123, NC-456..."
                                         value={busqueda}
                                         onChange={(e) => setBusqueda(e.target.value)}
-                                        className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm transition focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
+                                        className="w-full rounded-lg border-2 border-gray-200 px-4 py-2 text-sm transition focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
                                     />
                                 </div>
+
                                 <div>
                                     <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">Tipo de Operación</label>
                                     <select
@@ -653,34 +654,6 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                         </div>
                     </Card>
 
-                    {/* Botones de Descarga */}
-                    {tieneFiltrantes && (
-                        <Card className="border p-4 dark:border-slate-700 dark:bg-slate-800">
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                {/* Botón de descarga filtrada - solo si hay filtros aplicados */}
-                                {tieneFiltrantes && (
-                                    <Button
-                                        onClick={descargarFiltrado}
-                                        className="flex-1 bg-green-600 text-white transition hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
-                                    >
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Descargar Filtrado ({movimientosFiltrados.length})
-                                    </Button>
-                                )}
-                                {/* Botón de descarga del cierre completo */}
-                                <Button
-                                    onClick={() => {
-                                        window.location.href = `/cajas/admin/reportes-diarios/${cierre.id}/descargar?formato=A4`;
-                                    }}
-                                    className="flex-1 bg-blue-600 text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-                                >
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Descargar Completo ({movimientos.length})
-                                </Button>
-                            </div>
-                        </Card>
-                    )}
-
                     {/* Totales Filtrados */}
                     {tieneFiltrantes && (
                         <Card className="border p-6 dark:border-slate-700 dark:bg-slate-800">
@@ -731,13 +704,13 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                     <TableHead className="font-semibold dark:text-gray-300">Tipo de Operación</TableHead>
                                     <TableHead className="font-semibold dark:text-gray-300">Documento</TableHead>
                                     <TableHead className="font-semibold dark:text-gray-300">Tipo de Pago</TableHead>
-                                    <TableHead className="font-semibold dark:text-gray-300">Cliente</TableHead>
+                                    {/* <TableHead className="font-semibold dark:text-gray-300">Cliente</TableHead> */}
                                     <TableHead className="text-right font-semibold dark:text-gray-300">Monto</TableHead>
-                                    <TableHead className="text-right font-semibold dark:text-gray-300">Total Venta</TableHead>
-                                    <TableHead className="text-right font-semibold dark:text-gray-300">Monto Pagado</TableHead>
-                                    <TableHead className="text-right font-semibold dark:text-gray-300">Monto Pendiente</TableHead>
-                                    <TableHead className="font-semibold dark:text-gray-300">Detalles de Pago</TableHead>
-                                    <TableHead className="font-semibold dark:text-gray-300">Estado Venta</TableHead>
+                                    {/* <TableHead className="text-right font-semibold dark:text-gray-300">Total Venta</TableHead> */}
+                                    {/* <TableHead className="text-right font-semibold dark:text-gray-300">Monto Pagado</TableHead> */}
+                                    {/* <TableHead className="text-right font-semibold dark:text-gray-300">Monto Pendiente</TableHead> */}
+                                    {/* <TableHead className="font-semibold dark:text-gray-300">Detalles de Pago</TableHead> */}
+                                    {/* <TableHead className="font-semibold dark:text-gray-300">Estado Venta</TableHead> */}
                                     <TableHead className="font-semibold dark:text-gray-300">Observaciones</TableHead>
                                     <TableHead className="text-center font-semibold dark:text-gray-300">Acciones</TableHead>
                                 </TableRow>
@@ -754,7 +727,7 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                             }`}
                                         >
                                             <TableCell className="text-sm dark:text-gray-300">{mov.id}</TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">
+                                            <TableCell className="text-xs dark:text-gray-300">
                                                 {format(parseISO(mov.fecha), 'dd/MM/yyyy HH:mm:ss', { locale: es })}
                                             </TableCell>
                                             <TableCell className="dark:text-gray-300">{mov.usuario.name}</TableCell>
@@ -772,8 +745,8 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                                     {mov.tipo_operacion.nombre}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">{mov.numero_documento}</TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">
+                                            <TableCell className="text-xs dark:text-gray-300">{mov.numero_documento}</TableCell>
+                                            <TableCell className="text-xs dark:text-gray-300">
                                                 {mov.tipo_pago ? (
                                                     <Badge
                                                         variant="outline"
@@ -785,7 +758,7 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                                     <span className="text-gray-400">-</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">{mov.venta?.cliente?.nombre || '-'}</TableCell>
+                                            {/* <TableCell className="text-sm dark:text-gray-300">{mov.venta?.cliente?.nombre || '-'}</TableCell> */}
                                             <TableCell
                                                 className={`text-right font-semibold ${
                                                     mov.monto > 0
@@ -800,15 +773,15 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                             </TableCell>
 
                                             {/* ✅ NUEVO: Total Venta */}
-                                            <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
+                                            {/* <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
                                                 {mov.venta?.total ? `Bs. ${Number(mov.venta.total).toFixed(2)}` : '-'}
-                                            </TableCell>
+                                            </TableCell> */}
                                             {/* ✅ NUEVO: Monto Pagado */}
-                                            <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
+                                            {/* <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
                                                 {mov.venta?.monto_pagado ? `Bs. ${Number(mov.venta.monto_pagado).toFixed(2)}` : '-'}
-                                            </TableCell>
+                                            </TableCell> */}
                                             {/* ✅ NUEVO: Monto Pendiente (desde BD) */}
-                                            <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
+                                            {/* <TableCell className="text-right text-sm font-semibold dark:text-gray-300">
                                                 {mov.venta?.monto_pendiente !== undefined && mov.venta?.monto_pendiente !== null ? (
                                                     <span
                                                         className={
@@ -822,8 +795,8 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                                 ) : (
                                                     '-'
                                                 )}
-                                            </TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">
+                                            </TableCell> */}
+                                            {/* <TableCell className="text-sm dark:text-gray-300">
                                                 {mov.venta?.detallesPagoVenta && mov.venta.detallesPagoVenta.length > 0 ? (
                                                     <div className="space-y-1">
                                                         {mov.venta.detallesPagoVenta.map((detalle, idx) => (
@@ -843,9 +816,9 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                                 ) : (
                                                     <span className="text-gray-400">-</span>
                                                 )}
-                                            </TableCell>
-                                            <TableCell className="text-sm dark:text-gray-300">{getEstadoVentaBadge(mov) || '-'}</TableCell>
-                                            <TableCell className="max-w-xs truncate text-sm dark:text-gray-300">{mov.observaciones || '-'}</TableCell>
+                                            </TableCell> */}
+                                            {/* <TableCell className="text-sm dark:text-gray-300">{getEstadoVentaBadge(mov) || '-'}</TableCell> */}
+                                            <TableCell className="text-xs dark:text-gray-300">{mov.observaciones || '-'}</TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     {/* Botón de Ver Detalles de Venta */}
@@ -858,14 +831,16 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                                                             <Eye className="h-4 w-4" />
                                                         </button>
                                                     )}
-                                                    {/* Botón de Imprimir */}
-                                                    <button
-                                                        onClick={() => abrirModalImpresion(mov)}
-                                                        className="inline-flex items-center justify-center rounded-lg p-2 text-blue-600 transition hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                                                        title="Imprimir/Descargar movimiento"
-                                                    >
-                                                        <Printer className="h-4 w-4" />
-                                                    </button>
+                                                    {/* Botón de Imprimir - solo para movimientos que no sean VENTA ni CREDITO */}
+                                                    {mov.tipo_operacion.codigo !== 'VENTA' && mov.tipo_operacion.codigo !== 'CREDITO' && (
+                                                        <button
+                                                            onClick={() => abrirModalImpresion(mov)}
+                                                            className="inline-flex items-center justify-center rounded-lg p-2 text-blue-600 transition hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                                            title="Imprimir/Descargar movimiento"
+                                                        >
+                                                            <Printer className="h-4 w-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
