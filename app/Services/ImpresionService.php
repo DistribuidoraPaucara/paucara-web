@@ -539,7 +539,10 @@ class ImpresionService
                     'numero' => $documento->cuentaPorCobrar->venta->numero,
                     'fecha' => $documento->cuentaPorCobrar->venta->created_at,
                 ] : null,
+                'usuario' => $documento->usuario,
             ]);
+            // Agregar ID del pago a los datos generales
+            $datos['pago']['id'] = $documento->id;
         }
 
         return $datos;
