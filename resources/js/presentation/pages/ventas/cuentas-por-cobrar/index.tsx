@@ -720,12 +720,12 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Estado</label>
-                                <Select value={filtros.estado || ''} onValueChange={(value) => handleFiltroChange('estado', value)}>
+                                <Select value={filtros.estado || 'all'} onValueChange={(value) => handleFiltroChange('estado', value === 'all' ? '' : value)}>
                                     <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-white">
                                         <SelectValue placeholder="Seleccionar estado..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Todos</SelectItem>
+                                        <SelectItem value="all">Todos</SelectItem>
                                         {estadosDisponibles.map((estado) => (
                                             <SelectItem key={estado.valor} value={estado.valor}>
                                                 {estado.etiqueta}
