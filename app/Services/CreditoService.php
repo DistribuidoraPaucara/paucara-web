@@ -47,19 +47,29 @@ class CreditoService
 
     /**
      * Crear una cuenta por cobrar cuando se crea una venta con crédito
+     *
+     * ✅ NUEVO (2026-06-27): Agregado tipo, observaciones y usuario_id
      */
     public function crearCuentaPorCobrar(
         Venta $venta,
         ?int $diasVencimiento = 7,
     ): CuentaPorCobrar {
+        // ✅ NUEVO (2026-06-27): Construir observaciones con referencias de la venta
+        $observaciones = "Venta #{$venta->numero} | Cliente: {$venta->cliente?->nombre ?? 'N/A'} | Monto: {$venta->total}";
+
         $cuentaPorCobrar = CuentaPorCobrar::create([
             'venta_id' => $venta->id,
             'cliente_id' => $venta->cliente_id,
             'monto_original' => $venta->total,
+            'monto_pagado' => 0,
             'saldo_pendiente' => $venta->total,
             'fecha_vencimiento' => now()->addDays($diasVencimiento),
             'dias_vencido' => 0,
-            'estado' => 'pendiente',
+            'estado' => 'PENDIENTE',
+            // ✅ NUEVO (2026-06-27): Agregar tipo, observaciones y usuario_id
+            'tipo' => 'CREDITO_AUTOMATICO',
+            'observaciones' => $observaciones,
+            'usuario_id' => $venta->usuario_id,
         ]);
 
         // Registrar en auditoría del cliente
@@ -69,6 +79,7 @@ class CreditoService
                 'monto' => $venta->total,
                 'venta_id' => $venta->id,
                 'numero_venta' => $venta->numero,
+                'usuario_id' => $venta->usuario_id,
             ],
             'Venta a crédito registrada'
         );
