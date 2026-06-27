@@ -188,8 +188,8 @@ export default function ReportesDiariosDetalle({
   const creditoTipoPagoId = tipos_pago.find(tp => tp.nombre?.toUpperCase().includes('CRÉDIT'))?.id;
 
   // ===== FILTROS =====
-  const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
-  const [tiposPagoSeleccionados, setTiposPagoSeleccionados] = useState<number[]>([]);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<string>('');  // ✅ ACTUALIZADO (2026-06-27): Select simple en lugar de array
+  const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState<number | ''>('');  // ✅ ACTUALIZADO (2026-06-27): Select simple en lugar de array
   const [busqueda, setBusqueda] = useState('');
   const [montoMin, setMontoMin] = useState<number | null>(null);
   const [montoMax, setMontoMax] = useState<number | null>(null);
@@ -297,28 +297,28 @@ export default function ReportesDiariosDetalle({
   // ===== LÓGICA DE FILTRADO =====
   const movimientosFiltrados = useMemo(() => {
     return movimientos.filter((mov) => {
-      // Filtro por tipo de operación
-      if (tiposSeleccionados.length > 0) {
-        if (!tiposSeleccionados.includes(mov.tipo_operacion.codigo)) {
+      // ✅ ACTUALIZADO (2026-06-27): Filtro por tipo de operación (select simple)
+      if (tipoSeleccionado) {
+        if (mov.tipo_operacion.codigo !== tipoSeleccionado) {
           return false;
         }
       }
 
-      // Filtro por tipo de pago
-      if (tiposPagoSeleccionados.length > 0) {
+      // ✅ ACTUALIZADO (2026-06-27): Filtro por tipo de pago (select simple)
+      if (tipoPagoSeleccionado !== '') {
         // Verificar tipo_pago_id del movimiento
-        const tipoPagoDelMovimiento = mov.tipo_pago_id && tiposPagoSeleccionados.includes(mov.tipo_pago_id);
+        const tipoPagoDelMovimiento = mov.tipo_pago_id === tipoPagoSeleccionado;
 
         // Verificar tipo_pago_id de la venta (para ventas a crédito sin detalles_pago_venta)
-        const tipoPagoDelVenta = mov.venta?.tipo_pago_id && tiposPagoSeleccionados.includes(mov.venta.tipo_pago_id);
+        const tipoPagoDelVenta = mov.venta?.tipo_pago_id === tipoPagoSeleccionado;
 
         // Verificar detalles de pago de la venta
         const tieneDetalleConTipoPago = mov.venta?.detallesPagoVenta?.some(detalle =>
-          tiposPagoSeleccionados.includes(detalle.tipo_pago_id)
+          detalle.tipo_pago_id === tipoPagoSeleccionado
         );
 
         // Para CREDITO operations (tipo_operacion.codigo = 'CREDITO'), asumir tipo_pago = CREDITO por defecto
-        const esCreditoImplicito = mov.tipo_operacion.codigo === 'CREDITO' && creditoTipoPagoId && tiposPagoSeleccionados.includes(creditoTipoPagoId);
+        const esCreditoImplicito = mov.tipo_operacion.codigo === 'CREDITO' && creditoTipoPagoId === tipoPagoSeleccionado;
 
         // Si no coincide en ningún lugar, excluir
         if (!tipoPagoDelMovimiento && !tipoPagoDelVenta && !tieneDetalleConTipoPago && !esCreditoImplicito) {
@@ -358,13 +358,13 @@ export default function ReportesDiariosDetalle({
 
       return true;
     });
-  }, [movimientos, tiposSeleccionados, tiposPagoSeleccionados, busqueda, montoMin, montoMax, filtroEstadoVenta]);
+  }, [movimientos, tipoSeleccionado, tipoPagoSeleccionado, busqueda, montoMin, montoMax, filtroEstadoVenta]);
 
   // ✅ DEBUG: Log de filtrado
-  if (tiposPagoSeleccionados.length > 0 || tiposSeleccionados.length > 0) {
+  if (tipoPagoSeleccionado !== '' || tipoSeleccionado) {
     console.log('🎯 [ReportesDiariosDetalle] FILTROS ACTIVOS:', {
-      tiposSeleccionados,
-      tiposPagoSeleccionados,
+      tipoSeleccionado,
+      tipoPagoSeleccionado,
       creditoTipoPagoId,
       movimientosFiltrados_count: movimientosFiltrados.length,
       movimientosFiltrados: movimientosFiltrados,
@@ -382,21 +382,9 @@ export default function ReportesDiariosDetalle({
 
   const totalNeto = totalIngresos + totalEgresos;
 
-  const toggleTipo = (codigo: string) => {
-    setTiposSeleccionados((prev) =>
-      prev.includes(codigo) ? prev.filter((t) => t !== codigo) : [...prev, codigo]
-    );
-  };
-
-  const toggleTipoPago = (id: number) => {
-    setTiposPagoSeleccionados((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
-  };
-
   const limpiarFiltros = () => {
-    setTiposSeleccionados([]);
-    setTiposPagoSeleccionados([]);
+    setTipoSeleccionado('');
+    setTipoPagoSeleccionado('');
     setBusqueda('');
     setMontoMin(null);
     setMontoMax(null);
@@ -429,7 +417,7 @@ export default function ReportesDiariosDetalle({
     window.location.href = `/cajas/admin/reportes-diarios/${cierre.id}/descargar-filtrado?${params.toString()}`;
   };
 
-  const tieneFiltrantes = tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda.trim() || montoMin !== null || montoMax !== null || filtroEstadoVenta;
+  const tieneFiltrantes = tipoSeleccionado || tipoPagoSeleccionado !== '' || busqueda.trim() || montoMin !== null || montoMax !== null || filtroEstadoVenta;
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -587,35 +575,27 @@ export default function ReportesDiariosDetalle({
             </div>
 
             {/* Tags de Filtros Activos */}
-            {(tiposSeleccionados.length > 0 || tiposPagoSeleccionados.length > 0 || busqueda || montoMin !== null || montoMax !== null || filtroEstadoVenta) && (
+            {(tipoSeleccionado || tipoPagoSeleccionado !== '' || busqueda || montoMin !== null || montoMax !== null || filtroEstadoVenta) && (
               <div className="mb-6 pb-6 border-b dark:border-slate-700">
                 <div className="flex flex-wrap gap-2">
-                  {tiposSeleccionados.map((codigo) => {
-                    const tipo = tipos_operacion.find((t) => t.codigo === codigo);
-                    return (
-                      <Badge
-                        key={codigo}
-                        className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 py-2 px-3 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition"
-                        onClick={() => toggleTipo(codigo)}
-                      >
-                        {tipo?.nombre}
-                        <X className="ml-2 h-3 w-3" />
-                      </Badge>
-                    );
-                  })}
-                  {tiposPagoSeleccionados.map((id) => {
-                    const tipoPago = tipos_pago.find((t) => t.id === id);
-                    return (
-                      <Badge
-                        key={id}
-                        className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700 py-2 px-3 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50 transition"
-                        onClick={() => toggleTipoPago(id)}
-                      >
-                        💳 {tipoPago?.nombre}
-                        <X className="ml-2 h-3 w-3" />
-                      </Badge>
-                    );
-                  })}
+                  {tipoSeleccionado && (
+                    <Badge
+                      className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 py-2 px-3 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition"
+                      onClick={() => setTipoSeleccionado('')}
+                    >
+                      {tipos_operacion.find((t) => t.codigo === tipoSeleccionado)?.nombre}
+                      <X className="ml-2 h-3 w-3" />
+                    </Badge>
+                  )}
+                  {tipoPagoSeleccionado !== '' && (
+                    <Badge
+                      className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700 py-2 px-3 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50 transition"
+                      onClick={() => setTipoPagoSeleccionado('')}
+                    >
+                      💳 {tipos_pago.find((t) => t.id === tipoPagoSeleccionado)?.nombre}
+                      <X className="ml-2 h-3 w-3" />
+                    </Badge>
+                  )}
                   {busqueda && (
                     <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700 py-2 px-3 cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/50 transition"
                       onClick={() => setBusqueda('')}
@@ -679,23 +659,17 @@ export default function ReportesDiariosDetalle({
                     Tipo de Operación
                   </label>
                   <select
-                    multiple
-                    value={tiposSeleccionados}
-                    onChange={(e) => {
-                      const valores = Array.from(e.target.selectedOptions, (option) => option.value);
-                      setTiposSeleccionados(valores);
-                    }}
+                    value={tipoSeleccionado}
+                    onChange={(e) => setTipoSeleccionado(e.target.value)}
                     className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
                   >
+                    <option value="">Todos</option>
                     {tipos_operacion.map((tipo) => (
                       <option key={tipo.codigo} value={tipo.codigo}>
                         {tipo.nombre} {tipo.direccion ? `(${tipo.direccion})` : ''}
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Mantén Ctrl/Cmd para seleccionar múltiples
-                  </p>
                 </div>
 
                 {/* Filtro por tipo de pago */}
@@ -705,23 +679,17 @@ export default function ReportesDiariosDetalle({
                       💳 Tipo de Pago
                     </label>
                     <select
-                      multiple
-                      value={tiposPagoSeleccionados.map(String)}
-                      onChange={(e) => {
-                        const valores = Array.from(e.target.selectedOptions, (option) => Number(option.value));
-                        setTiposPagoSeleccionados(valores);
-                      }}
+                      value={tipoPagoSeleccionado}
+                      onChange={(e) => setTipoPagoSeleccionado(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition"
                     >
+                      <option value="">Todos</option>
                       {tipos_pago.map((tipo) => (
                         <option key={tipo.id} value={tipo.id}>
                           {tipo.nombre}
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Mantén Ctrl/Cmd para seleccionar múltiples
-                    </p>
                   </div>
                 )}
               </div>
