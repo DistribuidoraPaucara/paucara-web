@@ -57,6 +57,26 @@
 
 <div class="separador-simple"></div>
 
+{{-- ✅ NUEVO: Mostrar última confirmación de entrega si existe (compacto) --}}
+@if($documento->confirmaciones && $documento->confirmaciones->count() > 0)
+@php
+    $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
+@endphp
+@if($ultimaConfirmacion)
+<div style="font-size: 5px; background-color: #f5f5f5; padding: 2px 3px; margin: 2px 0;">
+    <p style="margin: 1px 0; font-weight: bold;">📦 ENTREGA: {{ ucfirst(str_replace('_', ' ', strtolower($ultimaConfirmacion->tipo_confirmacion ?? 'pendiente'))) }}</p>
+    @if($ultimaConfirmacion->total_dinero_recibido)
+    <p style="margin: 1px 0;">Recibido: {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->total_dinero_recibido, 2) }}</p>
+    @endif
+    @if($ultimaConfirmacion->observaciones_logistica)
+    <p style="margin: 1px 0; word-break: break-word;">{{ $ultimaConfirmacion->observaciones_logistica }}</p>
+    @endif
+</div>
+@endif
+@endif
+
+<div class="separador-simple"></div>
+
 {{-- ==================== ITEMS (compactos) ==================== --}}
 @include('impresion.ventas.partials._items', ['formato' => 'ticket-58'])
 

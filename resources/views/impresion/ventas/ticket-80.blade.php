@@ -23,15 +23,7 @@
 
 <div class="separador"></div>
 
-{{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
-@if($documento->estadoDocumento && strtoupper($documento->estadoDocumento->codigo ?? '') === 'ANULADO' && $documento->observaciones)
-<div style="padding: 5px; background-color: #ffcccc; border-left: 3px solid #cc0000; margin: 5px 0; font-size: 10px;">
-    <p style="margin: 2px 0; color: #cc0000; font-weight: bold;">⚠️ VENTA ANULADA</p>
-    <p style="margin: 2px 0; color: #cc0000; line-height: 1.2;">
-        {{ $documento->observaciones }}
-    </p>
-</div>
-@endif
+
 
 {{-- ==================== INFO DEL CLIENTE ==================== --}}
 <div class="documento-info" style="font-size:12px;">
@@ -104,6 +96,36 @@
 
 <div class="separador"></div>
 
+{{-- ✅ NUEVO: Mostrar última confirmación de entrega si existe --}}
+@if($documento->confirmaciones && $documento->confirmaciones->count() > 0)
+@php
+    $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
+@endphp
+@if($ultimaConfirmacion)
+<div class="documento-info" style="font-size:11px; background-color: #f5f5f5; padding: 3px 5px; margin: 3px 0;">
+    <p style="margin: 2px 0; font-weight: bold;">📦 CONFIRMACIÓN DE ENTREGA</p>
+    @if($ultimaConfirmacion->tipo_confirmacion)
+    <p style="margin: 2px 0;"><strong>Estado:</strong> {{ ucfirst(str_replace('_', ' ', strtolower($ultimaConfirmacion->tipo_confirmacion))) }}</p>
+    @endif
+    @if($ultimaConfirmacion->tipo_entrega)
+    <p style="margin: 2px 0;"><strong>Tipo:</strong> {{ $ultimaConfirmacion->tipo_entrega === 'COMPLETA' ? 'Completa' : 'Con Novedad' }}</p>
+    @endif
+    @if($ultimaConfirmacion->total_dinero_recibido)
+    <p style="margin: 2px 0;"><strong>Dinero Recibido:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->total_dinero_recibido, 2) }}</p>
+    @endif
+    @if($ultimaConfirmacion->monto_pendiente)
+    <p style="margin: 2px 0;"><strong>Pendiente:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->monto_pendiente, 2) }}</p>
+    @endif
+    @if($ultimaConfirmacion->observaciones_logistica)
+    <p style="margin: 2px 0; font-size: 9px;"><strong>Observaciones:</strong></p>
+    <p style="margin: 2px 0; font-size: 9px; line-height: 1.2;">{{ $ultimaConfirmacion->observaciones_logistica }}</p>
+    @endif
+</div>
+@endif
+@endif
+
+<div class="separador"></div>
+
 {{-- ==================== ITEMS ==================== --}}
 @include('impresion.ventas.partials._items', ['formato' => 'ticket-80'])
 
@@ -141,5 +163,14 @@
 </div>
 
 <div class="separador"></div>
+{{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
+@if($documento->estadoDocumento && strtoupper($documento->estadoDocumento->codigo ?? '') === 'ANULADO' && $documento->observaciones)
+<div style="padding: 5px; margin: 5px 0; font-size: 11px;">
+    <p style="margin: 2px 0; font-weight: bold;">VENTA ANULADA</p>
+    <p style="margin: 2px 0; line-height: 1.2;">
+        {{ $documento->observaciones }}
+    </p>
+</div>
+@endif
 
 @endsection
