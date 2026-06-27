@@ -314,7 +314,7 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
     
     show.form = showForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -360,7 +360,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -368,7 +368,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -377,7 +377,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
     const devolucionesForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -386,7 +386,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
         devolucionesForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -394,7 +394,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:882
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
         devolucionesForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -409,7 +409,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     
     devoluciones.form = devolucionesForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -423,7 +423,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -455,7 +455,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -463,7 +463,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -472,7 +472,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
     const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -481,7 +481,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -489,7 +489,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:888
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -505,7 +505,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     registrarDevolucion.form = registrarDevolucionForm
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 export const imprimir = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -520,7 +520,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -553,7 +553,7 @@ imprimir.url = (args: { prestamo: number | { id: number } } | [prestamo: number 
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -562,7 +562,7 @@ imprimir.get = (args: { prestamo: number | { id: number } } | [prestamo: number 
 })
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
 imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -572,7 +572,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
     const imprimirForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -582,7 +582,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
         imprimirForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -591,7 +591,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
         })
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:453
+ * @see app/Http/Controllers/PrestamoEventoController.php:505
  * @route '/prestamos/eventos/{prestamo}/imprimir'
  */
         imprimirForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

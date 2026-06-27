@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
 export const disponibles = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ disponibles.definition = {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
 disponibles.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ disponibles.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
 disponibles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ disponibles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
 disponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ disponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
     const disponiblesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ disponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
         disponiblesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ disponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:1041
+ * @see app/Http/Controllers/ReporteVentasController.php:872
  * @route '/api/ventas/impresoras/disponibles'
  */
         disponiblesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

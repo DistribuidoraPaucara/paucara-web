@@ -34,6 +34,66 @@ class PrestamoEventoService
     }
 
     /**
+     * ✅ NUEVO: Validar que no se devuelve más de lo prestado POR CADA ALMACÉN
+     * Consulta PrestamoEventoAlmacen (prestado) vs DevolucionEventoDetalleAlmacen (devuelto)
+     *
+     * @param PrestamoEventoDetalle $detalle Detalle del préstamo
+     * @param array $devolucionesAlmacenes Array con las devoluciones por almacén
+     * @throws \Exception Si algún almacén excede lo prestado
+     */
+    private function validarDevolucionPorAlmacen(PrestamoEventoDetalle $detalle, array $devolucionesAlmacenes): void
+    {
+        foreach ($devolucionesAlmacenes as $almacenDev) {
+            $almacenId = (int) $almacenDev['almacenes_prestables_id'];
+            $cantDevAlmacen = (int) ($almacenDev['cantidad_devuelta'] ?? 0);
+            $cantDanAlmacen = (int) ($almacenDev['cantidad_dañada_total'] ?? 0);
+            $cantTotalAlmacen = $cantDevAlmacen + $cantDanAlmacen;
+
+            // Cantidad prestada de ESTE almacén específico
+            $cantidadPrestadaAlmacen = (int) PrestamoEventoAlmacen::where('prestamo_evento_detalle_id', $detalle->id)
+                ->where('almacenes_prestables_id', $almacenId)
+                ->value('cantidad') ?? 0;
+
+            if ($cantidadPrestadaAlmacen === 0) {
+                throw new \Exception(
+                    "❌ Almacén {$almacenId} no fue usado para prestar el detalle {$detalle->id}. " .
+                    "No se puede devolver de un almacén del cual no se prestó."
+                );
+            }
+
+            // Cantidad DEVUELTA de ESTE almacén específico (en devoluciones anteriores)
+            $cantidadDevueltaAlmacen = (int) DB::table('devolucion_evento_detalle_almacenes as deda')
+                ->join('devolucion_evento_detalle as ded', 'deda.devolucion_evento_detalle_id', '=', 'ded.id')
+                ->where('ded.prestamo_evento_detalle_id', $detalle->id)
+                ->where('deda.almacenes_prestables_id', $almacenId)
+                ->sum(DB::raw('deda.cantidad_devuelta + deda.cantidad_dañada_total'));
+
+            // Cantidad que FALTA devolver de este almacén
+            $faltaPorDevolverAlmacen = $cantidadPrestadaAlmacen - $cantidadDevueltaAlmacen;
+
+            // Validar que NO se devuelve más de lo que falta
+            if ($cantTotalAlmacen > $faltaPorDevolverAlmacen) {
+                throw new \Exception(
+                    "❌ Devolución excede lo faltante para almacén {$almacenId} en detalle {$detalle->id}: " .
+                    "Prestado: {$cantidadPrestadaAlmacen}, " .
+                    "Ya devuelto: {$cantidadDevueltaAlmacen}, " .
+                    "Falta: {$faltaPorDevolverAlmacen}, " .
+                    "Intenta devolver ahora: {$cantTotalAlmacen}"
+                );
+            }
+
+            \Log::info('✅ Validación por almacén correcta (Evento)', [
+                'detalle_id' => $detalle->id,
+                'almacen_id' => $almacenId,
+                'cantidad_prestada_almacen' => $cantidadPrestadaAlmacen,
+                'cantidad_ya_devuelta_almacen' => $cantidadDevueltaAlmacen,
+                'cantidad_falta_devolver' => $faltaPorDevolverAlmacen,
+                'cantidad_devolviendo_ahora' => $cantTotalAlmacen,
+            ]);
+        }
+    }
+
+    /**
      * Calcular devoluciones automáticas por almacén si devolucion_automatica = true
      * Distribuye secuencialmente: termina un almacén antes de pasar al siguiente
      *
@@ -43,10 +103,8 @@ class PrestamoEventoService
      */
     private function calcularDevolucionesAutomaticas(array $detalleData, PrestamoEvento $prestamo): array
     {
-        // Si NO es automático O ya viene con almacenes especificados, retornar tal cual
-        if (!($detalleData['devolucion_automatica'] ?? false) || !empty($detalleData['devolucion_almacenes'] ?? [])) {
-            return $detalleData['devolucion_almacenes'] ?? [];
-        }
+        // ✅ SIEMPRE calcular automáticamente basado en PrestamoEventoAlmacen
+        // Ignorar lo que venga del frontend para asegurar correcta distribución FIFO
 
         $cantidadDevuelta = $detalleData['cantidad_devuelta'] ?? 0;
         $cantidadDañadaTotal = $detalleData['cantidad_dañada_total'] ?? 0;
@@ -79,12 +137,37 @@ class PrestamoEventoService
         foreach ($almacenesPrestados as $almacenPrestado) {
             if ($cantidadRestante <= 0) break;
 
-            $cantidadDispuesta = $almacenPrestado->cantidad;
-            $aDevolverDeEste = min($cantidadRestante, $cantidadDispuesta);
+            $almacenId = $almacenPrestado->almacenes_prestables_id;
+            $cantidadPrestada = (int) $almacenPrestado->cantidad;
+
+            // ✅ NUEVO: Calcular cuánto ya fue devuelto de ESTE almacén
+            $cantidadDevueltaDelAlmacen = (int) \DB::table('devolucion_evento_detalle_almacenes as deda')
+                ->join('devolucion_evento_detalle as ded', 'deda.devolucion_evento_detalle_id', '=', 'ded.id')
+                ->where('ded.prestamo_evento_detalle_id', $detalleId)
+                ->where('deda.almacenes_prestables_id', $almacenId)
+                ->sum('deda.cantidad_devuelta');
+
+            $faltaPorDevolver = $cantidadPrestada - $cantidadDevueltaDelAlmacen;
+
+            \Log::info('📊 Análisis de devolución por almacén (Evento)', [
+                'almacen_id' => $almacenId,
+                'cantidad_prestada' => $cantidadPrestada,
+                'cantidad_ya_devuelta' => $cantidadDevueltaDelAlmacen,
+                'falta_por_devolver' => $faltaPorDevolver,
+                'cantidad_restante_a_distribuir' => $cantidadRestante,
+            ]);
+
+            if ($faltaPorDevolver <= 0) {
+                // Este almacén ya está completamente devuelto, pasar al siguiente
+                continue;
+            }
+
+            // Devolver lo que falta de este almacén, sin exceder lo restante
+            $aDevolverDeEste = min($cantidadRestante, $faltaPorDevolver);
 
             // ✅ CRÍTICO: Incluir es_proveedor para saber qué columna de stock actualizar
             $devolucionesAlmacenes[] = [
-                'almacenes_prestables_id' => $almacenPrestado->almacenes_prestables_id,
+                'almacenes_prestables_id' => $almacenId,
                 'cantidad_devuelta' => $aDevolverDeEste,
                 'cantidad_dañada_total' => 0,
                 'es_proveedor' => $almacenPrestado->es_proveedor, // ← CRÍTICO
@@ -350,9 +433,18 @@ class PrestamoEventoService
     {
         try {
             return DB::transaction(function () use ($datos) {
+                // ✅ DEBUG: Verificar qué recibe el servicio
+                Log::info('🔧 SERVICIO EVENTO - DATOS RECIBIDOS', [
+                    'tiene_prestamo_evento_id' => isset($datos['prestamo_evento_id']),
+                    'prestamo_evento_id' => $datos['prestamo_evento_id'] ?? 'NO EXISTE',
+                    'detalles_count' => count($datos['detalles'] ?? []),
+                    'todas_las_keys' => array_keys($datos),
+                ]);
+
                 $prestamo = PrestamoEvento::findOrFail($datos['prestamo_evento_id']);
 
                 Log::info('📦 Procesando devolución evento', [
+                    'prestamo_evento_id' => $prestamo->id,
                     'monto_cobrado_daño_total_header' => $datos['monto_cobrado_daño_total'] ?? 0,
                     'cantidad_detalles' => count($datos['detalles'] ?? []),
                 ]);
@@ -410,6 +502,9 @@ class PrestamoEventoService
                                 "suma de almacenes ({$sumaCantidadDanada}) ≠ cantidad total ({$cantidadDañadaTotal})"
                             );
                         }
+
+                        // ✅ NUEVO: Validar que NO se devuelve más de lo prestado POR CADA ALMACÉN
+                        $this->validarDevolucionPorAlmacen($detallePrestamoEvento, $devolucionesAlmacenes);
 
                         // ✅ El usuario especificó almacenes en la devolución
                         Log::info('🔍 Devolución evento por almacenes especificados', [
@@ -500,6 +595,40 @@ class PrestamoEventoService
                         'monto_final_usado' => (float) ($detalleData['monto_cobrado_daño'] ?? 0),
                     ]);
 
+                    // ✅ NUEVO: Calcular TOTAL DEVUELTO para este detalle y actualizar estado
+                    // IMPORTANTE: Incluir TANTO cantidad_devuelta (buen estado) COMO cantidad_dañada_total
+                    // porque ambos se "devolvieron" (ya no hay que devolverlos)
+                    // CRÍTICO: Sumar lo que YA se había devuelto ANTES + lo que se acaba de devolver AHORA
+                    $totalDevueltoAntes = $detallePrestamoEvento->devolucionDetalles()
+                        ->where('id', '!=', $detalleDevolucion->id)  // Excluir la que acabamos de crear
+                        ->sum(\DB::raw('cantidad_devuelta + cantidad_dañada_total'));
+                    $totalDevueltoAhora = $totalDevueltoAntes + $cantidadDevuelta + $cantidadDañadaTotal;
+
+                    // 🔍 DEBUG: Log detallado del cálculo
+                    Log::info('🔍 DEBUG - Cálculo de estado del detalle evento', [
+                        'detalle_id' => $detallePrestamoEvento->id,
+                        'prestable_nombre' => $detallePrestamoEvento->prestable?->nombre,
+                        'cantidad_prestada' => $detallePrestamoEvento->cantidad_prestada,
+                        'cantidad_devuelta_antes' => $totalDevueltoAntes,
+                        'cantidad_devuelta_ahora_en_esta_devolución' => $cantidadDevuelta,
+                        'total_devuelto_acumulado' => $totalDevueltoAhora,
+                        'comparacion' => "{$totalDevueltoAhora} >= {$detallePrestamoEvento->cantidad_prestada}? = " . ($totalDevueltoAhora >= $detallePrestamoEvento->cantidad_prestada ? 'YES (COMPLETAMENTE)' : 'NO (PARCIALMENTE)'),
+                    ]);
+
+                    // Actualizar estado del detalle basado en lo completamente devuelto
+                    if ($totalDevueltoAhora >= $detallePrestamoEvento->cantidad_prestada) {
+                        $detallePrestamoEvento->update(['estado' => 'COMPLETAMENTE_DEVUELTO']);
+                    } else {
+                        $detallePrestamoEvento->update(['estado' => 'PARCIALMENTE_DEVUELTO']);
+                    }
+
+                    Log::info('✅ Estado del detalle evento actualizado', [
+                        'detalle_id' => $detallePrestamoEvento->id,
+                        'cantidad_prestada' => $detallePrestamoEvento->cantidad_prestada,
+                        'cantidad_total_devuelta' => $totalDevueltoAhora,
+                        'nuevo_estado' => $detallePrestamoEvento->estado,
+                    ]);
+
                     $cantidadDevueltaTotal += $cantidadDevuelta;
                 }
 
@@ -507,8 +636,9 @@ class PrestamoEventoService
                 $devolucion->update(['cantidad_total_devuelta' => $cantidadDevueltaTotal]);
 
                 // Actualizar estado del préstamo si es completamente devuelto
+                // IMPORTANTE: Contar detalles que NO sean completamente devueltos
                 $detallesPendientes = PrestamoEventoDetalle::where('prestamo_evento_id', $prestamo->id)
-                    ->where('estado', 'ACTIVO')
+                    ->where('estado', '!=', 'COMPLETAMENTE_DEVUELTO')
                     ->count();
 
                 if ($detallesPendientes === 0) {

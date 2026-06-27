@@ -68,7 +68,7 @@ function getDevolucionRelationKey(tipoDevolucion: TipoDevolucion): string {
         case 'evento':
             return 'devolucion_detalles';  // snake_case
         case 'proveedor':
-            return 'devolucionDetalles';   // camelCase en la API de proveedores
+            return 'devolucion_detalles';  // snake_case (Laravel serializa a snake_case)
         default:
             return 'devolucion_detalles';
     }
@@ -537,13 +537,26 @@ export function RegistrarDevolucionGenerico({
             setDevolucionCreada(respuesta);
             setModalImpresionOpen(true);
         } catch (error: any) {
+            console.error('%c❌ ERROR EN DEVOLUCIÓN', 'color: #cc0000; font-weight: bold; font-size: 12px');
+            console.log('Error completo:', error);
+            console.log('Response data:', error?.response?.data);
+
             // Si hay errores de validación, mostrarlos explícitamente
             const errores = error?.response?.data?.errores;
             if (errores && Array.isArray(errores) && errores.length > 0) {
                 const mensajeDetallado = errores.map((e: string, idx: number) => `${idx + 1}. ${e}`).join('\n');
                 toastError(`❌ Validación fallida:\n${mensajeDetallado}`);
             } else {
-                const mensajeError = error?.message || error?.response?.data?.message || 'Error al registrar devolución';
+                // ✅ MEJORADO: Intentar extraer el mensaje de error de múltiples ubicaciones
+                const mensajeError =
+                    error?.response?.data?.message ||
+                    error?.response?.data?.error ||
+                    error?.message ||
+                    'Error al registrar devolución';
+
+                console.log('%c📋 MENSAJE DE ERROR A MOSTRAR', 'color: #ff6600; font-weight: bold');
+                console.log(mensajeError);
+
                 toastError(`❌ ${mensajeError}`);
             }
         } finally {

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
 export const imprimir = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
 imprimir.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ imprimir.url = (args: { cliente: number | { id: number } } | [cliente: number | 
 
 /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
 imprimir.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ imprimir.get = (args: { cliente: number | { id: number } } | [cliente: number | 
 })
 /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
 imprimir.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ imprimir.head = (args: { cliente: number | { id: number } } | [cliente: number |
 
     /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
     const imprimirForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ imprimir.head = (args: { cliente: number | { id: number } } | [cliente: number |
 
             /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
         imprimirForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ imprimir.head = (args: { cliente: number | { id: number } } | [cliente: number |
         })
             /**
 * @see \App\Http\Controllers\ClienteController::imprimir
- * @see app/Http/Controllers/ClienteController.php:2063
+ * @see app/Http/Controllers/ClienteController.php:2095
  * @route '/api/clientes/{cliente}/credito/imprimir'
  */
         imprimirForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ imprimir.head = (args: { cliente: number | { id: number } } | [cliente: number |
     imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
 export const preview = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
 preview.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ preview.url = (args: { cliente: number | { id: number } } | [cliente: number | {
 
 /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
 preview.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -160,7 +160,7 @@ preview.get = (args: { cliente: number | { id: number } } | [cliente: number | {
 })
 /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
 preview.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -170,7 +170,7 @@ preview.head = (args: { cliente: number | { id: number } } | [cliente: number | 
 
     /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
     const previewForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -180,7 +180,7 @@ preview.head = (args: { cliente: number | { id: number } } | [cliente: number | 
 
             /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
         previewForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -189,7 +189,7 @@ preview.head = (args: { cliente: number | { id: number } } | [cliente: number | 
         })
             /**
 * @see \App\Http\Controllers\ClienteController::preview
- * @see app/Http/Controllers/ClienteController.php:2142
+ * @see app/Http/Controllers/ClienteController.php:2174
  * @route '/api/clientes/{cliente}/credito/preview'
  */
         previewForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

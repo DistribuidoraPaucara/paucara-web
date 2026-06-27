@@ -254,7 +254,7 @@ export default function PrestableForm({ prestable, isEdit = false }: PrestableFo
                         </div>
 
                         {/* Grid de campos adicionales */}
-                        <div className="grid grid-cols-2 md:grid-cols-2 gap-4">                            
+                        <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
 
                             {formData.tipo === 'EMBASES' && (
                                 <div>
@@ -312,148 +312,113 @@ export default function PrestableForm({ prestable, isEdit = false }: PrestableFo
                             )}
                         </div>
 
-                        {/* Productos Relacionados */}
-                        <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">
-                                    🔗 Productos Relacionados (Variantes)
-                                </h3>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => {
-                                        const currentLength = (formData.productos_relacionados || []).length;
-                                        setFormData({
-                                            ...formData,
-                                            productos_relacionados: [
-                                                ...(formData.productos_relacionados || []),
-                                                { producto_id: 0, es_principal: currentLength === 0 }
-                                            ]
-                                        });
-                                    }}
-                                    className="gap-2"
-                                >
-                                    <Plus size={16} />
-                                    Agregar
-                                </Button>
-                            </div>
-
-                            {formData.productos_relacionados && formData.productos_relacionados.length > 0 ? (
-                                <div className="space-y-2 mb-4">
-                                    {formData.productos_relacionados.map((pr: any, idx: number) => {
-                                        const productoSeleccionado = productos.find(p => p.id === pr.producto_id);
-                                        return (
-                                        <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                                            <div className="flex-1">
-                                                <SearchSelect
-                                                    placeholder="Buscar producto..."
-                                                    value={pr.producto_id || ''}
-                                                    options={productos.map((p) => ({
-                                                        value: p.id,
-                                                        label: p.nombre,
-                                                        description: `ID: ${p.id} | SKU: ${p.sku || 'N/A'}`,
-                                                    }))}
-                                                    onChange={(id) => {
-                                                        const newPR = [...(formData.productos_relacionados || [])];
-                                                        newPR[idx].producto_id = Number(id || 0);
-                                                        setFormData({ ...formData, productos_relacionados: newPR });
-                                                    }}
-                                                    allowClear
-                                                />
-                                                {productoSeleccionado && (
-                                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1 p-2 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-                                                        <p>
-                                                            <span className="font-medium">ID:</span> <span className="font-mono">{productoSeleccionado.id} | </span>
-                                                            <span className="font-medium">SKU:</span> <span className="font-mono">{productoSeleccionado.sku || 'N/A'}</span>
-                                                        </p>
-                                                        <p>
-                                                            
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <label className="flex items-center gap-2 whitespace-nowrap cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={pr.es_principal || false}
-                                                    onChange={(e) => {
-                                                        const newPR = [...(formData.productos_relacionados || [])];
-                                                        newPR[idx].es_principal = e.target.checked;
-                                                        setFormData({ ...formData, productos_relacionados: newPR });
-                                                    }}
-                                                    className="w-4 h-4 cursor-pointer"
-                                                />
-                                                <span className="text-sm text-gray-700 dark:text-gray-300">⭐ Principal</span>
-                                            </label>
-
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="destructive"
-                                                onClick={() => {
-                                                    const newPR = (formData.productos_relacionados || []).filter((_: any, i: number) => i !== idx);
-                                                    setFormData({ ...formData, productos_relacionados: newPR });
-                                                }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
-                                        </div>
-                                        );
-                                    })}
+                        {/* Productos Relacionados y Precios en 2 Columnas */}
+                        <div className="border-t border-gray-300 dark:border-gray-600 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Columna 1: Productos Relacionados */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                                        🔗 Productos Relacionados (Variantes)
+                                    </h3>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={() => {
+                                            const currentLength = (formData.productos_relacionados || []).length;
+                                            setFormData({
+                                                ...formData,
+                                                productos_relacionados: [
+                                                    ...(formData.productos_relacionados || []),
+                                                    { producto_id: 0, es_principal: currentLength === 0 }
+                                                ]
+                                            });
+                                        }}
+                                        className="gap-2"
+                                    >
+                                        <Plus size={16} />
+                                        Agregar
+                                    </Button>
                                 </div>
-                            ) : (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-                                    Haz click en "Agregar" para relacionar productos.
-                                </p>
-                            )}
-                        </div>
 
-                        {/* Precios */}
-                        <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
-                            <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">
-                                💰 Precios {formData.tipo === 'CANASTILLA' ? '📦 Canastilla' : '🔖 Embases'}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {formData.precios?.map((precio, idx) => (
-                                    <div key={idx} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            {precio.tipo_precio === 'COMPRA' ? '📦 Precio Compra' :
-                                                precio.tipo_precio === 'PRESTAMO' ? '💰 Precio Préstamo' :
-                                                    precio.tipo_precio === 'VENTA' ? '🛒 Precio Venta' :
-                                                        '💥 Precio por Daño Total'}
-                                        </label>
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={precio.valor === 0 ? '' : precio.valor ?? ''}
-                                            onChange={(e) => {
-                                                const newPrecios = [...(formData.precios || [])];
-                                                newPrecios[idx].valor = e.target.value === '' ? 0 : Number(e.target.value);
-                                                setFormData({ ...formData, precios: newPrecios });
-                                            }}
-                                            step="0.01"
-                                            min="0"
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        />
+                                {formData.productos_relacionados && formData.productos_relacionados.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+                                        {formData.productos_relacionados.map((pr: any, idx: number) => {
+                                            const productoSeleccionado = productos.find(p => p.id === pr.producto_id);
+                                            return (
+                                                <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+                                                    <SearchSelect
+                                                        placeholder="Buscar producto..."
+                                                        value={pr.producto_id || ''}
+                                                        options={productos.map((p) => ({
+                                                            value: p.id,
+                                                            label: p.nombre,
+                                                            description: `ID: ${p.id} | SKU: ${p.sku || 'N/A'}`,
+                                                        }))}
+                                                        onChange={(id) => {
+                                                            const newPR = [...(formData.productos_relacionados || [])];
+                                                            newPR[idx].producto_id = Number(id || 0);
+                                                            setFormData({ ...formData, productos_relacionados: newPR });
+                                                        }}
+                                                        allowClear
+                                                    />
+                                                    {productoSeleccionado && (
+                                                        <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1 p-2 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                                                            <p>
+                                                                <span className="font-medium">ID:</span> <span className="font-mono">{productoSeleccionado.id}</span>
+                                                            </p>
+                                                            <p>
+                                                                <span className="font-medium">SKU:</span> <span className="font-mono">{productoSeleccionado.sku || 'N/A'}</span>
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                        <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={pr.es_principal || false}
+                                                                onChange={(e) => {
+                                                                    const newPR = [...(formData.productos_relacionados || [])];
+                                                                    newPR[idx].es_principal = e.target.checked;
+                                                                    setFormData({ ...formData, productos_relacionados: newPR });
+                                                                }}
+                                                                className="w-4 h-4 cursor-pointer"
+                                                            />
+                                                            <span className="text-sm text-gray-700 dark:text-gray-300">⭐ Principal</span>
+                                                        </label>
+
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            onClick={() => {
+                                                                const newPR = (formData.productos_relacionados || []).filter((_: any, i: number) => i !== idx);
+                                                                setFormData({ ...formData, productos_relacionados: newPR });
+                                                            }}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                ))}
+                                ) : (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                                        Haz click en "Agregar" para relacionar productos.
+                                    </p>
+                                )}
                             </div>
-                        </div>
 
-                        {/* Precios Embase */}
-                        {formData.tipo === 'CANASTILLA' && formData.crear_embase_asociado && !isEdit && (
-                            <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
+                            {/* Columna 2: Precios */}
+                            <div>
                                 <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">
-                                    💰 Precios 🔖 Embase Asociado
+                                    💰 Precios {formData.tipo === 'CANASTILLA' ? '📦 Canastilla' : '🔖 Embases'}
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    Especifica los precios para el embase que se creará automáticamente con la canastilla.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {(formData as any).precios_embase?.map((precio: any, idx: number) => (
-                                        <div key={idx} className="space-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                            <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {formData.precios?.map((precio, idx) => (
+                                        <div key={idx} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 {precio.tipo_precio === 'COMPRA' ? '📦 Precio Compra' :
                                                     precio.tipo_precio === 'PRESTAMO' ? '💰 Precio Préstamo' :
                                                         precio.tipo_precio === 'VENTA' ? '🛒 Precio Venta' :
@@ -464,9 +429,9 @@ export default function PrestableForm({ prestable, isEdit = false }: PrestableFo
                                                 placeholder="0.00"
                                                 value={precio.valor === 0 ? '' : precio.valor ?? ''}
                                                 onChange={(e) => {
-                                                    const newPrecios = [...((formData as any).precios_embase || [])];
+                                                    const newPrecios = [...(formData.precios || [])];
                                                     newPrecios[idx].valor = e.target.value === '' ? 0 : Number(e.target.value);
-                                                    setFormData({ ...formData, precios_embase: newPrecios });
+                                                    setFormData({ ...formData, precios: newPrecios });
                                                 }}
                                                 step="0.01"
                                                 min="0"
@@ -475,8 +440,45 @@ export default function PrestableForm({ prestable, isEdit = false }: PrestableFo
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Precios Embase */}
+                                {formData.tipo === 'CANASTILLA' && formData.crear_embase_asociado && !isEdit && (
+                                    <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4">
+                                        <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">
+                                            💰 Precios 🔖 Embase Asociado
+                                        </h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                            Especifica los precios para el embase que se creará automáticamente con la canastilla.
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {(formData as any).precios_embase?.map((precio: any, idx: number) => (
+                                                <div key={idx} className="space-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                    <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                                                        {precio.tipo_precio === 'COMPRA' ? '📦 Precio Compra' :
+                                                            precio.tipo_precio === 'PRESTAMO' ? '💰 Precio Préstamo' :
+                                                                precio.tipo_precio === 'VENTA' ? '🛒 Precio Venta' :
+                                                                    '💥 Precio por Daño Total'}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="0.00"
+                                                        value={precio.valor === 0 ? '' : precio.valor ?? ''}
+                                                        onChange={(e) => {
+                                                            const newPrecios = [...((formData as any).precios_embase || [])];
+                                                            newPrecios[idx].valor = e.target.value === '' ? 0 : Number(e.target.value);
+                                                            setFormData({ ...formData, precios_embase: newPrecios });
+                                                        }}
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
 
                         {/* Botones */}
                         <div className="border-t border-gray-300 dark:border-gray-600 pt-6 flex gap-3 justify-end">

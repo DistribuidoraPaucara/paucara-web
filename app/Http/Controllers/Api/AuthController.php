@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\PreventistStatisticsService;
+use App\Services\ProductosVendidosService;
+use App\Services\ProformasStatisticsService;
+use App\Services\VentasStatisticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -62,7 +65,64 @@ class AuthController extends Controller
         // ✅ NUEVO: Obtener estadísticas del preventista si aplica
         $preventistStats = null;
         if ($user->empleado && $user->empleado->esPreventista()) {
+            // Obtener estadísticas de clientes
             $preventistStats = PreventistStatisticsService::getStatsForLogin($user->empleado);
+
+            // ✅ NUEVO: Agregar estadísticas de productos vendidos (mes actual: día 1 hasta hoy)
+            $productosVendidos = ProductosVendidosService::obtenerProductosVendidos([
+                'fecha_desde' => now()->startOfMonth(),  // Día 1 del mes actual
+                'fecha_hasta' => now(),                  // Hoy
+                'preventista_id' => $user->id,
+            ]);
+
+            if ($productosVendidos['success']) {
+                // Agregar estadísticas de ventas
+                $preventistStats['cantidad_productos_vendidos'] = $productosVendidos['totales']['cantidad_productos'];
+                $preventistStats['sumatoria_productos_vendidos'] = $productosVendidos['totales']['total_venta_general'];
+                $preventistStats['cantidad_total_items_vendidos'] = $productosVendidos['totales']['cantidad_total_vendida'];
+                $preventistStats['precio_promedio_vendido'] = $productosVendidos['totales']['precio_promedio_general'];
+            }
+
+            // ✅ NUEVO: Agregar estadísticas de proformas (creadas hoy + entrega solicitada hoy)
+            try {
+                $proformasStats = ProformasStatisticsService::obtenerEstadisticasProformas($user->id);
+
+                if ($proformasStats['success']) {
+                    $preventistStats['proformas_creadas_hoy'] = $proformasStats['creadas_hoy'];
+                    $preventistStats['proformas_entrega_solicitada_hoy'] = $proformasStats['entrega_solicitada_hoy'];
+                } else {
+                    \Log::warning('⚠️ Error obteniendo estadísticas de proformas', [
+                        'user_id' => $user->id,
+                        'error' => $proformasStats['error'] ?? 'Desconocido',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('❌ Excepción obteniendo estadísticas de proformas', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // ✅ NUEVO: Agregar estadísticas de ventas (APROBADA y ANULADO)
+            try {
+                $ventasStats = VentasStatisticsService::obtenerEstadisticasVentas($user->id);
+
+                if ($ventasStats['success']) {
+                    $preventistStats['ventas_aprobadas'] = $ventasStats['ventas_aprobadas'];
+                    $preventistStats['ventas_anuladas'] = $ventasStats['ventas_anuladas'];
+                    $preventistStats['total_ventas'] = $ventasStats['total_ventas'];
+                } else {
+                    \Log::warning('⚠️ Error obteniendo estadísticas de ventas', [
+                        'user_id' => $user->id,
+                        'error' => $ventasStats['error'] ?? 'Desconocido',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('❌ Excepción obteniendo estadísticas de ventas', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $responseData = [
@@ -192,7 +252,64 @@ class AuthController extends Controller
 
         // ✅ NUEVO: Incluir estadísticas del preventista si aplica
         if ($user->empleado && $user->empleado->esPreventista()) {
-            $responseData['preventista_stats'] = PreventistStatisticsService::getStatsForLogin($user->empleado);
+            $preventistStats = PreventistStatisticsService::getStatsForLogin($user->empleado);
+
+            // ✅ NUEVO: Agregar estadísticas de productos vendidos (mes actual: día 1 hasta hoy)
+            $productosVendidos = ProductosVendidosService::obtenerProductosVendidos([
+                'fecha_desde' => now()->startOfMonth(),
+                'fecha_hasta' => now(),
+                'preventista_id' => $user->id,
+            ]);
+
+            if ($productosVendidos['success']) {
+                $preventistStats['cantidad_productos_vendidos'] = $productosVendidos['totales']['cantidad_productos'];
+                $preventistStats['sumatoria_productos_vendidos'] = $productosVendidos['totales']['total_venta_general'];
+                $preventistStats['cantidad_total_items_vendidos'] = $productosVendidos['totales']['cantidad_total_vendida'];
+                $preventistStats['precio_promedio_vendido'] = $productosVendidos['totales']['precio_promedio_general'];
+            }
+
+            // ✅ NUEVO: Agregar estadísticas de proformas
+            try {
+                $proformasStats = ProformasStatisticsService::obtenerEstadisticasProformas($user->id);
+
+                if ($proformasStats['success']) {
+                    $preventistStats['proformas_creadas_hoy'] = $proformasStats['creadas_hoy'];
+                    $preventistStats['proformas_entrega_solicitada_hoy'] = $proformasStats['entrega_solicitada_hoy'];
+                } else {
+                    \Log::warning('⚠️ Error obteniendo estadísticas de proformas en user()', [
+                        'user_id' => $user->id,
+                        'error' => $proformasStats['error'] ?? 'Desconocido',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('❌ Excepción obteniendo estadísticas de proformas en user()', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // ✅ NUEVO: Agregar estadísticas de ventas (APROBADA y ANULADO)
+            try {
+                $ventasStats = VentasStatisticsService::obtenerEstadisticasVentas($user->id);
+
+                if ($ventasStats['success']) {
+                    $preventistStats['ventas_aprobadas'] = $ventasStats['ventas_aprobadas'];
+                    $preventistStats['ventas_anuladas'] = $ventasStats['ventas_anuladas'];
+                    $preventistStats['total_ventas'] = $ventasStats['total_ventas'];
+                } else {
+                    \Log::warning('⚠️ Error obteniendo estadísticas de ventas en user()', [
+                        'user_id' => $user->id,
+                        'error' => $ventasStats['error'] ?? 'Desconocido',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('❌ Excepción obteniendo estadísticas de ventas en user()', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $responseData['preventista_stats'] = $preventistStats;
         }
 
         return response()->json($responseData);

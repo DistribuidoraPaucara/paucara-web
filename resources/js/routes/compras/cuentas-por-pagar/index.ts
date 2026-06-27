@@ -503,7 +503,7 @@ anularPago.post = (args: { cuentaPorPagar: number | { id: number }, pago: number
     anularPago.form = anularPagoForm
 /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
 export const imprimirTicket80 = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -518,7 +518,7 @@ imprimirTicket80.definition = {
 
 /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
 imprimirTicket80.url = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -551,7 +551,7 @@ imprimirTicket80.url = (args: { cuentaPorPagar: number | { id: number } } | [cue
 
 /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
 imprimirTicket80.get = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -560,7 +560,7 @@ imprimirTicket80.get = (args: { cuentaPorPagar: number | { id: number } } | [cue
 })
 /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
 imprimirTicket80.head = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -570,7 +570,7 @@ imprimirTicket80.head = (args: { cuentaPorPagar: number | { id: number } } | [cu
 
     /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
     const imprimirTicket80Form = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -580,7 +580,7 @@ imprimirTicket80.head = (args: { cuentaPorPagar: number | { id: number } } | [cu
 
             /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
         imprimirTicket80Form.get = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -589,7 +589,7 @@ imprimirTicket80.head = (args: { cuentaPorPagar: number | { id: number } } | [cu
         })
             /**
 * @see \App\Http\Controllers\CuentaPorPagarController::imprimirTicket80
- * @see app/Http/Controllers/CuentaPorPagarController.php:295
+ * @see app/Http/Controllers/CuentaPorPagarController.php:296
  * @route '/compras/cuentas-por-pagar/{cuentaPorPagar}/imprimir-ticket-80'
  */
         imprimirTicket80Form.head = (args: { cuentaPorPagar: number | { id: number } } | [cuentaPorPagar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

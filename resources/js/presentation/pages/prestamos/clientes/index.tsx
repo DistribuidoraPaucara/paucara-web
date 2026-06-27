@@ -361,10 +361,13 @@ export default function PrestamosClientesIndex() {
         // Calcular totales de prestables
         let totalCanastillasPrestadas = 0;
         let totalCanastillasDevueltas = 0;
+        let totalCanastillasDañadas = 0;
         let totalEmbasesPrestadas = 0;
         let totalEmbassesDevueltos = 0;
+        let totalEmbasesDañados = 0;
         let totalItemsPrestados = 0;
         let totalItemsDevueltos = 0;
+        let totalItemsDañados = 0;
 
         prestamos.forEach(prestamo => {
             // Contar por tipo de prestable
@@ -383,14 +386,19 @@ export default function PrestamosClientesIndex() {
             // Contar devoluciones
             (prestamo.devoluciones || []).forEach(devolucion => {
                 (devolucion.detalles || []).forEach(detalleDevol => {
-                    const cantidad = Number(detalleDevol.cantidad_devuelta) || 0;
-                    totalItemsDevueltos += cantidad;
+                    const cantidadDevuelta = Number(detalleDevol.cantidad_devuelta) || 0;
+                    const cantidadDañada = Number(detalleDevol.cantidad_dañada_total) || 0;
+                    totalItemsDevueltos += cantidadDevuelta;
+                    totalItemsDañados += cantidadDañada;
 
-                    const prestableType = detalleDevol.prestable?.tipo;
+                    // ✅ CORREGIDO: Acceder al prestable a través de detallePrestamoCliente
+                    const prestableType = detalleDevol.detallePrestamoCliente?.prestable?.tipo;
                     if (prestableType === 'CANASTILLA') {
-                        totalCanastillasDevueltas += cantidad;
+                        totalCanastillasDevueltas += cantidadDevuelta;
+                        totalCanastillasDañadas += cantidadDañada;
                     } else if (prestableType === 'EMBASES') {
-                        totalEmbassesDevueltos += cantidad;
+                        totalEmbassesDevueltos += cantidadDevuelta;
+                        totalEmbasesDañados += cantidadDañada;
                     }
                 });
             });
@@ -420,22 +428,93 @@ export default function PrestamosClientesIndex() {
             canastillas: {
                 prestadas: totalCanastillasPrestadas,
                 devueltas: totalCanastillasDevueltas,
+                dañadas: totalCanastillasDañadas,
                 pendientes: totalCanastillasPrestadas - totalCanastillasDevueltas,
             },
             embases: {
                 prestadas: totalEmbasesPrestadas,
                 devueltos: totalEmbassesDevueltos,
+                dañados: totalEmbasesDañados,
                 pendientes: totalEmbasesPrestadas - totalEmbassesDevueltos,
             },
             itemsTotales: {
                 prestados: totalItemsPrestados,
                 devueltos: totalItemsDevueltos,
+                dañados: totalItemsDañados,
                 pendientes: totalItemsPrestados - totalItemsDevueltos,
             }
         };
     };
 
     const totales = calcularTotales();
+
+    // ✅ NUEVO: Calcular información de préstamos pendientes (ACTIVO + PARCIALMENTE_DEVUELTO)
+    const calcularPendientes = () => {
+        const prestamosPendientes = prestamos.filter(p =>
+            p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO'
+        );
+
+        const resumen = {
+            totalPrestamos: prestamosPendientes.length,
+            canastillas: {
+                prestadas: 0,
+                devueltas: 0,
+                pendientes: 0,
+            },
+            embases: {
+                prestadas: 0,
+                devueltas: 0,
+                pendientes: 0,
+            },
+            montoGarantia: 0,
+        };
+
+        prestamosPendientes.forEach(prestamo => {
+            resumen.montoGarantia += Number(prestamo.monto_garantia || 0);
+
+            (prestamo.detalles || []).forEach((detalle: any) => {
+                const totalDetalle = Number(detalle.cantidad_prestada || 0);
+                const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
+
+                if (detalle.prestable?.tipo === 'CANASTILLA') {
+                    resumen.canastillas.prestadas += totalDetalle;
+                    resumen.canastillas.devueltas += devueltoDetalle;
+                    resumen.canastillas.pendientes += pendienteDetalle;
+                } else if (detalle.prestable?.tipo === 'EMBASES') {
+                    resumen.embases.prestadas += totalDetalle;
+                    resumen.embases.devueltas += devueltoDetalle;
+                    resumen.embases.pendientes += pendienteDetalle;
+                }
+            });
+        });
+
+        return resumen;
+    };
+
+    const pendientes = calcularPendientes();
+
+    // ✅ NUEVO: Calcular pendientes por préstamo individual
+    const calcularPendientesPorPrestamo = (prestamo: PrestamoCliente) => {
+        const resumen = {
+            canastillas: 0,
+            embases: 0,
+        };
+
+        (prestamo.detalles || []).forEach((detalle: any) => {
+            const totalDetalle = Number(detalle.cantidad_prestada || 0);
+            const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+            const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
+
+            if (detalle.prestable?.tipo === 'CANASTILLA') {
+                resumen.canastillas += pendienteDetalle;
+            } else if (detalle.prestable?.tipo === 'EMBASES') {
+                resumen.embases += pendienteDetalle;
+            }
+        });
+
+        return resumen;
+    };
 
     const getEstadoBadge = (estado: EstadoPrestamo | string) => {
         const styles: Record<string, string> = {
@@ -445,7 +524,7 @@ export default function PrestamosClientesIndex() {
             CANCELADO: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
         };
         return (
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[estado as string] || styles.ACTIVO}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-xs ${styles[estado as string] || styles.ACTIVO}`}>
                 {(estado as string).replace(/_/g, ' ')}
             </span>
         );
@@ -513,8 +592,8 @@ export default function PrestamosClientesIndex() {
     return (
         <AppLayout>
             <Head title="Préstamos a Clientes" />
-            <div className="p-8 bg-white dark:bg-gray-950 min-h-screen">
-                <div className="flex justify-between items-center mb-8">
+            <div className="p-4 bg-white dark:bg-gray-950 min-h-screen">
+                <div className="flex justify-between items-center mb-2">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">👥 Préstamos a Clientes</h1>
                     <a href="/prestamos/clientes/crear">
                         <Button className="gap-2">
@@ -524,127 +603,78 @@ export default function PrestamosClientesIndex() {
                     </a>
                 </div>
 
-                {/* Cards de Resumen */}
-                {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Préstamos Activos</p>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.activos}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Garantías en Juego</p>
-                        <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.garantiasEnJuego.toFixed(2)}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Pendiente Devolución</p>
-                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-1">{totales.pendienteDevolución}</p>
-                    </Card>
+                {/* ✅ NUEVO: Card de Resumen Pendiente */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-2">
                     <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">🔴 Vencidos</p>
-                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.vencidos}</p>
-                    </Card>
-                </div> */}
-
-                {/* Cards de Detalle: Canastillas y Embases */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    {/* Card: Activos o Parcialmente Devueltos */}
-                    <Card className="p-4 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 border-cyan-200 dark:border-cyan-700">
                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                            ⚡ Activos o Parciales
-                        </p>
-                        <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
-                            {totales.activosOParciales}
-                        </p>
-                        <p className="text-xs text-cyan-700 dark:text-cyan-300">
-                            Préstamos en gestión
-                        </p>
-                    </Card>
-
-                    {/* Card: Canastillas */}
-                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                            🧺 Canastillas
+                            ⚠️ Préstamos Pendientes
                         </p>
                         <div className="space-y-1">
-                            <p className="text-sm">
-                                <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                    {totales.canastillas.prestadas}
-                                </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Prestadas</span>
-                            </p>
-                            <p className="text-sm">
-                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                    {totales.canastillas.devueltas}
-                                </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Devueltas</span>
-                            </p>
-                            <p className="text-sm border-t border-orange-200 dark:border-orange-700 pt-1 mt-1">
-                                <span className="font-bold text-orange-700 dark:text-orange-300">
-                                    {totales.canastillas.pendientes}
-                                </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Pendientes</span>
-                            </p>
+                            <div>
+                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                    {pendientes.totalPrestamos}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">Préstamos activos</p>
+                            </div>
+                            <div className="pt-2 border-t border-red-200 dark:border-red-700">
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <span className="font-semibold">Canastillas:</span> {pendientes.canastillas.pendientes} por devolver
+                                </p>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <span className="font-semibold">Embases:</span> {pendientes.embases.pendientes} por devolver
+                                </p>
+                            </div>
                         </div>
                     </Card>
 
-                    {/* Card: Embases */}
-                    <Card className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/30 dark:to-pink-800/30 border-pink-200 dark:border-pink-700">
+                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                            🥫 Embases
+                            📊 Items Pendientes por Tipo
                         </p>
                         <div className="space-y-1">
-                            <p className="text-sm">
-                                <span className="font-semibold text-pink-600 dark:text-pink-400">
-                                    {totales.embases.prestadas}
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">📦 Canastillas</span>
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                    {pendientes.canastillas.pendientes}
                                 </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Prestados</span>
-                            </p>
-                            <p className="text-sm">
-                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                    {totales.embases.devueltos}
+                            </div>
+                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">🥫 Embases</span>
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                    {pendientes.embases.pendientes}
                                 </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Devueltos</span>
-                            </p>
-                            <p className="text-sm border-t border-pink-200 dark:border-pink-700 pt-1 mt-1">
-                                <span className="font-bold text-pink-700 dark:text-pink-300">
-                                    {totales.embases.pendientes}
+                            </div>
+                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                                <span className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                                    {pendientes.canastillas.pendientes + pendientes.embases.pendientes}
                                 </span>
-                                <span className="text-xs text-gray-600 dark:text-gray-400"> Pendientes</span>
-                            </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            💰 Garantías en Riesgo
+                        </p>
+                        <div className="space-y-1">
+                            <div>
+                                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                    Bs {pendientes.montoGarantia.toLocaleString('es-ES')}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">Total en garantía</p>
+                            </div>
+                            <div className="pt-2 border-t border-purple-200 dark:border-purple-700">
+                                <p className="text-xs text-purple-700 dark:text-purple-300">
+                                    💡 Recuperar para liberar garantías
+                                </p>
+                            </div>
                         </div>
                     </Card>
                 </div>
 
-                {/* Card: Resumen Total de Items */}
-                {/* <div className="grid grid-cols-1 gap-4 mb-6">
-                    <Card className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/30 border-slate-200 dark:border-slate-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
-                            📊 Resumen Total de Ítems
-                        </p>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                    {totales.itemsTotales.prestados}
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Prestado</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                    {totales.itemsTotales.devueltos}
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Devuelto</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                                    {totales.itemsTotales.pendientes}
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Falta por Recoger</p>
-                            </div>
-                        </div>
-                    </Card>
-                </div> */}
-
                 {/* Panel de Filtros */}
-                <div className="mb-6">
+                <div className="mb-2">
                     <div className="flex gap-2 mb-3">
                         <Button
                             variant={mostrarFiltros ? 'default' : 'outline'}
@@ -808,15 +838,11 @@ export default function PrestamosClientesIndex() {
                                         <TableHead className="text-gray-900 dark:text-gray-100 w-16">Folio</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100">Cliente</TableHead>
                                         <TableHead className="text-center text-gray-900 dark:text-gray-100">Venta ID</TableHead>
-                                        {/* <TableHead className="text-gray-900 dark:text-gray-100">Prestable</TableHead> */}
-                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Cantidad</TableHead> */}
                                         <TableHead className="text-gray-900 dark:text-gray-100">Garantía</TableHead>
-                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Total</TableHead> */}
-                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Devuelto</TableHead> */}
-                                        {/* <TableHead className="text-center text-gray-900 dark:text-gray-100">Faltante</TableHead> */}
                                         <TableHead className="text-gray-900 dark:text-gray-100">Fecha Préstamo</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100">Plazo</TableHead>
-                                        {/* <TableHead className="text-gray-900 dark:text-gray-100">Vencido</TableHead> */}
+                                        {/* ✅ NUEVO: Columna de Pendientes */}
+                                        <TableHead className="text-center text-gray-900 dark:text-gray-100">Pendientes</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100">Estado</TableHead>
                                         <TableHead className="text-right text-gray-900 dark:text-gray-100">Acciones</TableHead>
                                     </TableRow>
@@ -828,7 +854,7 @@ export default function PrestamosClientesIndex() {
                                         const cantidadTotal = p.detalles?.reduce((sum: number, d: any) => sum + (d.cantidad_prestada || 0), 0) || 0;
                                         // Sumar devoluciones de cada detalle usando devolucion_detalles
                                         const cantidadDevuelta = p.detalles?.reduce((sum: number, detalle: any) => {
-                                            const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + (dev.cantidad_devuelta || 0), 0) || 0;
+                                            const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
                                             return sum + devueltoDetalle;
                                         }, 0) || 0;
                                         const cantidadFaltante = p.estado === 'CANCELADO' ? 0 : Math.max(0, cantidadTotal - cantidadDevuelta);
@@ -854,36 +880,44 @@ export default function PrestamosClientesIndex() {
                                                             <span className="text-gray-400 dark:text-gray-500">-</span>
                                                         )}
                                                     </TableCell>
-                                                    {/* <TableCell className="text-gray-900 dark:text-gray-100 text-sm">{prestabesNombres}</TableCell> */}
-                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100">{cantidadTotal || p.cantidad || 0}</TableCell> */}
                                                     <TableCell className="text-gray-900 dark:text-gray-100">Bs {p.monto_garantia}</TableCell>
-                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold">{cantidadTotal}</TableCell> */}
-                                                    {/* <TableCell className="text-center text-gray-900 dark:text-gray-100 font-semibold text-green-600 dark:text-green-400">{cantidadDevuelta}</TableCell> */}
-                                                    {/* <TableCell className="text-center">
-                                                    <span className={`font-semibold ${cantidadFaltante === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                                                        {cantidadFaltante}
-                                                    </span>
-                                                </TableCell> */}
-                                                    <TableCell className="text-gray-900 dark:text-gray-100">
+                                                    <TableCell className="text-gray-900 dark:text-gray-100 texto-xs">
                                                         {new Date(p.fecha_prestamo).toLocaleDateString('es-ES')}
                                                     </TableCell>
-                                                    <TableCell className="text-gray-900 dark:text-gray-100">
+                                                    <TableCell className="text-gray-900 dark:text-gray-100 texto-xs">
                                                         {p.fecha_esperada_devolucion
                                                             ? new Date(p.fecha_esperada_devolucion).toLocaleDateString(
                                                                 'es-ES'
                                                             )
                                                             : 'S/P'}
                                                     </TableCell>
-                                                    {/* <TableCell className="text-gray-900 dark:text-gray-100">
-                                                    {diasVencidos !== null ? (
-                                                        <span className="text-red-600 dark:text-red-400 font-semibold">
-                                                            {diasVencidos}d
-                                                        </span>
-                                                    ) : (
-                                                        '-'
-                                                    )}
-                                                </TableCell> */}
-                                                    <TableCell>{getEstadoBadge(p.estado)}</TableCell>
+                                                    {/* ✅ NUEVO: Celda de Pendientes */}
+                                                    <TableCell className="text-center">
+                                                        {(() => {
+                                                            const pend = calcularPendientesPorPrestamo(p);
+                                                            const totalPendiente = pend.canastillas + pend.embases;
+                                                            if (totalPendiente === 0) {
+                                                                return <span className="text-green-600 dark:text-green-400 font-semibold">✓ Completo</span>;
+                                                            }
+                                                            return (
+                                                                <div className="flex flex-col gap-1 text-sm">
+                                                                    {pend.canastillas > 0 && (
+                                                                        <div className="flex items-center justify-center gap-1">
+                                                                            <span>📦</span>
+                                                                            <span className="font-semibold text-orange-600 dark:text-orange-400">{pend.canastillas}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {pend.embases > 0 && (
+                                                                        <div className="flex items-center justify-center gap-1">
+                                                                            <span>🥫</span>
+                                                                            <span className="font-semibold text-pink-600 dark:text-pink-400">{pend.embases}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </TableCell>
+                                                    <TableCell className='text-xs'>{getEstadoBadge(p.estado)}</TableCell>
                                                     <TableCell className="text-right">
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
@@ -900,6 +934,12 @@ export default function PrestamosClientesIndex() {
                                                                 <DropdownMenuItem onSelect={() => abrirModalEdicion(p)}>
                                                                     <Edit size={16} />
                                                                     Editar
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem asChild>
+                                                                    <a href={`/prestamos/clientes/${p.id}`}>
+                                                                        <Eye size={16} />
+                                                                        Ver detalle completo
+                                                                    </a>
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem asChild>
                                                                     <a href={`/prestamos/clientes/${p.id}/devoluciones`}>
@@ -969,27 +1009,63 @@ export default function PrestamosClientesIndex() {
                                                     </TableCell>
                                                 </TableRow>
 
-                                                {/* Expandable detail rows */}
+                                                {/* ✅ MEJORADO: Expandable detail rows */}
                                                 {isExpanded && p.detalles && p.detalles.map((detalle: any, detalleIdx: number) => {
                                                     const totalDetalle = detalle.cantidad_prestada || 0;
-                                                    const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + (dev.cantidad_devuelta || 0), 0) || 0;
+                                                    const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                                                    const dañadoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + (dev.cantidad_dañada_total || 0), 0) || 0;
                                                     const faltanteDetalle = p.estado === 'CANCELADO' ? 0 : Math.max(0, totalDetalle - devueltoDetalle);
                                                     const nombreDetalle = detalle.prestable?.nombre || 'N/D';
+                                                    const tipoDetalle = detalle.prestable?.tipo || 'N/D';
+                                                    const iconoTipo = tipoDetalle === 'CANASTILLA' ? '📦' : '🥫';
+                                                    const porcentajeDev = totalDetalle > 0 ? Math.round((devueltoDetalle / totalDetalle) * 100) : 0;
 
                                                     return (
-                                                        <TableRow key={`${p.id}-detail-${detalleIdx}`} className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700">
-                                                            <TableCell></TableCell>
-                                                            <TableCell className="pl-4 text-gray-700 dark:text-gray-300 text-sm">{nombreDetalle}</TableCell>
-                                                            <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm font-medium">Cantidad: {totalDetalle}</TableCell>
-                                                            <TableCell className="text-center text-green-600 dark:text-green-400 text-sm font-medium">Devuelto: {devueltoDetalle}</TableCell>
-                                                            <TableCell className="text-center">
-                                                                {/* <span className={`text-sm font-medium ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                                                                {faltanteDetalle}
-                                                            </span> */}
+                                                        <TableRow key={`${p.id}-detail-${detalleIdx}`} className="bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900/50">
+                                                            <TableCell className="pl-8 text-gray-700 dark:text-gray-300 text-sm">
+                                                                <span>{iconoTipo} {tipoDetalle}</span>
                                                             </TableCell>
-                                                            <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
-                                                            <TableCell className="text-gray-700 dark:text-gray-300 text-sm"></TableCell>
-                                                            <TableCell></TableCell>
+                                                            <TableCell className="pl-4 text-gray-700 dark:text-gray-300 text-sm font-medium">{nombreDetalle}</TableCell>
+                                                            <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="font-semibold">{totalDetalle}</span>
+                                                                    <span className="text-xs text-gray-500">Total</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-center">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-green-600 dark:text-green-400 font-semibold">{devueltoDetalle}</span>
+                                                                    <span className="text-xs text-gray-500">{porcentajeDev}%</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className={`font-semibold ${faltanteDetalle === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                                                        {faltanteDetalle}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-500">Pendiente</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-gray-700 dark:text-gray-300 text-sm">
+                                                                {dañadoDetalle > 0 && (
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span className="text-red-600 dark:text-red-400 font-semibold">{dañadoDetalle}</span>
+                                                                        <span className="text-xs text-gray-500">Dañados</span>
+                                                                    </div>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-gray-700 dark:text-gray-300 text-sm">
+                                                                {detalle.estado && (
+                                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${detalle.estado === 'COMPLETAMENTE_DEVUELTO'
+                                                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                                                        : detalle.estado === 'PARCIALMENTE_DEVUELTO'
+                                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                                                                        }`}>
+                                                                        {detalle.estado.replace(/_/g, ' ')}
+                                                                    </span>
+                                                                )}
+                                                            </TableCell>
                                                             <TableCell></TableCell>
                                                         </TableRow>
                                                     );

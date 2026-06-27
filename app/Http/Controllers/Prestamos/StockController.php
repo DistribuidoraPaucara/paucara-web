@@ -119,8 +119,12 @@ class StockController extends Controller
                 $stock = $stockExistente->get($key);
 
                 $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
-                $cantidadClienteDevuelto = $stock?->cantidad_cliente_devuelto ?? 0;
-                $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDevuelto;
+                $cantidadClienteDañada = $stock?->cantidad_cliente_dañada ?? 0;
+                $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDañada;
+
+                $cantidadEventoDeudor = $stock?->cantidad_evento_deudor ?? 0;
+                $cantidadEventoDañada = $stock?->cantidad_evento_dañada ?? 0;
+                $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDañada;
 
                 $items[] = [
                     'id' => $stock?->id ?? null,
@@ -134,9 +138,13 @@ class StockController extends Controller
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
                     'cantidad_cliente_deudor' => $cantidadClienteDeudor,
-                    'cantidad_cliente_devuelto' => $cantidadClienteDevuelto,
-                    'cantidad_cliente_dañada' => $stock?->cantidad_cliente_dañada ?? 0,
+                    'cantidad_cliente_devuelto' => $stock?->cantidad_cliente_devuelto ?? 0,
+                    'cantidad_cliente_dañada' => $cantidadClienteDañada,
                     'cantidad_cliente_total' => $cantidadClienteTotal,
+                    'cantidad_evento_deudor' => $cantidadEventoDeudor,
+                    'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
+                    'cantidad_evento_dañada' => $cantidadEventoDañada,
+                    'cantidad_evento_total' => $cantidadEventoTotal,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal,
                 ];
             }
@@ -144,14 +152,58 @@ class StockController extends Controller
 
         \Log::info('✅ Items generados: ' . count($items) . ' items totales');
 
-        // Calcular resumen (solo clientes, sin eventos)
+        // Calcular resumen separado por tipo de prestable
         $itemsCollection = collect($items);
+        $canastillas = $itemsCollection->where('prestable_tipo', 'CANASTILLA');
+        $embases = $itemsCollection->where('prestable_tipo', 'EMBASES');
+
+        // Resumen para clientes
+        $resumenClientes = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
+                'dañada' => $itemsCollection->sum('cantidad_cliente_dañada'),
+                'total' => $itemsCollection->sum('cantidad_cliente_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_cliente_deudor'),
+                'dañada' => $canastillas->sum('cantidad_cliente_dañada'),
+                'total' => $canastillas->sum('cantidad_cliente_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_cliente_deudor'),
+                'dañada' => $embases->sum('cantidad_cliente_dañada'),
+                'total' => $embases->sum('cantidad_cliente_total'),
+            ],
+        ];
+
+        // Resumen para eventos
+        $resumenEventos = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_evento_deudor'),
+                'dañada' => $itemsCollection->sum('cantidad_evento_dañada'),
+                'total' => $itemsCollection->sum('cantidad_evento_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_evento_deudor'),
+                'dañada' => $canastillas->sum('cantidad_evento_dañada'),
+                'total' => $canastillas->sum('cantidad_evento_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_evento_deudor'),
+                'dañada' => $embases->sum('cantidad_evento_dañada'),
+                'total' => $embases->sum('cantidad_evento_total'),
+            ],
+        ];
+
         $resumen = [
-            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
-            'total_cliente_deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
-            'total_cliente_devuelto' => $itemsCollection->sum('cantidad_cliente_devuelto'),
-            'total_cliente' => $itemsCollection->sum('cantidad_cliente_total'),
-            'total_general' => $itemsCollection->sum('cantidad_total'),
+            'clientes' => $resumenClientes,
+            'eventos' => $resumenEventos,
         ];
 
         return Inertia::render('prestamos/stock-clientes', [
@@ -195,10 +247,13 @@ class StockController extends Controller
                 $key = "{$prestable->id}_{$almacen->id}";
                 $stock = $stockExistente->get($key);
 
-                $cantidadEventoDeudor = $stock?->cantidad_evento_deudor ?? 0;
-                $cantidadEventoDevuelto = $stock?->cantidad_evento_devuelto ?? 0;
+                $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
+                $cantidadClienteDañada = $stock?->cantidad_cliente_dañada ?? 0;
+                $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDañada;
 
-                $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDevuelto;
+                $cantidadEventoDeudor = $stock?->cantidad_evento_deudor ?? 0;
+                $cantidadEventoDañada = $stock?->cantidad_evento_dañada ?? 0;
+                $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDañada;
 
                 $items[] = [
                     'id' => $stock?->id ?? null,
@@ -211,23 +266,71 @@ class StockController extends Controller
                     'almacen_nombre' => $almacen->nombre,
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_cliente_deudor' => $cantidadClienteDeudor,
+                    'cantidad_cliente_devuelto' => $stock?->cantidad_cliente_devuelto ?? 0,
+                    'cantidad_cliente_dañada' => $cantidadClienteDañada,
+                    'cantidad_cliente_total' => $cantidadClienteTotal,
                     'cantidad_evento_deudor' => $cantidadEventoDeudor,
-                    'cantidad_evento_devuelto' => $cantidadEventoDevuelto,
-                    'cantidad_evento_dañada' => $stock?->cantidad_evento_dañada ?? 0,
+                    'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
+                    'cantidad_evento_dañada' => $cantidadEventoDañada,
                     'cantidad_evento_total' => $cantidadEventoTotal,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadEventoTotal,
                 ];
             }
         }
 
-        // Calcular resumen (solo eventos)
+        // Calcular resumen separado por tipo de prestable
         $itemsCollection = collect($items);
+        $canastillas = $itemsCollection->where('prestable_tipo', 'CANASTILLA');
+        $embases = $itemsCollection->where('prestable_tipo', 'EMBASES');
+
+        // Resumen para clientes
+        $resumenClientes = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
+                'dañada' => $itemsCollection->sum('cantidad_cliente_dañada'),
+                'total' => $itemsCollection->sum('cantidad_cliente_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_cliente_deudor'),
+                'dañada' => $canastillas->sum('cantidad_cliente_dañada'),
+                'total' => $canastillas->sum('cantidad_cliente_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_cliente_deudor'),
+                'dañada' => $embases->sum('cantidad_cliente_dañada'),
+                'total' => $embases->sum('cantidad_cliente_total'),
+            ],
+        ];
+
+        // Resumen para eventos
+        $resumenEventos = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_evento_deudor'),
+                'dañada' => $itemsCollection->sum('cantidad_evento_dañada'),
+                'total' => $itemsCollection->sum('cantidad_evento_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_evento_deudor'),
+                'dañada' => $canastillas->sum('cantidad_evento_dañada'),
+                'total' => $canastillas->sum('cantidad_evento_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_evento_deudor'),
+                'dañada' => $embases->sum('cantidad_evento_dañada'),
+                'total' => $embases->sum('cantidad_evento_total'),
+            ],
+        ];
+
         $resumen = [
-            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
-            'total_evento_deudor' => $itemsCollection->sum('cantidad_evento_deudor'),
-            'total_evento_devuelto' => $itemsCollection->sum('cantidad_evento_devuelto'),
-            'total_evento' => $itemsCollection->sum('cantidad_evento_total'),
-            'total_general' => $itemsCollection->sum('cantidad_total'),
+            'clientes' => $resumenClientes,
+            'eventos' => $resumenEventos,
         ];
 
         return Inertia::render('prestamos/stock-eventos', [
@@ -272,10 +375,12 @@ class StockController extends Controller
                 $stock = $stockExistente->get($key);
 
                 $cantidadClienteDeudor = $stock?->cantidad_cliente_deudor ?? 0;
-                $cantidadProveedorAcreedor = $stock?->cantidad_proveedor_acreedor ?? 0;
-                $cantidadProveedorDevuelto = $stock?->cantidad_proveedor_devuelto ?? 0;
+                $cantidadClienteDañada = $stock?->cantidad_cliente_dañada ?? 0;
+                $cantidadClienteTotal = $cantidadClienteDeudor + $cantidadClienteDañada;
 
-                $cantidadProveedorTotal = $cantidadProveedorAcreedor + $cantidadProveedorDevuelto;
+                $cantidadProveedorAcreedor = $stock?->cantidad_proveedor_acreedor ?? 0;
+                $cantidadProveedorDañada = $stock?->cantidad_proveedor_dañada ?? 0;
+                $cantidadProveedorTotal = $cantidadProveedorAcreedor + $cantidadProveedorDañada;
 
                 $items[] = [
                     'id' => $stock?->id ?? null,
@@ -289,28 +394,105 @@ class StockController extends Controller
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
                     'cantidad_cliente_deudor' => $cantidadClienteDeudor,
+                    'cantidad_cliente_devuelto' => $stock?->cantidad_cliente_devuelto ?? 0,
+                    'cantidad_cliente_dañada' => $cantidadClienteDañada,
+                    'cantidad_cliente_total' => $cantidadClienteTotal,
                     'cantidad_proveedor_acreedor' => $cantidadProveedorAcreedor,
-                    'cantidad_proveedor_devuelto' => $cantidadProveedorDevuelto,
-                    'cantidad_proveedor_dañada' => $stock?->cantidad_proveedor_dañada ?? 0,
+                    'cantidad_proveedor_devuelto' => $stock?->cantidad_proveedor_devuelto ?? 0,
+                    'cantidad_proveedor_dañada' => $cantidadProveedorDañada,
                     'cantidad_proveedor_total' => $cantidadProveedorTotal,
-                    //cantidad evetos
                     'cantidad_evento_deudor' => $stock?->cantidad_evento_deudor ?? 0,
                     'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
                     'cantidad_evento_dañada' => $stock?->cantidad_evento_dañada ?? 0,
-                    'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadProveedorTotal,
+                    'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal + $cantidadProveedorTotal,
                 ];
             }
         }
 
-        // Calcular resumen (incluir clientes deudores + proveedores)
+        // Calcular resumen separado por tipo de prestable (clientes + proveedores)
         $itemsCollection = collect($items);
+        $canastillas = $itemsCollection->where('prestable_tipo', 'CANASTILLA');
+        $embases = $itemsCollection->where('prestable_tipo', 'EMBASES');
+
+        // Resumen para clientes
+        $resumenClientes = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
+                'dañada' => $itemsCollection->sum('cantidad_cliente_dañada'),
+                'total' => $itemsCollection->sum('cantidad_cliente_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_cliente_deudor'),
+                'dañada' => $canastillas->sum('cantidad_cliente_dañada'),
+                'total' => $canastillas->sum('cantidad_cliente_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_cliente_deudor'),
+                'dañada' => $embases->sum('cantidad_cliente_dañada'),
+                'total' => $embases->sum('cantidad_cliente_total'),
+            ],
+        ];
+
+        // Resumen para proveedores
+        $resumenProveedores = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $itemsCollection->sum('cantidad_proveedor_acreedor'),
+                'dañada' => $itemsCollection->sum('cantidad_proveedor_dañada'),
+                'total' => $itemsCollection->sum('cantidad_proveedor_total'),
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillas->sum('cantidad_proveedor_acreedor'),
+                'dañada' => $canastillas->sum('cantidad_proveedor_dañada'),
+                'total' => $canastillas->sum('cantidad_proveedor_total'),
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embases->sum('cantidad_proveedor_acreedor'),
+                'dañada' => $embases->sum('cantidad_proveedor_dañada'),
+                'total' => $embases->sum('cantidad_proveedor_total'),
+            ],
+        ];
+
+        // Resumen para eventos
+        $totalEventoDeudor = $itemsCollection->sum('cantidad_evento_deudor');
+        $totalEventoDañada = $itemsCollection->sum('cantidad_evento_dañada');
+
+        $canastillasEventoDeudor = $canastillas->sum('cantidad_evento_deudor');
+        $canastillasEventoDañada = $canastillas->sum('cantidad_evento_dañada');
+
+        $embasesEventoDeudor = $embases->sum('cantidad_evento_deudor');
+        $embasesEventoDañada = $embases->sum('cantidad_evento_dañada');
+
+        $resumenEventos = [
+            'total' => [
+                'disponible' => $itemsCollection->sum('cantidad_disponible'),
+                'deudor' => $totalEventoDeudor,
+                'dañada' => $totalEventoDañada,
+                'total' => $totalEventoDeudor + $totalEventoDañada,
+            ],
+            'canastillas' => [
+                'disponible' => $canastillas->sum('cantidad_disponible'),
+                'deudor' => $canastillasEventoDeudor,
+                'dañada' => $canastillasEventoDañada,
+                'total' => $canastillasEventoDeudor + $canastillasEventoDañada,
+            ],
+            'embases' => [
+                'disponible' => $embases->sum('cantidad_disponible'),
+                'deudor' => $embasesEventoDeudor,
+                'dañada' => $embasesEventoDañada,
+                'total' => $embasesEventoDeudor + $embasesEventoDañada,
+            ],
+        ];
+
         $resumen = [
-            'total_disponible' => $itemsCollection->sum('cantidad_disponible'),
-            'total_cliente_deudor' => $itemsCollection->sum('cantidad_cliente_deudor'),
-            'total_proveedor_acreedor' => $itemsCollection->sum('cantidad_proveedor_acreedor'),
-            'total_proveedor_devuelto' => $itemsCollection->sum('cantidad_proveedor_devuelto'),
-            'total_proveedor' => $itemsCollection->sum('cantidad_proveedor_total'),
-            'total_general' => $itemsCollection->sum('cantidad_total'),
+            'clientes' => $resumenClientes,
+            'proveedores' => $resumenProveedores,
+            'eventos' => $resumenEventos,
         ];
 
         return Inertia::render('prestamos/stock-proveedores', [

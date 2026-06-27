@@ -71,7 +71,7 @@ export default function AjustePage({
     const [loading, setLoading] = useState(false);
     const [motivo, setMotivo] = useState('');
     const [comentarios, setComentarios] = useState('');
-    const [actualizarEmbase, setActualizarEmbase] = useState(false);
+    const [actualizarEmbase, setActualizarEmbase] = useState(true);
     const [embaseValoresCalculados, setEmbaseValoresCalculados] = useState<any>(null);
 
     // 📡 LOG: Mostrar datos que llegan del backend
@@ -559,7 +559,7 @@ export default function AjustePage({
                                             <>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        🔵 Deudor
+                                                        🔵 Prestado
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_cliente_deudor || 0}
@@ -579,7 +579,7 @@ export default function AjustePage({
                                                         </span>
                                                     </td>
                                                 </tr>
-                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                {/* <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         ✅ Devuelto
                                                     </td>
@@ -600,7 +600,7 @@ export default function AjustePage({
                                                             {clientesData.cantidad_cliente_devuelto - (initialItem.cantidad_cliente_devuelto || 0) >= 0 ? '+' : ''}{clientesData.cantidad_cliente_devuelto - (initialItem.cantidad_cliente_devuelto || 0)}
                                                         </span>
                                                     </td>
-                                                </tr>
+                                                </tr> */}
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         🔴 Dañada
@@ -631,7 +631,7 @@ export default function AjustePage({
                                             <>
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        🟣 Deudor
+                                                        🟣 Prestado
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                         {initialItem.cantidad_evento_deudor || 0}
@@ -651,7 +651,7 @@ export default function AjustePage({
                                                         </span>
                                                     </td>
                                                 </tr>
-                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                {/* <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         ✅ Devuelto
                                                     </td>
@@ -672,7 +672,7 @@ export default function AjustePage({
                                                             {eventosData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0) >= 0 ? '+' : ''}{eventosData.cantidad_evento_devuelto - (initialItem.cantidad_evento_devuelto || 0)}
                                                         </span>
                                                     </td>
-                                                </tr>
+                                                </tr> */}
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         🔴 Dañada
@@ -723,7 +723,7 @@ export default function AjustePage({
                                                         </span>
                                                     </td>
                                                 </tr>
-                                                <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                {/* <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         ✅ Devuelto
                                                     </td>
@@ -744,7 +744,7 @@ export default function AjustePage({
                                                             {proveedoresData.cantidad_proveedor_devuelto - (initialItem.cantidad_proveedor_devuelto || 0) >= 0 ? '+' : ''}{proveedoresData.cantidad_proveedor_devuelto - (initialItem.cantidad_proveedor_devuelto || 0)}
                                                         </span>
                                                     </td>
-                                                </tr>
+                                                </tr> */}
                                                 <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                                         🔴 Dañada
@@ -862,7 +862,7 @@ export default function AjustePage({
                                                 {tipo === 'clientes' && (
                                                     <>
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔵 Cliente Deudor</td>
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔵 Prestado</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_cliente_deudor || 0}</td>
                                                             <td className="px-4 py-3">
                                                                 <input
@@ -879,7 +879,7 @@ export default function AjustePage({
                                                                 </span>
                                                             </td>
                                                         </tr>
-                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                        {/* <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Cliente Devuelto</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_cliente_devuelto || 0}</td>
                                                             <td className="px-4 py-3">
@@ -896,7 +896,7 @@ export default function AjustePage({
                                                                     {(embaseData?.cantidad_cliente_devuelto || 0) - (embaseRelacionado?.cantidad_cliente_devuelto || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_cliente_devuelto || 0) - (embaseRelacionado?.cantidad_cliente_devuelto || 0)}
                                                                 </span>
                                                             </td>
-                                                        </tr>
+                                                        </tr> */}
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_cliente_dañada || 0}</td>
@@ -921,7 +921,7 @@ export default function AjustePage({
                                                 {tipo === 'eventos' && (
                                                     <>
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🟣 Evento Deudor</td>
+                                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🟣 Prestado</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_deudor || 0}</td>
                                                             <td className="px-4 py-3">
                                                                 <input
@@ -938,7 +938,7 @@ export default function AjustePage({
                                                                 </span>
                                                             </td>
                                                         </tr>
-                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                        {/* <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Evento Devuelto</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_devuelto || 0}</td>
                                                             <td className="px-4 py-3">
@@ -955,7 +955,7 @@ export default function AjustePage({
                                                                     {(embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_evento_devuelto || 0) - (embaseRelacionado?.cantidad_evento_devuelto || 0)}
                                                                 </span>
                                                             </td>
-                                                        </tr>
+                                                        </tr> */}
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_evento_dañada || 0}</td>
@@ -997,7 +997,7 @@ export default function AjustePage({
                                                                 </span>
                                                             </td>
                                                         </tr>
-                                                        <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                                                        {/* <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">✅ Devuelto</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_proveedor_devuelto || 0}</td>
                                                             <td className="px-4 py-3">
@@ -1014,7 +1014,7 @@ export default function AjustePage({
                                                                     {(embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0) >= 0 ? '+' : ''}{(embaseData?.cantidad_proveedor_devuelto || 0) - (embaseRelacionado?.cantidad_proveedor_devuelto || 0)}
                                                                 </span>
                                                             </td>
-                                                        </tr>
+                                                        </tr> */}
                                                         <tr className="hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">🔴 Dañada</td>
                                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{embaseRelacionado?.cantidad_proveedor_dañada || 0}</td>

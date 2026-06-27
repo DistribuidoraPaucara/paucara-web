@@ -34,11 +34,23 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
                 'detalles.devolucionDetalles',
+                'detalles.almacenes',
                 'cliente',
                 'almacen',
                 'chofer',
                 'vehiculo',
-                'devoluciones.detalles.detallePrestamoCliente.prestable'
+                // ✅ MEJORADO: Cargar devoluciones con sus detalles y prestables
+                'devoluciones' => function ($query) {
+                    $query->with([
+                        'detalles' => function ($q) {
+                            $q->with([
+                                'detallePrestamoCliente' => function ($dq) {
+                                    $dq->with('prestable:id,tipo,nombre');
+                                }
+                            ]);
+                        }
+                    ]);
+                }
             ]);
 
             // Filtro por cliente
@@ -209,14 +221,15 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable',
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
-                'detalles.almacenes.almacen',
+                'detalles.almacenes',
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'cliente',
                 'almacen',
                 'chofer',
                 'vehiculo',
                 'venta',
-                'devoluciones.detalles.detallePrestamoCliente.prestable'
+                'devoluciones.detalles.detallePrestamoCliente.prestable',
+                'devoluciones.detalles.devolucionesAlmacenes.almacen'
             ]);
             $resumen = $this->prestamoService->obtenerResumenPrestamo($prestamo->id);
 
@@ -285,14 +298,48 @@ class PrestamoClienteController extends Controller
     public function registrarDevolucion(Request $request, PrestamoCliente $prestamo): JsonResponse
     {
         try {
+            $usuario = auth()->user();
+
+            // ✅ NUEVO: Validar permisos de acceso
+            $tienePermiso = false;
+
+            // Admin, Manager: permiso total
+            if ($usuario->hasRole(['admin', 'Admin', 'manager', 'Manager', 'ADMIN', 'MANAGER'])) {
+                $tienePermiso = true;
+            }
+            // Chofer: solo puede registrar devoluciones de sus propios préstamos
+            elseif ($usuario->hasRole(['chofer', 'Chofer', 'CHOFER'])) {
+                if ($prestamo->chofer_id === $usuario->id) {
+                    $tienePermiso = true;
+                }
+            }
+
+            if (!$tienePermiso) {
+                Log::warning('⚠️ ACCESO DENEGADO - Intento de registrar devolución sin permisos', [
+                    'usuario_id' => $usuario->id,
+                    'usuario_nombre' => $usuario->name,
+                    'prestamo_id' => $prestamo->id,
+                    'chofer_asignado_id' => $prestamo->chofer_id,
+                    'roles_usuario' => $usuario->getRoleNames()->toArray(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para registrar devoluciones de este préstamo',
+                ], 403);
+            }
+
             // Preparar datos para validación y servicio
             $datosValidacion = $request->all();
             $datosValidacion['prestamo_cliente_id'] = $prestamo->id;
 
             Log::info('📨 INICIANDO DEVOLUCIÓN', [
+                'usuario_id' => $usuario->id,
+                'usuario_nombre' => $usuario->name,
                 'prestamo_id' => $prestamo->id,
                 'fecha_devolucion' => $datosValidacion['fecha_devolucion'] ?? null,
                 'cantidad_detalles' => count($datosValidacion['detalles'] ?? []),
+                'almacen_id' => $prestamo->almacenes_prestables_id,
             ]);
 
             // Validar datos de devolución

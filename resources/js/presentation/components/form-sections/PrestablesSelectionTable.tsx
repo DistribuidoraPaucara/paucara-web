@@ -28,6 +28,7 @@ interface PrestablesSelectionTableProps {
     loading?: boolean;
     emptyMessage?: string;
     almacen_prestable_id?: number;
+    esPrestamoProveedor?: boolean;
 }
 
 export default function PrestablesSelectionTable({
@@ -44,6 +45,7 @@ export default function PrestablesSelectionTable({
     loading = false,
     emptyMessage = 'Busca arriba para agregar prestables',
     almacen_prestable_id,
+    esPrestamoProveedor = false,
 }: PrestablesSelectionTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -222,9 +224,11 @@ export default function PrestablesSelectionTable({
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 Cantidad
                             </th>
-                            <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                🏭 Almacenes
-                            </th>
+                            {!esPrestamoProveedor && (
+                                <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    🏭 Almacenes
+                                </th>
+                            )}
                             {almacen_prestable_id && (
                                 <th className="px-2 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     📦 Disponibilidad
@@ -272,12 +276,9 @@ export default function PrestablesSelectionTable({
                                             const embasePrestable = prestables.find(p => Number(p.id) === embaseItem.prestable_id);
                                             // Solo agrupar si: es embase + es automático + pertenece a esta canastilla
                                             return embasePrestable?.tipo === 'EMBASES' &&
-                                                   embaseItem.isAutomaticEmbase === true &&
-                                                   (embasePrestable as any).prestable_relacionado_id === prestable.id;
+                                                embaseItem.isAutomaticEmbase === true &&
+                                                (embasePrestable as any).prestable_relacionado_id === prestable.id;
                                         });
-
-                                        // Renderizar canastilla
-                                        const isCanastilla = true;
                                         const icon = '📦';
                                         const typeLabel = 'Canastilla';
                                         const typeBgColor = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
@@ -320,29 +321,36 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-2 text-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
-                                                            onEditAlmacenes?.(item, idx);
-                                                        }}
-                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
-                                                    >
-                                                        {getAlmacenesDisplay(item)}
-                                                    </button>
-                                                </td>
+                                                {!esPrestamoProveedor && (
+                                                    <td className="px-2 py-2 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                                onEditAlmacenes?.(item, idx);
+                                                            }}
+                                                            className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                        >
+                                                            {getAlmacenesDisplay(item)}
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 {almacen_prestable_id && (
                                                     <td className="px-2 py-2 text-right">
                                                         <div className="space-y-1">
                                                             <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const disponible = stockDisponible - item.cantidad;
-                                                                    const isValido = disponible >= 0;
+                                                                    const disponibleFinal = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const isValido = esPrestamoProveedor ? true : disponibleFinal >= 0;
+                                                                    const label = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${disponibleFinal.toLocaleString('es-BO')}`
+                                                                        : `${stockDisponible.toLocaleString('es-BO')} (${disponibleFinal >= 0 ? 'Disponible' : 'Insuficiente'})`;
                                                                     return (
                                                                         <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                            {label} {isValido ? '✓' : '✕'}
                                                                         </span>
                                                                     );
                                                                 })()}
@@ -350,8 +358,13 @@ export default function PrestablesSelectionTable({
                                                             <div className="text-xs text-slate-500 dark:text-slate-400">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const restante = stockDisponible - item.cantidad;
-                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    const restante = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const labelRestante = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${restante.toLocaleString('es-BO')}`
+                                                                        : `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    return labelRestante;
                                                                 })()}
                                                             </div>
                                                         </div>
@@ -412,17 +425,25 @@ export default function PrestablesSelectionTable({
                                                             className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                         />
                                                     </td>
+                                                    {!esPrestamoProveedor && (
+                                                        <td></td>
+                                                    )}
                                                     {almacen_prestable_id && (
                                                         <td className="px-2 py-2 text-right">
                                                             <div className="space-y-1">
                                                                 <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
                                                                     {(() => {
                                                                         const stockDisponible = getStockDisponibleDelItem(embasePrestable, embaseItem);
-                                                                        const disponible = stockDisponible - embaseItem.cantidad;
-                                                                        const isValido = disponible >= 0;
+                                                                        const disponibleFinal = esPrestamoProveedor
+                                                                            ? stockDisponible + embaseItem.cantidad
+                                                                            : stockDisponible - embaseItem.cantidad;
+                                                                        const isValido = esPrestamoProveedor ? true : disponibleFinal >= 0;
+                                                                        const label = esPrestamoProveedor
+                                                                            ? `Después de recibir: ${disponibleFinal.toLocaleString('es-BO')}`
+                                                                            : `${stockDisponible.toLocaleString('es-BO')} (${disponibleFinal >= 0 ? 'Disponible' : 'Insuficiente'})`;
                                                                         return (
                                                                             <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                                                                {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                                {label} {isValido ? '✓' : '✕'}
                                                                             </span>
                                                                         );
                                                                     })()}
@@ -430,8 +451,13 @@ export default function PrestablesSelectionTable({
                                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
                                                                     {(() => {
                                                                         const stockDisponible = getStockDisponibleDelItem(embasePrestable, embaseItem);
-                                                                        const restante = stockDisponible - embaseItem.cantidad;
-                                                                        return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                        const restante = esPrestamoProveedor
+                                                                            ? stockDisponible + embaseItem.cantidad
+                                                                            : stockDisponible - embaseItem.cantidad;
+                                                                        const labelRestante = esPrestamoProveedor
+                                                                            ? `Después de recibir: ${restante.toLocaleString('es-BO')}`
+                                                                            : `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                        return labelRestante;
                                                                     })()}
                                                                 </div>
                                                             </div>
@@ -491,29 +517,36 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-2 text-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
-                                                            onEditAlmacenes?.(item, idx);
-                                                        }}
-                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
-                                                    >
-                                                        {getAlmacenesDisplay(item)}
-                                                    </button>
-                                                </td>
+                                                {!esPrestamoProveedor && (
+                                                    <td className="px-2 py-2 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                                onEditAlmacenes?.(item, idx);
+                                                            }}
+                                                            className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                        >
+                                                            {getAlmacenesDisplay(item)}
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 {almacen_prestable_id && (
                                                     <td className="px-2 py-2 text-right">
                                                         <div className="space-y-1">
                                                             <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const disponible = stockDisponible - item.cantidad;
-                                                                    const isValido = disponible >= 0;
+                                                                    const disponibleFinal = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const isValido = esPrestamoProveedor ? true : disponibleFinal >= 0;
+                                                                    const label = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${disponibleFinal.toLocaleString('es-BO')}`
+                                                                        : `${stockDisponible.toLocaleString('es-BO')} (${disponibleFinal >= 0 ? 'Disponible' : 'Insuficiente'})`;
                                                                     return (
                                                                         <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                            {label} {isValido ? '✓' : '✕'}
                                                                         </span>
                                                                     );
                                                                 })()}
@@ -521,8 +554,13 @@ export default function PrestablesSelectionTable({
                                                             <div className="text-xs text-slate-500 dark:text-slate-400">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const restante = stockDisponible - item.cantidad;
-                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    const restante = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const labelRestante = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${restante.toLocaleString('es-BO')}`
+                                                                        : `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    return labelRestante;
                                                                 })()}
                                                             </div>
                                                         </div>
@@ -580,29 +618,36 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-2 text-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
-                                                            onEditAlmacenes?.(item, idx);
-                                                        }}
-                                                        className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
-                                                    >
-                                                        {getAlmacenesDisplay(item)}
-                                                    </button>
-                                                </td>
+                                                {!esPrestamoProveedor && (
+                                                    <td className="px-2 py-2 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const idx = items.findIndex(i => i.prestable_id === item.prestable_id && i.isAutomaticEmbase === item.isAutomaticEmbase);
+                                                                onEditAlmacenes?.(item, idx);
+                                                            }}
+                                                            className="w-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition whitespace-normal"
+                                                        >
+                                                            {getAlmacenesDisplay(item)}
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 {almacen_prestable_id && (
                                                     <td className="px-2 py-2 text-right">
                                                         <div className="space-y-1">
                                                             <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const disponible = stockDisponible - item.cantidad;
-                                                                    const isValido = disponible >= 0;
+                                                                    const disponibleFinal = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const isValido = esPrestamoProveedor ? true : disponibleFinal >= 0;
+                                                                    const label = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${disponibleFinal.toLocaleString('es-BO')}`
+                                                                        : `${stockDisponible.toLocaleString('es-BO')} (${disponibleFinal >= 0 ? 'Disponible' : 'Insuficiente'})`;
                                                                     return (
                                                                         <span className={isValido ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                                                            {stockDisponible.toLocaleString('es-BO')} {isValido ? '✓' : '✕'}
+                                                                            {label} {isValido ? '✓' : '✕'}
                                                                         </span>
                                                                     );
                                                                 })()}
@@ -610,8 +655,13 @@ export default function PrestablesSelectionTable({
                                                             <div className="text-xs text-slate-500 dark:text-slate-400">
                                                                 {(() => {
                                                                     const stockDisponible = getStockDisponibleDelItem(prestable, item);
-                                                                    const restante = stockDisponible - item.cantidad;
-                                                                    return `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    const restante = esPrestamoProveedor
+                                                                        ? stockDisponible + item.cantidad
+                                                                        : stockDisponible - item.cantidad;
+                                                                    const labelRestante = esPrestamoProveedor
+                                                                        ? `Después de recibir: ${restante.toLocaleString('es-BO')}`
+                                                                        : `Restante: ${restante.toLocaleString('es-BO')}`;
+                                                                    return labelRestante;
                                                                 })()}
                                                             </div>
                                                         </div>

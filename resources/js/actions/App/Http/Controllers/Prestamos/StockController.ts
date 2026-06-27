@@ -157,7 +157,7 @@ stockClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     stockClientes.form = stockClientesForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
 export const stockEventos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ stockEventos.definition = {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
 stockEventos.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ stockEventos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
 stockEventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ stockEventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
 stockEventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ stockEventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
     const stockEventosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ stockEventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
         stockEventosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ stockEventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockEventos
- * @see app/Http/Controllers/Prestamos/StockController.php:168
+ * @see app/Http/Controllers/Prestamos/StockController.php:220
  * @route '/prestamos/stock/eventos'
  */
         stockEventosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ stockEventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     stockEventos.form = stockEventosForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
 export const stockProveedores = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ stockProveedores.definition = {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
 stockProveedores.url = (options?: RouteQueryOptions) => {
@@ -259,7 +259,7 @@ stockProveedores.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
 stockProveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ stockProveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => 
 })
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
 stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -278,7 +278,7 @@ stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
     /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
     const stockProveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -288,7 +288,7 @@ stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
         stockProveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
         })
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::stockProveedores
- * @see app/Http/Controllers/Prestamos/StockController.php:244
+ * @see app/Http/Controllers/Prestamos/StockController.php:347
  * @route '/prestamos/stock/proveedores'
  */
         stockProveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ stockProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     stockProveedores.form = stockProveedoresForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
 export const ajuste = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ ajuste.definition = {
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
 ajuste.url = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions) => {
@@ -357,7 +357,7 @@ ajuste.url = (args: { tipo: string | number, prestable_id: string | number, alma
 
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
 ajuste.get = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -366,7 +366,7 @@ ajuste.get = (args: { tipo: string | number, prestable_id: string | number, alma
 })
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
 ajuste.head = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -376,7 +376,7 @@ ajuste.head = (args: { tipo: string | number, prestable_id: string | number, alm
 
     /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
     const ajusteForm = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -386,7 +386,7 @@ ajuste.head = (args: { tipo: string | number, prestable_id: string | number, alm
 
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
         ajusteForm.get = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -395,7 +395,7 @@ ajuste.head = (args: { tipo: string | number, prestable_id: string | number, alm
         })
             /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
- * @see app/Http/Controllers/Prestamos/StockController.php:327
+ * @see app/Http/Controllers/Prestamos/StockController.php:509
  * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
  */
         ajusteForm.head = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

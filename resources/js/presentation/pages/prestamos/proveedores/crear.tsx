@@ -654,6 +654,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                             onToggleAlmacen={() => { }}
                             hideAlmacenesSelection={true}
                             almacen_prestable_id={formData.almacenes_prestables_id}
+                            esPrestamoProveedor={true}
                             getStockDisponibleTotal={(prestable) =>
                                 (prestable.stocks || []).reduce(
                                     (sum, stock) => sum + Number(stock.cantidad_disponible || 0),

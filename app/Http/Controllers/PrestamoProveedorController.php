@@ -124,14 +124,18 @@ class PrestamoProveedorController extends Controller
     {
         try {
             $prestamo->load([
-                'detalles.prestable.precios',
-                'detalles.prestable.condiciones',
-                'detalles.almacenes.almacen',  // ✅ CORREGIDO: usar 'almacen' no 'almacen_prestable'
+                'detalles' => function ($query) {
+                    $query->with([
+                        'prestable.precios',
+                        'prestable.condiciones',
+                        'almacenes.almacen',
+                        'devolucionDetalles',
+                    ]);
+                },
                 'proveedor',
                 'almacen',
                 'chofer',
-                'detalles.devolucionDetalles',
-                'devoluciones.detalles',
+                'devoluciones.detalles.detallePrestamoProveedor.prestable',
             ]);
             $resumen = $this->prestamoService->obtenerResumen($prestamo->id);
 

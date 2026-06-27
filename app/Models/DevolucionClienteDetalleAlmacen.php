@@ -13,7 +13,6 @@ class DevolucionClienteDetalleAlmacen extends Model
         'devolucion_cliente_detalle_id',
         'almacenes_prestables_id',
         'cantidad_devuelta',
-        'cantidad_dañada_parcial',
         'cantidad_dañada_total',
         'monto_garantia_devuelta',
         'es_proveedor',
@@ -21,7 +20,6 @@ class DevolucionClienteDetalleAlmacen extends Model
 
     protected $casts = [
         'cantidad_devuelta' => 'integer',
-        'cantidad_dañada_parcial' => 'integer',
         'cantidad_dañada_total' => 'integer',
         'monto_garantia_devuelta' => 'decimal:2',
         'es_proveedor' => 'boolean',
@@ -47,7 +45,7 @@ class DevolucionClienteDetalleAlmacen extends Model
 
     public function getTotalDevuelto(): int
     {
-        return $this->cantidad_devuelta + $this->cantidad_dañada_parcial + $this->cantidad_dañada_total;
+        return $this->cantidad_devuelta + $this->cantidad_dañada_total;
     }
 
     public function esDeProveedor(): bool

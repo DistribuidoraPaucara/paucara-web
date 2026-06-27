@@ -39,6 +39,167 @@ class PrestamoClienteService
     }
 
     /**
+     * ✅ NUEVO: Validar que no se devuelve más de lo prestado POR CADA ALMACÉN
+     * Consulta PrestamoClienteAlmacen (prestado) vs DevolucionClienteDetalleAlmacen (devuelto)
+     *
+     * @param PrestamoClienteDetalle $detalle Detalle del préstamo
+     * @param array $devolucionesAlmacenes Array con las devoluciones por almacén
+     * @throws \Exception Si algún almacén excede lo prestado
+     */
+    private function validarDevolucionPorAlmacen(PrestamoClienteDetalle $detalle, array $devolucionesAlmacenes): void
+    {
+        foreach ($devolucionesAlmacenes as $almacenDev) {
+            $almacenId = (int) $almacenDev['almacenes_prestables_id'];
+            $cantDevAlmacen = (int) ($almacenDev['cantidad_devuelta'] ?? 0);
+            $cantDanAlmacen = (int) ($almacenDev['cantidad_dañada_total'] ?? 0);
+            $cantTotalAlmacen = $cantDevAlmacen + $cantDanAlmacen;
+
+            // Cantidad prestada de ESTE almacén específico
+            $cantidadPrestadaAlmacen = (int) PrestamoClienteAlmacen::where('prestamo_cliente_detalle_id', $detalle->id)
+                ->where('almacenes_prestables_id', $almacenId)
+                ->value('cantidad') ?? 0;
+
+            if ($cantidadPrestadaAlmacen === 0) {
+                throw new \Exception(
+                    "❌ Almacén {$almacenId} no fue usado para prestar el detalle {$detalle->id}. " .
+                    "No se puede devolver de un almacén del cual no se prestó."
+                );
+            }
+
+            // Cantidad DEVUELTA de ESTE almacén específico (en devoluciones anteriores)
+            $cantidadDevueltaAlmacen = (int) DB::table('devolucion_cliente_detalle_almacenes as dcda')
+                ->join('devolucion_cliente_detalle as dcd', 'dcda.devolucion_cliente_detalle_id', '=', 'dcd.id')
+                ->where('dcd.prestamo_cliente_detalle_id', $detalle->id)
+                ->where('dcda.almacenes_prestables_id', $almacenId)
+                ->sum(DB::raw('dcda.cantidad_devuelta + dcda.cantidad_dañada_total'));
+
+            // Cantidad que FALTA devolver de este almacén
+            $faltaPorDevolverAlmacen = $cantidadPrestadaAlmacen - $cantidadDevueltaAlmacen;
+
+            // Validar que NO se devuelve más de lo que falta
+            if ($cantTotalAlmacen > $faltaPorDevolverAlmacen) {
+                throw new \Exception(
+                    "❌ Devolución excede lo faltante para almacén {$almacenId} en detalle {$detalle->id}: " .
+                    "Prestado: {$cantidadPrestadaAlmacen}, " .
+                    "Ya devuelto: {$cantidadDevueltaAlmacen}, " .
+                    "Falta: {$faltaPorDevolverAlmacen}, " .
+                    "Intenta devolver ahora: {$cantTotalAlmacen}"
+                );
+            }
+
+            \Log::info('✅ Validación por almacén correcta', [
+                'detalle_id' => $detalle->id,
+                'almacen_id' => $almacenId,
+                'cantidad_prestada_almacen' => $cantidadPrestadaAlmacen,
+                'cantidad_ya_devuelta_almacen' => $cantidadDevueltaAlmacen,
+                'cantidad_falta_devolver' => $faltaPorDevolverAlmacen,
+                'cantidad_devolviendo_ahora' => $cantTotalAlmacen,
+            ]);
+        }
+    }
+
+    /**
+     * Calcular devoluciones automáticas por almacén si devolucion_automatica = true
+     * Distribuye secuencialmente: termina un almacén antes de pasar al siguiente
+     *
+     * @param array $detalleData Datos del detalle de devolución
+     * @param PrestamoCliente $prestamo Préstamo asociado
+     * @return array Array de almacenes con cantidades calculadas
+     */
+    private function calcularDevolucionesAutomaticas(array $detalleData, PrestamoCliente $prestamo): array
+    {
+        // ✅ SIEMPRE calcular automáticamente basado en PrestamoClienteAlmacen
+        // Ignorar lo que venga del frontend para asegurar correcta distribución FIFO
+
+        $cantidadDevuelta = (int) ($detalleData['cantidad_devuelta'] ?? 0);
+        $cantidadDañadaTotal = (int) ($detalleData['cantidad_dañada_total'] ?? 0);
+        $detalleId = (int) ($detalleData['prestamo_cliente_detalle_id'] ?? null);
+
+        if (!$detalleId) {
+            return [];
+        }
+
+        // ✅ OBTENER ALMACENES EN ORDEN FIFO (del histórico de lo que se prestó)
+        $almacenesHistoricos = \DB::table('prestamo_cliente_almacenes')
+            ->where('prestamo_cliente_detalle_id', $detalleId)
+            ->orderBy('id', 'asc') // FIFO: primeros registrados primero
+            ->get(['almacenes_prestables_id', 'cantidad']);
+
+        if ($almacenesHistoricos->isEmpty()) {
+            return [];
+        }
+
+        $devolucionesAlmacenes = [];
+        $cantidadRestante = $cantidadDevuelta;
+
+        // ✅ ITERAR EN ORDEN Y CALCULAR CUÁNTO FALTA DEVOLVER DE CADA UNO
+        foreach ($almacenesHistoricos as $almacenHistorico) {
+            if ($cantidadRestante <= 0) break;
+
+            $almacenId = $almacenHistorico->almacenes_prestables_id;
+            $cantidadPrestada = (int) $almacenHistorico->cantidad;
+
+            // Calcular cuánto ya fue devuelto de ESTE almacén
+            $cantidadDevueltaDelAlmacen = (int) \DB::table('devolucion_cliente_detalle_almacenes as dcda')
+                ->join('devolucion_cliente_detalle as dcd', 'dcda.devolucion_cliente_detalle_id', '=', 'dcd.id')
+                ->where('dcd.prestamo_cliente_detalle_id', $detalleId)
+                ->where('dcda.almacenes_prestables_id', $almacenId)
+                ->sum('dcda.cantidad_devuelta');
+
+            $faltaPorDevolver = $cantidadPrestada - $cantidadDevueltaDelAlmacen;
+
+            \Log::info('📊 Análisis de devolución por almacén', [
+                'almacen_id' => $almacenId,
+                'cantidad_prestada' => $cantidadPrestada,
+                'cantidad_ya_devuelta' => $cantidadDevueltaDelAlmacen,
+                'falta_por_devolver' => $faltaPorDevolver,
+                'cantidad_restante_a_distribuir' => $cantidadRestante,
+            ]);
+
+            if ($faltaPorDevolver <= 0) {
+                // Este almacén ya está completamente devuelto, pasar al siguiente
+                continue;
+            }
+
+            // Devolver lo que falta de este almacén, sin exceder lo restante
+            $aDevolverDeEste = min($cantidadRestante, $faltaPorDevolver);
+
+            $devolucionesAlmacenes[] = [
+                'almacenes_prestables_id' => $almacenId,
+                'cantidad_devuelta' => $aDevolverDeEste,
+                'cantidad_dañada_total' => 0,
+                'es_proveedor' => false, // Se obtendrá después si es necesario
+            ];
+
+            $cantidadRestante -= $aDevolverDeEste;
+        }
+
+        // Si aún hay cantidad que distribuir pero no hay más almacenes, registrar error
+        if ($cantidadRestante > 0) {
+            \Log::warning('❌ No se pudo distribuir toda la devolución - excede lo prestado', [
+                'detalle_id' => $detalleId,
+                'cantidad_solicitada' => $cantidadDevuelta,
+                'cantidad_prestada_total' => $almacenesHistoricos->sum('cantidad'),
+                'cantidad_ya_devuelta_total' => $cantidadDevuelta - $cantidadRestante,
+                'cantidad_excedente' => $cantidadRestante,
+            ]);
+
+            throw new \Exception(
+                "Cantidad a devolver ({$cantidadDevuelta}) excede total prestado (" .
+                $almacenesHistoricos->sum('cantidad') . "). Ya devuelto: " .
+                ($cantidadDevuelta - $cantidadRestante)
+            );
+        }
+
+        // Distribuir cantidad dañada al último almacén procesado
+        if ($cantidadDañadaTotal > 0 && !empty($devolucionesAlmacenes)) {
+            $devolucionesAlmacenes[count($devolucionesAlmacenes) - 1]['cantidad_dañada_total'] = $cantidadDañadaTotal;
+        }
+
+        return $devolucionesAlmacenes;
+    }
+
+    /**
      * Crear préstamo a cliente con múltiples detalles desde UN SOLO almacén
      *
      * @param array $datos
@@ -301,7 +462,7 @@ class PrestamoClienteService
                 $detalles = $datos['detalles'] ?? [];
 
                 // Procesar cada detalle de devolución
-                foreach ($detalles as $detalleData) {
+                foreach ($detalles as &$detalleData) {
                     $detalle = PrestamoClienteDetalle::find($detalleData['prestamo_cliente_detalle_id']);
 
                     if (!$detalle) {
@@ -309,9 +470,8 @@ class PrestamoClienteService
                     }
 
                     $cantidadDevuelta = $detalleData['cantidad_devuelta'] ?? 0;
-                    $cantidadDañadaParcial = $detalleData['cantidad_dañada_parcial'] ?? 0;
                     $cantidadDañadaTotal = $detalleData['cantidad_dañada_total'] ?? 0;
-                    $cantidadTotal = $cantidadDevuelta + $cantidadDañadaParcial + $cantidadDañadaTotal;
+                    $cantidadTotal = $cantidadDevuelta + $cantidadDañadaTotal;
                     // Regla de negocio: lo dañado se registra para auditoría/cobro, pero NO mueve stock
                     $cantidadParaStock = $cantidadDevuelta;
 
@@ -321,7 +481,7 @@ class PrestamoClienteService
                             // Solo contar devoluciones confirmadas (creadas antes de esta)
                             $q->where('created_at', '<', now());
                         })
-                        ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_parcial + cantidad_dañada_total'));
+                        ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_total'));
 
                     $cantidadRestante = $detalle->cantidad_prestada - $cantidadYaDevuelta;
 
@@ -336,7 +496,7 @@ class PrestamoClienteService
 
                     // Calcular TOTAL DEVUELTO HISTÓRICO ANTES de crear el nuevo registro
                     $totalDevueltoHistorico = $detalle->devolucionDetalles()
-                        ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_parcial + cantidad_dañada_total'));
+                        ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_total'));
                     $totalDevueltoAhora = $totalDevueltoHistorico + $cantidadTotal;
 
                     // Crear detalle de devolución
@@ -344,14 +504,13 @@ class PrestamoClienteService
                         'devolucion_cliente_id' => $devolucion->id,
                         'prestamo_cliente_detalle_id' => $detalleData['prestamo_cliente_detalle_id'],
                         'cantidad_devuelta' => $cantidadDevuelta,
-                        'cantidad_dañada_parcial' => $cantidadDañadaParcial,
                         'cantidad_dañada_total' => $cantidadDañadaTotal,
                         'monto_cobrado_daño' => 0,
                         'monto_garantia_devuelta' => $cantidadDevuelta * ($condicion->monto_garantia ?? 0),
                     ]);
 
-                    // ✅ NUEVO: Procesar devoluciones por CADA ALMACÉN especificado
-                    $devolucionesAlmacenes = $detalleData['devolucion_almacenes'] ?? [];
+                    // ✅ CENTRALIZADO: Calcular devolucionesAlmacenes (automático o manual)
+                    $devolucionesAlmacenes = $this->calcularDevolucionesAutomaticas($detalleData, $prestamo);
 
                     if (!empty($devolucionesAlmacenes)) {
                         // ✅ NUEVO: Validar que los valores de almacenes sumen correctamente
@@ -372,6 +531,9 @@ class PrestamoClienteService
                             );
                         }
 
+                        // ✅ NUEVO: Validar que NO se devuelve más de lo prestado POR CADA ALMACÉN
+                        $this->validarDevolucionPorAlmacen($detalle, $devolucionesAlmacenes);
+
                         // El usuario especificó almacenes en la devolución
                         \Log::info('🔍 Devolución por almacenes especificados', [
                             'prestable_id' => $detalle->prestable_id,
@@ -384,18 +546,18 @@ class PrestamoClienteService
                             $almacenId = $almacenDev['almacenes_prestables_id'];
                             $cantDevAlmacen = $almacenDev['cantidad_devuelta'] ?? 0;
                             $cantDanAlmacen = $almacenDev['cantidad_dañada_total'] ?? 0;
+                            // ✅ CRÍTICO: Usar es_proveedor del array calculado, no buscar de nuevo en BD
+                            $esProveedor = $almacenDev['es_proveedor'] ?? false;
 
                             // Crear registro en DevolucionClienteDetalleAlmacen
                             if ($cantDevAlmacen > 0 || $cantDanAlmacen > 0) {
-                                $almacenObj = AlmacenPrestable::find($almacenId);
                                 DevolucionClienteDetalleAlmacen::create([
                                     'devolucion_cliente_detalle_id' => $detalleDevolucion->id,
                                     'almacenes_prestables_id' => $almacenId,
                                     'cantidad_devuelta' => $cantDevAlmacen,
-                                    'cantidad_dañada_parcial' => 0,
                                     'cantidad_dañada_total' => $cantDanAlmacen,
                                     'monto_garantia_devuelta' => $cantDevAlmacen * ($condicion->monto_garantia ?? 0),
-                                    'es_proveedor' => (bool) $almacenObj->es_proveedor,
+                                    'es_proveedor' => $esProveedor,
                                 ]);
                             }
 
@@ -463,85 +625,14 @@ class PrestamoClienteService
                             ]);
                         }
                     } else {
-                        // FALLBACK: Si no hay almacenes especificados, usar el almacén de cabecera
-                        \Log::info('🔍 Devolución usando almacén de cabecera (fallback)', [
-                            'prestable_id' => $detalle->prestable_id,
-                            'almacen_cabecera_id' => $prestamo->almacenes_prestables_id,
+                        \Log::error('❌ CRÍTICO: Array de devoluciones vacío', [
+                            'detalleData' => $detalleData,
+                            'prestamo_id' => $prestamo->id,
+                            'detalle_id' => $detalleData['prestamo_cliente_detalle_id'],
+                            'devolucionesAlmacenes_result' => $devolucionesAlmacenes,
+                            'is_empty' => empty($devolucionesAlmacenes),
                         ]);
-
-                        $almacenId = $prestamo->almacenes_prestables_id;
-
-                        if (!$almacenId) {
-                            throw new \Exception('El préstamo no tiene un almacén asignado y no se especificaron almacenes en la devolución');
-                        }
-
-                        // Crear registro en DevolucionClienteDetalleAlmacen
-                        if ($cantidadDevuelta > 0 || $cantidadDañadaTotal > 0) {
-                            $almacenObj = AlmacenPrestable::find($almacenId);
-                            DevolucionClienteDetalleAlmacen::create([
-                                'devolucion_cliente_detalle_id' => $detalleDevolucion->id,
-                                'almacenes_prestables_id' => $almacenId,
-                                'cantidad_devuelta' => $cantidadDevuelta,
-                                'cantidad_dañada_parcial' => $cantidadDañadaParcial,
-                                'cantidad_dañada_total' => $cantidadDañadaTotal,
-                                'monto_garantia_devuelta' => $cantidadDevuelta * ($condicion->monto_garantia ?? 0),
-                                'es_proveedor' => (bool) $almacenObj->es_proveedor,
-                            ]);
-                        }
-
-                        // Obtener stock ANTES de devolver
-                        $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
-                        $disponibleAntes = $stock->cantidad_disponible;
-                        $prestamoClienteActivoAntes = $stock->cantidad_cliente_deudor;
-                        $prestamoProveedorActivoAntes = $stock->cantidad_proveedor_acreedor;
-                        $prestamoEventoActivoAntes = $stock->cantidad_evento_deudor;
-                        $clienteDañadaAntes = $stock->cantidad_cliente_dañada;
-                        $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada;
-
-                        // ✅ Actualizar stock con cantidad devuelta Y dañada
-                        if ($cantidadParaStock > 0 || $cantidadDañadaTotal > 0) {
-                            // ✅ CORRECTO: SIEMPRE devolverDelCliente()
-                            // porque este servicio es EXCLUSIVAMENTE para devoluciones de CLIENTES
-                            $this->stockService->devolverDelCliente(
-                                $detalle->prestable_id,
-                                $almacenId,
-                                $cantidadParaStock,
-                                $cantidadDañadaTotal
-                            );
-                        }
-
-                        // Obtener stock DESPUÉS de devolver
-                        $stock->refresh();
-
-                        // Registrar movimiento de devolución
-                        if ($cantidadParaStock > 0 || $cantidadDañadaTotal > 0) {
-                            $this->movimientoService->registrarMovimiento([
-                                'prestable_stock_id' => $stock->id,
-                                'almacenes_prestables_id' => $almacenId,
-                                'usuario_id' => auth()->id(),
-                                'tipo' => 'ENTRADA',
-                                'cantidad' => $cantidadParaStock,
-                                'cantidad_dañada_registrada' => $cantidadDañadaTotal,
-                                'disponible_anterior' => $disponibleAntes,
-                                'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
-                                'prestamo_proveedor_anterior' => $prestamoProveedorActivoAntes,
-                                'disponible_posterior' => $stock->cantidad_disponible,
-                                'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
-                                'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
-                                'cantidad_cliente_dañada_anterior' => $clienteDañadaAntes,
-                                'cantidad_cliente_dañada_posterior' => $stock->cantidad_cliente_dañada,
-                                'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
-                                'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada,
-                                'cantidad_evento_dañada_anterior' => $stock->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
-                                'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
-                                'categoria_afectada' => 'prestamo_cliente',
-                                'motivo' => 'Devolución de préstamo a cliente',
-                                'numero_referencia' => $prestamo->id,
-                                'referencia_tipo' => 'DEVOLUCIO_CLIENTE',
-                                'referencia_id' => $devolucion->id,
-                                'observaciones' => $datos['observaciones'] ?? null,
-                            ]);
-                        }
+                        throw new \Exception('No se pudo determinar almacén para la devolución. Contacte soporte.');
                     }
 
                     // ✅ NUEVO: Actualizar embases automáticos solo si NO fueron enviados por el frontend
@@ -579,7 +670,7 @@ class PrestamoClienteService
                             $totalEmbasesHistorico = 0;
                             if ($detalleEmbase) {
                                 $totalEmbasesHistorico = $detalleEmbase->devolucionDetalles()
-                                    ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_parcial + cantidad_dañada_total'));
+                                    ->sum(DB::raw('cantidad_devuelta + cantidad_dañada_total'));
                             }
                             $totalEmbasesDevueltosAhora = $totalEmbasesHistorico + $embasesADevolver + $embasesDanados;
 
@@ -589,7 +680,6 @@ class PrestamoClienteService
                                     'devolucion_cliente_id' => $devolucion->id,
                                     'prestamo_cliente_detalle_id' => $detalleEmbase->id,
                                     'cantidad_devuelta' => $embasesADevolver,
-                                    'cantidad_dañada_parcial' => $detalleData['embases_danados_parcial'] ?? 0,
                                     'cantidad_dañada_total' => $detalleData['embases_danados_total'] ?? 0,
                                     'monto_cobrado_daño' => 0,
                                     'monto_garantia_devuelta' => 0,

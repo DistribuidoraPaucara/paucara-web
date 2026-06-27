@@ -298,9 +298,9 @@ export default function PrestablesIndex() {
                                         <TableHead className="text-gray-900 dark:text-gray-100">
                                             🛒 Precio Venta
                                         </TableHead>
-                                        <TableHead className="text-gray-900 dark:text-gray-100">
+                                        {/* <TableHead className="text-gray-900 dark:text-gray-100">
                                             🔗 Garantía
-                                        </TableHead>
+                                        </TableHead> */}
                                         <TableHead className="text-gray-900 dark:text-gray-100">
                                             Estado
                                         </TableHead>
@@ -333,7 +333,7 @@ export default function PrestablesIndex() {
                                                 {p.tipo === 'CANASTILLA' && p.capacidad ? (
                                                     <span className="font-semibold text-green-600 dark:text-green-400">{p.capacidad}</span>
                                                 ) : (
-                                                    <span className="text-gray-400 dark:text-gray-500">-</span>
+                                                    <span className="text-gray-400 dark:text-gray-500">1</span>
                                                 )}
                                             </TableCell>
                                             {/* <TableCell className="text-gray-700 dark:text-gray-300 text-sm">
@@ -347,19 +347,19 @@ export default function PrestablesIndex() {
                                                 )}
                                             </TableCell> */}
                                             <TableCell className="text-gray-900 dark:text-gray-100 font-medium">
-                                                ${Number(p.precios?.find((pr) => pr.tipo_precio === 'PRESTAMO')?.valor || 0).toFixed(2)}
+                                                Bs {Number(p.precios?.find((pr) => pr.tipo_precio === 'PRESTAMO')?.valor || 0).toFixed(2)}
                                             </TableCell>
                                             <TableCell className="text-gray-900 dark:text-gray-100 font-medium">
-                                                ${Number(p.precios?.find((pr) => pr.tipo_precio === 'VENTA')?.valor || 0).toFixed(2)}
+                                                Bs {Number(p.precios?.find((pr) => pr.tipo_precio === 'VENTA')?.valor || 0).toFixed(2)}
                                             </TableCell>
-                                            <TableCell className="text-gray-900 dark:text-gray-100">
+                                            {/* <TableCell className="text-gray-900 dark:text-gray-100">
                                                 ${Number(p.condiciones?.[0]?.monto_garantia || 0).toFixed(2)}
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell>
                                                 <span
                                                     className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${p.activo
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                                                         }`}
                                                 >
                                                     {p.activo ? '✅ Activo' : '❌ Inactivo'}

@@ -88,9 +88,26 @@ const getTipoLabel = (tipo: string) => {
     return labels[tipo] || tipo;
 };
 
-// Determinar qué columnas mostrar
+// Determinar qué columnas mostrar basado en los datos disponibles
 const obtenerColumnasAMostrar = (movimientos: Movimiento[]): string[] => {
-    return ['disponible', 'dañada_cliente', 'dañada_proveedor'];
+    const columnas = ['disponible'];
+
+    // Verificar si hay datos de dañadas por tipo
+    const tieneClienteDañada = movimientos.some(
+        m => (m.cantidad_cliente_dañada_anterior ?? 0) > 0 || (m.cantidad_cliente_dañada_posterior ?? 0) > 0
+    );
+    const tieneProveedorDañada = movimientos.some(
+        m => (m.cantidad_proveedor_dañada_anterior ?? 0) > 0 || (m.cantidad_proveedor_dañada_posterior ?? 0) > 0
+    );
+    const tieneEventoDañada = movimientos.some(
+        m => (m.cantidad_evento_dañada_anterior ?? 0) > 0 || (m.cantidad_evento_dañada_posterior ?? 0) > 0
+    );
+
+    if (tieneClienteDañada) columnas.push('dañada_cliente');
+    if (tieneProveedorDañada) columnas.push('dañada_proveedor');
+    if (tieneEventoDañada) columnas.push('dañada_evento');
+
+    return columnas;
 };
 
 const getIconoColumna = (columna: string): string => {
@@ -103,20 +120,6 @@ const getIconoColumna = (columna: string): string => {
     return iconos[columna] || '📊';
 };
 
-const getEtiquetaColumna = (columna: string): string => {
-    const etiquetas: Record<string, string> = {
-        disponible: 'Disponible',
-        dañada_cliente: 'Dañada Cliente',
-        dañada_proveedor: 'Dañada Proveedor',
-        dañada_evento: 'Dañada Evento',
-        prestamo_cliente: 'Préstamo Cliente',
-        prestamo_proveedor: 'Préstamo Proveedor',
-        prestamo_evento: 'Préstamo Evento',
-        compra: 'Compra',
-        vendida: 'Vendida',
-    };
-    return etiquetas[columna] || columna;
-};
 
 export default function MovimientosPrestables() {
     const [movimientos, setMovimientos] = useState<PaginationData | null>(null);
@@ -141,13 +144,44 @@ export default function MovimientosPrestables() {
             });
 
             const result = await response.json();
-            console.log('📡 Respuesta del backend:', result);
+            console.log('%c📡 RESPUESTA DEL BACKEND', 'color: #0066cc; font-weight: bold; font-size: 12px');
+            console.log(result);
+
             if (result.success) {
-                console.log('✅ Movimientos cargados:', result.data);
+                console.log('%c✅ MOVIMIENTOS CARGADOS', 'color: #00aa00; font-weight: bold; font-size: 12px');
+                console.log(`Total: ${result.data.total} movimientos`);
+
+                // Mostrar detalles de cada movimiento
+                if (result.data.data && result.data.data.length > 0) {
+                    console.log('%c📊 DETALLES DE MOVIMIENTOS', 'color: #ff6600; font-weight: bold; font-size: 12px');
+                    result.data.data.forEach((mov: Movimiento, idx: number) => {
+                        console.log(`%c[${idx + 1}] Movimiento #${mov.id}`, 'color: #aa00aa; font-weight: bold');
+                        console.table({
+                            Prestable: mov.prestable_stock?.prestable?.nombre,
+                            Tipo: mov.tipo,
+                            Cantidad: mov.cantidad,
+                            'Dañada Registrada': mov.cantidad_dañada_registrada,
+                            'Referencia Tipo': mov.referencia_tipo,
+                            'Referencia ID': mov.referencia_id,
+                            Motivo: mov.motivo,
+                            Observaciones: mov.observaciones,
+                            'Cliente Dañada Anterior': mov.cantidad_cliente_dañada_anterior,
+                            'Cliente Dañada Posterior': mov.cantidad_cliente_dañada_posterior,
+                            'Proveedor Dañada Anterior': mov.cantidad_proveedor_dañada_anterior,
+                            'Proveedor Dañada Posterior': mov.cantidad_proveedor_dañada_posterior,
+                            'Evento Dañada Anterior': mov.cantidad_evento_dañada_anterior,
+                            'Evento Dañada Posterior': mov.cantidad_evento_dañada_posterior,
+                        });
+                    });
+                }
+
                 setMovimientos(result.data);
                 // Actualizar columnas a mostrar basadas en los datos
                 const columnas = obtenerColumnasAMostrar(result.data.data || []);
                 setColumnasAMostrar(columnas);
+            } else {
+                console.error('%c❌ ERROR EN RESPUESTA', 'color: #cc0000; font-weight: bold; font-size: 12px');
+                console.log(result);
             }
         } catch (error) {
             console.error('Error cargando movimientos:', error);
@@ -227,56 +261,66 @@ export default function MovimientosPrestables() {
                     </div>
                 </div>
 
-                {/* Leyenda */}
-                {/* <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
-                    <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-300">📋 Columnas mostradas en los estados Antes/Después:</h3>
-                    <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-6">
-                        {columnasAMostrar.map(col => (
-                            <div key={col} className="flex items-center gap-2">
-                                <span className="text-lg">{getIconoColumna(col)}</span>
-                                <p className="text-blue-700 dark:text-blue-400">{getEtiquetaColumna(col)}</p>
-                            </div>
-                        ))}
+                {/* Leyenda de Columnas */}
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+                    <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-300">📋 Leyenda de Columnas (Estados Antes/Después):</h3>
+                    <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">📦</span>
+                            <p className="text-blue-700 dark:text-blue-400">Disponible</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">❌</span>
+                            <p className="text-blue-700 dark:text-blue-400">Dañada Cliente</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">⚠️</span>
+                            <p className="text-blue-700 dark:text-blue-400">Dañada Proveedor</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">🎉❌</span>
+                            <p className="text-blue-700 dark:text-blue-400">Dañada Evento</p>
+                        </div>
                         <div className="flex items-center gap-2">
                             <span className="text-lg">📊</span>
-                            <p className="text-blue-700 dark:text-blue-400">Total</p>
+                            <p className="text-blue-700 dark:text-blue-400">Cantidad Movida</p>
                         </div>
                     </div>
-                </div> */}
+                </div>
 
                 {/* Tabla de Movimientos */}
                 <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     ID
                                 </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Fecha
                                 </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Prestable
                                 </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Tipo
                                 </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Almacén
                                 </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Referencia
                                 </th>
-                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                     Antes
                                 </th>
-                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                     Cantidad
                                 </th>
-                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                     ❌ Dañada Registrada
                                 </th>
-                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                     Después
                                 </th>
                             </tr>
@@ -297,18 +341,17 @@ export default function MovimientosPrestables() {
                                     return (
                                         <tr
                                             key={movimiento.id}
-                                            className={`border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50 ${
-                                                movimiento.anulado ? 'bg-red-50 opacity-60 dark:bg-red-900/10' : ''
-                                            }`}
+                                            className={`border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50 ${movimiento.anulado ? 'bg-red-50 opacity-60 dark:bg-red-900/10' : ''
+                                                }`}
                                         >
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300">
                                                 <div className="text-sm font-medium">{movimiento.id}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                                                <div className="text-sm font-medium">{new Date(movimiento.created_at).toLocaleString('es-ES')}</div>
+                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300">
+                                                <div className="text-xs">{new Date(movimiento.created_at).toLocaleString('es-ES')}</div>
                                                 <div className="text-xs text-slate-500">{movimiento.usuario?.name || 'Sin usuario'}</div>
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-2 py-3">
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-slate-900 dark:text-slate-100">
                                                         {movimiento.prestable_stock?.prestable?.nombre || 'Sin prestable'}
@@ -318,7 +361,7 @@ export default function MovimientosPrestables() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-2 py-3">
                                                 <Badge className={`${estilo.bg} ${estilo.text}`}>
                                                     {getTipoLabel(movimiento.tipo)}
                                                 </Badge>
@@ -328,13 +371,13 @@ export default function MovimientosPrestables() {
                                                     </Badge>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300 text-xs">
                                                 {movimiento.prestable_stock?.almacen_prestable?.nombre || '-'}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300 text-xs">
                                                 {movimiento.referencia_id ? (
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium text-slate-900 dark:text-slate-100">
+                                                        <span className="font-xs text-slate-900 dark:text-slate-100">
                                                             #{movimiento.referencia_id}
                                                         </span>
                                                         <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -345,7 +388,7 @@ export default function MovimientosPrestables() {
                                                     <span className="text-slate-400 dark:text-slate-500">-</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-center bg-blue-50 dark:bg-blue-900/10">
+                                            <td className="px-2 py-3 text-center bg-blue-50 dark:bg-blue-900/10">
                                                 <div className="text-xs space-y-1 text-slate-700 dark:text-slate-300">
                                                     {columnasAMostrar.map(col => {
                                                         let valor = 0;
@@ -360,34 +403,32 @@ export default function MovimientosPrestables() {
                                                         }
                                                         return (
                                                             <div key={col}>
-                                                                <span className="font-medium">{getIconoColumna(col)}</span> {valor}
+                                                                <span className="font-xs">{getIconoColumna(col)}</span> {valor}
                                                             </div>
                                                         );
                                                     })}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-center">
+                                            <td className="px-2 py-3 text-center">
                                                 <span
-                                                    className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${
-                                                        movimiento.cantidad >= 0
-                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                    }`}
+                                                    className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${movimiento.cantidad >= 0
+                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                        }`}
                                                 >
                                                     {movimiento.cantidad >= 0 ? '✓' : ''}
                                                     {movimiento.cantidad}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-center bg-red-50 dark:bg-red-900/10">
-                                                <span className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${
-                                                    movimiento.cantidad_dañada_registrada > 0
-                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                                                }`}>
+                                            <td className="px-2 py-3 text-center bg-red-50 dark:bg-red-900/10">
+                                                <span className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${movimiento.cantidad_dañada_registrada > 0
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                                                    }`}>
                                                     ❌ {movimiento.cantidad_dañada_registrada}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-center bg-amber-50 dark:bg-amber-900/10">
+                                            <td className="px-2 py-3 text-center bg-amber-50 dark:bg-amber-900/10">
                                                 <div className="text-xs space-y-1 text-slate-700 dark:text-slate-300">
                                                     {columnasAMostrar.map(col => {
                                                         let valor = 0;

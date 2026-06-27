@@ -604,7 +604,6 @@ class ApiProformaController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // ✅ LOG DETALLADO del error para debugging
             \Log::error('❌ ERROR CRÍTICO creando proforma', [
                 'error_message' => $e->getMessage(),
                 'error_code'    => $e->getCode(),
@@ -620,8 +619,13 @@ class ApiProformaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error creando proforma',
-                'error'   => $e->getMessage(),
+                'status'  => 500,
+                'code'    => 'PROFORMA_CREATION_ERROR',
+                'message' => 'Error al crear proforma',
+                'error'   => [
+                    'type'    => class_basename($e),
+                    'message' => $e->getMessage(),
+                ],
             ], 500);
         }
     }

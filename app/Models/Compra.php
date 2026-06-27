@@ -283,9 +283,10 @@ class Compra extends Model
     /**
      * Revertir movimiento de caja al anular compra
      *
+     * ✅ MEJORADO (2026-06-27): Incluye motivo y usuario en observaciones
      * Crea un movimiento de ingreso (monto positivo) para compensar el egreso original
      */
-    public function revertirMovimientoCaja(): void
+    public function revertirMovimientoCaja(?string $motivo = null, ?string $usuarioNombre = null): void
     {
         if (!$this->movimientoCaja) {
             return;
@@ -297,13 +298,22 @@ class Compra extends Model
             // Obtener el tipo de operación ANULACION para la reversión
             $tipoOperacionAnulacion = \App\Models\TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
+            // ✅ MEJORADO: Construir observaciones con motivo y usuario
+            $observacionesMovimiento = "Anulación de compra #{$this->numero}";
+            if (!empty($motivo)) {
+                $observacionesMovimiento .= " | Motivo: {$motivo}";
+            }
+            if (!empty($usuarioNombre)) {
+                $observacionesMovimiento .= " | Anulado por: {$usuarioNombre}";
+            }
+
             // Crear movimiento de reversión con monto positivo (inverso del egreso)
             \App\Models\MovimientoCaja::create([
                 'caja_id' => $movimientoOriginal->caja_id,
                 'user_id' => \Illuminate\Support\Facades\Auth::id(),
                 'fecha' => now(),
                 'monto' => abs($movimientoOriginal->monto), // Positivo (inverso del egreso negativo)
-                'observaciones' => "Anulación de compra #{$this->numero}",
+                'observaciones' => $observacionesMovimiento,
                 'numero_documento' => $this->numero . '-ANU',
                 'tipo_operacion_id' => $tipoOperacionAnulacion->id,
                 'tipo_pago_id' => $movimientoOriginal->tipo_pago_id,

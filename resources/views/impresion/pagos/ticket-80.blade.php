@@ -9,6 +9,10 @@
 <div class="documento-titulo">
     COMPROBANTE DE PAGO
 </div>
+<div class="center">
+
+    Folio: <strong>#{{ $pago['id'] }}</strong>
+</div>
 <div class="center" style="margin-top: 3px;">
     {{ $fecha_impresion->format('d/m/Y H:i') }}
 </div>
@@ -22,6 +26,11 @@
     <p>NIT/CI: {{ $cliente['nit'] }}</p>
     @endif
     <p>Cód: {{ $cliente['codigo_cliente'] }}</p>
+    {{-- ✅ NUEVO (2026-06-27): Mostrar usuario que realizó el pago --}}
+    @if($usuario)
+    <p style="margin: 2px 0;"><strong>Registrado por:</strong> {{ $usuario->name ?? $usuario }}</p>
+    @endif
+
 </div>
 
 <div class="separador"></div>
@@ -46,10 +55,6 @@
     @if($pago['numero_cheque'])
     <p style="margin: 2px 0;"><strong>Cheque:</strong> {{ $pago['numero_cheque'] }}</p>
     @endif
-    {{-- ✅ NUEVO (2026-06-27): Mostrar usuario que realizó el pago --}}
-    @if($usuario)
-    <p style="margin: 2px 0;"><strong>Registrado por:</strong> {{ $usuario->name ?? $usuario }}</p>
-    @endif
 </div>
 
 <div class="separador"></div>
@@ -57,7 +62,6 @@
 {{-- Estado de cuenta --}}
 @if($cuenta)
 <div>
-    <p style="margin: 3px 0; font-weight: bold;">ESTADO DE CUENTA</p>
     <table style="width: 100%;">
         <tr>
             <td><strong>Saldo Anterior:</strong></td>

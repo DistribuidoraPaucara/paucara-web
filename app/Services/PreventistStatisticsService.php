@@ -13,63 +13,38 @@ class PreventistStatisticsService
      */
     public static function getStatsForLogin(Empleado $preventista): array
     {
-        // Obtener todos los clientes asignados al preventista
-        $clientes = Cliente::where('preventista_id', $preventista->id)
+        // ✅ NUEVO: Contar clientes totales en la BD
+        $totalClientesBD = Cliente::count();
+
+        // Obtener clientes asignados a este preventista
+        $clientesAsignados = Cliente::where('preventista_id', $preventista->id)
             ->with('localidad')
             ->get();
 
-        // Calcular estadísticas
-        $totalClientes = $clientes->count();
-        $clientesActivos = $clientes->where('activo', true)->count();
-        $clientesInactivos = $totalClientes - $clientesActivos;
+        // Calcular estadísticas de clientes asignados
+        $totalClientesAsignados = $clientesAsignados->count();
+        $clientesActivos = $clientesAsignados->where('activo', true)->count();
+        $clientesInactivos = $totalClientesAsignados - $clientesActivos;
+
+        // ✅ NUEVO: Calcular la diferencia entre total en BD y asignados a este preventista
+        $clientesSinAsignar = $totalClientesBD - $totalClientesAsignados;
 
         // Porcentajes
-        $porcentajeActivos = $totalClientes > 0
-            ? round(($clientesActivos / $totalClientes) * 100, 2)
+        $porcentajeActivos = $totalClientesAsignados > 0
+            ? round(($clientesActivos / $totalClientesAsignados) * 100, 2)
             : 0;
-        $porcentajeInactivos = $totalClientes > 0
-            ? round(($clientesInactivos / $totalClientes) * 100, 2)
+        $porcentajeInactivos = $totalClientesAsignados > 0
+            ? round(($clientesInactivos / $totalClientesAsignados) * 100, 2)
             : 0;
-
-        // ✅ MODIFICADO: Obtener primeros 3 clientes para reactivar (si hay inactivos)
-        // O si no hay inactivos, mostrar primeros 3 clientes activos como muestra
-        $clientesInactivos = $clientes->where('activo', false);
-
-        if ($clientesInactivos->count() > 0) {
-            // Si hay clientes inactivos, mostrar los primeros para reactivar
-            $clientesParaMostrar = $clientesInactivos
-                ->slice(0, 3)
-                ->values();
-        } else {
-            // Si todos están activos, mostrar los primeros 3 activos
-            $clientesParaMostrar = $clientes
-                ->where('activo', true)
-                ->slice(0, 3)
-                ->values();
-        }
-
-        $clientesParaReactivar = $clientesParaMostrar
-            ->map(function ($cliente) {
-                return [
-                    'id' => $cliente->id,
-                    'nombre' => $cliente->nombre,
-                    'razon_social' => $cliente->razon_social,
-                    'telefono' => $cliente->telefono,
-                    'email' => $cliente->email,
-                    'localidad' => $cliente->localidad?->nombre,
-                    'activo' => $cliente->activo,
-                ];
-            })
-            ->toArray();
 
         return [
-            'total_clientes' => $totalClientes,
+            'total_clientes_bd' => $totalClientesBD,
+            'total_clientes_asignados' => $totalClientesAsignados,
+            'clientes_sin_asignar' => $clientesSinAsignar,
             'clientes_activos' => $clientesActivos,
-            'clientes_inactivos' => $clientesInactivos->count(),
+            'clientes_inactivos' => $clientesInactivos,
             'porcentaje_activos' => $porcentajeActivos,
             'porcentaje_inactivos' => $porcentajeInactivos,
-            'clientes_para_reactivar' => $clientesParaReactivar,
-            'clientes_para_reactivar_count' => count($clientesParaReactivar),
         ];
     }
 

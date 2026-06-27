@@ -155,6 +155,25 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
             filtros.per_page = 15;
 
             const resultado = await prestamoEventoService.listar(filtros);
+            // ✅ NUEVO: Log para debugging
+            console.group('📥 DATOS DEL BACKEND - EVENTOS');
+            console.log('Total prestamos:', resultado.data?.length);
+            resultado.data?.forEach((prestamo: any) => {
+                console.group(`🎉 Préstamo #${prestamo.id} - ${prestamo.nombre_evento}`);
+                console.log('Estado:', prestamo.estado);
+                console.log('Detalles:', prestamo.detalles);
+                console.log('Devoluciones:', prestamo.devoluciones);
+                if (prestamo.detalles) {
+                    prestamo.detalles.forEach((detalle: any, idx: number) => {
+                        const totalPrestado = detalle.cantidad_prestada || 0;
+                        const totalDevuelto = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                        const falta = totalPrestado - totalDevuelto;
+                        console.log(`  Detalle ${idx + 1}: ${detalle.prestable?.nombre} | Prestado: ${totalPrestado} | Devuelto: ${totalDevuelto} | Falta: ${falta} | Estado: ${detalle.estado}`);
+                    });
+                }
+                console.groupEnd();
+            });
+            console.groupEnd();
             setPrestamos(resultado.data || []);
             setPaginacion(resultado.pagination);
         } catch (err: any) {
@@ -206,6 +225,60 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         });
     };
 
+    // ✅ NUEVO: Calcular información de préstamos pendientes
+    const calcularPendientes = () => {
+        const prestamosPendientes = prestamos.filter(p =>
+            p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO'
+        );
+
+        const resumen = {
+            totalPrestamos: prestamosPendientes.length,
+            canastillas: { prestadas: 0, devueltas: 0, pendientes: 0 },
+            embases: { prestadas: 0, devueltas: 0, pendientes: 0 },
+            montoGarantia: 0,
+        };
+
+        prestamosPendientes.forEach(prestamo => {
+            resumen.montoGarantia += Number(prestamo.monto_garantia || 0);
+            (prestamo.detalles || []).forEach((detalle: any) => {
+                const totalDetalle = Number(detalle.cantidad_prestada || 0);
+                const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
+
+                if (detalle.prestable?.tipo === 'CANASTILLA') {
+                    resumen.canastillas.prestadas += totalDetalle;
+                    resumen.canastillas.devueltas += devueltoDetalle;
+                    resumen.canastillas.pendientes += pendienteDetalle;
+                } else if (detalle.prestable?.tipo === 'EMBASES') {
+                    resumen.embases.prestadas += totalDetalle;
+                    resumen.embases.devueltas += devueltoDetalle;
+                    resumen.embases.pendientes += pendienteDetalle;
+                }
+            });
+        });
+
+        return resumen;
+    };
+
+    // ✅ NUEVO: Calcular pendientes por préstamo individual
+    const calcularPendientesPorPrestamo = (prestamo: PrestamoEvento) => {
+        const resumen = { canastillas: 0, embases: 0 };
+        (prestamo.detalles || []).forEach((detalle: any) => {
+            const totalDetalle = Number(detalle.cantidad_prestada || 0);
+            const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+            const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
+
+            if (detalle.prestable?.tipo === 'CANASTILLA') {
+                resumen.canastillas += pendienteDetalle;
+            } else if (detalle.prestable?.tipo === 'EMBASES') {
+                resumen.embases += pendienteDetalle;
+            }
+        });
+        return resumen;
+    };
+
+    const pendientes = calcularPendientes();
+
     return (
         <AppLayout>
             <Head title="Préstamos a Eventos" />
@@ -228,6 +301,70 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                     </div>
                 )}
 
+                {/* ✅ NUEVO: Cards de Resumen Pendiente */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            ⚠️ Préstamos Pendientes
+                        </p>
+                        <div className="space-y-2">
+                            <div>
+                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{pendientes.totalPrestamos}</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">Préstamos activos</p>
+                            </div>
+                            <div className="pt-2 border-t border-red-200 dark:border-red-700">
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <span className="font-semibold">Canastillas:</span> {pendientes.canastillas.pendientes} por devolver
+                                </p>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <span className="font-semibold">Embases:</span> {pendientes.embases.pendientes} por devolver
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            📊 Items Pendientes por Tipo
+                        </p>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">📦 Canastillas</span>
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.canastillas.pendientes}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">🥫 Embases</span>
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.embases.pendientes}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                                <span className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                                    {pendientes.canastillas.pendientes + pendientes.embases.pendientes}
+                                </span>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            💰 Garantías en Riesgo
+                        </p>
+                        <div className="space-y-2">
+                            <div>
+                                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                    Bs {pendientes.montoGarantia.toLocaleString('es-ES')}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">Total en garantía</p>
+                            </div>
+                            <div className="pt-2 border-t border-purple-200 dark:border-purple-700">
+                                <p className="text-xs text-purple-700 dark:text-purple-300">
+                                    💡 Recuperar para liberar garantías
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
                 {/* Botón para mostrar/ocultar filtros */}
                 <div className="mb-6">
                     <button
@@ -242,159 +379,159 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                 {/* Filtros */}
                 {mostrarFiltros && (
                     <Card className="p-4 mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                    <div className="space-y-4">
-                        {/* Primera fila de filtros */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    ID Préstamo
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por ID..."
-                                    value={filtroId}
-                                    onChange={(e) => setFiltroId(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
+                        <div className="space-y-4">
+                            {/* Primera fila de filtros */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        ID Préstamo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por ID..."
+                                        value={filtroId}
+                                        onChange={(e) => setFiltroId(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Nombre Evento
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por nombre de evento..."
+                                        value={nombreEventoSearch}
+                                        onChange={(e) => setNombreEventoSearch(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <DynamicSearchSelect
+                                        label="Chofer"
+                                        placeholder="Buscar chofer..."
+                                        selectedItem={chofersSeleccionado}
+                                        items={chofersResults}
+                                        isLoading={chofersLoading}
+                                        searchValue={chofersSearch}
+                                        onSearch={handleSearchChoferes}
+                                        onSelect={(chofer) => setChofersSeleccionado(chofer)}
+                                        onClear={() => {
+                                            setChofersSeleccionado(null);
+                                            setChofersSearch('');
+                                        }}
+                                        renderItem={(chofer) => <p className="font-medium">{chofer.name}</p>}
+                                        getItemId={(chofer) => chofer.id}
+                                        getDisplayValue={(chofer) => chofer.name}
+                                    />
+                                </div>
+                                <div>
+                                    <DynamicSearchSelect
+                                        label="Vehículo"
+                                        placeholder="Buscar por placa, marca, modelo..."
+                                        selectedItem={vehiculoSeleccionado}
+                                        items={vehiculosResults}
+                                        isLoading={false}
+                                        searchValue={vehiculosSearch}
+                                        onSearch={handleSearchVehiculos}
+                                        onSelect={(vehiculo) => setVehiculoSeleccionado(vehiculo)}
+                                        onClear={() => {
+                                            setVehiculoSeleccionado(null);
+                                            setVehiculosSearch('');
+                                        }}
+                                        renderItem={(vehiculo) => (
+                                            <div>
+                                                <p className="font-medium">{vehiculo.placa}</p>
+                                                <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
+                                            </div>
+                                        )}
+                                        getItemId={(vehiculo) => vehiculo.id}
+                                        getDisplayValue={(vehiculo) => vehiculo.placa}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Encargado Evento
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por encargado..."
+                                        value={encargadoSearch}
+                                        onChange={(e) => {
+                                            setEncargadoSearch(e.target.value);
+                                            setEncargadoSeleccionado(e.target.value);
+                                        }}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Desde (Fecha Préstamo)
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={filtroFechaDesde}
+                                        onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Hasta (Fecha Devolución)
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={filtroFechaHasta}
+                                        onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        Estado
+                                    </label>
+                                    <select
+                                        value={filtroEstado}
+                                        onChange={(e) => setFiltroEstado(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="">Todos</option>
+                                        <option value="ACTIVO">Activos</option>
+                                        <option value="PARCIALMENTE_DEVUELTO">Parcialmente Devueltos</option>
+                                        <option value="COMPLETAMENTE_DEVUELTO">Completamente Devueltos</option>
+                                        <option value="CANCELADO">Cancelados</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-2 items-end">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => cargarPrestamos()}
+                                        className="flex-1"
+                                    >
+                                        🔄 Buscar
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={limpiarFiltros}
+                                        className="flex-1"
+                                    >
+                                        ✖️ Limpiar
+                                    </Button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Nombre Evento
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por nombre de evento..."
-                                    value={nombreEventoSearch}
-                                    onChange={(e) => setNombreEventoSearch(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
+
+                            {/* Segunda fila de filtros */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
                             </div>
-                            <div>
-                                <DynamicSearchSelect
-                                    label="Chofer"
-                                    placeholder="Buscar chofer..."
-                                    selectedItem={chofersSeleccionado}
-                                    items={chofersResults}
-                                    isLoading={chofersLoading}
-                                    searchValue={chofersSearch}
-                                    onSearch={handleSearchChoferes}
-                                    onSelect={(chofer) => setChofersSeleccionado(chofer)}
-                                    onClear={() => {
-                                        setChofersSeleccionado(null);
-                                        setChofersSearch('');
-                                    }}
-                                    renderItem={(chofer) => <p className="font-medium">{chofer.name}</p>}
-                                    getItemId={(chofer) => chofer.id}
-                                    getDisplayValue={(chofer) => chofer.name}
-                                />
-                            </div>
-                            <div>
-                                <DynamicSearchSelect
-                                    label="Vehículo"
-                                    placeholder="Buscar por placa, marca, modelo..."
-                                    selectedItem={vehiculoSeleccionado}
-                                    items={vehiculosResults}
-                                    isLoading={false}
-                                    searchValue={vehiculosSearch}
-                                    onSearch={handleSearchVehiculos}
-                                    onSelect={(vehiculo) => setVehiculoSeleccionado(vehiculo)}
-                                    onClear={() => {
-                                        setVehiculoSeleccionado(null);
-                                        setVehiculosSearch('');
-                                    }}
-                                    renderItem={(vehiculo) => (
-                                        <div>
-                                            <p className="font-medium">{vehiculo.placa}</p>
-                                            <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
-                                        </div>
-                                    )}
-                                    getItemId={(vehiculo) => vehiculo.id}
-                                    getDisplayValue={(vehiculo) => vehiculo.placa}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Encargado Evento
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por encargado..."
-                                    value={encargadoSearch}
-                                    onChange={(e) => {
-                                        setEncargadoSearch(e.target.value);
-                                        setEncargadoSeleccionado(e.target.value);
-                                    }}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Desde (Fecha Préstamo)
-                                </label>
-                                <input
-                                    type="date"
-                                    value={filtroFechaDesde}
-                                    onChange={(e) => setFiltroFechaDesde(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Hasta (Fecha Devolución)
-                                </label>
-                                <input
-                                    type="date"
-                                    value={filtroFechaHasta}
-                                    onChange={(e) => setFiltroFechaHasta(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Estado
-                                </label>
-                                <select
-                                    value={filtroEstado}
-                                    onChange={(e) => setFiltroEstado(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="ACTIVO">Activos</option>
-                                    <option value="PARCIALMENTE_DEVUELTO">Parcialmente Devueltos</option>
-                                    <option value="COMPLETAMENTE_DEVUELTO">Completamente Devueltos</option>
-                                    <option value="CANCELADO">Cancelados</option>
-                                </select>
-                            </div>
-                            <div className="flex gap-2 items-end">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => cargarPrestamos()}
-                                    className="flex-1"
-                                >
-                                    🔄 Buscar
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={limpiarFiltros}
-                                    className="flex-1"
-                                >
-                                    ✖️ Limpiar
-                                </Button>
+
+                            {/* Cuarta fila: Estado y botones */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+
+
                             </div>
                         </div>
-
-                        {/* Segunda fila de filtros */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            
-                        </div>
-
-                        {/* Cuarta fila: Estado y botones */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-
-
-                        </div>
-                    </div>
-                </Card>
+                    </Card>
                 )}
 
 
@@ -412,52 +549,72 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">ID</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Nombre</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Encargado</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Chofer</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehiculo</th>
-                                    {/* <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cantidad</th> */}
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Garantía</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Préstamo</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Esperada Devolución</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Evento/Encargado</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Chofer/Vehiculo</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Garantía</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Préstamo</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Devolución</th>
+                                    {/* ✅ NUEVO: Columna de Pendientes */}
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Pendientes</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
+                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {prestamos.map((prestamo) => (
                                     <tr key={prestamo.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {prestamo.id}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                            {prestamo.nombre_evento}
+                                        <td className="px-1 py-4 text-gray-900 dark:text-white">
+                                            <p>{prestamo.nombre_evento}</p>
+                                            {/* <p>{prestamo.cliente?.nombre || prestamo.cliente?.razon_social || '-'}</p> */}
+                                            <p className="text-xs text-gray-600 dark:text-gray-300">
+                                                Encargado: <b> {prestamo.encargado_evento || '-'}</b>
+                                            </p>
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-blue-600 dark:text-blue-400">
-                                            {prestamo.cliente?.nombre || prestamo.cliente?.razon_social || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {prestamo.encargado_evento || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {prestamo.chofer?.name || prestamo.chofer?.nombre || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {prestamo.vehiculo_asignado || '-'}
+                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                            <p>{prestamo.chofer?.name || prestamo.chofer?.nombre || '-'}</p>
+                                            <p className='text-xs'><b>Vehículo:</b> {prestamo.vehiculo_asignado || '-'}</p>
                                         </td>
                                         {/* <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                             {prestamo.cantidad}
                                         </td> */}
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             Bs {Number(prestamo.monto_garantia).toFixed(2)}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {formatDate(prestamo.fecha_prestamo)}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {formatDate(prestamo.fecha_esperada_devolucion)}
+                                        </td>
+                                        {/* ✅ NUEVO: Celda de Pendientes */}
+                                        <td className="px-1 py-4 text-center">
+                                            {(() => {
+                                                const pend = calcularPendientesPorPrestamo(prestamo);
+                                                const totalPendiente = pend.canastillas + pend.embases;
+                                                if (totalPendiente === 0) {
+                                                    return <span className="text-green-600 dark:text-green-400 font-semibold">✓ Completo</span>;
+                                                }
+                                                return (
+                                                    <div className="flex flex-col gap-1 text-sm">
+                                                        {pend.canastillas > 0 && (
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span>📦</span>
+                                                                <span className="font-semibold text-orange-600 dark:text-orange-400">{pend.canastillas}</span>
+                                                            </div>
+                                                        )}
+                                                        {pend.embases > 0 && (
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span>🥫</span>
+                                                                <span className="font-semibold text-pink-600 dark:text-pink-400">{pend.embases}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
                                             {getEstadoBadge(prestamo.estado)}

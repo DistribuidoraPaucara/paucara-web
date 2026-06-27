@@ -55,7 +55,8 @@ class CreditoService
         ?int $diasVencimiento = 7,
     ): CuentaPorCobrar {
         // ✅ NUEVO (2026-06-27): Construir observaciones con referencias de la venta
-        $observaciones = "Venta #{$venta->numero} | Cliente: {$venta->cliente?->nombre ?? 'N/A'} | Monto: {$venta->total}";
+        $clienteNombre = $venta->cliente?->nombre ?? 'N/A';
+        $observaciones = "Venta #{$venta->numero} | Cliente: {$clienteNombre} | Monto: {$venta->total}";
 
         $cuentaPorCobrar = CuentaPorCobrar::create([
             'venta_id' => $venta->id,

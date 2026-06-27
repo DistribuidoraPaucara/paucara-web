@@ -148,6 +148,17 @@ class EntregaController extends Controller
                 'user_id'  => $user->id,
                 'name'     => $user->name,
                 'usernick' => $user->usernick,
+                'roles'    => $user->getRoleNames()->toArray(), // ✅ Log de roles
+            ]);
+
+            // ✅ NUEVO: Verificar rol del usuario
+            $esAdmin = $user->hasRole(['admin', 'Admin']);
+            $esChofer = $user->hasRole(['chofer', 'Chofer']);
+
+            Log::info('📱 [misTrabjos] Verificación de roles', [
+                'user_id'   => $user->id,
+                'es_admin'  => $esAdmin,
+                'es_chofer' => $esChofer,
             ]);
 
             // DEBUG: Log de todas las entregas en la BD agrupadas por chofer_id
@@ -159,25 +170,30 @@ class EntregaController extends Controller
                 'resumen' => $entregasPorChofer->toArray(),
             ]);
 
-            // Obtener entregas asignadas al chofer (user actual)
+            // Obtener entregas asignadas al chofer (user actual) o todas si es admin
             // FK chofer_id en entregas apunta a users.id
             $perPage = $request->per_page ?? 15;
             $page    = $request->page ?? 1;
             $estado  = $request->estado;
 
             // DEBUG: Log todas las entregas del chofer sin filtro
-            $todasEntregas = Entrega::where('chofer_id', $user->id)
-                ->get();
+            if ($esChofer) {
+                $todasEntregas = Entrega::where('chofer_id', $user->id)->get();
+                Log::info('📱 [misTrabjos] Chofer - Todas las entregas sin filtro', [
+                    'user_id'             => $user->id,
+                    'chofer_id'           => $user->id,
+                    'cantidad_total'      => count($todasEntregas),
+                    'estados'             => $todasEntregas->pluck('estado')->unique()->toArray(),
+                    'entregas_por_estado' => $todasEntregas->groupBy('estado')->map(fn($grupo) => count($grupo))->toArray(),
+                ]);
+            } else {
+                $todasEntregas = Entrega::get();
+                Log::info('📱 [misTrabjos] Admin - Todas las entregas sin filtro', [
+                    'cantidad_total' => count($todasEntregas),
+                ]);
+            }
 
-            Log::info('📱 [misTrabjos] Todas las entregas sin filtro', [
-                'user_id'             => $user->id,
-                'chofer_id'           => $user->id,
-                'cantidad_total'      => count($todasEntregas),
-                'estados'             => $todasEntregas->pluck('estado')->unique()->toArray(),
-                'entregas_por_estado' => $todasEntregas->groupBy('estado')->map(fn($grupo) => count($grupo))->toArray(),
-            ]);
-
-                                                      // Obtener entregas asignadas al chofer (user actual)
+                                                      // Obtener entregas asignadas al chofer (user actual) o todas si es admin
                                                       // Parámetros opcionales:
                                                       // - entrega_id: filtro exacto por ID de entrega
                                                       // - search_venta: búsqueda inteligente (ID exacto si es numérico, o nombre cliente case-insensitive si es texto)
@@ -194,7 +210,10 @@ class EntregaController extends Controller
             $hayFiltroFecha = ! empty($createdDesde) || ! empty($createdHasta);
 
             // Seleccionar solo campos necesarios para la lista
-            $entregas = Entrega::where('chofer_id', $user->id)
+            $entregas = Entrega::when(!$esAdmin, function ($q) use ($user) {
+                    // Si NO es admin, filtrar por chofer actual
+                    return $q->where('chofer_id', $user->id);
+                })
                 ->when($entregaId, function ($q) use ($entregaId) {
                     return $q->where('id', $entregaId);
                 })
@@ -278,9 +297,11 @@ class EntregaController extends Controller
             // DEBUG: Log cantidad de entregas encontradas CON filtro
             Log::info('📱 [misTrabjos] Entregas encontradas CON FILTRO', [
                 'user_id'                 => $user->id,
+                'es_admin'                => $esAdmin,
+                'es_chofer'               => $esChofer,
                 'fecha_asignacion_filtro' => $fechaFiltro,
-                'created_desde'           => $createdDesde, // ✅ NUEVO
-                'created_hasta'           => $createdHasta, // ✅ NUEVO
+                'created_desde'           => $createdDesde,
+                'created_hasta'           => $createdHasta,
                 'estado_filtro'           => $estado,
                 'search'                  => $search,
                 'localidad_id'            => $localidadId,

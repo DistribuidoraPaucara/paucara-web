@@ -12,7 +12,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/presentation/components/ui/select';
-import { DistributionChart } from '@/presentation/components/prestamos';
 
 interface StockItem {
     id: number;
@@ -24,6 +23,10 @@ interface StockItem {
     embase_asociado_id?: number | null;
     almacen_nombre: string;
     cantidad_disponible: number;
+    cantidad_cliente_deudor?: number;
+    cantidad_cliente_devuelto?: number;
+    cantidad_cliente_dañada?: number;
+    cantidad_cliente_total?: number;
     cantidad_evento_deudor: number;
     cantidad_evento_devuelto: number;
     cantidad_evento_dañada: number;
@@ -38,14 +41,26 @@ interface StockItemWithGroupIndex extends StockItem {
     groupIndex?: number;
 }
 
+interface ResumenTipo {
+    disponible: number;
+    deudor: number;
+    dañada: number;
+    total: number;
+}
+
 interface StockPageProps {
     items: StockItem[];
     resumen: {
-        total_disponible: number;
-        total_evento_deudor: number;
-        total_evento_devuelto: number;
-        total_evento: number;
-        total_general: number;
+        clientes: {
+            total: ResumenTipo;
+            canastillas: ResumenTipo;
+            embases: ResumenTipo;
+        };
+        eventos: {
+            total: ResumenTipo;
+            canastillas: ResumenTipo;
+            embases: ResumenTipo;
+        };
     };
     almacenes: Array<{ id: number; nombre: string }>;
 }
@@ -53,17 +68,17 @@ interface StockPageProps {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Préstamos',
-        href: '/prestamos',
+        href: '/prestamos/stock/eventos',
     },
     {
         title: 'Stock Eventos',
-        href: '#',
+        href: '/prestamos/stock/eventos',
     },
 ];
 
 export default function StockEventosPage({
     items: initialItems,
-    resumen: initialResumen,
+    resumen,
     almacenes,
 }: StockPageProps) {
     const [searchTerm, setSearchTerm] = useState('');
@@ -301,11 +316,16 @@ export default function StockEventosPage({
             <div className="space-y-6 p-4">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                        📦 Stock de Eventos
-                    </h1>
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                            📦 Stock de Eventos
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 mt-1">
+                            Visualiza la distribución de stock: disponible, préstamos y deuda
+                        </p>
+                    </div>
                     <div className="flex gap-2">
-                        <Button
+                        {/* <Button
                             variant="outline"
                             size="sm"
                             onClick={handleRefresh}
@@ -314,7 +334,7 @@ export default function StockEventosPage({
                         >
                             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                             Actualizar
-                        </Button>
+                        </Button> */}
                         <Button
                             variant="outline"
                             size="sm"
@@ -324,6 +344,125 @@ export default function StockEventosPage({
                             <Download size={16} />
                             Exportar CSV
                         </Button>
+                    </div>
+                </div>
+
+                {/* Resumen de Totales - Card Contenedor */}
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+                    {/* <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">📊 Resumen de Stock</h2> */}
+
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+                        {/* Totales Clientes */}
+                        <div className="space-y-2">
+                            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                👥 Totales Préstamos Clientes
+                            </h2>
+
+                            {/* Canastillas + Embases lado a lado */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                {/* Canastillas */}
+                                <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-red-700 dark:text-red-300 mb-2">📦 Canastillas</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Disponible</span>
+                                            <span className="font-bold text-sm text-green-700 dark:text-green-300">{resumen.clientes.canastillas.disponible.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado</span>
+                                            <span className="font-bold text-sm text-red-700 dark:text-red-300">{resumen.clientes.canastillas.deudor.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada</span>
+                                            <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.canastillas.dañada.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-red-200 dark:border-red-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.canastillas.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Embases */}
+                                <div className="rounded-lg border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">🔖 Embases</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Disponible</span>
+                                            <span className="font-bold text-sm text-green-700 dark:text-green-300">{resumen.clientes.embases.disponible.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado</span>
+                                            <span className="font-bold text-sm text-red-700 dark:text-red-300">{resumen.clientes.embases.deudor.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada</span>
+                                            <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.embases.dañada.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.embases.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Totales Eventos */}
+                        <div className="space-y-2">
+                            {/* <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                🎉 Totales Préstamos Eventos
+                            </h2> */}
+
+                            {/* Canastillas + Embases lado a lado */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                {/* Canastillas */}
+                                {/* <div className="rounded-lg border border-cyan-200 dark:border-cyan-700 bg-cyan-50 dark:bg-cyan-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-cyan-700 dark:text-cyan-300 mb-2">📦 Canastillas</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Disponible</span>
+                                            <span className="font-bold text-sm text-green-700 dark:text-green-300">{resumen.eventos.canastillas.disponible.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado</span>
+                                            <span className="font-bold text-sm text-cyan-700 dark:text-cyan-300">{resumen.eventos.canastillas.deudor.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada</span>
+                                            <span className="font-bold text-sm text-pink-700 dark:text-pink-300">{resumen.eventos.canastillas.dañada.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-cyan-200 dark:border-cyan-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="font-bold text-base text-blue-700 dark:text-blue-300">{resumen.eventos.canastillas.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div> */}
+
+                                {/* Embases */}
+                                {/* <div className="rounded-lg border border-teal-200 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-teal-700 dark:text-teal-300 mb-2">🔖 Embases</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Disponible</span>
+                                            <span className="font-bold text-sm text-green-700 dark:text-green-300">{resumen.eventos.embases.disponible.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado</span>
+                                            <span className="font-bold text-sm text-cyan-700 dark:text-cyan-300">{resumen.eventos.embases.deudor.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada</span>
+                                            <span className="font-bold text-sm text-pink-700 dark:text-pink-300">{resumen.eventos.embases.dañada.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-teal-200 dark:border-teal-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="font-bold text-base text-blue-700 dark:text-blue-300">{resumen.eventos.embases.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div> */}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -420,7 +559,7 @@ export default function StockEventosPage({
                                         Disponible
                                     </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                        Deudor (Activo)
+                                        Prestado (Activo)
                                     </th>
                                     {/* <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Devuelto
@@ -455,11 +594,10 @@ export default function StockEventosPage({
                                             return (
                                                 <React.Fragment key={`${item.prestable_id}-${item.almacen_nombre}`}>
                                                     <tr
-                                                        className={`border-b border-slate-200 dark:border-slate-700 ${
-                                                            isEmbaseRelacionado
-                                                                ? 'bg-slate-50 dark:bg-slate-800/50'
-                                                                : getRowColor(item.prestable_tipo)
-                                                        } transition-colors`}
+                                                        className={`border-b border-slate-200 dark:border-slate-700 ${isEmbaseRelacionado
+                                                            ? 'bg-slate-50 dark:bg-slate-800/50'
+                                                            : getRowColor(item.prestable_tipo)
+                                                            } transition-colors`}
                                                     >
                                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                                             {item.id}
@@ -472,11 +610,10 @@ export default function StockEventosPage({
                                                             {item.prestable_nombre}
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
-                                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                                                                item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE'
-                                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                                                                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                                                            }`}>
+                                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE'
+                                                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
+                                                                }`}>
                                                                 {item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE' ? '🔖 Embase' : '📦 Canastilla'}
                                                             </span>
                                                         </td>

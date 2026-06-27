@@ -58,7 +58,6 @@
 {{-- ==================== MONTOS ==================== --}}
 <div class="documento-info">
     <p><strong>Monto Original:</strong> Bs {{ number_format($documento->monto_original, 2) }}</p>
-    <p><strong>Monto Total:</strong> Bs {{ number_format($documento->monto_total, 2) }}</p>
     <p><strong>Monto Pagado:</strong> Bs {{ number_format($documento->monto_pagado, 2) }}</p>
 </div>
 

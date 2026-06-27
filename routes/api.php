@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\EstadoMermaController;
 use App\Http\Controllers\Api\StockDisponiblePdfController;
 use App\Http\Controllers\Api\SectorController;
 use App\Http\Controllers\Api\TipoPagoController;
+use App\Http\Controllers\Api\CuentaPorCobrarController;
 use App\Http\Controllers\ReporteCargaPdfController;
 use App\Http\Controllers\ReporteCargoListController;
 use App\Http\Controllers\Api\NotificationController;
@@ -1817,3 +1818,7 @@ Route::prefix('productos-comida')->group(function () {
 
 // ✨ NUEVO: Ruta para crear ventas de comidas/helados
 Route::post('/ventas-comidas', [\App\Http\Controllers\Api\VentasComidasController::class, 'store']);
+
+// ✅ NUEVO 2026-06-23: API endpoint para Cuentas por Cobrar (para app Flutter)
+Route::get('/cuentas-por-cobrar', [CuentaPorCobrarController::class, 'indexApi'])->name('api.cuentas-por-cobrar.index');
+Route::get('/cuentas-por-cobrar/{cuentaPorCobrar}', [CuentaPorCobrarController::class, 'showApi'])->name('api.cuentas-por-cobrar.show');

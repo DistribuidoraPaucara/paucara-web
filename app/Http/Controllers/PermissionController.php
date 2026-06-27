@@ -729,7 +729,7 @@ class PermissionController extends Controller
             'guard_name'  => $validated['guard_name'],
         ]);
 
-        return redirect()->route('permissions.index')
+        return redirect()->route('permisos.index')
             ->with('success', 'Permiso creado exitosamente.');
     }
 
@@ -758,7 +758,7 @@ class PermissionController extends Controller
 
         $permission->update($validated);
 
-        return redirect()->route('permissions.index')
+        return redirect()->route('permisos.index')
             ->with('success', 'Permiso actualizado exitosamente.');
     }
 
@@ -776,7 +776,7 @@ class PermissionController extends Controller
 
         $permission->delete();
 
-        return redirect()->route('permissions.index')
+        return redirect()->route('permisos.index')
             ->with('success', 'Permiso eliminado exitosamente.');
     }
 }

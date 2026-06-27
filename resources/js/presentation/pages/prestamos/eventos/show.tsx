@@ -1,468 +1,224 @@
-import { Head } from '@inertiajs/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { AlertCircle, Printer } from 'lucide-react';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { formatDate } from '@/lib/utils';
+import { Card } from '@/presentation/components/ui/card';
+import { Badge } from '@/presentation/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import axios from 'axios';
 
-interface Prestable {
-    id: number;
-    nombre: string;
-    codigo: string;
-    tipo: string;
-}
+export default function PrestamosEventosShow() {
+    const { url } = usePage();
+    const prestamoId = url.split('/').pop();
+    const [prestamo, setPrestamo] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [expandedDetalles, setExpandedDetalles] = useState([]);
+    const [expandedDevoluciones, setExpandedDevoluciones] = useState([]);
 
-interface Devolucion {
-    id: number;
-    cantidad_devuelta: number;
-    cantidad_dañada_total: number;
-}
-
-interface PrestamoEventoDetalle {
-    id: number;
-    prestable_id: number;
-    cantidad: number;
-    cantidad_prestada?: number;
-    devoluciones?: Devolucion[];
-    prestable?: Prestable;
-}
-
-interface Cliente {
-    id: number;
-    nombre: string;
-    razon_social?: string;
-}
-
-interface Usuario {
-    id: number;
-    name: string;
-}
-
-interface PrestamoEvento {
-    id: number;
-    nombre_evento: string;
-    encargado_evento?: string;
-    vehiculo_asignado?: string;
-    direccion_evento?: string;
-    telefono_uno?: string;
-    telefono_dos?: string;
-    chofer_id?: number;
-    monto_garantia: number;
-    fecha_prestamo: string;
-    fecha_entrega?: string;
-    fecha_esperada_devolucion?: string;
-    estado: string;
-    detalles: PrestamoEventoDetalle[];
-    cliente?: Cliente;
-    chofer?: Usuario;
-    created_at: string;
-    updated_at: string;
-}
-
-const getEstadoBadgeStyle = (estado: string) => {
-    const styles: Record<string, { bg: string; text: string }> = {
-        ACTIVO: { bg: 'bg-blue-100', text: 'text-blue-700' },
-        PARCIALMENTE_DEVUELTO: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-        COMPLETAMENTE_DEVUELTO: { bg: 'bg-green-100', text: 'text-green-700' },
-        CANCELADO: { bg: 'bg-red-100', text: 'text-red-700' },
-    };
-    return styles[estado] || { bg: 'bg-gray-100', text: 'text-gray-700' };
-};
-
-const calcularDevolucion = (detalle: PrestamoEventoDetalle) => {
-    const cantidadPrestada = detalle.cantidad_prestada || detalle.cantidad || 0;
-    const cantidadDevuelta = detalle.devoluciones?.reduce((sum, dev) => sum + dev.cantidad_devuelta, 0) || 0;
-    const cantidadPendiente = Math.max(0, cantidadPrestada - cantidadDevuelta);
-    const porcentajeDevuelto = cantidadPrestada > 0 ? Math.round((cantidadDevuelta / cantidadPrestada) * 100) : 0;
-
-    return { cantidadDevuelta, cantidadPendiente, porcentajeDevuelto, cantidadPrestada };
-};
-
-const getProgressColor = (porcentaje: number) => {
-    if (porcentaje === 0) return 'bg-red-500';
-    if (porcentaje < 50) return 'bg-orange-500';
-    if (porcentaje < 100) return 'bg-yellow-500';
-    return 'bg-green-500';
-};
-
-export default function ShowPrestamoEvento({ prestamo }: { prestamo: PrestamoEvento }) {
-    const [loading, setLoading] = useState(false);
-    const [showOutputModal, setShowOutputModal] = useState(false);
-    const [error, setError] = useState('');
-
-    const handlePrint = () => {
-        setShowOutputModal(true);
-    };
-
-    const handleAnular = async () => {
-        if (!confirm('¿Estás seguro de que deseas anular este préstamo?')) return;
-
-        setLoading(true);
-        try {
-            const response = await fetch(`/api/prestamos-evento/${prestamo.id}/anular`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ razon_anulacion: 'Anulado manualmente' }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Error anulando préstamo');
-            }
-
-            // Recargar la página
-            window.location.reload();
-        } catch (err: any) {
-            setError(err.message || 'Error anulando préstamo');
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        if (prestamoId) {
+            axios.get(`/api/prestamos-evento/${prestamoId}`)
+                .then(res => {
+                    console.group('📥 EVENTO #' + prestamoId);
+                    console.log('✅ Datos del backend:', res.data.data);
+                    console.log('📋 Detalles:', res.data.data.detalles);
+                    console.log('🔄 Devoluciones:', res.data.data.devoluciones);
+                    res.data.data.detalles?.forEach((det, idx) => {
+                        console.log(`  Detalle ${idx + 1}:`, {
+                            nombre: det.prestable?.nombre,
+                            prestada: det.cantidad_prestada,
+                            devuelto: det.devolucion_detalles?.reduce((s, d) => s + (d.cantidad_devuelta || 0) + (d.cantidad_dañada_total || 0), 0) || 0,
+                            estado: det.estado,
+                            devoluciones: det.devolucion_detalles
+                        });
+                    });
+                    res.data.data.devoluciones?.forEach((dev, idx) => {
+                        console.log(`  Devolución ${idx + 1}:`, {
+                            id: dev.id,
+                            fecha: dev.fecha_devolucion,
+                            cantidadTotal: dev.cantidad_total_devuelta,
+                            monto_daño: dev.monto_cobrado_daño_total,
+                            detalles: dev.detalles
+                        });
+                    });
+                    console.groupEnd();
+                    setPrestamo(res.data.data);
+                })
+                .catch(err => {
+                    console.error('❌ Error obteniendo evento:', err.response?.data || err.message);
+                })
+                .finally(() => setLoading(false));
         }
-    };
+    }, [prestamoId]);
 
-    const handleDevolver = () => {
-        window.location.href = `/prestamos/eventos/${prestamo.id}/devoluciones`;
-    };
-
-    const estatoStyle = getEstadoBadgeStyle(prestamo.estado);
+    if (loading) return <AppLayout><div className="text-center p-8 text-gray-900 dark:text-white">Cargando...</div></AppLayout>;
+    if (!prestamo) return <AppLayout><div className="text-center p-8 text-red-600 dark:text-red-400">Préstamo no encontrado</div></AppLayout>;
 
     return (
         <AppLayout>
-            <Head title={`Préstamo a Evento #${prestamo.id}`} />
-
-            <div className="space-y-6 p-6">
-                {/* Encabezado */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Préstamo a Evento #{prestamo.id}
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
-                            {prestamo.nombre_evento}
+            <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="p-6">
+                        <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Evento</h3>
+                        <p className="text-2xl font-bold mt-2 text-gray-900 dark:text-white">{prestamo.nombre_evento || 'N/D'}</p>
+                    </Card>
+                    <Card className="p-6">
+                        <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Estado</h3>
+                        <Badge className="mt-3">{prestamo.estado}</Badge>
+                    </Card>
+                    <Card className="p-6">
+                        <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Fechas</h3>
+                        <p className="text-sm mt-2">
+                            <span className="text-gray-600 dark:text-gray-300">Préstamo:</span> <span className="text-gray-900 dark:text-white">{new Date(prestamo.fecha_prestamo).toLocaleDateString()}</span>
                         </p>
-                    </div>
-                    <div className={`px-4 py-2 rounded-lg font-semibold ${estatoStyle.bg} ${estatoStyle.text}`}>
-                        {prestamo.estado}
-                    </div>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {/* Información Principal */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Información del Evento</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre del Evento</label>
-                                <p className="text-gray-900 dark:text-white mt-1">{prestamo.nombre_evento}</p>
-                            </div>
-                            {prestamo.encargado_evento && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Encargado</label>
-                                    <p className="text-gray-900 dark:text-white mt-1">{prestamo.encargado_evento}</p>
-                                </div>
-                            )}
-                            {prestamo.direccion_evento && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Dirección</label>
-                                    <p className="text-gray-900 dark:text-white mt-1">{prestamo.direccion_evento}</p>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-2 gap-4">
-                                {prestamo.telefono_uno && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono 1</label>
-                                        <p className="text-gray-900 dark:text-white mt-1">{prestamo.telefono_uno}</p>
-                                    </div>
-                                )}
-                                {prestamo.telefono_dos && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono 2</label>
-                                        <p className="text-gray-900 dark:text-white mt-1">{prestamo.telefono_dos}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Información del Transporte</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {prestamo.chofer && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Chofer</label>
-                                    <p className="text-gray-900 dark:text-white mt-1">{prestamo.chofer.name}</p>
-                                </div>
-                            )}
-                            {prestamo.vehiculo_asignado && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Vehículo</label>
-                                    <p className="text-gray-900 dark:text-white mt-1">{prestamo.vehiculo_asignado}</p>
-                                </div>
-                            )}
-                            <div>
-                                <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Monto de Garantía</label>
-                                <p className="text-gray-900 dark:text-white mt-1">
-                                    Bs {Number(prestamo.monto_garantia).toFixed(2)}
-                                </p>
-                            </div>
-                        </CardContent>
                     </Card>
                 </div>
 
-                {/* Resumen de Devoluciones */}
-                {(() => {
-                    const totalPrestado = prestamo.detalles.reduce((sum, d) => sum + (d.cantidad_prestada || d.cantidad || 0), 0);
-                    const totalDevuelto = prestamo.detalles.reduce((sum, d) => {
-                        const dev = calcularDevolucion(d);
-                        return sum + dev.cantidadDevuelta;
-                    }, 0);
-                    const totalPendiente = totalPrestado - totalDevuelto;
-                    const porcentajeTotal = totalPrestado > 0 ? Math.round((totalDevuelto / totalPrestado) * 100) : 0;
-
-                    return (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">📤 Total Prestado</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalPrestado}</p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">✅ Total Devuelto</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalDevuelto}</p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">⏳ Pendiente</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className={`text-2xl font-bold ${totalPendiente === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                                        {totalPendiente}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">📊 Progreso</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{porcentajeTotal}%</p>
-                                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${getProgressColor(porcentajeTotal)} transition-all duration-300`}
-                                                style={{ width: `${porcentajeTotal}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                <Card className="p-6">
+                    <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Información General</h2>
+                    <div className="grid grid-cols-4 gap-4">
+                        <div>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">Almacén</p>
+                            <p className="font-bold text-gray-900 dark:text-white">{prestamo.almacen?.nombre || 'N/D'}</p>
                         </div>
-                    );
-                })()}
-
-                {/* Fechas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">Fecha de Préstamo</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {formatDate(prestamo.fecha_prestamo)}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    {prestamo.fecha_entrega && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm">Fecha de Entrega</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                    {formatDate(prestamo.fecha_entrega)}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">Fecha Esperada Devolución</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {formatDate(prestamo.fecha_esperada_devolucion)}
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Detalles de Prestables */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">📦 Detalles de Prestables y Devoluciones</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                            Prestable
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                            Código
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                            Tipo
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                            📤 Prestado
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                            ✅ Devuelto
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                            ⏳ Pendiente
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                            📊 Progreso
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {prestamo.detalles.map((detalle) => {
-                                        const { cantidadDevuelta, cantidadPendiente, porcentajeDevuelto, cantidadPrestada } = calcularDevolucion(detalle);
-                                        const colorProgress = getProgressColor(porcentajeDevuelto);
-
-                                        return (
-                                            <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                    {detalle.prestable?.nombre || '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                                                    {detalle.prestable?.codigo || '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                                        detalle.prestable?.tipo === 'CANASTILLA'
-                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                                                    }`}>
-                                                        {detalle.prestable?.tipo || '-'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className="inline-block px-3 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200 font-semibold text-sm">
-                                                        {cantidadPrestada}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className="inline-block px-3 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold text-sm">
-                                                        {cantidadDevuelta}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className={`inline-block px-3 py-1 rounded-md font-semibold text-sm ${
-                                                        cantidadPendiente === 0
-                                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200'
-                                                            : 'bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200'
-                                                    }`}>
-                                                        {cantidadPendiente}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className={`h-full ${colorProgress} transition-all duration-300`}
-                                                                    style={{ width: `${porcentajeDevuelto}%` }}
-                                                                />
-                                                            </div>
-                                                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 w-8 text-right">
-                                                                {porcentajeDevuelto}%
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                        <div>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">Chofer</p>
+                            <p className="font-bold text-gray-900 dark:text-white">{prestamo.chofer?.name || 'N/D'}</p>
                         </div>
-                    </CardContent>
+                        <div>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">Cantidad</p>
+                            <p className="font-bold text-gray-900 dark:text-white">{prestamo.cantidad}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">Garantía</p>
+                            <p className="font-bold text-gray-900 dark:text-white">${Number(prestamo.monto_garantia).toFixed(2)}</p>
+                        </div>
+                    </div>
                 </Card>
 
-                {/* Botones de Acción */}
-                <div className="flex gap-3 justify-end">
-                    <Button
-                        variant="outline"
-                        onClick={handlePrint}
-                        disabled={loading}
-                        className="flex items-center gap-2"
-                    >
-                        <Printer className="w-4 h-4" />
-                        Imprimir
-                    </Button>
+                <Tabs defaultValue="detalles">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="detalles">Artículos ({prestamo.detalles?.length || 0})</TabsTrigger>
+                        <TabsTrigger value="devoluciones">Devoluciones ({prestamo.devoluciones?.length || 0})</TabsTrigger>
+                    </TabsList>
 
-                    {prestamo.estado === 'ACTIVO' && (
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={handleDevolver}
-                                disabled={loading}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                                Registrar Devolución
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={handleAnular}
-                                disabled={loading}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                                Anular Préstamo
-                            </Button>
-                        </>
-                    )}
+                    <TabsContent value="detalles" className="space-y-4">
+                        {prestamo.detalles?.map((detalle) => (
+                            <Card key={detalle.id} className="p-0">
+                                <div className="p-4 bg-gray-50 dark:bg-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition" onClick={() => setExpandedDetalles(prev => prev.includes(detalle.id) ? prev.filter(id => id !== detalle.id) : [...prev, detalle.id])}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 dark:text-white">{detalle.prestable?.nombre}</h3>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                                Prestado: <span className="font-bold text-gray-900 dark:text-white">{detalle.cantidad_prestada}</span> | Devuelto: <span className="font-bold text-green-600 dark:text-green-400">{detalle.devolucion_detalles?.reduce((s, d) => s + (d.cantidad_devuelta || 0) + (d.cantidad_dañada_total || 0), 0) || 0}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </TabsContent>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => window.history.back()}
-                        disabled={loading}
-                    >
-                        Volver
-                    </Button>
-                </div>
-
-                {/* Modal de Impresión */}
-                {showOutputModal && (
-                    <OutputSelectionModal
-                        documentoId={prestamo.id}
-                        tipoDocumento="prestamo-evento"
-                        documentoInfo={prestamo}
-                        onClose={() => setShowOutputModal(false)}
-                    />
-                )}
+                    <TabsContent value="devoluciones" className="space-y-4">
+                        {prestamo.devoluciones?.map((devolucion) => {
+                            const isExpanded = expandedDevoluciones.includes(devolucion.id);
+                            const devueltoTotal = devolucion.detalles?.reduce((s, d) => s + (d.cantidad_devuelta || 0), 0) || 0;
+                            const dañadoTotal = devolucion.detalles?.reduce((s, d) => s + (d.cantidad_dañada_total || 0), 0) || 0;
+                            return (
+                            <Card key={devolucion.id} className="p-0">
+                                <div
+                                    className="p-4 bg-gray-50 dark:bg-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                                    onClick={() => setExpandedDevoluciones(prev => prev.includes(devolucion.id) ? prev.filter(id => id !== devolucion.id) : [...prev, devolucion.id])}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-2 flex-1">
+                                            {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 dark:text-white">Devolución #{devolucion.id}</h3>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                                    Fecha: <span className="text-gray-900 dark:text-white">{new Date(devolucion.fecha_devolucion).toLocaleDateString()}</span>
+                                                    {' | '}
+                                                    Devuelto: <span className="font-bold text-green-600 dark:text-green-400">{devueltoTotal}</span>
+                                                    {' | '}
+                                                    Dañado: <span className="font-bold text-orange-600 dark:text-orange-400">{dañadoTotal}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {isExpanded && (
+                                    <div className="p-4 border-t border-gray-200 dark:border-gray-600 space-y-4">
+                                        {devolucion.detalles && devolucion.detalles.length > 0 && (
+                                            <div>
+                                                <h4 className="font-bold text-sm mb-3 text-gray-900 dark:text-white">📋 Detalles por Artículo</h4>
+                                                <div className="space-y-2">
+                                                    {devolucion.detalles.map((detalle, idx) => (
+                                                        <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                                                            <p className="font-bold text-gray-900 dark:text-white">{detalle.detalle_prestamo_evento?.prestable?.nombre || 'N/D'}</p>
+                                                            <div className="grid grid-cols-3 gap-2 mt-2 text-sm">
+                                                                <div>
+                                                                    <p className="text-gray-600 dark:text-gray-300">Buen Estado</p>
+                                                                    <p className="font-bold text-green-600 dark:text-green-400">{detalle.cantidad_devuelta || 0}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-600 dark:text-gray-300">Dañado Total</p>
+                                                                    <p className="font-bold text-orange-600 dark:text-orange-400">{detalle.cantidad_dañada_total || 0}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-600 dark:text-gray-300">Total</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white">{(detalle.cantidad_devuelta || 0) + (detalle.cantidad_dañada_total || 0)}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {devolucion.detalles && devolucion.detalles.some(d => d.devolucion_evento_detalle_almacenes?.length) && (
+                                            <div>
+                                                <h4 className="font-bold text-sm mb-3 text-gray-900 dark:text-white">📦 Distribución por Almacén</h4>
+                                                <div className="bg-gray-50 dark:bg-gray-700 rounded overflow-x-auto">
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead className="text-gray-900 dark:text-white">Artículo</TableHead>
+                                                                <TableHead className="text-gray-900 dark:text-white">Almacén</TableHead>
+                                                                <TableHead className="text-right text-gray-900 dark:text-white">Devuelto</TableHead>
+                                                                <TableHead className="text-right text-gray-900 dark:text-white">Dañado</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {devolucion.detalles.flatMap((detalle) =>
+                                                                (detalle.devolucion_evento_detalle_almacenes || []).map((almacen, idx) => (
+                                                                    <TableRow key={`${detalle.id}-${idx}`}>
+                                                                        <TableCell className="text-gray-900 dark:text-white">{detalle.detalle_prestamo_evento?.prestable?.nombre || 'N/D'}</TableCell>
+                                                                        <TableCell className="text-gray-900 dark:text-white">{almacen.almacen?.nombre || `Almacén ${almacen.almacenes_prestables_id}`}</TableCell>
+                                                                        <TableCell className="text-right text-gray-900 dark:text-white">{almacen.cantidad_devuelta}</TableCell>
+                                                                        <TableCell className="text-right text-gray-900 dark:text-white">{almacen.cantidad_dañada_total}</TableCell>
+                                                                    </TableRow>
+                                                                ))
+                                                            )}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {devolucion.monto_cobrado_daño_total > 0 && (
+                                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                    <span className="font-semibold">💰 Monto Cobrado por Daño:</span>
+                                                    <span className="font-bold text-blue-600 dark:text-blue-400 ml-2">${Number(devolucion.monto_cobrado_daño_total).toFixed(2)}</span>
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </Card>
+                            );
+                        })}
+                    </TabsContent>
+                </Tabs>
             </div>
         </AppLayout>
     );

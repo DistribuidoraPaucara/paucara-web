@@ -834,9 +834,10 @@ class Venta extends Model
     /**
      * Revertir movimiento de caja al anular venta
      *
+     * ✅ MEJORADO (2026-06-27): Incluye motivo y usuario en observaciones
      * Crea un movimiento de egreso (monto negativo) para compensar el ingreso original
      */
-    public function revertirMovimientoCaja(): void
+    public function revertirMovimientoCaja(?string $motivo = null, ?string $usuarioNombre = null): void
     {
         if (!$this->movimientoCaja) {
             return;
@@ -848,6 +849,15 @@ class Venta extends Model
             // Obtener el tipo de operación ANULACION para la reversión
             $tipoOperacionAnulacion = TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
+            // ✅ MEJORADO: Construir observaciones con motivo y usuario
+            $observacionesMovimiento = "Anulación de venta #{$this->numero}";
+            if (!empty($motivo)) {
+                $observacionesMovimiento .= " | Motivo: {$motivo}";
+            }
+            if (!empty($usuarioNombre)) {
+                $observacionesMovimiento .= " | Anulado por: {$usuarioNombre}";
+            }
+
             // 1️⃣ Crear movimiento de reversión con monto negativo (para el movimiento principal de la venta)
             MovimientoCaja::create([
                 'apertura_caja_id'    => $movimientoOriginal->apertura_caja_id,  // ✅ NUEVO (2026-06-20)
@@ -855,7 +865,7 @@ class Venta extends Model
                 'user_id'             => Auth::id(),
                 'fecha'               => now(),
                 'monto'               => -abs($movimientoOriginal->monto), // Negativo para restar
-                'observaciones'       => "Anulación de venta #{$this->numero}",
+                'observaciones'       => $observacionesMovimiento,
                 'numero_documento'    => $this->numero . '-ANU',
                 'tipo_operacion_id'   => $tipoOperacionAnulacion->id,
                 'tipo_pago_id'        => $movimientoOriginal->tipo_pago_id, // Mantener mismo tipo de pago
@@ -882,12 +892,22 @@ class Venta extends Model
                     // El vuelto está registrado como negativo, pero para anularlo necesitamos su opuesto
                     // Vuelto original: -14 (salida)
                     // Anulación de vuelto: +14 (entrada/reversión)
+
+                    // ✅ MEJORADO: Construir observaciones con motivo y usuario para anulación de vuelto
+                    $observacionesVuelto = "Anulación de vuelto - venta #{$this->numero}";
+                    if (!empty($motivo)) {
+                        $observacionesVuelto .= " | Motivo: {$motivo}";
+                    }
+                    if (!empty($usuarioNombre)) {
+                        $observacionesVuelto .= " | Anulado por: {$usuarioNombre}";
+                    }
+
                     MovimientoCaja::create([
                         'caja_id'             => $vueltoOriginal->caja_id,
                         'user_id'             => Auth::id(),
                         'fecha'               => now(),
                         'monto'               => abs($vueltoOriginal->monto), // Positivo (opuesto del vuelto)
-                        'observaciones'       => "Anulación de vuelto - venta #{$this->numero}",
+                        'observaciones'       => $observacionesVuelto,
                         'numero_documento'    => $this->numero . '-VUELTO-ANU',
                         'tipo_operacion_id'   => $tipoOperacionAnulacion->id,
                         'venta_id'            => $this->id,

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
 export const productosVendidos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ productosVendidos.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
 productosVendidos.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ productosVendidos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
 productosVendidos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ productosVendidos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 })
 /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
 productosVendidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ productosVendidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
     /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
     const productosVendidosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ productosVendidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
             /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
         productosVendidosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ productosVendidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
         })
             /**
 * @see \App\Http\Controllers\Api\ApiReporteVentasController::productosVendidos
- * @see app/Http/Controllers/Api/ApiReporteVentasController.php:24
+ * @see app/Http/Controllers/Api/ApiReporteVentasController.php:26
  * @route '/api/reportes/productos-vendidos'
  */
         productosVendidosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

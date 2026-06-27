@@ -1,18 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Head, router } from '@inertiajs/react';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/presentation/components/ui/button';
-import { Input } from '@/presentation/components/ui/input';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Card, CardContent } from '@/presentation/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/presentation/components/ui/dialog';
-import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
-import SearchSelect from '@/presentation/components/ui/search-select'; // ✅ NUEVO
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
-import { Eye, CreditCard, AlertTriangle, Plus, ChevronDown, ChevronUp, Trash2, Printer, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, CheckCheck, MoreVertical } from 'lucide-react';
 import RegistrarPagoModal from '@/presentation/components/clientes/RegistrarPagoModal';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
+import { Badge } from '@/presentation/components/ui/badge';
+import { Button } from '@/presentation/components/ui/button';
+import { Card, CardContent } from '@/presentation/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
+import { Input } from '@/presentation/components/ui/input';
+import SearchSelect from '@/presentation/components/ui/search-select'; // ✅ NUEVO
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, router } from '@inertiajs/react';
+import {
+    AlertCircle,
+    AlertTriangle,
+    Calendar,
+    CheckCheck,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    CreditCard,
+    Eye,
+    MoreVertical,
+    Plus,
+    Printer,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 // Helper functions
@@ -189,7 +205,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
     if (!cuentasPorCobrar || !cuentasPorCobrar.filtros) {
         return (
             <AppLayout>
-                <div className="flex items-center justify-center min-h-screen">
+                <div className="flex min-h-screen items-center justify-center">
                     <div className="text-center">
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Cargando...</h2>
                         <p className="text-gray-600 dark:text-gray-400">Por favor espere mientras se cargan los datos.</p>
@@ -237,7 +253,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
             console.log('✅ Modal abierto con cuenta preseleccionada:', {
                 cuenta_id: cuenta.id,
                 cliente_id: cuenta.cliente_id,
-                saldo: cuenta.saldo_pendiente
+                saldo: cuenta.saldo_pendiente,
             });
         }, 50);
     };
@@ -247,9 +263,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         try {
             // Filtrar cuentas pendientes del cliente actual de los datos que ya tenemos
             // Incluir todas las cuentas del cliente, no solo las pendientes
-            const cuentasPendientes = cuentasPorCobrar.cuentas_por_cobrar.data.filter(
-                (c) => c.cliente_id === clienteId
-            );
+            const cuentasPendientes = cuentasPorCobrar.cuentas_por_cobrar.data.filter((c) => c.cliente_id === clienteId);
             const cuentasFormateadas = cuentasPendientes.map((c) => ({
                 id: c.id,
                 venta_id: c.venta_id,
@@ -328,7 +342,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
             const data = await response.json();
 
             if (data.success) {
-                toast.success(`✅ Cuenta por cobrar #${cuentaAAnular.id} anulada exitosamente (Monto: ${formatCurrency(cuentaAAnular.saldo_pendiente)})`);
+                toast.success(
+                    `✅ Cuenta por cobrar #${cuentaAAnular.id} anulada exitosamente (Monto: ${formatCurrency(cuentaAAnular.saldo_pendiente)})`,
+                );
                 setCuentaAAnular(null);
                 setMotivoCuentaAnulacion('');
                 router.get('/ventas/cuentas-por-cobrar');
@@ -385,38 +401,38 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         const estadoNormalizado = (estado || '').toUpperCase().trim();
 
         const estadoMap = {
-            'PENDIENTE': {
+            PENDIENTE: {
                 variant: 'default' as const,
                 bgColor: 'bg-blue-100 dark:bg-blue-900/30',
                 textColor: 'text-blue-800 dark:text-blue-200',
                 borderColor: 'border-blue-300 dark:border-blue-700',
                 icon: Clock,
-                label: 'Pendiente'
+                label: 'Pendiente',
             },
-            'PAGADO': {
+            PAGADO: {
                 variant: 'default' as const,
                 bgColor: 'bg-green-100 dark:bg-green-900/30',
                 textColor: 'text-green-800 dark:text-green-200',
                 borderColor: 'border-green-300 dark:border-green-700',
                 icon: CheckCircle2,
-                label: 'Pagado'
+                label: 'Pagado',
             },
-            'PARCIAL': {
+            PARCIAL: {
                 variant: 'default' as const,
                 bgColor: 'bg-amber-100 dark:bg-amber-900/30',
                 textColor: 'text-amber-800 dark:text-amber-200',
                 borderColor: 'border-amber-300 dark:border-amber-700',
                 icon: Clock,
-                label: 'Parcial'
+                label: 'Parcial',
             },
-            'ANULADO': {
+            ANULADO: {
                 variant: 'destructive' as const,
                 bgColor: 'bg-red-100 dark:bg-red-900/30',
                 textColor: 'text-red-800 dark:text-red-200',
                 borderColor: 'border-red-300 dark:border-red-700',
                 icon: XCircle,
-                label: 'Anulado'
-            }
+                label: 'Anulado',
+            },
         };
         return estadoMap[estadoNormalizado as keyof typeof estadoMap] || estadoMap['PENDIENTE'];
     };
@@ -429,8 +445,10 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         const estadoDisplay = (estado || '').toUpperCase();
 
         return (
-            <span className={`inline-flex items-center gap-2 px-2 py-1 mb-1 font-medium text-sm ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
-                <IconComponent className="w-4 h-4" />
+            <span
+                className={`mb-1 inline-flex items-center gap-2 px-2 py-1 text-xs font-xs ${info.bgColor} ${info.textColor} ${info.borderColor}`}
+            >
+                <IconComponent className="h-4 w-4" />
                 <span>{estadoDisplay}</span>
             </span>
         );
@@ -445,7 +463,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-red-800 dark:text-red-200',
                 borderColor: 'border-red-300 dark:border-red-700',
                 icon: AlertTriangle,
-                label: `${diasVencido} días vencido`
+                label: `${diasVencido} días vencido`,
             };
         }
         if (diasVencido > 15) {
@@ -455,7 +473,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-amber-800 dark:text-amber-200',
                 borderColor: 'border-amber-300 dark:border-amber-700',
                 icon: AlertCircle,
-                label: `${diasVencido} días`
+                label: `${diasVencido} días`,
             };
         }
         if (diasVencido > 0) {
@@ -465,7 +483,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-yellow-800 dark:text-yellow-200',
                 borderColor: 'border-yellow-300 dark:border-yellow-700',
                 icon: Clock,
-                label: `${diasVencido} días`
+                label: `${diasVencido} días`,
             };
         }
         return {
@@ -474,7 +492,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
             textColor: 'text-green-800 dark:text-green-200',
             borderColor: 'border-green-300 dark:border-green-700',
             icon: CheckCircle2,
-            label: 'Al día'
+            label: 'Al día',
         };
     };
 
@@ -484,18 +502,11 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         const IconComponent = info.icon;
 
         return (
-            <span className={`inline-flex items-center gap-2 px-2 py-1 text-sm font-medium ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
-                <IconComponent className="w-4 h-4" />
+            <span className={`inline-flex items-center gap-2 px-2 py-1 text-xs font-xs ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
+                <IconComponent className="h-4 w-4" />
                 <span>{info.label}</span>
             </span>
         );
-    };
-
-    const getUrgenciaBadge = (diasVencido: number) => {
-        if (diasVencido > 30) return 'destructive';
-        if (diasVencido > 15) return 'secondary';
-        if (diasVencido > 0) return 'default';
-        return 'outline';
     };
 
     // ✅ MEJORADO: Función para mostrar el estado del pago con iconos
@@ -503,41 +514,41 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         if (!estado) return null;
 
         const estadoMap = {
-            'CONFIRMADO': {
+            CONFIRMADO: {
                 bgColor: 'bg-green-100 dark:bg-green-900/30',
                 textColor: 'text-green-800 dark:text-green-200',
                 borderColor: 'border-green-300 dark:border-green-700',
                 icon: CheckCheck,
-                label: 'Confirmado'
+                label: 'Confirmado',
             },
-            'PENDIENTE': {
+            PENDIENTE: {
                 bgColor: 'bg-blue-100 dark:bg-blue-900/30',
                 textColor: 'text-blue-800 dark:text-blue-200',
                 borderColor: 'border-blue-300 dark:border-blue-700',
                 icon: Clock,
-                label: 'Pendiente'
+                label: 'Pendiente',
             },
-            'ANULADO': {
+            ANULADO: {
                 bgColor: 'bg-red-100 dark:bg-red-900/30',
                 textColor: 'text-red-800 dark:text-red-200',
                 borderColor: 'border-red-300 dark:border-red-700',
                 icon: XCircle,
-                label: 'Anulado'
+                label: 'Anulado',
             },
-            'RECHAZADO': {
+            RECHAZADO: {
                 bgColor: 'bg-red-100 dark:bg-red-900/30',
                 textColor: 'text-red-800 dark:text-red-200',
                 borderColor: 'border-red-300 dark:border-red-700',
                 icon: XCircle,
-                label: 'Rechazado'
+                label: 'Rechazado',
             },
-            'PROCESANDO': {
+            PROCESANDO: {
                 bgColor: 'bg-amber-100 dark:bg-amber-900/30',
                 textColor: 'text-amber-800 dark:text-amber-200',
                 borderColor: 'border-amber-300 dark:border-amber-700',
                 icon: Clock,
-                label: 'Procesando'
-            }
+                label: 'Procesando',
+            },
         };
         return estadoMap[estado as keyof typeof estadoMap] || null;
     };
@@ -551,8 +562,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         const IconComponent = info.icon;
 
         return (
-            <span className={`inline-flex items-center gap-2 px-1 py-1 rounded-full border ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
-                <IconComponent className="w-4 h-4" />
+            <span className={`inline-flex items-center gap-2 rounded-full border px-1 py-1 ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
+                <IconComponent className="h-4 w-4" />
                 <span>{estado}</span>
             </span>
         );
@@ -593,35 +604,34 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
     };
 
     return (
-        <AppLayout breadcrumbs={[
-            { title: 'Ventas', href: '/ventas' },
-            { title: 'Cuentas por Cobrar', href: '/ventas/cuentas-por-cobrar' }
-        ]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Ventas', href: '/ventas' },
+                { title: 'Cuentas por Cobrar', href: '/ventas/cuentas-por-cobrar' },
+            ]}
+        >
             <Head title="Cuentas por Cobrar" />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Cuentas por Cobrar</h1>
                         <p className="text-gray-600 dark:text-gray-400">Gestión de deudas de clientes</p>
                     </div>
-                    <Button
-                        onClick={() => router.visit('/admin/creditos/crear')}
-                        className="flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
+                    <Button onClick={() => router.visit('/admin/creditos/crear')} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
                         Crear Crédito Manual
                     </Button>
                 </div>
 
                 {/* Estadísticas Rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                         <CardContent className="p-1">
                             <div className="flex items-center">
-                                <div className="p-1 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                                    <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                <div className="rounded-lg bg-blue-100 p-1 dark:bg-blue-900/20">
+                                    <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pendiente</p>
@@ -636,8 +646,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                     <Card>
                         <CardContent className="p-1">
                             <div className="flex items-center">
-                                <div className="p-1 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                                    <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                <div className="rounded-lg bg-red-100 p-1 dark:bg-red-900/20">
+                                    <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Vencidas</p>
@@ -652,8 +662,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                     <Card>
                         <CardContent className="p-1">
                             <div className="flex items-center">
-                                <div className="p-1 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                                    <CreditCard className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                <div className="rounded-lg bg-yellow-100 p-1 dark:bg-yellow-900/20">
+                                    <CreditCard className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Cuentas Vencidas</p>
@@ -668,8 +678,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                     <Card>
                         <CardContent className="p-1">
                             <div className="flex items-center">
-                                <div className="p-1 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                                    <CreditCard className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                <div className="rounded-lg bg-green-100 p-1 dark:bg-green-900/20">
+                                    <CreditCard className="h-6 w-6 text-green-600 dark:text-green-400" />
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio Días</p>
@@ -683,211 +693,200 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 </div>
 
                 {/* Filtros */}
-                <Card>
-                    <CardContent className="p-2">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            {/* ✅ ACTUALIZADO: SearchSelect para cliente */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
-                                <SearchSelect
-                                    id="cliente"
-                                    label="Cliente"
-                                    placeholder="Seleccione un cliente"
-                                    value={filtros.cliente_id || ''}
-                                    options={cuentasPorCobrar.datosParaFiltros.clientes.map((cliente) => ({
-                                        value: cliente.id,
-                                        label: cliente.nombre,
-                                        description: cliente.codigo_cliente
-                                    }))}
-                                    onChange={(value) => handleFiltroChange('cliente_id', value)}
-                                    allowClear={true}
-                                    emptyText="No se encontraron clientes"
-                                    searchPlaceholder="Buscar clientes..."
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
-                                <Input
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    onKeyPress={handleBusquedaEnter}
-                                    placeholder="ID cuenta, ID venta, referencia, número, cliente, usuario..."
-                                    className="dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                />
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Presiona <kbd className="bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">Enter</kbd> para buscar rápidamente
-                                </p>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Estado</label>
-                                <Select value={filtros.estado || 'all'} onValueChange={(value) => handleFiltroChange('estado', value === 'all' ? '' : value)}>
-                                    <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                        <SelectValue placeholder="Seleccionar estado..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        {estadosDisponibles.map((estado) => (
-                                            <SelectItem key={estado.valor} value={estado.valor}>
-                                                {estado.etiqueta}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                <div className="p-2">
+                    <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+                            <Input
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyPress={handleBusquedaEnter}
+                                placeholder="ID cuenta, ID venta, referencia, número, cliente, usuario..."
+                                className="dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            />
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Presiona <kbd className="rounded bg-gray-200 px-1.5 py-0.5 text-xs dark:bg-gray-700">Enter</kbd> para buscar
+                                rápidamente
+                            </p>
+                        </div>
+                        {/* ✅ ACTUALIZADO: SearchSelect para cliente */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
+                            <SearchSelect
+                                id="cliente"
+                                label="Cliente"
+                                placeholder="Seleccione un cliente"
+                                value={filtros.cliente_id || ''}
+                                options={cuentasPorCobrar.datosParaFiltros.clientes.map((cliente) => ({
+                                    value: cliente.id,
+                                    label: cliente.nombre,
+                                    description: cliente.codigo_cliente,
+                                }))}
+                                onChange={(value) => handleFiltroChange('cliente_id', value)}
+                                allowClear={true}
+                                emptyText="No se encontraron clientes"
+                                searchPlaceholder="Buscar clientes..."
+                            />
                         </div>
 
-                        {/* Rango de Fechas de Vencimiento */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                    Rango de Fecha de Vencimiento
-                                </label>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900/30">
-                                {/* Fecha Desde */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-                                        Desde
-                                    </label>
-                                    <Input
-                                        type="date"
-                                        value={filtros.fecha_vencimiento_desde || ''}
-                                        onChange={(e) => handleFiltroChange('fecha_vencimiento_desde', e.target.value)}
-                                        placeholder="Selecciona fecha inicial"
-                                        className="bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white border-blue-300 dark:border-blue-900 focus:ring-blue-500"
-                                    />
-                                    {filtros.fecha_vencimiento_desde && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                                            A partir de {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')}
-                                        </p>
-                                    )}
-                                </div>
+                        <div className="space-y-2">
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                            <Select
+                                value={filtros.estado || 'all'}
+                                onValueChange={(value) => handleFiltroChange('estado', value === 'all' ? '' : value)}
+                            >
+                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                    <SelectValue placeholder="Seleccionar estado..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos</SelectItem>
+                                    {estadosDisponibles.map((estado) => (
+                                        <SelectItem key={estado.valor} value={estado.valor}>
+                                            {estado.etiqueta}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
-                                {/* Fecha Hasta */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                        <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                                        Hasta
-                                    </label>
-                                    <Input
-                                        type="date"
-                                        value={filtros.fecha_vencimiento_hasta || ''}
-                                        onChange={(e) => handleFiltroChange('fecha_vencimiento_hasta', e.target.value)}
-                                        placeholder="Selecciona fecha final"
-                                        className="bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white border-green-300 dark:border-green-900 focus:ring-green-500"
-                                    />
-                                    {filtros.fecha_vencimiento_hasta && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                                            Hasta {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
-                                        </p>
-                                    )}
-                                </div>
+                    {/* Rango de Fechas de Vencimiento */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">Rango de Fecha de Vencimiento</label>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-200 bg-blue-50 p-4 md:grid-cols-3 dark:border-blue-900/30 dark:bg-blue-950/20">
+                            {/* Fecha Desde */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                                    Desde
+                                </label>
+                                <Input
+                                    type="date"
+                                    value={filtros.fecha_vencimiento_desde || ''}
+                                    onChange={(e) => handleFiltroChange('fecha_vencimiento_desde', e.target.value)}
+                                    placeholder="Selecciona fecha inicial"
+                                    className="border-blue-300 bg-white focus:ring-blue-500 dark:border-blue-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                />
+                                {filtros.fecha_vencimiento_desde && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        A partir de {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')}
+                                    </p>
+                                )}
                             </div>
+
+                            {/* Fecha Hasta */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+                                    Hasta
+                                </label>
+                                <Input
+                                    type="date"
+                                    value={filtros.fecha_vencimiento_hasta || ''}
+                                    onChange={(e) => handleFiltroChange('fecha_vencimiento_hasta', e.target.value)}
+                                    placeholder="Selecciona fecha final"
+                                    className="border-green-300 bg-white focus:ring-green-500 dark:border-gray-600 dark:border-green-900 dark:bg-gray-800 dark:text-white"
+                                />
+                                {filtros.fecha_vencimiento_hasta && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Hasta {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Filtro: Solo Vencidas - Card Interactivo */}
                             <div
                                 onClick={() => handleFiltroChange('solo_vencidas', !filtros.solo_vencidas)}
-                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${filtros.solo_vencidas
-                                    ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
-                                    : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 hover:border-red-300'
-                                    }`}
+                                className={`cursor-pointer rounded-lg border-2 p-2 transition-all ${
+                                    filtros.solo_vencidas
+                                        ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                                        : 'border-gray-200 bg-gray-50 hover:border-red-300 dark:border-gray-700 dark:bg-gray-800/50'
+                                }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <div
-                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${filtros.solo_vencidas
-                                            ? 'bg-red-500 border-red-500'
-                                            : 'border-gray-300 dark:border-gray-600'
-                                            }`}
+                                        className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                                            filtros.solo_vencidas ? 'border-red-500 bg-red-500' : 'border-gray-300 dark:border-gray-600'
+                                        }`}
                                     >
-                                        {filtros.solo_vencidas && (
-                                            <CheckCircle2 className="w-4 h-4 text-white" />
-                                        )}
+                                        {filtros.solo_vencidas && <CheckCircle2 className="h-4 w-4 text-white" />}
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                                            🚨 Mostrar solo vencidas
-                                        </p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">🚨 Mostrar solo vencidas</p>
                                         <p className="text-xs text-gray-600 dark:text-gray-400">
                                             Filtra cuentas con fecha vencimiento anterior a hoy
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                            {/* Indicador de rango activo */}
-                            {filtros.fecha_vencimiento_desde && filtros.fecha_vencimiento_hasta && (
-                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 rounded-lg">
-                                    <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                    <span className="text-sm text-green-700 dark:text-green-300">
-                                        Filtrando: {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')} → {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
-                        <div className="flex justify-between gap-3 mt-6">
-                            <Button
-                                onClick={limpiarFiltros}
-                                variant="outline"
-                            >
-                                🔄 Limpiar Filtros
-                            </Button>
-                            <Button
-                                onClick={handleBusqueda}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                            >
-                                🔍 Buscar
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                        {/* Indicador de rango activo */}
+                        {filtros.fecha_vencimiento_desde && filtros.fecha_vencimiento_hasta && (
+                            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900/30 dark:bg-green-950/20">
+                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <span className="text-sm text-green-700 dark:text-green-300">
+                                    Filtrando: {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')} →{' '}
+                                    {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-6 flex justify-between gap-3">
+                        <Button onClick={limpiarFiltros} variant="outline">
+                            🔄 Limpiar Filtros
+                        </Button>
+                        <Button onClick={handleBusqueda} className="bg-blue-600 px-8 text-white hover:bg-blue-700">
+                            🔍 Buscar
+                        </Button>
+                    </div>
+                </div>
 
                 {/* Tabla de Cuentas por Cobrar */}
-                <Card>
-                    <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+                <div>
+                    <div className="max-h-[600px] overflow-x-auto overflow-y-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        ID
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Folio
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Venta
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Cliente
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Monto Original
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Creación
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Vencimiento
                                     </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Días Retraso
-                                    </th>
-                                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Estado
                                     </th>
-                                    <th className="px-2 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-2 py-2 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                 {cuentasPorCobrar.cuentas_por_cobrar.data.map((cuenta) => (
                                     <React.Fragment key={cuenta.id}>
                                         <tr className={`${getRowColorClass(cuenta.dias_vencido, cuenta.estado)} transition-colors duration-200`}>
-                                            <td className="px-2 py-2 whitespace-nowrap">{cuenta.id}</td>
+                                            <td className="px-2 py-2 whitespace-nowrap">#{cuenta.id}</td>
                                             <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900 dark:text-white">
                                                     {/* <p>Folio CxC:  #{cuenta.id}</p> */}
-                                                    {cuenta.venta && (
-                                                        <p>V: {cuenta.venta?.id}</p>
-                                                    )}
+                                                    {cuenta.venta && <p>#{cuenta.venta?.id}</p>}
                                                     <p>{cuenta?.referencia_documento}</p>
                                                 </div>
                                             </td>
@@ -901,37 +900,27 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                     Mnt. Org.: {formatCurrency(cuenta.monto_original)}
                                                 </p>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    Saldo: {formatCurrency(cuenta.saldo_pendiente)}
-                                                </p>
+                                                <p className="text-sm font-medium text-amber-500">Saldo: {formatCurrency(cuenta.saldo_pendiente)}</p>
                                             </td>
                                             <td className="px-2 py-2 whitespace-nowrap">
-                                                <p className="text-sm text-gray-900 dark:text-white">
-                                                    {formatDate(cuenta.created_at)}
-                                                </p>
+                                                <p className="text-sm text-gray-900 dark:text-white">{formatDate(cuenta.created_at)}</p>
                                             </td>
                                             <td className="px-2 py-2 whitespace-nowrap">
-                                                <p className="text-sm text-gray-900 dark:text-white">
-                                                    {formatDate(cuenta.fecha_vencimiento)}
-                                                </p>
-                                            </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
-                                                <div className="text-xs">
-                                                    <UrgenciaBadgeComponent diasVencido={cuenta.dias_vencido} />
-                                                </div>
+                                                <p className="text-sm text-gray-900 dark:text-white">{formatDate(cuenta.fecha_vencimiento)}</p>
+                                                {cuenta.estado !== 'anulado' && <UrgenciaBadgeComponent diasVencido={cuenta.dias_vencido} />}
                                             </td>
                                             <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-xs">
                                                     <EstadoBadgeComponent estado={cuenta.estado} />
                                                 </div>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap text-right text-sm font-medium">
+                                            <td className="px-2 py-2 text-right text-sm font-medium whitespace-nowrap">
                                                 <div className="flex justify-end space-x-1">
                                                     {cuenta.estado !== 'PAGADO' && (
                                                         <Button
                                                             size="sm"
                                                             onClick={() => handleAbrirModalPago(cuenta)}
-                                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                                            className="bg-green-600 text-white hover:bg-green-700"
                                                         >
                                                             Cobrar 💵
                                                         </Button>
@@ -944,9 +933,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                             setModalImpresionOpen(true);
                                                         }}
                                                         title="Imprimir"
-                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20"
                                                     >
-                                                        <Printer className="w-4 h-4" />
+                                                        <Printer className="h-4 w-4" />
                                                     </Button>
                                                     {cuenta.pagos && cuenta.pagos.length > 0 && (
                                                         <Button
@@ -956,9 +945,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                             title={expandedRows.has(cuenta.id) ? 'Ocultar pagos' : 'Mostrar pagos'}
                                                         >
                                                             {expandedRows.has(cuenta.id) ? (
-                                                                <ChevronUp className="w-4 h-4" />
+                                                                <ChevronUp className="h-4 w-4" />
                                                             ) : (
-                                                                <ChevronDown className="w-4 h-4" />
+                                                                <ChevronDown className="h-4 w-4" />
                                                             )}
                                                         </Button>
                                                     )}
@@ -971,12 +960,12 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                             onClick={() => setMenuAbiertoId(menuAbiertoId === cuenta.id ? null : cuenta.id)}
                                                             title="Más opciones"
                                                         >
-                                                            <MoreVertical className="w-4 h-4" />
+                                                            <MoreVertical className="h-4 w-4" />
                                                         </Button>
 
                                                         {/* Menú Popup */}
                                                         {menuAbiertoId === cuenta.id && (
-                                                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                                                            <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
                                                                 <div className="py-1">
                                                                     {/* Opción: Ver Detalles */}
                                                                     <button
@@ -984,9 +973,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                             setModalDetalle({ isOpen: true, cuenta });
                                                                             setMenuAbiertoId(null);
                                                                         }}
-                                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                                                     >
-                                                                        <Eye className="w-4 h-4" />
+                                                                        <Eye className="h-4 w-4" />
                                                                         Ver Detalles
                                                                     </button>
 
@@ -998,9 +987,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                             setModalEditarFechaOpen(true);
                                                                             setMenuAbiertoId(null);
                                                                         }}
-                                                                        className="w-full text-left px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
+                                                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                                     >
-                                                                        <Calendar className="w-4 h-4" />
+                                                                        <Calendar className="h-4 w-4" />
                                                                         Cambiar Fecha Vencimiento
                                                                     </button>
 
@@ -1011,9 +1000,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                                 setCuentaAAnular(cuenta);
                                                                                 setMenuAbiertoId(null);
                                                                             }}
-                                                                            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 border-t border-gray-200 dark:border-gray-700"
+                                                                            className="flex w-full items-center gap-2 border-t border-gray-200 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-red-900/20"
                                                                         >
-                                                                            <XCircle className="w-4 h-4" />
+                                                                            <XCircle className="h-4 w-4" />
                                                                             Anular Cuenta
                                                                         </button>
                                                                     )}
@@ -1028,15 +1017,17 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                             <tr className="bg-gray-50 dark:bg-gray-800/50">
                                                 <td colSpan={10} className="px-6 py-4">
                                                     <div className="space-y-2">
-                                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Historial de Cobros</h4>
+                                                        <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Historial de Cobros
+                                                        </h4>
                                                         <div className="space-y-2">
                                                             {cuenta.pagos.map((pago) => (
                                                                 <div
                                                                     key={pago.id}
-                                                                    className="flex justify-between items-center p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                                                                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
                                                                 >
                                                                     <div className="flex-1">
-                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                        <div className="mb-1 flex items-center gap-2">
                                                                             <p>Folio: {pago.id} | </p>
                                                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                                                 {formatCurrency(pago.monto)}
@@ -1050,7 +1041,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
                                                                         {pago.observaciones && (
-                                                                            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                                                                            <p className="max-w-xs truncate text-xs text-gray-500 dark:text-gray-400">
                                                                                 {pago.observaciones}
                                                                             </p>
                                                                         )}
@@ -1061,19 +1052,25 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                                 setPagoAImprimir(pago);
                                                                                 setModalImpresionPagoOpen(true);
                                                                             }}
-                                                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                                            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20"
                                                                             title="Imprimir pago"
                                                                         >
-                                                                            <Printer className="w-4 h-4" />
+                                                                            <Printer className="h-4 w-4" />
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"
                                                                             variant="ghost"
-                                                                            onClick={() => setPagoAAnular({ id: pago.id, monto: pago.monto, cuenta_id: cuenta.id })}
-                                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                            onClick={() =>
+                                                                                setPagoAAnular({
+                                                                                    id: pago.id,
+                                                                                    monto: pago.monto,
+                                                                                    cuenta_id: cuenta.id,
+                                                                                })
+                                                                            }
+                                                                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
                                                                             title=""
                                                                         >
-                                                                            <Trash2 className="w-4 h-4" />
+                                                                            <Trash2 className="h-4 w-4" />
                                                                         </Button>
                                                                     </div>
                                                                 </div>
@@ -1090,7 +1087,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                     </div>
 
                     {cuentasPorCobrar.cuentas_por_cobrar.data.length === 0 && (
-                        <div className="text-center py-12">
+                        <div className="py-12 text-center">
                             <CreditCard className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay cuentas por cobrar</h3>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">No se encontraron cuentas con los filtros aplicados.</p>
@@ -1099,28 +1096,22 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                     {/* ✅ NUEVO: Componente de Paginación */}
                     {cuentasPorCobrar.cuentas_por_cobrar.data.length > 0 && (
-                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
+                        <div className="flex items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 dark:border-gray-700">
                             {/* Info de Paginación */}
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 Mostrando{' '}
                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                    {(cuentasPorCobrar.cuentas_por_cobrar.current_page - 1) *
-                                        cuentasPorCobrar.cuentas_por_cobrar.per_page +
-                                        1}
-                                </span>
-                                {' '}a{' '}
+                                    {(cuentasPorCobrar.cuentas_por_cobrar.current_page - 1) * cuentasPorCobrar.cuentas_por_cobrar.per_page + 1}
+                                </span>{' '}
+                                a{' '}
                                 <span className="font-semibold text-gray-900 dark:text-white">
                                     {Math.min(
-                                        cuentasPorCobrar.cuentas_por_cobrar.current_page *
-                                        cuentasPorCobrar.cuentas_por_cobrar.per_page,
-                                        cuentasPorCobrar.cuentas_por_cobrar.total
+                                        cuentasPorCobrar.cuentas_por_cobrar.current_page * cuentasPorCobrar.cuentas_por_cobrar.per_page,
+                                        cuentasPorCobrar.cuentas_por_cobrar.total,
                                     )}
-                                </span>
-                                {' '}de{' '}
-                                <span className="font-semibold text-gray-900 dark:text-white">
-                                    {cuentasPorCobrar.cuentas_por_cobrar.total}
-                                </span>
-                                {' '}cuentas
+                                </span>{' '}
+                                de <span className="font-semibold text-gray-900 dark:text-white">{cuentasPorCobrar.cuentas_por_cobrar.total}</span>{' '}
+                                cuentas
                             </div>
 
                             {/* Selector de Registros por Página */}
@@ -1129,7 +1120,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 <select
                                     value={filtros.per_page || cuentasPorCobrar.cuentas_por_cobrar.per_page}
                                     onChange={(e) => handleFiltroChange('per_page', e.target.value)}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white text-sm"
+                                    className="rounded-md border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 >
                                     <option value="25">25</option>
                                     <option value="50">50</option>
@@ -1145,9 +1136,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                     variant="outline"
                                     size="sm"
                                     disabled={cuentasPorCobrar.cuentas_por_cobrar.current_page === 1}
-                                    onClick={() => router.get('/ventas/cuentas-por-cobrar',
-                                        { ...filtros, page: 1 },
-                                        { preserveScroll: true })}
+                                    onClick={() => router.get('/ventas/cuentas-por-cobrar', { ...filtros, page: 1 }, { preserveScroll: true })}
                                 >
                                     {'<<'}
                                 </Button>
@@ -1157,9 +1146,13 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                     variant="outline"
                                     size="sm"
                                     disabled={cuentasPorCobrar.cuentas_por_cobrar.current_page === 1}
-                                    onClick={() => router.get('/ventas/cuentas-por-cobrar',
-                                        { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.current_page - 1 },
-                                        { preserveScroll: true })}
+                                    onClick={() =>
+                                        router.get(
+                                            '/ventas/cuentas-por-cobrar',
+                                            { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.current_page - 1 },
+                                            { preserveScroll: true },
+                                        )
+                                    }
                                 >
                                     {'<'}
                                 </Button>
@@ -1168,16 +1161,11 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 <div className="flex items-center gap-1">
                                     {Array.from(
                                         {
-                                            length: Math.min(
-                                                5,
-                                                cuentasPorCobrar.cuentas_por_cobrar.last_page
-                                            ),
+                                            length: Math.min(5, cuentasPorCobrar.cuentas_por_cobrar.last_page),
                                         },
                                         (_, i) => {
-                                            const currentPage =
-                                                cuentasPorCobrar.cuentas_por_cobrar.current_page;
-                                            const lastPage =
-                                                cuentasPorCobrar.cuentas_por_cobrar.last_page;
+                                            const currentPage = cuentasPorCobrar.cuentas_por_cobrar.current_page;
+                                            const lastPage = cuentasPorCobrar.cuentas_por_cobrar.last_page;
                                             let pageNum;
 
                                             if (lastPage <= 5) {
@@ -1191,24 +1179,14 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                             }
 
                                             return pageNum;
-                                        }
+                                        },
                                     ).map((pageNum) => (
                                         <Button
                                             key={pageNum}
-                                            variant={
-                                                pageNum ===
-                                                    cuentasPorCobrar.cuentas_por_cobrar
-                                                        .current_page
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
+                                            variant={pageNum === cuentasPorCobrar.cuentas_por_cobrar.current_page ? 'default' : 'outline'}
                                             size="sm"
                                             onClick={() =>
-                                                router.get(
-                                                    '/ventas/cuentas-por-cobrar',
-                                                    { ...filtros, page: pageNum },
-                                                    { preserveScroll: true }
-                                                )
+                                                router.get('/ventas/cuentas-por-cobrar', { ...filtros, page: pageNum }, { preserveScroll: true })
                                             }
                                         >
                                             {pageNum}
@@ -1220,13 +1198,14 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={
-                                        cuentasPorCobrar.cuentas_por_cobrar.current_page ===
-                                        cuentasPorCobrar.cuentas_por_cobrar.last_page
+                                    disabled={cuentasPorCobrar.cuentas_por_cobrar.current_page === cuentasPorCobrar.cuentas_por_cobrar.last_page}
+                                    onClick={() =>
+                                        router.get(
+                                            '/ventas/cuentas-por-cobrar',
+                                            { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.current_page + 1 },
+                                            { preserveScroll: true },
+                                        )
                                     }
-                                    onClick={() => router.get('/ventas/cuentas-por-cobrar',
-                                        { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.current_page + 1 },
-                                        { preserveScroll: true })}
                                 >
                                     {'>'}
                                 </Button>
@@ -1235,33 +1214,31 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={
-                                        cuentasPorCobrar.cuentas_por_cobrar.current_page ===
-                                        cuentasPorCobrar.cuentas_por_cobrar.last_page
+                                    disabled={cuentasPorCobrar.cuentas_por_cobrar.current_page === cuentasPorCobrar.cuentas_por_cobrar.last_page}
+                                    onClick={() =>
+                                        router.get(
+                                            '/ventas/cuentas-por-cobrar',
+                                            { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.last_page },
+                                            { preserveScroll: true },
+                                        )
                                     }
-                                    onClick={() => router.get('/ventas/cuentas-por-cobrar',
-                                        { ...filtros, page: cuentasPorCobrar.cuentas_por_cobrar.last_page },
-                                        { preserveScroll: true })}
                                 >
                                     {'>>'}
                                 </Button>
                             </div>
                         </div>
                     )}
-                </Card>
+                </div>
 
                 {/* Modal de Detalle */}
-                <Dialog
-                    open={modalDetalle.isOpen}
-                    onOpenChange={() => setModalDetalle({ isOpen: false })}
-                >
+                <Dialog open={modalDetalle.isOpen} onOpenChange={() => setModalDetalle({ isOpen: false })}>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Detalle de Cuenta por Cobrar</DialogTitle>
                         </DialogHeader>
                         {modalDetalle.cuenta && (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Venta</label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
@@ -1302,20 +1279,21 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 {modalDetalle.cuenta.observaciones && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Observaciones</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {modalDetalle.cuenta.observaciones}
-                                        </p>
+                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{modalDetalle.cuenta.observaciones}</p>
                                     </div>
                                 )}
 
                                 {modalDetalle.cuenta.pagos && modalDetalle.cuenta.pagos.length > 0 && (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Historial de Cobros</label>
+                                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Historial de Cobros</label>
                                         <div className="space-y-2">
                                             {modalDetalle.cuenta.pagos.map((pago) => (
-                                                <div key={pago.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                                <div
+                                                    key={pago.id}
+                                                    className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800"
+                                                >
                                                     <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-1">
+                                                        <div className="mb-1 flex items-center gap-2">
                                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                                 {formatCurrency(pago.monto)}
                                                             </p>
@@ -1327,7 +1305,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                         </p>
                                                     </div>
                                                     {pago.observaciones && (
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                                                        <p className="max-w-xs truncate text-xs text-gray-500 dark:text-gray-400">
                                                             {pago.observaciones}
                                                         </p>
                                                     )}
@@ -1338,10 +1316,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 )}
 
                                 <div className="flex justify-end space-x-3">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setModalDetalle({ isOpen: false })}
-                                    >
+                                    <Button variant="outline" onClick={() => setModalDetalle({ isOpen: false })}>
                                         Cerrar
                                     </Button>
                                     {modalDetalle.cuenta.estado !== 'PAGADO' && (
@@ -1378,36 +1353,35 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                 {/* Modal de confirmación para anular pago */}
                 {pagoAAnular && (
-                    <Dialog open={!!pagoAAnular} onOpenChange={() => {
-                        setPagoAAnular(null);
-                        setMotivoAnulacion('');
-                    }}>
+                    <Dialog
+                        open={!!pagoAAnular}
+                        onOpenChange={() => {
+                            setPagoAAnular(null);
+                            setMotivoAnulacion('');
+                        }}
+                    >
                         <DialogContent className="max-w-md">
                             <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2 text-red-600">
-                                    ⚠️ Anular Pago
-                                </DialogTitle>
+                                <DialogTitle className="flex items-center gap-2 text-red-600">⚠️ Anular Pago</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
-                                <Alert variant="destructive" className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+                                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50">
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertDescription className="text-red-800 dark:text-red-200">
                                         ¿Está seguro de que desea anular este pago de <strong>{formatCurrency(pagoAAnular.monto)}</strong>?
-                                        <p className="text-xs mt-2">
+                                        <p className="mt-2 text-xs">
                                             Esta acción no puede deshacerse. Se revertirán todos los movimientos asociados.
                                         </p>
                                     </AlertDescription>
                                 </Alert>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-900 dark:text-white">
-                                        Motivo de anulación (opcional)
-                                    </label>
+                                    <label className="text-sm font-medium text-gray-900 dark:text-white">Motivo de anulación (opcional)</label>
                                     <textarea
                                         value={motivoAnulacion}
                                         onChange={(e) => setMotivoAnulacion(e.target.value)}
                                         placeholder="Ej: Pago registrado erróneamente, cliente no confirma..."
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-none"
+                                        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                         rows={3}
                                         disabled={anulandoPago}
                                     />
@@ -1425,12 +1399,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 >
                                     Cancelar
                                 </Button>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleAnularPago}
-                                    disabled={anulandoPago}
-                                    className="flex-1"
-                                >
+                                <Button variant="destructive" onClick={handleAnularPago} disabled={anulandoPago} className="flex-1">
                                     {anulandoPago ? '⏳ Anulando...' : '❌ Anular Pago'}
                                 </Button>
                             </DialogFooter>
@@ -1440,26 +1409,33 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                 {/* ✅ NUEVO: Modal de confirmación para anular cuenta por cobrar */}
                 {cuentaAAnular && (
-                    <Dialog open={!!cuentaAAnular} onOpenChange={() => {
-                        setCuentaAAnular(null);
-                        setMotivoCuentaAnulacion('');
-                    }}>
+                    <Dialog
+                        open={!!cuentaAAnular}
+                        onOpenChange={() => {
+                            setCuentaAAnular(null);
+                            setMotivoCuentaAnulacion('');
+                        }}
+                    >
                         <DialogContent className="max-w-md">
                             <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2 text-red-600">
-                                    ⚠️ Anular Cuenta por Cobrar
-                                </DialogTitle>
+                                <DialogTitle className="flex items-center gap-2 text-red-600">⚠️ Anular Cuenta por Cobrar</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
-                                <Alert variant="destructive" className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+                                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50">
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertDescription className="text-red-800 dark:text-red-200">
                                         ¿Está seguro de que desea anular esta cuenta por cobrar?
                                         <div className="mt-2 space-y-1 text-sm">
-                                            <p><strong>Folio:</strong> #{cuentaAAnular.id}</p>
-                                            <p><strong>Cliente:</strong> {cuentaAAnular.cliente?.nombre}</p>
-                                            <p><strong>Monto a anular:</strong> {formatCurrency(cuentaAAnular.saldo_pendiente)}</p>
-                                            <p className="text-xs mt-2">
+                                            <p>
+                                                <strong>Folio:</strong> #{cuentaAAnular.id}
+                                            </p>
+                                            <p>
+                                                <strong>Cliente:</strong> {cuentaAAnular.cliente?.nombre}
+                                            </p>
+                                            <p>
+                                                <strong>Monto a anular:</strong> {formatCurrency(cuentaAAnular.saldo_pendiente)}
+                                            </p>
+                                            <p className="mt-2 text-xs">
                                                 Esta acción no puede deshacerse. Se revertirán todos los movimientos asociados.
                                             </p>
                                         </div>
@@ -1467,14 +1443,12 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 </Alert>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-900 dark:text-white">
-                                        Motivo de anulación (obligatorio)
-                                    </label>
+                                    <label className="text-sm font-medium text-gray-900 dark:text-white">Motivo de anulación (obligatorio)</label>
                                     <textarea
                                         value={motivoCuentaAnulacion}
                                         onChange={(e) => setMotivoCuentaAnulacion(e.target.value)}
                                         placeholder="Ej: Crédito no cobrable, acuerdo con cliente, producto dañado..."
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-none"
+                                        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                         rows={3}
                                         disabled={anulandoCuenta}
                                     />
@@ -1545,33 +1519,31 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 <Dialog open={modalEditarFechaOpen} onOpenChange={setModalEditarFechaOpen}>
                     <DialogContent className="max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">
-                                📅 Editar Fecha de Vencimiento
-                            </DialogTitle>
+                            <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">📅 Editar Fecha de Vencimiento</DialogTitle>
                         </DialogHeader>
 
                         {cuentaEditarFecha && (
                             <div className="space-y-6 py-4">
                                 {/* Info de la cuenta */}
-                                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900/30">
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-950/20">
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Cuenta por Cobrar</p>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                        #{cuentaEditarFecha.id}
-                                    </p>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                                        Cliente: <span className="font-semibold">{cuentaEditarFecha.cliente?.nombre || cuentaEditarFecha.venta?.cliente?.nombre || 'Sin cliente'}</span>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white">#{cuentaEditarFecha.id}</p>
+                                    <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                                        Cliente:{' '}
+                                        <span className="font-semibold">
+                                            {cuentaEditarFecha.cliente?.nombre || cuentaEditarFecha.venta?.cliente?.nombre || 'Sin cliente'}
+                                        </span>
                                     </p>
                                     <p className="text-sm text-gray-700 dark:text-gray-300">
-                                        Saldo: <span className="font-semibold text-amber-600">{formatCurrency(cuentaEditarFecha.saldo_pendiente)}</span>
+                                        Saldo:{' '}
+                                        <span className="font-semibold text-amber-600">{formatCurrency(cuentaEditarFecha.saldo_pendiente)}</span>
                                     </p>
                                 </div>
 
                                 {/* Fecha actual */}
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-gray-700 dark:text-gray-400">
-                                        Fecha Vencimiento Actual
-                                    </label>
-                                    <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                    <label className="text-xs font-medium text-gray-700 dark:text-gray-400">Fecha Vencimiento Actual</label>
+                                    <div className="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                                             {new Date(cuentaEditarFecha.fecha_vencimiento).toLocaleDateString('es-BO')}
                                         </p>
@@ -1580,14 +1552,12 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                                 {/* Nueva fecha */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        Nueva Fecha de Vencimiento
-                                    </label>
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Nueva Fecha de Vencimiento</label>
                                     <Input
                                         type="date"
                                         value={nuevaFechaVencimiento}
                                         onChange={(e) => setNuevaFechaVencimiento(e.target.value)}
-                                        className="bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                        className="bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                         min={new Date().toISOString().split('T')[0]}
                                     />
                                     {nuevaFechaVencimiento && (
@@ -1598,8 +1568,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 </div>
 
                                 {/* Alerta */}
-                                <div className="flex gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg">
-                                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                                <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/30 dark:bg-amber-950/20">
+                                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                                     <p className="text-xs text-amber-700 dark:text-amber-300">
                                         Al cambiar la fecha, se recalcularán automáticamente los días vencidos.
                                     </p>

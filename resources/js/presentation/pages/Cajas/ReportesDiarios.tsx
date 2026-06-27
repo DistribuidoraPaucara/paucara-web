@@ -22,6 +22,7 @@ import {
   Users,
   TrendingDown,
   AlertCircle,
+  Printer,
 } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
@@ -35,6 +36,7 @@ import {
 } from '@/presentation/components/ui/table';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Pagination } from '@/presentation/components/ui/pagination';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -119,6 +121,8 @@ export default function ReportesDiarios({
   const [hasta, setHasta] = useState(filtros.hasta || '');
   const [usuarioId, setUsuarioId] = useState(filtros.usuario_id || '');
   const [soloDiscrepancias, setSoloDiscrepancias] = useState(filtros.solo_discrepancias || false);
+  const [modalImpresionAbierto, setModalImpresionAbierto] = useState(false);
+  const [cierreSeleccionado, setCierreSeleccionado] = useState<CierreDiarioGeneral | null>(null);
 
   const aplicarFiltros = () => {
     const params = new URLSearchParams();
@@ -171,13 +175,6 @@ export default function ReportesDiarios({
                 Histórico de todos los cierres diarios generales realizados
               </p>
             </div>
-            <Button
-              onClick={() => router.visit('/cajas')}
-              variant="outline"
-              className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-700"
-            >
-              ← Volver al Dashboard
-            </Button>
           </div>
 
           {/* Estadísticas */}
@@ -243,31 +240,30 @@ export default function ReportesDiarios({
           <Card className="p-4 dark:bg-slate-800 border dark:border-slate-700">
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filtros</h3>
-
-              {/* Búsqueda general */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
-                  Buscar (ID, Apertura, Usuario)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: 123 o #456 o Juan"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      aplicarFiltros();
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Busca en ID del cierre, ID de apertura o nombre de usuario
-                </p>
-              </div>
-
               {/* Otros filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {/* Búsqueda general */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                    Buscar (ID, Apertura, Usuario)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 123 o #456 o Juan"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        aplicarFiltros();
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Busca en ID del cierre, ID de apertura o nombre de usuario
+                  </p>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Desde
@@ -309,34 +305,34 @@ export default function ReportesDiarios({
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  onClick={aplicarFiltros}
-                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white"
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Buscar
-                </Button>
-                <Button
-                  onClick={limpiarFiltros}
-                  variant="outline"
-                  className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
-                >
-                  Limpiar
-                </Button>
-              </div>
+                <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={soloDiscrepancias}
+                    onChange={(e) => setSoloDiscrepancias(e.target.checked)}
+                    className="rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:accent-blue-500"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Solo cierres con discrepancias</span>
+                </label>
 
-              <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={soloDiscrepancias}
-                  onChange={(e) => setSoloDiscrepancias(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:accent-blue-500"
-                />
-                <span className="text-gray-700 dark:text-gray-300">Solo cierres con discrepancias</span>
-              </label>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    onClick={aplicarFiltros}
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white"
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Buscar
+                  </Button>
+                  <Button
+                    onClick={limpiarFiltros}
+                    variant="outline"
+                    className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
+                  >
+                    Limpiar
+                  </Button>
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -416,6 +412,17 @@ export default function ReportesDiarios({
                           size="sm"
                           variant="ghost"
                           onClick={() => {
+                            setCierreSeleccionado(cierre);
+                            setModalImpresionAbierto(true);
+                          }}
+                          className="dark:hover:bg-slate-600 dark:text-gray-300 dark:hover:text-white transition-colors"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
                             window.location.href = `/cajas/admin/reportes-diarios/${cierre.id}/descargar?formato=A4`;
                           }}
                           className="dark:hover:bg-slate-600 dark:text-gray-300 dark:hover:text-white transition-colors"
@@ -449,6 +456,24 @@ export default function ReportesDiarios({
           </Card>
         </div>
       </div>
+
+      {/* Modal de impresión */}
+      {cierreSeleccionado && (
+        <OutputSelectionModal
+          isOpen={modalImpresionAbierto}
+          onClose={() => {
+            setModalImpresionAbierto(false);
+            setCierreSeleccionado(null);
+          }}
+          documentoId={cierreSeleccionado.apertura_caja_id}
+          tipoDocumento="caja"
+          printType="cierre"
+          documentoInfo={{
+            numero: `Cierre #${cierreSeleccionado.id}`,
+            fecha: format(parseISO(cierreSeleccionado.fecha_ejecucion), 'dd/MM/yyyy HH:mm', { locale: es }),
+          }}
+        />
+      )}
     </AppLayout>
   );
 }

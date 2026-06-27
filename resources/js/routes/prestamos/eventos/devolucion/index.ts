@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
 export const imprimir = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
 imprimir.url = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ imprimir.url = (args: { devolucion: number | { id: number } } | [devolucion: num
 
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
 imprimir.get = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ imprimir.get = (args: { devolucion: number | { id: number } } | [devolucion: num
 })
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
 imprimir.head = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ imprimir.head = (args: { devolucion: number | { id: number } } | [devolucion: nu
 
     /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
     const imprimirForm = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ imprimir.head = (args: { devolucion: number | { id: number } } | [devolucion: nu
 
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
         imprimirForm.get = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ imprimir.head = (args: { devolucion: number | { id: number } } | [devolucion: nu
         })
             /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:485
+ * @see app/Http/Controllers/PrestamoEventoController.php:537
  * @route '/prestamos/eventos/devoluciones/{devolucion}/imprimir'
  */
         imprimirForm.head = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

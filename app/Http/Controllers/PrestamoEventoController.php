@@ -33,7 +33,7 @@ class PrestamoEventoController extends Controller
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
                 'detalles.almacenes',
-                'detalles.devoluciones',
+                'detalles.devolucionDetalles',  // ✅ CORREGIDO: era 'devoluciones'
                 'chofer',
                 'almacen',
                 'ventas',
@@ -253,10 +253,13 @@ class PrestamoEventoController extends Controller
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
                 'detalles.almacenes.almacen',
-                'detalles.devoluciones.devolucionesAlmacenes.almacen',
+                // ✅ CORREGIDO: Cargar devoluciones anteriores con sus detalles por almacén
+                'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'chofer',
                 'ventas',
-                'devoluciones.detalles',
+                // ✅ NUEVO: Cargar prestable en detalles de devoluciones
+                'devoluciones.detalles.prestamoEventoDetalle.prestable',
+                'devoluciones.detalles.devolucionesAlmacenes.almacen'
             ]);
             $resumen = $this->prestamoService->obtenerResumen($prestamo->id);
 
@@ -382,6 +385,20 @@ class PrestamoEventoController extends Controller
                 'cantidad_detalles' => count($datosValidacion['detalles'] ?? []),
                 'almacen_id' => $prestamo->almacenes_prestables_id,
             ]);
+
+            // ✅ DEBUG: Mostrar payload completo
+            Log::info('📦 PAYLOAD RECIBIDO EN CONTROLLER EVENTO', [
+                'datos_keys' => array_keys($datosValidacion),
+                'prestamo_evento_id' => $datosValidacion['prestamo_evento_id'] ?? 'FALTA',
+                'fecha_devolucion' => $datosValidacion['fecha_devolucion'] ?? null,
+                'detalles_count' => count($datosValidacion['detalles'] ?? []),
+                'almacenes_prestables_id' => $datosValidacion['almacenes_prestables_id'] ?? null,
+            ]);
+
+            // ✅ DEBUG: Mostrar primer detalle si existe
+            if (!empty($datosValidacion['detalles'])) {
+                Log::info('🔍 PRIMER DETALLE EVENTO', $datosValidacion['detalles'][0] ?? []);
+            }
 
             // Validar datos de devolución
             $validacion = $this->validacionService->datosDevolucion($datosValidacion);

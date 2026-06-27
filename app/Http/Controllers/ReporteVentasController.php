@@ -6,6 +6,7 @@ use App\Models\Proforma;
 use App\Models\Venta;
 use App\Models\User;
 use App\Models\EstadoDocumento;
+use App\Services\ProductosVendidosService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -24,132 +25,50 @@ class ReporteVentasController extends Controller
             $user = auth()->user();
 
             // ✅ NUEVO (2026-03-03): Validar fechas - default mes actual (día 1 al hoy)
-            $fechaDesde = $request->filled('fecha_desde') ? $request->date('fecha_desde') : now()->startOfMonth();  // Primer día del mes actual
-            $fechaHasta = $request->filled('fecha_hasta') ? $request->date('fecha_hasta') : now();  // Hoy
+            $fechaDesde = $request->filled('fecha_desde') ? $request->date('fecha_desde') : now()->startOfMonth();
+            $fechaHasta = $request->filled('fecha_hasta') ? $request->date('fecha_hasta') : now();
 
-            // Obtener el ID del estado APROBADO
-            // ✅ CORREGIDO: La tabla EstadoDocumento solo tiene columna 'codigo', no 'categoria'
-            $estadoAprobadoId = EstadoDocumento::where('codigo', 'APROBADO')
-                ->value('id');
+            // ✅ NUEVO (2026-06-22): Usar ProductosVendidosService para obtener productos
+            $filtros = [
+                'fecha_desde' => $fechaDesde,
+                'fecha_hasta' => $fechaHasta,
+            ];
 
-            // ✅ NUEVO (2026-04-28): Query 1 - Productos vendidos DIRECTAMENTE
-            $productosDirectos = DB::table('proformas')
-                ->join('ventas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('detalle_proformas', 'proformas.id', '=', 'detalle_proformas.proforma_id')
-                ->join('productos', 'detalle_proformas.producto_id', '=', 'productos.id')
-                ->select(
-                    'productos.id',
-                    'productos.nombre as producto_nombre',
-                    'productos.sku as producto_codigo',
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2))) as cantidad_total'),
-                    DB::raw('AVG(CAST(detalle_proformas.precio_unitario AS DECIMAL(15,2))) as precio_promedio'),
-                    DB::raw('SUM(CAST(detalle_proformas.subtotal AS DECIMAL(15,2))) as total_venta'),
-                    'proformas.usuario_creador_id'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
-            // Filtro por usuario creador
+            // Determinar preventista_id
             if ($request->filled('usuario_creador_id')) {
-                $productosDirectos->where('proformas.usuario_creador_id', $request->usuario_creador_id);
+                $filtros['preventista_id'] = $request->integer('usuario_creador_id');
             } elseif ($user->hasRole('Preventista')) {
-                $productosDirectos->where('proformas.usuario_creador_id', $user->id);
+                $filtros['preventista_id'] = $user->id;
             }
 
-            // Filtro por cliente
+            // Determinar cliente_id
             if ($request->filled('cliente_id')) {
-                $productosDirectos->where('proformas.cliente_id', $request->cliente_id);
+                $filtros['cliente_id'] = $request->integer('cliente_id');
             }
 
-            $productosDirectos = $productosDirectos->groupBy('productos.id', 'productos.nombre', 'productos.sku', 'proformas.usuario_creador_id')
-                ->get();
+            // Obtener productos vendidos del service
+            $reporteProductos = ProductosVendidosService::obtenerProductosVendidos($filtros);
 
-            // ✅ NUEVO (2026-04-28): Query 2 - Productos dentro de COMBOS vendidos
-            // Cuando se vende un combo, los productos dentro del combo también se venden
-            // cantidad_producto = cantidad_combo * cantidad_en_combo_items
-            $productosEnCombos = DB::table('proformas')
-                ->join('ventas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('detalle_proformas', 'proformas.id', '=', 'detalle_proformas.proforma_id')
-                ->join('combo_items', 'detalle_proformas.producto_id', '=', 'combo_items.combo_id')
-                ->join('productos', 'combo_items.producto_id', '=', 'productos.id')
-                ->select(
-                    'productos.id',
-                    'productos.nombre as producto_nombre',
-                    'productos.sku as producto_codigo',
-                    // Multiplicar cantidad del combo por cantidad del item en el combo
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2)) * CAST(combo_items.cantidad AS DECIMAL(15,2))) as cantidad_total'),
-                    // Precio promedio del item en el combo
-                    DB::raw('AVG(CAST(combo_items.precio_unitario AS DECIMAL(15,2))) as precio_promedio'),
-                    // Total = cantidad_combo * cantidad_item * precio_item
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2)) * CAST(combo_items.cantidad AS DECIMAL(15,2)) * CAST(combo_items.precio_unitario AS DECIMAL(15,2))) as total_venta'),
-                    'proformas.usuario_creador_id'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
-            // Aplicar los mismos filtros a los combos
-            if ($request->filled('usuario_creador_id')) {
-                $productosEnCombos->where('proformas.usuario_creador_id', $request->usuario_creador_id);
-            } elseif ($user->hasRole('Preventista')) {
-                $productosEnCombos->where('proformas.usuario_creador_id', $user->id);
-            }
-
-            if ($request->filled('cliente_id')) {
-                $productosEnCombos->where('proformas.cliente_id', $request->cliente_id);
-            }
-
-            $productosEnCombos = $productosEnCombos->groupBy('productos.id', 'productos.nombre', 'productos.sku', 'proformas.usuario_creador_id')
-                ->get();
-
-            // ✅ NUEVO (2026-04-28): Combinar resultados y agregar por producto
-            $productosCombinados = collect();
-
-            // Agregar productos directos
-            foreach ($productosDirectos as $item) {
-                $productosCombinados->push([
-                    'id' => $item->id,
-                    'nombre' => $item->producto_nombre,
-                    'codigo' => $item->producto_codigo,
-                    'cantidad_total' => (float) $item->cantidad_total,
-                    'precio_promedio' => (float) $item->precio_promedio,
-                    'total_venta' => (float) $item->total_venta,
-                    'usuario_creador_id' => $item->usuario_creador_id,
+            if (!$reporteProductos['success']) {
+                \Log::error('Error obteniendo productos en productosVendidos', [
+                    'error' => $reporteProductos['error'] ?? 'Desconocido',
+                ]);
+                return Inertia::render('ventas/reporte-productos-vendidos', [
+                    'productos' => [],
+                    'totales' => ['cantidad_productos' => 0, 'cantidad_total_vendida' => 0, 'total_venta_general' => 0],
+                    'ventas' => [],
+                    'filtros' => [],
+                    'usuarios' => [],
+                    'clientes' => [],
+                    'error' => 'Error al generar reporte: ' . ($reporteProductos['error'] ?? 'Desconocido'),
                 ]);
             }
 
-            // Agregar productos de combos
-            foreach ($productosEnCombos as $item) {
-                $existe = $productosCombinados->firstWhere('id', $item->id);
-                if ($existe) {
-                    // Si el producto ya existe (también fue vendido directo), sumar cantidades
-                    $existe['cantidad_total'] += (float) $item->cantidad_total;
-                    $existe['total_venta'] += (float) $item->total_venta;
-                    // Recalcular precio promedio ponderado
-                    $cantidadTotal = $existe['cantidad_total'];
-                    $existe['precio_promedio'] = $cantidadTotal > 0 ? $existe['total_venta'] / $cantidadTotal : 0;
-                } else {
-                    // Si no existe, agregarlo
-                    $productosCombinados->push([
-                        'id' => $item->id,
-                        'nombre' => $item->producto_nombre,
-                        'codigo' => $item->producto_codigo,
-                        'cantidad_total' => (float) $item->cantidad_total,
-                        'precio_promedio' => (float) $item->precio_promedio,
-                        'total_venta' => (float) $item->total_venta,
-                        'usuario_creador_id' => $item->usuario_creador_id,
-                    ]);
-                }
-            }
+            // Convertir productos del service al formato esperado
+            $productos = collect($reporteProductos['productos'])->sortBy('nombre')->values();
 
-            $productos = $productosCombinados->sortBy('nombre')->values();
-
-            // ✅ NUEVO (2026-04-28): Agregar datos de movimientos de inventario (anterior y posterior)
+            // ✅ NUEVO: Agregar datos de movimientos de inventario (anterior y posterior)
             $productos = $productos->map(function ($producto) use ($fechaDesde, $fechaHasta) {
-                // Movimiento ANTERIOR: primer movimiento EN el período (captura estado inicial del período)
                 $movimientoAnterior = DB::table('movimientos_inventario')
                     ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
                     ->where('stock_productos.producto_id', $producto['id'])
@@ -159,7 +78,6 @@ class ReporteVentasController extends Controller
                     ->select('cantidad_total_anterior', 'cantidad_disponible_anterior', 'cantidad_reservada_anterior')
                     ->first();
 
-                // Movimiento POSTERIOR: último movimiento EN el período (captura estado final del período)
                 $movimientoPosterior = DB::table('movimientos_inventario')
                     ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
                     ->where('stock_productos.producto_id', $producto['id'])
@@ -169,7 +87,6 @@ class ReporteVentasController extends Controller
                     ->select('cantidad_total_posterior', 'cantidad_disponible_posterior', 'cantidad_reservada_posterior')
                     ->first();
 
-                // Si no hay movimientos en el período, traer el último movimiento antes del período
                 if (!$movimientoAnterior) {
                     $movimientoAnterior = DB::table('movimientos_inventario')
                         ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
@@ -182,26 +99,18 @@ class ReporteVentasController extends Controller
 
                 return [
                     ...$producto,
-                    // Datos ANTERIORES
                     'total_anterior' => (float) ($movimientoAnterior?->cantidad_total_anterior ?? 0),
                     'disponible_anterior' => (float) ($movimientoAnterior?->cantidad_disponible_anterior ?? 0),
                     'reservado_anterior' => (float) ($movimientoAnterior?->cantidad_reservada_anterior ?? 0),
-                    // Datos POSTERIORES
                     'total_posterior' => (float) ($movimientoPosterior?->cantidad_total_posterior ?? 0),
                     'disponible_posterior' => (float) ($movimientoPosterior?->cantidad_disponible_posterior ?? 0),
                     'reservado_posterior' => (float) ($movimientoPosterior?->cantidad_reservada_posterior ?? 0),
                 ];
             });
 
-            // Calcular totales
-            $totales = [
-                'cantidad_productos' => $productos->count(),
-                'cantidad_total_vendida' => $productos->sum('cantidad_total'),
-                'total_venta_general' => $productos->sum('total_venta'),
-                'precio_promedio_general' => $productos->count() > 0
-                    ? $productos->sum('total_venta') / $productos->sum('cantidad_total')
-                    : 0,
-            ];
+            // ✅ NUEVO: Usar totales y ventas del service
+            $totales = $reporteProductos['totales'];
+            $ventas = collect($reporteProductos['ventas']);
 
             // Obtener usuarios para el filtro
             $usuarios = User::whereHas('roles', function ($query) {
@@ -210,84 +119,6 @@ class ReporteVentasController extends Controller
 
             // Obtener clientes para el filtro
             $clientes = \App\Models\Cliente::activos()->select('id', 'nombre', 'email')->get();
-
-            // Obtener las ventas aprobadas que se usaron en el reporte
-            $ventasQuery = DB::table('ventas')
-                ->join('proformas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('clientes', 'proformas.cliente_id', '=', 'clientes.id')
-                ->join('users', 'proformas.usuario_creador_id', '=', 'users.id')
-                ->join('estados_documento', 'ventas.estado_documento_id', '=', 'estados_documento.id')
-                ->leftJoin('entregas', 'ventas.entrega_id', '=', 'entregas.id')
-                ->leftJoin('estados_logistica', 'entregas.estado_entrega_id', '=', 'estados_logistica.id')
-                ->leftJoin('entregas_venta_confirmaciones', 'ventas.id', '=', 'entregas_venta_confirmaciones.venta_id')
-                ->select(
-                    'ventas.id as venta_id',
-                    'ventas.numero as numero_venta',
-                    'proformas.id as proforma_id',
-                    'proformas.numero as numero_proforma',
-                    'proformas.created_at as fecha_proforma',
-                    'clientes.nombre as cliente_nombre',
-                    'users.name as usuario_nombre',
-                    'ventas.total',
-                    'ventas.created_at as fecha_venta',
-                    'estados_documento.codigo as estado_codigo',
-                    'estados_logistica.codigo as estado_entrega',
-                    'entregas_venta_confirmaciones.motivo_rechazo as motivo_entrega',
-                    'entregas_venta_confirmaciones.tienda_abierta',
-                    'entregas_venta_confirmaciones.cliente_presente',
-                    'entregas_venta_confirmaciones.observaciones_logistica',
-                    'entregas_venta_confirmaciones.tipo_entrega',
-                    'entregas_venta_confirmaciones.tipo_novedad',
-                    'entregas_venta_confirmaciones.tuvo_problema',
-                    'entregas_venta_confirmaciones.estado_pago',
-                    'entregas_venta_confirmaciones.total_dinero_recibido',
-                    'entregas_venta_confirmaciones.monto_pendiente',
-                    'entregas_venta_confirmaciones.confirmado_en'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
-            // Aplicar los mismos filtros a las ventas
-            if ($request->filled('usuario_creador_id')) {
-                $ventasQuery->where('proformas.usuario_creador_id', $request->usuario_creador_id);
-            } elseif ($user->hasRole('Preventista')) {
-                $ventasQuery->where('proformas.usuario_creador_id', $user->id);
-            }
-
-            if ($request->filled('cliente_id')) {
-                $ventasQuery->where('proformas.cliente_id', $request->cliente_id);
-            }
-
-            $ventas = $ventasQuery->orderByDesc('ventas.id')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->venta_id,
-                        'numero' => $item->numero_venta,
-                        'proforma_id' => $item->proforma_id,
-                        'proforma_numero' => $item->numero_proforma,
-                        'proforma_fecha' => $item->fecha_proforma,
-                        'cliente' => $item->cliente_nombre,
-                        'usuario' => $item->usuario_nombre,
-                        'total' => (float) $item->total,
-                        'fecha' => $item->fecha_venta,
-                        'estado' => $item->estado_codigo,
-                        'estado_entrega' => $item->estado_entrega,
-                        'motivo_entrega' => $item->motivo_entrega,
-                        'tienda_abierta' => $item->tienda_abierta,
-                        'cliente_presente' => $item->cliente_presente,
-                        'observaciones_logistica' => $item->observaciones_logistica,
-                        'tipo_entrega' => $item->tipo_entrega,
-                        'tipo_novedad' => $item->tipo_novedad,
-                        'tuvo_problema' => $item->tuvo_problema,
-                        'estado_pago' => $item->estado_pago,
-                        'total_dinero_recibido' => (float) ($item->total_dinero_recibido ?? 0),
-                        'monto_pendiente' => (float) ($item->monto_pendiente ?? 0),
-                        'confirmado_en' => $item->confirmado_en,
-                    ];
-                });
 
             $filtros = [
                 'fecha_desde' => $request->input('fecha_desde'),
@@ -1105,115 +936,47 @@ class ReporteVentasController extends Controller
             $fechaDesde = $request->filled('fecha_desde') ? $request->date('fecha_desde') : now()->subMonth();
             $fechaHasta = $request->filled('fecha_hasta') ? $request->date('fecha_hasta') : now();
 
-            // Obtener el ID del estado APROBADO
-            $estadoAprobadoId = EstadoDocumento::where('codigo', 'APROBADO')->value('id');
+            // ✅ NUEVO (2026-06-22): Usar ProductosVendidosService para obtener productos
+            $filtros = [
+                'fecha_desde' => $fechaDesde,
+                'fecha_hasta' => $fechaHasta,
+            ];
 
-            // ✅ ACTUALIZADO (2026-04-28): Considerar productos directos y dentro de combos
-            // Query 1: Productos directos
-            $productosDirectos = DB::table('proformas')
-                ->join('ventas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('detalle_proformas', 'proformas.id', '=', 'detalle_proformas.proforma_id')
-                ->join('productos', 'detalle_proformas.producto_id', '=', 'productos.id')
-                ->select(
-                    'productos.id',
-                    'productos.nombre as producto_nombre',
-                    'productos.sku as producto_codigo',
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2))) as cantidad_total'),
-                    DB::raw('AVG(CAST(detalle_proformas.precio_unitario AS DECIMAL(15,2))) as precio_promedio'),
-                    DB::raw('SUM(CAST(detalle_proformas.subtotal AS DECIMAL(15,2))) as total_venta'),
-                    'proformas.usuario_creador_id'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
+            // Determinar preventista_id o cliente_id
             if ($request->filled('usuario_creador_id')) {
-                $productosDirectos->where('proformas.usuario_creador_id', $request->usuario_creador_id);
+                $filtros['preventista_id'] = $request->integer('usuario_creador_id');
             } elseif ($user->hasRole('Preventista')) {
-                $productosDirectos->where('proformas.usuario_creador_id', $user->id);
+                $filtros['preventista_id'] = $user->id;
             }
 
             if ($request->filled('cliente_id')) {
-                $productosDirectos->where('proformas.cliente_id', $request->cliente_id);
+                $filtros['cliente_id'] = $request->integer('cliente_id');
             }
 
-            $productosDirectos = $productosDirectos->groupBy('productos.id', 'productos.nombre', 'productos.sku', 'proformas.usuario_creador_id')
-                ->get();
+            // Obtener productos vendidos del service
+            $reporteProductos = ProductosVendidosService::obtenerProductosVendidos($filtros);
 
-            // Query 2: Productos dentro de combos
-            $productosEnCombos = DB::table('proformas')
-                ->join('ventas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('detalle_proformas', 'proformas.id', '=', 'detalle_proformas.proforma_id')
-                ->join('combo_items', 'detalle_proformas.producto_id', '=', 'combo_items.combo_id')
-                ->join('productos', 'combo_items.producto_id', '=', 'productos.id')
-                ->select(
-                    'productos.id',
-                    'productos.nombre as producto_nombre',
-                    'productos.sku as producto_codigo',
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2)) * CAST(combo_items.cantidad AS DECIMAL(15,2))) as cantidad_total'),
-                    DB::raw('AVG(CAST(combo_items.precio_unitario AS DECIMAL(15,2))) as precio_promedio'),
-                    DB::raw('SUM(CAST(detalle_proformas.cantidad AS DECIMAL(15,2)) * CAST(combo_items.cantidad AS DECIMAL(15,2)) * CAST(combo_items.precio_unitario AS DECIMAL(15,2))) as total_venta'),
-                    'proformas.usuario_creador_id'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
-            if ($request->filled('usuario_creador_id')) {
-                $productosEnCombos->where('proformas.usuario_creador_id', $request->usuario_creador_id);
-            } elseif ($user->hasRole('Preventista')) {
-                $productosEnCombos->where('proformas.usuario_creador_id', $user->id);
-            }
-
-            if ($request->filled('cliente_id')) {
-                $productosEnCombos->where('proformas.cliente_id', $request->cliente_id);
-            }
-
-            $productosEnCombos = $productosEnCombos->groupBy('productos.id', 'productos.nombre', 'productos.sku', 'proformas.usuario_creador_id')
-                ->get();
-
-            // Combinar resultados
-            $productosCombinados = collect();
-
-            foreach ($productosDirectos as $item) {
-                $productosCombinados->push([
-                    'id' => $item->id,
-                    'nombre' => $item->producto_nombre,
-                    'codigo' => $item->producto_codigo,
-                    'cantidad_total' => (float) $item->cantidad_total,
-                    'precio_promedio' => (float) $item->precio_promedio,
-                    'total_venta' => (float) $item->total_venta,
-                    'usuario_creador_id' => $item->usuario_creador_id,
+            if (!$reporteProductos['success']) {
+                \Log::error('Error obteniendo productos en imprimirReporte', [
+                    'error' => $reporteProductos['error'] ?? 'Desconocido',
                 ]);
+                return response()->json(['error' => 'Error al generar reporte: ' . ($reporteProductos['error'] ?? 'Desconocido')], 500);
             }
 
-            foreach ($productosEnCombos as $item) {
-                $existe = $productosCombinados->firstWhere('id', $item->id);
-                if ($existe) {
-                    $existe['cantidad_total'] += (float) $item->cantidad_total;
-                    $existe['total_venta'] += (float) $item->total_venta;
-                    $cantidadTotal = $existe['cantidad_total'];
-                    $existe['precio_promedio'] = $cantidadTotal > 0 ? $existe['total_venta'] / $cantidadTotal : 0;
-                } else {
-                    $productosCombinados->push([
-                        'id' => $item->id,
-                        'nombre' => $item->producto_nombre,
-                        'codigo' => $item->producto_codigo,
-                        'cantidad_total' => (float) $item->cantidad_total,
-                        'precio_promedio' => (float) $item->precio_promedio,
-                        'total_venta' => (float) $item->total_venta,
-                        'usuario_creador_id' => $item->usuario_creador_id,
-                    ]);
-                }
-            }
+            // Convertir productos del service al formato esperado
+            $productos = collect($reporteProductos['productos'])->map(function ($producto) {
+                return [
+                    'id' => $producto['id'],
+                    'nombre' => $producto['nombre'],
+                    'codigo' => $producto['codigo'],
+                    'cantidad_total' => $producto['cantidad_total'],
+                    'precio_promedio' => $producto['precio_promedio'],
+                    'total_venta' => $producto['total_venta'],
+                ];
+            });
 
-            $productos = $productosCombinados->sortBy('nombre')->values();
-
-            // ✅ NUEVO (2026-04-28): Agregar datos de movimientos de inventario (anterior y posterior)
+            // ✅ NUEVO: Agregar datos de movimientos de inventario (anterior y posterior)
             $productos = $productos->map(function ($producto) use ($fechaDesde, $fechaHasta) {
-                // Movimiento ANTERIOR: primer movimiento EN el período (captura estado inicial del período)
                 $movimientoAnterior = DB::table('movimientos_inventario')
                     ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
                     ->where('stock_productos.producto_id', $producto['id'])
@@ -1223,7 +986,6 @@ class ReporteVentasController extends Controller
                     ->select('cantidad_total_anterior', 'cantidad_disponible_anterior', 'cantidad_reservada_anterior')
                     ->first();
 
-                // Movimiento POSTERIOR: último movimiento EN el período (captura estado final del período)
                 $movimientoPosterior = DB::table('movimientos_inventario')
                     ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
                     ->where('stock_productos.producto_id', $producto['id'])
@@ -1233,7 +995,6 @@ class ReporteVentasController extends Controller
                     ->select('cantidad_total_posterior', 'cantidad_disponible_posterior', 'cantidad_reservada_posterior')
                     ->first();
 
-                // Si no hay movimientos en el período, traer el último movimiento antes del período
                 if (!$movimientoAnterior) {
                     $movimientoAnterior = DB::table('movimientos_inventario')
                         ->join('stock_productos', 'movimientos_inventario.stock_producto_id', '=', 'stock_productos.id')
@@ -1246,105 +1007,20 @@ class ReporteVentasController extends Controller
 
                 return [
                     ...$producto,
-                    // Datos ANTERIORES
                     'total_anterior' => (float) ($movimientoAnterior?->cantidad_total_anterior ?? 0),
                     'disponible_anterior' => (float) ($movimientoAnterior?->cantidad_disponible_anterior ?? 0),
                     'reservado_anterior' => (float) ($movimientoAnterior?->cantidad_reservada_anterior ?? 0),
-                    // Datos POSTERIORES
                     'total_posterior' => (float) ($movimientoPosterior?->cantidad_total_posterior ?? 0),
                     'disponible_posterior' => (float) ($movimientoPosterior?->cantidad_disponible_posterior ?? 0),
                     'reservado_posterior' => (float) ($movimientoPosterior?->cantidad_reservada_posterior ?? 0),
                 ];
             });
 
-            // Calcular totales
-            $totales = [
-                'cantidad_productos' => $productos->count(),
-                'cantidad_total_vendida' => $productos->sum('cantidad_total'),
-                'total_venta_general' => $productos->sum('total_venta'),
-                'precio_promedio_general' => $productos->count() > 0
-                    ? $productos->sum('total_venta') / $productos->sum('cantidad_total')
-                    : 0,
-            ];
+            // Usar totales del service
+            $totales = $reporteProductos['totales'];
 
-            // Obtener las ventas aprobadas que se usaron en el reporte
-            $ventasQuery = DB::table('ventas')
-                ->join('proformas', 'ventas.proforma_id', '=', 'proformas.id')
-                ->join('clientes', 'proformas.cliente_id', '=', 'clientes.id')
-                ->join('users', 'proformas.usuario_creador_id', '=', 'users.id')
-                ->join('estados_documento', 'ventas.estado_documento_id', '=', 'estados_documento.id')
-                ->leftJoin('entregas', 'ventas.entrega_id', '=', 'entregas.id')
-                ->leftJoin('estados_logistica', 'entregas.estado_entrega_id', '=', 'estados_logistica.id')
-                ->leftJoin('entregas_venta_confirmaciones', 'ventas.id', '=', 'entregas_venta_confirmaciones.venta_id')
-                ->select(
-                    'ventas.id as venta_id',
-                    'ventas.numero as numero_venta',
-                    'proformas.id as proforma_id',
-                    'proformas.numero as numero_proforma',
-                    'proformas.created_at as fecha_proforma',
-                    'clientes.nombre as cliente_nombre',
-                    'users.name as usuario_nombre',
-                    'ventas.total',
-                    'ventas.created_at as fecha_venta',
-                    'estados_documento.codigo as estado_codigo',
-                    'estados_logistica.codigo as estado_entrega',
-                    'entregas_venta_confirmaciones.motivo_rechazo as motivo_entrega',
-                    'entregas_venta_confirmaciones.tienda_abierta',
-                    'entregas_venta_confirmaciones.cliente_presente',
-                    'entregas_venta_confirmaciones.observaciones_logistica',
-                    'entregas_venta_confirmaciones.tipo_entrega',
-                    'entregas_venta_confirmaciones.tipo_novedad',
-                    'entregas_venta_confirmaciones.tuvo_problema',
-                    'entregas_venta_confirmaciones.estado_pago',
-                    'entregas_venta_confirmaciones.total_dinero_recibido',
-                    'entregas_venta_confirmaciones.monto_pendiente',
-                    'entregas_venta_confirmaciones.confirmado_en'
-                )
-                ->where('ventas.estado_documento_id', $estadoAprobadoId)
-                ->whereDate('ventas.created_at', '>=', $fechaDesde)
-                ->whereDate('ventas.created_at', '<=', $fechaHasta)
-                ->whereNotNull('ventas.proforma_id');
-
-            // Aplicar los mismos filtros a las ventas
-            if ($request->filled('usuario_creador_id')) {
-                $ventasQuery->where('proformas.usuario_creador_id', $request->usuario_creador_id);
-            } elseif ($user->hasRole('Preventista')) {
-                $ventasQuery->where('proformas.usuario_creador_id', $user->id);
-            }
-
-            if ($request->filled('cliente_id')) {
-                $ventasQuery->where('proformas.cliente_id', $request->cliente_id);
-            }
-
-            $ventas = $ventasQuery->orderByDesc('ventas.id')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->venta_id,
-                        'numero' => $item->numero_venta,
-                        'proforma_numero' => $item->numero_proforma,
-                        'proforma_fecha' => $item->fecha_proforma,
-                        'cliente' => $item->cliente_nombre,
-                        'usuario' => $item->usuario_nombre,
-                        'total' => (float) $item->total,
-                        'fecha' => $item->fecha_venta,
-                        'estado' => $item->estado_codigo,
-                        'estado_entrega' => $item->estado_entrega,
-                        'motivo_entrega' => $item->motivo_entrega,
-                        'tienda_abierta' => $item->tienda_abierta,
-                        'cliente_presente' => $item->cliente_presente,
-                        'observaciones_logistica' => $item->observaciones_logistica,
-                        'tipo_entrega' => $item->tipo_entrega,
-                        'tipo_novedad' => $item->tipo_novedad,
-                        'tuvo_problema' => $item->tuvo_problema,
-                        'estado_pago' => $item->estado_pago,
-                        'total_dinero_recibido' => (float) ($item->total_dinero_recibido ?? 0),
-                        'monto_pendiente' => (float) ($item->monto_pendiente ?? 0),
-                        'confirmado_en' => $item->confirmado_en,
-                    ];
-                })
-                ->sortBy('id')
-                ->values();
+            // ✅ NUEVO: Usar ventas del service
+            $ventas = collect($reporteProductos['ventas']);
 
             // Obtener información del usuario si está filtrado
             $usuarioNombre = null;

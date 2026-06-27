@@ -396,6 +396,9 @@ export function OutputSelectionModal({
             // Para imprimir
             if (tipoDocumento === 'entrega') {
                 url = `${rutaBase}/descargar?formato=${formato}&accion=stream`;
+            } else if (tipoDocumento === 'caja') {
+                // ✅ NUEVO (2026-06-27): Para cajas (cierre y movimientos)
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'pago') {
                 // Para pagos
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
