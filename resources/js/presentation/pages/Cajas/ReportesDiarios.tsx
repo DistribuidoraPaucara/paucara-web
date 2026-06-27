@@ -40,6 +40,7 @@ import { es } from 'date-fns/locale';
 
 interface CierreDiarioGeneral {
   id: number;
+  apertura_caja_id: number;
   usuario_id: number;
   fecha_ejecucion: string;
   total_cajas_procesadas: number;
@@ -345,6 +346,7 @@ export default function ReportesDiarios({
               <TableHeader>
                 <TableRow className="dark:border-slate-700 dark:bg-slate-900">
                   <TableHead className="dark:text-gray-300 font-semibold">Folio</TableHead>
+                  <TableHead className="dark:text-gray-300 font-semibold">Apertura ID</TableHead>
                   <TableHead className="dark:text-gray-300 font-semibold">Fecha/Hora</TableHead>
                   <TableHead className="dark:text-gray-300 font-semibold">Ejecutado por</TableHead>
                   <TableHead className="dark:text-gray-300 text-right font-semibold">Cajas Cerradas</TableHead>
@@ -358,8 +360,13 @@ export default function ReportesDiarios({
                 {cierres.data.length > 0 ? (
                   cierres.data.map((cierre) => (
                     <TableRow key={cierre.id} className="dark:border-slate-700 dark:hover:bg-slate-700 transition-colors">
-                      <TableCell className="dark:text-gray-300">
-                        {cierre.id}
+                      <TableCell className="dark:text-gray-300 font-mono text-sm">
+                        #{cierre.id}
+                      </TableCell>
+                      <TableCell className="dark:text-gray-300 font-mono text-sm">
+                        <Badge variant="secondary" className="dark:bg-slate-700 dark:text-gray-300">
+                          #{cierre.apertura_caja_id}
+                        </Badge>
                       </TableCell>
                       <TableCell className="dark:text-gray-300">
                         {format(parseISO(cierre.fecha_ejecucion), 'dd/MM/yyyy HH:mm', { locale: es })}
@@ -420,7 +427,7 @@ export default function ReportesDiarios({
                   ))
                 ) : (
                   <TableRow className="dark:border-slate-700">
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No se encontraron cierres diarios
                     </TableCell>
                   </TableRow>

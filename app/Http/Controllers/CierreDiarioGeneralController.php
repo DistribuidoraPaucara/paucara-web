@@ -72,6 +72,7 @@ class CierreDiarioGeneralController extends Controller
         $cierresFormateados = $cierres->getCollection()->map(function ($cierre) {
             return [
                 'id' => $cierre->id,
+                'apertura_caja_id' => $cierre->apertura_caja_id,
                 'usuario_id' => $cierre->user_id,
                 'fecha_ejecucion' => $cierre->fecha,
                 'total_cajas_procesadas' => 1,
