@@ -280,7 +280,12 @@ export default function RegistrarPagoModal({
             setTimeout(() => {
                 if (response.data.success && response.data.data?.pago) {
                     setPagoRegistrado(response.data.data.pago);
-                    setMostrarModalImpresion(true);
+                    // Cerrar el modal de pago primero para que no bloquee el modal de impresión
+                    onHide();
+                    // Abrir el modal de impresión después de cerrar el anterior
+                    setTimeout(() => {
+                        setMostrarModalImpresion(true);
+                    }, 300);
                 } else {
                     onPagoRegistrado();
                     onHide();
