@@ -163,7 +163,7 @@ export default function ReportesDiarios({
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Reportes Diarios de Cajas" />
 
-      <div className="py-12">
+      <div className="py-1">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
           {/* Header */}
           <div className="flex justify-between items-start">
@@ -217,7 +217,7 @@ export default function ReportesDiarios({
                     Bs. {Number(estadisticas.total_monto_procesado).toFixed(2)}
                   </p>
                 </div>
-                <TrendingDown className="h-8 w-8 text-purple-500 dark:text-purple-400" />
+                {/* <TrendingDown className="h-8 w-8 text-purple-500 dark:text-purple-400" /> */}
               </div>
             </Card>
 
@@ -241,9 +241,9 @@ export default function ReportesDiarios({
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filtros</h3>
               {/* Otros filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-2">
                 {/* Búsqueda general */}
-                <div>
+                <div className="flex flex-col h-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Buscar (ID, Apertura, Usuario)
                   </label>
@@ -259,12 +259,9 @@ export default function ReportesDiarios({
                     }}
                     className="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Busca en ID del cierre, ID de apertura o nombre de usuario
-                  </p>
                 </div>
 
-                <div>
+                <div className="flex flex-col h-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Desde
                   </label>
@@ -276,7 +273,7 @@ export default function ReportesDiarios({
                   />
                 </div>
 
-                <div>
+                <div className="flex flex-col h-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Hasta
                   </label>
@@ -288,7 +285,7 @@ export default function ReportesDiarios({
                   />
                 </div>
 
-                <div>
+                <div className="flex flex-col h-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                     Usuario
                   </label>
@@ -306,20 +303,22 @@ export default function ReportesDiarios({
                   </select>
                 </div>
 
-                <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={soloDiscrepancias}
-                    onChange={(e) => setSoloDiscrepancias(e.target.checked)}
-                    className="rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:accent-blue-500"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">Solo cierres con discrepancias</span>
-                </label>
+                <div className="flex flex-col h-full justify-end">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={soloDiscrepancias}
+                      onChange={(e) => setSoloDiscrepancias(e.target.checked)}
+                      className="rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:accent-blue-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">Solo cierres con discrepancias</span>
+                  </label>
+                </div>
 
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-col h-full justify-end gap-2">
                   <Button
                     onClick={aplicarFiltros}
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white w-full"
                   >
                     <Search className="mr-2 h-4 w-4" />
                     Buscar
@@ -327,12 +326,15 @@ export default function ReportesDiarios({
                   <Button
                     onClick={limpiarFiltros}
                     variant="outline"
-                    className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
+                    className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 w-full"
                   >
                     Limpiar
                   </Button>
                 </div>
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Busca en ID del cierre, ID de apertura o nombre de usuario
+              </p>
             </div>
           </Card>
 
