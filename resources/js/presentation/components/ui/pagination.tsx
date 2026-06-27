@@ -17,6 +17,13 @@ interface PaginationProps {
   itemsPerPage?: number;
 }
 
+// Decodificar entidades HTML
+const decodeHtmlEntities = (text: string): string => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+};
+
 export function Pagination({
   links,
   onPageChange,
@@ -28,10 +35,13 @@ export function Pagination({
   if (!links || links.length === 0) return null;
 
   // Filtrar links (Laravel pagination retorna labels como "1", "2", etc.)
-  const prevLink = links.find((l) => l.label.includes('Previous'));
-  const nextLink = links.find((l) => l.label.includes('Next'));
+  const prevLink = links.find((l) => decodeHtmlEntities(l.label).toLowerCase().includes('previous'));
+  const nextLink = links.find((l) => decodeHtmlEntities(l.label).toLowerCase().includes('next'));
   const pageLinks = links.filter(
-    (l) => !l.label.includes('Previous') && !l.label.includes('Next')
+    (l) => {
+      const decodedLabel = decodeHtmlEntities(l.label).toLowerCase();
+      return !decodedLabel.includes('previous') && !decodedLabel.includes('next');
+    }
   );
 
   const calculateStartItem = () => {
@@ -98,7 +108,7 @@ export function Pagination({
                   : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700'
               }
             >
-              {link.label}
+              {decodeHtmlEntities(link.label)}
             </Button>
           ))}
 
@@ -119,7 +129,7 @@ export function Pagination({
                       : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700'
                   }
                 >
-                  {link.label}
+                  {decodeHtmlEntities(link.label)}
                 </Button>
               ))}
             </>
