@@ -159,6 +159,14 @@ export default function ReportesDiarios({
     }
   };
 
+  // ✅ NUEVO: Verificar si hay filtros activos
+  const hayFiltrosActivos =
+    busqueda.trim() !== '' ||
+    desde !== '' ||
+    hasta !== '' ||
+    usuarioId !== '' ||
+    soloDiscrepancias;
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Reportes Diarios de Cajas" />
@@ -245,7 +253,7 @@ export default function ReportesDiarios({
                 {/* Búsqueda general */}
                 <div className="flex flex-col h-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
-                    Buscar (ID, Apertura, Usuario)
+                    Buscar (ID)
                   </label>
                   <input
                     type="text"
@@ -325,8 +333,13 @@ export default function ReportesDiarios({
                   </Button>
                   <Button
                     onClick={limpiarFiltros}
+                    disabled={!hayFiltrosActivos}
                     variant="outline"
-                    className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 w-full"
+                    className={`w-full ${
+                      hayFiltrosActivos
+                        ? 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'opacity-50 cursor-not-allowed dark:border-slate-700 dark:text-gray-500 text-gray-400 border-gray-200'
+                    }`}
                   >
                     Limpiar
                   </Button>
