@@ -238,6 +238,7 @@ class CuentaPorPagarController extends Controller
                     $tipoAnulacion = \App\Models\TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
                     \App\Models\MovimientoCaja::create([
+                        'apertura_caja_id' => $movOriginal->apertura_caja_id, // ✅ NUEVO (2026-06-27): Usar apertura del movimiento original
                         'caja_id' => $movOriginal->caja_id,
                         'tipo_operacion_id' => $tipoAnulacion->id,
                         'numero_documento' => $cuentaPorPagar->compra?->numero ?? "CuentaPorPagar#{$cuentaPorPagar->id}",

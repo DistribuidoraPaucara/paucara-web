@@ -258,7 +258,14 @@ class DevolucionService
             return;
         }
 
+        // ✅ NUEVO (2026-06-27): Obtener apertura actual del usuario
+        $apertura = \App\Models\AperturaCaja::where('user_id', Auth::id())
+            ->whereDoesntHave('cierre')
+            ->latest('fecha')
+            ->first();
+
         MovimientoCaja::create([
+            'apertura_caja_id' => $apertura?->id, // ✅ NUEVO (2026-06-27): Guardar apertura_caja_id
             'caja_id' => $cajaId,
             'user_id' => Auth::id(),
             'fecha' => now(),

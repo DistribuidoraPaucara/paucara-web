@@ -3,6 +3,7 @@
 namespace App\Services\Servicio;
 
 use App\DTOs\Servicio\CrearServicioDTO;
+use App\Models\AperturaCaja; // ✅ NUEVO (2026-06-27): Para obtener apertura actual
 use App\Models\Servicio;
 use App\Models\MovimientoCaja;
 use App\Models\TipoOperacionCaja;
@@ -77,7 +78,14 @@ class ServicioService
             return;
         }
 
+        // ✅ NUEVO (2026-06-27): Obtener apertura actual del usuario
+        $apertura = AperturaCaja::where('user_id', Auth::id())
+            ->whereDoesntHave('cierre')
+            ->latest('fecha')
+            ->first();
+
         MovimientoCaja::create([
+            'apertura_caja_id' => $apertura?->id, // ✅ NUEVO (2026-06-27): Guardar apertura_caja_id
             'caja_id' => $cajaId,
             'user_id' => Auth::id(),
             'fecha' => now(),

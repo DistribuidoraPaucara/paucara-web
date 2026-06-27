@@ -192,7 +192,27 @@ class ClienteController extends Controller
 
             // Cargar relaciones según el tipo de request
             if ($this->isApiRequest()) {
-                $clientes->getCollection()->load('localidad', 'categorias', 'direcciones', 'user', 'ventanasEntrega', 'cuentasPorCobrar');
+                $clientes->getCollection()->load(
+                    'localidad',
+                    'categorias',
+                    'direcciones',
+                    'user',
+                    'ventanasEntrega',
+                    'cuentasPorCobrar'
+                );
+
+                // Cargar proformas con filtros mediante lazy load
+                foreach ($clientes as $cliente) {
+                    $cliente->load([
+                        'proformas' => function ($q) {
+                            $q->where('politica_pago', 'CREDITO')
+                                ->whereHas('estadoLogistica', function ($subQ) {
+                                    $subQ->where('codigo', 'PENDIENTE');
+                                })
+                                ->with('estadoLogistica:id,codigo,nombre');
+                        }
+                    ]);
+                }
             } else {
                 $clientes->getCollection()->load('localidad', 'categorias', 'cuentasPorCobrar');
             }
@@ -1361,6 +1381,7 @@ class ClienteController extends Controller
             }
 
             \App\Models\MovimientoCaja::create([
+                'apertura_caja_id'  => $aperturaCaja->id, // ✅ NUEVO (2026-06-27): Guardar apertura_caja_id para filtrado en reportes
                 'caja_id'           => $aperturaCaja->caja_id,
                 'user_id'           => Auth::id(),
                 'fecha'             => now(),

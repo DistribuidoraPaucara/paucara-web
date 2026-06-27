@@ -289,6 +289,7 @@ class CuentaPorCobrarController extends Controller
                 $tipoPago      = TipoPago::find($validated['tipo_pago_id']);
 
                 MovimientoCaja::create([
+                    'apertura_caja_id'  => $apertura->id, // ✅ NUEVO (2026-06-27): Guardar apertura_caja_id para filtrado en reportes
                     'caja_id'           => $apertura->caja_id,
                     'tipo_operacion_id' => $tipoOperacion->id,
                     'numero_documento'  => $cuentaPorCobrar->venta?->numero ?? "CuentaPorCobrar#{$cuentaPorCobrar->id}",
@@ -373,6 +374,7 @@ class CuentaPorCobrarController extends Controller
                     $tipoAnulacion = TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
                     MovimientoCaja::create([
+                        'apertura_caja_id' => $movOriginal->apertura_caja_id, // ✅ NUEVO (2026-06-27): Usar apertura del movimiento original
                         'caja_id' => $movOriginal->caja_id,
                         'tipo_operacion_id' => $tipoAnulacion->id,
                         'numero_documento' => $cuentaPorCobrar->venta?->numero ?? "CuentaPorCobrar#{$cuentaPorCobrar->id}",
@@ -470,6 +472,7 @@ class CuentaPorCobrarController extends Controller
                                 $tipoAnulacion = TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
                                 MovimientoCaja::create([
+                                    'apertura_caja_id' => $movOriginal->apertura_caja_id, // ✅ NUEVO (2026-06-27): Usar apertura del movimiento original
                                     'caja_id' => $movOriginal->caja_id,
                                     'tipo_operacion_id' => $tipoAnulacion->id,
                                     'numero_documento' => $cuentaPorCobrar->venta?->numero ?? "CuentaPorCobrar#{$cuentaPorCobrar->id}",
@@ -506,6 +509,7 @@ class CuentaPorCobrarController extends Controller
                         $tipoAnulacion = TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
                         MovimientoCaja::create([
+                            'apertura_caja_id' => $movVenta->apertura_caja_id, // ✅ NUEVO (2026-06-27): Usar apertura del movimiento original
                             'caja_id' => $movVenta->caja_id,
                             'tipo_operacion_id' => $tipoAnulacion->id,
                             'numero_documento' => $cuentaPorCobrar->venta->numero,
@@ -633,6 +637,138 @@ class CuentaPorCobrarController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar la fecha: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO 2026-06-23: Endpoint API para listar cuentas por cobrar (para app Flutter)
+     *
+     * GET /api/cuentas-por-cobrar
+     * Parámetros:
+     * - per_page: cantidad de registros (default: 20)
+     * - page: página (default: 1)
+     * - estado: filtrar por estado (PENDIENTE, PARCIAL, PAGADO)
+     * - cliente_id: filtrar por cliente
+     * - q: búsqueda libre
+     * - fecha_desde: fecha vencimiento desde
+     * - fecha_hasta: fecha vencimiento hasta
+     * - solo_vencidas: boolean (mostrar solo vencidas)
+     * - sort_by: campo para ordenar (default: id)
+     * - sort_order: asc|desc (default: desc)
+     */
+    public function indexApi(Request $request): JsonResponse
+    {
+        try {
+            $query = CuentaPorCobrar::with(['cliente', 'venta', 'pagos', 'usuario'])
+                ->when($request->filled('estado'), function ($q) use ($request) {
+                    $q->whereRaw('LOWER(estado) = ?', [strtolower($request->estado)]);
+                })
+                ->when($request->filled('cliente_id'), function ($q) use ($request) {
+                    $q->where('cliente_id', $request->cliente_id);
+                })
+                ->when($request->filled('q'), function ($q) use ($request) {
+                    $searchTerm = "%{$request->q}%";
+                    $isNumeric = is_numeric($request->q);
+
+                    $q->where(function ($subQ) use ($searchTerm, $isNumeric, $request) {
+                        // Búsqueda por ID de cuenta
+                        if ($isNumeric) {
+                            $subQ->orWhere('id', (int)$request->q);
+                        }
+                        // Búsqueda por referencia
+                        $subQ->orWhere('referencia_documento', 'LIKE', $searchTerm);
+                        // Búsqueda por cliente
+                        $subQ->orWhereHas('cliente', function ($clienteQ) use ($searchTerm) {
+                            $clienteQ->where('nombre', 'LIKE', $searchTerm);
+                        });
+                    });
+                })
+                ->when($request->filled('fecha_desde') && $request->filled('fecha_hasta'), function ($q) use ($request) {
+                    $q->whereBetween('fecha_vencimiento', [$request->fecha_desde, $request->fecha_hasta]);
+                })
+                ->when($request->filled('solo_vencidas') && $request->boolean('solo_vencidas'), function ($q) {
+                    $q->where('fecha_vencimiento', '<', now())
+                        ->where('estado', '!=', 'PAGADO');
+                });
+
+            // Ordenamiento
+            $sortBy = $request->input('sort_by', 'id');
+            $sortOrder = $request->input('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Paginación
+            $perPage = $request->input('per_page', 20);
+            $cuentas = $query->paginate($perPage);
+
+            // Estadísticas
+            $estadisticas = [
+                'total' => CuentaPorCobrar::count(),
+                'pendientes' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')->count(),
+                'monto_total_pendiente' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                    ->sum(DB::raw('CAST(saldo_pendiente AS DECIMAL(10, 2))')),
+                'cuentas_vencidas' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                    ->where('fecha_vencimiento', '<', now())
+                    ->count(),
+                'monto_total_vencido' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                    ->where('fecha_vencimiento', '<', now())
+                    ->sum(DB::raw('CAST(saldo_pendiente AS DECIMAL(10, 2))')),
+            ];
+
+            // Transformar datos para la app
+            $data = $cuentas->map(function ($cuenta) {
+                return [
+                    'id' => $cuenta->id,
+                    'venta_id' => $cuenta->venta_id,
+                    'cliente_id' => $cuenta->cliente_id,
+                    'monto_original' => (float) $cuenta->monto_original,
+                    'monto_pagado' => (float) $cuenta->monto_pagado,
+                    'saldo_pendiente' => (float) $cuenta->saldo_pendiente,
+                    'fecha_vencimiento' => $cuenta->fecha_vencimiento?->format('Y-m-d'),
+                    'dias_vencido' => $cuenta->dias_vencido,
+                    'estado' => $cuenta->estado,
+                    'referencia_documento' => $cuenta->referencia_documento,
+                    'observaciones' => $cuenta->observaciones,
+                    'cliente' => $cuenta->cliente ? [
+                        'id' => $cuenta->cliente->id,
+                        'nombre' => $cuenta->cliente->nombre,
+                        'nit' => $cuenta->cliente->nit,
+                        'telefono' => $cuenta->cliente->telefono,
+                        'email' => $cuenta->cliente->email,
+                    ] : null,
+                    'venta' => $cuenta->venta ? [
+                        'id' => $cuenta->venta->id,
+                        'numero' => $cuenta->venta->numero,
+                        'fecha' => $cuenta->venta->fecha?->format('Y-m-d'),
+                    ] : null,
+                    'pagos_count' => $cuenta->pagos->count(),
+                ];
+            })->toArray();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cuentas por cobrar obtenidas exitosamente',
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $cuentas->currentPage(),
+                    'per_page' => $cuentas->perPage(),
+                    'total' => $cuentas->total(),
+                    'last_page' => $cuentas->lastPage(),
+                    'has_more_pages' => $cuentas->hasMorePages(),
+                ],
+                'estadisticas' => $estadisticas,
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error obteniendo cuentas por cobrar para API', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener cuentas por cobrar: ' . $e->getMessage(),
             ], 500);
         }
     }
