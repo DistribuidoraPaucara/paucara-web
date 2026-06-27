@@ -919,11 +919,17 @@ class CierreCajaService
 
         // Extraer valores del desglose para detalle (para mantener compatibilidad con retorno)
         // ✅ BENEFICIO: Nuevos códigos aparecerán automáticamente sin necesidad de hardcodear
+
+        // SALIDA
         $gastos = $desgloseEgresos['GASTOS'] ?? 0;
         $pagosSueldo = $desgloseEgresos['PAGO_SUELDO'] ?? 0;
         $anticipos = $desgloseEgresos['ANTICIPO'] ?? 0;
         $compras = $desgloseEgresos['COMPRA'] ?? 0;
         $devoluciones = $desgloseEgresos['DEVOLUCION'] ?? 0;
+
+        // ENTRADA
+        $ventasEfectivo = ($desgloseIngresos['VENTA'] ?? 0);  // VENTA en dirección ENTRADA (por tipo de pago)
+        $pagosCreditoTotal = ($desgloseIngresos['PAGO'] ?? 0);  // PAGO en dirección ENTRADA
         $servicio = $desgloseIngresos['SERVICIO'] ?? 0;
 
         // Ventas anuladas (TODOS los tipos excepto crédito) - REFERENCIAL
