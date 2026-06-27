@@ -24,7 +24,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
-import { Input } from '@/presentation/components/ui/input';
 import { Card } from '@/presentation/components/ui/card';
 import {
   Table,
@@ -35,6 +34,7 @@ import {
   TableRow,
 } from '@/presentation/components/ui/table';
 import { Badge } from '@/presentation/components/ui/badge';
+import { Pagination } from '@/presentation/components/ui/pagination';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -67,11 +67,20 @@ interface Filtros {
   solo_discrepancias?: boolean;
 }
 
+interface PaginationLink {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
 interface Props {
   cierres: {
     data: CierreDiarioGeneral[];
-    links: any;
+    links: PaginationLink[];
     total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
   };
   estadisticas: {
     total_cierres: number;
@@ -129,6 +138,21 @@ export default function ReportesDiarios({
     setUsuarioId('');
     setSoloDiscrepancias(false);
     router.get('/cajas/admin/reportes-diarios');
+  };
+
+  const handlePageChange = (url: string) => {
+    if (url) {
+      // Mantener los filtros actuales al cambiar de página
+      const params = new URLSearchParams();
+      if (fecha) params.append('fecha', fecha);
+      if (desde) params.append('desde', desde);
+      if (hasta) params.append('hasta', hasta);
+      if (usuarioId) params.append('usuario_id', usuarioId);
+      if (soloDiscrepancias) params.append('solo_discrepancias', '1');
+
+      const separator = url.includes('?') ? '&' : '?';
+      router.get(`${url}${separator}${params.toString()}`);
+    }
   };
 
   return (
@@ -385,13 +409,25 @@ export default function ReportesDiarios({
                   ))
                 ) : (
                   <TableRow className="dark:border-slate-700">
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-gray-400">
                       No se encontraron cierres diarios
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+
+            {/* Paginación */}
+            <div className="p-4 border-t dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+              <Pagination
+                links={cierres.links}
+                onPageChange={handlePageChange}
+                currentPage={cierres.current_page}
+                totalPages={cierres.last_page}
+                totalItems={cierres.total}
+                itemsPerPage={cierres.per_page}
+              />
+            </div>
           </Card>
         </div>
       </div>
