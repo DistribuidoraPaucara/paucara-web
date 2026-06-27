@@ -411,14 +411,6 @@ class Cliente extends Model
         $comprometido = $this->credito_total_comprometido;
         $disponible = max(0, $limite - $comprometido);
 
-        \Log::debug('✅ [credito_disponible]', [
-            'cliente_id' => $this->id,
-            'limite_credito' => $limite,
-            'credito_total_comprometido' => $comprometido,
-            'credito_disponible' => $disponible,
-            'validacion_cumplida' => $comprometido < $limite,
-        ]);
-
         return $disponible;
     }
 }
