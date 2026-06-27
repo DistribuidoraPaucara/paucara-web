@@ -289,6 +289,7 @@ class CierreDiarioGeneralController extends Controller
             return Inertia::render('Cajas/ReportesDiariosDetalle', [
                 'cierre' => [
                     'id' => $cierre->id,
+                    'apertura_caja_id' => $cierre->apertura_caja_id,
                     'usuario_id' => $cierre->user_id,
                     'usuario' => [
                         'id' => $cierre->usuario->id,
