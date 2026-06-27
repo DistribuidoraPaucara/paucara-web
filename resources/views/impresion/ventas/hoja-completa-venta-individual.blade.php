@@ -58,9 +58,26 @@
         return is_object($venta) && isset($venta->descuento) ? (float)$venta->descuento : 0;
     }
 
+    function obtenerCodigoEstado($venta) {
+        if (is_array($venta) && isset($venta['estado_documento'])) {
+            $est = $venta['estado_documento'];
+            return is_array($est) ? ($est['codigo'] ?? '') : (is_object($est) ? ($est->codigo ?? '') : '');
+        }
+        return is_object($venta) && isset($venta->estadoDocumento) ? ($venta->estadoDocumento->codigo ?? '') : '';
+    }
+
+    function obtenerObservaciones($venta) {
+        if (is_array($venta) && isset($venta['observaciones'])) {
+            return $venta['observaciones'];
+        }
+        return is_object($venta) && isset($venta->observaciones) ? $venta->observaciones : '';
+    }
+
     $cliente = obtenerCliente($venta);
     $fecha = obtenerFecha($venta);
     $estado = obtenerEstado($venta);
+    $codigoEstado = obtenerCodigoEstado($venta);
+    $observaciones = obtenerObservaciones($venta);
     $subtotal = obtenerSubtotal($venta);
     $total = obtenerTotal($venta);
     $descuento = obtenerDescuento($venta);
@@ -80,6 +97,17 @@
         </div>
     </div>
 </div>
+
+{{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
+@if($codigoEstado === 'ANULADO' && $observaciones)
+<div style="margin: 15px 0; padding: 12px; background-color: #fadbd8; border-left: 4px solid #e74c3c; border-radius: 4px;">
+    <p style="margin: 0; color: #c0392b; font-weight: bold;">⚠️ VENTA ANULADA</p>
+    <p style="margin: 5px 0 0 0; color: #c0392b; font-size: 10px; line-height: 1.4;">
+        <strong>Motivo de anulación:</strong><br>
+        {{ $observaciones }}
+    </p>
+</div>
+@endif
 
 {{-- Tabla de productos --}}
 <table class="tabla-productos">
