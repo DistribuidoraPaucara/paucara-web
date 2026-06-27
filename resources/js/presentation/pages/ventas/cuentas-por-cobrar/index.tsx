@@ -916,7 +916,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                             </td>
                                             <td className="px-2 py-2 text-right text-sm font-medium whitespace-nowrap">
                                                 <div className="flex justify-end space-x-1">
-                                                    {cuenta.estado !== 'PAGADO' && (
+                                                    {cuenta.estado !== 'PAGADO' && cuenta.estado !== 'ANULADO' && (
                                                         <Button
                                                             size="sm"
                                                             onClick={() => handleAbrirModalPago(cuenta)}
