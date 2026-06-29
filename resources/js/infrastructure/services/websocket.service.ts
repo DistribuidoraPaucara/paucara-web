@@ -34,7 +34,7 @@ class WebSocketService {
         const baseUrl = config.url ||
                         appConfig.websocketUrl ||
                         import.meta.env.VITE_WEBSOCKET_URL ||
-                        'http://localhost:3001';
+                        'ws://localhost:3001';
 
         console.log('🔌 WebSocket URL (resolved):', baseUrl);
         console.log('🔍 Debug info:');

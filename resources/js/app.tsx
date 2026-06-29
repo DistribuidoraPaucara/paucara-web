@@ -30,6 +30,23 @@ const appName = getAppName();
 // Configurar axios con interceptadores para autenticación
 configureAxios();
 
+// ✅ NUEVO: Obtener token CSRF de Sanctum antes de hacer peticiones
+// Esto configura la cookie XSRF-TOKEN que axios usa en todas las peticiones
+const initializeCsrfToken = async () => {
+    try {
+        await fetch('/sanctum/csrf-cookie', {
+            credentials: 'include',
+            method: 'GET',
+        });
+        console.log('✅ CSRF token inicializado desde /sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('⚠️ Error inicializando CSRF token:', error);
+    }
+};
+
+// Inicializar CSRF token antes de crear la app
+initializeCsrfToken();
+
 createInertiaApp({
     title: (title) => title ? `${title} - ${appName}` : appName,
     resolve: (name) => resolvePageComponent(`./presentation/pages/${name}.tsx`, import.meta.glob('./presentation/pages/**/*.tsx')),
