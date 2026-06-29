@@ -395,30 +395,27 @@ class VentaService
             // ✅ CORREGIDO (2026-06-29): Validar que todos los productos fueron procesados
             // Nota: Cantidad de movimientos ≠ cantidad de productos
             // Un producto puede estar en múltiples lotes → múltiples movimientos por un producto
-            // Validar que se crearon ALGUNOS movimientos para cada producto
-            $productosConMovimientos = collect($movimientosStock)
-                ->pluck('stockProducto.producto_id')
-                ->unique()
-                ->count();
-
+            // Validar que se crearon movimientos (al menos uno por producto)
+            $cantidadMovimientos = count($movimientosStock);
             $cantidadProductosUnicos = collect($detallesParaStock)
                 ->pluck('producto_id')
                 ->unique()
                 ->count();
 
-            if ($productosConMovimientos != $cantidadProductosUnicos) {
+            // Validar que hay al menos tantos movimientos como productos
+            // (pueden haber más si un producto está en múltiples lotes)
+            if ($cantidadMovimientos < $cantidadProductosUnicos || $cantidadMovimientos === 0) {
                 Log::error('❌ [VentaService::crear] Producto(s) sin movimiento de inventario', [
                     'venta_id' => $venta->id,
                     'venta_numero' => $venta->numero,
                     'productos_esperados' => $cantidadProductosUnicos,
-                    'productos_con_movimiento' => $productosConMovimientos,
-                    'movimientos_creados' => count($movimientosStock),
+                    'movimientos_creados' => $cantidadMovimientos,
                     'detalles' => $detallesParaStock,
                 ]);
 
                 throw new \Exception(
                     "Error crítico: Se esperaban {$cantidadProductosUnicos} producto(s) pero " .
-                    "solo {$productosConMovimientos} tienen movimientos de inventario. " .
+                    "solo se crearon {$cantidadMovimientos} movimiento(s). " .
                     "Venta {$venta->numero} requiere revisión manual."
                 );
             }

@@ -49,9 +49,9 @@ class MovimientoStockService
         int $referencia_id,
         array $metadataAdicional = [],
         ?string $numeroDocumento = null  // ✅ NUEVO (2026-06-09): Número del documento para auditoría
-    ): void {
+    ): MovimientoInventario {
         try {
-            DB::transaction(function () use (
+            return DB::transaction(function () use (
                 $stockProductoId,
                 $cantidad,
                 $tipo,
@@ -223,7 +223,7 @@ class MovimientoStockService
                     $metadataAdicional
                 );
 
-                MovimientoInventario::create([
+                $movimiento = MovimientoInventario::create([
                     'stock_producto_id' => $stockProductoId,
                     'cantidad' => $cantidad,
                     // ✅ LOTE ESPECÍFICO (valores del lote individual)
@@ -256,6 +256,8 @@ class MovimientoStockService
                     'referencia' => "{$referencia_tipo}:{$referencia_id}",
                     'cantidad' => $cantidad,
                 ]);
+
+                return $movimiento;
             });
 
         } catch (InvalidArgumentException $e) {

@@ -169,8 +169,9 @@ class VentaDistribucionService
 
         $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
         $movimientos = [];
+        $productosProcessados = [];
 
-        return DB::transaction(function () use ($detalles, $numeroVenta, $ventaId, $almacenId, $permitirStockNegativo, $esFarmacia, &$movimientos) {
+        return DB::transaction(function () use ($detalles, $numeroVenta, $ventaId, $almacenId, $permitirStockNegativo, $esFarmacia, &$movimientos, &$productosProcessados) {
             foreach ($detalles as $item) {
                 $productoId = $item['producto_id'] ?? $item['id'];
                 // ✅ CAMBIO (2026-02-16): Permitir decimales en lugar de truncar a entero
@@ -186,6 +187,9 @@ class VentaDistribucionService
                     ]);
                     continue;
                 }
+
+                // ✅ NUEVO (2026-06-29): Rastrear que este producto fue procesado
+                $productosProcessados[$productoId] = true;
 
                 // 1. Obtener producto
                 $producto = Producto::find($productoId);
