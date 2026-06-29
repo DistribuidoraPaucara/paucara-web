@@ -66,6 +66,7 @@ const MovimientosInventarioPage: React.FC<PageProps> = ({
     console.log('MovimientosInventarioPage renderizado', { movimientos, filtros, stats });
     // ✅ Estado de UI
     const [activeTab, setActiveTab] = useState<'lista' | 'estadisticas'>('lista');
+    const [mostrarValoresPorLote, setMostrarValoresPorLote] = useState(false); // ✅ NUEVO (2026-06-28): Toggle para valores por lote
 
     // ✅ Hook de aplicación para manejo de acciones
     const { handleCreateAjuste, handleGoToReportes } = useMovimientosInventario();
@@ -118,7 +119,7 @@ const MovimientosInventarioPage: React.FC<PageProps> = ({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Movimientos de Inventario" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-2 p-2">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -131,6 +132,19 @@ const MovimientosInventarioPage: React.FC<PageProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {/* ✅ NUEVO (2026-06-28): Botón para mostrar/ocultar valores por lote */}
+                        <button
+                            onClick={() => setMostrarValoresPorLote(!mostrarValoresPorLote)}
+                            className={`px-3 py-2 text-sm rounded-md font-medium transition-colors ${
+                                mostrarValoresPorLote
+                                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            title="Mostrar/Ocultar valores por lote en la tabla"
+                        >
+                            {mostrarValoresPorLote ? '✓ Valores por Lote' : 'Valores por Lote'}
+                        </button>
+
                         <ImprimirMovimientosButton
                             movimientos={movimientos.data as any}
                             filtros={filtros}
@@ -253,6 +267,7 @@ const MovimientosInventarioPage: React.FC<PageProps> = ({
                         <MovimientosTable
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             movimientos={movimientos.data as any}
+                            mostrarValoresPorLote={mostrarValoresPorLote}
                             pagination={{
                                 current_page: movimientos.current_page,
                                 last_page: movimientos.last_page,

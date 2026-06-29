@@ -2,10 +2,9 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/presentation/components/ui/tabs';
-import { ArrowLeft, Package, CheckCircle2, Navigation, Flag, Printer } from 'lucide-react';
+import { Package, CheckCircle2, Navigation, Flag, Printer } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import type { Entrega, VehiculoCompleto } from '@/domain/entities/entregas';
-
 import VentasEntregaSection from './components/VentasEntregaSection';
 import ProductosAgrupados from './components/ProductosAgrupados';
 import ResumenPagosEntrega from './components/ResumenPagosEntrega';
@@ -14,6 +13,7 @@ import { CorregirPagoModal } from './components/CorregirPagoModal';
 import { EntregaActionsModal } from '@/presentation/components/logistica/entrega-actions-modal';
 import EstadoBadge from '@/presentation/components/logistica/EstadoBadge';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { UbicacionesMultiplesModal } from './components/UbicacionesMultiplesModal';
 import { useState, useEffect } from 'react';
 import { useEntregaNotifications } from '@/application/hooks/use-entrega-notifications';
 import { useToastNotifications } from '@/application/hooks/use-toast-notifications';
@@ -50,6 +50,8 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
     const [confirmandoEntrega, setConfirmandoEntrega] = useState<VentaEntrega | null>(null);
     // ✅ NUEVO: Estado para confirmación existente (editar)
     const [confirmacionExistente, setConfirmacionExistente] = useState<any>(null);
+    // ✅ NUEVO: Estado para modal de ubicaciones
+    const [mostrarUbicaciones, setMostrarUbicaciones] = useState(false);
 
     // ✅ DEBUG: Ver qué datos llegan del backend
     useEffect(() => {
@@ -65,7 +67,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 confirmacion_entrega: v.confirmacion_entrega,
                 todas_propiedades: v
             })),
-            todo_entrega: initialEntrega
+            todo_entrega: initialEntrega,
         });
     }, [initialEntrega]);
 
@@ -299,7 +301,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
         <AppLayout>
             <Head title={`Entrega ${numero}`} />
 
-            <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 bg-white dark:bg-slate-950 w-full">
+            <div className="space-y-2 p-4 sm:p-6 bg-white dark:bg-slate-950 w-full">
                 {/* Header - Responsive */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     {/* Título y Info */}
@@ -362,6 +364,16 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             </Button>
                         )}
 
+                        {/* ✅ NUEVO: Botón para ver ubicaciones en mapa */}
+                        <Button
+                            onClick={() => setMostrarUbicaciones(true)}
+                            variant="outline"
+                            className="w-full text-sm sm:text-base"
+                        >
+                            <Package className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <span className="truncate">Ver en Mapa</span>
+                        </Button>
+
                         {/* Botón para abrir modal de impresión/descarga */}
                         <Button
                             onClick={() => setIsOutputModalOpen(true)}
@@ -417,12 +429,43 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             tiposPago={tiposPago}
                         />
                     )}
+
+                    {/* ✅ NUEVO: Modal de ubicaciones múltiples */}
+                    {entrega.ventas && (
+                        <UbicacionesMultiplesModal
+                            isOpen={mostrarUbicaciones}
+                            onClose={() => setMostrarUbicaciones(false)}
+                            ubicaciones={
+                                entrega.ventas.map((venta: any) => ({
+                                    id: venta.direccion_cliente?.id || venta.id,
+                                    venta_id: venta.id,
+                                    venta_numero: venta.numero,
+                                    cliente_nombre: venta.cliente?.nombre || 'Cliente desconocido',
+                                    cliente_telefono: venta.cliente?.telefono,
+                                    cliente_foto: venta.cliente?.foto_perfil ? `/storage/${venta.cliente.foto_perfil}` : undefined,
+                                    direccion: venta.direccion_cliente?.direccion || 'Sin dirección',
+                                    observaciones: venta.direccion_cliente?.observaciones,
+                                    latitud: venta.direccion_cliente?.latitud,
+                                    longitud: venta.direccion_cliente?.longitud,
+                                    estado: entrega.estado_entrega?.nombre,
+                                    tipo_entrega: venta.confirmacion_entrega?.tipo_entrega || 'COMPLETA',
+                                    confirmacion_entrega: venta.confirmacion_entrega ? {
+                                        tipo_confirmacion: venta.confirmacion_entrega.tipo_confirmacion,
+                                        total_dinero_recibido: venta.confirmacion_entrega.total_dinero_recibido,
+                                        monto_pendiente: venta.confirmacion_entrega.monto_pendiente,
+                                        confirmado_en: venta.confirmacion_entrega.confirmado_en,
+                                    } : undefined,
+                                })) || []
+                            }
+                            titulo={`Ubicaciones de Entrega ${entrega.numero_entrega || ''}`}
+                        />
+                    )}
                 </div>
 
                 {/* Información del Lote - Entregas con mismo chofer y vehículo */}
                 {entrega.chofer && entrega.vehiculo && (
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-2 sm:p-6">
-                        <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-purple-900 dark:text-purple-200">
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-2">
+                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-purple-900 dark:text-purple-200">
                             <Package className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                             <span>Contexto del Lote</span>
                         </h2>

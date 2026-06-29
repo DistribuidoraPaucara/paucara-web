@@ -156,18 +156,25 @@ class MovimientoInventarioService
             $stock_producto_id = !empty($detallesLotes) ? $detallesLotes[0]['stock_producto_id'] : null;
 
             // Crear movimiento AGRUPADO
+            // ✅ CORREGIDO (2026-06-29): Guardar en AMBAS columnas (cantidad_disponible_* y disponible_total_*)
+            // porque cantidad_disponible_* son del lote específico, mientras que disponible_total_* son del total
             $movimiento = MovimientoInventario::create([
                 'stock_producto_id' => $stock_producto_id,
                 'cantidad' => $cantidad, // Cantidad neta (puede ser negativa)
                 'cantidad_anterior' => $cantidadTotalAnterior,
                 'cantidad_posterior' => $cantidadTotalPosterior,
-                // 6 columnas de auditoría
+                // ✅ 8 columnas de auditoría (cantidad_total + disponible_total + reservada_total)
                 'cantidad_total_anterior' => $cantidadTotalAnterior,
                 'cantidad_total_posterior' => $cantidadTotalPosterior,
                 'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
                 'cantidad_disponible_posterior' => $cantidadDisponiblePosterior,
                 'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
                 'cantidad_reservada_posterior' => $cantidadReservadaPosterior,
+                // ✅ NUEVO (2026-06-29): Columnas de totales agregados (suma de todos los lotes)
+                'disponible_total_anterior' => $cantidadDisponibleAnterior,
+                'disponible_total_posterior' => $cantidadDisponiblePosterior,
+                'reservada_total_anterior' => $cantidadReservadaAnterior,
+                'reservada_total_posterior' => $cantidadReservadaPosterior,
                 'tipo' => $tipo,
                 'numero_documento' => $numero_documento,
                 'referencia_tipo' => $referencia_tipo,

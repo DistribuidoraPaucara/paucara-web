@@ -704,10 +704,10 @@ class InventarioController extends Controller
         $totalSalidas     = (clone $query)->where('tipo', 'like', 'SALIDA%')->count();
 
         // ✅ Paginar resultados - Laravel obtiene automáticamente la página del request
-        // ✅ ORDENAMIENTO (2026-02-11): Ordenar por created_at DESC (más recientes primero)
+        // ✅ ORDENAMIENTO (2026-06-28): Ordenar por id DESC (movimientos más recientes primero)
         // ✅ NUEVO: Si mostrarTodos=true, paginar con el total de registros (1 sola página)
         $pageSize = $mostrarTodos ? max($totalMovimientos, 1) : $perPage;
-        $movimientosPaginados = $query->orderByDesc('created_at')
+        $movimientosPaginados = $query->orderByDesc('id')
             ->paginate($pageSize);
 
         // ✅ NUEVO (2026-06-02): Obtener movimientos sin paginar para comparación de inconsistencias
@@ -717,7 +717,7 @@ class InventarioController extends Controller
             $movimientosParaComparacion = $movimientosPaginados;
         } else {
             // Si no, obtener todos los movimientos del filtro actual para detección de inconsistencias
-            $movimientosParaComparacion = $query->orderByDesc('created_at')->get();
+            $movimientosParaComparacion = $query->orderByDesc('id')->get();
         }
 
         // Mapear datos de movimientos
@@ -731,7 +731,7 @@ class InventarioController extends Controller
 
                 return [
                     'id'                => $movimiento->id,
-                    'tipo'              => $this->mapearTipoMovimiento($movimiento->tipo),
+                    'tipo'              => $movimiento->tipo,  // ✅ CAMBIO: Enviar tipo directo sin transformación
                     'tipo_ajuste_id'    => $movimiento->tipo_ajuste_inventario_id,
                     'tipo_merma_id'     => $movimiento->tipo_merma_id,
                     'estado_merma_id'   => $movimiento->estado_merma_id,
@@ -746,6 +746,11 @@ class InventarioController extends Controller
                     'cantidad_disponible_posterior' => $movimiento->cantidad_disponible_posterior ?? 0,
                     'cantidad_reservada_anterior' => $movimiento->cantidad_reservada_anterior ?? $cantidadesExtraidas['cantidad_reservada_anterior'],
                     'cantidad_reservada_posterior' => $movimiento->cantidad_reservada_posterior ?? $cantidadesExtraidas['cantidad_reservada_posterior'],
+                    // ✅ NUEVO (2026-06-28): TOTALES de todos los lotes (centralizado)
+                    'disponible_total_anterior' => $movimiento->disponible_total_anterior ?? 0,
+                    'disponible_total_posterior' => $movimiento->disponible_total_posterior ?? 0,
+                    'reservada_total_anterior' => $movimiento->reservada_total_anterior ?? 0,
+                    'reservada_total_posterior' => $movimiento->reservada_total_posterior ?? 0,
                     'fecha'             => $movimiento->fecha->toISOString(),
                     'created_at'        => $movimiento->created_at->toISOString(),  // ✅ NUEVO (2026-02-11): Fecha de creación
                     'usuario'           => [
@@ -784,7 +789,7 @@ class InventarioController extends Controller
 
             return [
                 'id'                => $movimiento->id,
-                'tipo'              => $this->mapearTipoMovimiento($movimiento->tipo),
+                'tipo'              => $movimiento->tipo,  // ✅ CAMBIO: Enviar tipo directo sin transformación
                 'tipo_ajuste_id'    => $movimiento->tipo_ajuste_inventario_id,
                 'tipo_merma_id'     => $movimiento->tipo_merma_id,
                 'estado_merma_id'   => $movimiento->estado_merma_id,
@@ -799,6 +804,11 @@ class InventarioController extends Controller
                 'cantidad_disponible_posterior' => $movimiento->cantidad_disponible_posterior ?? 0,
                 'cantidad_reservada_anterior' => $movimiento->cantidad_reservada_anterior ?? $cantidadesExtraidas['cantidad_reservada_anterior'],
                 'cantidad_reservada_posterior' => $movimiento->cantidad_reservada_posterior ?? $cantidadesExtraidas['cantidad_reservada_posterior'],
+                // ✅ NUEVO (2026-06-28): TOTALES de todos los lotes (centralizado)
+                'disponible_total_anterior' => $movimiento->disponible_total_anterior ?? 0,
+                'disponible_total_posterior' => $movimiento->disponible_total_posterior ?? 0,
+                'reservada_total_anterior' => $movimiento->reservada_total_anterior ?? 0,
+                'reservada_total_posterior' => $movimiento->reservada_total_posterior ?? 0,
                 'fecha'             => $movimiento->fecha->toISOString(),
                 'created_at'        => $movimiento->created_at->toISOString(),  // ✅ NUEVO (2026-02-11): Fecha de creación
                 'usuario'           => [
@@ -1372,7 +1382,8 @@ class InventarioController extends Controller
                     ajustes: $ajustes,
                     numeroAjuste: $numeroFinal,
                     almacenId: $almacenId,
-                    usuarioId: auth()->id() ?? 1
+                    usuarioId: auth()->id() ?? 1,
+                    ajusteId: $ajusteInventarioId  // ✅ NUEVO (2026-06-29): Pasar ajuste_id para referencia_id
                 );
 
                 Log::info('✅ [InventarioController] Movimientos agrupados registrados', [
@@ -2642,8 +2653,9 @@ class InventarioController extends Controller
                     $cantidad  = $ajuste['cantidad'];
                     $esEntrada = $operacion->direccion === 'entrada';
 
-                    // Mapear el tipo de operación al tipo de movimiento
-                    $tipoMovimiento = $this->mapearTipoMovimiento($operacion->clave);
+                    // ✅ CAMBIO: Usar clave directo sin transformación (centralizar a valores de BD)
+                    // $operacion->clave será: ENTRADA_AJUSTE, SALIDA_AJUSTE, etc.
+                    $tipoMovimiento = $operacion->clave;
 
                     // Capturar cantidad anterior ANTES de actualizar el stock
                     $cantidadAnterior = $stock->cantidad;
@@ -3420,7 +3432,7 @@ class InventarioController extends Controller
                 ->get();
 
             // ✅ PASO 2: Obtener todos los productos (incluyendo los que NO existen en stock)
-            // Búsqueda incluye: ID, SKU, Códigos de Barra, Nombre (todo case-insensitive)
+            // ✅ CORREGIDO (2026-06-29): Búsqueda EXACTA para ID y SKU, parcial para nombre
             $todosProductos = \App\Models\Producto::with('codigosBarra')
                 ->select('id', 'nombre', 'sku', 'codigo_barras')
                 ->where(function ($query) use ($searchLower, $isNumeric, $searchTerm) {
@@ -3428,16 +3440,16 @@ class InventarioController extends Controller
                     if ($isNumeric) {
                         $query->orWhere('id', (int)$searchTerm);
                     }
-                    // SKU
-                    $query->orWhereRaw('LOWER(sku) LIKE ?', ['%' . $searchLower . '%'])
-                          // Nombre
+                    // SKU EXACTO (case-insensitive)
+                    $query->orWhereRaw('LOWER(sku) = ?', [$searchLower])
+                          // Nombre (búsqueda parcial)
                           ->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $searchLower . '%'])
-                          // Código de barras principal
-                          ->orWhereRaw('LOWER(codigo_barras) LIKE ?', ['%' . $searchLower . '%']);
+                          // Código de barras principal EXACTO
+                          ->orWhereRaw('LOWER(codigo_barras) = ?', [$searchLower]);
                 })
                 ->orWhereHas('codigosBarra', function ($query) use ($searchLower) {
-                    // Códigos de barra adicionales (si existen en tabla relacional)
-                    $query->whereRaw('LOWER(codigo) LIKE ?', ['%' . $searchLower . '%']);
+                    // Códigos de barra adicionales EXACTO
+                    $query->whereRaw('LOWER(codigo) = ?', [$searchLower]);
                 })
                 ->get();
 
@@ -3461,15 +3473,18 @@ class InventarioController extends Controller
             $resultadosColecccion = collect();
 
             // Primero agregar los que ya están en stock
+            // ✅ CORREGIDO (2026-06-29): Búsqueda EXACTA para SKU e ID, parcial para nombre
             foreach ($stockProductos as $sp) {
                 $sku = strtolower($sp->producto->sku ?? '');
                 $nombre = strtolower($sp->producto->nombre ?? '');
                 $codigos = $obtenerCodigosBarra($sp->producto);
+                $productoId = (string)$sp->producto->id;
 
-                $coincide = strpos($sku, $searchLower) !== false ||
+                // Coincide si: ID exacto O SKU exacto O nombre parcial O código barras exacto
+                $coincide = $isNumeric && $productoId === $searchTerm ||
+                           $sku === $searchLower ||
                            strpos($nombre, $searchLower) !== false ||
-                           in_array($searchLower, $codigos) ||
-                           array_filter($codigos, fn($c) => strpos($c, $searchLower) !== false);
+                           in_array($searchLower, $codigos);
 
                 if ($coincide) {
                     $resultadosColecccion->push([
@@ -3719,7 +3734,7 @@ class InventarioController extends Controller
                         'producto_sku' => $movimiento->stockProducto->producto->sku ?? 'N/A',
                         'almacen_nombre' => $movimiento->stockProducto->almacen->nombre ?? 'N/A',
                         'tipo_operacion' => $movimiento->tipo,
-                        'tipo_ajuste_label' => $this->mapearTipoMovimiento($movimiento->tipo),
+                        'tipo_ajuste_label' => $this->obtenerMotivoMovimiento($movimiento->tipo),  // ✅ Usar motivo en lugar de mapearTipo
                         'cantidad' => $movimiento->cantidad,
                         'cantidad_anterior' => $movimiento->cantidad_anterior ?? 0,
                         'cantidad_posterior' => $movimiento->cantidad_posterior ?? 0,
@@ -3819,7 +3834,7 @@ class InventarioController extends Controller
                     'producto_sku' => $ajuste['producto_sku'] ?? $ajuste['sku'] ?? 'N/A',
                     'almacen_nombre' => $ajuste['almacen_nombre'] ?? $ajuste['almacen'] ?? 'Sin almacén',
                     'tipo_operacion' => $ajuste['tipo_operacion'] ?? $ajuste['tipo'] ?? 'AJUSTE',
-                    'tipo_ajuste_label' => $this->mapearTipoMovimiento($ajuste['tipo_operacion'] ?? $ajuste['tipo'] ?? 'AJUSTE'),
+                    'tipo_ajuste_label' => $this->obtenerMotivoMovimiento($ajuste['tipo_operacion'] ?? $ajuste['tipo'] ?? 'AJUSTE'),  // ✅ Usar motivo en lugar de mapearTipo
                     'cantidad' => (float)($ajuste['cantidad'] ?? 0),
                     'cantidad_anterior' => (float)($ajuste['cantidad_anterior'] ?? 0),
                     'cantidad_posterior' => (float)($ajuste['cantidad_posterior'] ?? 0),
@@ -4484,12 +4499,13 @@ class InventarioController extends Controller
             $esAnulado = $movimiento['anulado'] ?? false;
             $cambio = $movimiento['cantidad'] ?? 0;
 
+            // ✅ NUEVO (2026-06-28): Usar TOTALES de todos los lotes (no valores del lote específico)
             $totAnt = $movimiento['cantidad_total_anterior'] ?? 0;
             $totPos = $movimiento['cantidad_total_posterior'] ?? 0;
-            $disAnt = $movimiento['cantidad_disponible_anterior'] ?? 0;
-            $disPos = $movimiento['cantidad_disponible_posterior'] ?? 0;
-            $resAnt = $movimiento['cantidad_reservada_anterior'] ?? 0;
-            $resPos = $movimiento['cantidad_reservada_posterior'] ?? 0;
+            $disAnt = $movimiento['disponible_total_anterior'] ?? 0;
+            $disPos = $movimiento['disponible_total_posterior'] ?? 0;
+            $resAnt = $movimiento['reservada_total_anterior'] ?? 0;
+            $resPos = $movimiento['reservada_total_posterior'] ?? 0;
 
             // ✅ Validación 1: Valores negativos (casi nunca permitidos)
             if ($totAnt < 0 || $totPos < 0) {

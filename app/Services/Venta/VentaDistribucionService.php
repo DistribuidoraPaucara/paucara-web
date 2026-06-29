@@ -154,6 +154,7 @@ class VentaDistribucionService
     public function consumirStock(
         array $detalles,
         string $numeroVenta,
+        ?int $ventaId = null,                    // ✅ NUEVO (2026-06-29): Para referencia_id en movimientos
         bool $permitirStockNegativo = false,
         bool $esFarmacia = false
     ): array {
@@ -169,7 +170,7 @@ class VentaDistribucionService
         $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
         $movimientos = [];
 
-        return DB::transaction(function () use ($detalles, $numeroVenta, $almacenId, $permitirStockNegativo, $esFarmacia, &$movimientos) {
+        return DB::transaction(function () use ($detalles, $numeroVenta, $ventaId, $almacenId, $permitirStockNegativo, $esFarmacia, &$movimientos) {
             foreach ($detalles as $item) {
                 $productoId = $item['producto_id'] ?? $item['id'];
                 // ✅ CAMBIO (2026-02-16): Permitir decimales en lugar de truncar a entero
@@ -326,7 +327,7 @@ class VentaDistribucionService
                             cantidad: -(int)$cantidadTomar,  // Negativo: salida
                             tipo: MovimientoInventario::TIPO_SALIDA_VENTA,
                             referencia_tipo: 'venta',
-                            referencia_id: 0,  // Se establecerá con venta_id si es necesario
+                            referencia_id: $ventaId ?? 0,  // ✅ CORREGIDO (2026-06-29): Usar venta_id real
                             metadataAdicional: [
                                 'numero_venta' => $numeroVenta,
                                 'lote' => $stock->lote,

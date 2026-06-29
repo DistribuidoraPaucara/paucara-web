@@ -2830,6 +2830,7 @@ class EntregaController extends Controller
 
             // ✅ ACTUALIZADO 2026-02-17: Incluir TODOS los campos de entregas_venta_confirmaciones
             // NOTE: 'referencia' no es columna directa, está dentro de desglose_pagos JSON
+            // ✅ ACTUALIZADO 2026-06-28: Ordenar por id DESC para obtener la última confirmación por venta
             $confirmaciones = EntregaVentaConfirmacion::select(
                 'id', 'entrega_id', 'venta_id', 'tipo_pago_id', 'monto_recibido',
                 'fotos', 'firma_digital_url', 'observaciones_logistica', // ✅ NUEVO: campos de confirmación
@@ -2840,7 +2841,10 @@ class EntregaController extends Controller
             )
                 ->with('tipoPago:id,codigo,nombre')
                 ->whereIn('venta_id', $ventasIds)
-                ->get();
+                ->orderBy('id', 'desc')  // ✅ NUEVO: Ordenar por id DESC para obtener la última confirmación
+                ->get()
+                ->unique('venta_id')  // ✅ NUEVO: Obtener solo la última confirmación por venta_id
+                ->values();  // ✅ NUEVO: Reindexar el array
 
             // Construir resumen con soporte para múltiples pagos
             // ✅ NOTA: total_esperado SOLO incluye ventas NO crédito
@@ -2869,7 +2873,17 @@ class EntregaController extends Controller
                     // ✅ NUEVA 2026-02-12: Procesar múltiples pagos por desglose
                     foreach ($confirmacionesGrupo as $confirmacion) {
                         if (! empty($confirmacion->desglose_pagos)) {
-                            foreach ($confirmacion->desglose_pagos as $pago) {
+                            // ✅ Parsear desglose_pagos si es string JSON
+                            $desglosePagos = $confirmacion->desglose_pagos;
+                            if (is_string($desglosePagos)) {
+                                try {
+                                    $desglosePagos = json_decode($desglosePagos, true) ?? [];
+                                } catch (\Exception $e) {
+                                    $desglosePagos = [];
+                                }
+                            }
+
+                            foreach ($desglosePagos as $pago) {
                                 $tipoPagoNombre = $pago['tipo_pago_nombre'] ?? 'Desconocido';
                                 $tipoPagoCodigo = $this->obtenerCodigoTipoPago($tipoPagoNombre);
                                 $montoPago      = (float) ($pago['monto'] ?? 0);

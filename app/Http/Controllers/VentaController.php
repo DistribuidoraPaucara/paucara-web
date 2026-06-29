@@ -9,6 +9,7 @@ use App\Http\Requests\StoreVentaRequest;
 use App\Http\Traits\ApiInertiaUnifiedResponse;
 use App\Models\Almacen;
 use App\Models\Cliente;
+use App\Models\EntregaVentaConfirmacion;
 use App\Models\EstadoDocumento;
 use App\Models\Moneda;
 use App\Models\Producto;
@@ -773,16 +774,22 @@ class VentaController extends Controller
                 'cliente',
                 'direccionCliente.localidad',
                 'usuario',
+                'preventista',                                     // ✅ Preventista (relación preventista_id → user_id)
                 'tipoPago',
                 'tipoDocumento',
                 'moneda',
                 'estadoDocumento',
                 'estadoLogistica',                                // ✅ Estado logístico de la VENTA (via estado_logistico_id)
                 'detalles.producto.imagenes',                     // ✅ NUEVO: Cargar imágenes del producto (relación correcta: imagenes, no imagenesProducto)
+                'detalles.producto.marca',                        // ✅ NUEVO: Cargar marca del producto
+                'detalles.producto.unidad',                       // ✅ NUEVO: Cargar unidad del producto
                 'detalles.producto.comboItems.producto.imagenes', // ✅ NUEVO: Cargar productos dentro de combos
+                'detalles.producto.comboItems.producto.marca',    // ✅ NUEVO: Cargar marca de productos en combos
+                'detalles.producto.comboItems.producto.unidad',   // ✅ NUEVO: Cargar unidad de productos en combos
                 'proforma',
                 'entrega.estadoEntrega', // ✅ Estado logístico de la entrega (relación separada si se necesita)
-                'confirmaciones',
+                'confirmaciones.confirmadoPor', // ✅ NUEVO: Cargar usuario que confirmó cada entrega
+                'cuentaPorCobrar',                                 // ✅ NUEVO: Cargar cuenta por cobrar
             ])->findOrFail($id);
 
             // ✅ DEBUG: Verificar estado logístico de la venta
@@ -829,6 +836,12 @@ class VentaController extends Controller
                             'nombre'      => $venta->estadoLogistica->nombre,
                             'descripcion' => $venta->estadoLogistica->descripcion ?? null,
                         ] : null,
+                        'preventista'                   => $venta->preventista ? [
+                            'id'    => $venta->preventista->id,
+                            'name'  => $venta->preventista->name,
+                            'email' => $venta->preventista->email,
+                            'foto'  => $venta->preventista->foto ?? null,
+                        ] : null,
                         'cliente'                       => $venta->cliente ? [
                             'id'           => $venta->cliente->id,
                             'nombre'       => $venta->cliente->nombre,
@@ -857,6 +870,18 @@ class VentaController extends Controller
                                 'sku'        => $d->producto->sku,
                                 'es_combo'   => (bool) $d->producto->es_combo,
                                 'prestables' => $d->producto->prestables ?? [],
+                                // ✅ NUEVO: Marca del producto
+                                'marca'      => $d->producto->marca ? [
+                                    'id'     => $d->producto->marca->id,
+                                    'nombre' => $d->producto->marca->nombre,
+                                ] : null,
+                                // ✅ NUEVO: Unidad del producto
+                                'unidad'     => $d->producto->unidad ? [
+                                    'id'          => $d->producto->unidad->id,
+                                    'nombre'      => $d->producto->unidad->nombre,
+                                    'simbolo'     => $d->producto->unidad->simbolo,
+                                    'descripcion' => $d->producto->unidad->descripcion,
+                                ] : null,
                                 // ✅ NUEVO: Primera imagen del producto
                                 'imagen'     => $d->producto->imagenes && count($d->producto->imagenes) > 0 ? [
                                     'id'           => $d->producto->imagenes[0]->id,
@@ -880,6 +905,18 @@ class VentaController extends Controller
                                             'id'     => $item->producto->id,
                                             'nombre' => $item->producto->nombre,
                                             'sku'    => $item->producto->sku,
+                                            // ✅ NUEVO: Marca del producto en combo
+                                            'marca'  => $item->producto->marca ? [
+                                                'id'     => $item->producto->marca->id,
+                                                'nombre' => $item->producto->marca->nombre,
+                                            ] : null,
+                                            // ✅ NUEVO: Unidad del producto en combo
+                                            'unidad' => $item->producto->unidad ? [
+                                                'id'          => $item->producto->unidad->id,
+                                                'nombre'      => $item->producto->unidad->nombre,
+                                                'simbolo'     => $item->producto->unidad->simbolo,
+                                                'descripcion' => $item->producto->unidad->descripcion,
+                                            ] : null,
                                             'imagen' => $item->producto->imagenes && count($item->producto->imagenes) > 0 ? [
                                                 'id'           => $item->producto->imagenes[0]->id,
                                                 'url'          => $item->producto->imagenes[0]->url,
@@ -892,6 +929,19 @@ class VentaController extends Controller
                         ])->toArray(),
                         // ✅ NUEVO: Incluir entregas_venta_confirmaciones (modelo completo)
                         'entregas_venta_confirmaciones' => $venta->confirmaciones?->toArray() ?? [],
+                        // ✅ NUEVO: Incluir cuenta_por_cobrar
+                        'cuenta_por_cobrar' => $venta->cuentaPorCobrar ? [
+                            'id'                    => $venta->cuentaPorCobrar->id,
+                            'venta_id'              => $venta->cuentaPorCobrar->venta_id,
+                            'monto'                 => (float) $venta->cuentaPorCobrar->monto,
+                            'saldo'                 => (float) $venta->cuentaPorCobrar->saldo,
+                            'fecha_vencimiento'     => $venta->cuentaPorCobrar->fecha_vencimiento,
+                            'estado'                => $venta->cuentaPorCobrar->estado,
+                            'descripcion'           => $venta->cuentaPorCobrar->descripcion,
+                            'observaciones'         => $venta->cuentaPorCobrar->observaciones,
+                            'created_at'            => $venta->cuentaPorCobrar->created_at,
+                            'updated_at'            => $venta->cuentaPorCobrar->updated_at,
+                        ] : null,
                     ],
                 ]);
             }
@@ -1252,33 +1302,44 @@ class VentaController extends Controller
                         ]);
                     }
 
-                    // 2️⃣ Registrar en entregas_venta_confirmaciones (SIN FALLAR)
+                    // 2️⃣ Registrar en entregas_venta_confirmaciones (SOLO SI TIENE ENTREGA)
                     try {
-                        $clienteNombre = $venta->cliente?->nombre ?? 'N/A';
-                        $observacionesConfirmacion = "ANULACIÓN DE VENTA - Motivo: {$motivo}\n";
-                        $observacionesConfirmacion .= "Venta: #{$venta->numero} | Proforma: #{$proforma->numero}\n";
-                        $observacionesConfirmacion .= "Cliente: {$clienteNombre}\n";
-                        $observacionesConfirmacion .= "Monto: Bs {$venta->total}\n";
-                        $observacionesConfirmacion .= "Anulado por: {$usuarioNombre} - {$fechaActual}";
+                        // ✅ CORREGIDO (2026-06-29): Solo crear si la venta tiene entrega asignada
+                        // EntregaVentaConfirmacion requiere entrega_id (NOT NULL constraint)
+                        // Las entregas se crean DESPUÉS de confirmar, así que ventas anuladas antes
+                        // de crear entrega no tendrán registro en confirmaciones
+                        if ($venta->entrega_id) {
+                            $clienteNombre = $venta->cliente?->nombre ?? 'N/A';
+                            $observacionesConfirmacion = "ANULACIÓN DE VENTA - Motivo: {$motivo}\n";
+                            $observacionesConfirmacion .= "Venta: #{$venta->numero} | Proforma: #{$proforma->numero}\n";
+                            $observacionesConfirmacion .= "Cliente: {$clienteNombre}\n";
+                            $observacionesConfirmacion .= "Monto: Bs {$venta->total}\n";
+                            $observacionesConfirmacion .= "Anulado por: {$usuarioNombre} - {$fechaActual}";
 
-                        \App\Models\EntregaVentaConfirmacion::create([
-                            'venta_id'                => $venta->id,
-                            'entrega_id'              => $venta->entrega_id,
-                            'tipo_entrega'            => 'CON_NOVEDAD',
-                            'tipo_novedad'            => 'RECHAZADO',
-                            'tipo_confirmacion'       => 'RECHAZADO',
-                            'tuvo_problema'           => true,
-                            'observaciones_logistica' => $observacionesConfirmacion,
-                            'confirmado_por'          => auth()->id(),
-                            'confirmado_en'           => now(),
-                        ]);
+                            \App\Models\EntregaVentaConfirmacion::create([
+                                'venta_id'                => $venta->id,
+                                'entrega_id'              => $venta->entrega_id,
+                                'tipo_entrega'            => 'CON_NOVEDAD',
+                                'tipo_novedad'            => 'RECHAZADO',
+                                'tipo_confirmacion'       => 'RECHAZADO',
+                                'tuvo_problema'           => true,
+                                'observaciones_logistica' => $observacionesConfirmacion,
+                                'confirmado_por'          => auth()->id(),
+                                'confirmado_en'           => now(),
+                            ]);
 
-                        Log::info('✅ Registro en entregas_venta_confirmaciones creado', [
-                            'venta_id'    => $venta->id,
-                            'proforma_id' => $proforma->id,
-                        ]);
+                            Log::info('✅ Registro en entregas_venta_confirmaciones creado', [
+                                'venta_id'    => $venta->id,
+                                'proforma_id' => $proforma->id,
+                            ]);
+                        } else {
+                            Log::info('ℹ️ Venta sin entrega asignada, no se crea confirmación', [
+                                'venta_id'    => $venta->id,
+                                'proforma_id' => $proforma->id,
+                            ]);
+                        }
                     } catch (\Exception $e) {
-                        Log::warning('⚠️ No se pudo crear registro en entregas_venta_confirmaciones', [
+                        Log::warning('⚠️ Error al crear registro en entregas_venta_confirmaciones', [
                             'venta_id' => $venta->id,
                             'error'    => $e->getMessage(),
                         ]);
@@ -2491,6 +2552,169 @@ class VentaController extends Controller
         } catch (\Exception $e) {
             Log::error('❌ Error buscando ventas', ['error' => $e->getMessage()]);
             return response()->json([], 200);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Registrar una nueva confirmación de entrega desde la pantalla de venta
+     * POST /ventas/{venta}/confirmaciones
+     */
+    public function storeConfirmacion(Request $request, int $id): JsonResponse
+    {
+        try {
+            // ✅ DEBUG: Log request recibido
+            Log::info('📥 [storeConfirmacion] Request recibido', [
+                'venta_id' => $id,
+                'entrega_id_recibido' => $request->input('entrega_id'),
+                'todos_campos' => $request->all(),
+            ]);
+
+            // Validar request
+            $validated = $request->validate([
+                'entrega_id' => 'nullable|integer|exists:entregas,id',
+                'tipo_confirmacion' => 'required|in:COMPLETA,RECHAZADO,CLIENTE_CERRADO,DEVOLUCION_PARCIAL,NO_CONTACTADO',
+                'tipo_entrega' => 'required|in:COMPLETA,CON_NOVEDAD',
+                'tienda_abierta' => 'nullable|boolean',
+                'cliente_presente' => 'nullable|boolean',
+                'motivo_rechazo' => 'nullable|string|in:TIENDA_CERRADA,CLIENTE_AUSENTE,CLIENTE_RECHAZA,DIRECCION_INCORRECTA,CLIENTE_NO_IDENTIFICADO,OTRO',
+                'monto_recibido' => 'nullable|numeric|min:0',
+                'monto_pendiente' => 'nullable|numeric|min:0',
+                'observaciones_logistica' => 'nullable|string|max:1000',
+                'observaciones' => 'nullable|string|max:500',
+                'pagos' => 'nullable|array',
+                'pagos.*.tipo_pago_id' => 'required_with:pagos|integer|exists:tipos_pago,id',
+                'pagos.*.monto' => 'required_with:pagos|numeric|min:0',
+                'productos_devueltos' => 'nullable|array',
+                'productos_devueltos.*.producto_id' => 'required_with:productos_devueltos|integer',
+                'productos_devueltos.*.producto_nombre' => 'required_with:productos_devueltos|string|max:255',
+                'productos_devueltos.*.cantidad' => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.precio_unitario' => 'required_with:productos_devueltos|numeric|min:0',
+                'productos_devueltos.*.subtotal' => 'required_with:productos_devueltos|numeric|min:0',
+            ]);
+
+            // ✅ DEBUG: Log after validation
+            Log::info('✅ [storeConfirmacion] Datos validados', [
+                'venta_id' => $id,
+                'entrega_id_validado' => $validated['entrega_id'] ?? 'null',
+            ]);
+
+            // Obtener venta
+            $venta = Venta::findOrFail($id);
+
+            // Procesar desglose de pagos
+            $desglosePagos = null;
+            if (isset($validated['pagos']) && !empty($validated['pagos'])) {
+                $desglosePagos = [];
+                foreach ($validated['pagos'] as $pago) {
+                    $tipoPago = TipoPago::find($pago['tipo_pago_id']);
+                    $desglosePagos[] = [
+                        'tipo_pago_id' => $pago['tipo_pago_id'],
+                        'tipo_pago_nombre' => $tipoPago->nombre ?? 'Desconocido',
+                        'monto' => (float) $pago['monto'],
+                    ];
+                }
+            }
+
+            // Crear confirmación
+            // ✅ tipo_novedad siempre es igual a tipo_confirmacion
+            $confirmacion = EntregaVentaConfirmacion::create([
+                'entrega_id' => $validated['entrega_id'] ?? null,
+                'venta_id' => $venta->id,
+                'tipo_confirmacion' => $validated['tipo_confirmacion'],
+                'tipo_novedad' => $validated['tipo_confirmacion'], // ✅ Siempre igual a tipo_confirmacion
+                'tipo_entrega' => $validated['tipo_entrega'],
+                'tienda_abierta' => $validated['tienda_abierta'] ?? null,
+                'cliente_presente' => $validated['cliente_presente'] ?? null,
+                'motivo_rechazo' => $validated['motivo_rechazo'] ?? null,
+                'total_dinero_recibido' => isset($validated['monto_recibido']) ? (float) $validated['monto_recibido'] : null,
+                'monto_pendiente' => isset($validated['monto_pendiente']) ? (float) $validated['monto_pendiente'] : null,
+                'observaciones_logistica' => $validated['observaciones_logistica'] ?? null,
+                'observaciones' => $validated['observaciones'] ?? null,
+                'desglose_pagos' => $desglosePagos ? json_encode($desglosePagos) : null,
+                'productos_devueltos' => isset($validated['productos_devueltos']) && !empty($validated['productos_devueltos'])
+                    ? json_encode($validated['productos_devueltos'])
+                    : null,
+                'usuario_id' => Auth::id(),
+                // ✅ NUEVO: Registrar quién confirmó y cuándo
+                'confirmado_por' => Auth::id(),
+                'confirmado_en' => now(),
+            ]);
+
+            Log::info('✅ Confirmación de entrega registrada', [
+                'confirmacion_id' => $confirmacion->id,
+                'venta_id' => $venta->id,
+                'entrega_id_guardado' => $confirmacion->entrega_id, // ✅ Verificar que se guardó
+                'tipo_confirmacion' => $validated['tipo_confirmacion'],
+                'tipo_novedad' => $confirmacion->tipo_novedad,
+                'tipo_entrega' => $validated['tipo_entrega'],
+                'monto_recibido' => $validated['monto_recibido'] ?? null,
+                'usuario_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Confirmación registrada exitosamente',
+                'confirmacion' => $confirmacion,
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Errores de validación',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al registrar confirmación', [
+                'venta_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Error al registrar la confirmación: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ Eliminar una confirmación de entrega
+     */
+    public function destroyConfirmacion(int $ventaId, int $confirmacionId): JsonResponse
+    {
+        try {
+            $venta = Venta::findOrFail($ventaId);
+            $confirmacion = EntregaVentaConfirmacion::findOrFail($confirmacionId);
+
+            // Validar que la confirmación pertenezca a esta venta
+            if ($confirmacion->venta_id !== $venta->id) {
+                return response()->json([
+                    'message' => 'La confirmación no pertenece a esta venta',
+                ], 403);
+            }
+
+            $confirmacionId = $confirmacion->id;
+            $confirmacion->delete();
+
+            Log::info('✅ Confirmación de entrega eliminada', [
+                'confirmacion_id' => $confirmacionId,
+                'venta_id' => $venta->id,
+                'eliminado_por' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Confirmación eliminada exitosamente',
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Confirmación no encontrada',
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al eliminar confirmación', [
+                'venta_id' => $ventaId,
+                'confirmacion_id' => $confirmacionId ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Error al eliminar la confirmación: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

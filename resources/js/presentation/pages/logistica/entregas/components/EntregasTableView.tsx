@@ -1,22 +1,29 @@
-import { Link } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Button } from '@/presentation/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
-import { Eye, Truck, User, XCircle, FileText, Pencil, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { useEstadosEntregas } from '@/application/hooks';
+import { useEntregas } from '@/application/hooks/use-entregas';
+import { useQueryParam } from '@/application/hooks/use-query-param';
 import type { Entrega } from '@/domain/entities/entregas';
 import type { Pagination } from '@/domain/entities/shared';
-import { useEntregas } from '@/application/hooks/use-entregas';
-import { useEstadosEntregas } from '@/application/hooks';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { ModalOptimizacionRutas } from '@/presentation/components/logistica/modal-optimizacion-rutas';
-import { useQueryParam } from '@/application/hooks/use-query-param';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import EstadoEntregaBadge from '@/presentation/components/logistica/EstadoEntregaBadge';
+import { ModalOptimizacionRutas } from '@/presentation/components/logistica/modal-optimizacion-rutas';
+import { Badge } from '@/presentation/components/ui/badge';
+import { Button } from '@/presentation/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
+import { Link } from '@inertiajs/react';
+import { ChevronDown, ChevronUp, Eye, FileText, MapPin, MoreVertical, Pencil, Truck, User, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 // Importar componente de filtros y modal
-import { EntregasFilters, type FiltrosEntregas } from './EntregasFilters';
 import { CancelarEntregaModal } from './CancelarEntregaModal';
+import { EntregasFilters, type FiltrosEntregas } from './EntregasFilters';
 import { UbicacionesMultiplesModal } from './UbicacionesMultiplesModal';
 
 interface Props {
@@ -93,56 +100,88 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
     const [entregaSeleccionadaParaUbicaciones, setEntregaSeleccionadaParaUbicaciones] = useState<Entrega | null>(null);
 
     // Handler para cambiar filtros (SOLO ESTADO LOCAL, sin refetch)
-    const handleFilterChange = useCallback((key: keyof FiltrosEntregas, value: string) => {
-        setFiltros(prev => ({ ...prev, [key]: value }));
-        // ✅ Actualizar también los hooks de URL sincronizadamente para que handleAplicarFiltros use valores actualizados
-        if (key === 'estado') setEstadoURL(value);
-        else if (key === 'busqueda_entrega') setBusquedaEntregaURL(value);
-        else if (key === 'busqueda_ventas') setBusquedaVentasURL(value);
-        else if (key === 'chofer_id') setChoferURL(value);
-        else if (key === 'vehiculo_id') setVehiculoURL(value);
-        else if (key === 'localidad_id') setLocalidadURL(value);
-        else if (key === 'estado_logistica_id') setEstadoLogisticaURL(value);
-        else if (key === 'fecha_desde') setFechaDesdeURL(value);
-        else if (key === 'fecha_hasta') setFechaHastaURL(value);
-        else if (key === 'tipo_fecha') setTipoFechaURL(value); // ✅ NUEVO
-        else if (key === 'turno') setTurnoURL(value); // ✅ NUEVO
-    }, [setEstadoURL, setBusquedaEntregaURL, setBusquedaVentasURL, setChoferURL, setVehiculoURL, setLocalidadURL, setEstadoLogisticaURL, setFechaDesdeURL, setFechaHastaURL, setTipoFechaURL, setTurnoURL]);
+    const handleFilterChange = useCallback(
+        (key: keyof FiltrosEntregas, value: string) => {
+            setFiltros((prev) => ({ ...prev, [key]: value }));
+            // ✅ Actualizar también los hooks de URL sincronizadamente para que handleAplicarFiltros use valores actualizados
+            if (key === 'estado') setEstadoURL(value);
+            else if (key === 'busqueda_entrega') setBusquedaEntregaURL(value);
+            else if (key === 'busqueda_ventas') setBusquedaVentasURL(value);
+            else if (key === 'chofer_id') setChoferURL(value);
+            else if (key === 'vehiculo_id') setVehiculoURL(value);
+            else if (key === 'localidad_id') setLocalidadURL(value);
+            else if (key === 'estado_logistica_id') setEstadoLogisticaURL(value);
+            else if (key === 'fecha_desde') setFechaDesdeURL(value);
+            else if (key === 'fecha_hasta') setFechaHastaURL(value);
+            else if (key === 'tipo_fecha')
+                setTipoFechaURL(value); // ✅ NUEVO
+            else if (key === 'turno') setTurnoURL(value); // ✅ NUEVO
+        },
+        [
+            setEstadoURL,
+            setBusquedaEntregaURL,
+            setBusquedaVentasURL,
+            setChoferURL,
+            setVehiculoURL,
+            setLocalidadURL,
+            setEstadoLogisticaURL,
+            setFechaDesdeURL,
+            setFechaHastaURL,
+            setTipoFechaURL,
+            setTurnoURL,
+        ],
+    );
 
     // Handler para APLICAR filtros (manual - ENTER o botón Buscar)
     // ✅ Acepta los valores de filtros como parámetros para evitar issues de timing con state asíncrono
-    const handleAplicarFiltros = useCallback((filtrosDirectos?: Partial<FiltrosEntregas>) => {
-        // Usar valores pasados directamente O los del state
-        const busquedaEntregaFinal = filtrosDirectos?.busqueda_entrega !== undefined ? filtrosDirectos.busqueda_entrega : busquedaEntregaURL;
-        const busquedaVentasFinal = filtrosDirectos?.busqueda_ventas !== undefined ? filtrosDirectos.busqueda_ventas : busquedaVentasURL;
-        const estadoFinal = filtrosDirectos?.estado !== undefined ? filtrosDirectos.estado : estadoURL;
-        const choferFinal = filtrosDirectos?.chofer_id !== undefined ? filtrosDirectos.chofer_id : choferURL;
-        const vehiculoFinal = filtrosDirectos?.vehiculo_id !== undefined ? filtrosDirectos.vehiculo_id : vehiculoURL;
-        const localidadFinal = filtrosDirectos?.localidad_id !== undefined ? filtrosDirectos.localidad_id : localidadURL;
-        const estadoLogisticaFinal = filtrosDirectos?.estado_logistica_id !== undefined ? filtrosDirectos.estado_logistica_id : estadoLogisticaURL;
-        const fechaDesdeFinal = filtrosDirectos?.fecha_desde !== undefined ? filtrosDirectos.fecha_desde : fechaDesdeURL;
-        const fechaHastaFinal = filtrosDirectos?.fecha_hasta !== undefined ? filtrosDirectos.fecha_hasta : fechaHastaURL;
-        const tipoFechaFinal = filtrosDirectos?.tipo_fecha !== undefined ? filtrosDirectos.tipo_fecha : tipoFechaURL; // ✅ NUEVO
-        const turnoFinal = filtrosDirectos?.turno !== undefined ? filtrosDirectos.turno : turnoURL; // ✅ NUEVO
+    const handleAplicarFiltros = useCallback(
+        (filtrosDirectos?: Partial<FiltrosEntregas>) => {
+            // Usar valores pasados directamente O los del state
+            const busquedaEntregaFinal = filtrosDirectos?.busqueda_entrega !== undefined ? filtrosDirectos.busqueda_entrega : busquedaEntregaURL;
+            const busquedaVentasFinal = filtrosDirectos?.busqueda_ventas !== undefined ? filtrosDirectos.busqueda_ventas : busquedaVentasURL;
+            const estadoFinal = filtrosDirectos?.estado !== undefined ? filtrosDirectos.estado : estadoURL;
+            const choferFinal = filtrosDirectos?.chofer_id !== undefined ? filtrosDirectos.chofer_id : choferURL;
+            const vehiculoFinal = filtrosDirectos?.vehiculo_id !== undefined ? filtrosDirectos.vehiculo_id : vehiculoURL;
+            const localidadFinal = filtrosDirectos?.localidad_id !== undefined ? filtrosDirectos.localidad_id : localidadURL;
+            const estadoLogisticaFinal =
+                filtrosDirectos?.estado_logistica_id !== undefined ? filtrosDirectos.estado_logistica_id : estadoLogisticaURL;
+            const fechaDesdeFinal = filtrosDirectos?.fecha_desde !== undefined ? filtrosDirectos.fecha_desde : fechaDesdeURL;
+            const fechaHastaFinal = filtrosDirectos?.fecha_hasta !== undefined ? filtrosDirectos.fecha_hasta : fechaHastaURL;
+            const tipoFechaFinal = filtrosDirectos?.tipo_fecha !== undefined ? filtrosDirectos.tipo_fecha : tipoFechaURL; // ✅ NUEVO
+            const turnoFinal = filtrosDirectos?.turno !== undefined ? filtrosDirectos.turno : turnoURL; // ✅ NUEVO
 
-        // Construir URL con parámetros
-        const params = new URLSearchParams();
-        if (estadoFinal && estadoFinal !== 'TODOS') params.append('estado', estadoFinal);
-        if (busquedaEntregaFinal) params.append('search_entrega', busquedaEntregaFinal);
-        if (busquedaVentasFinal) params.append('search_ventas', busquedaVentasFinal);
-        if (choferFinal) params.append('chofer_id', choferFinal);
-        if (vehiculoFinal) params.append('vehiculo_id', vehiculoFinal);
-        if (localidadFinal) params.append('localidad_id', localidadFinal);
-        if (estadoLogisticaFinal) params.append('estado_logistica_id', estadoLogisticaFinal);
-        if (fechaDesdeFinal) params.append('fecha_desde', fechaDesdeFinal);
-        if (fechaHastaFinal) params.append('fecha_hasta', fechaHastaFinal);
-        if (tipoFechaFinal && tipoFechaFinal !== 'fecha_programada') params.append('tipo_fecha', tipoFechaFinal); // ✅ NUEVO
-        if (turnoFinal) params.append('turno', turnoFinal); // ✅ NUEVO
+            // Construir URL con parámetros
+            const params = new URLSearchParams();
+            if (estadoFinal && estadoFinal !== 'TODOS') params.append('estado', estadoFinal);
+            if (busquedaEntregaFinal) params.append('search_entrega', busquedaEntregaFinal);
+            if (busquedaVentasFinal) params.append('search_ventas', busquedaVentasFinal);
+            if (choferFinal) params.append('chofer_id', choferFinal);
+            if (vehiculoFinal) params.append('vehiculo_id', vehiculoFinal);
+            if (localidadFinal) params.append('localidad_id', localidadFinal);
+            if (estadoLogisticaFinal) params.append('estado_logistica_id', estadoLogisticaFinal);
+            if (fechaDesdeFinal) params.append('fecha_desde', fechaDesdeFinal);
+            if (fechaHastaFinal) params.append('fecha_hasta', fechaHastaFinal);
+            if (tipoFechaFinal && tipoFechaFinal !== 'fecha_programada') params.append('tipo_fecha', tipoFechaFinal); // ✅ NUEVO
+            if (turnoFinal) params.append('turno', turnoFinal); // ✅ NUEVO
 
-        // Navegar con nuevos filtros
-        const url = `/logistica/entregas${params.toString() ? '?' + params.toString() : ''}`;
-        window.location.href = url; // Recarga simple
-    }, [estadoURL, busquedaEntregaURL, busquedaVentasURL, choferURL, vehiculoURL, localidadURL, estadoLogisticaURL, fechaDesdeURL, fechaHastaURL, tipoFechaURL, turnoURL]);
+            // Navegar con nuevos filtros
+            const url = `/logistica/entregas${params.toString() ? '?' + params.toString() : ''}`;
+            window.location.href = url; // Recarga simple
+        },
+        [
+            estadoURL,
+            busquedaEntregaURL,
+            busquedaVentasURL,
+            choferURL,
+            vehiculoURL,
+            localidadURL,
+            estadoLogisticaURL,
+            fechaDesdeURL,
+            fechaHastaURL,
+            tipoFechaURL,
+            turnoURL,
+        ],
+    );
 
     // Handler para resetear todos los filtros
     const handleResetFiltros = useCallback(() => {
@@ -174,7 +213,19 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
 
         // Recargar página sin filtros
         window.location.href = '/logistica/entregas';
-    }, [setEstadoURL, setBusquedaEntregaURL, setBusquedaVentasURL, setChoferURL, setVehiculoURL, setLocalidadURL, setEstadoLogisticaURL, setFechaDesdeURL, setFechaHastaURL, setTipoFechaURL, setTurnoURL]);
+    }, [
+        setEstadoURL,
+        setBusquedaEntregaURL,
+        setBusquedaVentasURL,
+        setChoferURL,
+        setVehiculoURL,
+        setLocalidadURL,
+        setEstadoLogisticaURL,
+        setFechaDesdeURL,
+        setFechaHastaURL,
+        setTipoFechaURL,
+        setTurnoURL,
+    ]);
 
     // Handler para abrir modal de cancelación
     const handleAbrirCancelarModal = useCallback((entrega: Entrega) => {
@@ -208,7 +259,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
     // ✅ NUEVO: Auto-activar "Todas las fechas" si hay parámetros de fecha en URL
     useEffect(() => {
         if (fechaDesdeURL || fechaHastaURL) {
-            setMostrarTodasLasFechas(true);  // Activar automáticamente si hay fechas en URL
+            setMostrarTodasLasFechas(true); // Activar automáticamente si hay fechas en URL
         }
     }, [fechaDesdeURL, fechaHastaURL]);
 
@@ -216,12 +267,16 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
     const entregasFiltradas = useMemo(() => {
         // El backend ya aplicó todos los filtros (estado, fechas, chofer, vehículo, localidad, estado_logística, búsqueda)
         // Solo filtrar localmente si es necesario mostrar "Solo Hoy" Y NO hay parámetros específicos
-        if (!mostrarTodasLasFechas && !filtros.fecha_desde && !filtros.fecha_hasta && !filtros.busqueda_entrega && !filtros.busqueda_ventas && !filtros.estado_logistica_id) {
+        if (
+            !mostrarTodasLasFechas &&
+            !filtros.fecha_desde &&
+            !filtros.fecha_hasta &&
+            !filtros.busqueda_entrega &&
+            !filtros.busqueda_ventas &&
+            !filtros.estado_logistica_id
+        ) {
             // Si está en "Solo Hoy" y no hay parámetros de fecha, búsqueda o filtros específicos, filtrar por created_at
-            return entregas.data.filter(entrega =>
-                entrega.created_at &&
-                new Date(entrega.created_at).toDateString() === new Date().toDateString()
-            );
+            return entregas.data.filter((entrega) => entrega.created_at && new Date(entrega.created_at).toDateString() === new Date().toDateString());
         }
         // Si hay parámetros de fecha, búsqueda o filtros específicos, el backend ya filtró - devolver datos tal cual
         return entregas.data;
@@ -229,7 +284,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
 
     // ✅ NUEVO: Toglear expansión de fila
     const toggleExpandirEntrega = (entregaId: number) => {
-        setEntregasExpandidas(prev => {
+        setEntregasExpandidas((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(entregaId)) {
                 newSet.delete(entregaId);
@@ -242,21 +297,16 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
 
     // ✅ Función para calcular el total de una entrega (suma de subtotales de todas las ventas)
     const calcularTotalEntrega = (entrega: Entrega): number => {
-        return entrega.ventas?.reduce((total, venta) => {
-            const subtotal = typeof venta.subtotal === 'string' ? parseFloat(venta.subtotal) : venta.subtotal || 0;
-            return total + subtotal;
-        }, 0) ?? 0;
+        return (
+            entrega.ventas?.reduce((total, venta) => {
+                const subtotal = typeof venta.subtotal === 'string' ? parseFloat(venta.subtotal) : venta.subtotal || 0;
+                return total + subtotal;
+            }, 0) ?? 0
+        );
     };
-
-    const puedeOptimizar = entregasSeleccionadas.length >= 2 &&
-        entregasSeleccionadas.every(id => {
-            const entrega = entregas.data.find(e => Number(e.id) === id);
-            return entrega && (entrega.estado === 'PROGRAMADO' || entrega.estado === 'PENDIENTE');
-        });
 
     return (
         <div className="space-y-6">
-
             {/* ✅ COMPONENTE DE FILTROS MEJORADO */}
             <EntregasFilters
                 filtros={filtros}
@@ -282,9 +332,8 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-
                     {entregas.data.length === 0 ? (
-                        <div className="text-center py-8">
+                        <div className="py-8 text-center">
                             <p className="text-muted-foreground">No se encontraron entregas.</p>
                         </div>
                     ) : (
@@ -292,13 +341,14 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                             <Table className="w-full">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[5%]"></TableHead>
-                                        <TableHead className="w-[15%]">#ID</TableHead>
-                                        <TableHead className="w-[20%]">Vehículo / Chofer</TableHead>
-                                        <TableHead className="w-[20%]">Ventas Asignadas</TableHead>
-                                        <TableHead className="w-[15%]">Total</TableHead>
-                                        <TableHead className="w-[15%]">🕐 Creada</TableHead>
-                                        <TableHead className="w-[10%]">Acciones</TableHead>
+                                        <TableHead></TableHead>
+                                        <TableHead>#ID</TableHead>
+                                        <TableHead>Logistica</TableHead>
+                                        <TableHead>Vehículo / Chofer</TableHead>
+                                        <TableHead>Ventas Asignadas</TableHead>
+                                        <TableHead>Peso</TableHead>
+                                        <TableHead>🕐 Creada</TableHead>
+                                        <TableHead>Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -307,26 +357,30 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                         return (
                                             <React.Fragment key={entrega.id}>
                                                 <TableRow
-                                                    className={entregasSeleccionadas.includes(Number(entrega.id)) ? 'bg-blue-50 dark:bg-blue-950' : ''}
+                                                    className={
+                                                        entregasSeleccionadas.includes(Number(entrega.id)) ? 'bg-blue-50 dark:bg-blue-950' : ''
+                                                    }
                                                 >
                                                     {/* ✅ NUEVO: Botón para expandir */}
-                                                    <TableCell className="w-[5%] text-center cursor-pointer" onClick={() => toggleExpandirEntrega(Number(entrega.id))}>
+                                                    <TableCell
+                                                        className="cursor-pointer text-left"
+                                                        onClick={() => toggleExpandirEntrega(Number(entrega.id))}
+                                                    >
                                                         {entrega.ventas && entrega.ventas.length > 0 ? (
-                                                            estaExpandida ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                                            estaExpandida ? (
+                                                                <ChevronUp className="h-4 w-4" />
+                                                            ) : (
+                                                                <ChevronDown className="h-4 w-4" />
+                                                            )
                                                         ) : null}
                                                     </TableCell>
-                                                    <TableCell className="w-[15%]">
+                                                    <TableCell>
                                                         Folio: {entrega.id} <br /> {entrega.numero_entrega || entrega.numero_envio}
-                                                        <br />
-                                                        <EstadoEntregaBadge
-                                                            estado={entrega.estado}
-                                                            tamaño="sm"
-                                                            conIcono={true}
-                                                            mostrarLabel={true}
-                                                        />
-                                                        <br />
                                                     </TableCell>
-                                                    <TableCell className="w-[20%]">
+                                                    <TableCell className="font-medium">
+                                                        <EstadoEntregaBadge estado={entrega.estado} tamaño="sm" conIcono={true} mostrarLabel={true} />
+                                                    </TableCell>
+                                                    <TableCell>
                                                         {entrega.vehiculo ? (
                                                             <div className="flex items-center gap-2">
                                                                 <Truck className="h-4 w-4 text-muted-foreground" />
@@ -350,62 +404,51 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                         )}
                                                     </TableCell>
                                                     {/* ✅ NUEVO: Columna de Ventas Asignadas con Rango Compacto */}
-                                                    <TableCell className="w-[20%]">
+                                                    <TableCell>
                                                         {entrega.ventas && entrega.ventas.length > 0 ? (
                                                             <div className="space-y-1">
                                                                 <div>
                                                                     {/* 📊 Mostrar rango de IDs de ventas como vista rápida */}
                                                                     <Badge variant="secondary" className="text-xs">
-                                                                        Folio: {Math.min(...entrega.ventas.map(v => v.id))}
+                                                                        Folio: {Math.min(...entrega.ventas.map((v) => v.id))}
                                                                         {entrega.ventas.length > 1
-                                                                            ? ` a ${Math.max(...entrega.ventas.map(v => v.id))}`
-                                                                            : ''
-                                                                        }
+                                                                            ? ` a ${Math.max(...entrega.ventas.map((v) => v.id))} \n`
+                                                                            : ''} / {entrega.ventas.length} venta{entrega.ventas.length !== 1 ? 's' : ''}
                                                                     </Badge>
                                                                 </div>
-                                                                <div className="text-xs text-muted-foreground">
-                                                                    {entrega.ventas.length} venta{entrega.ventas.length !== 1 ? 's' : ''}
-                                                                </div>
+                                                                <span className="text-sm text-muted-foreground">
+                                                                    Bs. {calcularTotalEntrega(entrega).toFixed(2)}
+                                                                </span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground text-sm">Sin ventas</span>
+                                                            <span className="text-sm text-muted-foreground">Sin ventas</span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="w-[15%]">
-                                                        <span className="font-bold text-lg">
+                                                    <TableCell>
+                                                        <span className="text-md font-bold">
                                                             {entrega.peso_kg ? (
                                                                 <span className="font-medium">{entrega.peso_kg} kg</span>
                                                             ) : (
                                                                 <span className="text-muted-foreground">-</span>
                                                             )}
-                                                            <br />
-                                                            {calcularTotalEntrega(entrega).toLocaleString('es-BO', {
-                                                                style: 'currency',
-                                                                currency: 'BOB',
-                                                                minimumFractionDigits: 2
-                                                            })}
-                                                        </span>
-                                                        <br />
-                                                        <span className="text-sm text-muted-foreground">
-                                                            {entrega.ventas?.length || 0} venta{(entrega.ventas?.length || 0) !== 1 ? 's' : ''}
                                                         </span>
                                                     </TableCell>
                                                     {/* ✅ NUEVO: Columna Fecha de Creación */}
-                                                    <TableCell className="w-[15%]">
-                                                        <div className="text-sm">
+                                                    <TableCell>
+                                                        <div className="text-xs">
                                                             {entrega.created_at ? (
                                                                 <>
                                                                     <div className="font-medium">
                                                                         {new Date(entrega.created_at).toLocaleDateString('es-BO', {
                                                                             day: 'numeric',
                                                                             month: 'short',
-                                                                            year: 'numeric'
+                                                                            year: 'numeric',
                                                                         })}
                                                                     </div>
                                                                     <div className="text-xs text-muted-foreground">
                                                                         {new Date(entrega.created_at).toLocaleTimeString('es-BO', {
                                                                             hour: '2-digit',
-                                                                            minute: '2-digit'
+                                                                            minute: '2-digit',
                                                                         })}
                                                                     </div>
                                                                 </>
@@ -414,73 +457,113 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                             )}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="w-[10%]">
-                                                        <div className="flex gap-2 flex-wrap">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleVerEntrega(entrega.id)}
-                                                            >
-                                                                <Eye className="h-4 w-4 mr-1" />
-                                                                Ver
-                                                            </Button>
+                                                    <TableCell>
+                                                        <Button size="sm" variant="outline" onClick={() => handleVerEntrega(entrega.id)}>
+                                                            <Eye className="mr-1 h-4 w-4" />
+                                                            Ver
+                                                        </Button>
+                                                        {/* ✅ NUEVO: Menú desplegable con acciones */}
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acciones">
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                    <span className="sr-only">Abrir menú</span>
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
 
-                                                            {/* ✅ NUEVO (2026-06-11): Botón para ver ubicaciones */}
-                                                            {entrega.ventas && entrega.ventas.length > 0 && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => handleAbrirUbicaciones(entrega)}
-                                                                    title={`Ver ${entrega.ventas.length} ubicación${entrega.ventas.length !== 1 ? 'es' : ''}`}
-                                                                >
-                                                                    <MapPin className="h-4 w-4 mr-1" />
-                                                                    Ubicaciones
-                                                                </Button>
-                                                            )}
+                                                            <DropdownMenuContent align="end">
+                                                                {/* Ver entrega */}
+                                                                <DropdownMenuItem onClick={() => handleVerEntrega(entrega.id)}>
+                                                                    <Eye className="mr-2 h-4 w-4" />
+                                                                    Ver Entrega
+                                                                </DropdownMenuItem>
 
-                                                            <Link href={`/logistica/entregas/${entrega.id}/edit`}>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    title="Editar entrega"
-                                                                >
-                                                                    <Pencil className="h-4 w-4 mr-1" />
-                                                                    Editar
-                                                                </Button>
-                                                            </Link>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleAbrirOutputSelection(entrega.id)}
-                                                                title="Descargar o imprimir entrega"
-                                                            >
-                                                                <FileText className="h-4 w-4" />
-                                                            </Button>
-                                                            {/* Botón de cancelación - solo si el estado permite */}
-                                                            {['PROGRAMADO', 'PENDIENTE', 'EN_TRANSITO', 'PREPARACION_CARGA'].includes(entrega.estado) && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleAbrirCancelarModal(entrega)}
-                                                                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                                                    title="Cancelar entrega"
-                                                                >
-                                                                    <XCircle className="h-4 w-4" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
+                                                                {/* Ver ubicaciones */}
+                                                                {entrega.ventas && entrega.ventas.length > 0 && (
+                                                                    <>
+                                                                        <DropdownMenuItem onClick={() => handleAbrirUbicaciones(entrega)}>
+                                                                            <MapPin className="mr-2 h-4 w-4" />
+                                                                            Ver Ubicaciones ({entrega.ventas.length})
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                    </>
+                                                                )}
+
+                                                                {/* Editar */}
+                                                                <Link href={`/logistica/entregas/${entrega.id}/edit`}>
+                                                                    <DropdownMenuItem>
+                                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                                        Editar
+                                                                    </DropdownMenuItem>
+                                                                </Link>
+
+                                                                {/* Imprimir */}
+                                                                <DropdownMenuItem onClick={() => handleAbrirOutputSelection(entrega.id)}>
+                                                                    <FileText className="mr-2 h-4 w-4" />
+                                                                    Imprimir
+                                                                </DropdownMenuItem>
+
+                                                                {/* Cancelar - solo si estado permite */}
+                                                                {['PROGRAMADO', 'PENDIENTE', 'EN_TRANSITO', 'PREPARACION_CARGA'].includes(
+                                                                    entrega.estado,
+                                                                ) && (
+                                                                    <>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleAbrirCancelarModal(entrega)}
+                                                                            className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/30 dark:focus:text-red-400"
+                                                                        >
+                                                                            <XCircle className="mr-2 h-4 w-4" />
+                                                                            Cancelar
+                                                                        </DropdownMenuItem>
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </TableCell>
                                                 </TableRow>
                                                 {/* ✅ NUEVO: Fila expandible con detalles de ventas */}
                                                 {estaExpandida && entrega.ventas && entrega.ventas.length > 0 && (
                                                     <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                                        <TableCell colSpan={7} className="p-4">
+                                                        <TableCell colSpan={8} className="p-4">
                                                             <div className="space-y-3">
-                                                                <h4 className="font-semibold text-sm">Ventas en esta entrega:</h4>
-                                                                <div className="space-y-2">
-                                                                    {entrega.ventas.map((venta) => (
-                                                                        <>
-                                                                            {(() => {
+                                                                <h4 className="mb-3 text-sm font-semibold">
+                                                                    📦 Ventas en esta entrega ({entrega.ventas.length}):
+                                                                </h4>
+
+                                                                {/* ✅ TABLA NESTED DE VENTAS */}
+                                                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
+                                                                    <table className="w-full text-sm">
+                                                                        {/* Encabezados */}
+                                                                        <thead>
+                                                                            <tr className="border-b border-gray-200 bg-gray-100 dark:border-slate-700 dark:bg-slate-800">
+                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Folio
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Cliente
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Tipo Entrega
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Confirmación
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Monto
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Peso
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Tipo de Pago
+                                                                                </th>
+                                                                            </tr>
+                                                                        </thead>
+
+                                                                        {/* Cuerpo de la tabla */}
+                                                                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                                                                            {entrega.ventas.map((venta) => {
                                                                                 // ✅ DEBUG: Mostrar datos que llegan del backend
                                                                                 console.log('🔍 Venta completa:', {
                                                                                     venta_id: venta.id,
@@ -488,87 +571,118 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                     confirmacion_entrega: venta.confirmacion_entrega,
                                                                                     tipo_entrega: venta.confirmacion_entrega?.tipo_entrega,
                                                                                     tipo_confirmacion: venta.confirmacion_entrega?.tipo_confirmacion,
-                                                                                    todas_las_propiedades: venta
                                                                                 });
-                                                                                return null;
-                                                                            })()}
-                                                                            <div key={venta.id} className="border-l-2 border-blue-400 pl-3 py-2">
-                                                                                <div className="flex items-start justify-between gap-4">
-                                                                                    <div className="flex-1">
-                                                                                        <div className="font-medium">Folio: {venta.id}</div>
-                                                                                        <div className="text-sm text-muted-foreground">{venta.cliente?.nombre || '-'}</div>
-                                                                                        {/* ✅ NUEVO: Mostrar tipo_entrega y tipo_confirmacion */}
-                                                                                        {venta.confirmacion_entrega && (
-                                                                                            <div className="text-xs mt-2 space-y-1">
-                                                                                                {venta.confirmacion_entrega.tipo_entrega && (
-                                                                                                    <div>
-                                                                                                        <Badge
-                                                                                                            variant="outline"
-                                                                                                            className={
-                                                                                                                venta.confirmacion_entrega.tipo_entrega === 'COMPLETA'
-                                                                                                                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-700'
-                                                                                                                    : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-700'
-                                                                                                            }
-                                                                                                        >
-                                                                                                            📦 {venta.confirmacion_entrega.tipo_entrega}
-                                                                                                        </Badge>
-                                                                                                    </div>
-                                                                                                )}
 
-                                                                                                {venta.confirmacion_entrega.tipo_confirmacion && (
-                                                                                                    <div>
-                                                                                                        <Badge
-                                                                                                            variant="outline"
-                                                                                                            className={
-                                                                                                                venta.confirmacion_entrega.tipo_confirmacion === 'COMPLETA'
-                                                                                                                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-700'
-                                                                                                                    : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-700'
-                                                                                                            }
-                                                                                                        >
-                                                                                                            ✓ {venta.confirmacion_entrega.tipo_confirmacion}
-                                                                                                        </Badge>
-                                                                                                    </div>
-                                                                                                )}
+                                                                                const montoTotal =
+                                                                                    typeof venta.total === 'string'
+                                                                                        ? parseFloat(venta.total)
+                                                                                        : venta.total || 0;
+
+                                                                                return (
+                                                                                    <tr
+                                                                                        key={venta.id}
+                                                                                        className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                                                    >
+                                                                                        {/* Folio */}
+                                                                                        <td className="px-3 py-3">
+                                                                                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                                                                                                #{venta.id}
                                                                                             </div>
-                                                                                        )}
-                                                                                    </div>
-                                                                                    {/* ✅ NUEVO: Línea divisoria en el medio */}
-                                                                                    <div className="border-l border-gray-300 dark:border-gray-700"></div>
-                                                                                    <div className="text-right">
-                                                                                        <div className="font-semibold">
-                                                                                            {(typeof venta.total === 'string' ? parseFloat(venta.total) : venta.total || 0).toLocaleString('es-BO', {
-                                                                                                style: 'currency',
-                                                                                                currency: 'BOB',
-                                                                                                minimumFractionDigits: 2
-                                                                                            })}
-                                                                                        </div>
-                                                                                        {venta.peso_total_estimado && (
-                                                                                            <div className="text-xs text-muted-foreground">
-                                                                                                {venta.peso_total_estimado} kg
-                                                                                            </div>
-                                                                                        )}
-                                                                                        {/* ✅ NUEVO: Mostrar tipo de pago debajo del total */}
-                                                                                        {venta.tipo_pago && (
-                                                                                            <div className="text-xs mt-2">
+                                                                                            {venta.numero && (
+                                                                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                                    {venta.numero}
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </td>
+
+                                                                                        {/* Cliente */}
+                                                                                        <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                                                                                            {venta.cliente?.nombre || '-'}
+                                                                                        </td>
+
+                                                                                        {/* Tipo Entrega */}
+                                                                                        <td className="px-3 py-3">
+                                                                                            {venta.confirmacion_entrega?.tipo_entrega ? (
                                                                                                 <Badge
-                                                                                                    variant="outline"
                                                                                                     className={
-                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
-                                                                                                            ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-700'
-                                                                                                            : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-700'
+                                                                                                        venta.confirmacion_entrega.tipo_entrega ===
+                                                                                                        'COMPLETA'
+                                                                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                                                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
                                                                                                     }
                                                                                                 >
-                                                                                                    💳 {venta.tipo_pago?.nombre}
+                                                                                                    {venta.confirmacion_entrega.tipo_entrega ===
+                                                                                                    'COMPLETA'
+                                                                                                        ? '✅'
+                                                                                                        : '⚠️'}{' '}
+                                                                                                    {venta.confirmacion_entrega.tipo_entrega}
                                                                                                 </Badge>
-                                                                                            </div>
-                                                                                        )}
+                                                                                            ) : (
+                                                                                                <span className="text-gray-400 dark:text-gray-600">
+                                                                                                    -
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </td>
 
+                                                                                        {/* Confirmación */}
+                                                                                        <td className="px-3 py-3">
+                                                                                            {venta.confirmacion_entrega?.tipo_confirmacion ? (
+                                                                                                <Badge
+                                                                                                    className={
+                                                                                                        venta.confirmacion_entrega
+                                                                                                            .tipo_confirmacion === 'COMPLETA'
+                                                                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                                                                                                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                                                                                                    }
+                                                                                                >
+                                                                                                    {venta.confirmacion_entrega.tipo_confirmacion ===
+                                                                                                    'COMPLETA'
+                                                                                                        ? '✓'
+                                                                                                        : '✗'}{' '}
+                                                                                                    {venta.confirmacion_entrega.tipo_confirmacion}
+                                                                                                </Badge>
+                                                                                            ) : (
+                                                                                                <span className="text-gray-400 dark:text-gray-600">
+                                                                                                    -
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </td>
 
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </>
-                                                                    ))}
+                                                                                        {/* Monto */}
+                                                                                        <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                                                                            Bs. {montoTotal.toFixed(2)}
+                                                                                        </td>
+
+                                                                                        {/* Peso */}
+                                                                                        <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
+                                                                                            {venta.peso_total_estimado
+                                                                                                ? `${venta.peso_total_estimado} kg`
+                                                                                                : '-'}
+                                                                                        </td>
+
+                                                                                        {/* Tipo de Pago */}
+                                                                                        <td className="px-3 py-3">
+                                                                                            {venta.tipo_pago ? (
+                                                                                                <Badge
+                                                                                                    className={
+                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
+                                                                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
+                                                                                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                                                                    }
+                                                                                                >
+                                                                                                    💳 {venta.tipo_pago.nombre}
+                                                                                                </Badge>
+                                                                                            ) : (
+                                                                                                <span className="text-gray-400 dark:text-gray-600">
+                                                                                                    -
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                );
+                                                                            })}
+                                                                        </tbody>
+                                                                    </table>
                                                                 </div>
                                                             </div>
                                                         </TableCell>
@@ -584,25 +698,16 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                             {entregas.last_page > 1 && (
                                 <div className="flex items-center justify-between">
                                     <div className="text-sm text-muted-foreground">
-                                        Página {entregas.current_page} de {entregas.last_page}
-                                        ({entregas.total} total)
+                                        Página {entregas.current_page} de {entregas.last_page}({entregas.total} total)
                                     </div>
                                     <div className="flex gap-2">
                                         {entregas.current_page > 1 && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handlePaginaAnterior(entregas.current_page)}
-                                            >
+                                            <Button variant="outline" size="sm" onClick={() => handlePaginaAnterior(entregas.current_page)}>
                                                 Anterior
                                             </Button>
                                         )}
                                         {entregas.current_page < entregas.last_page && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handlePaginaSiguiente(entregas.current_page)}
-                                            >
+                                            <Button variant="outline" size="sm" onClick={() => handlePaginaSiguiente(entregas.current_page)}>
                                                 Siguiente
                                             </Button>
                                         )}
@@ -655,17 +760,25 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                         setEntregaSeleccionadaParaUbicaciones(null);
                     }}
                     ubicaciones={
-                        entregaSeleccionadaParaUbicaciones.ventas?.map(venta => ({
+                        entregaSeleccionadaParaUbicaciones.ventas?.map((venta) => ({
                             id: venta.direccion_cliente?.id || venta.id,
                             venta_id: venta.id,
                             venta_numero: venta.numero,
                             cliente_nombre: venta.cliente?.nombre || 'Cliente desconocido',
                             cliente_telefono: venta.cliente?.telefono,
+                            cliente_foto: venta.cliente?.foto_perfil ? `/storage/${venta.cliente.foto_perfil}` : undefined,
                             direccion: venta.direccion_cliente?.direccion || 'Sin dirección',
                             observaciones: venta.direccion_cliente?.observaciones,
                             latitud: venta.direccion_cliente?.latitud,
                             longitud: venta.direccion_cliente?.longitud,
                             estado: entregaSeleccionadaParaUbicaciones.estado_entrega?.nombre,
+                            tipo_entrega: venta.confirmacion_entrega?.tipo_entrega || 'COMPLETA',
+                            confirmacion_entrega: venta.confirmacion_entrega ? {
+                                tipo_confirmacion: venta.confirmacion_entrega.tipo_confirmacion,
+                                total_dinero_recibido: venta.confirmacion_entrega.total_dinero_recibido,
+                                monto_pendiente: venta.confirmacion_entrega.monto_pendiente,
+                                confirmado_en: venta.confirmacion_entrega.confirmado_en,
+                            } : undefined,
                         })) || []
                     }
                     titulo={`Ubicaciones de Entrega ${entregaSeleccionadaParaUbicaciones.numero_entrega || ''}`}

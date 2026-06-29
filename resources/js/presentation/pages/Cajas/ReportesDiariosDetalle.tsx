@@ -397,10 +397,10 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Cierre de Caja #${cierre.id}`} />
 
-            <div className="py-12">
+            <div className="py-1">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-2">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Cierre de Caja #{cierre.id}</h1>
                             <p className="mt-2 text-gray-600 dark:text-gray-400">

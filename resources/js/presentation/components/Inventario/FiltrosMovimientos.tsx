@@ -25,18 +25,27 @@ interface FiltrosMovimientosProps {
 }
 
 const tiposMovimiento = [
-    // ✅ Tipos principales
-    { value: 'ENTRADA', label: 'Entradas' },
-    { value: 'SALIDA', label: 'Salidas' },
-    { value: 'AJUSTE', label: 'Ajustes' },
-    { value: 'TRANSFERENCIA', label: 'Transferencias' },
-    { value: 'MERMA', label: 'Mermas' },
-    { value: 'PRODUCCION', label: 'Producción' },
-    { value: 'DEVOLUCION', label: 'Devoluciones' },
-    // ✅ NUEVO (2026-02-12): Tipos de reservas de proforma
+    // ✅ Entradas (desde CompraController, AjusteInventario, DevolucionesVenta)
+    { value: 'ENTRADA_COMPRA', label: 'Entrada por Compra' },
+    { value: 'ENTRADA_AJUSTE', label: 'Entrada por Ajuste' },
+    { value: 'ENTRADA_DEVOLUCION', label: 'Entrada por Devolución de Cliente' },
+    // ✅ Salidas (desde VentaController, AjusteInventario, Mermas)
+    { value: 'SALIDA_VENTA', label: 'Salida por Venta' },
+    { value: 'SALIDA_AJUSTE', label: 'Salida por Ajuste' },
+    { value: 'SALIDA_MERMA', label: 'Salida por Merma' },
+    // ✅ Operaciones entre almacenes
+    { value: 'TRANSFERENCIA', label: 'Transferencia entre Almacenes' },
+    // ✅ Ajustes generales
+    { value: 'AJUSTE', label: 'Ajuste General' },
+    // ✅ Reservas de Proforma (desde ReservaDistribucionService)
     { value: 'RESERVA_PROFORMA', label: 'Reserva de Proforma' },
     { value: 'LIBERACION_RESERVA', label: 'Liberación de Reserva' },
-    { value: 'CONSUMO_RESERVA', label: 'Consumo de Reserva' },
+    { value: 'CONSUMO_RESERVA', label: 'Consumo de Reserva (Conversión a Venta)' },
+    // ✅ Anulaciones de documentos
+    { value: 'ANULACION_VENTA', label: 'Anulación de Venta' },
+    { value: 'ANULACION_COMPRA', label: 'Anulación de Compra' },
+    { value: 'ANULACION_PROFORMA', label: 'Anulación de Proforma' },
+    { value: 'ANULACION_CONSUMO_RESERVA', label: 'Anulación de Consumo de Reserva' },
 ];
 
 export default function FiltrosMovimientos({
@@ -110,7 +119,7 @@ export default function FiltrosMovimientos({
 
     return (
         <Card>
-            <CardHeader className="pb-4">
+            <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <Filter className="h-5 w-5" />
@@ -152,157 +161,6 @@ export default function FiltrosMovimientos({
                     </div>
                 </div>
             </CardHeader>
-
-            {/* ✅ NUEVO: Botones de filtro rápido */}
-            <CardContent className="pb-0 pt-2 space-y-3">
-                {/* Filtro de tipo */}
-                <div className="flex flex-wrap gap-2">
-                    <Label className="text-xs text-muted-foreground w-full">Por tipo:</Label>
-                    <Button
-                        variant={filtrosLocal.tipo === 'SALIDA_VENTA' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            // ✅ TOGGLE: Si ya está seleccionado, deselecciona; si no, selecciona
-                            const newFiltros = filtrosLocal.tipo === 'SALIDA_VENTA'
-                                ? { ...filtrosLocal, tipo: undefined }
-                                : { ...filtrosLocal, tipo: 'SALIDA_VENTA' };
-                            setFiltrosLocal(newFiltros);
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        💰 Ventas
-                    </Button>
-                    <Button
-                        variant={filtrosLocal.tipo === 'ENTRADA_COMPRA' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            const newFiltros = filtrosLocal.tipo === 'ENTRADA_COMPRA'
-                                ? { ...filtrosLocal, tipo: undefined }
-                                : { ...filtrosLocal, tipo: 'ENTRADA_COMPRA' };
-                            setFiltrosLocal(newFiltros);
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        📦 Compras
-                    </Button>
-                    <Button
-                        variant={filtrosLocal.tipo === 'AJUSTE' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            const newFiltros = filtrosLocal.tipo === 'AJUSTE'
-                                ? { ...filtrosLocal, tipo: undefined }
-                                : { ...filtrosLocal, tipo: 'AJUSTE' };
-                            setFiltrosLocal(newFiltros);
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        🔧 Ajustes
-                    </Button>
-                    {/* ✅ NUEVO (2026-03-27): Filtro rápido para Proformas - Usa referencia_tipo */}
-                    <Button
-                        variant={isProformasFilterActive ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            if (isProformasFilterActive) {
-                                // Si ya está seleccionado, deselecciona
-                                const newFiltros = { ...filtrosLocal } as any;
-                                delete newFiltros.referencia_tipo;
-                                setFiltrosLocal(newFiltros);
-                            } else {
-                                // Selecciona todas las proformas (RESERVA_PROFORMA, LIBERACION_RESERVA, CONSUMO_RESERVA)
-                                setFiltrosLocal({ ...filtrosLocal, referencia_tipo: 'proforma' } as any);
-                            }
-                        }}
-                        className="flex-shrink-0"
-                        title="Filtra por movimientos de proformas (Reservas, Liberaciones, Consumos)"
-                    >
-                        📋 Proformas
-                    </Button>
-                    {filtrosLocal.tipo && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                const newFiltros = { ...filtrosLocal };
-                                delete newFiltros.tipo;
-                                setFiltrosLocal(newFiltros);
-                            }}
-                            className="flex-shrink-0 ml-auto"
-                        >
-                            <X className="h-3 w-3 mr-1" />
-                            Limpiar
-                        </Button>
-                    )}
-                </div>
-
-                {/* Filtro de estado */}
-                <div className="flex flex-wrap gap-2">
-                    <Label className="text-xs text-muted-foreground w-full">Por estado:</Label>
-                    <Button
-                        variant={filtrosLocal.anulado === false ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            // ✅ TOGGLE: Si ya está seleccionado, deselecciona (sin estado = TODOS)
-                            const newFiltros = filtrosLocal.anulado === false
-                                ? { ...filtrosLocal, anulado: undefined }
-                                : { ...filtrosLocal, anulado: false };
-                            setFiltrosLocal(newFiltros);
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        ✅ Aprobados
-                    </Button>
-                    <Button
-                        variant={filtrosLocal.anulado === true ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            const newFiltros = filtrosLocal.anulado === true
-                                ? { ...filtrosLocal, anulado: undefined }
-                                : { ...filtrosLocal, anulado: true };
-                            setFiltrosLocal(newFiltros);
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        ❌ Anulados
-                    </Button>
-                    <Button
-                        variant={filtrosLocal.tipo === 'ENTRADA_AJUSTE' && filtrosLocal.es_reversión === true ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                            // ✅ TOGGLE: Reversiones es un tipo especial
-                            const isReversionsSelected = filtrosLocal.tipo === 'ENTRADA_AJUSTE' && filtrosLocal.es_reversión === true;
-                            if (isReversionsSelected) {
-                                const newFiltros = { ...filtrosLocal };
-                                delete newFiltros.tipo;
-                                delete newFiltros.es_reversión;
-                                setFiltrosLocal(newFiltros);
-                            } else {
-                                setFiltrosLocal({ ...filtrosLocal, tipo: 'ENTRADA_AJUSTE', es_reversión: true });
-                            }
-                        }}
-                        className="flex-shrink-0"
-                    >
-                        🔄 Reversiones
-                    </Button>
-                    {(filtrosLocal.anulado !== undefined || (filtrosLocal.tipo === 'ENTRADA_AJUSTE' && filtrosLocal.es_reversión === true)) && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                const newFiltros = { ...filtrosLocal };
-                                delete newFiltros.anulado;
-                                delete newFiltros.tipo;
-                                delete newFiltros.es_reversión;
-                                setFiltrosLocal(newFiltros);
-                            }}
-                            className="flex-shrink-0 ml-auto"
-                        >
-                            <X className="h-3 w-3 mr-1" />
-                            Limpiar
-                        </Button>
-                    )}
-                </div>
-            </CardContent>
 
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleContent>
@@ -362,7 +220,7 @@ export default function FiltrosMovimientos({
 
                             {/* Tipo de movimiento */}
                             <div className="space-y-2">
-                                <Label>Tipo de movimiento</Label>
+                                <Label>Tipo de movimientos</Label>
                                 <SearchSelect
                                     placeholder="Seleccionar tipo..."
                                     value={filtrosLocal.tipo || ''}
@@ -372,21 +230,6 @@ export default function FiltrosMovimientos({
                                     emptyText="No se encontraron tipos"
                                 />
                             </div>
-
-                            {/* Tipo de Ajuste */}
-                            {tiposAjusteOptions.length > 0 && (
-                                <div className="space-y-2">
-                                    <Label>Tipo de Ajuste</Label>
-                                    <SearchSelect
-                                        placeholder="Seleccionar ajuste..."
-                                        value={filtrosLocal.tipo_ajuste_id?.toString() || ''}
-                                        options={tiposAjusteOptions}
-                                        onChange={(value) => updateFiltroLocal('tipo_ajuste_id', value ? parseInt(value) : undefined)}
-                                        allowClear={true}
-                                        emptyText="No se encontraron ajustes"
-                                    />
-                                </div>
-                            )}
 
                             {/* Almacén */}
                             <div className="space-y-2">

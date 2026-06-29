@@ -75,6 +75,9 @@ class MovimientoStockService
                 $reservadaAnterior = (int)$stock->cantidad_reservada;
                 $disponibleAnterior = (int)$stock->cantidad_disponible;
 
+                // ✅ NUEVO (2026-06-28): Capturar TOTALES del producto ANTES (centralizado)
+                $totalesAntes = $this->capturarTotalesDelProducto($stock->producto_id, $stock->almacen_id);
+
                 // 4️⃣ Calcular nuevo estado según TIPO DE TRANSACCIÓN
                 $nuevoTotal = $cantidadAnterior;
                 $nuevaReservada = $reservadaAnterior;
@@ -151,6 +154,9 @@ class MovimientoStockService
                 // Re-leer desde BD para confirmar que la actualización fue exitosa
                 $stockActualizado = StockProducto::findOrFail($stockProductoId);
 
+                // ✅ NUEVO (2026-06-28): Capturar TOTALES del producto DESPUÉS (centralizado)
+                $totalesDespues = $this->capturarTotalesDelProducto($stock->producto_id, $stock->almacen_id);
+
                 if (
                     (int) $stockActualizado->cantidad !== $nuevoTotal ||
                     (int) $stockActualizado->cantidad_reservada !== $nuevaReservada ||
@@ -220,20 +226,27 @@ class MovimientoStockService
                 MovimientoInventario::create([
                     'stock_producto_id' => $stockProductoId,
                     'cantidad' => $cantidad,
+                    // ✅ LOTE ESPECÍFICO (valores del lote individual)
                     'cantidad_anterior' => $cantidadAnterior,
                     'cantidad_posterior' => $nuevoTotal,
-                    'cantidad_total_anterior' => $cantidadAnterior,  // ✅ NUEVO (2026-06-09): Total anterior para seguimiento
-                    'cantidad_total_posterior' => $nuevoTotal,       // ✅ NUEVO (2026-06-09): Total posterior para seguimiento
-                    'cantidad_reservada_anterior' => $reservadaAnterior,
-                    'cantidad_reservada_posterior' => $nuevaReservada,
                     'cantidad_disponible_anterior' => $disponibleAnterior,
                     'cantidad_disponible_posterior' => $nuevaDisponible,
+                    'cantidad_reservada_anterior' => $reservadaAnterior,
+                    'cantidad_reservada_posterior' => $nuevaReservada,
+                    // ✅ NUEVO (2026-06-28): TOTALES de TODOS los lotes (centralizado)
+                    'cantidad_total_anterior' => $totalesAntes['cantidad_total'],
+                    'cantidad_total_posterior' => $totalesDespues['cantidad_total'],
+                    'disponible_total_anterior' => $totalesAntes['disponible_total'],
+                    'disponible_total_posterior' => $totalesDespues['disponible_total'],
+                    'reservada_total_anterior' => $totalesAntes['reservada_total'],
+                    'reservada_total_posterior' => $totalesDespues['reservada_total'],
+                    // ✅ Metadatos de auditoría
                     'tipo' => $tipo,
-                    'numero_documento' => $numeroDocumento,  // ✅ NUEVO (2026-06-09): Número del documento
+                    'numero_documento' => $numeroDocumento,
                     'referencia_tipo' => $referencia_tipo,
                     'referencia_id' => $referencia_id,
                     'user_id' => Auth::id(),
-                    'observacion' => $observacion,  // ✅ NUEVO: Campo obligatorio
+                    'observacion' => $observacion,
                     'metadata' => !empty($metadataAdicional) ? json_encode($metadataAdicional) : null,
                 ]);
 
@@ -261,6 +274,69 @@ class MovimientoStockService
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * ✅ NUEVO (2026-06-28): Capturar TOTALES de todos los lotes (centralizado)
+     *
+     * Este método calcula la suma de cantidad, disponible y reservada de TODOS los lotes
+     * del producto en el almacén. Se usa antes y después de cada operación.
+     *
+     * @param int $productoId ID del producto
+     * @param int $almacenId ID del almacén
+     * @return array [
+     *   'cantidad_total' => float,
+     *   'disponible_total' => float,
+     *   'reservada_total' => float,
+     * ]
+     */
+    public function capturarTotalesDelProducto(int $productoId, int $almacenId): array
+    {
+        try {
+            // ✅ NUEVO (2026-06-28): Usar raw query con SUM para obtener totales de TODOS los lotes
+            $totales = DB::table('stock_productos')
+                ->where('producto_id', $productoId)
+                ->where('almacen_id', $almacenId)
+                ->where('deleted_at', null)
+                ->selectRaw('
+                    SUM(CAST(cantidad AS DECIMAL(15,6))) as cantidad_total,
+                    SUM(CAST(cantidad_disponible AS DECIMAL(15,6))) as disponible_total,
+                    SUM(CAST(cantidad_reservada AS DECIMAL(15,6))) as reservada_total
+                ')
+                ->first();
+
+            // Log detallado para debugging
+            Log::debug('📊 [capturarTotalesDelProducto] Totales capturados', [
+                'producto_id' => $productoId,
+                'almacen_id' => $almacenId,
+                'totales_objeto' => $totales,
+                'cantidad_total' => $totales?->cantidad_total,
+                'disponible_total' => $totales?->disponible_total,
+                'reservada_total' => $totales?->reservada_total,
+                'stock_count' => StockProducto::where('producto_id', $productoId)
+                    ->where('almacen_id', $almacenId)
+                    ->count(),
+            ]);
+
+            return [
+                'cantidad_total' => (float) ($totales?->cantidad_total ?? 0),
+                'disponible_total' => (float) ($totales?->disponible_total ?? 0),
+                'reservada_total' => (float) ($totales?->reservada_total ?? 0),
+            ];
+        } catch (\Exception $e) {
+            Log::error('❌ Error capturando totales del producto', [
+                'producto_id' => $productoId,
+                'almacen_id' => $almacenId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'cantidad_total' => 0,
+                'disponible_total' => 0,
+                'reservada_total' => 0,
+            ];
         }
     }
 

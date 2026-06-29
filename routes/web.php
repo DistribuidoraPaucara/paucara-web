@@ -467,6 +467,12 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::post('ventas/{venta}/devoluciones', [\App\Http\Controllers\DevolucionController::class, 'store'])
         ->name('devoluciones.store');
 
+    // ✅ NUEVO: Registrar confirmación de entrega desde pantalla de venta
+    Route::post('ventas/{venta}/confirmaciones', [\App\Http\Controllers\VentaController::class, 'storeConfirmacion'])
+        ->name('ventas.confirmaciones.store');
+    Route::delete('ventas/{venta}/confirmaciones/{confirmacion}', [\App\Http\Controllers\VentaController::class, 'destroyConfirmacion'])
+        ->name('ventas.confirmaciones.destroy');
+
     // ==========================================
     // SERVICIOS - MÓDULO DE SERVICIOS (INYECCIONES, CONSULTAS, ETC.)
     // ==========================================

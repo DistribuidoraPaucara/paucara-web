@@ -273,7 +273,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
 export const descargar = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -288,7 +288,7 @@ descargar.definition = {
 
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
 descargar.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -316,7 +316,7 @@ descargar.url = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
 descargar.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -325,7 +325,7 @@ descargar.get = (args: { id: string | number } | [id: string | number ] | string
 })
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
 descargar.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -335,7 +335,7 @@ descargar.head = (args: { id: string | number } | [id: string | number ] | strin
 
     /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
     const descargarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -345,7 +345,7 @@ descargar.head = (args: { id: string | number } | [id: string | number ] | strin
 
             /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
         descargarForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -354,7 +354,7 @@ descargar.head = (args: { id: string | number } | [id: string | number ] | strin
         })
             /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:342
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
  * @route '/cajas/admin/reportes-diarios/{id}/descargar'
  */
         descargarForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -370,7 +370,7 @@ descargar.head = (args: { id: string | number } | [id: string | number ] | strin
     descargar.form = descargarForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
 export const descargarFiltrado = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -385,7 +385,7 @@ descargarFiltrado.definition = {
 
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
 descargarFiltrado.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -413,7 +413,7 @@ descargarFiltrado.url = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
 descargarFiltrado.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -422,7 +422,7 @@ descargarFiltrado.get = (args: { id: string | number } | [id: string | number ] 
 })
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
 descargarFiltrado.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -432,7 +432,7 @@ descargarFiltrado.head = (args: { id: string | number } | [id: string | number ]
 
     /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
     const descargarFiltradoForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -442,7 +442,7 @@ descargarFiltrado.head = (args: { id: string | number } | [id: string | number ]
 
             /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
         descargarFiltradoForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -451,7 +451,7 @@ descargarFiltrado.head = (args: { id: string | number } | [id: string | number ]
         })
             /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
- * @see app/Http/Controllers/CierreDiarioGeneralController.php:380
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
  * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
  */
         descargarFiltradoForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -57,7 +57,8 @@ class AjusteDistribucionService
         array $ajustes,
         string $numeroAjuste,
         int $almacenId,
-        int $usuarioId
+        int $usuarioId,
+        ?int $ajusteId = null  // ✅ NUEVO (2026-06-29): Para referencia_id en movimientos
     ): array {
         Log::info('🔄 [AjusteDistribucionService::registrarAjustesAgrupados] Iniciando ajustes agrupados', [
             'numero_ajuste' => $numeroAjuste,
@@ -68,7 +69,7 @@ class AjusteDistribucionService
 
         $movimientos = [];
 
-        return DB::transaction(function () use ($ajustes, $numeroAjuste, $almacenId, $usuarioId, &$movimientos) {
+        return DB::transaction(function () use ($ajustes, $numeroAjuste, $almacenId, $usuarioId, $ajusteId, &$movimientos) {
             // Agrupar ajustes por producto_id (extraer del StockProducto)
             $ajustesPorProducto = [];
 
@@ -200,7 +201,7 @@ class AjusteDistribucionService
                     detallesLotes: $detallesLotes,
                     opciones: [
                         // 'referencia_tipo' => 'ajuste',  // ← Movido a parámetro directo
-                        'referencia_id' => null,
+                        'referencia_id' => $ajusteId ?? null,  // ✅ CORREGIDO (2026-06-29): Usar ajuste_id real
                         // ✅ CORREGIDO (2026-04-05): Pasar totales del PRODUCTO COMPLETO
                         'totales_previos' => [
                             'cantidad_total_anterior' => $totalProductoAntes,

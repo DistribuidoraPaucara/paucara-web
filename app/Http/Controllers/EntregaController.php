@@ -366,7 +366,10 @@ class EntregaController extends Controller
                             'codigo' => $venta->tipoPago->codigo,
                         ] : null,
                         'direccion_cliente' => $venta->direccionCliente ? [
+                            'id' => $venta->direccionCliente->id,
                             'direccion' => $venta->direccionCliente->direccion,
+                            'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
+                            'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
                             'observaciones' => $venta->direccionCliente->observaciones,
                             'localidad' => $venta->direccionCliente->localidad ? [
                                 'id' => $venta->direccionCliente->localidad->id,
@@ -380,6 +383,13 @@ class EntregaController extends Controller
                             'nombre' => $venta->estadoLogistica->nombre,
                             'color' => $venta->estadoLogistica->color,
                             'icono' => $venta->estadoLogistica->icono,
+                        ] : null,
+                        // ✅ NUEVO: Estado documento (estado de la venta: VIGENTE, ANULADA, etc.)
+                        'estado_documento' => $venta->estadoDocumento ? [
+                            'id' => $venta->estadoDocumento->id,
+                            'nombre' => $venta->estadoDocumento->nombre,
+                            'codigo' => $venta->estadoDocumento->codigo,
+                            'color' => $venta->estadoDocumento->color ?? null,
                         ] : null,
                         // ✅ NUEVO: Última confirmación de entrega (via accessor)
                         'confirmacion_entrega' => $confirmacion ? [
@@ -1472,7 +1482,8 @@ class EntregaController extends Controller
             'ventas.detalles.producto.unidad', // ✅ ACTUALIZADO: Incluir unidad (correcta relación) para obtenerProductosGenerico()
             // ✅ NUEVO (2026-06-14): Cargar confirmaciones de cada venta (para el accessor confirmacion_entrega)
             'ventas.confirmaciones' => function ($q) {
-                $q->orderByDesc('id'); // Ordenar DESC para que first() retorne la más reciente
+                $q->orderByDesc('id') // Ordenar DESC para que first() retorne la más reciente
+                  ->with('confirmadoPor'); // ✅ NEW: Traer datos del usuario que confirmó
             },
             'chofer',
             'entregador',      // ✅ NUEVO (2026-02-12): Mostrar entregador en show
@@ -1480,8 +1491,32 @@ class EntregaController extends Controller
             'localidad',
             'reportes',        // Reportes asociados (Many-to-Many)
             'reporteEntregas', // Pivot con metadata (orden, incluida_en_carga, notas)
-            'confirmacionesVentas.venta.cliente',  // ✅ FIXED (2026-02-17): Eager load venta y cliente para ConfirmacionesEntregaSection
+            'confirmacionesVentas' => function ($q) {
+                $q->with([
+                    'venta.cliente',      // ✅ FIXED (2026-02-17): Cliente de la venta
+                    'confirmadoPor',      // ✅ NEW: Usuario que confirmó la entrega
+                ]);
+            },
         ]);
+
+        // ✅ NUEVO: Filtrar para obtener SOLO la última confirmación por venta (ordenado por ID DESC)
+        // Esto asegura que siempre mostremos la confirmación más reciente en el frontend
+        $entrega->confirmacionesVentas = $entrega->confirmacionesVentas
+            ->groupBy('venta_id')  // Agrupar por venta
+            ->map(function ($grupo) {
+                // Para cada venta, retornar la confirmación con ID más alto (más reciente)
+                return $grupo->sortByDesc('id')->first();
+            })
+            ->values(); // Reindexar el array
+
+        // ✅ NUEVO: También filtrar confirmaciones de cada venta para que solo tengan la última
+        foreach ($entrega->ventas as $venta) {
+            if ($venta->relationLoaded('confirmaciones') && $venta->confirmaciones->count() > 1) {
+                // Si hay múltiples confirmaciones, mantener solo la última
+                $ultimaConfirmacion = $venta->confirmaciones->sortByDesc('id')->first();
+                $venta->setRelation('confirmaciones', collect([$ultimaConfirmacion]));
+            }
+        }
 
         // 🔍 DEBUG: Verificar si confirmacionesVentas se cargó
         \Illuminate\Support\Facades\Log::info('📦 [ENTREGA SHOW DEBUG] Confirmaciones Cargadas', [
@@ -1520,18 +1555,127 @@ class EntregaController extends Controller
         }
 
         // Web (Inertia)
-        // Convertir a array - toArray() ya incluye todas las relaciones cargadas
-        $entregaData = $entrega->toArray();
+        // ✅ TRANSFORMER: Convertir entrega a array con transformación explícita (consistente con index())
+        $entregaData = [
+            'id' => $entrega->id,
+            'numero_entrega' => $entrega->numero_entrega,
+            'numero_envio' => $entrega->numero_envio,
+            'estado' => $entrega->estado,
+            'estado_entrega_id' => $entrega->estado_entrega_id,
+            'estado_entrega_codigo' => $entrega->estado_entrega_codigo,
+            'estado_entrega_nombre' => $entrega->estado_entrega_nombre,
+            'estado_entrega_color' => $entrega->estado_entrega_color,
+            'estado_entrega_icono' => $entrega->estado_entrega_icono,
+            'estado_entrega' => $entrega->estadoEntrega ? [
+                'id' => $entrega->estadoEntrega->id,
+                'codigo' => $entrega->estadoEntrega->codigo,
+                'nombre' => $entrega->estadoEntrega->nombre,
+                'color' => $entrega->estadoEntrega->color,
+                'icono' => $entrega->estadoEntrega->icono,
+            ] : null,
+            'chofer' => $entrega->chofer ? [
+                'id' => $entrega->chofer->id,
+                'name' => $entrega->chofer->name,
+                'nombre' => $entrega->chofer->nombre,
+            ] : null,
+            'entregador' => $entrega->entregador ? [
+                'id' => $entrega->entregador->id,
+                'name' => $entrega->entregador->name,
+            ] : null,
+            'vehiculo' => $entrega->vehiculo ? [
+                'id' => $entrega->vehiculo->id,
+                'placa' => $entrega->vehiculo->placa,
+                'marca' => $entrega->vehiculo->marca,
+                'modelo' => $entrega->vehiculo->modelo,
+            ] : null,
+            'localidad' => $entrega->localidad ? [
+                'id' => $entrega->localidad->id,
+                'nombre' => $entrega->localidad->nombre,
+            ] : null,
+            // ✅ NUEVO: Transformar ventas de forma consistente con index()
+            'ventas' => $entrega->ventas ? $entrega->ventas->map(function ($venta) {
+                $confirmacion = $venta->confirmacion_entrega;
 
-        // Agregar explícitamente accessors que toArray() podría no incluir
-        $entregaData['estado_entrega_codigo'] = $entrega->estado_entrega_codigo;
-        $entregaData['estado_entrega_nombre'] = $entrega->estado_entrega_nombre;
-        $entregaData['estado_entrega_color']  = $entrega->estado_entrega_color;
-        $entregaData['estado_entrega_icono']  = $entrega->estado_entrega_icono;
-
-        // ✅ CRITICAL FIX (2026-02-17): toArray() no incluye automáticamente relaciones cargadas
-        // Agregar explícitamente las confirmacionesVentas que fueron cargadas con load()
-        $entregaData['confirmacionesVentas'] = $entrega->confirmacionesVentas->toArray();
+                return [
+                    'id' => $venta->id,
+                    'numero' => $venta->numero,
+                    'cliente' => $venta->cliente ? [
+                        'id' => $venta->cliente->id,
+                        'nombre' => $venta->cliente->nombre,
+                        'telefono' => $venta->cliente->telefono,
+                        'foto_perfil' => $venta->cliente->foto_perfil,
+                    ] : null,
+                    'total' => (float) $venta->total,
+                    'subtotal' => (float) $venta->subtotal,
+                    'impuesto' => (float) $venta->impuesto,
+                    'peso_total_estimado' => $venta->peso_total_estimado,
+                    'estado_logistico_id' => $venta->estado_logistico_id,
+                    'direccion_cliente_id' => $venta->direccion_cliente_id,
+                    'tipo_pago' => $venta->tipoPago ? [
+                        'id' => $venta->tipoPago->id,
+                        'nombre' => $venta->tipoPago->nombre,
+                        'codigo' => $venta->tipoPago->codigo,
+                    ] : null,
+                    'direccion_cliente' => $venta->direccionCliente ? [
+                        'id' => $venta->direccionCliente->id,
+                        'direccion' => $venta->direccionCliente->direccion,
+                        'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
+                        'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
+                        'observaciones' => $venta->direccionCliente->observaciones,
+                        'localidad' => $venta->direccionCliente->localidad ? [
+                            'id' => $venta->direccionCliente->localidad->id,
+                            'nombre' => $venta->direccionCliente->localidad->nombre,
+                            'codigo' => $venta->direccionCliente->localidad->codigo,
+                        ] : null,
+                    ] : null,
+                    'estado_logistica' => $venta->estadoLogistica ? [
+                        'id' => $venta->estadoLogistica->id,
+                        'codigo' => $venta->estadoLogistica->codigo,
+                        'nombre' => $venta->estadoLogistica->nombre,
+                        'color' => $venta->estadoLogistica->color,
+                        'icono' => $venta->estadoLogistica->icono,
+                    ] : null,
+                    // ✅ NUEVO: Estado documento (estado de la venta: VIGENTE, ANULADA, etc.)
+                    'estado_documento' => $venta->estadoDocumento ? [
+                        'id' => $venta->estadoDocumento->id,
+                        'nombre' => $venta->estadoDocumento->nombre,
+                        'codigo' => $venta->estadoDocumento->codigo,
+                        'color' => $venta->estadoDocumento->color ?? null,
+                    ] : null,
+                    // ✅ CRÍTICO: Incluir confirmacion_entrega con tipo_entrega y tipo_confirmacion
+                    'confirmacion_entrega' => $confirmacion ? [
+                        'id' => $confirmacion->id,
+                        'tipo_entrega' => $confirmacion->tipo_entrega,
+                        'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+                        'tuvo_problema' => $confirmacion->tuvo_problema,
+                        'estado_pago' => $confirmacion->estado_pago,
+                        'total_dinero_recibido' => (float) ($confirmacion->total_dinero_recibido ?? 0),
+                        'monto_pendiente' => (float) ($confirmacion->monto_pendiente ?? 0),
+                        'observaciones_logistica' => $confirmacion->observaciones_logistica,
+                        'confirmado_en' => $confirmacion->confirmado_en,
+                    ] : null,
+                    'detalles' => $venta->detalles ? $venta->detalles->map(function ($detalle) {
+                        return [
+                            'id' => $detalle->id,
+                            'producto' => $detalle->producto ? [
+                                'id' => $detalle->producto->id,
+                                'nombre' => $detalle->producto->nombre,
+                            ] : null,
+                            'cantidad' => $detalle->cantidad,
+                            'precio_unitario' => (float) $detalle->precio_unitario,
+                            'subtotal' => (float) $detalle->subtotal,
+                        ];
+                    })->toArray() : [],
+                ];
+            })->toArray() : [],
+            'fecha_asignacion' => $entrega->fecha_asignacion,
+            'fecha_entrega' => $entrega->fecha_entrega,
+            'fecha_programada' => $entrega->fecha_programada,
+            'created_at' => $entrega->created_at,
+            'peso_kg' => $entrega->peso_kg,
+            // ✅ Agregar confirmacionesVentas para los reportes
+            'confirmacionesVentas' => $entrega->confirmacionesVentas->toArray(),
+        ];
 
         return Inertia::render('logistica/entregas/Show', [
             'entrega' => $entregaData,

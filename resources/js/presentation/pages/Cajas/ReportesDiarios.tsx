@@ -323,10 +323,12 @@ export default function ReportesDiarios({
                   </label>
                 </div>
 
-                <div className="flex flex-col h-full justify-end gap-2">
+                
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                   <Button
                     onClick={aplicarFiltros}
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white w-full"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:text-white"
                   >
                     <Search className="mr-2 h-4 w-4" />
                     Buscar
@@ -335,7 +337,7 @@ export default function ReportesDiarios({
                     onClick={limpiarFiltros}
                     disabled={!hayFiltrosActivos}
                     variant="outline"
-                    className={`w-full ${
+                    className={`flex-1 ${
                       hayFiltrosActivos
                         ? 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 text-gray-700 border-gray-300 hover:bg-gray-50'
                         : 'opacity-50 cursor-not-allowed dark:border-slate-700 dark:text-gray-500 text-gray-400 border-gray-200'
@@ -344,7 +346,6 @@ export default function ReportesDiarios({
                     Limpiar
                   </Button>
                 </div>
-              </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Busca en ID del cierre, ID de apertura o nombre de usuario
               </p>

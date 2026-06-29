@@ -387,29 +387,38 @@ class VentaService
             $movimientosStock = $this->ventaDistribucionService->consumirStock(
                 $detallesParaStock,
                 $venta->numero,
+                ventaId: $venta->id,                 // ✅ NUEVO (2026-06-29): Pasar venta_id para referencia_id
                 permitirStockNegativo: $esCREDITO,  // ✅ Permite stock negativo para CREDITO
                 esFarmacia: $esFarmacia              // ✅ NUEVO (2026-05-08): Permite venta sin stock en farmacia
             );
 
-            // ✅ NUEVO (2026-03-28): Validar que se registraron movimientos para TODOS los productos
-            // Esto evita que quedenventas sin movimientos de inventario
+            // ✅ CORREGIDO (2026-06-29): Validar que todos los productos fueron procesados
+            // Nota: Cantidad de movimientos ≠ cantidad de productos
+            // Un producto puede estar en múltiples lotes → múltiples movimientos por un producto
+            // Validar que se crearon ALGUNOS movimientos para cada producto
+            $productosConMovimientos = collect($movimientosStock)
+                ->pluck('stockProducto.producto_id')
+                ->unique()
+                ->count();
+
             $cantidadProductosUnicos = collect($detallesParaStock)
                 ->pluck('producto_id')
                 ->unique()
                 ->count();
 
-            if (count($movimientosStock) != $cantidadProductosUnicos) {
-                Log::error('❌ [VentaService::crear] Discrepancia de movimientos', [
+            if ($productosConMovimientos != $cantidadProductosUnicos) {
+                Log::error('❌ [VentaService::crear] Producto(s) sin movimiento de inventario', [
                     'venta_id' => $venta->id,
                     'venta_numero' => $venta->numero,
                     'productos_esperados' => $cantidadProductosUnicos,
+                    'productos_con_movimiento' => $productosConMovimientos,
                     'movimientos_creados' => count($movimientosStock),
                     'detalles' => $detallesParaStock,
                 ]);
 
                 throw new \Exception(
-                    "Error crítico: Se esperaban {$cantidadProductosUnicos} movimientos de inventario " .
-                    "pero solo se registraron " . count($movimientosStock) . ". " .
+                    "Error crítico: Se esperaban {$cantidadProductosUnicos} producto(s) pero " .
+                    "solo {$productosConMovimientos} tienen movimientos de inventario. " .
                     "Venta {$venta->numero} requiere revisión manual."
                 );
             }

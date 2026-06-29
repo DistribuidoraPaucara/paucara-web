@@ -1,26 +1,18 @@
-import { useState, useCallback, useMemo, useEffect, useRef, ReactNode } from 'react';
-import { useForm, usePage, router } from '@inertiajs/react';
-import { createPortal } from 'react-dom';
-import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Almacen } from '@/domain/entities/almacenes';
-import { StockProducto, Producto } from '@/domain/entities/movimientos-inventario';
-import { Id } from '@/domain/entities/shared';
-import { Button } from '@/presentation/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/presentation/components/ui/select';
-import { Input } from '@/presentation/components/ui/input';
-import { Textarea } from '@/presentation/components/ui/textarea';
-import { toast } from 'react-hot-toast';
-import { Trash2, Plus, Save, XCircle, Search, Loader, FileText } from 'lucide-react';
+import { Producto, StockProducto } from '@/domain/entities/movimientos-inventario';
+import AppLayout from '@/layouts/app-layout';
 import { Breadcrumbs } from '@/presentation/components/breadcrumbs';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Button } from '@/presentation/components/ui/button';
+import { Input } from '@/presentation/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
+import { Textarea } from '@/presentation/components/ui/textarea';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, router, usePage } from '@inertiajs/react';
+import { FileText, Loader, Plus, Save, Search, Trash2, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { toast } from 'react-hot-toast';
 
 interface TipoAjusteInventario {
     id: number;
@@ -69,13 +61,7 @@ interface DropdownPortalProps {
     visible: boolean;
 }
 
-function DropdownPortal({
-    ajusteId,
-    inputRef,
-    searchResults,
-    onSelectProduct,
-    visible,
-}: DropdownPortalProps) {
+function DropdownPortal({ ajusteId, inputRef, searchResults, onSelectProduct, visible }: DropdownPortalProps) {
     const [position, setPosition] = useState<{
         top: number;
         left: number;
@@ -89,8 +75,8 @@ function DropdownPortal({
         // ✅ getBoundingClientRect() ya da posición relativa al viewport
         // para fixed positioning, NO necesitamos sumar scrollY/scrollX
         setPosition({
-            top: rect.bottom + 4,   // Posición exacta debajo del input
-            left: rect.left,        // Posición exacta a la izquierda del input
+            top: rect.bottom + 4, // Posición exacta debajo del input
+            left: rect.left, // Posición exacta a la izquierda del input
             width: rect.width,
         });
     }, [visible, inputRef, searchResults]);
@@ -98,24 +84,27 @@ function DropdownPortal({
     if (!visible || searchResults.length === 0) return null;
 
     // Agrupar resultados por producto_id para mostrar lotes
-    const agrupadosPorProducto = searchResults.reduce((acc, item) => {
-        const productoId = item.producto_id || item.id;
-        if (!acc[productoId]) {
-            acc[productoId] = {
-                nombre: item.nombre,
-                sku: item.sku,
-                producto_id: productoId,
-                existe_en_almacen: item.existe_en_almacen ?? true,  // ✅ Rastrear si es producto nuevo
-                lotes: []
-            };
-        }
-        acc[productoId].lotes.push(item);
-        return acc;
-    }, {} as Record<string | number, any>);
+    const agrupadosPorProducto = searchResults.reduce(
+        (acc, item) => {
+            const productoId = item.producto_id || item.id;
+            if (!acc[productoId]) {
+                acc[productoId] = {
+                    nombre: item.nombre,
+                    sku: item.sku,
+                    producto_id: productoId,
+                    existe_en_almacen: item.existe_en_almacen ?? true, // ✅ Rastrear si es producto nuevo
+                    lotes: [],
+                };
+            }
+            acc[productoId].lotes.push(item);
+            return acc;
+        },
+        {} as Record<string | number, any>,
+    );
 
     return createPortal(
         <div
-            className="absolute bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md shadow-2xl z-[9999] overflow-y-auto"
+            className="absolute z-[9999] overflow-y-auto rounded-md border border-gray-200 bg-white shadow-2xl dark:border-slate-600 dark:bg-slate-700"
             style={{
                 position: 'fixed',
                 top: `${position.top}px`,
@@ -126,29 +115,22 @@ function DropdownPortal({
             }}
         >
             {Object.values(agrupadosPorProducto).map((grupo) => (
-                <div
-                    key={grupo.producto_id}
-                    className="border-b dark:border-slate-600 last:border-b-0"
-                >
+                <div key={grupo.producto_id} className="border-b last:border-b-0 dark:border-slate-600">
                     {/* Encabezado del Producto */}
-                    <div className={`px-3 py-2 sticky top-0 ${
-                        grupo.existe_en_almacen
-                            ? 'bg-gray-50 dark:bg-slate-600'
-                            : 'bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-500'
-                    }`}>
+                    <div
+                        className={`sticky top-0 px-3 py-2 ${
+                            grupo.existe_en_almacen ? 'bg-gray-50 dark:bg-slate-600' : 'border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-900/30'
+                        }`}
+                    >
                         <div className="flex items-center justify-between">
-                            <div className="font-semibold text-sm dark:text-gray-100">
-                                {grupo.nombre}
-                            </div>
+                            <div className="text-sm font-semibold dark:text-gray-100">{grupo.nombre}</div>
                             {!grupo.existe_en_almacen && (
-                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900 px-2 py-1 rounded">
+                                <span className="rounded bg-amber-100 px-2 py-1 text-xs font-bold text-amber-600 dark:bg-amber-900 dark:text-amber-400">
                                     🆕 NUEVO
                                 </span>
                             )}
                         </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-300">
-                            SKU: {grupo.sku}
-                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">SKU: {grupo.sku}</div>
                     </div>
 
                     {/* Lotes del Producto */}
@@ -159,24 +141,26 @@ function DropdownPortal({
                                 onClick={() => {
                                     onSelectProduct(lote);
                                 }}
-                                className="px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-500 transition"
+                                className="cursor-pointer px-3 py-2 transition hover:bg-blue-50 dark:hover:bg-slate-500"
                             >
-                                <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1">
+                                <div className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
                                     {lote.lote ? (
-                                        <div className="font-medium text-blue-600 dark:text-blue-400">
-                                            📋 Lote: {lote.lote}
-                                        </div>
+                                        <div className="font-medium text-blue-600 dark:text-blue-400">📋 Lote: {lote.lote}</div>
                                     ) : (
-                                        <div className="font-medium text-orange-600 dark:text-orange-400">
-                                            ⚠️ Sin Lote
-                                        </div>
+                                        <div className="font-medium text-orange-600 dark:text-orange-400">⚠️ Sin Lote</div>
                                     )}
                                     <div className="grid grid-cols-2 gap-2">
                                         <span className="block">
-                                            📦 Stock: <span className="font-semibold text-blue-600 dark:text-blue-400">{parseFloat(lote.cantidad_actual || 0).toFixed(2)}</span>
+                                            📦 Stock:{' '}
+                                            <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                                {parseFloat(lote.cantidad_actual || 0).toFixed(2)}
+                                            </span>
                                         </span>
                                         <span className="block">
-                                            ✓ Disp: <span className="font-semibold text-green-600 dark:text-green-400">{parseFloat(lote.cantidad_disponible || 0).toFixed(2)}</span>
+                                            ✓ Disp:{' '}
+                                            <span className="font-semibold text-green-600 dark:text-green-400">
+                                                {parseFloat(lote.cantidad_disponible || 0).toFixed(2)}
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
@@ -186,7 +170,7 @@ function DropdownPortal({
                 </div>
             ))}
         </div>,
-        document.body
+        document.body,
     );
 }
 
@@ -206,7 +190,7 @@ export default function AjusteTabla() {
     useEffect(() => {
         if (tiposAjuste.length === 0) {
             fetch('/api/tipos-ajuste-inventario', {
-                headers: { 'Accept': 'application/json' },
+                headers: { Accept: 'application/json' },
             })
                 .then((res) => res.json())
                 .then((data) => {
@@ -220,9 +204,7 @@ export default function AjusteTabla() {
 
     // ✅ Seleccionar "Almacen Principal" por defecto al montar
     useEffect(() => {
-        const almacenPrincipal = almacenes.find(
-            (a) => a.nombre && a.nombre.toLowerCase().includes('principal')
-        );
+        const almacenPrincipal = almacenes.find((a) => a.nombre && a.nombre.toLowerCase().includes('principal'));
 
         if (almacenPrincipal) {
             setAlmacenSeleccionado(String(almacenPrincipal.id));
@@ -245,9 +227,7 @@ export default function AjusteTabla() {
     // Filtrar stock_productos según almacén seleccionado
     const stockProductosFiltrados = useMemo(() => {
         if (!almacenSeleccionado) return [];
-        return initialStockProductos.filter(
-            (sp) => String(sp.almacen_id) === almacenSeleccionado
-        );
+        return initialStockProductos.filter((sp) => String(sp.almacen_id) === almacenSeleccionado);
     }, [almacenSeleccionado, initialStockProductos]);
 
     // Generar ID temporal único
@@ -272,7 +252,7 @@ export default function AjusteTabla() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json',
+                            Accept: 'application/json',
                         },
                         body: JSON.stringify({
                             producto_id: producto.producto_id,
@@ -314,14 +294,11 @@ export default function AjusteTabla() {
                         const actualizado = { ...ajuste, stock_producto_id: producto.id || producto.stock_producto_id };
 
                         // Buscar el producto en los stock filtrados
-                        const stockProducto = stockProductosFiltrados.find(
-                            (sp) => sp.id === (producto.id || producto.stock_producto_id)
-                        );
+                        const stockProducto = stockProductosFiltrados.find((sp) => sp.id === (producto.id || producto.stock_producto_id));
 
                         if (stockProducto) {
                             actualizado.producto = stockProducto;
-                            actualizado.cantidad_actual =
-                                parseFloat(stockProducto.cantidad) || 0;  // ✅ Usar cantidad (stock total), no cantidad_disponible
+                            actualizado.cantidad_actual = parseFloat(stockProducto.cantidad) || 0; // ✅ Usar cantidad (stock total), no cantidad_disponible
                             actualizado.cantidad_nueva = actualizado.cantidad_actual;
                         } else {
                             // ✅ Si es producto nuevo, inicializar con cantidad 0
@@ -338,14 +315,14 @@ export default function AjusteTabla() {
                         }
 
                         return actualizado;
-                    })
+                    }),
                 );
             } catch (error) {
                 console.error('Error al seleccionar producto:', error);
                 toast.error('Error al seleccionar producto');
             }
         },
-        [stockProductosFiltrados, almacenSeleccionado]
+        [stockProductosFiltrados, almacenSeleccionado],
     );
 
     // Buscar productos por término de búsqueda (Enter o botón)
@@ -364,16 +341,11 @@ export default function AjusteTabla() {
             try {
                 setLoadingSearch((prev) => ({ ...prev, [ajusteId]: true }));
 
-                const response = await fetch(
-                    `/api/inventario/productos-almacen/${almacenSeleccionado}?q=${encodeURIComponent(
-                        term
-                    )}&limit=10`,
-                    {
-                        headers: {
-                            'Accept': 'application/json',
-                        },
-                    }
-                );
+                const response = await fetch(`/api/inventario/productos-almacen/${almacenSeleccionado}?q=${encodeURIComponent(term)}&limit=10`, {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                });
 
                 const data = await response.json();
 
@@ -383,7 +355,7 @@ export default function AjusteTabla() {
                     almacen: almacenSeleccionado,
                     resultados: data.data,
                     totalResultados: data.data?.length || 0,
-                    respuestaCompleta: data
+                    respuestaCompleta: data,
                 });
 
                 if (data.success) {
@@ -411,7 +383,7 @@ export default function AjusteTabla() {
                 setLoadingSearch((prev) => ({ ...prev, [ajusteId]: false }));
             }
         },
-        [almacenSeleccionado, seleccionarProducto]
+        [almacenSeleccionado, seleccionarProducto],
     );
 
     // Agregar nueva fila de ajuste
@@ -429,9 +401,12 @@ export default function AjusteTabla() {
     }, [ajustes]);
 
     // Eliminar fila de ajuste
-    const eliminarFila = useCallback((id: string) => {
-        setAjustes(ajustes.filter((a) => a.id !== id));
-    }, [ajustes]);
+    const eliminarFila = useCallback(
+        (id: string) => {
+            setAjustes(ajustes.filter((a) => a.id !== id));
+        },
+        [ajustes],
+    );
 
     // Actualizar fila de ajuste
     const actualizarFila = useCallback(
@@ -444,13 +419,10 @@ export default function AjusteTabla() {
 
                     // Si cambió el stock_producto_id
                     if (campo === 'stock_producto_id') {
-                        const stockProducto = stockProductosFiltrados.find(
-                            (sp) => sp.id === valor
-                        );
+                        const stockProducto = stockProductosFiltrados.find((sp) => sp.id === valor);
                         if (stockProducto) {
                             actualizado.producto = stockProducto;
-                            actualizado.cantidad_actual =
-                                parseFloat(stockProducto.cantidad) || 0;  // ✅ Usar cantidad (stock total), no cantidad_disponible
+                            actualizado.cantidad_actual = parseFloat(stockProducto.cantidad) || 0; // ✅ Usar cantidad (stock total), no cantidad_disponible
                             actualizado.cantidad_nueva = actualizado.cantidad_actual;
                             // Actualizar término de búsqueda con el nombre del producto
                             setSearchTerms((prev) => ({
@@ -461,35 +433,22 @@ export default function AjusteTabla() {
                     }
 
                     // Recalcular cantidad_nueva
-                    if (
-                        campo === 'cantidad_ajuste' ||
-                        campo === 'tipo_ajuste'
-                    ) {
-                        const ajusteNum =
-                            campo === 'cantidad_ajuste'
-                                ? parseInt(valor) || 0
-                                : actualizado.cantidad_ajuste;
-                        const tipoAjuste =
-                            campo === 'tipo_ajuste'
-                                ? valor
-                                : actualizado.tipo_ajuste;
+                    if (campo === 'cantidad_ajuste' || campo === 'tipo_ajuste') {
+                        const ajusteNum = campo === 'cantidad_ajuste' ? parseInt(valor) || 0 : actualizado.cantidad_ajuste;
+                        const tipoAjuste = campo === 'tipo_ajuste' ? valor : actualizado.tipo_ajuste;
 
                         if (tipoAjuste === 'entrada') {
-                            actualizado.cantidad_nueva =
-                                actualizado.cantidad_actual + ajusteNum;
+                            actualizado.cantidad_nueva = actualizado.cantidad_actual + ajusteNum;
                         } else {
-                            actualizado.cantidad_nueva = Math.max(
-                                0,
-                                actualizado.cantidad_actual - ajusteNum
-                            );
+                            actualizado.cantidad_nueva = Math.max(0, actualizado.cantidad_actual - ajusteNum);
                         }
                     }
 
                     return actualizado;
-                })
+                }),
             );
         },
-        [ajustes, stockProductosFiltrados]
+        [ajustes, stockProductosFiltrados],
     );
 
     // Validar ajustes
@@ -536,10 +495,7 @@ export default function AjusteTabla() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
                     almacen_id: almacenSeleccionado,
@@ -554,9 +510,7 @@ export default function AjusteTabla() {
                 return;
             }
 
-            toast.success(
-                `Se procesaron ${ajustes.length} ajustes exitosamente`
-            );
+            toast.success(`Se procesaron ${ajustes.length} ajustes exitosamente`);
 
             // Guardar ajustes temporalmente para impresión
             ajustesGuardadosRef.current = ajustes;
@@ -617,15 +571,11 @@ export default function AjusteTabla() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
                     ajustes: datosImpresion,
-                    almacen_filtro:
-                        ajustes[0]?.producto?.almacen?.nombre || 'Todos',
+                    almacen_filtro: ajustes[0]?.producto?.almacen?.nombre || 'Todos',
                     tipo_ajuste_filtro: null,
                 }),
             });
@@ -675,15 +625,11 @@ export default function AjusteTabla() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
                     ajustes: datosImpresion,
-                    almacen_filtro:
-                        ajustesGuardados[0]?.producto?.almacen?.nombre || 'Todos',
+                    almacen_filtro: ajustesGuardados[0]?.producto?.almacen?.nombre || 'Todos',
                     tipo_ajuste_filtro: null,
                 }),
             });
@@ -708,19 +654,9 @@ export default function AjusteTabla() {
 
     // Calcular resumen
     const resumen = useMemo(() => {
-        const totalProductos = ajustes.filter(
-            (a) => a.stock_producto_id !== null
-        ).length;
-        const entradas = ajustes.reduce(
-            (sum, a) =>
-                a.tipo_ajuste === 'entrada' ? sum + a.cantidad_ajuste : sum,
-            0
-        );
-        const salidas = ajustes.reduce(
-            (sum, a) =>
-                a.tipo_ajuste === 'salida' ? sum + a.cantidad_ajuste : sum,
-            0
-        );
+        const totalProductos = ajustes.filter((a) => a.stock_producto_id !== null).length;
+        const entradas = ajustes.reduce((sum, a) => (a.tipo_ajuste === 'entrada' ? sum + a.cantidad_ajuste : sum), 0);
+        const salidas = ajustes.reduce((sum, a) => (a.tipo_ajuste === 'salida' ? sum + a.cantidad_ajuste : sum), 0);
 
         return { totalProductos, entradas, salidas };
     }, [ajustes]);
@@ -734,103 +670,76 @@ export default function AjusteTabla() {
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold dark:text-white">
-                            Ajuste de Inventario
-                        </h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            Realiza ajustes de stock por tabla editable
-                        </p>
+                        <h1 className="text-3xl font-bold dark:text-white">Ajuste de Inventario</h1>
+                        <p className="mt-1 text-gray-500 dark:text-gray-400">Realiza ajustes de stock por tabla editable</p>
                     </div>
                 </div>
 
                 {/* Selector de Almacén y Observación General */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow dark:shadow-slate-900 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium dark:text-gray-200 mb-2">
-                            Almacén
-                        </label>
-                        <Select
-                            value={almacenSeleccionado}
-                            onValueChange={setAlmacenSeleccionado}
-                        >
-                            <SelectTrigger className="w-full max-w-md">
-                                <SelectValue placeholder="Selecciona un almacén" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {almacenes.map((almacen) => (
-                                    <SelectItem
-                                        key={almacen.id}
-                                        value={String(almacen.id)}
-                                    >
-                                        {almacen.nombre}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="space-y-4 rounded-lg bg-white p-6 shadow dark:bg-slate-800 dark:shadow-slate-900">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium dark:text-gray-200">Almacén</label>
+                            <Select value={almacenSeleccionado} onValueChange={setAlmacenSeleccionado}>
+                                <SelectTrigger className="w-full max-w-md">
+                                    <SelectValue placeholder="Selecciona un almacén" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {almacenes.map((almacen) => (
+                                        <SelectItem key={almacen.id} value={String(almacen.id)}>
+                                            {almacen.nombre}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* ✅ NUEVA: Observación General del Documento */}
-                    <div>
-                        <label className="block text-sm font-medium dark:text-gray-200 mb-2">
-                            📝 Observación General del Ajuste (Opcional)
-                        </label>
-                        <Textarea
-                            value={observacionGeneral}
-                            onChange={(e) => setObservacionGeneral(e.target.value)}
-                            placeholder="Ej: Ajuste por faltantes encontrados en recuento físico..."
-                            className="w-full"
-                            rows={3}
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Esta observación se mostrará en el documento y en la impresión
-                        </p>
+                        {/* ✅ NUEVA: Observación General del Documento */}
+                        <div>
+                            <label className="mb-2 block text-sm font-medium dark:text-gray-200">📝 Observación General del Ajuste (Opcional)</label>
+                            <Textarea
+                                value={observacionGeneral}
+                                onChange={(e) => setObservacionGeneral(e.target.value)}
+                                placeholder="Ej: Ajuste por faltantes encontrados en recuento físico..."
+                                className="w-full"
+                                rows={3}
+                            />
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Esta observación se mostrará en el documento y en la impresión
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Tabla de Ajustes */}
                 {almacenSeleccionado && (
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900 overflow-hidden">
+                    <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-slate-800 dark:shadow-slate-900">
                         <form onSubmit={procesarAjustes}>
                             {/* Tabla */}
                             <div className="overflow-x-auto overflow-y-visible">
-                                <table className="w-full relative">
-                                    <thead className="bg-gray-100 dark:bg-slate-700 border-b dark:border-slate-600">
+                                <table className="relative w-full">
+                                    <thead className="border-b bg-gray-100 dark:border-slate-600 dark:bg-slate-700">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-                                                Producto
-                                            </th>
-                                            <th className="px-4 py-3 text-center text-sm font-medium dark:text-gray-200">
-                                                📥/📤 Movimiento
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-                                                Stock Actual
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-                                                Cantidad
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-                                                Stock Nuevo
-                                            </th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Producto</th>
+                                            <th className="px-4 py-3 text-center text-sm font-medium dark:text-gray-200">📥/📤 Movimiento</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Stock Actual</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Cantidad</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Stock Nuevo</th>
                                             {/* ✅ REMOVIDA: Columna de Observación - ahora es general */}
-                                            <th className="px-4 py-3 text-center text-sm font-medium dark:text-gray-200">
-                                                Acción
-                                            </th>
+                                            <th className="px-4 py-3 text-center text-sm font-medium dark:text-gray-200">Acción</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {ajustes.map((ajuste, idx) => (
-                                            <tr
-                                                key={ajuste.id}
-                                                className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700"
-                                            >
+                                            <tr key={ajuste.id} className="border-b hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-700">
                                                 {/* Producto - Search Input */}
-                                                <td className="px-4 py-3 relative">
+                                                <td className="relative px-4 py-3">
                                                     <div className="relative">
                                                         <div className="relative flex items-center gap-1">
                                                             <div className="relative flex-1">
                                                                 <Search
                                                                     size={16}
-                                                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+                                                                    className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 transform text-gray-400 dark:text-gray-500"
                                                                 />
                                                                 <Input
                                                                     ref={(el) => {
@@ -838,78 +747,40 @@ export default function AjusteTabla() {
                                                                     }}
                                                                     type="text"
                                                                     placeholder="SKU o nombre..."
-                                                                    value={
-                                                                        searchTerms[
-                                                                        ajuste.id
-                                                                        ] || ''
-                                                                    }
+                                                                    value={searchTerms[ajuste.id] || ''}
                                                                     onChange={(e) => {
-                                                                        setSearchTerms(
-                                                                            (prev) => ({
-                                                                                ...prev,
-                                                                                [ajuste.id]:
-                                                                                    e.target
-                                                                                        .value,
-                                                                            })
-                                                                        );
+                                                                        setSearchTerms((prev) => ({
+                                                                            ...prev,
+                                                                            [ajuste.id]: e.target.value,
+                                                                        }));
                                                                     }}
                                                                     onKeyPress={(e) => {
-                                                                        if (
-                                                                            e.key ===
-                                                                            'Enter'
-                                                                        ) {
+                                                                        if (e.key === 'Enter') {
                                                                             e.preventDefault();
-                                                                            buscarProductos(
-                                                                                ajuste.id,
-                                                                                searchTerms[
-                                                                                ajuste
-                                                                                    .id
-                                                                                ] || ''
-                                                                            );
+                                                                            buscarProductos(ajuste.id, searchTerms[ajuste.id] || '');
                                                                         }
                                                                     }}
                                                                     onFocus={() =>
-                                                                        (searchResults[
-                                                                            ajuste.id
-                                                                        ]?.length >
-                                                                            0) &&
-                                                                        setShowDropdown(
-                                                                            (prev) => ({
-                                                                                ...prev,
-                                                                                [ajuste.id]:
-                                                                                    true,
-                                                                            })
-                                                                        )
+                                                                        searchResults[ajuste.id]?.length > 0 &&
+                                                                        setShowDropdown((prev) => ({
+                                                                            ...prev,
+                                                                            [ajuste.id]: true,
+                                                                        }))
                                                                     }
-                                                                    className="w-full pl-8 pr-10"
+                                                                    className="w-full pr-10 pl-8"
                                                                 />
-                                                                {loadingSearch[
-                                                                    ajuste.id
-                                                                ] && (
-                                                                        <Loader
-                                                                            size={16}
-                                                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin pointer-events-none"
-                                                                        />
-                                                                    )}
+                                                                {loadingSearch[ajuste.id] && (
+                                                                    <Loader
+                                                                        size={16}
+                                                                        className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 transform animate-spin text-blue-500"
+                                                                    />
+                                                                )}
                                                             </div>
                                                             <button
                                                                 type="button"
-                                                                onClick={() =>
-                                                                    buscarProductos(
-                                                                        ajuste.id,
-                                                                        searchTerms[
-                                                                        ajuste
-                                                                            .id
-                                                                        ] || ''
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    loadingSearch[
-                                                                    ajuste.id
-                                                                    ] ||
-                                                                    !almacenSeleccionado
-                                                                }
-                                                                className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-md transition flex items-center justify-center"
+                                                                onClick={() => buscarProductos(ajuste.id, searchTerms[ajuste.id] || '')}
+                                                                disabled={loadingSearch[ajuste.id] || !almacenSeleccionado}
+                                                                className="flex items-center justify-center rounded-md bg-blue-500 p-2 text-white transition hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600"
                                                                 title="Buscar (Enter)"
                                                             >
                                                                 <Search size={16} />
@@ -921,48 +792,32 @@ export default function AjusteTabla() {
                                                             ajusteId={ajuste.id}
                                                             inputRef={
                                                                 {
-                                                                    current:
-                                                                        inputRefsRef
-                                                                            .current[
-                                                                        ajuste.id
-                                                                        ] ||
-                                                                        null,
+                                                                    current: inputRefsRef.current[ajuste.id] || null,
                                                                 } as React.RefObject<HTMLInputElement>
                                                             }
-                                                            searchResults={
-                                                                searchResults[
-                                                                ajuste.id
-                                                                ] || []
-                                                            }
-                                                            loadingSearch={
-                                                                loadingSearch[
-                                                                ajuste.id
-                                                                ] || false
-                                                            }
+                                                            searchResults={searchResults[ajuste.id] || []}
+                                                            loadingSearch={loadingSearch[ajuste.id] || false}
                                                             onSelectProduct={(producto) => {
                                                                 seleccionarProducto(ajuste.id, producto);
                                                             }}
-                                                            visible={
-                                                                showDropdown[
-                                                                ajuste.id
-                                                                ] || false
-                                                            }
+                                                            visible={showDropdown[ajuste.id] || false}
                                                         />
                                                     </div>
                                                 </td>
                                                 {/* 📥/📤 MOVIMIENTO - ENTRADA O SALIDA - INTERACTIVO */}
                                                 <td className="px-4 py-3 text-center">
-                                                    <div className="flex gap-1 justify-center mb-2">
+                                                    <div className="mb-2 flex justify-center gap-1">
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 // Usar actualizarFila para ejecutar el recálculo automático
                                                                 actualizarFila(ajuste.id, 'tipo_ajuste', 'entrada');
                                                             }}
-                                                            className={`px-3 py-1 rounded-full text-xs font-bold transition ${ajuste.tipo_ajuste === 'entrada'
+                                                            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                                                                ajuste.tipo_ajuste === 'entrada'
                                                                     ? 'bg-green-500 text-white'
                                                                     : 'bg-gray-200 text-gray-700 hover:bg-green-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-green-900/30'
-                                                                }`}
+                                                            }`}
                                                             title="Selecciona ENTRADA"
                                                         >
                                                             📥 ENTRADA
@@ -973,10 +828,11 @@ export default function AjusteTabla() {
                                                                 // Usar actualizarFila para ejecutar el recálculo automático
                                                                 actualizarFila(ajuste.id, 'tipo_ajuste', 'salida');
                                                             }}
-                                                            className={`px-3 py-1 rounded-full text-xs font-bold transition ${ajuste.tipo_ajuste === 'salida'
+                                                            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                                                                ajuste.tipo_ajuste === 'salida'
                                                                     ? 'bg-red-500 text-white'
                                                                     : 'bg-gray-200 text-gray-700 hover:bg-red-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-red-900/30'
-                                                                }`}
+                                                            }`}
                                                             title="Selecciona SALIDA"
                                                         >
                                                             📤 SALIDA
@@ -986,10 +842,10 @@ export default function AjusteTabla() {
                                                     <Select
                                                         value={String(ajuste.tipo_ajuste_inventario_id || '')}
                                                         onValueChange={(val) => {
-                                                            const tipo = tiposAjuste.find(t => String(t.id) === val);
+                                                            const tipo = tiposAjuste.find((t) => String(t.id) === val);
                                                             if (tipo) {
-                                                                setAjustes(prevAjustes =>
-                                                                    prevAjustes.map(a => {
+                                                                setAjustes((prevAjustes) =>
+                                                                    prevAjustes.map((a) => {
                                                                         if (a.id !== ajuste.id) return a;
                                                                         return {
                                                                             ...a,
@@ -997,7 +853,7 @@ export default function AjusteTabla() {
                                                                             tipoAjusteInventario: tipo,
                                                                             // ✅ NO actualizar tipo_ajuste - son independientes
                                                                         };
-                                                                    })
+                                                                    }),
                                                                 );
                                                             }
                                                         }}
@@ -1010,22 +866,17 @@ export default function AjusteTabla() {
                                                         <SelectContent>
                                                             {/* Mostrar todos los tipos si están vacíos, sino filtrar */}
                                                             {tiposAjuste.length === 0 ? (
-                                                                <div className="p-2 text-sm text-gray-500">
-                                                                    Cargando tipos de ajuste...
-                                                                </div>
+                                                                <div className="p-2 text-sm text-gray-500">Cargando tipos de ajuste...</div>
                                                             ) : (
                                                                 (() => {
                                                                     const tiposFiltrados = tiposAjuste.filter(
-                                                                        tipo => tipo.tipo_operacion === ajuste.tipo_ajuste
+                                                                        (tipo) => tipo.tipo_operacion === ajuste.tipo_ajuste,
                                                                     );
                                                                     // Si no hay tipos filtrados, mostrar todos
                                                                     const tiposAMostrar = tiposFiltrados.length > 0 ? tiposFiltrados : tiposAjuste;
 
                                                                     return tiposAMostrar.map((tipo) => (
-                                                                        <SelectItem
-                                                                            key={tipo.id}
-                                                                            value={String(tipo.id)}
-                                                                        >
+                                                                        <SelectItem key={tipo.id} value={String(tipo.id)}>
                                                                             {tipo.tipo_operacion === 'entrada' ? '📥' : '📤'} {tipo.label}
                                                                         </SelectItem>
                                                                     ));
@@ -1042,7 +893,7 @@ export default function AjusteTabla() {
                                                             {ajuste.cantidad_actual.toFixed(2)}
                                                         </div>
                                                         {ajuste.producto && (
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                                 📦 Disp: {parseFloat(ajuste.producto.cantidad_disponible || 0).toFixed(2)}
                                                             </div>
                                                         )}
@@ -1055,18 +906,12 @@ export default function AjusteTabla() {
                                                         type="number"
                                                         min="0"
                                                         step="0.01"
-                                                        value={
-                                                            ajuste.cantidad_ajuste || ''
-                                                        }
+                                                        value={ajuste.cantidad_ajuste || ''}
                                                         onChange={(e) => {
                                                             const valor = e.target.value.trim();
                                                             // Convertir a número, permitiendo decimales
                                                             const numero = valor === '' ? 0 : parseFloat(valor) || 0;
-                                                            actualizarFila(
-                                                                ajuste.id,
-                                                                'cantidad_ajuste',
-                                                                numero
-                                                            );
+                                                            actualizarFila(ajuste.id, 'cantidad_ajuste', numero);
                                                         }}
                                                         onFocus={(e) => {
                                                             // ✅ Seleccionar todo el texto al hacer foco
@@ -1078,10 +923,8 @@ export default function AjusteTabla() {
                                                 </td>
 
                                                 {/* Stock Nuevo */}
-                                                <td className="px-4 py-3 text-sm font-semibold bg-blue-50 dark:bg-blue-900 dark:text-blue-100">
-                                                    {ajuste.cantidad_nueva.toFixed(
-                                                        2
-                                                    )}
+                                                <td className="bg-blue-50 px-4 py-3 text-sm font-semibold dark:bg-blue-900 dark:text-blue-100">
+                                                    {ajuste.cantidad_nueva.toFixed(2)}
                                                 </td>
 
                                                 {/* ✅ REMOVIDA: Columna de Observación - ahora es general */}
@@ -1090,11 +933,7 @@ export default function AjusteTabla() {
                                                 <td className="px-4 py-3 text-center">
                                                     <button
                                                         type="button"
-                                                        onClick={() =>
-                                                            eliminarFila(
-                                                                ajuste.id
-                                                            )
-                                                        }
+                                                        onClick={() => eliminarFila(ajuste.id)}
                                                         className="text-red-600 hover:text-red-900"
                                                     >
                                                         <Trash2 size={18} />
@@ -1108,42 +947,25 @@ export default function AjusteTabla() {
 
                             {/* Resumen */}
                             {ajustes.length > 0 && (
-                                <div className="bg-gray-50 dark:bg-slate-700 px-6 py-4 border-t dark:border-slate-600 grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-3 gap-4 border-t bg-gray-50 px-6 py-4 dark:border-slate-600 dark:bg-slate-700">
                                     <div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Total Productos
-                                        </p>
-                                        <p className="text-2xl font-bold dark:text-white">
-                                            {resumen.totalProductos}
-                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Productos</p>
+                                        <p className="text-2xl font-bold dark:text-white">{resumen.totalProductos}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Total Entradas
-                                        </p>
-                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            +{resumen.entradas}
-                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Entradas</p>
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">+{resumen.entradas}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Total Salidas
-                                        </p>
-                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                                            -{resumen.salidas}
-                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Salidas</p>
+                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">-{resumen.salidas}</p>
                                     </div>
                                 </div>
                             )}
 
                             {/* Botones */}
-                            <div className="px-6 py-4 bg-gray-50 dark:bg-slate-700 border-t dark:border-slate-600 flex gap-3 justify-between">
-                                <Button
-                                    type="button"
-                                    onClick={agregarFila}
-                                    variant="outline"
-                                    disabled={!almacenSeleccionado}
-                                >
+                            <div className="flex justify-between gap-3 border-t bg-gray-50 px-6 py-4 dark:border-slate-600 dark:bg-slate-700">
+                                <Button type="button" onClick={agregarFila} variant="outline" disabled={!almacenSeleccionado}>
                                     <Plus size={18} className="mr-2" />
                                     Agregar Fila
                                 </Button>
@@ -1160,25 +982,13 @@ export default function AjusteTabla() {
                                         <XCircle size={18} className="mr-2" />
                                         Cancelar
                                     </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={abrirOpcionesImpresion}
-                                        disabled={ajustes.length === 0}
-                                    >
+                                    <Button type="button" variant="outline" onClick={abrirOpcionesImpresion} disabled={ajustes.length === 0}>
                                         <FileText size={18} className="mr-2" />
                                         Opciones de Salida
                                     </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={
-                                            isSubmitting || ajustes.length === 0
-                                        }
-                                    >
+                                    <Button type="submit" disabled={isSubmitting || ajustes.length === 0}>
                                         <Save size={18} className="mr-2" />
-                                        {isSubmitting
-                                            ? 'Procesando...'
-                                            : 'Guardar Ajustes'}
+                                        {isSubmitting ? 'Procesando...' : 'Guardar Ajustes'}
                                     </Button>
                                 </div>
                             </div>
@@ -1188,11 +998,8 @@ export default function AjusteTabla() {
 
                 {/* Mensaje cuando no hay almacén seleccionado */}
                 {!almacenSeleccionado && (
-                    <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-blue-700 dark:text-blue-200">
-                        <p>
-                            Selecciona un almacén para comenzar a realizar
-                            ajustes
-                        </p>
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-700 dark:border-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <p>Selecciona un almacén para comenzar a realizar ajustes</p>
                     </div>
                 )}
 

@@ -578,7 +578,27 @@ class ApiProformaController extends Controller
             }
 
             // Cargar relaciones para respuesta
-            $proforma->load(['detalles.producto.imagenes', 'cliente.localidad', 'direccionSolicitada', 'direccionConfirmada']);
+            $proforma->load([
+                'detalles.producto.imagenes',
+                'cliente.localidad',
+                'direccionSolicitada',
+                'direccionConfirmada',
+                // ✅ NUEVO (2026-06-29): Cargar venta relacionada con sus entregas y estados
+                'venta' => function ($query) {
+                    $query->with([
+                        'estadoDocumento:id,codigo,nombre',           // ✅ NUEVO: Estados documento
+                        'estadoLogistica:id,codigo,nombre,categoria',  // ✅ NUEVO: Estados logística
+                        'entregas' => function ($q) {
+                            $q->select('id', 'venta_id', 'numero', 'estado_logistica_id', 'created_at')
+                              ->with('estadoLogistica:id,codigo,nombre,categoria');
+                        },
+                        'entregas.confirmaciones' => function ($q) {
+                            // Último registro ordenado por ID ascendente (el más reciente)
+                            $q->orderBy('id', 'asc')->limit(1);
+                        },
+                    ]);
+                },
+            ]);
 
             DB::commit();
 
@@ -594,10 +614,14 @@ class ApiProformaController extends Controller
                     'numero'          => $proforma->numero,
                     'total'           => $proforma->total,
                     'estado'          => $proforma->estado,
-                    'politica_pago'   => $proforma->politica_pago, // ✅ Incluir política de pago en respuesta
-                    'detalles_rangos' => $detallesConRangos,       // ✅ Información de rangos aplicados
+                    'politica_pago'   => $proforma->politica_pago,
+                    'detalles_rangos' => $detallesConRangos,
                     'subtotal'        => $subtotal,
                     'impuesto'        => $impuesto,
+                    // ✅ NUEVO (2026-06-29): Incluir venta con entregas y confirmaciones
+                    'venta'           => $proforma->venta,
+                    'entregas'        => $proforma->venta?->entregas,
+                    'confirmaciones'  => $proforma->venta?->entregas?->flatMap(fn($e) => $e->confirmaciones),
                 ],
             ], 201);
 
@@ -617,11 +641,31 @@ class ApiProformaController extends Controller
                 ],
             ]);
 
+            // ✅ NUEVO (2026-06-28): Detectar tipos de errores específicos para mensajes más claros
+            $errorMsg = $e->getMessage();
+
+            // 🔴 Error de Inconsistencia en Stock
+            if (str_contains($errorMsg, 'INCONSISTENCIA EN') || str_contains($errorMsg, 'INCONSISTENCIA EN LOTE')) {
+                return response()->json([
+                    'success' => false,
+                    'status'  => 500,
+                    'code'    => 'STOCK_INCONSISTENCY_ERROR',
+                    'message' => '⚠️ Error interno en cálculo de inventario. Contacta al equipo de soporte.',
+                    'tipo_error' => 'STOCK_INCONSISTENCY',
+                    'detalles_error' => [
+                        'error_tecnico' => $errorMsg,
+                        'sugerencia' => 'Este es un error del sistema. Por favor, contacta al equipo de soporte técnico.',
+                    ],
+                ], 500);
+            }
+
+            // 🔴 Error Genérico
             return response()->json([
                 'success' => false,
                 'status'  => 500,
                 'code'    => 'PROFORMA_CREATION_ERROR',
-                'message' => 'Error al crear proforma',
+                'message' => 'Error al crear proforma. Por favor, intenta nuevamente.',
+                'tipo_error' => 'GENERIC_ERROR',
                 'error'   => [
                     'type'    => class_basename($e),
                     'message' => $e->getMessage(),

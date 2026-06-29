@@ -57,6 +57,12 @@ class MovimientoInventario extends Model
         'cantidad_disponible_posterior',
         'cantidad_reservada_anterior',
         'cantidad_reservada_posterior',
+        // ✅ NUEVO (2026-06-28): TOTALES de todos los lotes (centralizado)
+        'disponible_total_anterior',
+        'disponible_total_posterior',
+        'reservada_total_anterior',
+        'reservada_total_posterior',
+        'metadata',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -78,6 +84,8 @@ class MovimientoInventario extends Model
             'cantidad_disponible_posterior' => 'float',
             'cantidad_reservada_anterior' => 'float',
             'cantidad_reservada_posterior' => 'float',
+            // ✅ NUEVO (2026-06-28): Cast para metadata JSON
+            'metadata' => 'array',
             'fecha'              => 'datetime',
             'created_at'         => 'datetime',
             'updated_at'         => 'datetime',
@@ -144,37 +152,72 @@ class MovimientoInventario extends Model
         parent::booting();
 
         static::creating(function ($model) {
-            // Solo validar si los campos están presentes
+            // ✅ NUEVO (2026-06-28): Validación CORRECTA diferenciando lote vs totales
+
+            // 1️⃣ VALIDAR LOTE ESPECÍFICO: cantidad_anterior = disponible_anterior + reservada_anterior
             if (
-                $model->cantidad_total_anterior !== null &&
+                $model->cantidad_anterior !== null &&
                 $model->cantidad_disponible_anterior !== null &&
                 $model->cantidad_reservada_anterior !== null
             ) {
-                // Validar estado ANTERIOR: total_anterior = disponible_anterior + reservada_anterior
-                $sumaAnterior = (float)$model->cantidad_disponible_anterior + (float)$model->cantidad_reservada_anterior;
-                if (abs((float)$model->cantidad_total_anterior - $sumaAnterior) > 0.001) {
+                $sumaLoteAnterior = (float)$model->cantidad_disponible_anterior + (float)$model->cantidad_reservada_anterior;
+                if (abs((float)$model->cantidad_anterior - $sumaLoteAnterior) > 0.001) {
                     throw new \Exception(
-                        "❌ INCONSISTENCIA EN MOVIMIENTO (ANTES): " .
-                        "cantidad_total_anterior({$model->cantidad_total_anterior}) ≠ " .
+                        "❌ INCONSISTENCIA EN LOTE (ANTES): " .
+                        "cantidad_anterior({$model->cantidad_anterior}) ≠ " .
                         "disponible_anterior({$model->cantidad_disponible_anterior}) + " .
-                        "reservada_anterior({$model->cantidad_reservada_anterior}) = {$sumaAnterior}"
+                        "reservada_anterior({$model->cantidad_reservada_anterior}) = {$sumaLoteAnterior}"
                     );
                 }
             }
 
+            // 2️⃣ VALIDAR LOTE ESPECÍFICO: cantidad_posterior = disponible_posterior + reservada_posterior
             if (
-                $model->cantidad_total_posterior !== null &&
+                $model->cantidad_posterior !== null &&
                 $model->cantidad_disponible_posterior !== null &&
                 $model->cantidad_reservada_posterior !== null
             ) {
-                // Validar estado POSTERIOR: total_posterior = disponible_posterior + reservada_posterior
-                $sumaPostetrior = (float)$model->cantidad_disponible_posterior + (float)$model->cantidad_reservada_posterior;
-                if (abs((float)$model->cantidad_total_posterior - $sumaPostetrior) > 0.001) {
+                $sumaLotePostetrior = (float)$model->cantidad_disponible_posterior + (float)$model->cantidad_reservada_posterior;
+                if (abs((float)$model->cantidad_posterior - $sumaLotePostetrior) > 0.001) {
                     throw new \Exception(
-                        "❌ INCONSISTENCIA EN MOVIMIENTO (DESPUÉS): " .
-                        "cantidad_total_posterior({$model->cantidad_total_posterior}) ≠ " .
+                        "❌ INCONSISTENCIA EN LOTE (DESPUÉS): " .
+                        "cantidad_posterior({$model->cantidad_posterior}) ≠ " .
                         "disponible_posterior({$model->cantidad_disponible_posterior}) + " .
-                        "reservada_posterior({$model->cantidad_reservada_posterior}) = {$sumaPostetrior}"
+                        "reservada_posterior({$model->cantidad_reservada_posterior}) = {$sumaLotePostetrior}"
+                    );
+                }
+            }
+
+            // 3️⃣ VALIDAR TOTAL DE TODOS LOS LOTES: cantidad_total_anterior = disponible_total_anterior + reservada_total_anterior
+            if (
+                $model->cantidad_total_anterior !== null &&
+                $model->disponible_total_anterior !== null &&
+                $model->reservada_total_anterior !== null
+            ) {
+                $sumaTotalAnterior = (float)$model->disponible_total_anterior + (float)$model->reservada_total_anterior;
+                if (abs((float)$model->cantidad_total_anterior - $sumaTotalAnterior) > 0.001) {
+                    throw new \Exception(
+                        "❌ INCONSISTENCIA EN TOTAL (ANTES): " .
+                        "cantidad_total_anterior({$model->cantidad_total_anterior}) ≠ " .
+                        "disponible_total_anterior({$model->disponible_total_anterior}) + " .
+                        "reservada_total_anterior({$model->reservada_total_anterior}) = {$sumaTotalAnterior}"
+                    );
+                }
+            }
+
+            // 4️⃣ VALIDAR TOTAL DE TODOS LOS LOTES: cantidad_total_posterior = disponible_total_posterior + reservada_total_posterior
+            if (
+                $model->cantidad_total_posterior !== null &&
+                $model->disponible_total_posterior !== null &&
+                $model->reservada_total_posterior !== null
+            ) {
+                $sumaTotalPostetrior = (float)$model->disponible_total_posterior + (float)$model->reservada_total_posterior;
+                if (abs((float)$model->cantidad_total_posterior - $sumaTotalPostetrior) > 0.001) {
+                    throw new \Exception(
+                        "❌ INCONSISTENCIA EN TOTAL (DESPUÉS): " .
+                        "cantidad_total_posterior({$model->cantidad_total_posterior}) ≠ " .
+                        "disponible_total_posterior({$model->disponible_total_posterior}) + " .
+                        "reservada_total_posterior({$model->reservada_total_posterior}) = {$sumaTotalPostetrior}"
                     );
                 }
             }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency, formatCurrencyWith2Decimals } from '@/lib/utils';
+import { formatCurrencyWith2Decimals } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import EntregaDetallesModal from '@/presentation/components/ventas/entrega-detalles-modal';

@@ -58,6 +58,20 @@ class EntregaVentaConfirmacion extends Model
         'monto_aceptado' => 'decimal:2',            // Total aceptado con 2 decimales
     ];
 
+    // ===== VALIDACIÓN =====
+
+    protected static function booting(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->entrega_id)) {
+                throw new \Exception(
+                    'No se puede crear una confirmación de entrega sin entrega_id. ' .
+                    'Las entregas se crean después de confirmar la venta.'
+                );
+            }
+        });
+    }
+
     // ===== RELACIONES =====
 
     /**
@@ -77,9 +91,9 @@ class EntregaVentaConfirmacion extends Model
     }
 
     /**
-     * El usuario (chofer) que confirmó
+     * ✅ El usuario (chofer) que confirmó
      */
-    public function confirmadobPor(): BelongsTo
+    public function confirmadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmado_por');
     }
