@@ -2020,6 +2020,39 @@ class ApiProformaController extends Controller
 
             $proforma->rechazar(request()->user(), $request->comentario);
 
+            // ✅ NUEVO (2026-06-30): Si la proforma tiene venta asociada, actualizar su estado logístico a ANULADA
+            $proforma->load('venta'); // Cargar relación venta
+            if ($proforma->venta) {
+                $venta = $proforma->venta;
+                $estadoLogisticoAnulada = \App\Models\EstadoLogistica::where('codigo', 'ANULADA')
+                    ->where('categoria', 'venta_logistica')
+                    ->first();
+
+                if ($estadoLogisticoAnulada) {
+                    $venta->update([
+                        'estado_logistico_id' => $estadoLogisticoAnulada->id,
+                    ]);
+
+                    Log::info('✅ Estado logístico de venta asociada actualizado a ANULADA (API)', [
+                        'proforma_id'              => $proforma->id,
+                        'venta_id'                 => $venta->id,
+                        'venta_numero'             => $venta->numero,
+                        'estado_logistico_nuevo'   => 'ANULADA',
+                        'motivo_rechazo_proforma'  => $request->comentario,
+                        'usuario_id'               => request()->user()->id,
+                    ]);
+                } else {
+                    Log::warning('⚠️ Estado logístico ANULADA no encontrado (API), venta no fue actualizada', [
+                        'proforma_id' => $proforma->id,
+                        'venta_id'    => $venta->id,
+                    ]);
+                }
+            } else {
+                Log::info('ℹ️ Proforma sin venta asociada (API), no se actualiza estado logístico', [
+                    'proforma_id' => $proforma->id,
+                ]);
+            }
+
             // ✅ Emitir eventos para notificaciones y dashboard
             try {
                 event(new ProformaRechazada($proforma, $request->comentario));
