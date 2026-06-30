@@ -31,10 +31,12 @@ export default function ColorPickerField({
     return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
   };
 
-  // Actualizar input cuando value cambia
+  // Actualizar input solo cuando value cambia (NO incluir placeholder)
   useEffect(() => {
-    setInputValue(value || placeholder);
-  }, [value, placeholder]);
+    if (value) {
+      setInputValue(value);
+    }
+  }, [value]);
 
   // Cerrar picker al hacer clic fuera
   useEffect(() => {
