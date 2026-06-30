@@ -674,6 +674,64 @@ class ApiProformaController extends Controller
         }
     }
 
+    /**
+     * Obtener detalles completos de una proforma
+     *
+     * GET /api/proformas/{proforma}
+     *
+     * MEJORAS (2026-06-29):
+     * - Dirección de entrega solicitada (direccionSolicitada) con localidad completa
+     * - Dirección de entrega confirmada (direccionConfirmada) si existe
+     * - Para combos: detalles con comboItems y relación de cada item con producto
+     * - Cada producto incluye marca, unidad e imágenes
+     * - combo_items_seleccionados: los items que el cliente eligió del combo
+     * - tipo_precio_id y tipo_precio_nombre: información de precios
+     *
+     * Respuesta estructura:
+     * {
+     *   "detalles": [
+     *     {
+     *       "id": 1,
+     *       "cantidad": 2,
+     *       "combo_items_seleccionados": [
+     *         {"combo_item_id": 5, "producto_id": 10, "cantidad": 1, "incluido": true}
+     *       ],
+     *       "tipo_precio_id": 2,
+     *       "tipo_precio_nombre": "Precio de Licorería",
+     *       "producto": {
+     *         "id": 12,
+     *         "nombre": "Combo Bebidas",
+     *         "es_combo": true,
+     *         "marca": {...},
+     *         "unidad": {...},
+     *         "imagenes": [...],
+     *         "comboItems": [
+     *           {
+     *             "id": 5,
+     *             "cantidad": 1,
+     *             "producto": {
+     *               "id": 10,
+     *               "nombre": "Cerveza",
+     *               "marca": {...},
+     *               "unidad": {...},
+     *               "imagenes": [...]
+     *             }
+     *           }
+     *         ]
+     *       }
+     *     }
+     *   ],
+     *   "direccion_solicitada": {
+     *     "id": 392,
+     *     "direccion": "Calle Principal 123",
+     *     "localidad": {"id": 5, "nombre": "La Paz"},
+     *     "latitud": -17.3895,
+     *     "longitud": -66.1568,
+     *     "observaciones": "..."
+     *   },
+     *   "direccion_confirmada": {...}
+     * }
+     */
     public function show(Proforma $proforma)
     {
         // Verificar que la proforma pertenece al cliente autenticado
@@ -685,12 +743,38 @@ class ApiProformaController extends Controller
         }
 
         $proforma->load([
-            'detalles.producto.imagenes', // ✅ AGREGADO: Cargar imágenes del producto
-            'cliente.localidad',          // ✅ ACTUALIZADO: Cargar localidad del cliente
+            // ✅ MEJORADO 2026-06-29: Agregar dirección de entrega solicitada (relación correcta: direccionSolicitada)
+            'direccionSolicitada.localidad',         // Relación con DireccionCliente + localidad
+            'direccionConfirmada.localidad',         // Dirección confirmada si existe
+            'cliente.localidad',                     // Cargar localidad del cliente
             'usuarioCreador',
             'usuarioAprobador',
-            'estadoLogistica', // ✅ AGREGADO: Cargar relación de estado
-                               // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
+            'estadoLogistica',
+            // ✅ MEJORADO 2026-06-29: Cargar detalles con combo_items si es combo
+            'detalles' => function ($detallesQuery) {
+                $detallesQuery->with([
+                    'producto' => function ($productoQuery) {
+                        $productoQuery->with([
+                            'imagenes',  // Imágenes del producto
+                            'marca',     // Marca del producto
+                            'unidad',    // Unidad de medida
+                            // ✅ Si es combo, cargar sus items con sus productos
+                            'comboItems' => function ($itemsQuery) {
+                                $itemsQuery->with([
+                                    'producto' => function ($itemProdQuery) {
+                                        $itemProdQuery->with([
+                                            'imagenes',
+                                            'marca',
+                                            'unidad',
+                                        ]);
+                                    },
+                                ]);
+                            },
+                        ]);
+                    },
+                ]);
+            },
+            // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
             'venta' => function ($q) {
                 $q->with([
                     'estadoDocumento', // Estado del documento (estados_documento)
@@ -700,8 +784,43 @@ class ApiProformaController extends Controller
             },
         ]);
 
-        // ✅ MEJORADO 2026-02-27: Formatear respuesta para incluir observaciones de venta
+        // ✅ MEJORADO 2026-06-29: Formatear respuesta con mejoras para combos y dirección
         $responseData = $proforma->toArray();
+
+        // ✅ NUEVO: Mejorar estructura de detalles para combos
+        if (isset($responseData['detalles']) && is_array($responseData['detalles'])) {
+            $responseData['detalles'] = collect($responseData['detalles'])->map(function ($detalle) {
+                // Incluir combo_items_seleccionados si existen en el modelo
+                if (!isset($detalle['combo_items_seleccionados']) && isset($detalle['id'])) {
+                    $detalleOriginal = $proforma->detalles->find($detalle['id']);
+                    if ($detalleOriginal) {
+                        $detalle['combo_items_seleccionados'] = $detalleOriginal->combo_items_seleccionados ?? [];
+                        $detalle['tipo_precio_id'] = $detalleOriginal->tipo_precio_id;
+                        $detalle['tipo_precio_nombre'] = $detalleOriginal->tipo_precio_nombre;
+                    }
+                }
+                return $detalle;
+            })->toArray();
+        }
+
+        // ✅ NUEVO: Mejorar estructura de dirección de entrega solicitada
+        if (isset($responseData['direccion_solicitada']) && $responseData['direccion_solicitada']) {
+            $dirEntrega = $responseData['direccion_solicitada'];
+            // Asegurarse de que incluya localidad con todos los datos
+            if (isset($dirEntrega['localidad'])) {
+                $dirEntrega['localidad_completa'] = $dirEntrega['localidad'];
+            }
+            $responseData['direccion_solicitada'] = $dirEntrega;
+        }
+
+        // ✅ También incluir dirección confirmada si existe
+        if (isset($responseData['direccion_confirmada']) && $responseData['direccion_confirmada']) {
+            $dirConfirmada = $responseData['direccion_confirmada'];
+            if (isset($dirConfirmada['localidad'])) {
+                $dirConfirmada['localidad_completa'] = $dirConfirmada['localidad'];
+            }
+            $responseData['direccion_confirmada'] = $dirConfirmada;
+        }
 
         // Si tiene venta convertida, incluir observaciones
         if ($proforma->venta) {
@@ -1030,6 +1149,41 @@ class ApiProformaController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * Listar proformas con soporte para filtros avanzados y búsqueda
+     *
+     * MEJORAS (2026-06-29):
+     * - Venta ahora incluye la entrega asignada con todas sus relaciones
+     * - Relación: Una venta (belongsTo) UNA entrega
+     * - Una entrega (hasMany) MUCHAS ventas
+     * - Formato 'app' retorna entrega con datos completos
+     *
+     * Query parameters:
+     * - search: Búsqueda general (ID, número, cliente)
+     * - estado: Filtro por estado logístico
+     * - cliente_id: Filtro por cliente
+     * - fecha_desde, fecha_hasta: Rango de fechas
+     * - total_min, total_max: Rango de montos
+     * - format: 'app' (simplificado) o 'default' (completo)
+     * - per_page: Items por página (máximo 100)
+     *
+     * Respuesta:
+     * {
+     *   "venta": {
+     *     "id": 3378,
+     *     "numero": "VEN20260627-3378",
+     *     "entrega_id": 437,
+     *     "entrega": {
+     *       "id": 437,
+     *       "numero": "ENT437",
+     *       "fecha": "2026-06-29",
+     *       "chofer": {"id": 5, "nombre": "Juan"},
+     *       "vehiculo": {"id": 2, "placa": "ABC-123"},
+     *       "estado_entrega": {"id": 3, "codigo": "EN_TRANSITO"}
+     *     }
+     *   }
+     * }
+     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -1290,7 +1444,7 @@ class ApiProformaController extends Controller
         // ========================================
 
         $query->with([
-            'cliente',
+            'cliente.localidad',
             'usuarioCreador',
             'estadoLogistica',
             'detalles.producto.categoria',
@@ -1298,11 +1452,22 @@ class ApiProformaController extends Controller
             'direccionSolicitada',
             'direccionConfirmada',
             // ✅ MEJORADO 2026-02-27: Cargar venta con todos sus estados relacionados
+            // ✅ CORREGIDO 2026-06-29: Usar relación correcta entrega (1:N no N:M)
             'venta' => function ($q) {
                 $q->with([
                     'estadoDocumento', // Estado del documento (estados_documento)
                     'estadoLogistica', // Estado logístico (estados_logistica)
                     'confirmaciones',  // Confirmaciones de entrega (entregas_venta_confirmaciones)
+                    // ✅ Entrega actual asignada (relación belongsTo)
+                    // Una venta está asignada a UNA entrega
+                    'entrega' => function ($entregaQuery) {
+                        $entregaQuery->with([
+                            'vehiculo',      // Vehículo de la entrega
+                            'chofer',        // Chofer asignado
+                            'estadoEntrega', // Estado de la entrega (Estados_Entrega, no logistica)
+                            'localidad',     // Localidad de destino
+                        ]);
+                    },
                 ]);
             },
         ]);
@@ -1360,6 +1525,10 @@ class ApiProformaController extends Controller
                                 'nombre'   => $proforma->cliente->nombre,
                                 'telefono' => $proforma->cliente->telefono,
                                 'nit'      => $proforma->cliente->nit,
+                                'localidad' => $proforma->cliente->localidad ? [
+                                    'id'     => $proforma->cliente->localidad->id,
+                                    'nombre' => $proforma->cliente->localidad->nombre,
+                                ] : null,
                             ],
                             'cantidad_items'           => $proforma->detalles->count(),
                             'total_productos'          => (float) $proforma->detalles->sum('cantidad'),
@@ -1375,6 +1544,7 @@ class ApiProformaController extends Controller
                         ];
 
                         // ✅ NUEVO 2026-02-27: Si está convertida, agregar info de venta
+                        // ✅ MEJORADO 2026-06-29: Agregar entregas con sus datos completos
                         if ($proforma->venta) {
                             $responseItem['venta'] = [
                                 'id'                     => $proforma->venta->id,
@@ -1401,6 +1571,34 @@ class ApiProformaController extends Controller
                                         'cliente' => $confirmacion->cliente_confirmacion ?? null,
                                     ];
                                 })->toArray() : [],
+                                // ✅ NUEVO 2026-06-29: Agregar entrega actual asignada
+                                // Una venta está asignada a UNA entrega (relación belongsTo)
+                                'entrega'                => $proforma->venta->entrega ? [
+                                    'id'                => $proforma->venta->entrega->id,
+                                    'numero'            => $proforma->venta->entrega->numero,
+                                    'fecha'             => $proforma->venta->entrega->fecha?->format('Y-m-d'),
+                                    'fecha_entrega'     => $proforma->venta->entrega->fecha_entrega?->format('Y-m-d H:i:s'),
+                                    'estado_entrega'    => $proforma->venta->entrega->estadoEntrega ? [
+                                        'id'     => $proforma->venta->entrega->estadoEntrega->id,
+                                        'codigo' => $proforma->venta->entrega->estadoEntrega->codigo,
+                                        'nombre' => $proforma->venta->entrega->estadoEntrega->nombre,
+                                        'color'  => $proforma->venta->entrega->estadoEntrega->color ?? null,
+                                    ] : null,
+                                    'chofer'            => $proforma->venta->entrega->chofer ? [
+                                        'id'     => $proforma->venta->entrega->chofer->id,
+                                        'nombre' => $proforma->venta->entrega->chofer->name,
+                                        'telefono' => $proforma->venta->entrega->chofer->telefono ?? null,
+                                    ] : null,
+                                    'vehiculo'          => $proforma->venta->entrega->vehiculo ? [
+                                        'id'         => $proforma->venta->entrega->vehiculo->id,
+                                        'placa'      => $proforma->venta->entrega->vehiculo->placa,
+                                        'descripcion' => $proforma->venta->entrega->vehiculo->descripcion ?? null,
+                                    ] : null,
+                                    'localidad'         => $proforma->venta->entrega->localidad ? [
+                                        'id'     => $proforma->venta->entrega->localidad->id,
+                                        'nombre' => $proforma->venta->entrega->localidad->nombre,
+                                    ] : null,
+                                ] : null,
                                 'observaciones'          => $proforma->venta->observaciones, // ✅ NUEVO 2026-02-27: Motivo de anulación
                             ];
                         }
@@ -3148,7 +3346,7 @@ class ApiProformaController extends Controller
                     $estadoLogisticoId = \App\Models\Venta::obtenerIdEstado('PENDIENTE_RETIRO', 'venta_logistica');
                 } else {
                     // DELIVERY
-                    $estadoLogisticoId = \App\Models\Venta::obtenerIdEstado('PENDIENTE_ENVIO', 'venta_logistica');
+                    $estadoLogisticoId = \App\Models\Venta::obtenerIdEstado('SIN_ENTREGA', 'venta_logistica');
                 }
 
                 if (! $estadoLogisticoId) {
