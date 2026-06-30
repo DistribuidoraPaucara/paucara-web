@@ -459,6 +459,37 @@ class ProformaService
                 'observaciones'      => ($proforma->observaciones ?? '') . "\nMotivo rechazo: {$motivo}",
             ]);
 
+            // ✅ NUEVO (2026-06-30): Si la proforma tiene venta asociada, actualizar su estado logístico a ANULADA
+            if ($proforma->venta) {
+                $venta = $proforma->venta;
+                $estadoLogisticoAnulada = \App\Models\EstadoLogistica::where('codigo', 'ANULADA')
+                    ->where('categoria', 'venta_logistica')
+                    ->first();
+
+                if ($estadoLogisticoAnulada) {
+                    $venta->update([
+                        'estado_logistico_id' => $estadoLogisticoAnulada->id,
+                    ]);
+
+                    Log::info('✅ Estado logístico de venta asociada actualizado a ANULADA', [
+                        'proforma_id'              => $proformaId,
+                        'venta_id'                 => $venta->id,
+                        'venta_numero'             => $venta->numero,
+                        'estado_logistico_nuevo'   => 'ANULADA',
+                        'motivo_rechazo_proforma'  => $motivo,
+                    ]);
+                } else {
+                    Log::warning('⚠️ Estado logístico ANULADA no encontrado, venta no fue actualizada', [
+                        'proforma_id' => $proformaId,
+                        'venta_id'    => $venta->id,
+                    ]);
+                }
+            } else {
+                Log::info('ℹ️ Proforma sin venta asociada, no se actualiza estado logístico', [
+                    'proforma_id' => $proformaId,
+                ]);
+            }
+
             // ✅ NUEVO: Disparar evento de notificación a cliente y preventista
             event(new \App\Events\ProformaRechazada($proforma, $motivo));
 
