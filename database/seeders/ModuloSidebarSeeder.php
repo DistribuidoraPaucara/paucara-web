@@ -311,7 +311,7 @@ class ModuloSidebarSeeder extends Seeder
                     'ruta'        => '/estados-logistica',
                     'icono'       => 'FlowChart',
                     'descripcion' => 'Gestión de estados y transiciones de logística',
-                    'orden'       => 12.5,
+                    'orden'       => 13,
                     'categoria'   => 'Logística',
                     'permisos'    => ['estados-logistica.manage'],
                 ],
