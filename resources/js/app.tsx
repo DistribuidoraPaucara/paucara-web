@@ -1,4 +1,5 @@
 import '../css/app.css';
+import '../css/react-colorful.css';
 import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 

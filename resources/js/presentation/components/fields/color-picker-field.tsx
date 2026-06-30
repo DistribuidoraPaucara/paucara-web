@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { Input } from '@/presentation/components/ui/input';
 import { ChevronDown } from 'lucide-react';
-import 'react-colorful/styles.css';
 
 interface ColorPickerFieldProps {
   id: string;
