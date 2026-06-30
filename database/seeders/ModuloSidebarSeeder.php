@@ -303,6 +303,23 @@ class ModuloSidebarSeeder extends Seeder
                     ['titulo' => 'Almacenes Prestables', 'ruta' => '/almacenes-prestables', 'icono' => 'Package', 'orden' => 3, 'permisos' => ['almacenes.manage']],
                 ],
             ],
+
+            // ===== MÓDULO: ESTADOS DE LOGÍSTICA =====
+            'estados-logistica' => [
+                'modulo' => [
+                    'titulo'      => 'Estados de Logística',
+                    'ruta'        => '/estados-logistica',
+                    'icono'       => 'FlowChart',
+                    'descripcion' => 'Gestión de estados y transiciones de logística',
+                    'orden'       => 12.5,
+                    'categoria'   => 'Logística',
+                    'permisos'    => ['estados-logistica.manage'],
+                ],
+                'submenu' => [
+                    ['titulo' => 'Estados', 'ruta' => '/estados-logistica', 'icono' => 'List', 'orden' => 1, 'permisos' => ['estados-logistica.manage']],
+                    ['titulo' => 'Crear Estado', 'ruta' => '/estados-logistica/create', 'icono' => 'Plus', 'orden' => 2, 'permisos' => ['estados-logistica.manage']],
+                ],
+            ],
             'proveedores'     => [
                 'modulo' => [
                     'titulo'      => 'Proveedores',
