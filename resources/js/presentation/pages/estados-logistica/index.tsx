@@ -16,6 +16,7 @@
  * ✓ Crear, editar, eliminar
  */
 
+import { useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import GenericContainer from '@/presentation/components/generic/generic-container';
 import { estadosLogisticaConfig } from '@/config/modules/estadosLogistica.config';
@@ -25,10 +26,27 @@ import type { EstadoLogistica, EstadoLogisticaFormData } from '@/domain/entities
 
 interface EstadosLogisticaIndexProps {
   estadosLogistica: Pagination<EstadoLogistica>;
-  filters: { q?: string };
+  filters: { q?: string; categoria?: string; activo?: string | boolean; es_estado_final?: string | boolean };
 }
 
 export default function EstadosLogisticaIndex({ estadosLogistica, filters }: EstadosLogisticaIndexProps) {
+  useEffect(() => {
+    console.group('📊 EstadosLogistica - Backend Data');
+    console.log('🔵 Filtros recibidos:', filters);
+    console.log('📋 Total de registros:', estadosLogistica.total);
+    console.log('📄 Registros en esta página:', estadosLogistica.data?.length || 0);
+    console.log('📑 Página actual:', estadosLogistica.current_page);
+    console.log('🔢 Total de páginas:', estadosLogistica.last_page);
+    console.log('🔗 URL actual:', estadosLogistica.path);
+    console.log('📦 Datos completos:', estadosLogistica);
+
+    if (estadosLogistica.data && estadosLogistica.data.length > 0) {
+      console.log('🎯 Primer registro:', estadosLogistica.data[0]);
+      console.log('📌 Categorías encontradas:', [...new Set(estadosLogistica.data.map(e => e.categoria))]);
+    }
+    console.groupEnd();
+  }, [estadosLogistica, filters]);
+
   return (
     <AppLayout breadcrumbs={[
       { title: 'Dashboard', href: estadosLogisticaService.indexUrl() },
