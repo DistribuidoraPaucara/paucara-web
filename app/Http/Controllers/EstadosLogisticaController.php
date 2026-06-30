@@ -116,30 +116,33 @@ class EstadosLogisticaController extends Controller
     public function index(Request $request): Response
     {
         $modelClass = $this->getModel();
-        $q = $request->string('q', '');
-        $categoria = $request->string('categoria', '');
+        // Convertir a string explícitamente para evitar objetos Stringable
+        $q = (string) $request->string('q', '');
+        $categoria = (string) $request->string('categoria', '');
         $activo = $request->input('activo');
         $esEstadoFinal = $request->input('es_estado_final');
 
         Log::info('EstadosLogistica Index - Parámetros recibidos:', [
             'q' => $q,
+            'q_type' => gettype($q),
             'categoria' => $categoria,
+            'categoria_type' => gettype($categoria),
             'activo' => $activo,
             'es_estado_final' => $esEstadoFinal,
         ]);
 
         $query = $modelClass::query();
 
-        // Filtro de búsqueda (case-insensitive)
-        if (!empty($q)) {
+        // Filtro de búsqueda (case-insensitive) - validar como string
+        if (strlen($q) > 0) {
             $query->where(function ($sub) use ($q) {
                 $sub->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
                     ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . strtolower($q) . '%']);
             });
         }
 
-        // Filtro de categoría (case-insensitive)
-        if (!empty($categoria)) {
+        // Filtro de categoría (case-insensitive) - validar como string
+        if (strlen($categoria) > 0) {
             $query->whereRaw('LOWER("categoria") = LOWER(?)', [$categoria]);
         }
 
