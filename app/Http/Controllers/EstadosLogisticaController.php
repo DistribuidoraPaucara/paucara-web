@@ -52,6 +52,14 @@ class EstadosLogisticaController extends Controller
     }
 
     /**
+     * Retorna el nombre singular del recurso
+     */
+    protected function getSingularResourceName(): string
+    {
+        return 'estadoLogistica';
+    }
+
+    /**
      * Retorna las reglas de validación
      */
     protected function getValidationRules(): array
