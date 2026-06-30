@@ -80,18 +80,21 @@ class EstadosLogisticaController extends Controller
         $modelClass = $this->getModel();
         $q = $request->string('q');
         $categoria = $request->string('categoria');
-        $activo = $request->input('activo'); // puede ser true, false, o null
+        $activo = $request->input('activo');
         $esEstadoFinal = $request->input('es_estado_final');
 
         $items = $modelClass::query()
             // Filtro de búsqueda (case-insensitive)
-            ->when($q, function ($query) use ($q) {
-                return $query->whereRaw('LOWER(nombre) like ?', ['%' . strtolower($q) . '%'])
-                            ->orWhereRaw('LOWER(codigo) like ?', ['%' . strtolower($q) . '%']);
+            ->when($q !== '', function ($query) use ($q) {
+                return $query->where(function ($q_inner) use ($q) {
+                    $q_inner->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
+                           ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . strtolower($q) . '%']);
+                });
             })
-            // Filtro de categoría (case-insensitive)
-            ->when($categoria, function ($query) use ($categoria) {
-                return $query->whereRaw('LOWER(categoria) = ?', [strtolower($categoria)]);
+            // Filtro de categoría (case-insensitive) - CRÍTICO
+            ->when($categoria !== '', function ($query) use ($categoria) {
+                // Usar where en lugar de whereRaw para mejor compatibilidad
+                return $query->whereRaw('LOWER("categoria") = LOWER(?)', [$categoria]);
             })
             // Filtro de activo
             ->when($activo !== null && $activo !== '', function ($query) use ($activo) {
