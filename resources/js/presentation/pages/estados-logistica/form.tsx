@@ -1,4 +1,5 @@
 // Pages: EstadosLogistica form page using generic components
+import { useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import GenericFormContainer from '@/presentation/components/generic/generic-form-container';
 import { estadosLogisticaConfig } from '@/config/modules/estadosLogistica.config';
@@ -25,6 +26,29 @@ const initialEstadoLogisticaData: EstadoLogisticaFormData = {
 
 export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogisticaFormPageProps) {
   const isEditing = !!estadoLogistica;
+
+  useEffect(() => {
+    if (isEditing && estadoLogistica) {
+      console.group('📝 EstadoLogistica Form - Datos de edición');
+      console.log('✏️ Modo: EDITAR');
+      console.log('🆔 ID:', estadoLogistica.id);
+      console.log('📋 Código:', estadoLogistica.codigo);
+      console.log('📝 Nombre:', estadoLogistica.nombre);
+      console.log('📂 Categoría:', estadoLogistica.categoria);
+      console.log('🔢 Orden:', estadoLogistica.orden);
+      console.log('📄 Descripción:', estadoLogistica.descripcion);
+      console.log('✅ Activo:', estadoLogistica.activo);
+      console.log('🏁 Estado Final:', estadoLogistica.es_estado_final);
+      console.log('✏️ Permite Edición:', estadoLogistica.permite_edicion);
+      console.log('👤 Requiere Aprobación:', estadoLogistica.requiere_aprobacion);
+      console.log('🎨 Color:', estadoLogistica.color);
+      console.log('🎭 Ícono:', estadoLogistica.icono);
+      console.log('📦 Datos completos:', estadoLogistica);
+      console.groupEnd();
+    } else {
+      console.log('✨ Modo: CREAR (sin datos previos)');
+    }
+  }, [estadoLogistica, isEditing]);
 
   return (
     <AppLayout breadcrumbs={[

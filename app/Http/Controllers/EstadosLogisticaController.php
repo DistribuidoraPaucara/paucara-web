@@ -6,6 +6,7 @@ use App\Http\Traits\SimpleCrudController;
 use App\Models\EstadoLogistica;
 use Illuminate\Http\Request;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * EstadosLogisticaController - CRUD de Estados de Logística
@@ -69,6 +70,35 @@ class EstadosLogisticaController extends Controller
             'requiere_aprobacion' => ['boolean'],
             'metadatos' => ['nullable', 'json'],
         ];
+    }
+
+    /**
+     * Mostrar formulario de edición con todos los datos
+     */
+    public function edit($id): Response
+    {
+        $modelClass = $this->getModel();
+        $item = $modelClass::findOrFail($id);
+
+        Log::info('EstadoLogistica Edit - Datos cargados:', [
+            'id' => $item->id,
+            'codigo' => $item->codigo,
+            'nombre' => $item->nombre,
+            'categoria' => $item->categoria,
+            'orden' => $item->orden,
+            'descripcion' => $item->descripcion,
+            'activo' => $item->activo,
+            'es_estado_final' => $item->es_estado_final,
+            'permite_edicion' => $item->permite_edicion,
+            'requiere_aprobacion' => $item->requiere_aprobacion,
+            'color' => $item->color,
+            'icono' => $item->icono,
+            'todos_los_datos' => $item->toArray(),
+        ]);
+
+        return inertia($this->getViewPath() . '/form', [
+            $this->getSingularResourceName() => $item,
+        ]);
     }
 
     /**
