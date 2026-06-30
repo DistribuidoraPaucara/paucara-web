@@ -18,6 +18,23 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
     { key: 'codigo', label: 'Código', type: 'text' },
     { key: 'categoria', label: 'Categoría', type: 'text' },
     { key: 'nombre', label: 'Nombre', type: 'text' },
+    {
+      key: 'color',
+      label: 'Color',
+      type: 'custom',
+      render: (value: string) => (
+        <div className="flex items-center gap-2">
+          <div
+            className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 shadow-sm"
+            style={{ backgroundColor: value || '#E5E7EB' }}
+            title={value || 'Sin color'}
+          />
+          <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+            {value || '-'}
+          </span>
+        </div>
+      )
+    },
     // { key: 'orden', label: 'Orden', type: 'number' },
     { key: 'activo', label: 'Activo', type: 'boolean' },
     { key: 'es_estado_final', label: 'Estado Final', type: 'boolean' },
