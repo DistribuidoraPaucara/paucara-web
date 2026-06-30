@@ -767,6 +767,48 @@ class VentaController extends Controller
     /**
      * Mostrar detalle de venta
      */
+    /**
+     * Obtener detalles completos de una venta
+     *
+     * GET /api/ventas/{venta}
+     *
+     * MEJORAS (2026-06-29):
+     * - Entrega asignada con chofer, vehículo, estado de entrega completo
+     * - Confirmaciones de entrega: MODELO COMPLETO sin restricciones
+     * - Detalles con productos, combo_items_seleccionados y comboItems si es combo
+     * - Dirección del cliente con localidad
+     * - Tipo de pago y estado del documento completos
+     *
+     * Respuesta estructura:
+     * {
+     *   "entrega_id": 437,
+     *   "entrega": {
+     *     "id": 437,
+     *     "numero": "ENT437",
+     *     "chofer": {"id": 5, "name": "Juan", "telefono": "..."},
+     *     "vehiculo": {"id": 2, "placa": "ABC-123"},
+     *     "estado_entrega": {"id": 3, "codigo": "EN_TRANSITO", "nombre": "En Tránsito"}
+     *   },
+     *   "entregas_venta_confirmaciones": [
+     *     {
+     *       "id": 1,
+     *       "venta_id": 3382,
+     *       "entrega_id": 437,
+     *       "estado": "CONFIRMADO",
+     *       "fecha_confirmacion": "2026-06-29T10:30:00",
+     *       "tipo_entrega": "CON_NOVEDAD",
+     *       "cliente_confirmacion": "Juan",
+     *       "cliente_nombre_confirmacion": "Juan García",
+     *       "chofer_confirmacion_id": 5,
+     *       "notas": "Entrega realizada",
+     *       "tipo_pago_id": 1,
+     *       "confirmado_por": {"id": 5, "name": "Juan", "email": "juan@..."},
+     *       "created_at": "2026-06-29T10:30:00",
+     *       "updated_at": "2026-06-29T10:30:00"
+     *     }
+     *   ]
+     * }
+     */
     public function show(int $id): JsonResponse | InertiaResponse
     {
         try {
@@ -860,10 +902,14 @@ class VentaController extends Controller
                             'es_principal'  => (bool) $venta->direccionCliente->es_principal,
                         ] : null,
                         'detalles'                      => $venta->detalles->map(fn($d) => [
-                            'id'              => $d->id,
-                            'cantidad'        => $d->cantidad,
-                            'precio_unitario' => $d->precio_unitario,
-                            'subtotal'        => $d->subtotal,
+                            'id'                          => $d->id,
+                            'cantidad'                    => $d->cantidad,
+                            'precio_unitario'             => $d->precio_unitario,
+                            'subtotal'                    => $d->subtotal,
+                            'tipo_precio_id'              => $d->tipo_precio_id,
+                            'tipo_precio_nombre'          => $d->tipo_precio_nombre,
+                            // ✅ NUEVO (2026-06-29): Items del combo seleccionados por el cliente
+                            'combo_items_seleccionados'   => $d->combo_items_seleccionados ?? [],
                             'producto'        => $d->producto ? [
                                 'id'         => $d->producto->id,
                                 'nombre'     => $d->producto->nombre,
@@ -927,7 +973,30 @@ class VentaController extends Controller
                                 })->toArray() : [],
                             ] : null,
                         ])->toArray(),
-                        // ✅ NUEVO: Incluir entregas_venta_confirmaciones (modelo completo)
+                        // ✅ NUEVO (2026-06-29): Incluir datos completos de entrega asignada
+                        'entrega'                       => $venta->entrega ? [
+                            'id'                => $venta->entrega->id,
+                            'numero'            => $venta->entrega->numero,
+                            'fecha'             => $venta->entrega->fecha?->format('Y-m-d'),
+                            'fecha_entrega'     => $venta->entrega->fecha_entrega?->format('Y-m-d H:i:s'),
+                            'estado_entrega'    => $venta->entrega->estadoEntrega ? [
+                                'id'     => $venta->entrega->estadoEntrega->id,
+                                'codigo' => $venta->entrega->estadoEntrega->codigo,
+                                'nombre' => $venta->entrega->estadoEntrega->nombre,
+                                'color'  => $venta->entrega->estadoEntrega->color ?? null,
+                            ] : null,
+                            'chofer'            => $venta->entrega->chofer ? [
+                                'id'       => $venta->entrega->chofer->id,
+                                'nombre'   => $venta->entrega->chofer->name,
+                                'telefono' => $venta->entrega->chofer->telefono ?? null,
+                            ] : null,
+                            'vehiculo'          => $venta->entrega->vehiculo ? [
+                                'id'          => $venta->entrega->vehiculo->id,
+                                'placa'       => $venta->entrega->vehiculo->placa,
+                                'descripcion' => $venta->entrega->vehiculo->descripcion ?? null,
+                            ] : null,
+                        ] : null,
+                        // ✅ MEJORADO (2026-06-29): Incluir entregas_venta_confirmaciones (modelo COMPLETO sin restricciones)
                         'entregas_venta_confirmaciones' => $venta->confirmaciones?->toArray() ?? [],
                         // ✅ NUEVO: Incluir cuenta_por_cobrar
                         'cuenta_por_cobrar' => $venta->cuentaPorCobrar ? [
@@ -1397,10 +1466,31 @@ class VentaController extends Controller
                     throw new \Exception('Estado "ANULADO" no encontrado en la base de datos');
                 }
 
-                $actualizado = $venta->update([
+                // ✅ NUEVO: Obtener estado logístico ANULADA para actualizar la venta
+                $estadoLogisticoAnulada = \App\Models\EstadoLogistica::where('codigo', 'ANULADA')
+                    ->where('categoria', 'venta_logistica')
+                    ->first();
+
+                $datosActualizacion = [
                     'estado_documento_id' => $estadoAnulado->id,
                     'observaciones'       => $observacionesFinal,
-                ]);
+                ];
+
+                // Si existe el estado ANULADA, actualizar también el estado logístico
+                if ($estadoLogisticoAnulada) {
+                    $datosActualizacion['estado_logistico_id'] = $estadoLogisticoAnulada->id;
+                    Log::info('✅ Estado logístico ANULADA será asignado a la venta', [
+                        'venta_id'                  => $venta->id,
+                        'estado_logistico_id'       => $estadoLogisticoAnulada->id,
+                        'estado_logistico_codigo'   => 'ANULADA',
+                    ]);
+                } else {
+                    Log::warning('⚠️ Estado logístico ANULADA no encontrado, solo se actualiza estado_documento', [
+                        'venta_id' => $venta->id,
+                    ]);
+                }
+
+                $actualizado = $venta->update($datosActualizacion);
 
                 Log::info('🔴 [ANULAR VENTA] PASO 4 - Update completado', [
                     'venta_id'                => $venta->id,
@@ -1784,7 +1874,7 @@ class VentaController extends Controller
         $venta->load('detallesPagoVenta.tipoPago');
 
         // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega (necesarias para mostrar estado de entrega)
-        $venta->load('confirmaciones.confirmadobPor', 'confirmaciones.tipoPago');
+        $venta->load('confirmaciones.confirmadoPor', 'confirmaciones.tipoPago');
 
         // 🔍 DEBUG: Loguear información de la venta antes de imprimir
         \Log::info('📋 [VentaController::imprimir] Datos de venta para descargar/stream', [
