@@ -1,5 +1,5 @@
 // Presentation Layer: Color Picker Field Component
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { Input } from '@/presentation/components/ui/input';
 import { ChevronDown } from 'lucide-react';
@@ -22,7 +22,6 @@ export default function ColorPickerField({
   error
 }: ColorPickerFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(value || placeholder);
   const pickerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -31,12 +30,7 @@ export default function ColorPickerField({
     return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
   };
 
-  // Actualizar input solo cuando value cambia (NO incluir placeholder)
-  useEffect(() => {
-    if (value) {
-      setInputValue(value);
-    }
-  }, [value]);
+  const displayValue = value || placeholder;
 
   // Cerrar picker al hacer clic fuera
   useEffect(() => {
@@ -57,17 +51,15 @@ export default function ColorPickerField({
     }
   }, [isOpen]);
 
-  const handleInputChange = (newValue: string) => {
-    setInputValue(newValue);
+  const handleInputChange = useCallback((newValue: string) => {
     if (isValidHex(newValue)) {
       onChange(newValue);
     }
-  };
+  }, [onChange]);
 
-  const handleColorChange = (newColor: string) => {
-    setInputValue(newColor);
+  const handleColorChange = useCallback((newColor: string) => {
     onChange(newColor);
-  };
+  }, [onChange]);
 
   return (
     <div className="relative">
@@ -77,7 +69,7 @@ export default function ColorPickerField({
           {/* Color Preview Circle */}
           <div
             className="w-8 h-8 rounded-md border-2 border-gray-300 dark:border-gray-600 cursor-pointer transition-transform hover:scale-110"
-            style={{ backgroundColor: isValidHex(inputValue) ? inputValue : placeholder }}
+            style={{ backgroundColor: isValidHex(displayValue) ? displayValue : placeholder }}
             onClick={() => setIsOpen(!isOpen)}
             title="Click para abrir selector de color"
           />
@@ -86,14 +78,14 @@ export default function ColorPickerField({
           <Input
             id={id}
             type="text"
-            value={inputValue}
+            value={displayValue}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
             className={`border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 text-sm font-mono uppercase ${
               error
                 ? 'text-red-600 dark:text-red-400 placeholder:text-red-400'
-                : isValidHex(inputValue)
+                : isValidHex(displayValue)
                   ? 'text-gray-900 dark:text-gray-100'
                   : 'text-yellow-600 dark:text-yellow-400'
             }`}
@@ -121,7 +113,7 @@ export default function ColorPickerField({
           className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-input p-4 animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <HexColorPicker
-            color={isValidHex(inputValue) ? inputValue : placeholder}
+            color={isValidHex(displayValue) ? displayValue : placeholder}
             onChange={handleColorChange}
             style={{
               width: '280px',
@@ -133,7 +125,7 @@ export default function ColorPickerField({
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
             <p className="text-xs text-muted-foreground mb-2">Valor Hexadecimal</p>
             <p className="text-sm font-mono font-bold text-gray-900 dark:text-gray-100">
-              {isValidHex(inputValue) ? inputValue.toUpperCase() : 'Invalid'}
+              {isValidHex(displayValue) ? displayValue.toUpperCase() : 'Invalid'}
             </p>
           </div>
         </div>
@@ -147,7 +139,7 @@ export default function ColorPickerField({
       )}
 
       {/* Info Message */}
-      {!error && !isValidHex(inputValue) && (
+      {!error && !isValidHex(displayValue) && (
         <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
           Formato hexadecimal inválido. Ej: #6366F1
         </p>
