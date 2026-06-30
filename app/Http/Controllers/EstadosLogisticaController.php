@@ -116,38 +116,60 @@ class EstadosLogisticaController extends Controller
     public function index(Request $request): Response
     {
         $modelClass = $this->getModel();
-        $q = $request->string('q');
-        $categoria = $request->string('categoria');
+        $q = $request->string('q', '');
+        $categoria = $request->string('categoria', '');
         $activo = $request->input('activo');
         $esEstadoFinal = $request->input('es_estado_final');
 
-        $items = $modelClass::query()
-            // Filtro de búsqueda (case-insensitive)
-            ->when($q !== '', function ($query) use ($q) {
-                return $query->where(function ($q_inner) use ($q) {
-                    $q_inner->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
-                           ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . strtolower($q) . '%']);
-                });
-            })
-            // Filtro de categoría (case-insensitive) - CRÍTICO
-            ->when($categoria !== '', function ($query) use ($categoria) {
-                // Usar where en lugar de whereRaw para mejor compatibilidad
-                return $query->whereRaw('LOWER("categoria") = LOWER(?)', [$categoria]);
-            })
-            // Filtro de activo
-            ->when($activo !== null && $activo !== '', function ($query) use ($activo) {
-                $activo = filter_var($activo, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-                return $query->where('activo', $activo);
-            })
-            // Filtro de estado final
-            ->when($esEstadoFinal !== null && $esEstadoFinal !== '', function ($query) use ($esEstadoFinal) {
-                $esEstadoFinal = filter_var($esEstadoFinal, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-                return $query->where('es_estado_final', $esEstadoFinal);
-            })
+        Log::info('EstadosLogistica Index - Parámetros recibidos:', [
+            'q' => $q,
+            'categoria' => $categoria,
+            'activo' => $activo,
+            'es_estado_final' => $esEstadoFinal,
+        ]);
+
+        $query = $modelClass::query();
+
+        // Filtro de búsqueda (case-insensitive)
+        if (!empty($q)) {
+            $query->where(function ($sub) use ($q) {
+                $sub->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
+                    ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . strtolower($q) . '%']);
+            });
+        }
+
+        // Filtro de categoría (case-insensitive)
+        if (!empty($categoria)) {
+            $query->whereRaw('LOWER("categoria") = LOWER(?)', [$categoria]);
+        }
+
+        // Filtro de activo
+        if ($activo !== null && $activo !== '') {
+            $activo = filter_var($activo, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($activo !== null) {
+                $query->where('activo', $activo);
+            }
+        }
+
+        // Filtro de estado final
+        if ($esEstadoFinal !== null && $esEstadoFinal !== '') {
+            $esEstadoFinal = filter_var($esEstadoFinal, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($esEstadoFinal !== null) {
+                $query->where('es_estado_final', $esEstadoFinal);
+            }
+        }
+
+        $items = $query
             ->orderBy('categoria', 'asc')
             ->orderBy('orden', 'asc')
             ->paginate(10)
             ->withQueryString();
+
+        Log::info('EstadosLogistica Index - Resultados:', [
+            'total' => $items->total(),
+            'count' => $items->count(),
+            'sql_bindings' => $query->toSql(),
+        ]);
 
         return inertia($this->getViewPath() . '/index', [
             $this->getResourceName() => $items,
