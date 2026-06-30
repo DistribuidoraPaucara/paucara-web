@@ -18,7 +18,7 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
     { key: 'codigo', label: 'Código', type: 'text' },
     { key: 'categoria', label: 'Categoría', type: 'text' },
     { key: 'nombre', label: 'Nombre', type: 'text' },
-    { key: 'orden', label: 'Orden', type: 'number' },
+    // { key: 'orden', label: 'Orden', type: 'number' },
     { key: 'activo', label: 'Activo', type: 'boolean' },
     { key: 'es_estado_final', label: 'Estado Final', type: 'boolean' },
     { key: 'permite_edicion', label: 'Permite Edición', type: 'boolean' },
@@ -35,6 +35,14 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
       validation: { maxLength: 50 }
     },
     {
+      key: 'nombre',
+      label: 'Nombre',
+      type: 'text',
+      required: true,
+      placeholder: 'Ingrese el nombre del estado',
+      validation: { maxLength: 100 }
+    },
+    {
       key: 'categoria',
       label: 'Categoría',
       type: 'select',
@@ -48,14 +56,7 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
         { value: 'pago', label: 'Pago' },
       ]
     },
-    {
-      key: 'nombre',
-      label: 'Nombre',
-      type: 'text',
-      required: true,
-      placeholder: 'Ingrese el nombre del estado',
-      validation: { maxLength: 100 }
-    },
+    
     {
       key: 'descripcion',
       label: 'Descripción',
@@ -71,9 +72,9 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
     {
       key: 'color',
       label: 'Color',
-      type: 'text',
-      placeholder: 'ej: #FFC107',
-      validation: { maxLength: 7 }
+      type: 'color',
+      placeholder: '#6366F1',
+      description: 'Selecciona el color para este estado',
     },
     {
       key: 'icono',

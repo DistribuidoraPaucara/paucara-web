@@ -4,6 +4,7 @@ import { Label } from '@/presentation/components/ui/label';
 import { useState, useEffect } from 'react';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import SearchMultiSelect from '@/presentation/components/ui/search-multi-select';
+import ColorPickerField from '@/presentation/components/fields/color-picker-field';
 import type { BaseFormData, FormField } from '@/domain/entities/generic';
 import { Info, Eye, EyeOff } from 'lucide-react';
 
@@ -387,6 +388,20 @@ export default function GenericFormFields<F extends BaseFormData>({
           </div>
         );
         return withPrefixSuffix(passwordInput);
+      }
+
+      case 'color': {
+        const placeholderValue = typeof field.placeholder === 'function' ? field.placeholder(data) : field.placeholder || '#6366F1';
+        return (
+          <ColorPickerField
+            id={String(field.key)}
+            value={value ? String(value) : ''}
+            onChange={(val) => onChange(field.key, val)}
+            placeholder={placeholderValue}
+            disabled={fieldDisabled}
+            error={error}
+          />
+        );
       }
 
       default: { // text
