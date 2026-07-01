@@ -653,26 +653,26 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
 
                                                                                         {/* Estado Logístico */}
                                                                                         <td className="px-3 py-3">
-                                                                                            {venta.estadoLogistica ? (
+                                                                                            {venta.estado_logistica ? (
                                                                                                 <Badge
                                                                                                     style={{
-                                                                                                        backgroundColor: venta.estadoLogistica.color
-                                                                                                            ? `${venta.estadoLogistica.color}20`
+                                                                                                        backgroundColor: venta.estado_logistica.color
+                                                                                                            ? `${venta.estado_logistica.color}20`
                                                                                                             : '#f3f4f6',
-                                                                                                        color: venta.estadoLogistica.color
-                                                                                                            ? venta.estadoLogistica.color
+                                                                                                        color: venta.estado_logistica.color
+                                                                                                            ? venta.estado_logistica.color
                                                                                                             : '#6b7280',
-                                                                                                        borderColor: venta.estadoLogistica.color,
+                                                                                                        borderColor: venta.estado_logistica.color,
                                                                                                         borderWidth: '1px',
                                                                                                     }}
                                                                                                     className="font-medium"
                                                                                                 >
-                                                                                                    {venta.estadoLogistica.icono && (
+                                                                                                    {venta.estado_logistica.icono && (
                                                                                                         <span className="mr-1">
-                                                                                                            {venta.estadoLogistica.icono}
+                                                                                                            {venta.estado_logistica.icono}
                                                                                                         </span>
                                                                                                     )}
-                                                                                                    {venta.estadoLogistica.nombre}
+                                                                                                    {venta.estado_logistica.nombre}
                                                                                                 </Badge>
                                                                                             ) : (
                                                                                                 <span className="text-gray-400 dark:text-gray-600">
