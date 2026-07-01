@@ -109,6 +109,14 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
       options: [], // 🔄 Array vacío para cargar dinámicamente via loadOptions
     },
     {
+      key: 'estado_siguiente_id',
+      label: 'Estado Siguiente',
+      type: 'select',
+      placeholder: 'Seleccione estado siguiente (opcional)',
+      description: 'Define el estado que sigue a este en la cadena de transiciones',
+      options: [], // 🔄 Array vacío para cargar dinámicamente via loadOptions
+    },
+    {
       key: 'activo',
       label: 'Estado activo',
       type: 'boolean'

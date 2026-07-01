@@ -74,6 +74,7 @@ class EstadosLogisticaController extends Controller
             'color' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'icono' => ['nullable', 'string', 'max:50'],
             'estado_anterior_id' => ['nullable', 'exists:estados_logistica,id'],
+            'estado_siguiente_id' => ['nullable', 'exists:estados_logistica,id'],
             'es_estado_final' => ['boolean'],
             'permite_edicion' => ['boolean'],
             'requiere_aprobacion' => ['boolean'],

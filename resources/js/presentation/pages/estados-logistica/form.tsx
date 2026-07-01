@@ -20,6 +20,7 @@ const initialEstadoLogisticaData: EstadoLogisticaFormData = {
   color: '#6366F1',
   icono: 'circle',
   estado_anterior_id: null,
+  estado_siguiente_id: null,
   es_estado_final: false,
   permite_edicion: true,
   requiere_aprobacion: false,
@@ -29,11 +30,11 @@ export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogistica
   const isEditing = !!estadoLogistica;
   const [estadosOptions, setEstadosOptions] = useState<Array<{ value: number; label: string }>>([]);
 
-  // Cargar opciones de estados para el campo estado_anterior_id
+  // Cargar opciones de estados para los campos estado_anterior_id y estado_siguiente_id
   const loadOptions = async (fieldKey: string) => {
-    if (fieldKey === 'estado_anterior_id') {
+    if (fieldKey === 'estado_anterior_id' || fieldKey === 'estado_siguiente_id') {
       try {
-        console.log('📦 Cargando opciones de estados...');
+        console.log(`📦 Cargando opciones de estados para ${fieldKey}...`);
         // Usar el servicio para traer todos los estados
         const response = await fetch('/api/estados-logistica?per_page=100');
         const data = await response.json();
@@ -45,11 +46,11 @@ export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogistica
           }));
 
           setEstadosOptions(options);
-          console.log('✅ Estados cargados:', options);
+          console.log(`✅ Estados cargados para ${fieldKey}:`, options);
           return options;
         }
       } catch (error) {
-        console.error('❌ Error cargando estados:', error);
+        console.error(`❌ Error cargando estados para ${fieldKey}:`, error);
       }
     }
     return [];
@@ -77,6 +78,14 @@ export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogistica
           id: estadoLogistica.estadoAnterior.id,
           nombre: estadoLogistica.estadoAnterior.nombre,
           codigo: estadoLogistica.estadoAnterior.codigo,
+        });
+      }
+      console.log('➡️ Estado Siguiente ID:', estadoLogistica.estado_siguiente_id);
+      if (estadoLogistica.estadoSiguiente) {
+        console.log('➡️ Estado Siguiente:', {
+          id: estadoLogistica.estadoSiguiente.id,
+          nombre: estadoLogistica.estadoSiguiente.nombre,
+          codigo: estadoLogistica.estadoSiguiente.codigo,
         });
       }
       console.log('📦 Datos completos:', estadoLogistica);
