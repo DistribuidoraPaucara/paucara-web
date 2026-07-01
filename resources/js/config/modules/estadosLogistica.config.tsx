@@ -101,6 +101,16 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
       validation: { maxLength: 50 }
     },
     {
+      key: 'estado_anterior_id',
+      label: 'Estado Anterior',
+      type: 'select',
+      placeholder: 'Seleccione estado anterior (opcional)',
+      description: 'Define el estado que precede a este en la cadena de transiciones',
+      endpoint: '/api/estados-logistica?per_page=100',
+      optionLabel: 'nombre',
+      optionValue: 'id',
+    },
+    {
       key: 'activo',
       label: 'Estado activo',
       type: 'boolean'

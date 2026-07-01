@@ -12,10 +12,12 @@ export interface EstadoLogistica extends BaseEntity {
   activo: boolean;
   color?: string | null;
   icono?: string | null;
+  estado_anterior_id?: Id | null;
   es_estado_final: boolean;
   permite_edicion: boolean;
   requiere_aprobacion: boolean;
   metadatos?: Record<string, any> | null;
+  estadoAnterior?: EstadoLogistica | null;
 }
 
 export interface EstadoLogisticaFormData extends BaseFormData {
@@ -28,6 +30,7 @@ export interface EstadoLogisticaFormData extends BaseFormData {
   activo?: boolean;
   color?: string | null;
   icono?: string | null;
+  estado_anterior_id?: Id | null;
   es_estado_final?: boolean;
   permite_edicion?: boolean;
   requiere_aprobacion?: boolean;
