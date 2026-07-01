@@ -224,6 +224,7 @@ class CuentaPorCobrarController extends Controller
                     'estado' => $cuenta->estado,
                     'referencia_documento' => $cuenta->referencia_documento,
                     'observaciones' => $cuenta->observaciones,
+                    'created_at' => $cuenta->created_at?->toDateTimeString(),
                     'cliente' => $cuenta->cliente ? [
                         'id' => $cuenta->cliente->id,
                         'nombre' => $cuenta->cliente->nombre,
