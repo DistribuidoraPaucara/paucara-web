@@ -1,5 +1,5 @@
 // Pages: EstadosLogistica form page using generic components
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import GenericFormContainer from '@/presentation/components/generic/generic-form-container';
 import { estadosLogisticaConfig } from '@/config/modules/estadosLogistica.config';
@@ -19,6 +19,7 @@ const initialEstadoLogisticaData: EstadoLogisticaFormData = {
   activo: true,
   color: '#6366F1',
   icono: 'circle',
+  estado_anterior_id: null,
   es_estado_final: false,
   permite_edicion: true,
   requiere_aprobacion: false,
@@ -26,6 +27,33 @@ const initialEstadoLogisticaData: EstadoLogisticaFormData = {
 
 export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogisticaFormPageProps) {
   const isEditing = !!estadoLogistica;
+  const [estadosOptions, setEstadosOptions] = useState<Array<{ value: number; label: string }>>([]);
+
+  // Cargar opciones de estados para el campo estado_anterior_id
+  const loadOptions = async (fieldKey: string) => {
+    if (fieldKey === 'estado_anterior_id') {
+      try {
+        console.log('📦 Cargando opciones de estados...');
+        // Usar el servicio para traer todos los estados
+        const response = await fetch('/api/estados-logistica?per_page=100');
+        const data = await response.json();
+
+        if (data.data) {
+          const options = data.data.map((estado: EstadoLogistica) => ({
+            value: estado.id,
+            label: `${estado.nombre} (${estado.codigo})`,
+          }));
+
+          setEstadosOptions(options);
+          console.log('✅ Estados cargados:', options);
+          return options;
+        }
+      } catch (error) {
+        console.error('❌ Error cargando estados:', error);
+      }
+    }
+    return [];
+  };
 
   useEffect(() => {
     if (isEditing && estadoLogistica) {
@@ -43,6 +71,14 @@ export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogistica
       console.log('👤 Requiere Aprobación:', estadoLogistica.requiere_aprobacion);
       console.log('🎨 Color:', estadoLogistica.color);
       console.log('🎭 Ícono:', estadoLogistica.icono);
+      console.log('🔗 Estado Anterior ID:', estadoLogistica.estado_anterior_id);
+      if (estadoLogistica.estadoAnterior) {
+        console.log('🔗 Estado Anterior:', {
+          id: estadoLogistica.estadoAnterior.id,
+          nombre: estadoLogistica.estadoAnterior.nombre,
+          codigo: estadoLogistica.estadoAnterior.codigo,
+        });
+      }
       console.log('📦 Datos completos:', estadoLogistica);
       console.groupEnd();
     } else {
@@ -61,6 +97,7 @@ export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogistica
         config={estadosLogisticaConfig}
         service={estadosLogisticaService}
         initialData={initialEstadoLogisticaData}
+        loadOptions={loadOptions}
       />
     </AppLayout>
   );
