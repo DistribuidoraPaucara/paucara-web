@@ -795,44 +795,39 @@ class EntregaController extends Controller
                 ? Entrega::ESTADO_EN_CAMINO
                 : Entrega::ESTADO_EN_TRANSITO;
 
-            // ✅ CRÍTICO: Actualizar ventas ANTES de cambiar estado de entrega
+            // ✅ CRÍTICO: Actualizar TODAS las ventas a EN_TRANSITO antes de cambiar estado de entrega
             // Esto asegura que cuando el Observer envía notificaciones,
             // las ventas ya tengan el estado_logistico_id correcto
+            // NOTA: 1 entrega tiene N ventas, 1 venta está en 1 entrega
             if ($nuevoEstado === Entrega::ESTADO_EN_TRANSITO) {
-                // Obtener IDs de estados EN_TRANSITO y PENDIENTE_ENVIO
+                // Obtener ID del estado EN_TRANSITO (categoría: venta_logistica)
                 $estadoEnTransitoId = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
                     ->where('categoria', 'venta_logistica')
                     ->value('id');
 
-                $estadoPendienteEnvioId = \App\Models\EstadoLogistica::where('codigo', 'PENDIENTE_ENVIO')
-                    ->where('categoria', 'venta_logistica')
-                    ->value('id');
-
-                if ($estadoEnTransitoId && $estadoPendienteEnvioId) {
-                    // Solo actualizar ventas que están en PENDIENTE_ENVIO → EN_TRANSITO
+                if ($estadoEnTransitoId) {
+                    // ✅ ACTUALIZAR TODAS LAS VENTAS A EN_TRANSITO
+                    // Independientemente de su estado anterior
                     $ventasCount = $entrega->ventas()
-                        ->where('estado_logistico_id', $estadoPendienteEnvioId)
                         ->update([
                             'estado_logistico_id' => $estadoEnTransitoId,
                             'updated_at'          => now(),
                         ]);
 
-                    Log::info('✅ [INICIAR_RUTA] Ventas actualizadas a EN_TRANSITO ANTES DE cambiar estado', [
-                        'entrega_id'          => $entrega->id,
-                        'ventas_actualizadas' => $ventasCount,
-                        'estado_anterior_id'  => $estadoPendienteEnvioId,
-                        'estado_logistico_id' => $estadoEnTransitoId,
+                    Log::info('✅ [INICIAR_RUTA] TODAS las ventas actualizadas a EN_TRANSITO', [
+                        'entrega_id'           => $entrega->id,
+                        'estado_entrega'       => $nuevoEstado,
+                        'categoria_estado'     => 'venta_logistica',
+                        'codigo_estado'        => 'EN_TRANSITO',
+                        'estado_logistico_id'  => $estadoEnTransitoId,
+                        'ventas_totales'       => $entrega->ventas()->count(),
+                        'ventas_actualizadas'  => $ventasCount,
                     ]);
-                } elseif ($estadoEnTransitoId && ! $estadoPendienteEnvioId) {
-                    // Fallback: Si no encuentra PENDIENTE_ENVIO, actualiza todas
-                    $ventasCount = $entrega->ventas()->update([
-                        'estado_logistico_id' => $estadoEnTransitoId,
-                        'updated_at'          => now(),
-                    ]);
-
-                    Log::warning('⚠️ [INICIAR_RUTA] Estado PENDIENTE_ENVIO no encontrado, se actualizaron todas las ventas', [
-                        'entrega_id'          => $entrega->id,
-                        'ventas_actualizadas' => $ventasCount,
+                } else {
+                    Log::error('❌ [INICIAR_RUTA] Estado EN_TRANSITO no encontrado', [
+                        'entrega_id'   => $entrega->id,
+                        'codigo_estado' => 'EN_TRANSITO',
+                        'categoria'    => 'venta_logistica',
                     ]);
                 }
             }
