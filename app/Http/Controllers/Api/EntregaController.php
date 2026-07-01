@@ -1636,6 +1636,30 @@ class EntregaController extends Controller
                 // ✅ Aquí podría guardar monto_recolectado si existe la columna
             ]);
 
+            // ✅ ACTUALIZAR ventas que sigan siendo EN_TRANSITO a SIN_REPORTE
+            $estadoEnTransito = EstadoLogistica::where('codigo', 'EN_TRANSITO')
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            $estadoSinReporte = EstadoLogistica::where('codigo', 'SIN_REPORTE')
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            if ($estadoEnTransito && $estadoSinReporte) {
+                $ventasActualizadas = $entrega->ventas()
+                    ->where('estado_logistico_id', $estadoEnTransito->id)
+                    ->update(['estado_logistico_id' => $estadoSinReporte->id]);
+
+                if ($ventasActualizadas > 0) {
+                    Log::info('✅ Ventas sin reporte actualizado al finalizar entrega', [
+                        'entrega_id'                    => $id,
+                        'cantidad_ventas_actualizadas'  => $ventasActualizadas,
+                        'estado_anterior'               => 'EN_TRANSITO',
+                        'estado_nuevo'                  => 'SIN_REPORTE',
+                    ]);
+                }
+            }
+
             // ✅ Recargar entrega con todas sus relaciones
             $entrega->refresh();
             $entrega->load([
