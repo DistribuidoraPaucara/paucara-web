@@ -335,11 +335,7 @@ class VentaController extends Controller
                         'name'  => $venta->usuario->name,
                         'email' => $venta->usuario->email,
                     ] : null,
-                    'estado_documento'           => $venta->estadoDocumento ? [
-                        'id'     => $venta->estadoDocumento->id,
-                        'codigo' => $venta->estadoDocumento->codigo,
-                        'nombre' => $venta->estadoDocumento->nombre,
-                    ] : null,
+                    'estado_documento'           => $venta->estadoDocumento?->toArray() ?? null,
                     'moneda'                     => $venta->moneda ? [
                         'id'     => $venta->moneda->id,
                         'codigo' => $venta->moneda->codigo,
@@ -357,12 +353,7 @@ class VentaController extends Controller
                         'es_principal'  => $venta->direccionCliente->es_principal,
                         'activa'        => $venta->direccionCliente->activa,
                     ] : null,
-                    'estadoLogistica'            => $venta->estadoLogistica ? [ // ✅ Relación de la VENTA (via estado_logistico_id)
-                        'id'        => $venta->estadoLogistica->id,
-                        'codigo'    => $venta->estadoLogistica->codigo,
-                        'nombre'    => $venta->estadoLogistica->nombre,
-                        'categoria' => $venta->estadoLogistica->categoria,
-                    ] : null,
+                    'estadoLogistica'            => $venta->estadoLogistica?->toArray() ?? null, // ✅ Relación de la VENTA (via estado_logistico_id)
                     'tipoPago'                   => $venta->tipoPago ? [
                         'id'     => $venta->tipoPago->id,
                         'nombre' => $venta->tipoPago->nombre,
@@ -865,19 +856,9 @@ class VentaController extends Controller
                         'tipo_pago_id'                  => $venta->tipo_pago_id,
                         // ✅ NUEVO: Tipo de pago completo
                         'tipoPago'                      => $venta->tipoPago?->toArray() ?? null,
-                        // ✅ NUEVO: Estado del documento y estado logístico
-                        'estado_documento'              => $venta->estadoDocumento ? [
-                            'id'          => $venta->estadoDocumento->id,
-                            'codigo'      => $venta->estadoDocumento->codigo,
-                            'nombre'      => $venta->estadoDocumento->nombre,
-                            'descripcion' => $venta->estadoDocumento->descripcion ?? null,
-                        ] : null,
-                        'estado_logistica'              => $venta->estadoLogistica ? [ // ✅ De la VENTA (via estado_logistico_id)
-                            'id'          => $venta->estadoLogistica->id,
-                            'codigo'      => $venta->estadoLogistica->codigo,
-                            'nombre'      => $venta->estadoLogistica->nombre,
-                            'descripcion' => $venta->estadoLogistica->descripcion ?? null,
-                        ] : null,
+                        // ✅ NUEVO: Estado del documento y estado logístico completos
+                        'estado_documento'              => $venta->estadoDocumento?->toArray() ?? null,
+                        'estado_logistica'              => $venta->estadoLogistica?->toArray() ?? null,
                         'preventista'                   => $venta->preventista ? [
                             'id'    => $venta->preventista->id,
                             'name'  => $venta->preventista->name,
