@@ -111,8 +111,8 @@ class CuentaPorCobrarController extends Controller
             $fechaDesde = $request->query('fecha_desde');
             $fechaHasta = $request->query('fecha_hasta');
             $soloVencidas = $request->query('solo_vencidas');
-            $sortBy = $request->query('sort_by', 'fecha_vencimiento');
-            $sortOrder = $request->query('sort_order', 'asc');
+            $sortBy = $request->query('sort_by', 'id');
+            $sortOrder = $request->query('sort_order', 'desc');
 
             // Validar parámetros
             $perPage = min((int)$perPage, 100); // Máximo 100 items por página
