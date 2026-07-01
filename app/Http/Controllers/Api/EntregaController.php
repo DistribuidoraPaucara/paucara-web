@@ -4574,11 +4574,48 @@ class EntregaController extends Controller
             ]);
 
             // ✅ ACTUALIZAR estado logístico de la venta basado en tipo_confirmacion
+            // COMPLETA → ENTREGADO
+            // RECHAZADO → RECHAZADO
+            // DEVOLUCION_PARCIAL → DEVOLUCION_PARCIAL
+            // CLIENTE_CERRADO → CLIENTE_CERRADO
+            // NO_CONTACTADO → EN_TRANSITO (fallback)
             $nuevoEstadoLogisticoId = null;
-            if ($tipoConfirmacion === 'COMPLETA') {
-                $nuevoEstadoLogisticoId = 13; // ENTREGADA
-            } elseif (in_array($tipoConfirmacion, ['RECHAZADO', 'CLIENTE_CERRADO', 'DEVOLUCION_PARCIAL', 'NO_CONTACTADO'])) {
-                $nuevoEstadoLogisticoId = 14; // PROBLEMAS
+
+            // Mapeo de tipo_confirmacion a código de estado logístico
+            $mapeoEstados = [
+                'COMPLETA'           => 'ENTREGADO',
+                'RECHAZADO'          => 'RECHAZADO',
+                'DEVOLUCION_PARCIAL' => 'DEVOLUCION_PARCIAL',
+                'CLIENTE_CERRADO'    => 'CLIENTE_CERRADO',
+                'NO_CONTACTADO'      => 'EN_TRANSITO',
+            ];
+
+            $codigoEstado = $mapeoEstados[$tipoConfirmacion] ?? 'EN_TRANSITO';
+
+            // Buscar el estado logístico en la BD
+            $estadoLogistico = \App\Models\EstadoLogistica::where('codigo', $codigoEstado)
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            if ($estadoLogistico) {
+                $nuevoEstadoLogisticoId = $estadoLogistico->id;
+                Log::info('✅ Estado logístico asignado según tipo_confirmacion', [
+                    'venta_id'                => $venta_id,
+                    'tipo_confirmacion'       => $tipoConfirmacion,
+                    'codigo_estado'           => $codigoEstado,
+                    'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                ]);
+            } else {
+                Log::warning('⚠️ Estado logístico NO ENCONTRADO para código: ' . $codigoEstado, [
+                    'venta_id'          => $venta_id,
+                    'tipo_confirmacion' => $tipoConfirmacion,
+                    'codigo_estado'     => $codigoEstado,
+                ]);
+                // Fallback a EN_TRANSITO si no encuentra el estado
+                $estadoFallback = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
+                    ->where('categoria', 'venta_logistica')
+                    ->first();
+                $nuevoEstadoLogisticoId = $estadoFallback?->id;
             }
 
             // Actualizar la venta con el nuevo estado logístico y observaciones
