@@ -359,17 +359,8 @@ class VentaController extends Controller
                         'nombre' => $venta->tipoPago->nombre,
                         'codigo' => $venta->tipoPago->codigo,
                     ] : null,
-                    // ✅ NUEVO: Relación con proforma (si existe)
-                    'proforma'                   => $venta->proforma ? [
-                        'id'                 => $venta->proforma->id,
-                        'numero'             => $venta->proforma->numero,
-                        'fecha'              => $venta->proforma->created_at,
-                        'cliente_id'         => $venta->proforma->cliente_id,
-                        'usuario_creador_id' => $venta->proforma->usuario_creador_id,
-                        'total'              => $venta->proforma->total,
-                        'estado'             => $venta->proforma->estado,
-                        'observaciones'      => $venta->proforma->observaciones,
-                    ] : null,
+                    // ✅ NUEVO: Relación con proforma completa (solo cabecera, sin detalles)
+                    'proforma'                   => $venta->proforma?->toArray() ?? null,
                     // ✅ NUEVO: Relación con entregas_venta_confirmaciones (si existe)
                     'entregaConfirmacion'        => (function () use ($venta) {
                         // Obtener el primer registro de confirmaciones (más reciente)
@@ -853,6 +844,7 @@ class VentaController extends Controller
                         'observaciones'                 => $venta->observaciones,
                         'canal_origen'                  => $venta->canal_origen,
                         'politica_pago'                 => $venta->politica_pago, // ✅ NUEVO
+                        'proforma_id'                   => $venta->proforma_id, // ✅ NUEVO: ID de la proforma asociada
                         'tipo_pago_id'                  => $venta->tipo_pago_id,
                         // ✅ NUEVO: Tipo de pago completo
                         'tipoPago'                      => $venta->tipoPago?->toArray() ?? null,
@@ -977,6 +969,8 @@ class VentaController extends Controller
                                 'descripcion' => $venta->entrega->vehiculo->descripcion ?? null,
                             ] : null,
                         ] : null,
+                        // ✅ NUEVO: Incluir proforma completa (solo cabecera, sin detalles)
+                        'proforma'                      => $venta->proforma?->toArray() ?? null,
                         // ✅ MEJORADO (2026-06-29): Incluir entregas_venta_confirmaciones (modelo COMPLETO sin restricciones)
                         'entregas_venta_confirmaciones' => $venta->confirmaciones?->toArray() ?? [],
                         // ✅ NUEVO: Incluir cuenta_por_cobrar
