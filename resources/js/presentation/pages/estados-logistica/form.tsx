@@ -31,9 +31,10 @@ export default function EstadoLogisticaForm({ estadoLogistica, estadosLogistica 
   const isEditing = !!estadoLogistica;
 
   // Convertir estados recibidos del servidor a opciones de select
+  // Incluir categoría para evitar confusión entre estados de diferentes tipos
   const estadosOptions = estadosLogistica.map((estado: EstadoLogistica) => ({
     value: estado.id,
-    label: `${estado.nombre} (${estado.codigo})`,
+    label: `[${estado.categoria.toUpperCase()}] ${estado.nombre} (${estado.codigo})`,
   }));
 
   // Cargar opciones de estados para los campos estado_anterior_id y estado_siguiente_id
@@ -41,7 +42,7 @@ export default function EstadoLogisticaForm({ estadoLogistica, estadosLogistica 
   const loadOptions = async (fieldKey: string) => {
     if (fieldKey === 'estado_anterior_id' || fieldKey === 'estado_siguiente_id') {
       console.log(`📦 Usando opciones de estados del servidor para ${fieldKey}...`);
-      console.log(`✅ Estados disponibles: ${estadosOptions.length}`);
+      console.log(`✅ Estados disponibles: ${estadosOptions.length}`, estadosOptions);
       return estadosOptions;
     }
     return [];
