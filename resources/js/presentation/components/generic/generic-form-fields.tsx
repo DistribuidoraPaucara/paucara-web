@@ -186,6 +186,7 @@ export default function GenericFormFields<F extends BaseFormData>({
       case 'select': {
         const fieldKey = String(field.key);
         const options = dynamicOptions[fieldKey] || field.options || [];
+        const hasDynamicOptions = dynamicOptions[fieldKey] && dynamicOptions[fieldKey].length > 0;
 
         // Use SearchSelect if field has extraDataKey (for dynamic data like localidades)
         if (field.extraDataKey && extraData?.[field.extraDataKey]) {
@@ -221,8 +222,9 @@ export default function GenericFormFields<F extends BaseFormData>({
           );
         }
 
-        // Use SearchSelect for dynamic options loaded via loadOptions
-        if (field.extraDataKey && options.length > 0) {
+        // ✅ Use SearchSelect for dynamic options loaded via loadOptions
+        if (hasDynamicOptions && options.length > 0) {
+          console.log(`🔍 Renderizando SearchSelect para ${fieldKey} con opciones dinámicas:`, options);
           return (
             <SearchSelect
               id={fieldKey}
@@ -232,7 +234,7 @@ export default function GenericFormFields<F extends BaseFormData>({
                 value: String(opt.value),
                 label: opt.label
               }))}
-              onChange={(val) => onChange(field.key, val === '' ? null : val)}
+              onChange={(val) => onChange(field.key, val === '' ? null : Number(val))}
               disabled={fieldDisabled}
               required={field.required}
               error={error}
@@ -246,7 +248,7 @@ export default function GenericFormFields<F extends BaseFormData>({
           <select
             id={fieldKey}
             value={value ? String(value) : ''}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(field.key, e.target.value === '' ? null : e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(field.key, e.target.value === '' ? null : Number(e.target.value))}
             disabled={fieldDisabled}
             className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ${error ? 'border-2 border-red-500 focus-visible:ring-red-500 dark:border-red-500 bg-red-50 dark:bg-red-950/30' : ''}`}
           >

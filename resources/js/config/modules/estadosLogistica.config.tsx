@@ -106,9 +106,7 @@ export const estadosLogisticaConfig: ModuleConfig<EstadoLogistica, EstadoLogisti
       type: 'select',
       placeholder: 'Seleccione estado anterior (opcional)',
       description: 'Define el estado que precede a este en la cadena de transiciones',
-      endpoint: '/api/estados-logistica?per_page=100',
-      optionLabel: 'nombre',
-      optionValue: 'id',
+      options: [], // 🔄 Array vacío para cargar dinámicamente via loadOptions
     },
     {
       key: 'activo',
