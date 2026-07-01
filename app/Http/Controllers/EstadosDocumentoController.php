@@ -140,10 +140,15 @@ class EstadosDocumentoController extends Controller
         $activo = $request->input('activo');
         $esEstadoFinal = $request->input('es_estado_final');
 
-        Log::info('EstadosDocumento Index - Parámetros recibidos:', [
+        // 🔍 DEBUG: Log completo de todos los parámetros
+        Log::info('EstadosDocumento Index - Parámetros COMPLETOS:', [
+            'all_params' => $request->all(),
             'q' => $q,
+            'q_type' => gettype($q),
             'activo' => $activo,
+            'activo_type' => gettype($activo),
             'es_estado_final' => $esEstadoFinal,
+            'es_estado_final_type' => gettype($esEstadoFinal),
         ]);
 
         $query = $modelClass::query();
@@ -154,21 +159,34 @@ class EstadosDocumentoController extends Controller
                 $sub->whereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($q) . '%'])
                     ->orWhereRaw('LOWER(codigo) LIKE ?', ['%' . strtolower($q) . '%']);
             });
+            Log::info('✅ Filtro búsqueda aplicado: ' . $q);
         }
 
         // Filtro de activo
         if ($activo !== null && $activo !== '') {
-            $activo = filter_var($activo, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-            if ($activo !== null) {
-                $query->where('activo', $activo);
+            $activoBooleano = filter_var($activo, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            Log::info('🔍 Procesando activo:', [
+                'valor_original' => $activo,
+                'valor_convertido' => $activoBooleano,
+                'es_null' => $activoBooleano === null,
+            ]);
+            if ($activoBooleano !== null) {
+                $query->where('activo', $activoBooleano);
+                Log::info('✅ Filtro activo aplicado: ' . ($activoBooleano ? 'true' : 'false'));
             }
         }
 
         // Filtro de estado final
         if ($esEstadoFinal !== null && $esEstadoFinal !== '') {
-            $esEstadoFinal = filter_var($esEstadoFinal, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-            if ($esEstadoFinal !== null) {
-                $query->where('es_estado_final', $esEstadoFinal);
+            $esEstadoFinalBooleano = filter_var($esEstadoFinal, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            Log::info('🔍 Procesando es_estado_final:', [
+                'valor_original' => $esEstadoFinal,
+                'valor_convertido' => $esEstadoFinalBooleano,
+                'es_null' => $esEstadoFinalBooleano === null,
+            ]);
+            if ($esEstadoFinalBooleano !== null) {
+                $query->where('es_estado_final', $esEstadoFinalBooleano);
+                Log::info('✅ Filtro es_estado_final aplicado: ' . ($esEstadoFinalBooleano ? 'true' : 'false'));
             }
         }
 
@@ -180,6 +198,7 @@ class EstadosDocumentoController extends Controller
         Log::info('EstadosDocumento Index - Resultados:', [
             'total' => $items->total(),
             'count' => $items->count(),
+            'sql' => $query->toSql(),
         ]);
 
         return inertia($this->getViewPath() . '/index', [
