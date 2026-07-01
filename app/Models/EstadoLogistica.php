@@ -19,6 +19,7 @@ class EstadoLogistica extends Model
         'activo',
         'color',
         'icono',
+        'estado_anterior_id',
         'es_estado_final',
         'permite_edicion',
         'requiere_aprobacion',
@@ -78,6 +79,24 @@ class EstadoLogistica extends Model
     public function mapeosDestino(): HasMany
     {
         return $this->hasMany(MapeoEstado::class, 'estado_destino_id');
+    }
+
+    /**
+     * El estado anterior en la cadena de transiciones
+     * Ej: SIN_ENTREGA → PENDIENTE_ENVIO → EN_TRANSITO → ENTREGADO
+     */
+    public function estadoAnterior(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(EstadoLogistica::class, 'estado_anterior_id');
+    }
+
+    /**
+     * Los estados siguientes en la cadena de transiciones
+     * Relación inversa de estado_anterior_id
+     */
+    public function estadosSiguientes(): HasMany
+    {
+        return $this->hasMany(EstadoLogistica::class, 'estado_anterior_id');
     }
 
     // ===== SCOPES =====
