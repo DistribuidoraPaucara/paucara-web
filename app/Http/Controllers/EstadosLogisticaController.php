@@ -83,12 +83,39 @@ class EstadosLogisticaController extends Controller
     }
 
     /**
+     * Mostrar formulario de creación
+     */
+    public function create(): Response
+    {
+        // Obtener todos los estados disponibles para los selects
+        $modelClass = $this->getModel();
+        $todosLosEstados = $modelClass::where('activo', true)
+            ->orderBy('categoria')
+            ->orderBy('orden')
+            ->get();
+
+        Log::info('EstadoLogistica Create - Cargando formulario', [
+            'estados_disponibles' => $todosLosEstados->count(),
+        ]);
+
+        return inertia($this->getViewPath() . '/form', [
+            'estadosLogistica' => $todosLosEstados,
+        ]);
+    }
+
+    /**
      * Mostrar formulario de edición con todos los datos
      */
     public function edit($id): Response
     {
         $modelClass = $this->getModel();
         $item = $modelClass::findOrFail($id);
+
+        // Obtener todos los estados disponibles para los selects
+        $todosLosEstados = $modelClass::where('activo', true)
+            ->orderBy('categoria')
+            ->orderBy('orden')
+            ->get();
 
         Log::info('EstadoLogistica Edit - Datos cargados:', [
             'id' => $item->id,
@@ -103,11 +130,15 @@ class EstadosLogisticaController extends Controller
             'requiere_aprobacion' => $item->requiere_aprobacion,
             'color' => $item->color,
             'icono' => $item->icono,
+            'estado_anterior_id' => $item->estado_anterior_id,
+            'estado_siguiente_id' => $item->estado_siguiente_id,
             'todos_los_datos' => $item->toArray(),
+            'estados_disponibles' => $todosLosEstados->count(),
         ]);
 
         return inertia($this->getViewPath() . '/form', [
             $this->getSingularResourceName() => $item,
+            'estadosLogistica' => $todosLosEstados,
         ]);
     }
 

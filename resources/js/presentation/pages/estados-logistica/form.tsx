@@ -8,6 +8,7 @@ import type { EstadoLogistica, EstadoLogisticaFormData } from '@/domain/entities
 
 interface EstadoLogisticaFormPageProps {
   estadoLogistica?: EstadoLogistica | null;
+  estadosLogistica?: EstadoLogistica[]; // Todos los estados para los selects
 }
 
 const initialEstadoLogisticaData: EstadoLogisticaFormData = {
@@ -26,32 +27,22 @@ const initialEstadoLogisticaData: EstadoLogisticaFormData = {
   requiere_aprobacion: false,
 };
 
-export default function EstadoLogisticaForm({ estadoLogistica }: EstadoLogisticaFormPageProps) {
+export default function EstadoLogisticaForm({ estadoLogistica, estadosLogistica = [] }: EstadoLogisticaFormPageProps) {
   const isEditing = !!estadoLogistica;
-  const [estadosOptions, setEstadosOptions] = useState<Array<{ value: number; label: string }>>([]);
+
+  // Convertir estados recibidos del servidor a opciones de select
+  const estadosOptions = estadosLogistica.map((estado: EstadoLogistica) => ({
+    value: estado.id,
+    label: `${estado.nombre} (${estado.codigo})`,
+  }));
 
   // Cargar opciones de estados para los campos estado_anterior_id y estado_siguiente_id
+  // Usa datos del servidor en lugar de hacer llamadas a la API
   const loadOptions = async (fieldKey: string) => {
     if (fieldKey === 'estado_anterior_id' || fieldKey === 'estado_siguiente_id') {
-      try {
-        console.log(`📦 Cargando opciones de estados para ${fieldKey}...`);
-        // Usar el servicio para traer todos los estados
-        const response = await fetch('/api/estados-logistica?per_page=100');
-        const data = await response.json();
-
-        if (data.data) {
-          const options = data.data.map((estado: EstadoLogistica) => ({
-            value: estado.id,
-            label: `${estado.nombre} (${estado.codigo})`,
-          }));
-
-          setEstadosOptions(options);
-          console.log(`✅ Estados cargados para ${fieldKey}:`, options);
-          return options;
-        }
-      } catch (error) {
-        console.error(`❌ Error cargando estados para ${fieldKey}:`, error);
-      }
+      console.log(`📦 Usando opciones de estados del servidor para ${fieldKey}...`);
+      console.log(`✅ Estados disponibles: ${estadosOptions.length}`);
+      return estadosOptions;
     }
     return [];
   };
