@@ -554,7 +554,10 @@ class VentaService
     {
         $venta = $this->read(fn() => Venta::with([
             'detalles.producto.prestables', // ✅ ACTUALIZADO: Incluir prestables relacionados para cargar en préstamos
-            'cliente',
+            'cliente.localidad',             // ✅ ACTUALIZADO: Cargar localidad del cliente
+            'cliente.direcciones',           // ✅ ACTUALIZADO: Cargar direcciones del cliente
+            'cliente.user',                  // ✅ ACTUALIZADO: Cargar usuario asociado al cliente
+            'cliente.categorias',            // ✅ ACTUALIZADO: Cargar categorías del cliente
             'usuario',
             'estadoDocumento',
             'moneda',
@@ -581,7 +584,10 @@ class VentaService
             // ✅ ACTUALIZADO: Cargar todas las relaciones necesarias para el frontend
             // Incluye estadoLogistica para mostrar estado de entregas en tabla
             $query = Venta::with([
-                'cliente',
+                'cliente.localidad',          // ✅ ACTUALIZADO: Cargar localidad del cliente
+                'cliente.direcciones',        // ✅ ACTUALIZADO: Cargar direcciones del cliente
+                'cliente.user',               // ✅ ACTUALIZADO: Cargar usuario asociado al cliente
+                'cliente.categorias',         // ✅ ACTUALIZADO: Cargar categorías del cliente
                 'estadoDocumento',
                 'usuario',
                 'moneda',

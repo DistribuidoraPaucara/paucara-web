@@ -323,13 +323,7 @@ class VentaController extends Controller
                     'created_at'                 => $venta->created_at,
                     'updated_at'                 => $venta->updated_at,
                     // ✅ RELACIONES - Incluir explícitamente
-                    'cliente'                    => $venta->cliente ? [
-                        'id'       => $venta->cliente->id,
-                        'nombre'   => $venta->cliente->nombre,
-                        'nit'      => $venta->cliente->nit,
-                        'email'    => $venta->cliente->email,
-                        'telefono' => $venta->cliente->telefono,
-                    ] : null,
+                    'cliente'                    => $venta->cliente ? $venta->cliente->toArray() : null,
                     'usuario'                    => $venta->usuario ? [
                         'id'    => $venta->usuario->id,
                         'name'  => $venta->usuario->name,
