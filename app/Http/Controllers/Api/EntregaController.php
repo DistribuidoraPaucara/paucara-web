@@ -1205,8 +1205,8 @@ class EntregaController extends Controller
                     'tipo_confirmacion' => $tipoConfirmacion,
                     'codigo_estado'     => $codigoEstado,
                 ]);
-                // Fallback a SIN_ENTREGA si no encuentra el estado
-                $estadoFallback = \App\Models\EstadoLogistica::where('codigo', 'SIN_ENTREGA')
+                // Fallback a EN_TRANSITO si no encuentra el estado
+                $estadoFallback = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
                     ->where('categoria', 'venta_logistica')
                     ->first();
                 $nuevoEstadoLogisticoId = $estadoFallback?->id;
