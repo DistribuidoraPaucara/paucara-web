@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:130
+ * @see app/Http/Controllers/EstadosLogisticaController.php:149
  * @route '/estados-logistica'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
 create.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
     const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
         createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:162
+ * @see app/Http/Controllers/EstadosLogisticaController.php:88
  * @route '/estados-logistica/create'
  */
         createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -309,7 +309,7 @@ show.head = (args: { estados_logistica: string | number } | [estados_logistica: 
     show.form = showForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
 export const edit = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -324,7 +324,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
 edit.url = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -352,7 +352,7 @@ edit.url = (args: { estados_logistica: string | number } | [estados_logistica: s
 
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
 edit.get = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -361,7 +361,7 @@ edit.get = (args: { estados_logistica: string | number } | [estados_logistica: s
 })
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
 edit.head = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -371,7 +371,7 @@ edit.head = (args: { estados_logistica: string | number } | [estados_logistica: 
 
     /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
     const editForm = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -381,7 +381,7 @@ edit.head = (args: { estados_logistica: string | number } | [estados_logistica: 
 
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
         editForm.get = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -390,7 +390,7 @@ edit.head = (args: { estados_logistica: string | number } | [estados_logistica: 
         })
             /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:203
+ * @see app/Http/Controllers/EstadosLogisticaController.php:109
  * @route '/estados-logistica/{estados_logistica}/edit'
  */
         editForm.head = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

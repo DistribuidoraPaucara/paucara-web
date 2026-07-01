@@ -257,6 +257,7 @@ export default function VentaShow() {
                                 </div>
                                 <div className="col-span-4 lg:col-span-5">
                                     <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-5">
+                                        {/* Vendedor */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
@@ -268,6 +269,7 @@ export default function VentaShow() {
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{venta.usuario.name}</p>
                                             </div>
                                         </div>
+                                        {/* Preventista */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
@@ -298,7 +300,6 @@ export default function VentaShow() {
                                         {/* Estado */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
-                                                {/* estado */}
                                                 <div
                                                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
                                                         esAprobada ? 'bg-green-100 dark:bg-green-900/30' : 'bg-orange-100 dark:bg-orange-900/30'
@@ -326,11 +327,31 @@ export default function VentaShow() {
                                                         href={`/proformas/${venta.proforma.id}`}
                                                         className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 transition-colors hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-100"
                                                     >
-                                                        {venta.proforma.id}
+                                                        #{venta.proforma.id}
                                                     </Link>
                                                 </div>
                                             </div>
                                         )}
+                                        {/* Entrega */}
+                                        {venta.entrega && (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+                                                        <span className="text-lg">📋</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Entrega</p>
+                                                    <Link
+                                                        href={`/logistica/entregas/${venta.entrega.id}`}
+                                                        className="inline-flex items-center gap-1 text-sm font-semibold text-purple-700 transition-colors hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-100"
+                                                    >
+                                                        #{venta.entrega.id}
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* Tipo Pago */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
@@ -344,6 +365,7 @@ export default function VentaShow() {
                                                 </p>
                                             </div>
                                         </div>
+                                        {/* Tipo de Entrega */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
@@ -357,36 +379,36 @@ export default function VentaShow() {
                                                 </p>
                                             </div>
                                         </div>
-
+                                        {/* Estado Logístico */}
+                                        {venta.estado_logistica && (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                                                        <span className="text-lg">📍</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+                                                        V. Estado Logístico
+                                                    </p>
+                                                    <div className="mt-1">
+                                                        {(() => {
+                                                            const estado = getEstadoLogisticoColor(venta.estado_logistica.codigo);
+                                                            return (
+                                                                <div
+                                                                    className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${estado.clase}`}
+                                                                >
+                                                                    {estado.emoji} {estado.nombre}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                         {/* ✅ NUEVO: Integración de EstadoLogisticoConfirmacion en el grid */}
                                         {venta.confirmaciones && venta.confirmaciones.length > 0 && (
                                             <>
-                                                {venta.entrega && venta.estado_logistica && (
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="flex-shrink-0">
-                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-                                                                <span className="text-lg">📍</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-                                                                Estado Logístico
-                                                            </p>
-                                                            <div className="mt-1">
-                                                                {(() => {
-                                                                    const estado = getEstadoLogisticoColor(venta.estado_logistica.codigo);
-                                                                    return (
-                                                                        <div
-                                                                            className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${estado.clase}`}
-                                                                        >
-                                                                            {estado.emoji} {estado.nombre}
-                                                                        </div>
-                                                                    );
-                                                                })()}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
                                                 <div className="flex items-center space-x-3">
                                                     <div className="flex-shrink-0">
                                                         <div
@@ -411,32 +433,6 @@ export default function VentaShow() {
                                                             {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
                                                                 ? 'Completa'
                                                                 : 'Con Novedad'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="flex-shrink-0">
-                                                        <div
-                                                            className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                                                venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion === 'COMPLETA'
-                                                                    ? 'bg-green-100 dark:bg-green-900/30'
-                                                                    : 'bg-yellow-100 dark:bg-yellow-900/30'
-                                                            }`}
-                                                        >
-                                                            <span className="text-lg">
-                                                                {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion ===
-                                                                'COMPLETA'
-                                                                    ? '✅'
-                                                                    : '📋'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-                                                            Tipo Confirmación
-                                                        </p>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                            {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -810,7 +806,30 @@ export default function VentaShow() {
                     {/* ✅ NUEVO: Sección de Confirmación de Entrega EXPANDIDA */}
                     {confirmacionEntrega && (
                         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                            <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">📦 Confirmación de Entrega</h2>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-2 mb-2">
+                                <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">📦 Confirmación de Entrega</h2>
+                                <div className="flex items-center space-x-3">
+                                    <div className="flex-shrink-0">
+                                        <div
+                                            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                                                venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion === 'COMPLETA'
+                                                    ? 'bg-green-100 dark:bg-green-900/30'
+                                                    : 'bg-yellow-100 dark:bg-yellow-900/30'
+                                            }`}
+                                        >
+                                            <span className="text-lg">
+                                                {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion === 'COMPLETA' ? '✅' : '📋'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Tipo Confirmación</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="space-y-6">
                                 {/* Desglose de Pagos */}

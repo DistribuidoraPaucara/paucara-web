@@ -22,17 +22,56 @@ class EstadoDocumento extends Model
         'permite_anulacion',
         'es_estado_final',
         'color',
-        'activo',
+        'icono',
+        'estado_anterior_id',
+        'estado_siguiente_id',
     ];
 
     protected function casts(): array
     {
         return [
             'activo' => 'boolean',
+            'permite_edicion' => 'boolean',
+            'permite_anulacion' => 'boolean',
+            'es_estado_final' => 'boolean',
         ];
     }
 
-    // Relaciones
+    // ===== RELATIONSHIPS =====
+
+    /**
+     * El estado anterior en la cadena de transiciones
+     */
+    public function estadoAnterior()
+    {
+        return $this->belongsTo(EstadoDocumento::class, 'estado_anterior_id');
+    }
+
+    /**
+     * El estado siguiente en la cadena de transiciones
+     */
+    public function estadoSiguiente()
+    {
+        return $this->belongsTo(EstadoDocumento::class, 'estado_siguiente_id');
+    }
+
+    /**
+     * Los estados que tienen este estado como anterior
+     */
+    public function estadosPosterioresToipo()
+    {
+        return $this->hasMany(EstadoDocumento::class, 'estado_anterior_id');
+    }
+
+    /**
+     * Los estados que tienen este estado como siguiente
+     */
+    public function estadosPrevios()
+    {
+        return $this->hasMany(EstadoDocumento::class, 'estado_siguiente_id');
+    }
+
+    // ===== DOCUMENT RELATIONS =====
     public function compras()
     {
         return $this->hasMany(Compra::class, 'estado_documento_id');

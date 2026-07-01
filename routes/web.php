@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\EstadosLogisticaController;
+use App\Http\Controllers\EstadosDocumentoController;
 use App\Http\Controllers\TipoOperacionCajaController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -62,6 +63,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
 
     Route::resource('categorias', CategoriaController::class)->middleware('permission:categorias.manage');
     Route::resource('estados-logistica', EstadosLogisticaController::class)->middleware('permission:estados-logistica.manage');
+    Route::resource('estados-documento', EstadosDocumentoController::class)->middleware('permission:estados-documento.manage');
     Route::resource('tipo-operacion-caja', TipoOperacionCajaController::class);
     Route::resource('marcas', \App\Http\Controllers\MarcaController::class)->middleware('permission:marcas.manage');
     Route::resource('almacenes', \App\Http\Controllers\AlmacenController::class)->middleware('permission:almacenes.manage');

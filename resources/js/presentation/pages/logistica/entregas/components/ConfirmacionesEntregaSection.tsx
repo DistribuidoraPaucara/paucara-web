@@ -276,8 +276,7 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                         </p>
                                         <p className="ml-2 text-sm text-cyan-600 dark:text-cyan-400 font-medium">
                                             {confirmacion.total_dinero_recibido
-                                                ? `Recibido: Bs. ${Number(confirmacion.total_dinero_recibido).toFixed(2)}`
-                                                : 'Recibido desconocido'}
+                                                ?? `Recibido: Bs. ${Number(confirmacion.total_dinero_recibido).toFixed(2)}`}
                                         </p>
                                     </div>
                                 </div>
@@ -306,66 +305,6 @@ export default function ConfirmacionesEntregaSection({ confirmaciones = [], vent
                                         tipoConfirmacionVal={confirmacion.tipo_confirmacion}
                                     />
                                 </div>
-                                
-
-                                {/* 3️⃣ Información de Pago */}
-                                {/* {(confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') &&
-                                    confirmacion.estado_pago && (
-                                        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-                                            <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                                                Información de Pago
-                                            </p>
-                                            <div className="space-y-2 rounded bg-gray-50 p-3 dark:bg-gray-800/50">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-600 dark:text-gray-400">Estado</span>
-                                                    <EstadoPagoBadge estado={confirmacion.estado_pago} />
-                                                </div>
-
-                                                {confirmacion.desglose_pagos && confirmacion.desglose_pagos.length > 0 && (
-                                                    <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
-                                                        <p className="mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                            Métodos de Pago ({confirmacion.desglose_pagos.length})
-                                                        </p>
-                                                        <div className="space-y-2">
-                                                            {confirmacion.desglose_pagos.map((pago, idx) => (
-                                                                <div key={idx} className="flex items-center justify-between text-sm">
-                                                                    <span className="text-gray-700 dark:text-gray-300">
-                                                                        {pago.tipo_pago_nombre || 'Desconocido'}
-                                                                        {pago.referencia && (
-                                                                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                                ({pago.referencia})
-                                                                            </span>
-                                                                        )}
-                                                                    </span>
-                                                                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                                                                        Bs. {(Number(pago.monto) || 0).toFixed(2)}
-                                                                    </span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {confirmacion.total_dinero_recibido ? (
-                                                    <div className="flex items-center justify-between text-sm font-medium">
-                                                        <span className="text-gray-700 dark:text-gray-300">Total Recibido</span>
-                                                        <span className="text-green-600 dark:text-green-400">
-                                                            Bs. {(Number(confirmacion.total_dinero_recibido) || 0).toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                ) : null}
-
-                                                {Number(confirmacion.monto_pendiente || 0) > 0 && (
-                                                    <div className="flex items-center justify-between text-sm font-medium">
-                                                        <span className="text-gray-700 dark:text-gray-300">Monto Pendiente</span>
-                                                        <span className="text-orange-600 dark:text-orange-400">
-                                                            Bs. {(Number(confirmacion.monto_pendiente) || 0).toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )} */}
 
                                 {/* 4️⃣ Devoluciones Parciales */}
                                 {confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' &&

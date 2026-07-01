@@ -81,13 +81,16 @@ export function WebSocketProvider({
       // console.log('✅ [WebSocketContext] Token seleccionado:', `${authToken.substring(0, 20)}...`);
       // console.log('✅ [WebSocketContext] Usando token de:', token ? 'parámetro directo' : 'localStorage');
 
-      // Crear promesa de conexión y almacenarla
-      // Pass URL explicitly to avoid fallback to localhost
-      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3001';
-      console.log('🔌 WebSocket URL desde config:', wsUrl);
+      // ✅ CORREGIDO (2026-06-29): NO pasar url explícitamente si es fallback
+      // Dejar que websocket.service.ts use el orden correcto de prioridad:
+      // 1. config.url (solo si lo pasamos aquí)
+      // 2. appConfig.websocketUrl (del template HTML, CORRECTO EN PRODUCCIÓN)
+      // 3. VITE_WEBSOCKET_URL (variables de entorno, puede ser undefined)
+      // 4. ws://localhost:3001 (fallback para dev)
+      //
+      // NO pasar url aquí permite que use appConfig.websocketUrl que tiene el valor correcto
 
       connectionPromiseRef.current = websocketService.connect({
-        url: wsUrl,
         auth: {
           token: authToken,
           userId: userId,
