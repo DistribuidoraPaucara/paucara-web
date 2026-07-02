@@ -11,6 +11,7 @@ use App\Models\Almacen;
 use App\Models\Cliente;
 use App\Models\EntregaVentaConfirmacion;
 use App\Models\EstadoDocumento;
+use App\Models\EstadoLogistica;
 use App\Models\Moneda;
 use App\Models\Producto;
 use App\Models\TipoDocumento;
