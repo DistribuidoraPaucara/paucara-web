@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
@@ -42,41 +42,6 @@ estadoGeneral.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
- * @route '/api/admin/cajas/estado-general'
- */
-    const estadoGeneralForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estadoGeneral.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
- * @route '/api/admin/cajas/estado-general'
- */
-        estadoGeneralForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadoGeneral.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
- * @route '/api/admin/cajas/estado-general'
- */
-        estadoGeneralForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadoGeneral.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estadoGeneral.form = estadoGeneralForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::alertas
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
@@ -120,41 +85,6 @@ alertas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::alertas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
- * @route '/api/admin/cajas/alertas'
- */
-    const alertasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: alertas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::alertas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
- * @route '/api/admin/cajas/alertas'
- */
-        alertasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: alertas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::alertas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
- * @route '/api/admin/cajas/alertas'
- */
-        alertasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: alertas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    alertas.form = alertasForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
@@ -198,41 +128,6 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
- * @route '/api/admin/cajas/estadisticas'
- */
-    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estadisticas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
- * @route '/api/admin/cajas/estadisticas'
- */
-        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
- * @route '/api/admin/cajas/estadisticas'
- */
-        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::detalle
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
@@ -295,41 +190,6 @@ detalle.head = (args: { id: string | number } | [id: string | number ] | string 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::detalle
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
- * @route '/api/admin/cajas/{id}/detalle'
- */
-    const detalleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: detalle.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::detalle
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
- * @route '/api/admin/cajas/{id}/detalle'
- */
-        detalleForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: detalle.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::detalle
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
- * @route '/api/admin/cajas/{id}/detalle'
- */
-        detalleForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: detalle.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    detalle.form = detalleForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiario
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
@@ -363,28 +223,6 @@ cierreDiario.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: cierreDiario.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiario
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
- * @route '/api/admin/cajas/cierre-diario'
- */
-    const cierreDiarioForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cierreDiario.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiario
- * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
- * @route '/api/admin/cajas/cierre-diario'
- */
-        cierreDiarioForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cierreDiario.url(options),
-            method: 'post',
-        })
-    
-    cierreDiario.form = cierreDiarioForm
 const cajas = {
     estadoGeneral,
 alertas,

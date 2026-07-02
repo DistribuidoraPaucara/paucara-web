@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\EntregaController::testNotificacionVenta
  * @see app/Http/Controllers/Api/EntregaController.php:43
@@ -33,27 +33,6 @@ testNotificacionVenta.post = (options?: RouteQueryOptions): RouteDefinition<'pos
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\EntregaController::testNotificacionVenta
- * @see app/Http/Controllers/Api/EntregaController.php:43
- * @route '/api/entregas/test-notificacion-venta'
- */
-    const testNotificacionVentaForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: testNotificacionVenta.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EntregaController::testNotificacionVenta
- * @see app/Http/Controllers/Api/EntregaController.php:43
- * @route '/api/entregas/test-notificacion-venta'
- */
-        testNotificacionVentaForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: testNotificacionVenta.url(options),
-            method: 'post',
-        })
-    
-    testNotificacionVenta.form = testNotificacionVentaForm
 /**
 * @see \App\Http\Controllers\EntregaController::store
  * @see app/Http/Controllers/EntregaController.php:1324
@@ -87,28 +66,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1324
- * @route '/api/entregas'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EntregaController::store
- * @see app/Http/Controllers/EntregaController.php:1324
- * @route '/api/entregas'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 const entregas = {
     testNotificacionVenta,
 store,

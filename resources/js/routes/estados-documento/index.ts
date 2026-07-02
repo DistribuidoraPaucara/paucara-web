@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::index
  * @see app/Http/Controllers/EstadosDocumentoController.php:136
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::index
- * @see app/Http/Controllers/EstadosDocumentoController.php:136
- * @route '/estados-documento'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::index
- * @see app/Http/Controllers/EstadosDocumentoController.php:136
- * @route '/estados-documento'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::index
- * @see app/Http/Controllers/EstadosDocumentoController.php:136
- * @route '/estados-documento'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::create
  * @see app/Http/Controllers/EstadosDocumentoController.php:86
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::create
- * @see app/Http/Controllers/EstadosDocumentoController.php:86
- * @route '/estados-documento/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::create
- * @see app/Http/Controllers/EstadosDocumentoController.php:86
- * @route '/estados-documento/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::create
- * @see app/Http/Controllers/EstadosDocumentoController.php:86
- * @route '/estados-documento/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::store
  * @see app/Http/Controllers/EstadosDocumentoController.php:177
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::store
- * @see app/Http/Controllers/EstadosDocumentoController.php:177
- * @route '/estados-documento'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::store
- * @see app/Http/Controllers/EstadosDocumentoController.php:177
- * @route '/estados-documento'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::show
  * @see app/Http/Controllers/EstadosDocumentoController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { estados_documento: string | number } | [estados_documento: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::show
- * @see app/Http/Controllers/EstadosDocumentoController.php:0
- * @route '/estados-documento/{estados_documento}'
- */
-    const showForm = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::show
- * @see app/Http/Controllers/EstadosDocumentoController.php:0
- * @route '/estados-documento/{estados_documento}'
- */
-        showForm.get = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::show
- * @see app/Http/Controllers/EstadosDocumentoController.php:0
- * @route '/estados-documento/{estados_documento}'
- */
-        showForm.head = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::edit
  * @see app/Http/Controllers/EstadosDocumentoController.php:106
@@ -369,41 +243,6 @@ edit.head = (args: { estados_documento: string | number } | [estados_documento: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::edit
- * @see app/Http/Controllers/EstadosDocumentoController.php:106
- * @route '/estados-documento/{estados_documento}/edit'
- */
-    const editForm = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::edit
- * @see app/Http/Controllers/EstadosDocumentoController.php:106
- * @route '/estados-documento/{estados_documento}/edit'
- */
-        editForm.get = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::edit
- * @see app/Http/Controllers/EstadosDocumentoController.php:106
- * @route '/estados-documento/{estados_documento}/edit'
- */
-        editForm.head = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::update
  * @see app/Http/Controllers/EstadosDocumentoController.php:222
@@ -466,51 +305,6 @@ update.patch = (args: { estados_documento: string | number } | [estados_document
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::update
- * @see app/Http/Controllers/EstadosDocumentoController.php:222
- * @route '/estados-documento/{estados_documento}'
- */
-    const updateForm = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::update
- * @see app/Http/Controllers/EstadosDocumentoController.php:222
- * @route '/estados-documento/{estados_documento}'
- */
-        updateForm.put = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::update
- * @see app/Http/Controllers/EstadosDocumentoController.php:222
- * @route '/estados-documento/{estados_documento}'
- */
-        updateForm.patch = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\EstadosDocumentoController::destroy
  * @see app/Http/Controllers/EstadosDocumentoController.php:244
@@ -563,38 +357,6 @@ destroy.delete = (args: { estados_documento: string | number } | [estados_docume
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\EstadosDocumentoController::destroy
- * @see app/Http/Controllers/EstadosDocumentoController.php:244
- * @route '/estados-documento/{estados_documento}'
- */
-    const destroyForm = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosDocumentoController::destroy
- * @see app/Http/Controllers/EstadosDocumentoController.php:244
- * @route '/estados-documento/{estados_documento}'
- */
-        destroyForm.delete = (args: { estados_documento: string | number } | [estados_documento: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const estadosDocumento = {
     index,
 create,

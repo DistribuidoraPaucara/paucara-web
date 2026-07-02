@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EntregaReporteController::choferEntregas
  * @see app/Http/Controllers/EntregaReporteController.php:17
@@ -60,42 +60,6 @@ choferEntregas.head = (args: { chofer: string | number } | [chofer: string | num
     url: choferEntregas.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\EntregaReporteController::choferEntregas
- * @see app/Http/Controllers/EntregaReporteController.php:17
- * @route '/api/choferes/{chofer}/entregas-reporte'
- */
-    const choferEntregasForm = (args: { chofer: string | number } | [chofer: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: choferEntregas.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EntregaReporteController::choferEntregas
- * @see app/Http/Controllers/EntregaReporteController.php:17
- * @route '/api/choferes/{chofer}/entregas-reporte'
- */
-        choferEntregasForm.get = (args: { chofer: string | number } | [chofer: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferEntregas.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EntregaReporteController::choferEntregas
- * @see app/Http/Controllers/EntregaReporteController.php:17
- * @route '/api/choferes/{chofer}/entregas-reporte'
- */
-        choferEntregasForm.head = (args: { chofer: string | number } | [chofer: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferEntregas.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    choferEntregas.form = choferEntregasForm
 const EntregaReporteController = { choferEntregas }
 
 export default EntregaReporteController

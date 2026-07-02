@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CreditoImportController::validar
  * @see app/Http/Controllers/CreditoImportController.php:23
@@ -33,27 +33,6 @@ validar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CreditoImportController::validar
- * @see app/Http/Controllers/CreditoImportController.php:23
- * @route '/api/creditos/importar/validar'
- */
-    const validarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: validar.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CreditoImportController::validar
- * @see app/Http/Controllers/CreditoImportController.php:23
- * @route '/api/creditos/importar/validar'
- */
-        validarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: validar.url(options),
-            method: 'post',
-        })
-    
-    validar.form = validarForm
 /**
 * @see \App\Http\Controllers\CreditoImportController::importar
  * @see app/Http/Controllers/CreditoImportController.php:66
@@ -87,28 +66,6 @@ importar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: importar.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\CreditoImportController::importar
- * @see app/Http/Controllers/CreditoImportController.php:66
- * @route '/api/creditos/importar'
- */
-    const importarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: importar.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CreditoImportController::importar
- * @see app/Http/Controllers/CreditoImportController.php:66
- * @route '/api/creditos/importar'
- */
-        importarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: importar.url(options),
-            method: 'post',
-        })
-    
-    importar.form = importarForm
 const CreditoImportController = { validar, importar }
 
 export default CreditoImportController

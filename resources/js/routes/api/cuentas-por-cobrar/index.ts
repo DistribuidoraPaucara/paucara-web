@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\CuentaPorCobrarController::index
  * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::index
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
- * @route '/api/cuentas-por-cobrar'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::index
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
- * @route '/api/cuentas-por-cobrar'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::index
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
- * @route '/api/cuentas-por-cobrar'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\CuentaPorCobrarController::show
  * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
@@ -143,42 +108,6 @@ show.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobr
     url: show.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::show
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
- * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
- */
-    const showForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::show
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
- * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
- */
-        showForm.get = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\CuentaPorCobrarController::show
- * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
- * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
- */
-        showForm.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 const cuentasPorCobrar = {
     index,
 show,

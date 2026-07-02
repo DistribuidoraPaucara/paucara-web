@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\VentaPublicController::preview
  * @see app/Http/Controllers/VentaPublicController.php:61
@@ -61,41 +61,6 @@ preview.head = (args: { token: string | number } | [token: string | number ] | s
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\VentaPublicController::preview
- * @see app/Http/Controllers/VentaPublicController.php:61
- * @route '/venta/preview/{token}'
- */
-    const previewForm = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: preview.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaPublicController::preview
- * @see app/Http/Controllers/VentaPublicController.php:61
- * @route '/venta/preview/{token}'
- */
-        previewForm.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaPublicController::preview
- * @see app/Http/Controllers/VentaPublicController.php:61
- * @route '/venta/preview/{token}'
- */
-        previewForm.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    preview.form = previewForm
 /**
 * @see \App\Http\Controllers\VentaPublicController::download
  * @see app/Http/Controllers/VentaPublicController.php:14
@@ -157,42 +122,6 @@ download.head = (args: { token: string | number } | [token: string | number ] | 
     url: download.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\VentaPublicController::download
- * @see app/Http/Controllers/VentaPublicController.php:14
- * @route '/venta/download/{token}'
- */
-    const downloadForm = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: download.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaPublicController::download
- * @see app/Http/Controllers/VentaPublicController.php:14
- * @route '/venta/download/{token}'
- */
-        downloadForm.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: download.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaPublicController::download
- * @see app/Http/Controllers/VentaPublicController.php:14
- * @route '/venta/download/{token}'
- */
-        downloadForm.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: download.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    download.form = downloadForm
 const venta = {
     preview,
 download,

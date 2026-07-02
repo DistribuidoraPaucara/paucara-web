@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
  * @see app/Http/Controllers/PrestamosInertiaController.php:125
@@ -41,42 +41,6 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: crear.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:125
- * @route '/prestamos/proveedores/prestamos/crear'
- */
-    const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: crear.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:125
- * @route '/prestamos/proveedores/prestamos/crear'
- */
-        crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:125
- * @route '/prestamos/proveedores/prestamos/crear'
- */
-        crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    crear.form = crearForm
 const prestamos = {
     crear,
 }

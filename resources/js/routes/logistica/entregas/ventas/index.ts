@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EntregaController::search
  * @see app/Http/Controllers/EntregaController.php:988
@@ -41,42 +41,6 @@ search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: search.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\EntregaController::search
- * @see app/Http/Controllers/EntregaController.php:988
- * @route '/logistica/entregas/ventas/search'
- */
-    const searchForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: search.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EntregaController::search
- * @see app/Http/Controllers/EntregaController.php:988
- * @route '/logistica/entregas/ventas/search'
- */
-        searchForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: search.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EntregaController::search
- * @see app/Http/Controllers/EntregaController.php:988
- * @route '/logistica/entregas/ventas/search'
- */
-        searchForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: search.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    search.form = searchForm
 const ventas = {
     search,
 }

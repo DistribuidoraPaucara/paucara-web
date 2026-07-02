@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::index
  * @see app/Http/Controllers/TipoOperacionCajaController.php:68
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::index
- * @see app/Http/Controllers/TipoOperacionCajaController.php:68
- * @route '/tipo-operacion-caja'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::index
- * @see app/Http/Controllers/TipoOperacionCajaController.php:68
- * @route '/tipo-operacion-caja'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::index
- * @see app/Http/Controllers/TipoOperacionCajaController.php:68
- * @route '/tipo-operacion-caja'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::create
  * @see app/Http/Controllers/TipoOperacionCajaController.php:162
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::create
- * @see app/Http/Controllers/TipoOperacionCajaController.php:162
- * @route '/tipo-operacion-caja/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::create
- * @see app/Http/Controllers/TipoOperacionCajaController.php:162
- * @route '/tipo-operacion-caja/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::create
- * @see app/Http/Controllers/TipoOperacionCajaController.php:162
- * @route '/tipo-operacion-caja/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::store
  * @see app/Http/Controllers/TipoOperacionCajaController.php:177
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::store
- * @see app/Http/Controllers/TipoOperacionCajaController.php:177
- * @route '/tipo-operacion-caja'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::store
- * @see app/Http/Controllers/TipoOperacionCajaController.php:177
- * @route '/tipo-operacion-caja'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::show
  * @see app/Http/Controllers/TipoOperacionCajaController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_ca
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::show
- * @see app/Http/Controllers/TipoOperacionCajaController.php:0
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-    const showForm = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::show
- * @see app/Http/Controllers/TipoOperacionCajaController.php:0
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-        showForm.get = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::show
- * @see app/Http/Controllers/TipoOperacionCajaController.php:0
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-        showForm.head = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::edit
  * @see app/Http/Controllers/TipoOperacionCajaController.php:203
@@ -369,41 +243,6 @@ edit.head = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_ca
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::edit
- * @see app/Http/Controllers/TipoOperacionCajaController.php:203
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}/edit'
- */
-    const editForm = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::edit
- * @see app/Http/Controllers/TipoOperacionCajaController.php:203
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}/edit'
- */
-        editForm.get = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::edit
- * @see app/Http/Controllers/TipoOperacionCajaController.php:203
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}/edit'
- */
-        editForm.head = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::update
  * @see app/Http/Controllers/TipoOperacionCajaController.php:222
@@ -466,51 +305,6 @@ update.patch = (args: { tipo_operacion_caja: string | number } | [tipo_operacion
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::update
- * @see app/Http/Controllers/TipoOperacionCajaController.php:222
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-    const updateForm = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::update
- * @see app/Http/Controllers/TipoOperacionCajaController.php:222
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-        updateForm.put = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::update
- * @see app/Http/Controllers/TipoOperacionCajaController.php:222
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-        updateForm.patch = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\TipoOperacionCajaController::destroy
  * @see app/Http/Controllers/TipoOperacionCajaController.php:244
@@ -563,38 +357,6 @@ destroy.delete = (args: { tipo_operacion_caja: string | number } | [tipo_operaci
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::destroy
- * @see app/Http/Controllers/TipoOperacionCajaController.php:244
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-    const destroyForm = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoOperacionCajaController::destroy
- * @see app/Http/Controllers/TipoOperacionCajaController.php:244
- * @route '/tipo-operacion-caja/{tipo_operacion_caja}'
- */
-        destroyForm.delete = (args: { tipo_operacion_caja: string | number } | [tipo_operacion_caja: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const tipoOperacionCaja = {
     index,
 create,

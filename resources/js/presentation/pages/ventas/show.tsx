@@ -396,7 +396,7 @@ export default function VentaShow() {
                                                     </p>
                                                     <div className="mt-1">
                                                         <div
-                                                            className="inline-block rounded-full px-2 py-1 text-xs font-semibold border"
+                                                            className="inline-block rounded-full border px-2 py-1 text-xs font-semibold"
                                                             style={{
                                                                 backgroundColor: `${venta.estado_logistica.color}15`,
                                                                 color: venta.estado_logistica.color,
@@ -641,66 +641,6 @@ export default function VentaShow() {
                                         </span>
                                     </div>
                                 )}
-
-                                {/* ✅ NUEVO: Resumen de Entrega (basado en última confirmación) */}
-                                {ultimaConfirmacion && ultimaConfirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' && (
-                                    <div className="space-y-1 border-t border-gray-200 pt-4 dark:border-zinc-700">
-                                        <h4 className="text-sm font-bold text-gray-900 uppercase dark:text-white">📦 Resumen de Entrega</h4>
-
-                                        {/* Lo que costaba */}
-                                        <div className="flex justify-between rounded bg-gray-50 p-3 dark:bg-zinc-800">
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">Total Venta</span>
-                                            <span className="font-semibold text-gray-900 dark:text-white">
-                                                {formatCurrencyWith2Decimals(venta.total, venta.moneda.codigo)}
-                                            </span>
-                                        </div>
-
-                                        {/* Monto recibido en la entrega */}
-                                        {ultimaConfirmacion.total_dinero_recibido && (
-                                            <div className="flex justify-between rounded bg-green-50 p-3 dark:bg-green-900/20">
-                                                <span className="text-sm text-green-700 dark:text-green-400">Monto Recibido</span>
-                                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                                    +{formatCurrencyWith2Decimals(ultimaConfirmacion.total_dinero_recibido, venta.moneda.codigo)}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Estado de pago en la entrega */}
-                                        {ultimaConfirmacion.estado_pago && (
-                                            <div className="flex justify-between rounded bg-blue-50 p-3 dark:bg-blue-900/20">
-                                                <span className="text-sm text-blue-700 dark:text-blue-400">Estado de Pago</span>
-                                                <span className="font-semibold text-blue-600 dark:text-blue-400">
-                                                    {ultimaConfirmacion.estado_pago === 'PAGADO' && '✅ Pagado'}
-                                                    {ultimaConfirmacion.estado_pago === 'PARCIAL' && '⚠️ Pago Parcial'}
-                                                    {ultimaConfirmacion.estado_pago === 'CREDITO' && '💳 Crédito'}
-                                                    {ultimaConfirmacion.estado_pago === 'NO_PAGADO' && '❌ No Pagado'}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Saldo pendiente en entrega */}
-                                        {ultimaConfirmacion.monto_pendiente && (
-                                            <div className="flex justify-between rounded bg-orange-50 p-3 dark:bg-orange-900/20">
-                                                <span className="text-sm text-orange-700 dark:text-orange-400">Saldo Pendiente en Entrega</span>
-                                                <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                                    {formatCurrencyWith2Decimals(ultimaConfirmacion.monto_pendiente, venta.moneda.codigo)}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Tipo de confirmación */}
-                                        <div className="flex justify-between rounded bg-purple-50 p-3 dark:bg-purple-900/20">
-                                            <span className="text-sm text-purple-700 dark:text-purple-400">Confirmación</span>
-                                            <span className="font-semibold text-purple-600 dark:text-purple-400">
-                                                {ultimaConfirmacion.tipo_confirmacion === 'COMPLETA' && '✅ Completa'}
-                                                {ultimaConfirmacion.tipo_confirmacion === 'RECHAZADO' && '🚫 Rechazado'}
-                                                {ultimaConfirmacion.tipo_confirmacion === 'CLIENTE_CERRADO' && '🔒 Cliente Cerrado'}
-                                                {ultimaConfirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' && '↩️ Devolución Parcial'}
-                                                {ultimaConfirmacion.tipo_confirmacion === 'NO_CONTACTADO' && '❓ No Contactado'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -809,8 +749,8 @@ export default function VentaShow() {
                     {/* ✅ NUEVO: Sección de Confirmación de Entrega EXPANDIDA */}
                     {confirmacionEntrega && (
                         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-2 mb-2">
-                                <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">📦 Confirmación de Entrega</h2>
+                            <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">📦 Confirmación de Entrega</h2>
+                            <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="flex-shrink-0">
                                         <div
@@ -832,6 +772,56 @@ export default function VentaShow() {
                                         </p>
                                     </div>
                                 </div>
+                                {confirmacionEntrega.confirmado_por && (
+                                    <>
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex-shrink-0">
+                                                <div
+                                                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                                                        venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion === 'COMPLETA'
+                                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                                            : 'bg-yellow-100 dark:bg-yellow-900/30'
+                                                    }`}
+                                                >
+                                                    <span className="text-lg">🧑‍💼</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Confirmado por</p>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {confirmacionEntrega.confirmado_por.name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {confirmacionEntrega.confirmado_en && (
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-shrink-0">
+                                            <div
+                                                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                                                    venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion === 'COMPLETA'
+                                                        ? 'bg-green-100 dark:bg-green-900/30'
+                                                        : 'bg-yellow-100 dark:bg-yellow-900/30'
+                                                }`}
+                                            >
+                                                <span className="text-lg">📆</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium uppercase">Registrado</p>
+                                            <p className="text-gray-900 dark:text-gray-100">
+                                                {new Date(confirmacionEntrega.confirmado_en).toLocaleDateString('es-ES', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-6">
@@ -860,7 +850,7 @@ export default function VentaShow() {
                                     return (
                                         <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
                                             <h3 className="mb-3 font-semibold text-purple-900 dark:text-purple-200">📊 Desglose de Pagos</h3>
-                                            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                            <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                                                 {pagos.map((pago: any, idx: number) => (
                                                     <div
                                                         key={idx}
@@ -875,6 +865,25 @@ export default function VentaShow() {
                                                     </div>
                                                 ))}
                                             </div>
+                                            {/* Monto recibido en la entrega */}
+                                            {ultimaConfirmacion.total_dinero_recibido && (
+                                                <div className="flex justify-between rounded bg-green-50 p-3 dark:bg-green-900/20">
+                                                    <span className="text-sm text-green-700 dark:text-green-400">Monto Recibido</span>
+                                                    <span className="font-semibold text-green-600 dark:text-green-400">
+                                                        +{formatCurrencyWith2Decimals(ultimaConfirmacion.total_dinero_recibido, venta.moneda.codigo)}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Saldo pendiente en entrega */}
+                                            {ultimaConfirmacion.monto_pendiente && (
+                                                <div className="flex justify-between rounded bg-orange-50 p-3 dark:bg-orange-900/20">
+                                                    <span className="text-sm text-orange-700 dark:text-orange-400">Saldo Pendiente en Entrega</span>
+                                                    <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                                        {formatCurrencyWith2Decimals(ultimaConfirmacion.monto_pendiente, venta.moneda.codigo)}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })()}

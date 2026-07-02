@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ConteoFisicoController::conteos
  * @see app/Http/Controllers/ConteoFisicoController.php:240
@@ -42,41 +42,6 @@ conteos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ConteoFisicoController::conteos
- * @see app/Http/Controllers/ConteoFisicoController.php:240
- * @route '/inventario/conteos-fisicos/api/conteos'
- */
-    const conteosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: conteos.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConteoFisicoController::conteos
- * @see app/Http/Controllers/ConteoFisicoController.php:240
- * @route '/inventario/conteos-fisicos/api/conteos'
- */
-        conteosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: conteos.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ConteoFisicoController::conteos
- * @see app/Http/Controllers/ConteoFisicoController.php:240
- * @route '/inventario/conteos-fisicos/api/conteos'
- */
-        conteosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: conteos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    conteos.form = conteosForm
 /**
 * @see \App\Http\Controllers\ConteoFisicoController::detalleConteo
  * @see app/Http/Controllers/ConteoFisicoController.php:263
@@ -144,41 +109,6 @@ detalleConteo.head = (args: { conteoFisico: number | { id: number } } | [conteoF
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ConteoFisicoController::detalleConteo
- * @see app/Http/Controllers/ConteoFisicoController.php:263
- * @route '/inventario/conteos-fisicos/api/{conteoFisico}/detalle'
- */
-    const detalleConteoForm = (args: { conteoFisico: number | { id: number } } | [conteoFisico: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: detalleConteo.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConteoFisicoController::detalleConteo
- * @see app/Http/Controllers/ConteoFisicoController.php:263
- * @route '/inventario/conteos-fisicos/api/{conteoFisico}/detalle'
- */
-        detalleConteoForm.get = (args: { conteoFisico: number | { id: number } } | [conteoFisico: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: detalleConteo.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ConteoFisicoController::detalleConteo
- * @see app/Http/Controllers/ConteoFisicoController.php:263
- * @route '/inventario/conteos-fisicos/api/{conteoFisico}/detalle'
- */
-        detalleConteoForm.head = (args: { conteoFisico: number | { id: number } } | [conteoFisico: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: detalleConteo.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    detalleConteo.form = detalleConteoForm
 /**
 * @see \App\Http\Controllers\ConteoFisicoController::programarCiclicos
  * @see app/Http/Controllers/ConteoFisicoController.php:296
@@ -212,28 +142,6 @@ programarCiclicos.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
     url: programarCiclicos.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\ConteoFisicoController::programarCiclicos
- * @see app/Http/Controllers/ConteoFisicoController.php:296
- * @route '/inventario/conteos-fisicos/api/programar-ciclicos'
- */
-    const programarCiclicosForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: programarCiclicos.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConteoFisicoController::programarCiclicos
- * @see app/Http/Controllers/ConteoFisicoController.php:296
- * @route '/inventario/conteos-fisicos/api/programar-ciclicos'
- */
-        programarCiclicosForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: programarCiclicos.url(options),
-            method: 'post',
-        })
-    
-    programarCiclicos.form = programarCiclicosForm
 const api = {
     conteos,
 detalleConteo,

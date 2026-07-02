@@ -1,6 +1,6 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 export const listado = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ listado.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ listado.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:821
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -38,40 +38,8 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see routes/web.php:821
- * @route '/prestamos/ventas'
- */
-    const listadoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: listado.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:821
- * @route '/prestamos/ventas'
- */
-        listadoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: listado.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:821
- * @route '/prestamos/ventas'
- */
-        listadoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: listado.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    listado.form = listadoForm
 /**
- * @see routes/web.php:822
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 export const crear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -85,7 +53,7 @@ crear.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:822
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.url = (options?: RouteQueryOptions) => {
@@ -93,7 +61,7 @@ crear.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:822
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +69,7 @@ crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:822
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -109,38 +77,6 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see routes/web.php:822
- * @route '/prestamos/ventas/crear'
- */
-    const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: crear.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:822
- * @route '/prestamos/ventas/crear'
- */
-        crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:822
- * @route '/prestamos/ventas/crear'
- */
-        crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    crear.form = crearForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::show
  * @see app/Http/Controllers/PrestamoVendidoController.php:78
@@ -207,42 +143,6 @@ show.head = (args: { venta: number | { id: number } } | [venta: number | { id: n
     url: show.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-    const showForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-        showForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-        showForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 const ventas = {
     listado,
 crear,
