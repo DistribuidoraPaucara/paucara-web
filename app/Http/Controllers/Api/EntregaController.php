@@ -4068,18 +4068,27 @@ class EntregaController extends Controller
                     'ventas'                            => function ($q) {
                         $q->select([
                             'id', 'numero', 'cliente_id', 'total', 'estado_logistico_id',
-                            'direccion_cliente_id', 'entrega_id', 'subtotal', 'impuesto',
-                            'tipo_pago_id', // ✅ FK para relación
+                            'direccion_cliente_id', 'entrega_id', 'subtotal', 'impuesto', 'descuento',
+                            'tipo_pago_id', 'usuario_id', 'estado_documento_id', 'estado_pago',
+                            'fecha', 'created_at', // ✅ NUEVO: Incluir fecha y timestamp
                         ])
-                            ->orderBy('id', 'asc'); // ✅ NUEVO: Ordenar por ID ascendente
+                            ->orderBy('id', 'asc');
                     },
                     // ✅ Cargar tipo de pago completo (nombre, código, id)
                     'ventas.tipoPago'                   => function ($q) {
                         $q->select(['id', 'nombre', 'codigo', 'activo']);
                     },
+                    // ✅ NUEVO: Cargar usuario que creó la venta
+                    'ventas.usuario'                    => function ($q) {
+                        $q->select(['id', 'name', 'email']);
+                    },
+                    // ✅ NUEVO: Cargar estado documento
+                    'ventas.estadoDocumento'            => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo']);
+                    },
                     // Cliente con localidad y direcciones
                     'ventas.cliente'                    => function ($q) {
-                        $q->select(['id', 'nombre', 'telefono', 'foto_perfil', 'localidad_id', 'nit']);
+                        $q->select(['id', 'nombre', 'telefono', 'foto_perfil', 'localidad_id', 'nit', 'email', 'codigo_cliente']);
                     },
                     'ventas.cliente.localidad'          => function ($q) {
                         $q->select(['id', 'nombre', 'codigo']);
@@ -4102,10 +4111,17 @@ class EntregaController extends Controller
                     'ventas.estadoLogistica'            => function ($q) {
                         $q->select(['id', 'codigo', 'nombre', 'color', 'icono', 'categoria']);
                     },
+                    // ✅ NUEVO: Cargar detalles de la venta (items/productos)
+                    'ventas.detalles'                   => function ($q) {
+                        $q->select(['id', 'venta_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal', 'descuento']);
+                    },
+                    'ventas.detalles.producto'          => function ($q) {
+                        $q->select(['id', 'nombre', 'codigo', 'descripcion']);
+                    },
                     // ✅ TODAS las confirmaciones de entrega (historial completo de intentos) - SIN RESTRICCIONES
                     // ⚠️ IMPORTANTE: Ordenadas DESC por ID, así first() retorna la MÁS RECIENTE (registrada último)
                     'ventas.confirmaciones'             => function ($q) {
-                        $q->orderByDesc('id'); // DESC por ID: más alta = más reciente en BD
+                        $q->orderByDesc('id');
                     },
                 ])
                 ->firstOrFail();
@@ -4140,8 +4156,13 @@ class EntregaController extends Controller
                 return [
                     'id'                            => $venta->id,
                     'numero'                        => $venta->numero,
+                    'fecha'                         => $venta->fecha?->toDateString(),
+                    'created_at'                    => $venta->created_at?->toDateTimeString(),
                     'tipo_pago_id'                  => $venta->tipo_pago_id,
                     'tipoPago'                      => $venta->tipoPago?->toArray(),
+                    'usuario'                       => $venta->usuario?->toArray(),
+                    'estado_documento'              => $venta->estadoDocumento?->toArray(),
+                    'estado_pago'                   => $venta->estado_pago,
                     'cliente'                       => $clienteArray,
                     'direccion_cliente'             => $venta->direccionCliente ? [
                         'id'            => $venta->direccionCliente->id,
@@ -4160,9 +4181,22 @@ class EntregaController extends Controller
                         ] : null,
                     ] : null,
                     'estadoLogistica'               => $venta->estadoLogistica?->toArray(),
-                    'total'                         => $venta->total,
-                    'subtotal'                      => $venta->subtotal,
-                    'impuesto'                      => $venta->impuesto,
+                    'total'                         => (float) $venta->total,
+                    'subtotal'                      => (float) $venta->subtotal,
+                    'descuento'                     => (float) ($venta->descuento ?? 0),
+                    'impuesto'                      => (float) $venta->impuesto,
+                    // ✅ NUEVO: Detalles de la venta (items/productos)
+                    'detalles'                      => $venta->detalles?->map(function ($detalle) {
+                        return [
+                            'id'                => $detalle->id,
+                            'producto_id'       => $detalle->producto_id,
+                            'producto'          => $detalle->producto?->toArray(),
+                            'cantidad'          => (float) $detalle->cantidad,
+                            'precio_unitario'   => (float) $detalle->precio_unitario,
+                            'subtotal'          => (float) $detalle->subtotal,
+                            'descuento'         => (float) ($detalle->descuento ?? 0),
+                        ];
+                    })->values()->all(),
                     'entregas_venta_confirmaciones' => $venta->confirmaciones->map(fn($c) => $c->toArray())->values()->all(),
                 ];
             });
