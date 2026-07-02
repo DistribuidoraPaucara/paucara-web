@@ -383,8 +383,11 @@ export default function VentaShow() {
                                         {venta.estado_logistica && (
                                             <div className="flex items-center space-x-3">
                                                 <div className="flex-shrink-0">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-                                                        <span className="text-lg">📍</span>
+                                                    <div
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full"
+                                                        style={{ backgroundColor: `${venta.estado_logistica.color}20` }}
+                                                    >
+                                                        <span className="text-lg">{venta.estado_logistica.icono}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex-1">
@@ -392,16 +395,16 @@ export default function VentaShow() {
                                                         V. Estado Logístico
                                                     </p>
                                                     <div className="mt-1">
-                                                        {(() => {
-                                                            const estado = getEstadoLogisticoColor(venta.estado_logistica.codigo);
-                                                            return (
-                                                                <div
-                                                                    className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${estado.clase}`}
-                                                                >
-                                                                    {estado.emoji} {estado.nombre}
-                                                                </div>
-                                                            );
-                                                        })()}
+                                                        <div
+                                                            className="inline-block rounded-full px-2 py-1 text-xs font-semibold border"
+                                                            style={{
+                                                                backgroundColor: `${venta.estado_logistica.color}15`,
+                                                                color: venta.estado_logistica.color,
+                                                                borderColor: venta.estado_logistica.color,
+                                                            }}
+                                                        >
+                                                            {venta.estado_logistica.icono} {venta.estado_logistica.nombre}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
