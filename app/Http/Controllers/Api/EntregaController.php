@@ -4116,7 +4116,7 @@ class EntregaController extends Controller
                         $q->select(['id', 'venta_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal', 'descuento']);
                     },
                     'ventas.detalles.producto'          => function ($q) {
-                        $q->select(['id', 'nombre', 'codigo', 'descripcion']);
+                        $q->select(['id', 'nombre', 'codigo_qr', 'descripcion']);
                     },
                     // ✅ TODAS las confirmaciones de entrega (historial completo de intentos) - SIN RESTRICCIONES
                     // ⚠️ IMPORTANTE: Ordenadas DESC por ID, así first() retorna la MÁS RECIENTE (registrada último)
