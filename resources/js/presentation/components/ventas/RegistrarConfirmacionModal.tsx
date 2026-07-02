@@ -543,14 +543,62 @@ export default function RegistrarConfirmacionModal({
                                         />
                                     </div>
                                 </div>
-                                {(montoEfectivo || montoTransferencia) && (
-                                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-                                            Total: Bs {(
-                                                (montoEfectivo ? parseFloat(montoEfectivo) : 0) +
-                                                (montoTransferencia ? parseFloat(montoTransferencia) : 0)
-                                            ).toFixed(2)}
-                                        </p>
+                                {(montoEfectivo || montoTransferencia || true) && (
+                                    <div className="mt-4 space-y-3">
+                                        {/* Total de la Venta */}
+                                        <div className="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-200 dark:border-slate-700">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Total de Venta:</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">
+                                                    Bs {detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Total Pagado */}
+                                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-semibold text-blue-900 dark:text-blue-200">Total Pagado:</span>
+                                                <span className="font-bold text-blue-700 dark:text-blue-300">
+                                                    Bs {(
+                                                        (montoEfectivo ? parseFloat(montoEfectivo) : 0) +
+                                                        (montoTransferencia ? parseFloat(montoTransferencia) : 0)
+                                                    ).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Faltante */}
+                                        {(() => {
+                                            const totalVenta = detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0);
+                                            const totalPagado = (montoEfectivo ? parseFloat(montoEfectivo) : 0) + (montoTransferencia ? parseFloat(montoTransferencia) : 0);
+                                            const faltante = totalVenta - totalPagado;
+
+                                            return (
+                                                <div className={`p-3 rounded-lg border ${
+                                                    faltante <= 0
+                                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                                        : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                                                }`}>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className={`text-sm font-semibold ${
+                                                            faltante <= 0
+                                                                ? 'text-green-900 dark:text-green-200'
+                                                                : 'text-orange-900 dark:text-orange-200'
+                                                        }`}>
+                                                            {faltante <= 0 ? '✅ Pagado Completo' : '⚠️ Falta pagar:'}
+                                                        </span>
+                                                        <span className={`font-bold text-lg ${
+                                                            faltante <= 0
+                                                                ? 'text-green-700 dark:text-green-300'
+                                                                : 'text-orange-700 dark:text-orange-300'
+                                                        }`}>
+                                                            Bs {Math.abs(faltante).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
