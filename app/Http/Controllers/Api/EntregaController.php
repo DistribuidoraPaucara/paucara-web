@@ -1535,12 +1535,49 @@ class EntregaController extends Controller
                 'confirmado_en'           => now(),
             ]);
 
+            // ✅ NUEVO: Actualizar estado logístico de la venta basado en tipo_confirmacion
+            $nuevoEstadoLogisticoId = null;
+
+            // Mapeo de tipo_confirmacion a código de estado logístico
+            $mapeoEstados = [
+                'COMPLETA'           => 'ENTREGADO',
+                'RECHAZADO'          => 'RECHAZADO',
+                'DEVOLUCION_PARCIAL' => 'DEVOLUCION_PARCIAL',
+                'CLIENTE_CERRADO'    => 'CLIENTE_CERRADO',
+                'NO_CONTACTADO'      => 'EN_TRANSITO',
+            ];
+
+            $codigoEstado = $mapeoEstados[$tipoConfirmacionActualizado] ?? 'EN_TRANSITO';
+
+            // Buscar el estado logístico en la BD
+            $estadoLogistico = \App\Models\EstadoLogistica::where('codigo', $codigoEstado)
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            if ($estadoLogistico) {
+                $nuevoEstadoLogisticoId = $estadoLogistico->id;
+
+                // Actualizar la venta con el nuevo estado logístico
+                $venta->update([
+                    'estado_logistico_id' => $nuevoEstadoLogisticoId,
+                    'observaciones_logistica' => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+                ]);
+
+                Log::info('✅ [ACTUALIZAR_CONFIRMACION] Estado logístico de venta actualizado', [
+                    'venta_id'              => $venta_id,
+                    'tipo_confirmacion'     => $tipoConfirmacionActualizado,
+                    'codigo_estado'         => $codigoEstado,
+                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
+                ]);
+            }
+
             Log::info('✅ Confirmación de entrega actualizada', [
                 'entrega_id'            => $id,
                 'venta_id'              => $venta_id,
                 'confirmacion_id'       => $confirmacion_id,
                 'estado_pago'           => $estadoPago,
                 'total_dinero_recibido' => $totalDineroRecibido,
+                'estado_logistico'      => $codigoEstado,
             ]);
 
             return response()->json([
