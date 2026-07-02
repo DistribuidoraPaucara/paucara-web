@@ -4662,7 +4662,7 @@ class EntregaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Confirmación creada exitosamente',
-                'data'    => $confirmacion->fresh()->load('confirmadobPor', 'tipoPago'),
+                'data'    => $confirmacion->fresh()->load('confirmadoPor', 'tipoPago'),
             ], 201);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -4854,7 +4854,7 @@ class EntregaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Confirmación actualizada exitosamente',
-                'data'    => $confirmacion->fresh()->load('confirmadobPor', 'tipoPago'),
+                'data'    => $confirmacion->fresh()->load('confirmadoPor', 'tipoPago'),
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
