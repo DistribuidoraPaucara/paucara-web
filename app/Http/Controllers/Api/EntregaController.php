@@ -4511,10 +4511,14 @@ class EntregaController extends Controller
                 'productos_devueltos.*.cantidad'        => 'required_with:productos_devueltos|numeric|min:0',
                 'productos_devueltos.*.precio_unitario' => 'required_with:productos_devueltos|numeric|min:0',
                 'productos_devueltos.*.subtotal'        => 'required_with:productos_devueltos|numeric|min:0',
+                // ✅ NUEVO: Aceptar también formato del frontend
+                'productos_rechazados'                  => 'nullable|array',
+                'productos_rechazados.*.detalleVentaId' => 'required_with:productos_rechazados|integer',
+                'productos_rechazados.*.cantidadRechazada' => 'required_with:productos_rechazados|numeric|min:0',
             ]);
 
             $entrega = Entrega::with('estadoEntrega')->findOrFail($id);
-            $venta   = Venta::with('estadoLogistica')
+            $venta   = Venta::with(['estadoLogistica', 'detalles.producto'])
                 ->where('entrega_id', $id)
                 ->findOrFail($venta_id);
 
@@ -4565,19 +4569,60 @@ class EntregaController extends Controller
             $montoDevuelto      = 0;
             $montoAceptado      = $venta->total;
 
-            if (isset($validated['productos_devueltos']) && ! empty($validated['productos_devueltos'])) {
+            // ✅ NUEVO: Aceptar formato del frontend (productos_rechazados con detalleVentaId)
+            $productosADevolver = $validated['productos_devueltos'] ?? $validated['productos_rechazados'] ?? [];
+
+            if (!empty($productosADevolver)) {
                 $productosDevueltos = [];
-                foreach ($validated['productos_devueltos'] as $producto) {
-                    $productosDevueltos[]  = [
-                        'producto_id'     => (int) $producto['producto_id'],
-                        'producto_nombre' => $producto['producto_nombre'],
-                        'cantidad'        => (float) $producto['cantidad'],
-                        'precio_unitario' => (float) $producto['precio_unitario'],
-                        'subtotal'        => (float) $producto['subtotal'],
-                    ];
-                    $montoDevuelto += (float) $producto['subtotal'];
+
+                foreach ($productosADevolver as $producto) {
+                    // Si viene del frontend con detalleVentaId, convertir al formato esperado
+                    if (isset($producto['detalleVentaId'])) {
+                        // Buscar el detalle en la venta cargada
+                        $detalle = $venta->detalles->firstWhere('id', $producto['detalleVentaId']);
+
+                        if ($detalle) {
+                            $cantidadRechazada = (float) ($producto['cantidadRechazada'] ?? 0);
+                            $subtotal = $cantidadRechazada * (float) $detalle->precio_unitario;
+
+                            $productosDevueltos[] = [
+                                'producto_id'     => (int) $detalle->producto_id,
+                                'producto_nombre' => $detalle->producto->nombre ?? 'Desconocido',
+                                'cantidad'        => $cantidadRechazada,
+                                'precio_unitario' => (float) $detalle->precio_unitario,
+                                'subtotal'        => $subtotal,
+                            ];
+                            $montoDevuelto += $subtotal;
+
+                            Log::info('✅ [PRODUCTOS_RECHAZADOS] Producto procesado desde detalleVentaId', [
+                                'venta_id'               => $venta_id,
+                                'detalle_venta_id'      => $producto['detalleVentaId'],
+                                'producto_nombre'       => $detalle->producto->nombre,
+                                'cantidad_rechazada'    => $cantidadRechazada,
+                                'subtotal'              => $subtotal,
+                            ]);
+                        }
+                    } else {
+                        // Formato esperado del backend
+                        $productosDevueltos[]  = [
+                            'producto_id'     => (int) $producto['producto_id'],
+                            'producto_nombre' => $producto['producto_nombre'],
+                            'cantidad'        => (float) $producto['cantidad'],
+                            'precio_unitario' => (float) $producto['precio_unitario'],
+                            'subtotal'        => (float) $producto['subtotal'],
+                        ];
+                        $montoDevuelto += (float) $producto['subtotal'];
+                    }
                 }
+
                 $montoAceptado = max(0, $venta->total - $montoDevuelto);
+
+                Log::info('✅ [PRODUCTOS_RECHAZADOS] Total procesado', [
+                    'venta_id'         => $venta_id,
+                    'total_productos'  => count($productosDevueltos),
+                    'monto_devuelto'   => $montoDevuelto,
+                    'monto_aceptado'   => $montoAceptado,
+                ]);
             }
 
             // Procesar fotos
