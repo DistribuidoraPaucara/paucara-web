@@ -2699,15 +2699,53 @@ class VentaController extends Controller
                 'confirmado_en' => now(),
             ]);
 
+            // ✅ NUEVO: Actualizar estado logístico de la venta basado en tipo_confirmacion
+            $nuevoEstadoLogisticoId = null;
+
+            // Mapeo de tipo_confirmacion a código de estado logístico
+            $mapeoEstados = [
+                'COMPLETA'           => 'ENTREGADO',
+                'RECHAZADO'          => 'RECHAZADO',
+                'DEVOLUCION_PARCIAL' => 'DEVOLUCION_PARCIAL',
+                'CLIENTE_CERRADO'    => 'CLIENTE_CERRADO',
+                'NO_CONTACTADO'      => 'EN_TRANSITO',
+            ];
+
+            $tipoConfirmacion = $validated['tipo_confirmacion'];
+            $codigoEstado = $mapeoEstados[$tipoConfirmacion] ?? 'EN_TRANSITO';
+
+            // Buscar el estado logístico en la BD
+            $estadoLogistico = EstadoLogistica::where('codigo', $codigoEstado)
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            if ($estadoLogistico) {
+                $nuevoEstadoLogisticoId = $estadoLogistico->id;
+
+                // Actualizar la venta con el nuevo estado logístico
+                $venta->update([
+                    'estado_logistico_id' => $nuevoEstadoLogisticoId,
+                    'observaciones_logistica' => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+                ]);
+
+                Log::info('✅ [STORE_CONFIRMACION] Estado logístico de venta actualizado', [
+                    'venta_id'              => $venta->id,
+                    'tipo_confirmacion'     => $tipoConfirmacion,
+                    'codigo_estado'         => $codigoEstado,
+                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
+                ]);
+            }
+
             Log::info('✅ Confirmación de entrega registrada', [
                 'confirmacion_id' => $confirmacion->id,
                 'venta_id' => $venta->id,
-                'entrega_id_guardado' => $confirmacion->entrega_id, // ✅ Verificar que se guardó
+                'entrega_id_guardado' => $confirmacion->entrega_id,
                 'tipo_confirmacion' => $validated['tipo_confirmacion'],
                 'tipo_novedad' => $confirmacion->tipo_novedad,
                 'tipo_entrega' => $validated['tipo_entrega'],
                 'monto_recibido' => $validated['monto_recibido'] ?? null,
                 'usuario_id' => Auth::id(),
+                'estado_logistico' => $codigoEstado,
             ]);
 
             return response()->json([
