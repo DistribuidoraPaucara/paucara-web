@@ -958,9 +958,8 @@ class EntregaService
         $entrega = $this->transaction(function () use ($entregaId) {
             $entrega = Entrega::lockForUpdate()->findOrFail($entregaId);
 
-            // ✅ NUEVA LÓGICA: Aceptar PREPARACION_CARGA o EN_CARGA
-            // El flujo ahora es: PREPARACION_CARGA → LISTO_PARA_ENTREGA
-            // (antes era: EN_CARGA → LISTO_PARA_ENTREGA)
+            // ✅ ACTUALIZADO: Cambiar de PREPARACION_CARGA a EN_TRANSITO
+            // Flujo: PREPARACION_CARGA → EN_TRANSITO
             $estadosValidos = [
                 Entrega::ESTADO_PREPARACION_CARGA,
                 Entrega::ESTADO_EN_CARGA,
@@ -971,73 +970,64 @@ class EntregaService
                     'Entrega',
                     $entregaId,
                     $entrega->estado,
-                    Entrega::ESTADO_LISTO_PARA_ENTREGA
+                    Entrega::ESTADO_EN_TRANSITO
                 );
             }
 
             $estadoAnterior = $entrega->estado;
 
-            // Obtener el ID del estado LISTO_PARA_ENTREGA (ID 20)
-            $estadoListoParaEntregaId = \App\Models\EstadoLogistica::where('codigo', 'LISTO_PARA_ENTREGA')
+            // Obtener el ID del estado EN_TRANSITO
+            $estadoEnTransitoId = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
                 ->where('categoria', 'entrega')
                 ->value('id');
 
-            if (! $estadoListoParaEntregaId) {
-                throw new \Exception('Estado LISTO_PARA_ENTREGA no encontrado en tabla estados_logistica');
+            if (! $estadoEnTransitoId) {
+                throw new \Exception('Estado EN_TRANSITO no encontrado en tabla estados_logistica');
             }
 
-            // ✅ Actualizar a LISTO_PARA_ENTREGA usando estado_entrega_id (FK normalizad)
-            // También mantener el ENUM legacy por compatibilidad
+            // ✅ Actualizar a EN_TRANSITO
             $entrega->update([
-                'estado'            => Entrega::ESTADO_LISTO_PARA_ENTREGA,
-                'estado_entrega_id' => $estadoListoParaEntregaId,
+                'estado'            => Entrega::ESTADO_EN_TRANSITO,
+                'estado_entrega_id' => $estadoEnTransitoId,
             ]);
 
-            \Log::info('✅ [LISTO_ENTREGA] Entrega marcada como LISTO_PARA_ENTREGA', [
+            \Log::info('✅ [LISTO_ENTREGA] Entrega marcada como EN_TRANSITO', [
                 'entrega_id'        => $entrega->id,
                 'estado_anterior'   => $estadoAnterior,
-                'estado_entrega_id' => $estadoListoParaEntregaId,
+                'estado_entrega_id' => $estadoEnTransitoId,
             ]);
 
             $this->registrarCambioEstado(
                 $entrega,
                 $estadoAnterior,
-                Entrega::ESTADO_LISTO_PARA_ENTREGA,
-                'Carga completada - Entrega lista para partida'
+                Entrega::ESTADO_EN_TRANSITO,
+                'Carga completada - Entrega en tránsito'
             );
 
-            // ✅ NUEVO: Cambiar estado logístico de ventas de EN_PREPARACION a PENDIENTE_ENVIO
-            // IMPORTANTE: Usar estado_logistico_id (FK a estados_logistica) en lugar de estado_logistico (string)
+            // ✅ ACTUALIZADO: Cambiar estado logístico de ventas a EN_TRANSITO
+            // Las ventas relacionadas a la entrega deben pasar a EN_TRANSITO cuando la entrega está en tránsito
 
-            // 1. Obtener ID del estado EN_PREPARACION (categoría: venta_logistica)
-            $estadoEnPreparacionId = \App\Models\EstadoLogistica::where('codigo', 'EN_PREPARACION')
+            // 1. Obtener ID del estado EN_TRANSITO (categoría: venta_logistica)
+            $estadoVentaEnTransitoId = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
                 ->where('categoria', 'venta_logistica')
                 ->value('id');
 
-            // 2. Obtener ID del estado PENDIENTE_ENVIO (categoría: venta_logistica)
-            $estadoPendienteEnvioId = \App\Models\EstadoLogistica::where('codigo', 'PENDIENTE_ENVIO')
-                ->where('categoria', 'venta_logistica')
-                ->value('id');
-
-            if (!$estadoEnPreparacionId || !$estadoPendienteEnvioId) {
-                throw new \Exception('Estados EN_PREPARACION o PENDIENTE_ENVIO no encontrados en tabla estados_logistica (categoría: venta_logistica)');
+            if (!$estadoVentaEnTransitoId) {
+                throw new \Exception('Estado EN_TRANSITO no encontrado en tabla estados_logistica (categoría: venta_logistica)');
             }
 
-            // 3. Actualizar ventas usando estado_logistico_id
+            // 2. Actualizar todas las ventas de la entrega a EN_TRANSITO
             // ✅ IMPORTANTE: Solo actualizar estado_logistico_id (FK a estados_logistica)
-            // NO actualizar estado_logistico (esa columna NO existe en tabla ventas)
             $ventasActualizadas = $entrega->ventas()
-                ->where('estado_logistico_id', $estadoEnPreparacionId)
                 ->update([
-                    'estado_logistico_id' => $estadoPendienteEnvioId,
+                    'estado_logistico_id' => $estadoVentaEnTransitoId,
                     'updated_at'          => now(),
                 ]);
 
-            \Log::info('✅ [LISTO_ENTREGA] Estados logísticos de ventas actualizados a PENDIENTE_ENVIO', [
+            \Log::info('✅ [LISTO_ENTREGA] Estados logísticos de ventas actualizados a EN_TRANSITO', [
                 'entrega_id'           => $entrega->id,
                 'cantidad_actualizadas' => $ventasActualizadas,
-                'estado_logistico_id'  => $estadoPendienteEnvioId,
-                'estado_anterior_id'   => $estadoEnPreparacionId,
+                'estado_logistico_id'  => $estadoVentaEnTransitoId,
             ]);
 
             // Recargar relaciones para WebSocket
