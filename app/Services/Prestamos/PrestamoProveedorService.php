@@ -926,4 +926,111 @@ class PrestamoProveedorService
             return false;
         }
     }
+
+    /**
+     * Anular un préstamo de proveedor completo
+     * Genera movimientos inversos por almacén y revierte el stock
+     */
+    public function anularPrestamo(int $prestamoProveedorId, string $razonAnulacion): PrestamoProveedor|false
+    {
+        try {
+            return DB::transaction(function () use ($prestamoProveedorId, $razonAnulacion) {
+                $prestamo = PrestamoProveedor::with('detalles.almacenes')->find($prestamoProveedorId);
+
+                if (!$prestamo) {
+                    throw new \Exception('Préstamo de proveedor no encontrado');
+                }
+
+                if ($prestamo->estado === 'ANULADO') {
+                    throw new \Exception('El préstamo ya está anulado');
+                }
+
+                Log::info('📝 Iniciando anulación de préstamo proveedor', [
+                    'prestamo_id' => $prestamoProveedorId,
+                    'razon' => $razonAnulacion,
+                ]);
+
+                // Iterar sobre detalles del préstamo
+                foreach ($prestamo->detalles as $detalle) {
+                    // Iterar sobre almacenes de cada detalle
+                    foreach ($detalle->almacenes as $almacenDistribucion) {
+                        $almacenId = $almacenDistribucion->almacenes_prestables_id;
+                        $cantidad = $almacenDistribucion->cantidad;
+
+                        // Obtener stock ANTES de actualizar
+                        $stock = PrestableStock::where('prestable_id', $detalle->prestable_id)
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->first();
+
+                        if (!$stock) {
+                            Log::warning('⚠️ Stock no encontrado al anular préstamo', [
+                                'prestable_id' => $detalle->prestable_id,
+                                'almacen_id' => $almacenId,
+                            ]);
+                            continue;
+                        }
+
+                        $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
+
+                        // Revertir stock: SALIDA de lo que se había prestado
+                        $stock->update([
+                            'cantidad_disponible' => max(0, $stock->cantidad_disponible - $cantidad),
+                            'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidad),
+                        ]);
+
+                        // Registrar movimiento inverso
+                        $this->movimientoService->registrarMovimiento([
+                            'prestable_stock_id' => $stock->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'usuario_id' => Auth::id(),
+                            'tipo' => 'SALIDA',
+                            'cantidad' => -$cantidad,
+                            'disponible_anterior' => $disponibleAntes,
+                            'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                            'categoria_afectada' => 'prestamo_proveedor_anulacion',
+                            'motivo' => 'Anulación de préstamo a proveedor',
+                            'numero_referencia' => $prestamoProveedorId,
+                            'referencia_tipo' => 'ANULACION_PRESTAMO_PROVEEDOR',
+                            'referencia_id' => $prestamoProveedorId,
+                            'observaciones' => "Proveedor: {$prestamo->proveedor?->nombre}, Razón: {$razonAnulacion}",
+                        ]);
+
+                        Log::info('✅ Movimiento inverso registrado para anulación de préstamo', [
+                            'prestable_id' => $detalle->prestable_id,
+                            'almacen_id' => $almacenId,
+                            'cantidad_anulada' => $cantidad,
+                        ]);
+                    }
+
+                    // Restaurar detalle a estado ACTIVO
+                    $detalle->update(['estado' => 'ACTIVO']);
+                }
+
+                // Marcar préstamo como anulado
+                $prestamo->update([
+                    'estado' => 'ANULADO',
+                    'anulada_por' => auth()->id(),
+                    'fecha_anulacion' => now(),
+                    'razon_anulacion' => $razonAnulacion,
+                ]);
+
+                Log::info('✅ PRÉSTAMO PROVEEDOR ANULADO CORRECTAMENTE', [
+                    'prestamo_proveedor_id' => $prestamoProveedorId,
+                    'cantidad_detalles' => count($prestamo->detalles),
+                ]);
+
+                return $prestamo->refresh();
+            });
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando préstamo proveedor', [
+                'error' => $e->getMessage(),
+                'prestamo_proveedor_id' => $prestamoProveedorId,
+            ]);
+
+            return false;
+        }
+    }
 }

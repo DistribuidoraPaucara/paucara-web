@@ -23,6 +23,9 @@ class PrestamoProveedor extends Model
         'observaciones',
         'estado',
         'created_by',
+        'anulada_por',
+        'razon_anulacion',
+        'fecha_anulacion',
     ];
 
     protected $casts = [
@@ -68,5 +71,11 @@ class PrestamoProveedor extends Model
     public function creador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // ✅ Relación con el usuario que anuló
+    public function anulador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulada_por');
     }
 }
