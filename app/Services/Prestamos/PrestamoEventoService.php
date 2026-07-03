@@ -879,10 +879,10 @@ class PrestamoEventoService
                 ]);
 
                 // Iterar sobre detalles de la devolución
-                $detalles = $devolucion->detalles()->with('detallePrestamoEvento')->get();
+                $detalles = $devolucion->detalles()->with('prestamoEventoDetalle')->get();
 
                 foreach ($detalles as $detalleDevolucion) {
-                    $detallePrestamoEvento = $detalleDevolucion->detallePrestamoEvento;
+                    $detallePrestamoEvento = $detalleDevolucion->prestamoEventoDetalle;
 
                     // Iterar sobre almacenes registrados en esta devolución
                     $devolucionesAlmacenes = DevolucionEventoDetalleAlmacen::where('devolucion_evento_detalle_id', $detalleDevolucion->id)

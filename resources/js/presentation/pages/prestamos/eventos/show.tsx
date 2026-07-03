@@ -497,7 +497,7 @@ export default function PrestamosEventosShow() {
                                                                     {devolucion.detalles.map((detalle: any, idx: number) => (
                                                                         <TableRow key={idx}>
                                                                             <TableCell>
-                                                                                {detalle.prestamoEventoDetalle?.prestable?.nombre || 'N/D'}
+                                                                                {detalle.prestamo_evento_detalle?.prestable?.nombre || 'N/D'}
                                                                             </TableCell>
                                                                             <TableCell className="text-right">
                                                                                 {detalle.cantidad_devuelta}
