@@ -731,11 +731,19 @@ class PrestamoEventoService
      *
      * Devuelve automáticamente todos los prestables al almacén de origen
      */
+    /**
+     * Anular préstamo a evento - cancela y devuelve stock al almacén
+     * ✅ CORREGIDO: Itera por PrestamoEventoAlmacen (como al crear)
+     * Genera 1 movimiento por almacén del detalle, NO movimientos extras
+     *
+     * @param int $prestamoEventoId ID del préstamo
+     * @param ?string $razonAnulacion Razón de la anulación
+     */
     public function anularPrestamo(int $prestamoEventoId, ?string $razonAnulacion = null): PrestamoEvento|false
     {
         try {
             return DB::transaction(function () use ($prestamoEventoId, $razonAnulacion) {
-                $prestamo = PrestamoEvento::with('detalles')->find($prestamoEventoId);
+                $prestamo = PrestamoEvento::with(['detalles.almacenes'])->find($prestamoEventoId);
 
                 if (!$prestamo) {
                     throw new \Exception('Préstamo a evento no encontrado');
@@ -745,51 +753,90 @@ class PrestamoEventoService
                     throw new \Exception('El préstamo ya está cancelado');
                 }
 
+                // ✅ ITERAR POR CADA DETALLE
                 foreach ($prestamo->detalles as $detalle) {
-                    // Buscar todos los stocks de este prestable
-                    $stocks = PrestableStock::where('prestable_id', $detalle->prestable_id)->get();
+                    // Si el detalle ya está completamente devuelto, solo cambiar estado
+                    if ($detalle->estado === 'COMPLETAMENTE_DEVUELTO') {
+                        $detalle->update(['estado' => 'CANCELADO']);
+                        continue;
+                    }
 
-                    foreach ($stocks as $stock) {
-                        if ((int) $stock->cantidad_evento_deudor > 0) {
-                            $cantidadADevolver = (int) $stock->cantidad_evento_deudor;
-                            $disponibleAntes = (int) $stock->cantidad_disponible;
+                    // ✅ ITERAR POR CADA ALMACÉN DEL DETALLE (como se creó)
+                    $almacenesDetalle = PrestamoEventoAlmacen::where(
+                        'prestamo_evento_detalle_id',
+                        $detalle->id
+                    )->get();
 
-                            // Devolver al disponible
+                    foreach ($almacenesDetalle as $almacenDetalle) {
+                        // Calcular cantidad ya devuelta de ESTE almacén específico
+                        $cantidadDevueltaDelAlmacen = (int) DB::table('devolucion_evento_detalle_almacenes as deda')
+                            ->join('devolucion_evento_detalle as ded', 'deda.devolucion_evento_detalle_id', '=', 'ded.id')
+                            ->where('ded.prestamo_evento_detalle_id', $detalle->id)
+                            ->where('deda.almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
+                            ->sum(DB::raw('deda.cantidad_devuelta + deda.cantidad_dañada_total'));
+
+                        $cantidadPendienteDelAlmacen = $almacenDetalle->cantidad - $cantidadDevueltaDelAlmacen;
+
+                        if ($cantidadPendienteDelAlmacen > 0) {
+                            // Obtener stock ANTES de devolver
+                            $stock = PrestableStock::where('prestable_id', $detalle->prestable_id)
+                                ->where('almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
+                                ->firstOrFail();
+
+                            $disponibleAntes = $stock->cantidad_disponible;
+                            $eventoDeudorAntes = $stock->cantidad_evento_deudor;
+
+                            // Devolver
                             $stock->update([
-                                'cantidad_evento_deudor' => 0,
-                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadADevolver,
+                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendienteDelAlmacen,
+                                'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $cantidadPendienteDelAlmacen),
                             ]);
 
-                            $stock->refresh();
-                            $disponibleDespues = (int) $stock->cantidad_disponible;
-
-                            // Registrar movimiento
+                            // ✅ 1 MOVIMIENTO POR ALMACÉN (espejo del proceso de creación)
                             $this->movimientoService->registrarMovimiento([
                                 'prestable_stock_id' => $stock->id,
-                                'almacenes_prestables_id' => $stock->almacenes_prestables_id,
-                                'tipo' => 'ANULACION_EVENTO',
-                                'cantidad' => $cantidadADevolver,
+                                'almacenes_prestables_id' => $almacenDetalle->almacenes_prestables_id,
+                                'usuario_id' => auth()->id(),
+                                'tipo' => 'ENTRADA',
+                                'cantidad' => $cantidadPendienteDelAlmacen,
                                 'disponible_anterior' => $disponibleAntes,
-                                'disponible_posterior' => $disponibleDespues,
-                                'categoria_afectada' => 'anulacion_evento',
-                                'motivo' => 'Anulación de préstamo a evento',
-                                'observaciones' => $razonAnulacion ?? 'Sin descripción',
-                                'referencia_tipo' => 'PRESTAMO_EVENTO',
+                                'evento_deudor_anterior' => $eventoDeudorAntes,
+                                'disponible_posterior' => $stock->cantidad_disponible,
+                                'evento_deudor_posterior' => $stock->cantidad_evento_deudor,
+                                'categoria_afectada' => 'prestamo_evento',
+                                'motivo' => 'Devolución por anulación de préstamo a evento',
+                                'numero_referencia' => $prestamo->id,
+                                'referencia_tipo' => 'PRESTAMO_EVENTO_ANULADO',
                                 'referencia_id' => $prestamo->id,
+                                'observaciones' => $razonAnulacion,
+                            ]);
+
+                            Log::info('✅ Stock devuelto por anulación de evento (almacén específico)', [
+                                'prestamo_id' => $prestamo->id,
+                                'detalle_id' => $detalle->id,
+                                'almacen_id' => $almacenDetalle->almacenes_prestables_id,
+                                'cantidad_pendiente_almacen' => $cantidadPendienteDelAlmacen,
+                                'disponible_posterior' => $stock->cantidad_disponible,
                             ]);
                         }
                     }
 
-                    // Marcar detalle como cancelado
+                    // Cambiar estado del detalle a CANCELADO
                     $detalle->update(['estado' => 'CANCELADO']);
                 }
 
-                // Actualizar estado del préstamo
-                $prestamo->update(['estado' => 'CANCELADO']);
+                // Actualizar estado y observaciones del préstamo
+                $prestamo->update([
+                    'estado' => 'CANCELADO',
+                    'observaciones' => $razonAnulacion ?
+                        trim(($prestamo->observaciones ?? '') . " [ANULADO: $razonAnulacion]") :
+                        $prestamo->observaciones,
+                ]);
 
-                Log::info('✅ Préstamo a evento anulado exitosamente', [
+                Log::info('✅ Préstamo a evento anulado correctamente', [
                     'prestamo_evento_id' => $prestamo->id,
-                    'razon' => $razonAnulacion,
+                    'cantidad_detalles' => count($prestamo->detalles),
+                    'razon_anulacion' => $razonAnulacion,
                 ]);
 
                 return $prestamo;

@@ -698,74 +698,78 @@ class PrestamoProveedorService
      * Anular préstamo a proveedor
      * Devuelve automáticamente el stock al almacén
      */
+    /**
+     * Anular préstamo a proveedor - cancela y devuelve stock al almacén
+     * ✅ CORREGIDO: Itera por PrestamoProveedorAlmacen (como al crear)
+     * Genera 1 movimiento por almacén del detalle, NO movimientos extras
+     *
+     * @param int $prestamoId ID del préstamo
+     * @param ?string $razonAnulacion Razón de la anulación
+     */
     public function anularPrestamo(int $prestamoId, ?string $razonAnulacion = null): PrestamoProveedor|false
     {
         try {
             return DB::transaction(function () use ($prestamoId, $razonAnulacion) {
-                $prestamo = PrestamoProveedor::with(['detalles', 'detalles.devolucionDetalles'])->find($prestamoId);
+                $prestamo = PrestamoProveedor::with(['detalles.almacenes'])->find($prestamoId);
 
                 if (!$prestamo) {
                     throw new \Exception('Préstamo a proveedor no encontrado');
                 }
 
-                // No permitir anular un préstamo que ya está cancelado
                 if ($prestamo->estado === 'CANCELADO') {
                     throw new \Exception('El préstamo ya está cancelado');
                 }
 
-                // Devolver stock para cada detalle usando un almacén de proveedor activo real
-                $almacenId = $this->obtenerAlmacenProveedorId();
-
+                // ✅ ITERAR POR CADA DETALLE
                 foreach ($prestamo->detalles as $detalle) {
-                    // Si el detalle aún no está completamente devuelto, devolver lo que falta
-                    if ($detalle->estado !== 'COMPLETAMENTE_DEVUELTO') {
-                        // Calcular cantidad devuelta consultando la BD directamente
-                        try {
-                            $devolutions = DevolucionProveedorDetalle::where('prestamo_proveedor_detalle_id', $detalle->id)->get();
-                            $totalDevuelto = 0;
-                            foreach ($devolutions as $dev) {
-                                $totalDevuelto += $dev->cantidad_devuelta + $dev->cantidad_dañada_parcial + $dev->cantidad_dañada_total;
-                            }
-                        } catch (\Exception $ex) {
-                            Log::warning('⚠️ Error calculando devoluciones', ['error' => $ex->getMessage()]);
-                            $totalDevuelto = 0;
-                        }
+                    // Si el detalle ya está completamente devuelto, solo cambiar estado
+                    if ($detalle->estado === 'COMPLETAMENTE_DEVUELTO') {
+                        $detalle->update(['estado' => 'CANCELADO']);
+                        continue;
+                    }
 
-                        $cantidadPendiente = $detalle->cantidad_prestada - $totalDevuelto;
+                    // ✅ ITERAR POR CADA ALMACÉN DEL DETALLE (como se creó)
+                    $almacenesDetalle = PrestamoProveedorAlmacen::where(
+                        'prestamo_proveedor_detalle_id',
+                        $detalle->id
+                    )->get();
 
-                        if ($cantidadPendiente > 0) {
+                    foreach ($almacenesDetalle as $almacenDetalle) {
+                        // Calcular cantidad ya devuelta de ESTE almacén específico
+                        $cantidadDevueltaDelAlmacen = (int) DB::table('devolucion_proveedor_detalle_almacenes as dpda')
+                            ->join('devolucion_proveedor_detalle as dpd', 'dpda.devolucion_proveedor_detalle_id', '=', 'dpd.id')
+                            ->where('dpd.prestamo_proveedor_detalle_id', $detalle->id)
+                            ->where('dpda.almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
+                            ->sum(DB::raw('dpda.cantidad_devuelta + dpda.cantidad_dañada_total'));
+
+                        $cantidadPendienteDelAlmacen = $almacenDetalle->cantidad - $cantidadDevueltaDelAlmacen;
+
+                        if ($cantidadPendienteDelAlmacen > 0) {
                             // Obtener stock ANTES de devolver
                             $stock = PrestableStock::where('prestable_id', $detalle->prestable_id)
-                                ->where('almacenes_prestables_id', $almacenId)
-                                ->first();
-                            $disponibleAntes = $stock->cantidad_disponible ?? 0;
-                            $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
-                            $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
-                            $vendidaAntes = 0;
+                                ->where('almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
+                                ->firstOrFail();
 
-                            // Devolver al proveedor (reduce cantidad_disponible y cantidad_proveedor_acreedor)
-                            if ($stock) {
-                                $stock->update([
-                                    'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendiente,
-                                    'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidadPendiente),
-                                ]);
-                            }
+                            $disponibleAntes = $stock->cantidad_disponible;
+                            $proveedorAcreedorAntes = $stock->cantidad_proveedor_acreedor;
 
-                            // Registrar movimiento de devolución por anulación
+                            // Devolver
+                            $stock->update([
+                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendienteDelAlmacen,
+                                'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidadPendienteDelAlmacen),
+                            ]);
+
+                            // ✅ 1 MOVIMIENTO POR ALMACÉN (espejo del proceso de creación)
                             $this->movimientoService->registrarMovimiento([
                                 'prestable_stock_id' => $stock->id,
-                                'almacenes_prestables_id' => $almacenId,
+                                'almacenes_prestables_id' => $almacenDetalle->almacenes_prestables_id,
                                 'usuario_id' => Auth::id(),
-                                'tipo' => 'SALIDA',
-                                'cantidad' => -$cantidadPendiente,
+                                'tipo' => 'ENTRADA',
+                                'cantidad' => $cantidadPendienteDelAlmacen,
                                 'disponible_anterior' => $disponibleAntes,
-                                'prestamo_cliente_anterior' => $prestamoClienteAntes,
-                                'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
-                                'vendida_anterior' => $vendidaAntes,
+                                'prestamo_proveedor_anterior' => $proveedorAcreedorAntes,
                                 'disponible_posterior' => $stock->cantidad_disponible,
-                                'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                                 'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
-                                'vendida_posterior' => 0,
                                 'categoria_afectada' => 'prestamo_proveedor',
                                 'motivo' => 'Devolución por anulación de préstamo',
                                 'numero_referencia' => $prestamo->id,
@@ -774,17 +778,26 @@ class PrestamoProveedorService
                                 'observaciones' => $razonAnulacion,
                             ]);
 
-                            // Actualizar estado del detalle a CANCELADO (se devolvió todo por anulación)
-                            $detalle->update(['estado' => 'CANCELADO']);
+                            Log::info('✅ Stock devuelto por anulación de proveedor (almacén específico)', [
+                                'prestamo_id' => $prestamo->id,
+                                'detalle_id' => $detalle->id,
+                                'almacen_id' => $almacenDetalle->almacenes_prestables_id,
+                                'cantidad_pendiente_almacen' => $cantidadPendienteDelAlmacen,
+                                'disponible_posterior' => $stock->cantidad_disponible,
+                            ]);
                         }
                     }
+
+                    // Cambiar estado del detalle a CANCELADO
+                    $detalle->update(['estado' => 'CANCELADO']);
                 }
 
-                // Actualizar estado del préstamo a CANCELADO
+                // Actualizar estado del préstamo
                 $prestamo->update(['estado' => 'CANCELADO']);
 
                 Log::info('✅ Préstamo a proveedor anulado correctamente', [
                     'prestamo_id' => $prestamo->id,
+                    'cantidad_detalles' => count($prestamo->detalles),
                     'razon_anulacion' => $razonAnulacion,
                 ]);
 
