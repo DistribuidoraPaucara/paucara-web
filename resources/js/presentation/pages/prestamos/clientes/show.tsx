@@ -668,7 +668,9 @@ export default function PrestamosClientesShow() {
                             setDevolucionSeleccionada(null);
                         }}
                         onAnulada={() => {
-                            cargarPrestamo(prestamoId);
+                            if (prestamoId) {
+                                cargarPrestamo(prestamoId as string);
+                            }
                         }}
                     />
                 )}
