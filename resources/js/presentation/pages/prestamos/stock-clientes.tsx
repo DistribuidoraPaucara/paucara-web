@@ -566,18 +566,16 @@ export default function StockClientesPage({
                                     <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Almacén
                                     </th>
-                                    <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                        Disponible
-                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200">
                                         💧 Con Líquido
                                     </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                        Prestado (Activo)
-                                    </th>                                    
-                                    {/* <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                        Devuelto
-                                    </th> */}
+                                        Disponible
+                                    </th>
+                                    
+                                    <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                        Prestamo (Activo)
+                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         🔴 Dañada
                                     </th>
@@ -587,9 +585,6 @@ export default function StockClientesPage({
                                     <th className="px-4 py-3 text-center font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200">
                                         🔴 Dañada (Evento)
                                     </th>
-                                    {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                        Total
-                                    </th> */}
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Acciones
                                     </th>
@@ -643,27 +638,21 @@ export default function StockClientesPage({
                                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                                             {item.almacen_nombre}
                                                         </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
-                                                                {item.cantidad_disponible}
-                                                            </span>
-                                                        </td>
                                                         <td className="px-4 py-3 text-center bg-green-50 dark:bg-green-900/10">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-200 font-semibold">
                                                                 {item.cantidad_con_liquido}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
+                                                                {item.cantidad_disponible}
+                                                            </span>
+                                                        </td>                                                        
+                                                        <td className="px-4 py-3 text-center">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
                                                                 {item.cantidad_cliente_deudor}
                                                             </span>
                                                         </td>
-                                                        
-                                                        {/* <td className="px-4 py-3 text-center">
-                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
-                                                                {item.cantidad_cliente_devuelto}
-                                                            </span>
-                                                        </td> */}
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
                                                                 {item.cantidad_cliente_dañada}

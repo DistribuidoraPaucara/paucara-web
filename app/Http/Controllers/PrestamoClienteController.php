@@ -266,8 +266,14 @@ class PrestamoClienteController extends Controller
                 'venta',
                 'ubicacion',
                 'creador',
-                'devoluciones.detalles.detallePrestamoCliente.prestable',
-                'devoluciones.detalles.devolucionesAlmacenes.almacen'
+                'devoluciones' => function ($query) {
+                    $query->with([
+                        'detalles.detallePrestamoCliente.prestable',
+                        'detalles.devolucionesAlmacenes.almacen',
+                        'creador',
+                        'anulador',
+                    ]);
+                }
             ]);
             $resumen = $this->prestamoService->obtenerResumenPrestamo($prestamo->id);
 

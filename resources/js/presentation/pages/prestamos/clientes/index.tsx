@@ -739,9 +739,7 @@ export default function PrestamosClientesIndex() {
                                         <TableHead className="text-gray-900 dark:text-gray-100 text-center">Garantía</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100 text-center">Fecha Préstamo</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100 text-center">Plazo</TableHead>
-                                        {/* Prestados */}
                                         <TableHead className="text-center text-gray-900 dark:text-gray-100">Prestados</TableHead>
-                                        {/* ✅ NUEVO: Columna de Pendientes */}
                                         <TableHead className="text-center text-gray-900 dark:text-gray-100">Pendientes</TableHead>
                                         <TableHead className="text-gray-900 dark:text-gray-100 text-center">Estado</TableHead>
                                         <TableHead className="text-right text-gray-900 dark:text-gray-100 text-center">Acciones</TableHead>
@@ -877,23 +875,23 @@ export default function PrestamosClientesIndex() {
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="w-56">
-                                                                <DropdownMenuItem onSelect={() => abrirModalEdicion(p)}>
+                                                                {/* <DropdownMenuItem onSelect={() => abrirModalEdicion(p)}>
                                                                     <Edit size={16} />
                                                                     Editar
-                                                                </DropdownMenuItem>
+                                                                </DropdownMenuItem> */}
                                                                 <DropdownMenuItem asChild>
                                                                     <a href={`/prestamos/clientes/${p.id}`}>
                                                                         <Eye size={16} />
-                                                                        Ver detalle completo
+                                                                        Ver detalles
                                                                     </a>
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem asChild>
+                                                                {/* <DropdownMenuItem asChild>
                                                                     <a href={`/prestamos/clientes/${p.id}/devoluciones`}>
                                                                         <History size={16} />
                                                                         Ver devoluciones
                                                                     </a>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
+                                                                </DropdownMenuItem> */}
+                                                                {/* <DropdownMenuItem
                                                                     onSelect={async () => {
                                                                         try {
                                                                             const prestamoActualizado = await prestamoClienteService.getById(p.id);
@@ -907,7 +905,7 @@ export default function PrestamosClientesIndex() {
                                                                 >
                                                                     <Eye size={16} />
                                                                     Ver detalles
-                                                                </DropdownMenuItem>
+                                                                </DropdownMenuItem> */}
                                                                 <DropdownMenuItem
                                                                     onSelect={() => {
                                                                         setSelectedPrestamoForPrint(p);

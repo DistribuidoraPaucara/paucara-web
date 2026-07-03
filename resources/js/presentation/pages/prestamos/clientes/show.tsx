@@ -13,7 +13,7 @@ import {
     TableRow,
 } from '@/presentation/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Phone, MapPin, User, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 
 interface PrestamoClienteShow {
@@ -27,9 +27,13 @@ interface PrestamoClienteShow {
     fecha_esperada_devolucion: string;
     estado: string;
     observaciones?: string;
+    created_by?: number;
     cliente?: any;
     almacen?: any;
     chofer?: any;
+    vehiculo?: any;
+    creador?: any;
+    ubicacion?: any;
     detalles?: any[];
     devoluciones?: any[];
 }
@@ -48,42 +52,11 @@ export default function PrestamosClientesShow() {
         }
     }, [prestamoId]);
 
-    const cargarPrestamo = async (id: number) => {
+    const cargarPrestamo = async (id: string | number) => {
         try {
             setLoading(true);
             const response = await axios.get(`/api/prestamos-cliente/${id}`);
             const prestamo = response.data.data;
-
-            console.group('📥 CLIENTE #' + id);
-            console.log('✅ Datos completos del backend:', prestamo);
-            console.log('👤 Cliente:', prestamo.cliente);
-            console.log('📦 Detalles:', prestamo.detalles);
-            console.log('🔄 Devoluciones:', prestamo.devoluciones);
-
-            prestamo.detalles?.forEach((det: any, idx: number) => {
-                const totalDevuelto = det.devolucion_detalles?.reduce((s: number, d: any) => s + ((d.cantidad_devuelta || 0) + (d.cantidad_dañada_total || 0)), 0) || 0;
-                console.log(`  Detalle ${idx + 1}: ${det.prestable?.nombre}`, {
-                    cantidad_prestada: det.cantidad_prestada,
-                    total_devuelto: totalDevuelto,
-                    falta: det.cantidad_prestada - totalDevuelto,
-                    estado: det.estado,
-                    almacenes: det.almacenes,
-                    devolucion_detalles: det.devolucion_detalles
-                });
-            });
-
-            prestamo.devoluciones?.forEach((dev: any, idx: number) => {
-                console.log(`  Devolución ${idx + 1}:`, {
-                    id: dev.id,
-                    fecha: dev.fecha_devolucion,
-                    cantidad_total_devuelta: dev.cantidad_total_devuelta,
-                    monto_garantia_devuelta: dev.monto_garantia_devuelta_total,
-                    monto_cobrado_daño: dev.monto_cobrado_daño_total,
-                    detalles: dev.detalles
-                });
-            });
-            console.groupEnd();
-
             setPrestamo(prestamo);
         } catch (err: any) {
             console.error('❌ Error cargando préstamo:', err.response?.data || err.message);
@@ -123,6 +96,19 @@ export default function PrestamosClientesShow() {
         );
     };
 
+    const getEstadoDevolucionBadge = (estado: string) => {
+        const variants: Record<string, any> = {
+            ACTIVA: { bg: 'bg-green-100', text: 'text-green-800', label: '✅ Activa' },
+            ANULADA: { bg: 'bg-red-100', text: 'text-red-800', label: '❌ Anulada' },
+        };
+        const variant = variants[estado] || variants.ACTIVA;
+        return (
+            <span className={`px-2 py-1 rounded text-xs font-medium ${variant.bg} ${variant.text}`}>
+                {variant.label}
+            </span>
+        );
+    };
+
     const calcularTotalDevueltoDetalle = (detalle: any) => {
         return detalle.devolucion_detalles?.reduce(
             (sum: number, dev: any) => sum + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
@@ -130,11 +116,22 @@ export default function PrestamosClientesShow() {
         ) || 0;
     };
 
+    const calcularResumenPrestamo = () => {
+        if (!prestamo?.detalles) return { total: 0, devuelto: 0, faltante: 0, tasa: 0 };
+
+        const total = prestamo.detalles.reduce((sum: number, d: any) => sum + (d.cantidad_prestada || 0), 0);
+        const devuelto = prestamo.detalles.reduce((sum: number, d: any) => sum + calcularTotalDevueltoDetalle(d), 0);
+        const faltante = Math.max(0, total - devuelto);
+        const tasa = total > 0 ? Math.round((devuelto / total) * 100) : 0;
+
+        return { total, devuelto, faltante, tasa };
+    };
+
     if (loading) {
         return (
             <AppLayout>
                 <div className="flex justify-center items-center h-screen">
-                    <div className="text-lg text-gray-600 dark:text-gray-300">Cargando prestamo...</div>
+                    <div className="text-lg text-gray-600 dark:text-gray-300">Cargando préstamo...</div>
                 </div>
             </AppLayout>
         );
@@ -143,17 +140,19 @@ export default function PrestamosClientesShow() {
     if (!prestamo) {
         return (
             <AppLayout>
-                <div className="text-center text-red-600">Prestamo no encontrado</div>
+                <div className="text-center text-red-600">Préstamo no encontrado</div>
             </AppLayout>
         );
     }
 
+    const resumen = calcularResumenPrestamo();
+
     return (
         <AppLayout>
             <div className="py-6 px-4 space-y-6">
-                {/* ENCABEZADO */}
+                {/* ENCABEZADO PRINCIPAL */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="p-2">
+                    <Card className="p-4">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Cliente</h3>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
                             {prestamo.cliente?.nombre || prestamo.cliente?.razon_social || 'N/D'}
@@ -163,14 +162,14 @@ export default function PrestamosClientesShow() {
                         </p>
                     </Card>
 
-                    <Card className="p-2">
+                    <Card className="p-4">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Estado</h3>
-                        <div >
+                        <div className="mt-2">
                             {getEstadoBadge(prestamo.estado)}
                         </div>
                     </Card>
 
-                    <Card className="p-2">
+                    <Card className="p-4">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Fechas</h3>
                         <div className="space-y-2">
                             <p className="text-sm">
@@ -189,35 +188,151 @@ export default function PrestamosClientesShow() {
                     </Card>
                 </div>
 
-                {/* INFORMACIÓN GENERAL */}
-                <Card className="p-2">
-                    <h2 className="text-xl font-bold mb-4">Información General</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4">
+                {/* AUDITORÍA DEL PRÉSTAMO */}
+                <Card className="p-4 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-900/20">
+                    <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        Auditoría del Préstamo
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">Almacén</p>
-                            <p className="font-bold">{prestamo.almacen?.nombre || 'N/D'}</p>
-                        </div>
-                        <div>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">Chofer</p>
-                            <p className="font-bold">{prestamo.chofer?.name || 'N/D'}</p>
-                        </div>
-                        <div>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">Vehículo</p>
-                            <p className="font-bold">{prestamo.vehiculo?.placa || 'N/D'}</p>
-                        </div>
-                        <div>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm">Garantía Total</p>
-                            <p className="font-bold">${Number(prestamo.monto_garantia || 0).toFixed(2)}</p>
-                        </div>
-                    </div>
-                    {prestamo.observaciones && (
-                        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                            <p className="text-sm text-gray-700">
-                                <span className="font-semibold">Observaciones:</span> {prestamo.observaciones}
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Creado por</p>
+                            <p className="font-bold text-lg">
+                                {prestamo.creador?.name || 'Sistema'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                {new Date(prestamo.fecha_prestamo).toLocaleString('es-ES')}
                             </p>
                         </div>
-                    )}
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Estado</p>
+                            <p className="font-bold text-lg">{prestamo.estado}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Observaciones Generales</p>
+                            <p className="font-bold text-sm text-gray-700 dark:text-gray-300">
+                                {prestamo.observaciones || 'Ninguna'}
+                            </p>
+                        </div>
+                    </div>
                 </Card>
+
+                {/* RESUMEN DE PRÉSTAMO (KPIs) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Total Prestado</p>
+                        <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{resumen.total}</p>
+                    </Card>
+                    <Card className="p-4 bg-green-50 dark:bg-green-900/20 border-green-200">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Devuelto</p>
+                        <p className="text-3xl font-bold text-green-700 dark:text-green-300">{resumen.devuelto}</p>
+                    </Card>
+                    <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Faltante</p>
+                        <p className="text-3xl font-bold text-red-700 dark:text-red-300">{resumen.faltante}</p>
+                    </Card>
+                    <Card className="p-4 bg-purple-50 dark:bg-purple-900/20 border-purple-200">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Tasa Devolución</p>
+                        <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{resumen.tasa}%</p>
+                    </Card>
+                </div>
+
+                {/* INFORMACIÓN GENERAL */}
+                <Card className="p-4">
+                    <h2 className="text-xl font-bold mb-4">Información General</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">Almacén</p>
+                                <p className="font-bold">{prestamo.almacen?.nombre || 'N/D'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">Chofer</p>
+                                <p className="font-bold">{prestamo.chofer?.name || 'N/D'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">Vehículo</p>
+                                <p className="font-bold">{prestamo.vehiculo?.placa || 'N/D'}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">Garantía Total</p>
+                                <p className="font-bold text-lg">Bs {Number(prestamo.monto_garantia || 0).toFixed(2)}</p>
+                            </div>
+                            {prestamo.observaciones && (
+                                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200">
+                                    <p className="text-sm">
+                                        <span className="font-semibold">Observaciones:</span> {prestamo.observaciones}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </Card>
+
+                {/* UBICACIÓN Y CONTACTO */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* UBICACIÓN */}
+                    {prestamo.ubicacion && (
+                        <Card className="p-4">
+                            <h3 className="font-bold mb-3 flex items-center gap-2">
+                                <MapPin className="w-5 h-5 text-blue-500" />
+                                Ubicación de Entrega
+                            </h3>
+                            <div className="space-y-2">
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Dirección</p>
+                                    <p className="font-medium">{prestamo.ubicacion.direccion || 'No especificada'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Localidad</p>
+                                    <p className="font-medium">
+                                        {prestamo.ubicacion.localidad?.nombre || 'No especificada'}
+                                    </p>
+                                </div>
+                                {prestamo.ubicacion.es_ubicacion_manual && (
+                                    <Badge variant="outline" className="w-fit">
+                                        📍 Ubicación Manual
+                                    </Badge>
+                                )}
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* CONTACTO */}
+                    <Card className="p-4">
+                        <h3 className="font-bold mb-3 flex items-center gap-2">
+                            <Phone className="w-5 h-5 text-green-500" />
+                            Contacto del Cliente
+                        </h3>
+                        <div className="space-y-2">
+                            {prestamo.cliente?.telefono_cliente_1 && (
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Teléfono 1</p>
+                                    <p className="font-medium">
+                                        <a href={`tel:${prestamo.cliente.telefono_cliente_1}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                                            {prestamo.cliente.telefono_cliente_1}
+                                        </a>
+                                    </p>
+                                </div>
+                            )}
+                            {prestamo.cliente?.telefono_cliente_2 && (
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Teléfono 2</p>
+                                    <p className="font-medium">
+                                        <a href={`tel:${prestamo.cliente.telefono_cliente_2}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                                            {prestamo.cliente.telefono_cliente_2}
+                                        </a>
+                                    </p>
+                                </div>
+                            )}
+                            {!prestamo.cliente?.telefono_cliente_1 && !prestamo.cliente?.telefono_cliente_2 && (
+                                <p className="text-sm text-gray-500">Sin contacto registrado</p>
+                            )}
+                        </div>
+                    </Card>
+                </div>
 
                 {/* TABS */}
                 <Tabs defaultValue="detalles" className="w-full">
@@ -296,7 +411,7 @@ export default function PrestamosClientesShow() {
                                                                                 {almacen.almacen?.nombre || `Almacén ${almacen.almacenes_prestables_id}`}
                                                                             </TableCell>
                                                                             <TableCell className="text-right">
-                                                                                {almacen.cantidad_prestada}
+                                                                                {almacen.cantidad}
                                                                             </TableCell>
                                                                         </TableRow>
                                                                     ))}
@@ -311,7 +426,7 @@ export default function PrestamosClientesShow() {
                                                     <p className="text-sm">
                                                         <span className="text-gray-700 dark:text-gray-300">Garantía por unidad:</span>
                                                         <span className="font-bold ml-2 text-blue-700 dark:text-blue-300">
-                                                            ${Number(detalle.prestable?.condiciones?.[0]?.monto_garantia || 0).toFixed(2)}
+                                                            Bs {Number(detalle.prestable?.condiciones?.[0]?.monto_garantia || 0).toFixed(2)}
                                                         </span>
                                                     </p>
                                                 </div>
@@ -337,7 +452,11 @@ export default function PrestamosClientesShow() {
                                     <Card key={devolucion.id} className="p-0 overflow-hidden">
                                         {/* HEADER */}
                                         <div
-                                            className="p-4 bg-gray-50 dark:bg-gray-700 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                                            className={`p-4 border-b cursor-pointer transition ${
+                                                devolucion.estado === 'ANULADA'
+                                                    ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100'
+                                                    : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                            }`}
                                             onClick={() => toggleDevolucion(devolucion.id)}
                                         >
                                             <div className="flex items-start justify-between">
@@ -351,12 +470,26 @@ export default function PrestamosClientesShow() {
                                                         <h3 className="font-bold">
                                                             Devolución #{devolucion.id}
                                                         </h3>
+                                                        {getEstadoDevolucionBadge(devolucion.estado)}
                                                     </div>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                                        Fecha: {new Date(devolucion.fecha_devolucion).toLocaleDateString('es-ES')}
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                                                        <Calendar className="w-4 h-4 inline mr-1" />
+                                                        {new Date(devolucion.fecha_devolucion).toLocaleDateString('es-ES')}
                                                         {' | '}
-                                                        Total devuelto: <span className="font-bold">{devolucion.cantidad_total_devuelta}</span>
+                                                        Creado por: <span className="font-bold">{devolucion.creador?.name || 'Sistema'}</span>
+                                                        {devolucion.estado === 'ANULADA' && (
+                                                            <>
+                                                                {' | '}
+                                                                Anulado por: <span className="font-bold">{devolucion.anulador?.name || 'Sistema'}</span>
+                                                            </>
+                                                        )}
                                                     </p>
+                                                    {devolucion.razon_anulacion && (
+                                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                                            <AlertCircle className="w-4 h-4 inline mr-1" />
+                                                            Razón: {devolucion.razon_anulacion}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -418,7 +551,7 @@ export default function PrestamosClientesShow() {
                                                     <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded">
                                                         <p className="text-sm text-gray-700 dark:text-gray-300">Monto Daño Cobrado</p>
                                                         <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                                                            ${Number(devolucion.monto_cobrado_daño_total || 0).toFixed(2)}
+                                                            Bs {Number(devolucion.monto_cobrado_daño_total || 0).toFixed(2)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -461,6 +594,37 @@ export default function PrestamosClientesShow() {
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {/* AUDITORÍA DE DEVOLUCIÓN */}
+                                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200">
+                                                    <p className="text-sm font-bold text-purple-700 dark:text-purple-300 mb-2">Auditoría de Devolución</p>
+                                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                                        <div>
+                                                            <span className="text-gray-600 dark:text-gray-300">Creado por:</span>
+                                                            <span className="font-bold ml-1">{devolucion.creador?.name || 'Sistema'}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-600 dark:text-gray-300">Fecha:</span>
+                                                            <span className="font-bold ml-1">
+                                                                {new Date(devolucion.created_at).toLocaleString('es-ES')}
+                                                            </span>
+                                                        </div>
+                                                        {devolucion.estado === 'ANULADA' && (
+                                                            <>
+                                                                <div>
+                                                                    <span className="text-gray-600 dark:text-gray-300">Anulado por:</span>
+                                                                    <span className="font-bold ml-1">{devolucion.anulador?.name || 'Sistema'}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-600 dark:text-gray-300">Fecha anulación:</span>
+                                                                    <span className="font-bold ml-1">
+                                                                        {devolucion.fecha_anulacion ? new Date(devolucion.fecha_anulacion).toLocaleString('es-ES') : 'N/D'}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </Card>
