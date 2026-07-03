@@ -13,8 +13,9 @@ import {
     TableRow,
 } from '@/presentation/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
-import { ChevronDown, ChevronUp, Phone, MapPin, User, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Phone, MapPin, User, Calendar, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 import axios from 'axios';
+import AnularDevolucionModal from '@/presentation/components/modals/AnularDevolucionModal';
 
 interface PrestamoClienteShow {
     id: number;
@@ -45,6 +46,8 @@ export default function PrestamosClientesShow() {
     const [loading, setLoading] = useState(true);
     const [expandedDetalles, setExpandedDetalles] = useState<number[]>([]);
     const [expandedDevoluciones, setExpandedDevoluciones] = useState<number[]>([]);
+    const [modalAnularOpen, setModalAnularOpen] = useState(false);
+    const [devolucionSeleccionada, setDevolucionSeleccionada] = useState<{ id: number; numero: number } | null>(null);
 
     useEffect(() => {
         if (prestamoId) {
@@ -457,9 +460,8 @@ export default function PrestamosClientesShow() {
                                                     ? 'bg-red-50 dark:bg-red-900/20 hover:bg-red-100'
                                                     : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                                             }`}
-                                            onClick={() => toggleDevolucion(devolucion.id)}
                                         >
-                                            <div className="flex items-start justify-between">
+                                            <div className="flex items-start justify-between" onClick={() => toggleDevolucion(devolucion.id)}>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         {isExpanded ? (
@@ -491,6 +493,22 @@ export default function PrestamosClientesShow() {
                                                         </p>
                                                     )}
                                                 </div>
+                                                {/* BOTONES DE ACCIÓN */}
+                                                {devolucion.estado === 'ACTIVA' && (
+                                                    <div className="flex gap-2 ml-4">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setDevolucionSeleccionada({ id: devolucion.id, numero: devolucion.id });
+                                                                setModalAnularOpen(true);
+                                                            }}
+                                                            className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded flex items-center gap-1 text-sm transition"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                            Anular
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -637,6 +655,23 @@ export default function PrestamosClientesShow() {
                         )}
                     </TabsContent>
                 </Tabs>
+
+                {/* MODAL ANULAR DEVOLUCIÓN */}
+                {devolucionSeleccionada && (
+                    <AnularDevolucionModal
+                        prestamo_id={prestamo.id}
+                        devolucion_id={devolucionSeleccionada.id}
+                        devolucion_numero={devolucionSeleccionada.numero}
+                        isOpen={modalAnularOpen}
+                        onClose={() => {
+                            setModalAnularOpen(false);
+                            setDevolucionSeleccionada(null);
+                        }}
+                        onAnulada={() => {
+                            cargarPrestamo(prestamoId);
+                        }}
+                    />
+                )}
             </div>
         </AppLayout>
     );
