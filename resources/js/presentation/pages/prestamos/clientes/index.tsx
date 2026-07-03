@@ -536,9 +536,9 @@ export default function PrestamosClientesIndex() {
 
                 {/* ✅ NUEVO: Card de Resumen Pendiente */}
                 <div className="mb-2 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-4 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
-                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">⚠️ Préstamos Pendientes</p>
+                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-2 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
                         <div className="space-y-1">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">⚠️ Préstamos Pendientes</p>
                             <div>
                                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{pendientes.totalPrestamos}</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">Préstamos activos</p>
@@ -554,9 +554,9 @@ export default function PrestamosClientesIndex() {
                         </div>
                     </Card>
 
-                    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-4 dark:border-orange-700 dark:from-orange-900/30 dark:to-orange-800/30">
-                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">📊 Items Pendientes por Tipo</p>
+                    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-2 dark:border-orange-700 dark:from-orange-900/30 dark:to-orange-800/30">
                         <div className="space-y-1">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">📊 Items Pendientes por Tipo</p>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-700 dark:text-gray-300">📦 Canastillas</span>
                                 <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.canastillas.pendientes}</span>
@@ -574,9 +574,9 @@ export default function PrestamosClientesIndex() {
                         </div>
                     </Card>
 
-                    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 dark:border-purple-700 dark:from-purple-900/30 dark:to-purple-800/30">
-                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">💰 Garantías en Riesgo</p>
+                    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-2 dark:border-purple-700 dark:from-purple-900/30 dark:to-purple-800/30">
                         <div className="space-y-1">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">💰 Garantías en Riesgo</p>
                             <div>
                                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                     Bs {pendientes.montoGarantia.toLocaleString('es-ES')}
