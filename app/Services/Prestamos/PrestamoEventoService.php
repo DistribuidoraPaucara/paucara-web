@@ -945,12 +945,8 @@ class PrestamoEventoService
                     }
 
                     // Restaurar estado del detalle del préstamo
-                    // El detalle vuelve a PARCIALMENTE_DEVUELTO o al estado anterior
-                    if ($detalleDevolucion->quantity_type === 'parcial') {
-                        $detallePrestamoEvento->update(['estado' => 'PARCIALMENTE_DEVUELTO']);
-                    } else {
-                        $detallePrestamoEvento->update(['estado' => 'PENDIENTE']);
-                    }
+                    // Al anular la devolución, vuelve a ACTIVO (como si nunca se hubiera devuelto)
+                    $detallePrestamoEvento->update(['estado' => 'ACTIVO']);
                 }
 
                 // Actualizar devolución como anulada
