@@ -423,11 +423,18 @@ export default function PrestamosClientesIndex() {
 
         (prestamo.detalles || []).forEach((detalle: any) => {
             const totalDetalle = Number(detalle.cantidad_prestada || 0);
-            const devueltoDetalle =
-                detalle.devolucion_detalles?.reduce(
+
+            // ✅ CORREGIDO: Filtrar devoluciones por estado ACTIVA
+            // Solo contar devoluciones ACTIVAS, ignorar ANULADAS
+            const devueltoDetalle = (prestamo.devoluciones || [])
+                .filter((dev: any) => dev.estado === 'ACTIVA') // Filtrar por estado
+                .flatMap((dev: any) => dev.detalles || [])
+                .filter((devDet: any) => devDet.prestamo_cliente_detalle_id === detalle.id)
+                .reduce(
                     (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
                     0,
                 ) || 0;
+
             const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
             if (detalle.prestable?.tipo === 'CANASTILLA') {
