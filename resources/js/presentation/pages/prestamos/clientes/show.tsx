@@ -60,6 +60,53 @@ export default function PrestamosClientesShow() {
             setLoading(true);
             const response = await axios.get(`/api/prestamos-cliente/${id}`);
             const prestamo = response.data.data;
+
+            // 🔍 DEBUG: Ver qué datos llegan del backend
+            console.group('📥 DATOS DEL BACKEND - CLIENTE #' + id);
+            console.log('✅ Préstamo completo:', prestamo);
+            console.log('👤 Creador del préstamo:', prestamo.creador);
+            console.log('👥 Cliente:', {
+                id: prestamo.cliente?.id,
+                nombre: prestamo.cliente?.nombre,
+                nit: prestamo.cliente?.nit,
+                telefono_1: prestamo.cliente?.telefono_cliente_1,
+                telefono_2: prestamo.cliente?.telefono_cliente_2,
+            });
+            console.log('📦 Detalles:', {
+                cantidad: prestamo.detalles?.length,
+                prestables: prestamo.detalles?.map((d: any) => ({
+                    nombre: d.prestable?.nombre,
+                    cantidad_prestada: d.cantidad_prestada,
+                    almacenes: d.almacenes?.length,
+                    devuelto: d.devolucion_detalles?.reduce((s: number, dv: any) =>
+                        s + (dv.cantidad_devuelta || 0) + (dv.cantidad_dañada_total || 0), 0) || 0,
+                })),
+            });
+            console.log('🔄 Devoluciones:', {
+                cantidad: prestamo.devoluciones?.length,
+                items: prestamo.devoluciones?.map((dev: any) => ({
+                    id: dev.id,
+                    fecha: dev.fecha_devolucion,
+                    estado: dev.estado,
+                    creador: dev.creador?.name,
+                    anulador: dev.anulador?.name,
+                    detalles: dev.detalles?.length,
+                    almacenes_por_detalle: dev.detalles?.map((det: any) => ({
+                        prestable: det.detalle_prestamo_cliente?.prestable?.nombre,
+                        almacenes: det.devolucion_cliente_detalle_almacenes?.length,
+                    })),
+                })),
+            });
+            console.log('📍 Ubicación:', {
+                direccion: prestamo.ubicacion?.direccion,
+                localidad: prestamo.ubicacion?.localidad?.nombre,
+                es_manual: prestamo.ubicacion?.es_ubicacion_manual,
+            });
+            console.log('🏢 Almacén:', prestamo.almacen);
+            console.log('👨‍✈️ Chofer:', prestamo.chofer);
+            console.log('🚗 Vehículo:', prestamo.vehiculo);
+            console.groupEnd();
+
             setPrestamo(prestamo);
         } catch (err: any) {
             console.error('❌ Error cargando préstamo:', err.response?.data || err.message);
