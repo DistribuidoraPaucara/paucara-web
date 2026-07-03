@@ -598,7 +598,7 @@ class PrestamoEventoController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $devolucionAnulada->load(['detalles.detallePrestamoEvento.prestable', 'creador', 'anulador']),
+                'data' => $devolucionAnulada->load(['detalles.prestamoEventoDetalle.prestable', 'creador', 'anulador']),
                 'message' => 'Devolución anulada exitosamente',
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
