@@ -135,7 +135,13 @@ class PrestamoProveedorController extends Controller
                 'proveedor',
                 'almacen',
                 'chofer',
-                'devoluciones.detalles.detallePrestamoProveedor.prestable',
+                'creador', // ✅ Usuario que creó el préstamo
+                'devoluciones' => fn($q) => $q
+                    ->with([
+                        'detalles.detallePrestamoProveedor.prestable',
+                        'creador', // ✅ Usuario que creó la devolución
+                        'anulador', // ✅ Usuario que anuló la devolución
+                    ]),
             ]);
             $resumen = $this->prestamoService->obtenerResumen($prestamo->id);
 

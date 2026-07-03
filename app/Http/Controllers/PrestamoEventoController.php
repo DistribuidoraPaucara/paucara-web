@@ -280,9 +280,11 @@ class PrestamoEventoController extends Controller
                 'ventas',
                 'ubicacion',
                 'creador', // ✅ Usuario que creó el préstamo
-                // ✅ NUEVO: Cargar prestable en detalles de devoluciones
+                // ✅ NUEVO: Cargar prestable en detalles de devoluciones + auditoría
                 'devoluciones.detalles.prestamoEventoDetalle.prestable',
-                'devoluciones.detalles.devolucionesAlmacenes.almacen'
+                'devoluciones.detalles.devolucionesAlmacenes.almacen',
+                'devoluciones.creador', // ✅ Usuario que creó la devolución
+                'devoluciones.anulador', // ✅ Usuario que anuló la devolución
             ]);
             $resumen = $this->prestamoService->obtenerResumen($prestamo->id);
 
