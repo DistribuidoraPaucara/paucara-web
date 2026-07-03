@@ -28,6 +28,7 @@ class PrestamoEvento extends Model
         'fecha_entrega',
         'fecha_esperada_devolucion',
         'estado',
+        'created_by', // ✅ Usuario que creó el préstamo
     ];
 
     protected $casts = [
@@ -80,5 +81,15 @@ class PrestamoEvento extends Model
     public function devoluciones(): HasMany
     {
         return $this->hasMany(DevolucionEvento::class, 'prestamo_evento_id');
+    }
+
+    public function ubicacion(): HasMany
+    {
+        return $this->hasMany(PrestamoUbicacion::class, 'prestamo_evento_id');
+    }
+
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

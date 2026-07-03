@@ -1,16 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import type { Prestable } from '@/domain/entities/prestamos';
+import prestamoClienteService from '@/infrastructure/services/prestamo-cliente.service';
 import AppLayout from '@/layouts/app-layout';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import ModalAlmacenesDetalle from '@/presentation/components/modales/ModalAlmacenesDetalle';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
-import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
-import prestamoClienteService from '@/infrastructure/services/prestamo-cliente.service';
 import { useToast } from '@/presentation/hooks/useToast';
-import type { Prestable } from '@/domain/entities/prestamos';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
-import ModalAlmacenesDetalle from '@/presentation/components/modales/ModalAlmacenesDetalle';
+import { Head } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
+import { UbicacionMapModal } from './components/UbicacionMapModal';
+
+/**
+ * ============================================
+ * 📍 REFERENCIA: DATOS DISPONIBLES AL SELECCIONAR VENTA
+ * ============================================
+ *
+ * ENDPOINT: GET /api/ventas/{id}
+ * CONTROLADOR: VentaController::show (línea 789)
+ *
+ * DATOS DEL CLIENTE (ventaData.cliente):
+ *   - id: number
+ *   - nombre: string
+ *   - nit: string
+ *   - telefono: string
+ *   - foto_perfil: string | null
+ *   - razon_social: string
+ *
+ * DATOS DE DIRECCIÓN (ventaData.direccionCliente):
+ *   - id: number
+ *   - direccion: string (texto de dirección)
+ *   - localidad: object { id, nombre } o string (nombre)
+ *   - observaciones: string
+ *   - latitud: number
+ *   - longitud: number
+ *   - es_principal: boolean
+ *
+ * DATOS DE VENTA (ventaData):
+ *   - id: number
+ *   - numero: string (folio)
+ *   - fecha: date
+ *   - cliente_id: number
+ *   - direccion_cliente_id: number
+ *   - total: decimal
+ *   - detalles: array (productos en la venta)
+ *
+ * ============================================
+ */
 
 interface Props {
     clientes: Array<{ id: number; nombre: string; razon_social?: string; telefono?: string | null }>;
@@ -19,6 +57,7 @@ interface Props {
     vehiculos: Array<{ id: number; placa: string; marca?: string; modelo?: string }>;
     ventas: Array<{ id: number; numero: string; cliente_id: number; cliente?: { id: number; nombre: string; razon_social?: string } }>;
     prestables: Prestable[]; // ✅ Nuevo: prestables vienen del servidor
+    localidades: Array<{ id: number; nombre: string }>; // ✅ Nuevo: localidades para ubicación
 }
 
 interface PrestamoItem {
@@ -33,11 +72,10 @@ interface PrestamoItem {
     isAutomaticEmbase?: boolean;
 }
 
-export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas, prestables }: Props) {
+export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas, prestables, localidades }: Props) {
     // ✅ Cambio: usar prestables del prop en lugar de fetchear del API
     const loadingPrestables = false; // No necesita loading porque vienen en props
     const { toasts, removeToast, error: toastError, warning: toastWarning, success: toastSuccess } = useToast();
-
 
     // Estado principal del préstamo
     const [formData, setFormData] = useState({
@@ -55,8 +93,14 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         fecha_prestamo: new Date().toISOString().split('T')[0],
         fecha_esperada_devolucion: getDateAdd7Days(),
         monto_garantia: 0,
+        // ✅ Nuevo: Ubicación del préstamo
+        ubicacion: {
+            localidad_id: undefined as number | undefined,
+            direccion: '',
+            observaciones: undefined as string | undefined,
+            es_ubicacion_manual: false,
+        },
     });
-
 
     // Lista de prestables agregados
     const [prestablesAgregados, setPrestablesAgregados] = useState<PrestamoItem[]>([]);
@@ -90,6 +134,61 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     const [prestamoItemEnEdicion, setPrestamoItemEnEdicion] = useState<PrestamoItem | null>(null);
     const [indexEnEdicion, setIndexEnEdicion] = useState<number | null>(null);
 
+    // ✅ Nuevo: Estados para modal de ubicación en mapa
+    const [mostrarModalUbicacion, setMostrarModalUbicacion] = useState(false);
+    const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<
+        | {
+              localidad_id?: number;
+              direccion?: string;
+              observaciones?: string | null;
+              latitud?: number;
+              longitud?: number;
+              direccion_cliente_id?: number;
+              es_ubicacion_manual?: boolean;
+          }
+        | null
+    >(null);
+
+    // ✅ Nuevo: Preselectionar primer almacén no proveedor al cargar
+    useEffect(() => {
+        const almacenNoProveedor = almacenes.find((a) => !a.es_proveedor);
+        if (almacenNoProveedor) {
+            setAlmacenSeleccionado(almacenNoProveedor);
+            setFormData((prev) => ({
+                ...prev,
+                almacenes_prestables_id: almacenNoProveedor.id,
+            }));
+        }
+    }, [almacenes]);
+
+    // ✅ DEBUG: Monitorear cambios en formData.ubicacion
+    useEffect(() => {
+        console.log('%c🔍 CAMBIO EN formData.ubicacion', 'color: #e91e63; font-weight: bold; font-size: 13px', {
+            ubicacion_actual: formData.ubicacion,
+            ubicacionSeleccionada_actual: ubicacionSeleccionada,
+            stack: new Error().stack?.split('\n').slice(0, 3).join('\n'),
+        });
+    }, [formData.ubicacion]);
+
+    // ✅ Nuevo: Sincronizar automáticamente formData.ubicacion con ubicacionSeleccionada
+    useEffect(() => {
+        if (ubicacionSeleccionada && (ubicacionSeleccionada.localidad_id || ubicacionSeleccionada.direccion)) {
+            console.log('%c🔗 AUTO-SINCRONIZANDO: ubicacionSeleccionada → formData.ubicacion', 'color: #4caf50; font-weight: bold; font-size: 12px', {
+                ubicacionSeleccionada,
+            });
+            setFormData((prev) => ({
+                ...prev,
+                ubicacion: {
+                    localidad_id: ubicacionSeleccionada.localidad_id,
+                    direccion: ubicacionSeleccionada.direccion || '',
+                    observaciones: ubicacionSeleccionada.observaciones,
+                    es_ubicacion_manual: ubicacionSeleccionada.es_ubicacion_manual ?? false,
+                    direccion_cliente_id: ubicacionSeleccionada.direccion_cliente_id,
+                },
+            }));
+        }
+    }, [ubicacionSeleccionada]);
+
     function getDateAdd7Days() {
         const date = new Date();
         date.setDate(date.getDate() + 7);
@@ -103,10 +202,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     };
 
     const getStockDisponibleTotal = (prestable: Prestable) => {
-        return (prestable.stocks || []).reduce(
-            (sum, stock) => sum + Number(stock.cantidad_disponible || 0),
-            0
-        );
+        return (prestable.stocks || []).reduce((sum, stock) => sum + Number(stock.cantidad_disponible || 0), 0);
     };
 
     const handleFechaPrestamo = (fecha: string) => {
@@ -132,7 +228,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         setVentasLoading(true);
         try {
             const response = await fetch(`/api/ventas/con-prestables/search?q=${encodeURIComponent(query)}`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { Accept: 'application/json' },
             });
             const data = await response.json();
             console.log('🔍 BÚSQUEDA DE VENTAS - Respuesta del backend:', {
@@ -156,7 +252,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
         try {
             const response = await fetch(`/api/ventas/${venta.id}`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { Accept: 'application/json' },
             });
             const data = await response.json();
             const ventaData = data.data || data;
@@ -170,67 +266,207 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 prestables_en_producto: ventaData.detalles?.[0]?.producto?.prestables,
             });
 
+            // ✅ Nuevo: Log detallado del cliente y su información
+            console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+            console.log('%c📍 ENDPOINT: GET /api/ventas/{id}', 'color: #00aa00; font-weight: bold; font-size: 14px');
+            console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+            console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                id: ventaData.cliente?.id,
+                nombre: ventaData.cliente?.nombre,
+                nit: ventaData.cliente?.nit,
+                telefono: ventaData.cliente?.telefono,
+                foto_perfil: ventaData.cliente?.foto_perfil,
+                razon_social: ventaData.cliente?.razon_social,
+            });
+            console.log('%c📍 DIRECCIÓN DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                id: ventaData.direccion_cliente?.id,
+                direccion: ventaData.direccion_cliente?.direccion,
+                localidad: ventaData.direccion_cliente?.localidad,
+                observaciones: ventaData.direccion_cliente?.observaciones,
+                latitud: ventaData.direccion_cliente?.latitud,
+                longitud: ventaData.direccion_cliente?.longitud,
+                es_principal: ventaData.direccion_cliente?.es_principal,
+            });
+            console.log('%c🛒 DATOS DE LA VENTA', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                venta_id: ventaData.id,
+                numero: ventaData.numero,
+                fecha: ventaData.fecha,
+                cliente_id: ventaData.cliente_id,
+                direccion_cliente_id: ventaData.direccion_cliente_id,
+                total: ventaData.total,
+            });
+
             const clienteId = ventaData.cliente_id;
             const telefonoVenta = (ventaData?.cliente?.telefono || '').trim();
             const telefonoCliente = telefonoVenta || obtenerTelefonoCliente(clienteId);
-            const direccion = ventaData.direccionCliente;
+            const direccion = ventaData.direccion_cliente;
 
             console.log('📍 DIRECCIÓN CAPTURADA:', {
                 direccion_cliente_id: ventaData.direccion_cliente_id,
                 direccionCliente: direccion,
+                localidad: direccion?.localidad,
+                latitud: direccion?.latitud,
+                longitud: direccion?.longitud,
             });
 
-            // Cargar prestables desde productos de la venta
+            // ✅ Nuevo: Si el cliente tiene dirección registrada, cargar en el mapa
+            if (ventaData.direccion_cliente) {
+                const dirCliente = ventaData.direccion_cliente;
+
+                // Extraer ID de localidad (puede venir de localidad_id o como objeto)
+                let localidadId = null;
+                if (dirCliente.localidad_id) {
+                    localidadId = dirCliente.localidad_id;
+                } else if (dirCliente.localidad?.id) {
+                    localidadId = dirCliente.localidad.id;
+                } else if (dirCliente.localidad && typeof dirCliente.localidad === 'object') {
+                    localidadId = dirCliente.localidad.id;
+                }
+
+                if (localidadId) {
+                    const direccionTexto = dirCliente.direccion || '';
+                    const latitud = dirCliente.latitud;
+                    const longitud = dirCliente.longitud;
+                    const direccionClienteId = dirCliente.id;
+                    const observaciones = dirCliente.observaciones;
+
+                    setUbicacionSeleccionada({
+                        localidad_id: localidadId,
+                        direccion: direccionTexto,
+                        latitud,
+                        longitud,
+                        direccion_cliente_id: direccionClienteId,
+                        observaciones,
+                    });
+
+                    setFormData((prev) => {
+                        const nuevoFormData = {
+                            ...prev,
+                            ubicacion: {
+                                localidad_id: localidadId,
+                                direccion: direccionTexto,
+                                es_ubicacion_manual: false,
+                                direccion_cliente_id: direccionClienteId,
+                                observaciones,
+                            },
+                        };
+                        console.log('%c📋 handleSelectVenta - Actualizando formData.ubicacion', 'color: #9c27b0; font-weight: bold; font-size: 12px', {
+                            ubicacion_anterior: prev.ubicacion,
+                            ubicacion_nueva: nuevoFormData.ubicacion,
+                            localidadId,
+                            direccionTexto,
+                            direccionClienteId,
+                            observaciones,
+                        });
+                        return nuevoFormData;
+                    });
+
+                    console.log('✅ Ubicación del cliente cargada automáticamente:', {
+                        localidad_id: localidadId,
+                        direccion: direccionTexto,
+                        latitud,
+                        longitud,
+                        direccion_cliente_id: direccionClienteId,
+                        observaciones,
+                    });
+
+                    toastSuccess('✓ Ubicación del cliente cargada automáticamente');
+                }
+            }
+
+            // ✅ NUEVO: Cargar prestables desde productos de la venta
             const nuevosPrestables: PrestamoItem[] = [];
             if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
-                ventaData.detalles.forEach((detalle: any) => {
+                console.log('%c🛒 PROCESANDO DETALLES DE VENTA', 'color: #ff6b6b; font-weight: bold; font-size: 12px', {
+                    total_detalles: ventaData.detalles.length,
+                    detalles: ventaData.detalles.map((d: any) => ({
+                        id: d.id,
+                        cantidad: d.cantidad,
+                        producto_nombre: d.producto?.nombre,
+                        prestables_count: d.producto?.prestables?.length || 0,
+                    })),
+                });
+
+                ventaData.detalles.forEach((detalle: any, index: number) => {
                     const producto = detalle.producto;
                     const cantidad = detalle.cantidad || 0;
 
-                    // Buscar prestable CANASTILLA relacionado (ventas al por mayor son en canastillas)
-                    if (producto && producto.prestables && producto.prestables.length > 0 && cantidad > 0) {
-                        // ✅ Buscar CANASTILLA primero (ventas al por mayor)
-                        const prestableCanastilla = producto.prestables.find(
-                            (p: any) => prestables.find(pr => pr.id === p.prestable_id)?.tipo === 'CANASTILLA'
-                        );
+                    console.log(`%c📋 DETALLE ${index + 1}/${ventaData.detalles.length}`, 'color: #4ecdc4; font-weight: bold; font-size: 11px', {
+                        producto_nombre: producto?.nombre,
+                        cantidad,
+                        prestables_disponibles: producto?.prestables?.map((p: any) => ({
+                            prestable_id: p.prestable_id,
+                            tipo_en_maestro: prestables.find((pr) => pr.id === p.prestable_id)?.tipo,
+                        })),
+                    });
+
+                    // ✅ Validar que el producto tenga prestables relacionados
+                    if (producto && producto.prestables && Array.isArray(producto.prestables) && producto.prestables.length > 0 && cantidad > 0) {
+                        console.log('%c🔍 BUSCANDO CANASTILLA EN PRODUCTO', 'color: #ff9ff3; font-weight: bold; font-size: 11px', {
+                            prestables_array: producto.prestables,
+                        });
+
+                        // 1️⃣ Buscar CANASTILLA en el array de prestables del producto (DIRECTAMENTE DEL BACKEND)
+                        const prestableCanastilla = producto.prestables.find((p: any) => {
+                            console.log(`   Verificando: ${p.nombre} (tipo: ${p.tipo})`);
+                            return p.tipo === 'CANASTILLA';
+                        });
 
                         if (prestableCanastilla) {
-                            const canastilla = prestables.find(p => p.id === prestableCanastilla.prestable_id);
+                            const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
+                            const capacidadCanastilla = prestableCanastilla.capacidad || 0;
 
-                            if (canastilla) {
-                                console.log('📦 Cargando CANASTILLA + EMBASES desde venta:', {
-                                    producto: producto.nombre,
-                                    canastilla: canastilla.nombre,
-                                    cantidad_canastillas: cantidad,
-                                    capacidad: canastilla.capacidad,
-                                    cantidad_embases: cantidad * (canastilla.capacidad || 0),
-                                });
+                            console.log('%c✅ CANASTILLA ENCONTRADA EN PRODUCTO', 'color: #00b894; font-weight: bold; font-size: 11px', {
+                                canastilla_id: canastillaId,
+                                canastilla_nombre: prestableCanastilla.nombre,
+                                cantidad_canastillas: cantidad,
+                                capacidad: capacidadCanastilla,
+                                cantidad_embases_calculada: cantidad * capacidadCanastilla,
+                            });
 
-                                // 1️⃣ Agregar CANASTILLA
+                            // ✅ Agregar CANASTILLA
+                            nuevosPrestables.push({
+                                prestable_id: canastillaId,
+                                cantidad: cantidad,
+                                almacenes_ids: [],
+                                prestable: prestableCanastilla,
+                            });
+
+                            // ✅ Buscar EMBASES en el array de prestables del producto
+                            const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
+
+                            console.log('%c🥫 EMBASES EN PRODUCTO', 'color: #fdcb6e; font-weight: bold; font-size: 11px', {
+                                total_embases: embasesEnProducto.length,
+                                embases: embasesEnProducto.map((e: any) => ({
+                                    id: e.id || e.prestable_id,
+                                    nombre: e.nombre,
+                                    cantidad_a_prestar: cantidad * capacidadCanastilla,
+                                })),
+                            });
+
+                            // ✅ Agregar cada EMBASE encontrado
+                            embasesEnProducto.forEach((embase: any) => {
+                                const embaseId = Number(embase.id || embase.prestable_id);
+                                const cantidadEmbases = cantidad * capacidadCanastilla;
                                 nuevosPrestables.push({
-                                    prestable_id: Number(canastilla.id),
-                                    cantidad: cantidad,
+                                    prestable_id: embaseId,
+                                    cantidad: cantidadEmbases,
                                     almacenes_ids: [],
-                                    prestable: canastilla,
+                                    prestable: embase,
+                                    isAutomaticEmbase: true,
                                 });
 
-                                // 2️⃣ Agregar EMBASES automáticos relacionados
-                                const embasesRelacionados = prestables.filter(
-                                    p => p.tipo === 'EMBASES' &&
-                                        (p as any).prestable_relacionado_id === canastilla.id
-                                );
-
-                                embasesRelacionados.forEach(embase => {
-                                    const cantidadEmbases = cantidad * (canastilla.capacidad || 0);
-                                    nuevosPrestables.push({
-                                        prestable_id: Number(embase.id),
-                                        cantidad: cantidadEmbases,
-                                        almacenes_ids: [],
-                                        prestable: embase,
-                                        isAutomaticEmbase: true,
-                                    });
-                                });
-                            }
+                                console.log(`   ✅ Agregado EMBASE: ${embase.nombre} (ID: ${embaseId}) x ${cantidadEmbases}`);
+                            });
+                        } else {
+                            console.warn('⚠️ No se encontró CANASTILLA en el producto:', {
+                                producto_nombre: producto.nombre,
+                                prestables_en_producto: producto.prestables.map((p: any) => ({
+                                    id: p.prestable_id,
+                                    nombre: p.nombre,
+                                    tipo: p.tipo,
+                                })),
+                            });
                         }
                     }
                 });
@@ -243,7 +479,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 telefono_cliente_1: telefonoCliente,
                 direccion_cliente_id: ventaData.direccion_cliente_id,
             });
-            setClienteSeleccionado(clientes.find(c => c.id === clienteId));
+            setClienteSeleccionado(clientes.find((c) => c.id === clienteId));
             setDireccionSeleccionada(direccion);
 
             // Agregar prestables cargados
@@ -264,10 +500,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             setClientesFiltered(clientes);
         } else {
             setClientesFiltered(
-                clientes.filter(c =>
-                    c.nombre.toLowerCase().includes(query.toLowerCase()) ||
-                    c.razon_social?.toLowerCase().includes(query.toLowerCase())
-                )
+                clientes.filter(
+                    (c) => c.nombre.toLowerCase().includes(query.toLowerCase()) || c.razon_social?.toLowerCase().includes(query.toLowerCase()),
+                ),
             );
         }
     };
@@ -291,11 +526,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         if (query.trim().length === 0) {
             setAlmacenesFiltered(almacenes);
         } else {
-            setAlmacenesFiltered(
-                almacenes.filter(a =>
-                    a.nombre.toLowerCase().includes(query.toLowerCase())
-                )
-            );
+            setAlmacenesFiltered(almacenes.filter((a) => a.nombre.toLowerCase().includes(query.toLowerCase())));
         }
     };
 
@@ -316,11 +547,12 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             setVehiculosFiltered(vehiculos);
         } else {
             setVehiculosFiltered(
-                vehiculos.filter(v =>
-                    v.placa.toLowerCase().includes(query.toLowerCase()) ||
-                    v.marca?.toLowerCase().includes(query.toLowerCase()) ||
-                    v.modelo?.toLowerCase().includes(query.toLowerCase())
-                )
+                vehiculos.filter(
+                    (v) =>
+                        v.placa.toLowerCase().includes(query.toLowerCase()) ||
+                        v.marca?.toLowerCase().includes(query.toLowerCase()) ||
+                        v.modelo?.toLowerCase().includes(query.toLowerCase()),
+                ),
             );
         }
     };
@@ -335,21 +567,40 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         });
     };
 
+    // ✅ Nuevo: Manejar ubicación seleccionada del mapa
+    const handleUbicacionSeleccionada = (ubicacion: {
+        latitud: number;
+        longitud: number;
+        localidad_id?: number;
+        direccion?: string;
+        es_ubicacion_manual?: boolean;
+    }) => {
+        setUbicacionSeleccionada({
+            localidad_id: ubicacion.localidad_id,
+            direccion: ubicacion.direccion,
+        });
+
+        setFormData({
+            ...formData,
+            ubicacion: {
+                localidad_id: ubicacion.localidad_id,
+                direccion: ubicacion.direccion || '',
+                es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
+            },
+        });
+
+        toastSuccess('✓ Ubicación seleccionada correctamente');
+    };
+
     const handleEliminarPrestable = (prestable_id: number) => {
         // Si es una canastilla, eliminar también sus embases relacionados
-        const prestable = prestables.find(p => Number(p.id) === prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === prestable_id);
         if (prestable?.tipo === 'CANASTILLA') {
-            const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id
-            );
-            const idsAEliminar = [prestable_id, ...embasesRelacionados.map(e => e.id)];
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id))
-            );
+            const embasesRelacionados = prestables.filter((p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id);
+            const idsAEliminar = [prestable_id, ...embasesRelacionados.map((e) => e.id)];
+            setPrestablesAgregados(prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id)));
         } else {
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => p.prestable_id !== prestable_id)
-            );
+            setPrestablesAgregados(prestablesAgregados.filter((p) => p.prestable_id !== prestable_id));
         }
     };
 
@@ -357,24 +608,28 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         const itemActualizado = prestablesAgregados[itemIndex];
         if (!itemActualizado) return;
 
-        const prestable = prestables.find(p => Number(p.id) === itemActualizado.prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === itemActualizado.prestable_id);
 
-        setPrestablesAgregados(prestablesAgregados.map((item, idx) => {
-            // Actualizar solo el item específico por índice
-            if (idx === itemIndex) {
-                return { ...item, cantidad: nueva_cantidad };
-            }
+        setPrestablesAgregados(
+            prestablesAgregados.map((item, idx) => {
+                // Actualizar solo el item específico por índice
+                if (idx === itemIndex) {
+                    return { ...item, cantidad: nueva_cantidad };
+                }
 
-            // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
-            if (prestable?.tipo === 'CANASTILLA' &&
-                item.isAutomaticEmbase === true &&  // ✅ SOLO embases automáticos
-                (item.prestable as any)?.prestable_relacionado_id === prestable?.id) {
-                const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
-                return { ...item, cantidad: cantidadEmbasesAutomatica };
-            }
+                // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
+                if (
+                    prestable?.tipo === 'CANASTILLA' &&
+                    item.isAutomaticEmbase === true && // ✅ SOLO embases automáticos
+                    (item.prestable as any)?.prestable_relacionado_id === prestable?.id
+                ) {
+                    const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
+                    return { ...item, cantidad: cantidadEmbasesAutomatica };
+                }
 
-            return item;
-        }));
+                return item;
+            }),
+        );
     };
 
     const handleEditAlmacenes = async (item: PrestamoItem, index: number) => {
@@ -382,7 +637,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             // Refrescar datos del prestable desde el API para obtener stock actual
             if (item.prestable_id) {
                 const response = await fetch(`/api/prestables/${item.prestable_id}`, {
-                    headers: { 'Accept': 'application/json' }
+                    headers: { Accept: 'application/json' },
                 });
 
                 if (response.ok) {
@@ -424,13 +679,13 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         if (indexEnEdicion !== null && prestamoItemEnEdicion) {
             const nuevosItems = [...prestablesAgregados];
             const itemActual = nuevosItems[indexEnEdicion];
-            const prestableActual = prestables.find(p => p.id === itemActual.prestable_id);
+            const prestableActual = prestables.find((p) => p.id === itemActual.prestable_id);
 
             // Actualizar el item actual con los almacenes seleccionados
             nuevosItems[indexEnEdicion] = {
                 ...itemActual,
                 almacenes: almacenesSeleccionados,
-                almacenes_ids: almacenesSeleccionados.map(a => a.almacenes_prestables_id),
+                almacenes_ids: almacenesSeleccionados.map((a) => a.almacenes_prestables_id),
             };
 
             // Si es CANASTILLA, actualizar automáticamente los EMBASES relacionados
@@ -440,7 +695,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 // Encontrar embases automáticos relacionados a esta canastilla
                 const embasesRelacionados = nuevosItems
                     .map((item, idx) => {
-                        const prestableEmbase = prestables.find(p => p.id === item.prestable_id);
+                        const prestableEmbase = prestables.find((p) => p.id === item.prestable_id);
                         const esEmbaseAuto = item.isAutomaticEmbase === true;
                         const estaRelacionado = (prestableEmbase as any)?.prestable_relacionado_id === prestableActual.id;
 
@@ -457,7 +712,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     const cantidadEmbasesNueva = itemActual.cantidad * capacidadCanastilla;
 
                     // Los embases usan la misma distribución de almacenes que la canastilla
-                    const almacenesEmbase = almacenesSeleccionados.map(almData => ({
+                    const almacenesEmbase = almacenesSeleccionados.map((almData) => ({
                         almacenes_prestables_id: almData.almacenes_prestables_id,
                         cantidad: Math.round((almData.cantidad / itemActual.cantidad) * cantidadEmbasesNueva) || 0,
                     }));
@@ -466,7 +721,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         ...nuevosItems[index],
                         cantidad: cantidadEmbasesNueva,
                         almacenes: almacenesEmbase,
-                        almacenes_ids: almacenesEmbase.map(a => a.almacenes_prestables_id),
+                        almacenes_ids: almacenesEmbase.map((a) => a.almacenes_prestables_id),
                     };
                 });
 
@@ -501,12 +756,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
         if (prestable.tipo === 'CANASTILLA') {
             const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES'
-                    && (p as any).prestable_relacionado_id === Number(prestable.id)
-                    && getStockDisponibleTotal(p) > 0
+                (p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === Number(prestable.id) && getStockDisponibleTotal(p) > 0,
             );
 
-            embasesRelacionados.forEach(embase => {
+            embasesRelacionados.forEach((embase) => {
                 const cantidadEmbasesAutomatica = 1 * (prestable.capacidad || 0);
 
                 nuevosItems.push({
@@ -522,13 +775,16 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
         const actualizado = [...prestablesAgregados, ...nuevosItems];
         console.log('🔵 handleAgregarCanastilla - Prestable:', prestable.nombre, prestable.tipo);
-        console.log('   Items nuevos:', nuevosItems.map(i => ({
-            id: i.prestable_id,
-            nombre: i.prestable?.nombre,
-            tipo: i.prestable?.tipo,
-            isAutomaticEmbase: i.isAutomaticEmbase,
-            almacenes_ids: i.almacenes_ids // ✅ Mostrar almacenes vacíos
-        })));
+        console.log(
+            '   Items nuevos:',
+            nuevosItems.map((i) => ({
+                id: i.prestable_id,
+                nombre: i.prestable?.nombre,
+                tipo: i.prestable?.tipo,
+                isAutomaticEmbase: i.isAutomaticEmbase,
+                almacenes_ids: i.almacenes_ids, // ✅ Mostrar almacenes vacíos
+            })),
+        );
         console.log('   ⚠️ USUARIO DEBE ESPECIFICAR ALMACENES en el modal');
         toastWarning('⚠️ Especifica los almacenes para este prestable en el modal');
         setPrestablesAgregados(actualizado);
@@ -562,15 +818,16 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         // Validar que cada prestable tiene almacenes especificados
         for (let i = 0; i < prestablesAgregados.length; i++) {
             const item = prestablesAgregados[i];
-            const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
+            const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
             if (!prestable) continue;
 
             // Usar almacenes del detalle si existen, sino almacén de cabecera
-            const almacenesAUsar = (item.almacenes && item.almacenes.length > 0)
-                ? item.almacenes
-                : formData.almacenes_prestables_id
-                    ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: item.cantidad }]
-                    : [];
+            const almacenesAUsar =
+                item.almacenes && item.almacenes.length > 0
+                    ? item.almacenes
+                    : formData.almacenes_prestables_id
+                      ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: item.cantidad }]
+                      : [];
 
             if (almacenesAUsar.length === 0) {
                 const msg = `${prestable.nombre}: Debes especificar almacenes (en cabecera o en el detalle)`;
@@ -582,12 +839,14 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             // Validar stock en cada almacén
             let cantidadValidadaTotal = 0;
             for (const almacenData of almacenesAUsar) {
-                const stock = prestable.stocks?.find(s => Number(s.almacenes_prestables_id) === almacenData.almacenes_prestables_id);
+                const stock = prestable.stocks?.find((s) => Number(s.almacenes_prestables_id) === almacenData.almacenes_prestables_id);
                 const cantidadDisponible = stock ? Number(stock.cantidad_disponible || 0) : 0;
                 const cantidadSolicitada = almacenData.cantidad;
 
                 if (cantidadSolicitada > cantidadDisponible) {
-                    const almacenNombre = almacenes.find(a => a.id === almacenData.almacenes_prestables_id)?.nombre || `Almacén #${almacenData.almacenes_prestables_id}`;
+                    const almacenNombre =
+                        almacenes.find((a) => a.id === almacenData.almacenes_prestables_id)?.nombre ||
+                        `Almacén #${almacenData.almacenes_prestables_id}`;
                     const msg = `${prestable.nombre} en ${almacenNombre}: Stock insuficiente. Disponible: ${cantidadDisponible}, solicitado: ${cantidadSolicitada}`;
                     setError(msg);
                     toastError(msg);
@@ -609,7 +868,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
         try {
             // Enviar todos los prestables en un único llamado con formato de detalles
-            const payload = {
+            const payload: any = {
                 cliente_id: formData.cliente_id,
                 almacenes_prestables_id: formData.almacenes_prestables_id,
                 chofer_id: formData.chofer_id,
@@ -624,7 +883,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 fecha_esperada_devolucion: formData.fecha_esperada_devolucion,
                 monto_garantia: formData.monto_garantia,
                 observaciones: '',
-                detalles: prestablesAgregados.map(item => {
+                detalles: prestablesAgregados.map((item) => {
                     // Si tiene almacenes en el nuevo formato, usarlo; sino usar almacenes_ids (antiguo)
                     const detallePayload: any = {
                         prestable_id: item.prestable_id,
@@ -640,6 +899,23 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     return detallePayload;
                 }),
             };
+
+            // ✅ Agregar ubicación si está seleccionada
+            console.log('%c📍 DEBUG: formData.ubicacion ANTES de verificar', 'color: #ff1744; font-weight: bold; font-size: 12px', formData.ubicacion);
+            console.log('%c📍 DEBUG: ubicacionSeleccionada ANTES de verificar', 'color: #ff1744; font-weight: bold; font-size: 12px', ubicacionSeleccionada);
+
+            if (formData.ubicacion?.localidad_id || formData.ubicacion?.direccion) {
+                payload.ubicacion = {
+                    localidad_id: formData.ubicacion.localidad_id || undefined,
+                    direccion: formData.ubicacion.observaciones || undefined,
+                    es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
+                    direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
+                    observaciones: formData.ubicacion.observaciones || undefined,
+                };
+                console.log('%c✅ Ubicación AGREGADA al payload', 'color: #4caf50; font-weight: bold; font-size: 12px', payload.ubicacion);
+            } else {
+                console.log('%c❌ Ubicación NO agregada (localidad_id y direccion vacías)', 'color: #ff9800; font-weight: bold; font-size: 12px');
+            }
 
             console.log('📤 Enviando préstamo con detalles:', payload);
             const response = await prestamoClienteService.crear(payload);
@@ -671,25 +947,19 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     return (
         <AppLayout>
             <Head title="Crear Préstamo a Cliente" />
-            <div className="p-2 bg-white dark:bg-gray-950 min-h-screen">
-                <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-                    👥 Nuevo Préstamo a Cliente
-                </h1>
+            <div className="min-h-screen bg-white p-2 dark:bg-gray-950">
+                <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">👥 Nuevo Préstamo a Cliente</h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
-                        <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg border border-red-300 dark:border-red-700">
+                        <div className="rounded-lg border border-red-300 bg-red-100 p-4 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
                             {error}
                         </div>
                     )}
 
                     {/* Sección 1: Información del Préstamo */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        {/* <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">
-                            📋 Información del Préstamo
-                        </h2> */}
-
-                        <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
+                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                        <div className="grid grid-cols-3 gap-4 md:grid-cols-4">
                             {/* Almacén - Búsqueda */}
                             <DynamicSearchSelect
                                 label="🏭 Almacén *"
@@ -741,52 +1011,22 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getItemId={(venta) => venta.id}
                                 getDisplayValue={(venta) => `${venta.numero} - ${venta.cliente?.nombre}`}
                             />
-
-                            {/* Cliente - Búsqueda Dinámica */}
-                            <DynamicSearchSelect
-                                label="Cliente *"
-                                placeholder="Buscar cliente..."
-                                selectedItem={clienteSeleccionado}
-                                items={clientesFiltered}
-                                isLoading={false}
-                                searchValue={clientesSearch}
-                                onSearch={handleSearchClientes}
-                                onSelect={handleSelectCliente}
-                                onClear={() => {
-                                    setClienteSeleccionado(null);
-                                    setClientesSearch('');
-                                    setFormData({ ...formData, cliente_id: undefined });
-                                }}
-                                renderItem={(cliente) => (
-                                    <div>
-                                        <p className="font-medium">{cliente.nombre}</p>
-                                        {cliente.razon_social && (
-                                            <p className="text-xs text-gray-500">{cliente.razon_social}</p>
-                                        )}
-                                    </div>
-                                )}
-                                getItemId={(cliente) => cliente.id}
-                                getDisplayValue={(cliente) => cliente.nombre}
-                            />
-
                             {/* Chofer - Pre cargados (sin búsqueda) */}
                             <DynamicSearchSelect
                                 label="Chofer Encargado (Opcional)"
                                 placeholder="Seleccionar chofer..."
-                                selectedItem={choferes.find(ch => ch.id === formData.chofer_id) || null}
+                                selectedItem={choferes.find((ch) => ch.id === formData.chofer_id) || null}
                                 items={choferes}
                                 isLoading={false}
                                 searchValue=""
-                                onSearch={() => { }}
+                                onSearch={() => {}}
                                 onSelect={(chofer) => {
                                     setFormData({ ...formData, chofer_id: chofer.id });
                                 }}
                                 onClear={() => {
                                     setFormData({ ...formData, chofer_id: undefined });
                                 }}
-                                renderItem={(chofer) => (
-                                    <p className="font-medium">{chofer.nombre}</p>
-                                )}
+                                renderItem={(chofer) => <p className="font-medium">{chofer.nombre}</p>}
                                 getItemId={(chofer) => chofer.id}
                                 getDisplayValue={(chofer) => chofer.nombre}
                             />
@@ -809,7 +1049,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                     <div>
                                         <p className="font-medium">{vehiculo.placa}</p>
                                         {(vehiculo.marca || vehiculo.modelo) && (
-                                            <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {vehiculo.marca} {vehiculo.modelo}
+                                            </p>
                                         )}
                                     </div>
                                 )}
@@ -817,9 +1059,33 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getDisplayValue={(vehiculo) => `${vehiculo.placa}${vehiculo.marca ? ` - ${vehiculo.marca} ${vehiculo.modelo}` : ''}`}
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            {/* Cliente - Búsqueda Dinámica */}
+                            <DynamicSearchSelect
+                                label="Cliente *"
+                                placeholder="Buscar cliente..."
+                                selectedItem={clienteSeleccionado}
+                                items={clientesFiltered}
+                                isLoading={false}
+                                searchValue={clientesSearch}
+                                onSearch={handleSearchClientes}
+                                onSelect={handleSelectCliente}
+                                onClear={() => {
+                                    setClienteSeleccionado(null);
+                                    setClientesSearch('');
+                                    setFormData({ ...formData, cliente_id: undefined });
+                                }}
+                                renderItem={(cliente) => (
+                                    <div>
+                                        <p className="font-medium">{cliente.nombre}</p>
+                                        {cliente.razon_social && <p className="text-xs text-gray-500">{cliente.razon_social}</p>}
+                                    </div>
+                                )}
+                                getItemId={(cliente) => cliente.id}
+                                getDisplayValue={(cliente) => cliente.nombre}
+                            />
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 1 (Opcional)
                                 </label>
                                 <input
@@ -832,13 +1098,13 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         })
                                     }
                                     maxLength={25}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ej: 71234567"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 2 (Opcional)
                                 </label>
                                 <input
@@ -851,51 +1117,77 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         })
                                     }
                                     maxLength={25}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ej: 76543210"
                                 />
                             </div>
 
-                            {/* 📍 Sección de Dirección del Cliente */}
-                            {direccionSeleccionada && (
-                                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-2xl">📍</span>
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                                                Dirección de Entrega
-                                            </h3>
-                                            {/* <p className="text-sm text-blue-800 dark:text-blue-200 mb-1">
-                                                <span className="font-medium">{direccionSeleccionada.direccion}</span>
-                                            </p> */}
-                                            {direccionSeleccionada.localidad && (
-                                                <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
-                                                    📌 {direccionSeleccionada.localidad}
-                                                </p>
-                                            )}
-                                            {direccionSeleccionada.observaciones && (
-                                                <p className="text-sm text-blue-700 dark:text-blue-300 italic border-l-2 border-blue-300 pl-2">
-                                                    💬 {direccionSeleccionada.observaciones}
-                                                </p>
-                                            )}
-                                            {/* {(direccionSeleccionada.latitud || direccionSeleccionada.longitud) && (
-                                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                                    🗺️ {direccionSeleccionada.latitud?.toFixed(4)}, {direccionSeleccionada.longitud?.toFixed(4)}
-                                                </p>
-                                            )} */}
+                            {/* ✅ Nuevo: Sección de Ubicación en Mapa */}
+                            <div>
+                                <div className="mb-2 flex items-end justify-between">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={() => setMostrarModalUbicacion(true)}
+                                        className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                                    >
+                                        📍 Seleccionar en Mapa
+                                    </Button>
+                                    {ubicacionSeleccionada && (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setUbicacionSeleccionada(null);
+                                                setFormData({
+                                                    ...formData,
+                                                    ubicacion: {
+                                                        localidad_id: undefined,
+                                                        observaciones: undefined,
+                                                        direccion: '',
+                                                        es_ubicacion_manual: false,
+                                                    },
+                                                });
+                                            }}
+                                            className="mt-2 rounded-lg border border-red-200 px-2 py-1 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
+                                        >
+                                            ✗ Limpiar
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {ubicacionSeleccionada && (
+                                    <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-950/30">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-1">
+                                                {/* <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                                                    Ubicación Seleccionada
+                                                </h3> */}
+                                                {ubicacionSeleccionada.localidad_id && (
+                                                    <p className="mb-1 text-xs text-green-800 dark:text-green-300">
+                                                        📌 Localidad:{' '}
+                                                        <span className="font-medium">
+                                                            {localidades.find((l) => l.id === ubicacionSeleccionada.localidad_id)?.nombre ||
+                                                                'No encontrada'}
+                                                        </span>
+                                                    </p>
+                                                )}
+                                                {ubicacionSeleccionada.observaciones && (
+                                                    <p className="mb-1 text-xs text-green-800 dark:text-green-300">
+                                                        📝 Observaciones: <span className="font-medium">{ubicacionSeleccionada.observaciones}</span>
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
 
-
-
-                        <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-4 md:grid-cols-3">
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Garantía Total (Opcional)
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -910,28 +1202,26 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         }
                                     }}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="0.00"
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     Escribe la garantía manualmente (Sugerencia: {totalGarantia.toFixed(2)})
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Fecha de Préstamo *
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
                                 <input
                                     type="date"
                                     required
                                     value={formData.fecha_prestamo}
                                     onChange={(e) => handleFechaPrestamo(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Fecha Esperada de Devolución (7 días) *
                                 </label>
                                 <input
@@ -944,35 +1234,15 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                             fecha_esperada_devolucion: e.target.value,
                                         })
                                     }
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                         </div>
-                        {/* <div>
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.es_evento}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            es_evento: e.target.checked,
-                                        })
-                                    }
-                                    className="w-5 h-5 cursor-pointer"
-                                />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    🎉 Este préstamo es para un evento
-                                </span>
-                            </label>
-                        </div> */}
                     </Card>
 
                     {/* Sección 2: Prestables */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            📦 Seleccionar Prestables
-                        </h2>
+                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📦 Seleccionar Prestables</h2>
 
                         <PrestablesSelectionTable
                             prestables={prestables}
@@ -993,7 +1263,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         <Button
                             type="submit"
                             disabled={loading || prestablesAgregados.length === 0}
-                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white"
+                            className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                         >
                             {loading ? 'Registrando...' : '✅ Registrar Préstamo'}
                         </Button>
@@ -1010,89 +1280,109 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             <ToastContainer toasts={toasts} onClose={removeToast} />
 
             {/* Modal de Almacenes */}
-            {prestamoItemEnEdicion && (() => {
-                const prestableActual = prestamoItemEnEdicion.prestable;
-                const esCanastilla = prestableActual?.tipo === 'CANASTILLA';
-                const capacidadCanastilla = prestableActual?.capacidad || 0;
+            {prestamoItemEnEdicion &&
+                (() => {
+                    const prestableActual = prestamoItemEnEdicion.prestable;
+                    const esCanastilla = prestableActual?.tipo === 'CANASTILLA';
+                    const capacidadCanastilla = prestableActual?.capacidad || 0;
 
-                // Buscar embases relacionados si es canastilla
-                let embaseRelacionado = null;
-                let embaseStockDisponible = [];
+                    // Buscar embases relacionados si es canastilla
+                    let embaseRelacionado = null;
+                    let embaseStockDisponible = [];
 
-                if (esCanastilla) {
-                    embaseRelacionado = prestables.find(p =>
-                        p.tipo === 'EMBASES' &&
-                        (p as any).prestable_relacionado_id === prestableActual?.id
-                    );
+                    if (esCanastilla) {
+                        embaseRelacionado = prestables.find(
+                            (p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestableActual?.id,
+                        );
 
-                    if (embaseRelacionado) {
-                        embaseStockDisponible = embaseRelacionado.stocks?.map(s => ({
-                            almacenes_prestables_id: s.almacenes_prestables_id,
-                            cantidad_disponible: s.cantidad_disponible,
-                        })) || [];
-                    }
-                }
-
-                return (
-                    <ModalAlmacenesDetalle
-                        isOpen={mostrarModalAlmacenes}
-                        onClose={() => {
-                            setMostrarModalAlmacenes(false);
-                            setPrestamoItemEnEdicion(null);
-                            setIndexEnEdicion(null);
-                        }}
-                        onSave={(almacenesCanastilla, almacenesEmbase) => {
-                            if (indexEnEdicion !== null) {
-                                const nuevosItems = [...prestablesAgregados];
-
-                                // Actualizar canastilla
-                                nuevosItems[indexEnEdicion] = {
-                                    ...nuevosItems[indexEnEdicion],
-                                    almacenes: almacenesCanastilla,
-                                    almacenes_ids: almacenesCanastilla.map(a => a.almacenes_prestables_id),
-                                };
-
-                                // Actualizar embase relacionado si existe
-                                if (esCanastilla && almacenesEmbase && embaseRelacionado) {
-                                    const embaseIndex = nuevosItems.findIndex(
-                                        item => item.prestable_id === embaseRelacionado?.id &&
-                                            item.isAutomaticEmbase === true
-                                    );
-
-                                    if (embaseIndex !== -1) {
-                                        const cantidadEmbase = prestamoItemEnEdicion.cantidad * capacidadCanastilla;
-                                        nuevosItems[embaseIndex] = {
-                                            ...nuevosItems[embaseIndex],
-                                            cantidad: cantidadEmbase,
-                                            almacenes: almacenesEmbase,
-                                            almacenes_ids: almacenesEmbase.map(a => a.almacenes_prestables_id),
-                                        };
-                                    }
-                                }
-
-                                setPrestablesAgregados(nuevosItems);
-                            }
-                            setMostrarModalAlmacenes(false);
-                            setPrestamoItemEnEdicion(null);
-                            setIndexEnEdicion(null);
-                        }}
-                        prestableNombre={prestamoItemEnEdicion.prestable?.nombre || 'Prestable'}
-                        cantidadTotal={prestamoItemEnEdicion.cantidad}
-                        almacenes={almacenes}
-                        stockDisponible={
-                            prestamoItemEnEdicion.prestable?.stocks?.map(s => ({
-                                almacenes_prestables_id: s.almacenes_prestables_id,
-                                cantidad_disponible: s.cantidad_disponible,
-                            })) || []
+                        if (embaseRelacionado) {
+                            embaseStockDisponible =
+                                embaseRelacionado.stocks?.map((s) => ({
+                                    almacenes_prestables_id: s.almacenes_prestables_id,
+                                    cantidad_disponible: s.cantidad_disponible,
+                                })) || [];
                         }
-                        almacenesActuales={prestamoItemEnEdicion.almacenes || []}
-                        esCanastilla={esCanastilla}
-                        capacidadCanastilla={capacidadCanastilla}
-                        embaseNombre={embaseRelacionado?.nombre || ''}
-                        embaseStockDisponible={embaseStockDisponible}
-                    />
-                );
-            })()}
+                    }
+
+                    return (
+                        <ModalAlmacenesDetalle
+                            isOpen={mostrarModalAlmacenes}
+                            onClose={() => {
+                                setMostrarModalAlmacenes(false);
+                                setPrestamoItemEnEdicion(null);
+                                setIndexEnEdicion(null);
+                            }}
+                            onSave={(almacenesCanastilla, almacenesEmbase) => {
+                                if (indexEnEdicion !== null) {
+                                    const nuevosItems = [...prestablesAgregados];
+
+                                    // Actualizar canastilla
+                                    nuevosItems[indexEnEdicion] = {
+                                        ...nuevosItems[indexEnEdicion],
+                                        almacenes: almacenesCanastilla,
+                                        almacenes_ids: almacenesCanastilla.map((a) => a.almacenes_prestables_id),
+                                    };
+
+                                    // Actualizar embase relacionado si existe
+                                    if (esCanastilla && almacenesEmbase && embaseRelacionado) {
+                                        const embaseIndex = nuevosItems.findIndex(
+                                            (item) => item.prestable_id === embaseRelacionado?.id && item.isAutomaticEmbase === true,
+                                        );
+
+                                        if (embaseIndex !== -1) {
+                                            const cantidadEmbase = prestamoItemEnEdicion.cantidad * capacidadCanastilla;
+                                            nuevosItems[embaseIndex] = {
+                                                ...nuevosItems[embaseIndex],
+                                                cantidad: cantidadEmbase,
+                                                almacenes: almacenesEmbase,
+                                                almacenes_ids: almacenesEmbase.map((a) => a.almacenes_prestables_id),
+                                            };
+                                        }
+                                    }
+
+                                    setPrestablesAgregados(nuevosItems);
+                                }
+                                setMostrarModalAlmacenes(false);
+                                setPrestamoItemEnEdicion(null);
+                                setIndexEnEdicion(null);
+                            }}
+                            prestableNombre={prestamoItemEnEdicion.prestable?.nombre || 'Prestable'}
+                            cantidadTotal={prestamoItemEnEdicion.cantidad}
+                            almacenes={almacenes}
+                            stockDisponible={
+                                prestamoItemEnEdicion.prestable?.stocks?.map((s) => ({
+                                    almacenes_prestables_id: s.almacenes_prestables_id,
+                                    cantidad_disponible: s.cantidad_disponible,
+                                })) || []
+                            }
+                            almacenesActuales={prestamoItemEnEdicion.almacenes || []}
+                            esCanastilla={esCanastilla}
+                            capacidadCanastilla={capacidadCanastilla}
+                            embaseNombre={embaseRelacionado?.nombre || ''}
+                            embaseStockDisponible={embaseStockDisponible}
+                        />
+                    );
+                })()}
+
+            {/* ✅ Nuevo: Modal de Ubicación en Mapa */}
+            <UbicacionMapModal
+                isOpen={mostrarModalUbicacion}
+                onClose={() => setMostrarModalUbicacion(false)}
+                onSelect={handleUbicacionSeleccionada}
+                localidades={localidades}
+                ubicacionInicial={
+                    ubicacionSeleccionada?.latitud && ubicacionSeleccionada?.longitud
+                        ? {
+                              latitud: ubicacionSeleccionada.latitud,
+                              longitud: ubicacionSeleccionada.longitud,
+                              localidad_id: ubicacionSeleccionada.localidad_id,
+                              direccion: ubicacionSeleccionada.direccion,
+                          }
+                        : undefined
+                }
+                localidadPreseleccionada={ubicacionSeleccionada?.localidad_id}
+                mostrarSelectLocalidad={true}
+            />
 
             {/* Modal de Impresión */}
             <OutputSelectionModal

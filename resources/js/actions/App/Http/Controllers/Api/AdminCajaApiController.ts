@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
@@ -42,6 +42,41 @@ estadoGeneral.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
+ * @route '/api/admin/cajas/estado-general'
+ */
+    const estadoGeneralForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadoGeneral.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
+ * @route '/api/admin/cajas/estado-general'
+ */
+        estadoGeneralForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadoGeneral.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadoGeneral
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:38
+ * @route '/api/admin/cajas/estado-general'
+ */
+        estadoGeneralForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadoGeneral.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadoGeneral.form = estadoGeneralForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::obtenerAlertas
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
@@ -85,6 +120,41 @@ obtenerAlertas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::obtenerAlertas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
+ * @route '/api/admin/cajas/alertas'
+ */
+    const obtenerAlertasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerAlertas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::obtenerAlertas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
+ * @route '/api/admin/cajas/alertas'
+ */
+        obtenerAlertasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerAlertas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::obtenerAlertas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:72
+ * @route '/api/admin/cajas/alertas'
+ */
+        obtenerAlertasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerAlertas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerAlertas.form = obtenerAlertasForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
@@ -128,6 +198,41 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
+ * @route '/api/admin/cajas/estadisticas'
+ */
+    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
+ * @route '/api/admin/cajas/estadisticas'
+ */
+        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:130
+ * @route '/api/admin/cajas/estadisticas'
+ */
+        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::detalleCaja
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
@@ -190,6 +295,41 @@ detalleCaja.head = (args: { id: string | number } | [id: string | number ] | str
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::detalleCaja
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
+ * @route '/api/admin/cajas/{id}/detalle'
+ */
+    const detalleCajaForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: detalleCaja.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::detalleCaja
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
+ * @route '/api/admin/cajas/{id}/detalle'
+ */
+        detalleCajaForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: detalleCaja.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::detalleCaja
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:199
+ * @route '/api/admin/cajas/{id}/detalle'
+ */
+        detalleCajaForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: detalleCaja.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    detalleCaja.form = detalleCajaForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiarioGeneral
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
@@ -224,6 +364,27 @@ cierreDiarioGeneral.post = (options?: RouteQueryOptions): RouteDefinition<'post'
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiarioGeneral
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
+ * @route '/api/admin/cajas/cierre-diario'
+ */
+    const cierreDiarioGeneralForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: cierreDiarioGeneral.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::cierreDiarioGeneral
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:473
+ * @route '/api/admin/cajas/cierre-diario'
+ */
+        cierreDiarioGeneralForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cierreDiarioGeneral.url(options),
+            method: 'post',
+        })
+    
+    cierreDiarioGeneral.form = cierreDiarioGeneralForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::cierresPendientes
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
@@ -267,6 +428,41 @@ cierresPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::cierresPendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+    const cierresPendientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: cierresPendientes.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::cierresPendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+        cierresPendientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: cierresPendientes.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::cierresPendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+        cierresPendientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: cierresPendientes.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    cierresPendientes.form = cierresPendientesForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticasCierres
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
@@ -310,6 +506,41 @@ estadisticasCierres.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticasCierres
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+    const estadisticasCierresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticasCierres.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticasCierres
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+        estadisticasCierresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasCierres.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticasCierres
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+        estadisticasCierresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasCierres.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticasCierres.form = estadisticasCierresForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::consolidarCierre
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
@@ -363,6 +594,27 @@ consolidarCierre.post = (args: { id: string | number } | [id: string | number ] 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::consolidarCierre
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
+ * @route '/api/admin/cierres/{id}/consolidar'
+ */
+    const consolidarCierreForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: consolidarCierre.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::consolidarCierre
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
+ * @route '/api/admin/cierres/{id}/consolidar'
+ */
+        consolidarCierreForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: consolidarCierre.url(args, options),
+            method: 'post',
+        })
+    
+    consolidarCierre.form = consolidarCierreForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::rechazarCierre
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
@@ -416,6 +668,27 @@ rechazarCierre.post = (args: { id: string | number } | [id: string | number ] | 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::rechazarCierre
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
+ * @route '/api/admin/cierres/{id}/rechazar'
+ */
+    const rechazarCierreForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: rechazarCierre.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::rechazarCierre
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
+ * @route '/api/admin/cierres/{id}/rechazar'
+ */
+        rechazarCierreForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: rechazarCierre.url(args, options),
+            method: 'post',
+        })
+    
+    rechazarCierre.form = rechazarCierreForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::resumenGastos
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:283
@@ -458,6 +731,42 @@ resumenGastos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     url: resumenGastos.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::resumenGastos
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:283
+ * @route '/api/admin/gastos/resumen'
+ */
+    const resumenGastosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: resumenGastos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::resumenGastos
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:283
+ * @route '/api/admin/gastos/resumen'
+ */
+        resumenGastosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: resumenGastos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::resumenGastos
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:283
+ * @route '/api/admin/gastos/resumen'
+ */
+        resumenGastosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: resumenGastos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    resumenGastos.form = resumenGastosForm
 const AdminCajaApiController = { estadoGeneral, obtenerAlertas, estadisticas, detalleCaja, cierreDiarioGeneral, cierresPendientes, estadisticasCierres, consolidarCierre, rechazarCierre, resumenGastos }
 
 export default AdminCajaApiController

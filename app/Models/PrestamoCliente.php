@@ -26,6 +26,7 @@ class PrestamoCliente extends Model
         'fecha_esperada_devolucion',
         'estado',
         'observaciones',
+        'created_by', // ✅ Usuario que creó el préstamo
     ];
 
     protected $casts = [
@@ -56,6 +57,11 @@ class PrestamoCliente extends Model
         return $this->belongsTo(User::class, 'chofer_id');
     }
 
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function vehiculo(): BelongsTo
     {
         return $this->belongsTo(Vehiculo::class);
@@ -69,5 +75,10 @@ class PrestamoCliente extends Model
     public function devoluciones(): HasMany
     {
         return $this->hasMany(DevolucionCliente::class, 'prestamo_cliente_id');
+    }
+
+    public function ubicacion(): HasMany
+    {
+        return $this->hasMany(PrestamoUbicacion::class, 'prestamo_cliente_id');
     }
 }

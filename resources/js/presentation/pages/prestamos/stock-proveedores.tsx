@@ -34,6 +34,7 @@ interface StockItem {
     cantidad_evento_deudor?: number;
     cantidad_evento_devuelto?: number;
     cantidad_evento_dañada?: number;
+    cantidad_con_liquido: number;
     cantidad_total: number;
     almacenes_prestables_id: number;
 }
@@ -276,12 +277,13 @@ export default function StockProveedoresPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Por Devolver', 'Devuelto', 'Dañada', 'Total Préstamo Proveedor', 'Total General'];
+        const headers = ['Código', 'Nombre', 'Almacén', 'Disponible', 'Con Líquido', 'Por Devolver', 'Devuelto', 'Dañada', 'Total Préstamo Proveedor', 'Total General'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.almacen_nombre,
             item.cantidad_disponible,
+            item.cantidad_con_liquido,
             item.cantidad_proveedor_acreedor,
             item.cantidad_proveedor_devuelto,
             item.cantidad_proveedor_dañada,
@@ -392,8 +394,14 @@ export default function StockProveedoresPage({
                                             <span className="font-bold text-sm text-pink-700 dark:text-pink-300">{resumen.proveedores.canastillas.dañada.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-amber-200 dark:border-amber-700">
-                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                             <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">{resumen.proveedores.canastillas.total.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                            <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                {(resumen.proveedores.canastillas.disponible + resumen.proveedores.canastillas.deudor + resumen.proveedores.canastillas.dañada + resumen.clientes.canastillas.deudor + resumen.clientes.canastillas.dañada + resumen.eventos.canastillas.deudor + resumen.eventos.canastillas.dañada).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -415,8 +423,14 @@ export default function StockProveedoresPage({
                                             <span className="font-bold text-sm text-pink-700 dark:text-pink-300">{resumen.proveedores.embases.dañada.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
-                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                             <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">{resumen.proveedores.embases.total.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                            <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                {(resumen.proveedores.embases.disponible + resumen.proveedores.embases.deudor + resumen.proveedores.embases.dañada + resumen.clientes.embases.deudor + resumen.clientes.embases.dañada + resumen.eventos.embases.deudor + resumen.eventos.embases.dañada).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -449,8 +463,14 @@ export default function StockProveedoresPage({
                                                 <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.canastillas.dañada.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between items-center pt-2 border-t border-red-200 dark:border-red-700">
-                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                                 <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.canastillas.total.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                                <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                    {(resumen.clientes.canastillas.disponible + resumen.clientes.canastillas.deudor + resumen.clientes.canastillas.dañada + resumen.eventos.canastillas.deudor + resumen.eventos.canastillas.dañada).toLocaleString()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -472,8 +492,14 @@ export default function StockProveedoresPage({
                                                 <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.embases.dañada.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
-                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                                 <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.embases.total.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                                <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                    {(resumen.clientes.embases.disponible + resumen.clientes.embases.deudor + resumen.clientes.embases.dañada + resumen.eventos.embases.deudor + resumen.eventos.embases.dañada).toLocaleString()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -615,44 +641,47 @@ export default function StockProveedoresPage({
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                    <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         #
                                     </th>
-                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                    <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Código
                                     </th>
-                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                    <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Nombre
                                     </th>
-                                    {/* Almacen */}
-                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                        Almacén
-                                    </th>
-                                    <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                    <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         🏷️ Tipo
                                     </th>
-                                    <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
+                                    {/* Almacen */}
+                                    <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                        Almacén
+                                    </th>                                    
+                                    <th className="px-2 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Disponible
                                     </th>
+                                    <th className="px-2 py-3 text-right font-semibold bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200">
+                                        💧 Con Líquido
+                                    </th>
                                     {/* PROVEEDORES - Siempre visible */}
-                                    <th className="px-4 py-3 text-right font-semibold text-white dark:text-white bg-purple-600 dark:bg-purple-700">
+                                    <th className="px-2 py-3 text-right font-semibold text-white dark:text-white bg-purple-600 dark:bg-purple-700">
                                         🏭 Prestado a Proveedores
                                     </th>
-                                    <th className="px-4 py-3 text-right font-semibold text-white dark:text-white bg-purple-600 dark:bg-purple-700">
+                                    <th className="px-2 py-3 text-right font-semibold text-white dark:text-white bg-purple-600 dark:bg-purple-700">
                                         ⚠️ Dañada por Proveedores
                                     </th>
                                     {/* CLIENTES - Condicional */}
                                     {mostrarDetalles && (
                                         <>
-                                            <th className="px-4 py-3 text-right font-semibold text-white dark:text-white bg-red-600 dark:bg-red-700">
+                                            <th className="px-2 py-3 text-right font-semibold text-white dark:text-white bg-red-600 dark:bg-red-700">
                                                 🧑‍💼 Prestado a Clientes
                                             </th>
-                                            <th className="px-4 py-3 text-right font-semibold text-white dark:text-white bg-red-600 dark:bg-red-700">
+                                            <th className="px-2 py-3 text-right font-semibold text-white dark:text-white bg-red-600 dark:bg-red-700">
                                                 ⚠️ Dañada por Clientes
                                             </th>
                                         </>
                                     )}
-                                    <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
+                                    <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Acciones
                                     </th>
                                 </tr>
@@ -662,7 +691,7 @@ export default function StockProveedoresPage({
                                     <tr>
                                         <td
                                             colSpan={mostrarDetalles ? 13 : 11}
-                                            className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
+                                            className="px-2 py-8 text-center text-slate-500 dark:text-slate-400"
                                         >
                                             No hay resultados
                                         </td>
@@ -684,17 +713,17 @@ export default function StockProveedoresPage({
                                                             : getRowColor(item.prestable_tipo)
                                                             } transition-colors`}
                                                     >
-                                                        <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-400">
+                                                        <td className="px-2 py-3 font-mono text-slate-600 dark:text-slate-400">
                                                             {item.id}
                                                         </td>
-                                                        <td className={`px-4 py-3 font-mono text-slate-600 dark:text-slate-400 ${isEmbaseRelacionado ? 'pl-8' : ''}`}>
-                                                            {isEmbaseRelacionado && <span className="text-slate-400">↳ </span>}
+                                                        <td className={`px-2 py-3 font-mono text-slate-600 dark:text-slate-400 ${isEmbaseRelacionado ? 'pl-3' : ''}`}>
+                                                            {isEmbaseRelacionado && <span className="text-slate-400 text-green-500">↳</span>}
                                                             {item.prestable_codigo}
                                                         </td>
-                                                        <td className={`px-4 py-3 font-medium text-slate-900 dark:text-slate-100 ${isEmbaseRelacionado ? 'text-slate-700 dark:text-slate-300' : ''}`}>
+                                                        <td className={`px-2 py-3 font-medium text-slate-900 dark:text-slate-100 ${isEmbaseRelacionado ? 'text-slate-700 dark:text-slate-300' : ''}`}>
                                                             {item.prestable_nombre}
                                                         </td>
-                                                        <td className="px-4 py-3 text-center">
+                                                        <td className="px-2 py-3 text-center">
                                                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE'
                                                                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                                                                 : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
@@ -702,23 +731,30 @@ export default function StockProveedoresPage({
                                                                 {item.prestable_tipo === 'EMBASES' || item.prestable_tipo === 'EMBASE' ? '🔖 Embase' : '📦 Canastilla'}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                                                        <td className="px-2 py-3 text-slate-600 dark:text-slate-400">
                                                             <p>{item.almacen_nombre}</p>
                                                         </td>
                                                         {/* Disponible */}
-                                                        <td className="px-4 py-3 text-right">
+                                                        <td className="px-2 py-3 text-right">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
                                                                 {item.cantidad_disponible}
                                                             </span>
                                                         </td>
 
+                                                        {/* Con Líquido */}
+                                                        <td className="px-2 py-3 text-right bg-green-50 dark:bg-green-900/10">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-200 font-semibold">
+                                                                {item.cantidad_con_liquido}
+                                                            </span>
+                                                        </td>
+
                                                         {/* PROVEEDORES - Siempre visible */}
-                                                        <td className="px-4 py-3 text-right bg-purple-50 dark:bg-purple-900/10">
+                                                        <td className="px-2 py-3 text-right bg-purple-50 dark:bg-purple-900/10">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-semibold">
                                                                 {item.cantidad_proveedor_acreedor}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-3 text-right bg-purple-50 dark:bg-purple-900/10">
+                                                        <td className="px-2 py-3 text-right bg-purple-50 dark:bg-purple-900/10">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-pink-100 dark:bg-pink-900/30 text-pink-900 dark:text-pink-200 font-semibold">
                                                                 {item.cantidad_proveedor_dañada}
                                                             </span>
@@ -727,26 +763,26 @@ export default function StockProveedoresPage({
                                                         {/* CLIENTES - Condicional */}
                                                         {mostrarDetalles && (
                                                             <>
-                                                                <td className="px-4 py-3 text-right bg-red-50 dark:bg-red-900/10">
+                                                                <td className="px-2 py-3 text-right bg-red-50 dark:bg-red-900/10">
                                                                     <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
                                                                         {item.cantidad_cliente_deudor}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 py-3 text-right bg-red-50 dark:bg-red-900/10">
+                                                                <td className="px-2 py-3 text-right bg-red-50 dark:bg-red-900/10">
                                                                     <span className="inline-block px-2 py-1 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200 font-semibold">
                                                                         {item.cantidad_cliente_dañada ?? 0}
                                                                     </span>
                                                                 </td>
                                                             </>
                                                         )}
-                                                        <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
+                                                        <td className="px-2 py-3 text-center flex gap-2 justify-center flex-wrap">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() => router.visit(`/prestamos/stock/proveedores/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
                                                                 className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                                                             >
-                                                                Ajustar
+                                                                ⚙️
                                                             </Button>
                                                         </td>
                                                     </tr>

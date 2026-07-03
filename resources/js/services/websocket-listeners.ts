@@ -87,12 +87,12 @@ function handleCierreRechazado(data: any) {
         data.requiere_reapertura ? '⚠️ Requiere reapertura de caja' : null,
     ].filter(Boolean).join('\n');
 
-    console.log('Cierre rechazado:', {
+    /* console.log('Cierre rechazado:', {
         cierre_id: data.cierre_id,
         caja: data.caja,
         motivo: data.motivo,
         requiere_reapertura: data.requiere_reapertura,
-    });
+    }); */
 
     // Mostrar diálogo adicional
     if (typeof window !== 'undefined') {
@@ -122,14 +122,14 @@ function handleCierrePendiente(data: any) {
     });
 
     // Datos adicionales para el admin
-    console.log('Nuevo cierre pendiente:', {
+    /* console.log('Nuevo cierre pendiente:', {
         cierre_id: data.cierre_id,
         caja: data.caja,
         usuario: data.usuario,
         diferencia: data.diferencia,
         monto_esperado: data.monto_esperado,
         monto_real: data.monto_real,
-    });
+    }); */
 
     // Actualizar badge de cierres pendientes
     updatePendientesCount();
@@ -197,7 +197,7 @@ export function connectWebSocket(userId: number, userRole: string) {
 
         // Aquí va la lógica de conexión actual que use tu aplicación
         // Por ejemplo, si usas Socket.io, Laravel Echo, etc.
-        console.log(`Conectando a WebSocket: ${wsUrl} como usuario ${userId} (${userRole})`);
+        // console.log(`Conectando a WebSocket: ${wsUrl} como usuario ${userId} (${userRole})`);
 
         // Inicializar listeners después de conectar
         initializeWebSocketListeners();

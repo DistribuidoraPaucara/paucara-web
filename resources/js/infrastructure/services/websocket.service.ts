@@ -36,12 +36,12 @@ class WebSocketService {
                         import.meta.env.VITE_WEBSOCKET_URL ||
                         'ws://localhost:3001';
 
-        console.log('🔌 WebSocket URL (resolved):', baseUrl);
+        /* console.log('🔌 WebSocket URL (resolved):', baseUrl);
         console.log('🔍 Debug info:');
         console.log('  - config.url:', config.url);
         console.log('  - window.__APP_CONFIG__:', appConfig);
         console.log('  - appConfig.websocketUrl:', appConfig.websocketUrl);
-        console.log('  - import.meta.env.VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL);
+        console.log('  - import.meta.env.VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL); */
         if (!config.url && !appConfig.websocketUrl && !import.meta.env.VITE_WEBSOCKET_URL) {
           console.warn('⚠️  WARNING: No WebSocket URL configured, falling back to localhost:3001');
         }
@@ -60,14 +60,14 @@ class WebSocketService {
 
         // Connection events
         this.socket.on('connect', () => {
-          console.log('✅ WebSocket conectado:', this.socket?.id);
+          // console.log('✅ WebSocket conectado:', this.socket?.id);
           this.isConnected = true;
 
           // 🔐 Autenticar inmediatamente después de conectarse
           if (config.auth?.token) {
-            console.log('🔐 Enviando autenticación al servidor WebSocket...');
+            /* console.log('🔐 Enviando autenticación al servidor WebSocket...');
             console.log(`🔐 Token: ${config.auth.token.substring(0, 20)}...`);
-            console.log(`🔐 User ID: ${config.auth.userId}`);
+            console.log(`🔐 User ID: ${config.auth.userId}`); */
             this.socket!.emit('authenticate', {
               token: config.auth.token,
               userId: config.auth.userId,
@@ -84,7 +84,7 @@ class WebSocketService {
 
         // Auth success event
         this.socket.on('authenticated', (data) => {
-          console.log('✅ Autenticación exitosa en WebSocket:', data);
+          // console.log('✅ Autenticación exitosa en WebSocket:', data);
           this.emitLocal('websocket:authenticated', data);
         });
 
@@ -131,7 +131,7 @@ class WebSocketService {
       return;
     }
 
-    console.log(`📡 Suscribiendo a canal: ${channelName}`);
+    // console.log(`📡 Suscribiendo a canal: ${channelName}`);
     this.subscribedChannels.add(channelName);
 
     // Join the room
@@ -171,7 +171,7 @@ class WebSocketService {
   updateToken(newToken: string | null): void {
     if (newToken) {
       sessionStorage.setItem('auth_token', newToken);
-      console.log(`✅ Token actualizado en sessionStorage: ${newToken.substring(0, 20)}...`);
+      // console.log(`✅ Token actualizado en sessionStorage: ${newToken.substring(0, 20)}...`);
     } else {
       sessionStorage.removeItem('auth_token');
       console.log(`🗑️  Token removido de sessionStorage`);

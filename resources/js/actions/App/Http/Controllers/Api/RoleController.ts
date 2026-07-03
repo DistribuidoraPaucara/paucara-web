@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\RoleController::getRolesWithDetails
  * @see app/Http/Controllers/Api/RoleController.php:207
@@ -42,6 +42,41 @@ getRolesWithDetails.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RoleController::getRolesWithDetails
+ * @see app/Http/Controllers/Api/RoleController.php:207
+ * @route '/api/roles/details'
+ */
+    const getRolesWithDetailsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: getRolesWithDetails.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RoleController::getRolesWithDetails
+ * @see app/Http/Controllers/Api/RoleController.php:207
+ * @route '/api/roles/details'
+ */
+        getRolesWithDetailsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getRolesWithDetails.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RoleController::getRolesWithDetails
+ * @see app/Http/Controllers/Api/RoleController.php:207
+ * @route '/api/roles/details'
+ */
+        getRolesWithDetailsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getRolesWithDetails.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    getRolesWithDetails.form = getRolesWithDetailsForm
 /**
 * @see \App\Http\Controllers\Api\RoleController::validateRoleCombination
  * @see app/Http/Controllers/Api/RoleController.php:247
@@ -75,6 +110,28 @@ validateRoleCombination.post = (options?: RouteQueryOptions): RouteDefinition<'p
     url: validateRoleCombination.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\RoleController::validateRoleCombination
+ * @see app/Http/Controllers/Api/RoleController.php:247
+ * @route '/api/roles/validate-combination'
+ */
+    const validateRoleCombinationForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: validateRoleCombination.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RoleController::validateRoleCombination
+ * @see app/Http/Controllers/Api/RoleController.php:247
+ * @route '/api/roles/validate-combination'
+ */
+        validateRoleCombinationForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: validateRoleCombination.url(options),
+            method: 'post',
+        })
+    
+    validateRoleCombination.form = validateRoleCombinationForm
 const RoleController = { getRolesWithDetails, validateRoleCombination }
 
 export default RoleController

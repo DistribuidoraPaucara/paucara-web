@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
@@ -152,15 +152,6 @@ export default function PrestablesIndex() {
                         Nuevo Prestable
                     </Button>
                 </div>
-
-                <PrestableDeleteConfirmModal
-                    open={showDeleteDialog}
-                    onOpenChange={setShowDeleteDialog}
-                    onConfirm={handleConfirmDelete}
-                    isDeleting={isSubmitting}
-                    prestableName={prestableToDelete?.nombre}
-                    prestableCodigo={prestableToDelete?.codigo}
-                />
 
                 {/* Panel de Filtros */}
                 <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 mb-2 p-2">
@@ -396,6 +387,14 @@ export default function PrestablesIndex() {
                     )}
                 </Card>
             </div>
+            <PrestableDeleteConfirmModal
+                    open={showDeleteDialog}
+                    onOpenChange={setShowDeleteDialog}
+                    onConfirm={handleConfirmDelete}
+                    isDeleting={isSubmitting}
+                    prestableName={prestableToDelete?.nombre}
+                    prestableCodigo={prestableToDelete?.codigo}
+                />
         </AppLayout>
     );
 }

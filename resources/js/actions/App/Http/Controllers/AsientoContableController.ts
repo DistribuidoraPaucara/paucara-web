@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AsientoContableController::indexApi
  * @see app/Http/Controllers/AsientoContableController.php:64
@@ -42,6 +42,41 @@ indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\AsientoContableController::indexApi
+ * @see app/Http/Controllers/AsientoContableController.php:64
+ * @route '/api/contabilidad/asientos'
+ */
+    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::indexApi
+ * @see app/Http/Controllers/AsientoContableController.php:64
+ * @route '/api/contabilidad/asientos'
+ */
+        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::indexApi
+ * @see app/Http/Controllers/AsientoContableController.php:64
+ * @route '/api/contabilidad/asientos'
+ */
+        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi.form = indexApiForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::showApi
  * @see app/Http/Controllers/AsientoContableController.php:91
@@ -109,6 +144,41 @@ showApi.head = (args: { asientoContable: number | { id: number } } | [asientoCon
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\AsientoContableController::showApi
+ * @see app/Http/Controllers/AsientoContableController.php:91
+ * @route '/api/contabilidad/asientos/{asientoContable}'
+ */
+    const showApiForm = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: showApi.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::showApi
+ * @see app/Http/Controllers/AsientoContableController.php:91
+ * @route '/api/contabilidad/asientos/{asientoContable}'
+ */
+        showApiForm.get = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::showApi
+ * @see app/Http/Controllers/AsientoContableController.php:91
+ * @route '/api/contabilidad/asientos/{asientoContable}'
+ */
+        showApiForm.head = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    showApi.form = showApiForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::index
  * @see app/Http/Controllers/AsientoContableController.php:15
@@ -152,6 +222,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\AsientoContableController::index
+ * @see app/Http/Controllers/AsientoContableController.php:15
+ * @route '/contabilidad/asientos'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::index
+ * @see app/Http/Controllers/AsientoContableController.php:15
+ * @route '/contabilidad/asientos'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::index
+ * @see app/Http/Controllers/AsientoContableController.php:15
+ * @route '/contabilidad/asientos'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::show
  * @see app/Http/Controllers/AsientoContableController.php:50
@@ -219,6 +324,41 @@ show.head = (args: { asientoContable: number | { id: number } } | [asientoContab
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\AsientoContableController::show
+ * @see app/Http/Controllers/AsientoContableController.php:50
+ * @route '/contabilidad/asientos/{asientoContable}'
+ */
+    const showForm = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::show
+ * @see app/Http/Controllers/AsientoContableController.php:50
+ * @route '/contabilidad/asientos/{asientoContable}'
+ */
+        showForm.get = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::show
+ * @see app/Http/Controllers/AsientoContableController.php:50
+ * @route '/contabilidad/asientos/{asientoContable}'
+ */
+        showForm.head = (args: { asientoContable: number | { id: number } } | [asientoContable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::libroMayor
  * @see app/Http/Controllers/AsientoContableController.php:103
@@ -262,6 +402,41 @@ libroMayor.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\AsientoContableController::libroMayor
+ * @see app/Http/Controllers/AsientoContableController.php:103
+ * @route '/contabilidad/reportes/libro-mayor'
+ */
+    const libroMayorForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: libroMayor.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::libroMayor
+ * @see app/Http/Controllers/AsientoContableController.php:103
+ * @route '/contabilidad/reportes/libro-mayor'
+ */
+        libroMayorForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: libroMayor.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::libroMayor
+ * @see app/Http/Controllers/AsientoContableController.php:103
+ * @route '/contabilidad/reportes/libro-mayor'
+ */
+        libroMayorForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: libroMayor.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    libroMayor.form = libroMayorForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
  * @see app/Http/Controllers/AsientoContableController.php:169
@@ -304,6 +479,42 @@ balanceComprobacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     url: balanceComprobacion.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
+ * @see app/Http/Controllers/AsientoContableController.php:169
+ * @route '/contabilidad/reportes/balance-comprobacion'
+ */
+    const balanceComprobacionForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: balanceComprobacion.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
+ * @see app/Http/Controllers/AsientoContableController.php:169
+ * @route '/contabilidad/reportes/balance-comprobacion'
+ */
+        balanceComprobacionForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: balanceComprobacion.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
+ * @see app/Http/Controllers/AsientoContableController.php:169
+ * @route '/contabilidad/reportes/balance-comprobacion'
+ */
+        balanceComprobacionForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: balanceComprobacion.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    balanceComprobacion.form = balanceComprobacionForm
 const AsientoContableController = { indexApi, showApi, index, show, libroMayor, balanceComprobacion }
 
 export default AsientoContableController

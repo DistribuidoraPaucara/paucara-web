@@ -269,7 +269,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         }
 
         // ✅ NUEVO: Show toast in the UI (top right corner)
-        console.log('🍞 Attempting to show toast for:', notification.title);
+        // console.log('🍞 Attempting to show toast for:', notification.title);
         toast(`${notification.title} - ${notification.message}`, {
           duration: 4000,
           icon: '🔔',
@@ -300,7 +300,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
    */
   useEffect(() => {
     if (!websocketService.isSocketConnected()) {
-      console.warn('WebSocket no conectado, esperando conexión...');
+      // console.warn('WebSocket no conectado, esperando conexión...');
       // Reset flag si desconecta
       listenersConfiguredRef.current = false;
       return;
@@ -313,7 +313,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       return;
     }
 
-    console.log('🔔 Configurando listeners de notificaciones unificadas...');
+    // console.log('🔔 Configurando listeners de notificaciones unificadas...');
 
     // PROFORMA EVENTS
     const setupListener = (eventName: string) => {
@@ -406,7 +406,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       return;
     }
 
-    console.log('⏳ Iniciando fetch de alertas de cuentas vencidas con delay de 1500ms...');
+    // console.log('⏳ Iniciando fetch de alertas de cuentas vencidas con delay de 1500ms...');
 
     const timer = setTimeout(async () => {
       try {
@@ -431,7 +431,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
           return;
         }
 
-        console.log(`📬 Se encontraron ${data.cuentas.length} cuentas vencidas`);
+        // console.log(`📬 Se encontraron ${data.cuentas.length} cuentas vencidas`);
 
         // Convertir cada cuenta en una notificación
         data.cuentas.forEach((cuenta: any) => {

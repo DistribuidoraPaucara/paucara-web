@@ -1704,6 +1704,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{prestamo}', [PrestamoClienteController::class, 'update']);
         Route::post('/{prestamo}/devolver', [PrestamoClienteController::class, 'registrarDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoClienteController::class, 'anularPrestamo']);
+        Route::post('/{prestamo}/devoluciones/{devolucion}/anular', [PrestamoClienteController::class, 'anularDevolucion']);
         Route::get('/{prestamo}/devoluciones/imprimir', [PrestamoClienteController::class, 'imprimirTodasLasDevoluciones']);
         Route::get('/{prestamo}/devoluciones/{devolucion}/imprimir', [PrestamoClienteController::class, 'imprimirDevolucion']);
         Route::get('/chofer/{choferId}/pendientes', [PrestamoClienteController::class, 'obtenerPendientesChofer']);

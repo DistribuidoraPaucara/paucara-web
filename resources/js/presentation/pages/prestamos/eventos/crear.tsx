@@ -1,24 +1,63 @@
-import React, { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import type { Prestable } from '@/domain/entities/prestamos';
+import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
 import AppLayout from '@/layouts/app-layout';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import ModalAlmacenesDetalle from '@/presentation/components/modales/ModalAlmacenesDetalle';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
-import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
-import ModalAlmacenesDetalle from '@/presentation/components/modales/ModalAlmacenesDetalle';
-import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
-import { usePrestables } from '@/stores/usePrestables';
 import { useToast } from '@/presentation/hooks/useToast';
-import type { Prestable } from '@/domain/entities/prestamos';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import { usePrestables } from '@/stores/usePrestables';
 import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
+import { UbicacionMapModal } from '../clientes/components/UbicacionMapModal';
+
+/**
+ * ============================================
+ * 📍 REFERENCIA: DATOS DISPONIBLES AL SELECCIONAR VENTA
+ * ============================================
+ *
+ * ENDPOINT: GET /api/ventas/{id}
+ * CONTROLADOR: VentaController::show (línea 789)
+ *
+ * DATOS DEL CLIENTE (ventaData.cliente):
+ *   - id: number
+ *   - nombre: string
+ *   - nit: string
+ *   - telefono: string
+ *   - foto_perfil: string | null
+ *   - razon_social: string
+ *
+ * DATOS DE DIRECCIÓN (ventaData.direccionCliente):
+ *   - id: number
+ *   - direccion: string (texto de dirección)
+ *   - localidad: object { id, nombre } o string (nombre)
+ *   - observaciones: string
+ *   - latitud: number
+ *   - longitud: number
+ *   - es_principal: boolean
+ *
+ * DATOS DE VENTA (ventaData):
+ *   - id: number
+ *   - numero: string (folio)
+ *   - fecha: date
+ *   - cliente_id: number
+ *   - direccion_cliente_id: number
+ *   - total: decimal
+ *   - detalles: array (productos en la venta)
+ *
+ * ============================================
+ */
 
 interface Props {
     choferes: Array<{ id: number; nombre: string }>;
     almacenes: Array<{ id: number; nombre: string; es_proveedor: boolean }>;
     ventas: Array<{ id: number; numero: string; cliente_id: number; cliente?: { id: number; nombre: string; razon_social?: string } }>;
     vehiculos: Array<{ id: number; placa: string; marca: string; modelo: string; anho: number }>;
+    localidades: Array<{ id: number; nombre: string }>; // ✅ Nuevo: localidades para ubicación
 }
 
 interface PrestamoItem {
@@ -38,7 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Crear Préstamo a Evento', href: '/prestamos/eventos/crear' },
 ];
 
-export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehiculos }: Props) {
+export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehiculos, localidades }: Props) {
     const { prestables, loading: loadingPrestables, fetchPrestables } = usePrestables();
     const { toasts, removeToast, error: toastError, warning: toastWarning, success: toastSuccess } = useToast();
 
@@ -56,6 +95,12 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         fecha_prestamo: new Date().toISOString().split('T')[0],
         fecha_esperada_devolucion: getDateAdd7Days(),
         monto_garantia: 0,
+        // ✅ Nuevo: Ubicación del préstamo
+        ubicacion: {
+            localidad_id: undefined as number | undefined,
+            direccion: '',
+            es_ubicacion_manual: false,
+        },
     });
 
     // Lista de prestables agregados
@@ -86,11 +131,55 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
     const [prestamoItemEnEdicion, setPrestamoItemEnEdicion] = useState<PrestamoItem | null>(null);
     const [indexEnEdicion, setIndexEnEdicion] = useState<number | null>(null);
 
+    // ✅ Nuevo: Estados para modal de ubicación en mapa
+    const [mostrarModalUbicacion, setMostrarModalUbicacion] = useState(false);
+    const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<{
+        localidad_id?: number;
+        direccion?: string;
+        observaciones?: string | null;
+        latitud?: number;
+        longitud?: number;
+        direccion_cliente_id?: number;
+        es_ubicacion_manual?: boolean;
+    } | null>(null);
+
     useEffect(() => {
         fetchPrestables();
+
+        // ✅ Preselectionar primer almacén no proveedor
+        const almacenNoProveedor = almacenes.find((a) => !a.es_proveedor);
+        if (almacenNoProveedor) {
+            setFormData((prev) => ({
+                ...prev,
+                almacenes_prestables_id: almacenNoProveedor.id,
+            }));
+            setAlmacenesResults([almacenNoProveedor, ...almacenes.filter((a) => a.es_proveedor)]);
+        }
         // Inicializar almacenes precargados
         setAlmacenesResults(almacenes);
+
+        // ✅ Inicializar vehículos precargados
+        setVehiculosResults(vehiculos);
     }, []);
+
+    // ✅ Nuevo: Sincronizar automáticamente formData.ubicacion con ubicacionSeleccionada
+    useEffect(() => {
+        if (ubicacionSeleccionada && (ubicacionSeleccionada.localidad_id || ubicacionSeleccionada.direccion)) {
+            console.log('%c🔗 AUTO-SINCRONIZANDO: ubicacionSeleccionada → formData.ubicacion', 'color: #4caf50; font-weight: bold; font-size: 12px', {
+                ubicacionSeleccionada,
+            });
+            setFormData((prev) => ({
+                ...prev,
+                ubicacion: {
+                    localidad_id: ubicacionSeleccionada.localidad_id,
+                    direccion: ubicacionSeleccionada.direccion || '',
+                    observaciones: ubicacionSeleccionada.observaciones,
+                    es_ubicacion_manual: ubicacionSeleccionada.es_ubicacion_manual ?? false,
+                    direccion_cliente_id: ubicacionSeleccionada.direccion_cliente_id,
+                },
+            }));
+        }
+    }, [ubicacionSeleccionada]);
 
     function getDateAdd7Days() {
         const date = new Date();
@@ -99,10 +188,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
     }
 
     const getStockDisponibleTotal = (prestable: Prestable) => {
-        return (prestable.stocks || []).reduce(
-            (sum, stock) => sum + Number(stock.cantidad_disponible || 0),
-            0
-        );
+        return (prestable.stocks || []).reduce((sum, stock) => sum + Number(stock.cantidad_disponible || 0), 0);
     };
 
     const getAlmacenesConStock = (prestable: Prestable) => {
@@ -110,7 +196,10 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             .filter((stock: any) => Number(stock.cantidad_disponible || 0) > 0)
             .map((stock: any) => ({
                 id: Number(stock.almacenes_prestables_id || stock.almacen_id),
-                nombre: stock?.almacen_prestable?.nombre || stock?.almacenPrestable?.nombre || `Almacén ${stock.almacenes_prestables_id || stock.almacen_id}`,
+                nombre:
+                    stock?.almacen_prestable?.nombre ||
+                    stock?.almacenPrestable?.nombre ||
+                    `Almacén ${stock.almacenes_prestables_id || stock.almacen_id}`,
                 stock: Number(stock.cantidad_disponible || 0),
                 es_proveedor: stock?.almacen_prestable?.es_proveedor || stock?.almacenPrestable?.es_proveedor || false,
             }))
@@ -127,18 +216,20 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
     };
 
     const handleToggleAlmacen = (prestableId: number, almacenId: number, checked: boolean) => {
-        setPrestablesAgregados(prev => prev.map(item => {
-            if (item.prestable_id !== prestableId) return item;
+        setPrestablesAgregados((prev) =>
+            prev.map((item) => {
+                if (item.prestable_id !== prestableId) return item;
 
-            const actuales = new Set((item.almacenes_ids || []).map(Number));
-            if (checked) {
-                actuales.add(almacenId);
-            } else {
-                actuales.delete(almacenId);
-            }
+                const actuales = new Set((item.almacenes_ids || []).map(Number));
+                if (checked) {
+                    actuales.add(almacenId);
+                } else {
+                    actuales.delete(almacenId);
+                }
 
-            return { ...item, almacenes_ids: Array.from(actuales) };
-        }));
+                return { ...item, almacenes_ids: Array.from(actuales) };
+            }),
+        );
     };
 
     const handleFechaPrestamo = (fecha: string) => {
@@ -164,7 +255,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         setVentasLoading(true);
         try {
             const response = await fetch(`/api/ventas/con-prestables/search?q=${encodeURIComponent(query)}`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { Accept: 'application/json' },
             });
             const data = await response.json();
             setVentasResults(data.data || []);
@@ -178,7 +269,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
     const handleSelectVenta = async (venta: any) => {
         // Verificar si ya está seleccionada
-        if (ventasSeleccionadas.find(v => v.id === venta.id)) {
+        if (ventasSeleccionadas.find((v) => v.id === venta.id)) {
             return;
         }
 
@@ -189,16 +280,206 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
         setFormData({
             ...formData,
-            ventas_ids: nuevasVentas.map(v => v.id),
+            ventas_ids: nuevasVentas.map((v) => v.id),
         });
+
+        // ✅ Cargar detalles y dirección de TODAS las ventas
+        try {
+                const response = await fetch(`/api/ventas/${venta.id}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                const data = await response.json();
+                const ventaData = data.data || data;
+
+                console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+                console.log('%c📍 ENDPOINT: GET /api/ventas/{id}', 'color: #00aa00; font-weight: bold; font-size: 14px');
+                console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+                console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                    id: ventaData.cliente?.id,
+                    nombre: ventaData.cliente?.nombre,
+                    nit: ventaData.cliente?.nit,
+                    telefono: ventaData.cliente?.telefono,
+                    foto_perfil: ventaData.cliente?.foto_perfil,
+                    razon_social: ventaData.cliente?.razon_social,
+                });
+                console.log('%c📍 DIRECCIÓN DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                    id: ventaData.direccionCliente?.id,
+                    direccion: ventaData.direccionCliente?.direccion,
+                    localidad: ventaData.direccionCliente?.localidad,
+                    observaciones: ventaData.direccionCliente?.observaciones,
+                    latitud: ventaData.direccionCliente?.latitud,
+                    longitud: ventaData.direccionCliente?.longitud,
+                    es_principal: ventaData.direccionCliente?.es_principal,
+                });
+
+                // ✅ NUEVO: Cargar prestables desde productos de la venta
+                const nuevosPrestables: PrestamoItem[] = [];
+                if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
+                    console.log('%c🛒 PROCESANDO DETALLES DE VENTA (EVENTOS)', 'color: #ff6b6b; font-weight: bold; font-size: 12px', {
+                        total_detalles: ventaData.detalles.length,
+                        detalles: ventaData.detalles.map((d: any) => ({
+                            id: d.id,
+                            cantidad: d.cantidad,
+                            producto_nombre: d.producto?.nombre,
+                            prestables_count: d.producto?.prestables?.length || 0,
+                        })),
+                    });
+
+                    ventaData.detalles.forEach((detalle: any, index: number) => {
+                        const producto = detalle.producto;
+                        const cantidad = detalle.cantidad || 0;
+
+                        console.log(
+                            `%c📋 DETALLE ${index + 1}/${ventaData.detalles.length}`,
+                            'color: #4ecdc4; font-weight: bold; font-size: 11px',
+                            {
+                                producto_nombre: producto?.nombre,
+                                cantidad,
+                                prestables_disponibles: producto?.prestables?.map((p: any) => ({
+                                    prestable_id: p.prestable_id,
+                                    tipo_en_maestro: prestables.find((pr) => pr.id === p.prestable_id)?.tipo,
+                                })),
+                            },
+                        );
+
+                        // ✅ Validar que el producto tenga prestables relacionados
+                        if (producto && producto.prestables && Array.isArray(producto.prestables) && producto.prestables.length > 0 && cantidad > 0) {
+                            console.log('%c🔍 BUSCANDO CANASTILLA EN PRODUCTO', 'color: #ff9ff3; font-weight: bold; font-size: 11px', {
+                                prestables_array: producto.prestables,
+                            });
+
+                            // 1️⃣ Buscar CANASTILLA en el array de prestables del producto (DIRECTAMENTE DEL BACKEND)
+                            const prestableCanastilla = producto.prestables.find((p: any) => {
+                                console.log(`   Verificando: ${p.nombre} (tipo: ${p.tipo})`);
+                                return p.tipo === 'CANASTILLA';
+                            });
+
+                            if (prestableCanastilla) {
+                                const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
+                                const capacidadCanastilla = prestableCanastilla.capacidad || 0;
+
+                                console.log('%b✅ CANASTILLA ENCONTRADA EN PRODUCTO', 'color: #00b894; font-weight: bold; font-size: 11px', {
+                                    canastilla_id: canastillaId,
+                                    canastilla_nombre: prestableCanastilla.nombre,
+                                    cantidad_canastillas: cantidad,
+                                    capacidad: capacidadCanastilla,
+                                    cantidad_embases_calculada: cantidad * capacidadCanastilla,
+                                });
+
+                                // ✅ Agregar CANASTILLA
+                                nuevosPrestables.push({
+                                    prestable_id: canastillaId,
+                                    cantidad: cantidad,
+                                    almacenes_ids: [],
+                                    prestable: prestableCanastilla,
+                                });
+
+                                // ✅ Buscar EMBASES en el array de prestables del producto
+                                const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
+
+                                console.log('%c🥫 EMBASES EN PRODUCTO', 'color: #fdcb6e; font-weight: bold; font-size: 11px', {
+                                    total_embases: embasesEnProducto.length,
+                                    embases: embasesEnProducto.map((e: any) => ({
+                                        id: e.id || e.prestable_id,
+                                        nombre: e.nombre,
+                                        cantidad_a_prestar: cantidad * capacidadCanastilla,
+                                    })),
+                                });
+
+                                // ✅ Agregar cada EMBASE encontrado
+                                embasesEnProducto.forEach((embase: any) => {
+                                    const embaseId = Number(embase.id || embase.prestable_id);
+                                    const cantidadEmbases = cantidad * capacidadCanastilla;
+                                    nuevosPrestables.push({
+                                        prestable_id: embaseId,
+                                        cantidad: cantidadEmbases,
+                                        almacenes_ids: [],
+                                        prestable: embase,
+                                        isAutomaticEmbase: true,
+                                    });
+
+                                    console.log(`   ✅ Agregado EMBASE: ${embase.nombre} (ID: ${embaseId}) x ${cantidadEmbases}`);
+                                });
+                            } else {
+                                console.warn('⚠️ No se encontró CANASTILLA en el producto:', {
+                                    producto_nombre: producto.nombre,
+                                    prestables_en_producto: producto.prestables.map((p: any) => ({
+                                        id: p.prestable_id,
+                                        nombre: p.nombre,
+                                        tipo: p.tipo,
+                                    })),
+                                });
+                            }
+                        }
+                    });
+                }
+
+                // Agregar prestables cargados
+                if (nuevosPrestables.length > 0) {
+                    setPrestablesAgregados([...prestablesAgregados, ...nuevosPrestables]);
+                    toastSuccess(`✅ Cargados ${nuevosPrestables.length} prestables desde la venta`);
+                }
+
+                // Cargar ubicación del cliente en el mapa si existe (solo en la PRIMERA venta)
+                if (ventasSeleccionadas.length === 0 && ventaData.direccionCliente) {
+                    const dirCliente = ventaData.direccionCliente;
+
+                    // Extraer ID de localidad (puede venir de localidad_id o como objeto)
+                    let localidadId = null;
+                    if (dirCliente.localidad_id) {
+                        localidadId = dirCliente.localidad_id;
+                    } else if (dirCliente.localidad?.id) {
+                        localidadId = dirCliente.localidad.id;
+                    } else if (dirCliente.localidad && typeof dirCliente.localidad === 'object') {
+                        localidadId = dirCliente.localidad.id;
+                    }
+
+                    if (localidadId) {
+                        const direccionTexto = dirCliente.direccion || '';
+                        const latitud = dirCliente.latitud;
+                        const longitud = dirCliente.longitud;
+                        const direccionClienteId = dirCliente.id;
+                        const observaciones = dirCliente.observaciones;
+
+                        setUbicacionSeleccionada({
+                            localidad_id: localidadId,
+                            direccion: direccionTexto,
+                            latitud,
+                            longitud,
+                            direccion_cliente_id: direccionClienteId,
+                            observaciones,
+                        });
+
+                        setFormData((prev) => ({
+                            ...prev,
+                            ubicacion: {
+                                localidad_id: localidadId,
+                                direccion: direccionTexto,
+                                es_ubicacion_manual: false,
+                            },
+                        }));
+
+                        console.log('✅ Ubicación del cliente cargada automáticamente:', {
+                            localidad_id: localidadId,
+                            direccion: direccionTexto,
+                            latitud,
+                            longitud,
+                        });
+
+                        toastSuccess('✓ Ubicación del cliente cargada automáticamente');
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando dirección del cliente:', error);
+            }
     };
 
     const handleRemoveVenta = (ventaId: number) => {
-        const nuevasVentas = ventasSeleccionadas.filter(v => v.id !== ventaId);
+        const nuevasVentas = ventasSeleccionadas.filter((v) => v.id !== ventaId);
         setVentasSeleccionadas(nuevasVentas);
         setFormData({
             ...formData,
-            ventas_ids: nuevasVentas.map(v => v.id),
+            ventas_ids: nuevasVentas.map((v) => v.id),
         });
     };
 
@@ -211,9 +492,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             return;
         }
 
-        const filtered = almacenes.filter(almacen =>
-            almacen.nombre.toLowerCase().includes(query.toLowerCase())
-        );
+        const filtered = almacenes.filter((almacen) => almacen.nombre.toLowerCase().includes(query.toLowerCase()));
         setAlmacenesResults(filtered);
     };
 
@@ -237,10 +516,11 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         }
 
         // Si hay texto, filtrar
-        const filtered = vehiculos.filter(v =>
-            v.placa.toLowerCase().includes(query.toLowerCase()) ||
-            v.marca.toLowerCase().includes(query.toLowerCase()) ||
-            v.modelo.toLowerCase().includes(query.toLowerCase())
+        const filtered = vehiculos.filter(
+            (v) =>
+                v.placa.toLowerCase().includes(query.toLowerCase()) ||
+                v.marca.toLowerCase().includes(query.toLowerCase()) ||
+                v.modelo.toLowerCase().includes(query.toLowerCase()),
         );
         setVehiculosResults(filtered);
     };
@@ -256,20 +536,39 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         });
     };
 
+    // ✅ Nuevo: Manejar ubicación seleccionada del mapa
+    const handleUbicacionSeleccionada = (ubicacion: {
+        latitud: number;
+        longitud: number;
+        localidad_id?: number;
+        direccion?: string;
+        es_ubicacion_manual?: boolean;
+    }) => {
+        setUbicacionSeleccionada({
+            localidad_id: ubicacion.localidad_id,
+            direccion: ubicacion.direccion,
+        });
+
+        setFormData({
+            ...formData,
+            ubicacion: {
+                localidad_id: ubicacion.localidad_id,
+                direccion: ubicacion.direccion || '',
+                es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
+            },
+        });
+
+        toastSuccess('✓ Ubicación seleccionada correctamente');
+    };
+
     const handleEliminarPrestable = (prestable_id: number) => {
-        const prestable = prestables.find(p => Number(p.id) === prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === prestable_id);
         if (prestable?.tipo === 'CANASTILLA') {
-            const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id
-            );
-            const idsAEliminar = [prestable_id, ...embasesRelacionados.map(e => e.id)];
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id))
-            );
+            const embasesRelacionados = prestables.filter((p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id);
+            const idsAEliminar = [prestable_id, ...embasesRelacionados.map((e) => e.id)];
+            setPrestablesAgregados(prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id)));
         } else {
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => p.prestable_id !== prestable_id)
-            );
+            setPrestablesAgregados(prestablesAgregados.filter((p) => p.prestable_id !== prestable_id));
         }
     };
 
@@ -278,24 +577,28 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         const itemActualizado = prestablesAgregados[itemIndex];
         if (!itemActualizado) return;
 
-        const prestable = prestables.find(p => Number(p.id) === itemActualizado.prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === itemActualizado.prestable_id);
 
-        setPrestablesAgregados(prestablesAgregados.map((item, idx) => {
-            // Actualizar solo el item específico por índice
-            if (idx === itemIndex) {
-                return { ...item, cantidad: nueva_cantidad };
-            }
+        setPrestablesAgregados(
+            prestablesAgregados.map((item, idx) => {
+                // Actualizar solo el item específico por índice
+                if (idx === itemIndex) {
+                    return { ...item, cantidad: nueva_cantidad };
+                }
 
-            // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
-            if (prestable?.tipo === 'CANASTILLA' &&
-                item.isAutomaticEmbase === true &&  // ✅ SOLO embases automáticos
-                (item.prestable as any)?.prestable_relacionado_id === prestable?.id) {
-                const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
-                return { ...item, cantidad: cantidadEmbasesAutomatica };
-            }
+                // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
+                if (
+                    prestable?.tipo === 'CANASTILLA' &&
+                    item.isAutomaticEmbase === true && // ✅ SOLO embases automáticos
+                    (item.prestable as any)?.prestable_relacionado_id === prestable?.id
+                ) {
+                    const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
+                    return { ...item, cantidad: cantidadEmbasesAutomatica };
+                }
 
-            return item;
-        }));
+                return item;
+            }),
+        );
     };
 
     const handleAgregarCanastilla = (prestable: Prestable) => {
@@ -315,12 +618,10 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
         if (prestable.tipo === 'CANASTILLA') {
             const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES'
-                    && (p as any).prestable_relacionado_id === Number(prestable.id)
-                    && getStockDisponibleTotal(p) > 0
+                (p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === Number(prestable.id) && getStockDisponibleTotal(p) > 0,
             );
 
-            embasesRelacionados.forEach(embase => {
+            embasesRelacionados.forEach((embase) => {
                 const cantidadEmbasesAutomatica = 1 * (prestable.capacidad || 0);
 
                 nuevosItems.push({
@@ -336,13 +637,16 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
         const actualizado = [...prestablesAgregados, ...nuevosItems];
         console.log('🔵 handleAgregarCanastilla - Prestable:', prestable.nombre, prestable.tipo);
-        console.log('   Items nuevos:', nuevosItems.map(i => ({
-            id: i.prestable_id,
-            nombre: i.prestable?.nombre,
-            tipo: i.prestable?.tipo,
-            isAutomaticEmbase: i.isAutomaticEmbase,
-            almacenes_ids: i.almacenes_ids // ✅ Mostrar almacenes vacíos
-        })));
+        console.log(
+            '   Items nuevos:',
+            nuevosItems.map((i) => ({
+                id: i.prestable_id,
+                nombre: i.prestable?.nombre,
+                tipo: i.prestable?.tipo,
+                isAutomaticEmbase: i.isAutomaticEmbase,
+                almacenes_ids: i.almacenes_ids, // ✅ Mostrar almacenes vacíos
+            })),
+        );
         console.log('   ⚠️ USUARIO DEBE ESPECIFICAR ALMACENES en el modal');
         toastWarning('⚠️ Especifica los almacenes para este prestable en el modal');
         setPrestablesAgregados(actualizado);
@@ -353,7 +657,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         try {
             // ✅ ACTUALIZADO: Usar prestable de memoria (ya tiene stocks desde el controller)
             if (item.prestable_id) {
-                const prestableActualizado = prestables.find(p => p.id === item.prestable_id);
+                const prestableActualizado = prestables.find((p) => p.id === item.prestable_id);
 
                 if (prestableActualizado) {
                     const itemConDatosActuales = {
@@ -389,12 +693,12 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         if (indexEnEdicion !== null && prestamoItemEnEdicion) {
             const nuevosItems = [...prestablesAgregados];
             const itemActual = nuevosItems[indexEnEdicion];
-            const prestableActual = prestables.find(p => p.id === itemActual.prestable_id);
+            const prestableActual = prestables.find((p) => p.id === itemActual.prestable_id);
 
             nuevosItems[indexEnEdicion] = {
                 ...itemActual,
                 almacenes: almacenesSeleccionados,
-                almacenes_ids: almacenesSeleccionados.map(a => a.almacenes_prestables_id),
+                almacenes_ids: almacenesSeleccionados.map((a) => a.almacenes_prestables_id),
             };
 
             if (prestableActual?.tipo === 'CANASTILLA') {
@@ -402,7 +706,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
                 const embasesRelacionados = nuevosItems
                     .map((item, idx) => {
-                        const prestableEmbase = prestables.find(p => p.id === item.prestable_id);
+                        const prestableEmbase = prestables.find((p) => p.id === item.prestable_id);
                         const esEmbaseAuto = item.isAutomaticEmbase === true;
                         const estaRelacionado = (prestableEmbase as any)?.prestable_relacionado_id === prestableActual.id;
 
@@ -416,7 +720,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 embasesRelacionados.forEach(({ index }) => {
                     const cantidadEmbasesNueva = itemActual.cantidad * capacidadCanastilla;
 
-                    const almacenesEmbase = almacenesSeleccionados.map(almData => ({
+                    const almacenesEmbase = almacenesSeleccionados.map((almData) => ({
                         almacenes_prestables_id: almData.almacenes_prestables_id,
                         cantidad: Math.round((almData.cantidad / itemActual.cantidad) * cantidadEmbasesNueva) || 0,
                     }));
@@ -425,7 +729,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                         ...nuevosItems[index],
                         cantidad: cantidadEmbasesNueva,
                         almacenes: almacenesEmbase,
-                        almacenes_ids: almacenesEmbase.map(a => a.almacenes_prestables_id),
+                        almacenes_ids: almacenesEmbase.map((a) => a.almacenes_prestables_id),
                     };
                 });
 
@@ -462,15 +766,16 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         }
 
         for (const item of prestablesAgregados) {
-            const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
+            const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
             if (!prestable) continue;
 
             // ✅ MODIFICADO: Permitir almacenes_ids vacío si hay almacén de cabecera
-            const almacenesAValidar = (item.almacenes_ids && item.almacenes_ids.length > 0)
-                ? item.almacenes_ids
-                : formData.almacenes_prestables_id
-                ? [formData.almacenes_prestables_id]
-                : [];
+            const almacenesAValidar =
+                item.almacenes_ids && item.almacenes_ids.length > 0
+                    ? item.almacenes_ids
+                    : formData.almacenes_prestables_id
+                      ? [formData.almacenes_prestables_id]
+                      : [];
 
             if (almacenesAValidar.length === 0) {
                 const msg = `Selecciona al menos un almacén para ${prestable.nombre} (en cabecera o en el detalle)`;
@@ -491,7 +796,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         setLoading(true);
 
         try {
-            const payload = {
+            const payload: any = {
                 nombre_evento: formData.nombre_evento.trim(),
                 encargado_evento: formData.encargado_evento.trim() || undefined,
                 vehiculo_asignado: formData.vehiculo_asignado.trim() || undefined,
@@ -504,7 +809,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 fecha_prestamo: formData.fecha_prestamo,
                 fecha_esperada_devolucion: formData.fecha_esperada_devolucion,
                 monto_garantia: formData.monto_garantia,
-                detalles: prestablesAgregados.map(item => {
+                detalles: prestablesAgregados.map((item) => {
                     // ✅ SIMPLIFICADO: Igual que en clientes
                     // Si tiene almacenes en el nuevo formato, usarlo; sino usar almacenes_ids (antiguo)
                     const detallePayload: any = {
@@ -522,6 +827,17 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                     return detallePayload;
                 }),
             };
+
+            // ✅ Agregar ubicación si está seleccionada
+            if (formData.ubicacion.localidad_id || formData.ubicacion.direccion) {
+                payload.ubicacion = {
+                    localidad_id: formData.ubicacion.localidad_id || undefined,
+                    direccion: formData.ubicacion.direccion || undefined,
+                    es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
+                    direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
+                    observaciones: formData.ubicacion.observaciones || undefined,
+                };
+            }
 
             // ✅ LOGS DETALLADOS
             console.log('%c📤 PRÉSTAMO A EVENTO - ENVIANDO AL BACKEND', 'color: #0066cc; font-weight: bold; font-size: 14px');
@@ -544,13 +860,14 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             payload.detalles.forEach((detalle, idx) => {
                 console.log(`%c📦 Detalle ${idx + 1}:`, 'color: #ff6600; font-weight: bold', {
                     prestable_id: detalle.prestable_id,
-                    prestable_nombre: prestables.find(p => p.id === detalle.prestable_id)?.nombre,
+                    prestable_nombre: prestables.find((p) => p.id === detalle.prestable_id)?.nombre,
                     cantidad: detalle.cantidad,
-                    almacenes_seleccionados: detalle.almacenes?.map(a => ({
-                        almacenes_prestables_id: a.almacenes_prestables_id,
-                        almacen_nombre: almacenes.find(alm => alm.id === a.almacenes_prestables_id)?.nombre,
-                        cantidad: a.cantidad,
-                    })) || [],
+                    almacenes_seleccionados:
+                        detalle.almacenes?.map((a) => ({
+                            almacenes_prestables_id: a.almacenes_prestables_id,
+                            almacen_nombre: almacenes.find((alm) => alm.id === a.almacenes_prestables_id)?.nombre,
+                            cantidad: a.cantidad,
+                        })) || [],
                 });
             });
 
@@ -585,115 +902,159 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Préstamo a Evento" />
-            <div className="p-2 bg-white dark:bg-gray-950 min-h-screen">
+            <div className="min-h-screen bg-white p-2 dark:bg-gray-950">
                 {/* <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
                     🎉 Nuevo Préstamo a Eventoss
                 </h1> */}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
-                        <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg border border-red-300 dark:border-red-700">
+                        <div className="rounded-lg border border-red-300 bg-red-100 p-4 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
                             {error}
                         </div>
                     )}
 
-                    {/* Información del Evento */}
-                    <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            📋 Información del Evento
-                        </h2>
-
-                        <div className="grid grid-cols-3 gap-4">
-                            {/* Cliente Automático */}
-                            <Card className="p-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="text-2xl">👤</div>
-                                    <div>
-                                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Cliente Asignado</p>
-                                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">EVENTOS</p>
-                                        <p className="text-xs text-blue-700 dark:text-blue-400">Se asigna automáticamente para préstamos a eventos</p>
+                    {/* ✅ Nuevo: Sección de Ubicación en Mapa */}
+                    <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+                        <div className="flex items-center justify-between">
+                            <div className="mb-2 flex items-end justify-between">
+                                {/* Cliente Automático */}
+                                <Card className="mr-2 border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                                    <div className="flex items-center">
+                                        <div className="text-2xl">👤</div>
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-900 dark:text-blue-300">Cliente Asignado</p>
+                                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400">EVENTOS</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
+                                {ubicacionSeleccionada && (
+                                    <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-950/30">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-1">
+                                                {ubicacionSeleccionada.localidad_id && (
+                                                    <p className="text-xs text-green-800 dark:text-green-300">
+                                                        📌 Localidad:{' '}
+                                                        <span className="font-medium">
+                                                            {localidades.find((l) => l.id === ubicacionSeleccionada.localidad_id)?.nombre ||
+                                                                'No encontrada'}
+                                                        </span>
+                                                    </p>
+                                                )}
+                                                {ubicacionSeleccionada.direccion && (
+                                                    <p className="text-xs text-green-800 dark:text-green-300">
+                                                        🏠 Dirección: <span className="font-medium">{ubicacionSeleccionada.direccion}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mb-2 flex items-end justify-between">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => setMostrarModalUbicacion(true)}
+                                    className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                                >
+                                    📍 Seleccionar en Mapa
+                                </Button>
+                                {ubicacionSeleccionada && (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setUbicacionSeleccionada(null);
+                                            setFormData({
+                                                ...formData,
+                                                ubicacion: {
+                                                    localidad_id: undefined,
+                                                    direccion: '',
+                                                    es_ubicacion_manual: false,
+                                                },
+                                            });
+                                        }}
+                                        className="mt-2 ml-2 border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
+                                    >
+                                        ✗ Limpiar
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Información del Evento */}
+                    <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+                        {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            📋 Información del Evento
+                        </h2> */}
+
+                        <div className="grid grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Nombre Evento *
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🎉Nombre Evento *</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.nombre_evento}
                                     onChange={(e) => setFormData({ ...formData, nombre_evento: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ej: Boda García"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Encargado
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🧑‍💼Encargado</label>
                                 <input
                                     type="text"
                                     value={formData.encargado_evento}
                                     onChange={(e) => setFormData({ ...formData, encargado_evento: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Nombre encargado"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Teléfono 1
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">📲Teléfono 1</label>
                                 <input
                                     type="tel"
                                     value={formData.telefono_uno}
                                     onChange={(e) => setFormData({ ...formData, telefono_uno: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Teléfono 2
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">📞Teléfono 2</label>
                                 <input
                                     type="tel"
                                     value={formData.telefono_dos}
                                     onChange={(e) => setFormData({ ...formData, telefono_dos: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Dirección
-                                </label>
+                            {/* <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
                                 <input
                                     type="text"
                                     value={formData.direccion_evento}
                                     onChange={(e) => setFormData({ ...formData, direccion_evento: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Calle, número, ciudad"
                                 />
-                            </div>
+                            </div> */}
                         </div>
                     </Card>
 
-
-
                     {/* Información Logística */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            🚗 Información Logística
-                        </h2>
+                    <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
                         <div className="text-sm text-gray-500 dark:text-gray-400">
                             {/* Ventas Relacionadas (Múltiples) */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    🛒 Ventas Relacionadas
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🛒 Ventas Relacionadas</label>
                                 <div className="space-y-2">
                                     <DynamicSearchSelect
                                         label=""
@@ -719,11 +1080,11 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                     />
                                     {/* Mostrar ventas seleccionadas como chips */}
                                     {ventasSeleccionadas.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                        <div className="flex flex-wrap gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
                                             {ventasSeleccionadas.map((venta) => (
                                                 <div
                                                     key={venta.id}
-                                                    className="inline-flex items-center gap-2 px-3 py-1 bg-blue-200 dark:bg-blue-700 text-blue-900 dark:text-blue-100 rounded-full text-sm"
+                                                    className="inline-flex items-center gap-2 rounded-full bg-blue-200 px-3 py-1 text-sm text-blue-900 dark:bg-blue-700 dark:text-blue-100"
                                                 >
                                                     {venta.numero} - {venta.cliente?.nombre}
                                                     <button
@@ -747,8 +1108,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                 placeholder="Buscar almacén..."
                                 selectedItem={
                                     formData.almacenes_prestables_id
-                                        ? almacenesResults.find(a => a.id === formData.almacenes_prestables_id) ||
-                                        almacenes.find(a => a.id === formData.almacenes_prestables_id)
+                                        ? almacenesResults.find((a) => a.id === formData.almacenes_prestables_id) ||
+                                          almacenes.find((a) => a.id === formData.almacenes_prestables_id)
                                         : null
                                 }
                                 items={almacenesResults}
@@ -764,35 +1125,29 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                 renderItem={(almacen) => (
                                     <div>
                                         <p className="font-medium">{almacen.nombre}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {almacen.es_proveedor ? '🏭 Proveedor' : '📦 Almacén Distribuidora'}
-                                        </p>
+                                        <p className="text-xs text-gray-500">{almacen.es_proveedor ? '🏭 Proveedor' : '📦 Almacén Distribuidora'}</p>
                                     </div>
                                 )}
                                 getItemId={(almacen) => almacen.id}
-                                getDisplayValue={(almacen) =>
-                                    `${almacen.nombre} (${almacen.es_proveedor ? 'Proveedor' : 'Distribuidora'})`
-                                }
+                                getDisplayValue={(almacen) => `${almacen.nombre} (${almacen.es_proveedor ? 'Proveedor' : 'Distribuidora'})`}
                             />
 
                             {/* Chofer */}
                             <DynamicSearchSelect
                                 label="Chofer Encargado (Opcional)"
                                 placeholder="Seleccionar chofer..."
-                                selectedItem={choferes.find(ch => ch.id === formData.chofer_id) || null}
+                                selectedItem={choferes.find((ch) => ch.id === formData.chofer_id) || null}
                                 items={choferes}
                                 isLoading={false}
                                 searchValue=""
-                                onSearch={() => { }}
+                                onSearch={() => {}}
                                 onSelect={(chofer) => {
                                     setFormData({ ...formData, chofer_id: chofer.id });
                                 }}
                                 onClear={() => {
                                     setFormData({ ...formData, chofer_id: undefined });
                                 }}
-                                renderItem={(chofer) => (
-                                    <p className="font-medium">{chofer.nombre}</p>
-                                )}
+                                renderItem={(chofer) => <p className="font-medium">{chofer.nombre}</p>}
                                 getItemId={(chofer) => chofer.id}
                                 getDisplayValue={(chofer) => chofer.nombre}
                             />
@@ -814,7 +1169,9 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                 renderItem={(vehiculo) => (
                                     <div>
                                         <p className="font-medium">{vehiculo.placa}</p>
-                                        <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo} ({vehiculo.anho})</p>
+                                        <p className="text-xs text-gray-500">
+                                            {vehiculo.marca} {vehiculo.modelo} ({vehiculo.anho})
+                                        </p>
                                     </div>
                                 )}
                                 getItemId={(vehiculo) => vehiculo.id}
@@ -823,39 +1180,33 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
                             {/* Monto Garantía */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Monto Garantía (Opcional)
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Monto Garantía (Opcional)</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={formData.monto_garantia}
                                     onChange={(e) => setFormData({ ...formData, monto_garantia: parseFloat(e.target.value) || 0 })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Fecha Préstamo *
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Préstamo *</label>
                                 <input
                                     type="date"
                                     required
                                     value={formData.fecha_prestamo}
                                     onChange={(e) => handleFechaPrestamo(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Fecha Esperada Devolución
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Esperada Devolución</label>
                                 <input
                                     type="date"
                                     value={formData.fecha_esperada_devolucion}
                                     onChange={(e) => setFormData({ ...formData, fecha_esperada_devolucion: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -876,20 +1227,12 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                     />
 
                     {/* Resumen y Botones */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-
+                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
                         <div className="flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => window.location.href = '/prestamos/eventos'}
-                            >
+                            <Button variant="outline" onClick={() => (window.location.href = '/prestamos/eventos')}>
                                 Cancelar
                             </Button>
-                            <Button
-                                disabled={loading}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                onClick={handleSubmit}
-                            >
+                            <Button disabled={loading} className="bg-blue-600 text-white hover:bg-blue-700" onClick={handleSubmit}>
                                 {loading ? 'Creando...' : '✅ Crear Préstamo'}
                             </Button>
                         </div>
@@ -897,6 +1240,26 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 </form>
 
                 <ToastContainer toasts={toasts} onClose={removeToast} />
+
+                {/* ✅ Nuevo: Modal de Ubicación en Mapa */}
+                <UbicacionMapModal
+                    isOpen={mostrarModalUbicacion}
+                    onClose={() => setMostrarModalUbicacion(false)}
+                    onSelect={handleUbicacionSeleccionada}
+                    localidades={localidades}
+                    ubicacionInicial={
+                        ubicacionSeleccionada?.latitud && ubicacionSeleccionada?.longitud
+                            ? {
+                                  latitud: ubicacionSeleccionada.latitud,
+                                  longitud: ubicacionSeleccionada.longitud,
+                                  localidad_id: ubicacionSeleccionada.localidad_id,
+                                  direccion: ubicacionSeleccionada.direccion,
+                              }
+                            : undefined
+                    }
+                    localidadPreseleccionada={ubicacionSeleccionada?.localidad_id}
+                    mostrarSelectLocalidad={true}
+                />
 
                 {/* Modal de impresión */}
                 {mostrarModalImpresion && ultimoPrestamoId && (
@@ -916,45 +1279,46 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 )}
 
                 {/* Modal de Almacenes */}
-                {mostrarModalAlmacenes && prestamoItemEnEdicion && (() => {
-                    const esCanastilla = prestamoItemEnEdicion.prestable?.tipo === 'CANASTILLA';
-                    const esEmbase = prestamoItemEnEdicion.prestable?.tipo === 'EMBASES';
+                {mostrarModalAlmacenes &&
+                    prestamoItemEnEdicion &&
+                    (() => {
+                        const esCanastilla = prestamoItemEnEdicion.prestable?.tipo === 'CANASTILLA';
+                        const esEmbase = prestamoItemEnEdicion.prestable?.tipo === 'EMBASES';
 
-                    // Si es canastilla, buscar el embase relacionado para mostrar su stock
-                    let embaseRelacionado = null;
-                    let embaseStock: any[] = [];
+                        // Si es canastilla, buscar el embase relacionado para mostrar su stock
+                        let embaseRelacionado = null;
+                        let embaseStock: any[] = [];
 
-                    if (esCanastilla) {
-                        embaseRelacionado = prestables.find(p =>
-                            p.tipo === 'EMBASES' &&
-                            (p as any).prestable_relacionado_id === prestamoItemEnEdicion.prestable?.id
-                        );
-                        if (embaseRelacionado) {
-                            embaseStock = embaseRelacionado.stocks || [];
+                        if (esCanastilla) {
+                            embaseRelacionado = prestables.find(
+                                (p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestamoItemEnEdicion.prestable?.id,
+                            );
+                            if (embaseRelacionado) {
+                                embaseStock = embaseRelacionado.stocks || [];
+                            }
                         }
-                    }
 
-                    return (
-                        <ModalAlmacenesDetalle
-                            isOpen={mostrarModalAlmacenes}
-                            onClose={() => {
-                                setMostrarModalAlmacenes(false);
-                                setPrestamoItemEnEdicion(null);
-                                setIndexEnEdicion(null);
-                            }}
-                            onSave={handleGuardarAlmacenes}
-                            prestableNombre={prestamoItemEnEdicion.prestable?.nombre || 'Prestable'}
-                            cantidadTotal={prestamoItemEnEdicion.cantidad}
-                            almacenes={almacenes}
-                            stockDisponible={prestamoItemEnEdicion.prestable?.stocks || []}
-                            almacenesActuales={prestamoItemEnEdicion.almacenes || []}
-                            esCanastilla={esCanastilla}
-                            capacidadCanastilla={prestamoItemEnEdicion.prestable?.capacidad || 0}
-                            embaseNombre={embaseRelacionado?.nombre || ''}
-                            embaseStockDisponible={embaseStock}
-                        />
-                    );
-                })()}
+                        return (
+                            <ModalAlmacenesDetalle
+                                isOpen={mostrarModalAlmacenes}
+                                onClose={() => {
+                                    setMostrarModalAlmacenes(false);
+                                    setPrestamoItemEnEdicion(null);
+                                    setIndexEnEdicion(null);
+                                }}
+                                onSave={handleGuardarAlmacenes}
+                                prestableNombre={prestamoItemEnEdicion.prestable?.nombre || 'Prestable'}
+                                cantidadTotal={prestamoItemEnEdicion.cantidad}
+                                almacenes={almacenes}
+                                stockDisponible={prestamoItemEnEdicion.prestable?.stocks || []}
+                                almacenesActuales={prestamoItemEnEdicion.almacenes || []}
+                                esCanastilla={esCanastilla}
+                                capacidadCanastilla={prestamoItemEnEdicion.prestable?.capacidad || 0}
+                                embaseNombre={embaseRelacionado?.nombre || ''}
+                                embaseStockDisponible={embaseStock}
+                            />
+                        );
+                    })()}
             </div>
         </AppLayout>
     );

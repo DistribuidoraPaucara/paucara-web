@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CreditoController::store
  * @see app/Http/Controllers/CreditoController.php:35
@@ -33,6 +33,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\CreditoController::store
+ * @see app/Http/Controllers/CreditoController.php:35
+ * @route '/api/creditos/crear'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CreditoController::store
+ * @see app/Http/Controllers/CreditoController.php:35
+ * @route '/api/creditos/crear'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\CreditoController::create
  * @see app/Http/Controllers/CreditoController.php:20
@@ -75,6 +96,42 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: create.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\CreditoController::create
+ * @see app/Http/Controllers/CreditoController.php:20
+ * @route '/admin/creditos/crear'
+ */
+    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: create.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CreditoController::create
+ * @see app/Http/Controllers/CreditoController.php:20
+ * @route '/admin/creditos/crear'
+ */
+        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CreditoController::create
+ * @see app/Http/Controllers/CreditoController.php:20
+ * @route '/admin/creditos/crear'
+ */
+        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    create.form = createForm
 const CreditoController = { store, create }
 
 export default CreditoController

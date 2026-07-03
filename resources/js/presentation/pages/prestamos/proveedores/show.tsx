@@ -61,17 +61,17 @@ export default function PrestamosProveedoresShow() {
 
     return (
         <AppLayout>
-            <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
+            <div className="py-2 px-4 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Proveedor</h3>
                         <p className="text-2xl font-bold mt-2">{prestamo.proveedor?.nombre || 'N/D'}</p>
                     </Card>
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Estado</h3>
                         <Badge className="mt-3">{prestamo.estado}</Badge>
                     </Card>
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase">Fechas</h3>
                         <p className="text-sm mt-2">
                             <span className="text-gray-600 dark:text-gray-300">Préstamo:</span> {new Date(prestamo.fecha_prestamo).toLocaleDateString()}
@@ -79,7 +79,7 @@ export default function PrestamosProveedoresShow() {
                     </Card>
                 </div>
 
-                <Card className="p-6">
+                <Card className="p-2">
                     <h2 className="text-xl font-bold mb-4">Información General</h2>
                     <div className="grid grid-cols-4 gap-4">
                         <div>

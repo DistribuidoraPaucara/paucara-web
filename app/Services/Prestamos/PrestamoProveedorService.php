@@ -8,6 +8,7 @@ use App\Models\PrestamoProveedorDetalle;
 use App\Models\PrestamoProveedorAlmacen;
 use App\Models\DevolucionProveedor;
 use App\Models\DevolucionProveedorDetalle;
+use App\Models\PrestableStock;
 use App\Services\MovimientoPrestableService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -199,34 +200,32 @@ class PrestamoProveedorService
                 foreach ($almacenesIds as $almacenId) {
                     if ($cantidadRestante <= 0) break;
 
-                    $stock = $this->stockService->obtenerStock($prestableId, $almacenId);
+                    $stock = PrestableStock::where('prestable_id', $prestableId)
+                        ->where('almacenes_prestables_id', $almacenId)
+                        ->first();
 
                     // Registrar cantidad en este almacén (los detalles simplemente registran la entrada)
                     $cantidadARegistrar = min($cantidadRestante, $cantidad);
 
                     // Obtener valores ANTES de actualizar
-                    $disponibleAntes = $stock->cantidad_disponible;
-                    $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
-                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                    $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                    $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
+                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                     $vendidaAntes = 0;
 
                     // Actualizar stock según tipo de operación
-                    if ($esCompra) {
-                        $this->stockService->incrementarStockInicial(
-                            $prestableId,
-                            $almacenId,
-                            $cantidadARegistrar
-                        );
-                    } else {
-                        $this->stockService->recibirPrestamoProveedor(
-                            $prestableId,
-                            $almacenId,
-                            $cantidadARegistrar
-                        );
+                    if ($stock && ($esCompra || !$esCompra)) {
+                        $updateData = [
+                            'cantidad_disponible' => $stock->cantidad_disponible + $cantidadARegistrar,
+                        ];
+                        if ($esCompra) {
+                            // Compra: solo incrementa disponible
+                        } else {
+                            // Préstamo de proveedor
+                            $updateData['cantidad_proveedor_acreedor'] = $stock->cantidad_proveedor_acreedor + $cantidadARegistrar;
+                        }
+                        $stock->update($updateData);
                     }
-
-                    // Refrescar stock DESPUÉS de actualizar
-                    $stock->refresh();
 
                     // Registrar movimiento
                     $this->movimientoService->registrarMovimiento([
@@ -311,6 +310,7 @@ class PrestamoProveedorService
                     'fecha_esperada_devolucion' => $datos['fecha_esperada_devolucion'] ?? null,
                     'observaciones' => $datos['observaciones'] ?? null,
                     'estado' => 'ACTIVO',
+                    'created_by' => auth()->id(),
                 ]);
 
                 Log::info('✅ Cabecera de préstamo creada', [
@@ -351,31 +351,25 @@ class PrestamoProveedorService
                         $cantidad = (int) $almacenData['cantidad'];
 
                         // Obtener stock ANTES de actualizar
-                        $stock = $this->stockService->obtenerStock($detalle['prestable_id'], $almacenId);
-                        $disponibleAntes = $stock->cantidad_disponible;
-                        $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
-                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                        $stock = PrestableStock::where('prestable_id', $detalle['prestable_id'])
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->first();
+                        $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                        $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
+                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                         $vendidaAntes = 0;
 
                         // Actualizar stock según tipo de operación
-                        if ($datos['es_compra']) {
-                            // COMPRA: solo incrementa disponible (no es deuda)
-                            $this->stockService->incrementarStockInicial(
-                                $detalle['prestable_id'],
-                                $almacenId,
-                                $cantidad
-                            );
-                        } else {
-                            // PRÉSTAMO: incrementa disponible y deuda activa con proveedor
-                            $this->stockService->recibirPrestamoProveedor(
-                                $detalle['prestable_id'],
-                                $almacenId,
-                                $cantidad
-                            );
+                        if ($stock) {
+                            $updateData = [
+                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidad,
+                            ];
+                            if (!$datos['es_compra']) {
+                                // PRÉSTAMO: incrementa deuda activa con proveedor
+                                $updateData['cantidad_proveedor_acreedor'] = $stock->cantidad_proveedor_acreedor + $cantidad;
+                            }
+                            $stock->update($updateData);
                         }
-
-                        // Obtener stock DESPUÉS de actualizar
-                        $stock->refresh();
 
                         // Crear registro en PrestamoProveedorAlmacen
                         PrestamoProveedorAlmacen::create([
@@ -518,22 +512,23 @@ class PrestamoProveedorService
 
                     // ✅ Registrar movimiento si hay cantidad devuelta
                     if ($cantidadDevuelta > 0 || $cantidadDañadaTotal > 0) {
-                        $stockAntes = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
-                        $disponibleAntes = $stockAntes->cantidad_disponible;
-                        $prestamoClienteAntes = $stockAntes->cantidad_cliente_deudor;
-                        $prestamoProveedorAntes = $stockAntes->cantidad_proveedor_acreedor;
+                        $stockAntes = PrestableStock::where('prestable_id', $detalle->prestable_id)
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->first();
+                        $disponibleAntes = $stockAntes->cantidad_disponible ?? 0;
+                        $prestamoClienteAntes = $stockAntes->cantidad_cliente_deudor ?? 0;
+                        $prestamoProveedorAntes = $stockAntes->cantidad_proveedor_acreedor ?? 0;
                         $proveedorDañadaAntes = $stockAntes->cantidad_proveedor_dañada ?? 0;
                         $vendidaAntes = 0;
 
                         // Procesar devolución en stock
-                        $this->stockService->devolverAlProveedor(
-                            $detalle->prestable_id,
-                            $almacenId,
-                            $cantidadDevuelta,
-                            $cantidadDañadaTotal
-                        );
-
-                        $stockAntes->refresh();
+                        if ($stockAntes) {
+                            $stockAntes->update([
+                                'cantidad_disponible' => $stockAntes->cantidad_disponible + $cantidadDevuelta,
+                                'cantidad_proveedor_acreedor' => max(0, $stockAntes->cantidad_proveedor_acreedor - $cantidadDevuelta),
+                                'cantidad_proveedor_dañada' => $stockAntes->cantidad_proveedor_dañada + $cantidadDañadaTotal,
+                            ]);
+                        }
 
                         // Registrar movimiento
                         $this->movimientoService->registrarMovimiento([
@@ -740,23 +735,21 @@ class PrestamoProveedorService
 
                         if ($cantidadPendiente > 0) {
                             // Obtener stock ANTES de devolver
-                            $stock = $this->stockService->obtenerStock($detalle->prestable_id, $almacenId);
-                            $disponibleAntes = $stock->cantidad_disponible;
-                            $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
-                            $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                            $stock = PrestableStock::where('prestable_id', $detalle->prestable_id)
+                                ->where('almacenes_prestables_id', $almacenId)
+                                ->first();
+                            $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                            $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
+                            $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                             $vendidaAntes = 0;
 
                             // Devolver al proveedor (reduce cantidad_disponible y cantidad_proveedor_acreedor)
-                            $this->stockService->devolverAlProveedor(
-                                $detalle->prestable_id,
-                                $almacenId,
-                                $cantidadPendiente,
-                                0, // sin daño parcial
-                                0  // sin daño total
-                            );
-
-                            // Obtener stock DESPUÉS de devolver
-                            $stock->refresh();
+                            if ($stock) {
+                                $stock->update([
+                                    'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendiente,
+                                    'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidadPendiente),
+                                ]);
+                            }
 
                             // Registrar movimiento de devolución por anulación
                             $this->movimientoService->registrarMovimiento([

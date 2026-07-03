@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::index
  * @see app/Http/Controllers/PrestamoProveedorController.php:26
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::index
+ * @see app/Http/Controllers/PrestamoProveedorController.php:26
+ * @route '/api/prestamos-proveedor'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::index
+ * @see app/Http/Controllers/PrestamoProveedorController.php:26
+ * @route '/api/prestamos-proveedor'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::index
+ * @see app/Http/Controllers/PrestamoProveedorController.php:26
+ * @route '/api/prestamos-proveedor'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::store
  * @see app/Http/Controllers/PrestamoProveedorController.php:69
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::store
+ * @see app/Http/Controllers/PrestamoProveedorController.php:69
+ * @route '/api/prestamos-proveedor'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::store
+ * @see app/Http/Controllers/PrestamoProveedorController.php:69
+ * @route '/api/prestamos-proveedor'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::obtenerActivosProveedor
  * @see app/Http/Controllers/PrestamoProveedorController.php:250
@@ -138,6 +194,41 @@ obtenerActivosProveedor.head = (args: { proveedorId: string | number } | [provee
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerActivosProveedor
+ * @see app/Http/Controllers/PrestamoProveedorController.php:250
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/activos'
+ */
+    const obtenerActivosProveedorForm = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerActivosProveedor.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerActivosProveedor
+ * @see app/Http/Controllers/PrestamoProveedorController.php:250
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/activos'
+ */
+        obtenerActivosProveedorForm.get = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerActivosProveedor.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerActivosProveedor
+ * @see app/Http/Controllers/PrestamoProveedorController.php:250
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/activos'
+ */
+        obtenerActivosProveedorForm.head = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerActivosProveedor.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerActivosProveedor.form = obtenerActivosProveedorForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::obtenerDeuda
  * @see app/Http/Controllers/PrestamoProveedorController.php:269
@@ -200,6 +291,41 @@ obtenerDeuda.head = (args: { proveedorId: string | number } | [proveedorId: stri
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerDeuda
+ * @see app/Http/Controllers/PrestamoProveedorController.php:269
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/deuda'
+ */
+    const obtenerDeudaForm = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerDeuda.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerDeuda
+ * @see app/Http/Controllers/PrestamoProveedorController.php:269
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/deuda'
+ */
+        obtenerDeudaForm.get = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDeuda.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::obtenerDeuda
+ * @see app/Http/Controllers/PrestamoProveedorController.php:269
+ * @route '/api/prestamos-proveedor/proveedor/{proveedorId}/deuda'
+ */
+        obtenerDeudaForm.head = (args: { proveedorId: string | number } | [proveedorId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDeuda.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerDeuda.form = obtenerDeudaForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::show
  * @see app/Http/Controllers/PrestamoProveedorController.php:123
@@ -267,6 +393,41 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::show
+ * @see app/Http/Controllers/PrestamoProveedorController.php:123
+ * @route '/api/prestamos-proveedor/{prestamo}'
+ */
+    const showForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::show
+ * @see app/Http/Controllers/PrestamoProveedorController.php:123
+ * @route '/api/prestamos-proveedor/{prestamo}'
+ */
+        showForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::show
+ * @see app/Http/Controllers/PrestamoProveedorController.php:123
+ * @route '/api/prestamos-proveedor/{prestamo}'
+ */
+        showForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::registrarDevolucion
  * @see app/Http/Controllers/PrestamoProveedorController.php:157
@@ -325,6 +486,27 @@ registrarDevolucion.post = (args: { prestamo: number | { id: number } } | [prest
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::registrarDevolucion
+ * @see app/Http/Controllers/PrestamoProveedorController.php:157
+ * @route '/api/prestamos-proveedor/{prestamo}/devolver'
+ */
+    const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: registrarDevolucion.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::registrarDevolucion
+ * @see app/Http/Controllers/PrestamoProveedorController.php:157
+ * @route '/api/prestamos-proveedor/{prestamo}/devolver'
+ */
+        registrarDevolucionForm.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: registrarDevolucion.url(args, options),
+            method: 'post',
+        })
+    
+    registrarDevolucion.form = registrarDevolucionForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::anularPrestamo
  * @see app/Http/Controllers/PrestamoProveedorController.php:332
@@ -383,6 +565,27 @@ anularPrestamo.post = (args: { prestamo: number | { id: number } } | [prestamo: 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::anularPrestamo
+ * @see app/Http/Controllers/PrestamoProveedorController.php:332
+ * @route '/api/prestamos-proveedor/{prestamo}/anular'
+ */
+    const anularPrestamoForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: anularPrestamo.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::anularPrestamo
+ * @see app/Http/Controllers/PrestamoProveedorController.php:332
+ * @route '/api/prestamos-proveedor/{prestamo}/anular'
+ */
+        anularPrestamoForm.post = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: anularPrestamo.url(args, options),
+            method: 'post',
+        })
+    
+    anularPrestamo.form = anularPrestamoForm
 /**
 * @see \App\Http\Controllers\PrestamoProveedorController::imprimir
  * @see app/Http/Controllers/PrestamoProveedorController.php:288
@@ -449,6 +652,42 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
     url: imprimir.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\PrestamoProveedorController::imprimir
+ * @see app/Http/Controllers/PrestamoProveedorController.php:288
+ * @route '/prestamos/proveedores/{prestamo}/imprimir'
+ */
+    const imprimirForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::imprimir
+ * @see app/Http/Controllers/PrestamoProveedorController.php:288
+ * @route '/prestamos/proveedores/{prestamo}/imprimir'
+ */
+        imprimirForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoProveedorController::imprimir
+ * @see app/Http/Controllers/PrestamoProveedorController.php:288
+ * @route '/prestamos/proveedores/{prestamo}/imprimir'
+ */
+        imprimirForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 const PrestamoProveedorController = { index, store, obtenerActivosProveedor, obtenerDeuda, show, registrarDevolucion, anularPrestamo, imprimir }
 
 export default PrestamoProveedorController

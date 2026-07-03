@@ -71,6 +71,25 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         fetchPrestables();
     }, []);
 
+    // ✅ NUEVO: Seleccionar automáticamente el primer almacén con es_proveedor=true
+    useEffect(() => {
+        if (almacenes_proveedor && almacenes_proveedor.length > 0) {
+            // Buscar primer almacén con es_proveedor=true
+            const almacenProveedor = almacenes_proveedor.find((a: any) => a.es_proveedor === true);
+
+            if (almacenProveedor) {
+                setFormData((prev) => ({
+                    ...prev,
+                    almacenes_prestables_id: almacenProveedor.id,
+                }));
+                console.log('%c✅ Almacén de proveedor seleccionado por defecto', 'color: #00b894; font-weight: bold', {
+                    almacen_id: almacenProveedor.id,
+                    almacen_nombre: almacenProveedor.nombre,
+                });
+            }
+        }
+    }, [almacenes_proveedor]);
+
 
     function getDateAdd7Days() {
         const date = new Date();
@@ -132,8 +151,91 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 proveedor_id: proveedorId,
             });
             setProveedorSeleccionado(proveedores.find(p => p.id === proveedorId));
+
+            // ✅ NUEVO: Cargar prestables automáticamente desde los detalles de la compra
+            const nuevosPrestables: PrestamoItem[] = [];
+            const detalles = compraData.detalles || [];
+
+            console.log('%c📦 Cargando prestables desde compra', 'color: #0066cc; font-weight: bold', {
+                compra_id: compra.id,
+                detalles_count: detalles.length,
+            });
+
+            detalles.forEach((detalle: any) => {
+                const producto = detalle.producto || {};
+                const cantidad = detalle.cantidad || 0;
+
+                console.log('%c🔍 Procesando producto', 'color: #ff9800', {
+                    producto_id: producto.id,
+                    producto_nombre: producto.nombre,
+                    cantidad,
+                    prestables: producto.prestables?.length || 0,
+                });
+
+                if (!producto.prestables || producto.prestables.length === 0) {
+                    return; // Saltar si el producto no tiene prestables
+                }
+
+                // 1️⃣ Buscar CANASTILLA en el array de prestables del producto
+                const prestableCanastilla = producto.prestables.find((p: any) => {
+                    return p.tipo === 'CANASTILLA';
+                });
+
+                if (prestableCanastilla) {
+                    const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
+                    const capacidadCanastilla = prestableCanastilla.capacidad || 0;
+
+                    console.log('%c✅ CANASTILLA encontrada', 'color: #00b894', {
+                        canastilla_id: canastillaId,
+                        canastilla_nombre: prestableCanastilla.nombre,
+                        cantidad_canastillas: cantidad,
+                        capacidad: capacidadCanastilla,
+                    });
+
+                    // Agregar CANASTILLA
+                    nuevosPrestables.push({
+                        prestable_id: canastillaId,
+                        cantidad: cantidad,
+                        prestable: prestableCanastilla,
+                    });
+
+                    // ✅ Buscar EMBASES relacionados
+                    const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
+
+                    embasesEnProducto.forEach((embase: any) => {
+                        const embaseId = Number(embase.id || embase.prestable_id);
+                        const cantidadEmbases = cantidad * capacidadCanastilla;
+
+                        console.log('%c✅ EMBASE encontrado', 'color: #9c27b0', {
+                            embase_id: embaseId,
+                            embase_nombre: embase.nombre,
+                            cantidad_embases_calculada: cantidadEmbases,
+                        });
+
+                        nuevosPrestables.push({
+                            prestable_id: embaseId,
+                            cantidad: cantidadEmbases,
+                            prestable: embase,
+                            isAutomaticEmbase: true,
+                        });
+                    });
+                }
+            });
+
+            console.log('%c📋 Prestables cargados automáticamente', 'color: #4caf50; font-weight: bold', {
+                cantidad_prestables: nuevosPrestables.length,
+                prestables: nuevosPrestables.map(p => ({ id: p.prestable_id, nombre: p.prestable?.nombre })),
+            });
+
+            // Reemplazar con los prestables cargados automáticamente
+            setPrestablesAgregados(nuevosPrestables);
+
+            if (nuevosPrestables.length > 0) {
+                toastWarning('⚠️ Se cargaron ' + nuevosPrestables.length + ' prestables automáticamente. Especifica los almacenes.');
+            }
         } catch (error) {
             console.error('Error cargando compra:', error);
+            toastError('Error al cargar los detalles de la compra');
         }
     };
 
@@ -352,43 +454,22 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         <AppLayout>
             <Head title="Crear Préstamo a Proveedor" />
             <ToastContainer toasts={toasts} onClose={removeToast} />
-            <div className="p-8 bg-white dark:bg-gray-950 min-h-screen">
+            <div className="p-2 bg-white dark:bg-gray-950 min-h-screen">
                 <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
                     🏭 Nuevo Préstamo a Proveedor
                 </h1>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-2">
                     {error && (
                         <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg border border-red-300 dark:border-red-700">
                             {error}
                         </div>
                     )}
 
-                    {/* Info Banner - Cómo funciona el Préstamo a Proveedor */}
-                    {/* <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                            ℹ️ Cómo funciona el Préstamo a Proveedor
-                        </h3>
-                        <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                            <p>
-                                <strong>Diferencia clave:</strong> El proveedor es el DUEÑO de las canastillas/embases
-                            </p>
-                            <p>
-                                ✅ <strong>El proveedor nos PRESTA sus items</strong> → <span className="font-semibold text-blue-600">STOCK AUMENTA pero NO está disponible para prestar a clientes</span>
-                            </p>
-                            <p>
-                                📍 <strong>Debes devolver</strong> estos items cuando termine el préstamo
-                            </p>
-                        </div>
-                    </div> */}
-
                     {/* Sección 1: Información del Préstamo */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        {/* <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                            📋 Información del Préstamo
-                        </h2> */}
+                    <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                             {/* Columna 1: Compra (REQUERIDA) */}
                             <DynamicSearchSelect
                                 label="📦 Compra *"
@@ -465,7 +546,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                         </div>
 
                         {/* Fila: Chofer y Vehículo */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {/* Chofer (Opcional) */}
                             <div>
                                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -517,7 +598,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                         </div>
 
                         {/* Fila: Fechas */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                             {/* Fila: Garantía */}
                             <div>
                                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -575,72 +656,10 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                     </Card>
 
                     {/* Sección 2: Seleccionar Prestables */}
-                    <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                    <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             📦 Seleccionar Prestables
                         </h2>
-
-                        {/* Filtro por Tipo - Radio Buttons */}
-                        {/* <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <p className="text-sm font-semibold mb-3 text-blue-900 dark:text-blue-100">
-                                📋 Tipo de Préstamo *
-                            </p>
-                            <div className="flex flex-wrap gap-6">
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="tipo_prestamo"
-                                        value="canastillas"
-                                        checked={formData.tipo_prestamo === 'canastillas'}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, tipo_prestamo: 'canastillas' });
-                                            // Limpiar embases del carrito
-                                            setPrestablesAgregados(
-                                                prestablesAgregados.filter(item => {
-                                                    const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
-                                                    return prestable?.tipo === 'CANASTILLA';
-                                                })
-                                            );
-                                        }}
-                                        className="w-4 h-4 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">📦 Solo Canastillas</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="tipo_prestamo"
-                                        value="embases"
-                                        checked={formData.tipo_prestamo === 'embases'}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, tipo_prestamo: 'embases' });
-                                            // Limpiar canastillas del carrito
-                                            setPrestablesAgregados(
-                                                prestablesAgregados.filter(item => {
-                                                    const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
-                                                    return prestable?.tipo === 'EMBASES';
-                                                })
-                                            );
-                                        }}
-                                        className="w-4 h-4 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">🔖 Solo Embases</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer border-l pl-6 border-blue-300 dark:border-blue-700">
-                                    <input
-                                        type="radio"
-                                        name="tipo_prestamo"
-                                        value="canastillas_embases"
-                                        checked={formData.tipo_prestamo === 'canastillas_embases'}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, tipo_prestamo: 'canastillas_embases' });
-                                        }}
-                                        className="w-4 h-4 cursor-pointer"
-                                    />
-                                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">📦+🔖 Canastillas + Embases</span>
-                                </label>
-                            </div>
-                        </div> */}
 
                         {/* Usar componente PrestablesSelectionTable */}
                         <PrestablesSelectionTable

@@ -88,6 +88,11 @@ class PrestamosInertiaController extends Controller
             ->orderBy('nombre')
             ->get();
 
+        // ✅ Nuevo: Traer localidades para selección de ubicación
+        $localidades = \App\Models\Localidad::select('id', 'nombre')
+            ->orderBy('nombre')
+            ->get();
+
         return Inertia::render('prestamos/clientes/crear', [
             'clientes' => $clientes,
             'choferes' => $choferes,
@@ -95,6 +100,7 @@ class PrestamosInertiaController extends Controller
             'vehiculos' => $vehiculos,
             'ventas' => $ventas,
             'prestables' => $prestables, // ✅ Nuevo: prestables con stocks
+            'localidades' => $localidades, // ✅ Nuevo: localidades para ubicación
         ]);
     }
 
@@ -318,12 +324,18 @@ class PrestamosInertiaController extends Controller
             ->orderBy('nombre')
             ->get();
 
+        // ✅ Nuevo: Traer localidades para selección de ubicación
+        $localidades = \App\Models\Localidad::select('id', 'nombre')
+            ->orderBy('nombre')
+            ->get();
+
         return Inertia::render('prestamos/eventos/crear', [
             'choferes' => $choferes,
             'almacenes' => $almacenes,
             'ventas' => $ventas,
             'vehiculos' => $vehiculos,
             'prestables' => $prestables, // ✅ Nuevo: prestables con stocks
+            'localidades' => $localidades, // ✅ Nuevo: localidades para ubicación
         ]);
     }
 

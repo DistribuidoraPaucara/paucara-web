@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Prestamos;
 use App\Http\Controllers\Controller;
 use App\Models\AlmacenPrestable;
 use App\Models\PrestableStock;
+use App\Services\Prestamos\PrestableStockService;
 use Inertia\Inertia;
 
 class StockController extends Controller
@@ -82,6 +83,8 @@ class StockController extends Controller
      */
     public function stockClientes()
     {
+        $prestableStockService = new PrestableStockService();
+
         // Obtener almacenes de clientes (es_proveedor = false)
         $almacenesClientes = AlmacenPrestable::where('es_proveedor', false)
             ->select('id', 'nombre')
@@ -92,7 +95,8 @@ class StockController extends Controller
 
         // Obtener TODOS los prestables activos
         $prestables = \App\Models\Prestable::where('activo', true)
-            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id', 'capacidad')
+            ->with('productos', 'prestablePadre')
             ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
@@ -126,6 +130,9 @@ class StockController extends Controller
                 $cantidadEventoDañada = $stock?->cantidad_evento_dañada ?? 0;
                 $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDañada;
 
+                // Calcular cantidad con líquido
+                $cantidadConLiquido = $prestableStockService->calcularCantidadConLiquido($prestable, $almacen->id);
+
                 $items[] = [
                     'id' => $stock?->id ?? null,
                     'prestable_id' => $prestable->id,
@@ -145,6 +152,7 @@ class StockController extends Controller
                     'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
                     'cantidad_evento_dañada' => $cantidadEventoDañada,
                     'cantidad_evento_total' => $cantidadEventoTotal,
+                    'cantidad_con_liquido' => $cantidadConLiquido,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal,
                 ];
             }
@@ -206,9 +214,36 @@ class StockController extends Controller
             'eventos' => $resumenEventos,
         ];
 
+        // Calcular sumatorias totales (Clientes + Eventos)
+        $resumenFuera = [
+            'canastillas' => [
+                'prestado' => $resumenClientes['canastillas']['deudor'] + $resumenEventos['canastillas']['deudor'],
+                'dañada' => $resumenClientes['canastillas']['dañada'] + $resumenEventos['canastillas']['dañada'],
+            ],
+            'embases' => [
+                'prestado' => $resumenClientes['embases']['deudor'] + $resumenEventos['embases']['deudor'],
+                'dañada' => $resumenClientes['embases']['dañada'] + $resumenEventos['embases']['dañada'],
+            ],
+        ];
+
+        // Agregar totales
+        $resumenFuera['canastillas']['total'] = $resumenFuera['canastillas']['prestado'] + $resumenFuera['canastillas']['dañada'];
+        $resumenFuera['embases']['total'] = $resumenFuera['embases']['prestado'] + $resumenFuera['embases']['dañada'];
+
+        // LOG DETALLADO PARA DEBUG
+        \Log::info('📊 Resumen Detalles - Stock Clientes', [
+            'resumen_clientes' => $resumenClientes,
+            'resumen_eventos' => $resumenEventos,
+            'resumen_fuera' => $resumenFuera,
+            'total_items' => count($items),
+            'canastillas_count' => $canastillas->count(),
+            'embases_count' => $embases->count(),
+        ]);
+
         return Inertia::render('prestamos/stock-clientes', [
             'items' => $items,
             'resumen' => $resumen,
+            'resumenFuera' => $resumenFuera,
             'almacenes' => $almacenesClientes->toArray(),
         ]);
     }
@@ -219,6 +254,8 @@ class StockController extends Controller
      */
     public function stockEventos()
     {
+        $prestableStockService = new PrestableStockService();
+
         // Obtener almacenes de clientes (es_proveedor = false) para eventos
         $almacenesClientes = AlmacenPrestable::where('es_proveedor', false)
             ->select('id', 'nombre')
@@ -229,7 +266,8 @@ class StockController extends Controller
 
         // Obtener TODOS los prestables activos (ordenar por tipo y nombre para agrupar canastillas y embases)
         $prestables = \App\Models\Prestable::where('activo', true)
-            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id', 'capacidad')
+            ->with('productos', 'prestablePadre')
             ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
@@ -255,6 +293,9 @@ class StockController extends Controller
                 $cantidadEventoDañada = $stock?->cantidad_evento_dañada ?? 0;
                 $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDañada;
 
+                // Calcular cantidad con líquido
+                $cantidadConLiquido = $prestableStockService->calcularCantidadConLiquido($prestable, $almacen->id);
+
                 $items[] = [
                     'id' => $stock?->id ?? null,
                     'prestable_id' => $prestable->id,
@@ -274,6 +315,7 @@ class StockController extends Controller
                     'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
                     'cantidad_evento_dañada' => $cantidadEventoDañada,
                     'cantidad_evento_total' => $cantidadEventoTotal,
+                    'cantidad_con_liquido' => $cantidadConLiquido,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadEventoTotal,
                 ];
             }
@@ -346,6 +388,8 @@ class StockController extends Controller
      */
     public function stockProveedores()
     {
+        $prestableStockService = new PrestableStockService();
+
         // Obtener almacenes de proveedores (es_proveedor = true)
         $almacenesProveedores = AlmacenPrestable::where('es_proveedor', true)
             ->select('id', 'nombre')
@@ -356,7 +400,8 @@ class StockController extends Controller
 
         // Obtener TODOS los prestables activos (ordenar por tipo y nombre para agrupar canastillas y embases)
         $prestables = \App\Models\Prestable::where('activo', true)
-            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id')
+            ->select('id', 'nombre', 'codigo', 'tipo', 'prestable_relacionado_id', 'embase_asociado_id', 'capacidad')
+            ->with('productos', 'prestablePadre')
             ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
@@ -382,6 +427,9 @@ class StockController extends Controller
                 $cantidadProveedorDañada = $stock?->cantidad_proveedor_dañada ?? 0;
                 $cantidadProveedorTotal = $cantidadProveedorAcreedor + $cantidadProveedorDañada;
 
+                // Calcular cantidad con líquido
+                $cantidadConLiquido = $prestableStockService->calcularCantidadConLiquido($prestable, $almacen->id);
+
                 $items[] = [
                     'id' => $stock?->id ?? null,
                     'prestable_id' => $prestable->id,
@@ -404,6 +452,7 @@ class StockController extends Controller
                     'cantidad_evento_deudor' => $stock?->cantidad_evento_deudor ?? 0,
                     'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
                     'cantidad_evento_dañada' => $stock?->cantidad_evento_dañada ?? 0,
+                    'cantidad_con_liquido' => $cantidadConLiquido,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal + $cantidadProveedorTotal,
                 ];
             }

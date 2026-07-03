@@ -37,7 +37,9 @@ class PrestamoEventoController extends Controller
                 'chofer',
                 'almacen',
                 'ventas',
+                'ubicacion',
                 'devoluciones.detalles',
+                'creador', // ✅ Usuario que creó el préstamo
             ]);
 
             // Filtro por ID
@@ -139,6 +141,10 @@ class PrestamoEventoController extends Controller
                 'fecha_entrega' => 'nullable|date|after_or_equal:fecha_prestamo',
                 'fecha_esperada_devolucion' => 'nullable|date|after_or_equal:fecha_prestamo',
                 'monto_garantia' => 'nullable|numeric|min:0',
+                'ubicacion.direccion_cliente_id' => 'nullable|integer|exists:direcciones_cliente,id',
+                'ubicacion.localidad_id' => 'nullable|integer|exists:localidades,id',
+                'ubicacion.direccion' => 'nullable|string|max:255',
+                'ubicacion.es_ubicacion_manual' => 'nullable|boolean',
                 'detalles' => 'required|array|min:1',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
                 'detalles.*.cantidad' => 'required|integer|min:1',
@@ -148,6 +154,21 @@ class PrestamoEventoController extends Controller
                 'detalles.*.almacenes.*.almacenes_prestables_id' => 'integer|exists:almacenes_prestables,id',
                 'detalles.*.almacenes.*.cantidad' => 'integer|min:1',
             ]);
+
+            // Validar ubicación si viene
+            if ($request->has('ubicacion')) {
+                $datosUbicacion = $request->input('ubicacion');
+
+                // Si es ubicación manual, validar que tenga localidad_id
+                if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
+                    if (!isset($datosUbicacion['localidad_id'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Ubicación manual requiere localidad_id',
+                        ], 422);
+                    }
+                }
+            }
 
             // Validar que se especifique almacén en cabecera O en detalles
             if (!$validated['almacenes_prestables_id']) {
@@ -221,7 +242,7 @@ class PrestamoEventoController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['cliente', 'detalles.prestable', 'detalles.prestable.condiciones', 'chofer', 'almacen', 'ventas']),
+                'data' => $prestamo->load(['cliente', 'detalles.prestable', 'detalles.prestable.condiciones', 'chofer', 'almacen', 'ventas', 'ubicacion', 'creador']),
                 'message' => 'Préstamo a evento creado exitosamente',
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -257,6 +278,8 @@ class PrestamoEventoController extends Controller
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'chofer',
                 'ventas',
+                'ubicacion',
+                'creador', // ✅ Usuario que creó el préstamo
                 // ✅ NUEVO: Cargar prestable en detalles de devoluciones
                 'devoluciones.detalles.prestamoEventoDetalle.prestable',
                 'devoluciones.detalles.devolucionesAlmacenes.almacen'
@@ -299,10 +322,29 @@ class PrestamoEventoController extends Controller
                 'monto_garantia' => 'nullable|numeric|min:0',
                 'ventas_ids' => 'nullable|array',
                 'ventas_ids.*' => 'integer|exists:ventas,id',
+                'ubicacion.direccion_cliente_id' => 'nullable|integer|exists:direcciones_cliente,id',
+                'ubicacion.localidad_id' => 'nullable|integer|exists:localidades,id',
+                'ubicacion.direccion' => 'nullable|string|max:255',
+                'ubicacion.es_ubicacion_manual' => 'nullable|boolean',
             ]);
 
+            // Validar ubicación si viene
+            if ($request->has('ubicacion')) {
+                $datosUbicacion = $request->input('ubicacion');
+
+                // Si es ubicación manual, validar que tenga localidad_id
+                if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
+                    if (!isset($datosUbicacion['localidad_id'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Ubicación manual requiere localidad_id',
+                        ], 422);
+                    }
+                }
+            }
+
             // Actualizar campos del préstamo
-            $prestamo->update(collect($validated)->except(['ventas_ids'])->toArray());
+            $prestamo->update(collect($validated)->except(['ventas_ids', 'ubicacion'])->toArray());
 
             // Sincronizar ventas (many-to-many)
             if (isset($validated['ventas_ids'])) {
@@ -313,13 +355,31 @@ class PrestamoEventoController extends Controller
                 ]);
             }
 
+            // Actualizar ubicación si viene en los datos
+            if (isset($validated['ubicacion'])) {
+                $datosUbicacion = $validated['ubicacion'];
+
+                $ubicacion = $prestamo->ubicacion()->first();
+
+                if ($ubicacion) {
+                    $ubicacion->update($datosUbicacion);
+                } else {
+                    $prestamo->ubicacion()->create($datosUbicacion);
+                }
+
+                Log::info('✅ Ubicación del préstamo de evento actualizada', [
+                    'prestamo_id' => $prestamo->id,
+                    'ubicacion_data' => $datosUbicacion
+                ]);
+            }
+
             Log::info('✅ Préstamo a evento actualizado exitosamente', [
                 'prestamo_evento_id' => $prestamo->id,
             ]);
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['cliente', 'almacen', 'detalles.prestable', 'chofer', 'ventas']),
+                'data' => $prestamo->load(['cliente', 'almacen', 'detalles.prestable', 'chofer', 'ventas', 'ubicacion']),
                 'message' => 'Préstamo actualizado exitosamente',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {

@@ -257,6 +257,7 @@ class CompraController extends Controller
             'moneda',
             'tipoPago',
             'detalles.producto.codigosBarra',
+            'detalles.producto.prestables',
             'almacen'
         ])->findOrFail($id);
 

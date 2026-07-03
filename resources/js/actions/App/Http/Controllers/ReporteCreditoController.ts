@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteCreditoController::index
  * @see app/Http/Controllers/ReporteCreditoController.php:22
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteCreditoController::index
+ * @see app/Http/Controllers/ReporteCreditoController.php:22
+ * @route '/reportes/credito'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::index
+ * @see app/Http/Controllers/ReporteCreditoController.php:22
+ * @route '/reportes/credito'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::index
+ * @see app/Http/Controllers/ReporteCreditoController.php:22
+ * @route '/reportes/credito'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ReporteCreditoController::obtenerGraficosCreditoApi
  * @see app/Http/Controllers/ReporteCreditoController.php:159
@@ -85,6 +120,41 @@ obtenerGraficosCreditoApi.head = (options?: RouteQueryOptions): RouteDefinition<
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerGraficosCreditoApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:159
+ * @route '/reportes/credito/graficos'
+ */
+    const obtenerGraficosCreditoApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerGraficosCreditoApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerGraficosCreditoApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:159
+ * @route '/reportes/credito/graficos'
+ */
+        obtenerGraficosCreditoApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerGraficosCreditoApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerGraficosCreditoApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:159
+ * @route '/reportes/credito/graficos'
+ */
+        obtenerGraficosCreditoApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerGraficosCreditoApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerGraficosCreditoApi.form = obtenerGraficosCreditoApiForm
 /**
 * @see \App\Http\Controllers\ReporteCreditoController::obtenerClientesVencidosApi
  * @see app/Http/Controllers/ReporteCreditoController.php:237
@@ -127,6 +197,42 @@ obtenerClientesVencidosApi.head = (options?: RouteQueryOptions): RouteDefinition
     url: obtenerClientesVencidosApi.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerClientesVencidosApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:237
+ * @route '/reportes/credito/vencidos'
+ */
+    const obtenerClientesVencidosApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerClientesVencidosApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerClientesVencidosApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:237
+ * @route '/reportes/credito/vencidos'
+ */
+        obtenerClientesVencidosApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerClientesVencidosApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteCreditoController::obtenerClientesVencidosApi
+ * @see app/Http/Controllers/ReporteCreditoController.php:237
+ * @route '/reportes/credito/vencidos'
+ */
+        obtenerClientesVencidosApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerClientesVencidosApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerClientesVencidosApi.form = obtenerClientesVencidosApiForm
 const ReporteCreditoController = { index, obtenerGraficosCreditoApi, obtenerClientesVencidosApi }
 
 export default ReporteCreditoController

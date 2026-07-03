@@ -39,6 +39,8 @@ class PrestamoClienteController extends Controller
                 'almacen',
                 'chofer',
                 'vehiculo',
+                'ubicacion',
+                'creador',
                 // ✅ MEJORADO: Cargar devoluciones con sus detalles y prestables
                 'devoluciones' => function ($query) {
                     $query->with([
@@ -104,6 +106,40 @@ class PrestamoClienteController extends Controller
                     'message' => 'Datos inválidos: ' . implode(', ', $validacion['errores']),
                     'errores' => $validacion['errores'],
                 ], 422);
+            }
+
+            // Validar datos de ubicación si vienen
+            if ($request->has('ubicacion')) {
+                $datosUbicacion = $request->input('ubicacion');
+
+                // Validar estructura
+                $validacionUbicacion = validator($datosUbicacion, [
+                    'direccion_cliente_id' => 'nullable|integer|exists:direcciones_cliente,id',
+                    'localidad_id' => 'nullable|integer|exists:localidades,id',
+                    'direccion' => 'nullable|string|max:255',
+                    'es_ubicacion_manual' => 'nullable|boolean',
+                ]);
+
+                if ($validacionUbicacion->fails()) {
+                    Log::error('❌ Validación de ubicación fallida', [
+                        'errores' => $validacionUbicacion->errors()
+                    ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Datos de ubicación inválidos',
+                        'errores' => $validacionUbicacion->errors(),
+                    ], 422);
+                }
+
+                // Si es ubicación manual, validar que tenga localidad_id
+                if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
+                    if (!isset($datosUbicacion['localidad_id'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Ubicación manual requiere localidad_id',
+                        ], 422);
+                    }
+                }
             }
 
             // Validar almacenes (pueden venir en cabecera O en detalles)
@@ -201,7 +237,7 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'detalles.prestable.condiciones', 'detalles.prestable.precios', 'cliente', 'almacen', 'chofer', 'vehiculo']),
+                'data' => $prestamo->load(['detalles.prestable', 'detalles.prestable.condiciones', 'detalles.prestable.precios', 'cliente', 'almacen', 'chofer', 'vehiculo', 'ubicacion', 'creador']),
                 'message' => 'Préstamo creado exitosamente',
             ], 201);
         } catch (\Exception $e) {
@@ -228,6 +264,8 @@ class PrestamoClienteController extends Controller
                 'chofer',
                 'vehiculo',
                 'venta',
+                'ubicacion',
+                'creador',
                 'devoluciones.detalles.detallePrestamoCliente.prestable',
                 'devoluciones.detalles.devolucionesAlmacenes.almacen'
             ]);
@@ -246,7 +284,7 @@ class PrestamoClienteController extends Controller
 
     /**
      * PATCH /api/prestamos-cliente/{prestamo}
-     * Actualizar préstamo (fecha esperada, garantía, observaciones)
+     * Actualizar préstamo (fecha esperada, garantía, observaciones, ubicación)
      */
     public function update(Request $request, PrestamoCliente $prestamo): JsonResponse
     {
@@ -261,10 +299,47 @@ class PrestamoClienteController extends Controller
                 'fecha_esperada_devolucion' => 'nullable|date',
                 'monto_garantia' => 'nullable|numeric|min:0',
                 'observaciones' => 'nullable|string|max:1000',
+                'ubicacion.direccion_cliente_id' => 'nullable|integer|exists:direcciones_cliente,id',
+                'ubicacion.localidad_id' => 'nullable|integer|exists:localidades,id',
+                'ubicacion.direccion' => 'nullable|string|max:255',
+                'ubicacion.es_ubicacion_manual' => 'nullable|boolean',
             ]);
 
             // Actualizar el préstamo
-            $prestamo->update($datosActualizacion);
+            $prestamo->update([
+                'fecha_esperada_devolucion' => $datosActualizacion['fecha_esperada_devolucion'] ?? $prestamo->fecha_esperada_devolucion,
+                'monto_garantia' => $datosActualizacion['monto_garantia'] ?? $prestamo->monto_garantia,
+                'observaciones' => $datosActualizacion['observaciones'] ?? $prestamo->observaciones,
+            ]);
+
+            // Actualizar ubicación si viene en los datos
+            if (isset($datosActualizacion['ubicacion'])) {
+                $datosUbicacion = $datosActualizacion['ubicacion'];
+
+                // Si es ubicación manual, validar que tenga localidad_id o dirección
+                if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
+                    if (!isset($datosUbicacion['localidad_id'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Ubicación manual requiere localidad_id',
+                        ], 422);
+                    }
+                }
+
+                // Obtener o crear ubicación
+                $ubicacion = $prestamo->ubicacion()->first();
+
+                if ($ubicacion) {
+                    $ubicacion->update($datosUbicacion);
+                } else {
+                    $prestamo->ubicacion()->create($datosUbicacion);
+                }
+
+                Log::info('✅ Ubicación del préstamo actualizada', [
+                    'prestamo_id' => $prestamo->id,
+                    'ubicacion_data' => $datosUbicacion
+                ]);
+            }
 
             Log::info('✅ Préstamo actualizado', [
                 'prestamo_id' => $prestamo->id,
@@ -273,7 +348,7 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'cliente', 'chofer']),
+                'data' => $prestamo->load(['detalles.prestable', 'cliente', 'chofer', 'ubicacion']),
                 'message' => 'Préstamo actualizado exitosamente',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -578,6 +653,67 @@ class PrestamoClienteController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('❌ Error anulando préstamo', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * POST /api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/anular
+     * Anular devolución (revierte movimientos y stock)
+     */
+    public function anularDevolucion(Request $request, PrestamoCliente $prestamo, $devolucionId): JsonResponse
+    {
+        try {
+            Log::info('📝 Anulando devolución', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucionId,
+                'datos' => $request->all()
+            ]);
+
+            // Validar datos
+            $datosValidacion = $request->validate([
+                'razon_anulacion' => 'nullable|string|max:500',
+            ]);
+
+            // Anular devolución
+            $devolucionAnulada = $this->prestamoService->anularDevolucion(
+                $prestamo->id,
+                (int) $devolucionId,
+                $datosValidacion['razon_anulacion'] ?? null
+            );
+
+            if (!$devolucionAnulada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error anulando devolución',
+                ], 500);
+            }
+
+            Log::info('✅ Devolución anulada correctamente', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucionAnulada->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $devolucionAnulada->load([
+                    'detalles.detallePrestamoCliente.prestable',
+                    'detalles.devolucionesAlmacenes.almacen',
+                    'prestamo.cliente'
+                ]),
+                'message' => 'Devolución anulada exitosamente',
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('⚠️ Validación fallida al anular devolución', [
+                'errores' => $e->errors()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errores' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }

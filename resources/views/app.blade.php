@@ -17,8 +17,6 @@
             apiUrl: "{{ env('VITE_API_URL', '/api') }}"
         };
         window.__APP_NAME__ = "{{ config('app.name', 'Laravel') }}";
-        console.log('🔧 App Config Loaded:', window.__APP_CONFIG__);
-        console.log('📱 App Name:', window.__APP_NAME__);
     </script>
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}

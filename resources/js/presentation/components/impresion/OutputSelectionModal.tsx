@@ -285,8 +285,11 @@ export function OutputSelectionModal({
             // Para préstamos a evento
             rutaBase = `/prestamos/eventos/${documentoId}`;
         } else if (tipoDocumento === 'devoluciones-evento') {
-            // Para devoluciones de evento
-            rutaBase = `/prestamos/eventos/devoluciones/${documentoId}`;
+            // Para devoluciones de evento (imprime el préstamo evento)
+            rutaBase = `/prestamos/eventos/${documentoId}`;
+        } else if (tipoDocumento === 'devoluciones-proveedor') {
+            // Para devoluciones de proveedor (imprime el préstamo proveedor)
+            rutaBase = `/prestamos/proveedores/${documentoId}`;
         } else if (tipoDocumento === 'prestamos-vendidos') {
             // Para ventas de prestables
             rutaBase = `/api/prestamos-vendidos/${documentoId}`;
@@ -368,6 +371,9 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'devoluciones-evento') {
                 // Para devoluciones de evento
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
+            } else if (tipoDocumento === 'devoluciones-proveedor') {
+                // Para devoluciones de proveedor
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'prestamos-vendidos') {
                 // Para ventas de prestables
@@ -453,6 +459,9 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'devoluciones-evento') {
                 // Para devoluciones de evento
+                url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
+            } else if (tipoDocumento === 'devoluciones-proveedor') {
+                // Para devoluciones de proveedor
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'prestamos-vendidos') {
                 // Para ventas de prestables

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::index
  * @see app/Http/Controllers/CierreDiarioGeneralController.php:24
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::index
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:24
+ * @route '/cajas/admin/reportes-diarios'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::index
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:24
+ * @route '/cajas/admin/reportes-diarios'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::index
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:24
+ * @route '/cajas/admin/reportes-diarios'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::debug
  * @see app/Http/Controllers/CierreDiarioGeneralController.php:133
@@ -104,6 +139,41 @@ debug.head = (args: { id: string | number } | [id: string | number ] | string | 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::debug
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:133
+ * @route '/cajas/admin/reportes-diarios/{id}/debug'
+ */
+    const debugForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: debug.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::debug
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:133
+ * @route '/cajas/admin/reportes-diarios/{id}/debug'
+ */
+        debugForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: debug.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::debug
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:133
+ * @route '/cajas/admin/reportes-diarios/{id}/debug'
+ */
+        debugForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: debug.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    debug.form = debugForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::show
  * @see app/Http/Controllers/CierreDiarioGeneralController.php:181
@@ -166,6 +236,41 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::show
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:181
+ * @route '/cajas/admin/reportes-diarios/{id}'
+ */
+    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::show
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:181
+ * @route '/cajas/admin/reportes-diarios/{id}'
+ */
+        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::show
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:181
+ * @route '/cajas/admin/reportes-diarios/{id}'
+ */
+        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
  * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
@@ -228,6 +333,41 @@ descargar.head = (args: { id: string | number } | [id: string | number ] | strin
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar'
+ */
+    const descargarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: descargar.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar'
+ */
+        descargarForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargar.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargar
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:343
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar'
+ */
+        descargarForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargar.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    descargar.form = descargarForm
 /**
 * @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
  * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
@@ -289,6 +429,42 @@ descargarFiltrado.head = (args: { id: string | number } | [id: string | number ]
     url: descargarFiltrado.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
+ */
+    const descargarFiltradoForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: descargarFiltrado.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
+ */
+        descargarFiltradoForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargarFiltrado.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CierreDiarioGeneralController::descargarFiltrado
+ * @see app/Http/Controllers/CierreDiarioGeneralController.php:381
+ * @route '/cajas/admin/reportes-diarios/{id}/descargar-filtrado'
+ */
+        descargarFiltradoForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: descargarFiltrado.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    descargarFiltrado.form = descargarFiltradoForm
 const CierreDiarioGeneralController = { index, debug, show, descargar, descargarFiltrado }
 
 export default CierreDiarioGeneralController

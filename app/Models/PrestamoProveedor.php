@@ -22,6 +22,7 @@ class PrestamoProveedor extends Model
         'fecha_esperada_devolucion',
         'observaciones',
         'estado',
+        'created_by',
     ];
 
     protected $casts = [
@@ -61,5 +62,11 @@ class PrestamoProveedor extends Model
     public function devoluciones(): HasMany
     {
         return $this->hasMany(DevolucionProveedor::class, 'prestamo_proveedor_id');
+    }
+
+    // ✅ Relación con el usuario creador
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

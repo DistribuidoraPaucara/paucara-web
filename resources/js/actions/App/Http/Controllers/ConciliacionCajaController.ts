@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ConciliacionCajaController::conciliacionDelDia
  * @see app/Http/Controllers/ConciliacionCajaController.php:23
@@ -42,6 +42,41 @@ conciliacionDelDia.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ConciliacionCajaController::conciliacionDelDia
+ * @see app/Http/Controllers/ConciliacionCajaController.php:23
+ * @route '/api/conciliacion/dia'
+ */
+    const conciliacionDelDiaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: conciliacionDelDia.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ConciliacionCajaController::conciliacionDelDia
+ * @see app/Http/Controllers/ConciliacionCajaController.php:23
+ * @route '/api/conciliacion/dia'
+ */
+        conciliacionDelDiaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: conciliacionDelDia.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ConciliacionCajaController::conciliacionDelDia
+ * @see app/Http/Controllers/ConciliacionCajaController.php:23
+ * @route '/api/conciliacion/dia'
+ */
+        conciliacionDelDiaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: conciliacionDelDia.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    conciliacionDelDia.form = conciliacionDelDiaForm
 /**
 * @see \App\Http\Controllers\ConciliacionCajaController::historial
  * @see app/Http/Controllers/ConciliacionCajaController.php:48
@@ -84,6 +119,42 @@ historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: historial.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ConciliacionCajaController::historial
+ * @see app/Http/Controllers/ConciliacionCajaController.php:48
+ * @route '/api/conciliacion/historial'
+ */
+    const historialForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: historial.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ConciliacionCajaController::historial
+ * @see app/Http/Controllers/ConciliacionCajaController.php:48
+ * @route '/api/conciliacion/historial'
+ */
+        historialForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: historial.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ConciliacionCajaController::historial
+ * @see app/Http/Controllers/ConciliacionCajaController.php:48
+ * @route '/api/conciliacion/historial'
+ */
+        historialForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: historial.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    historial.form = historialForm
 const ConciliacionCajaController = { conciliacionDelDia, historial }
 
 export default ConciliacionCajaController

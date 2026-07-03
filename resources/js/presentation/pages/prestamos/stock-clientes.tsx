@@ -27,6 +27,9 @@ interface StockItem {
     cantidad_cliente_devuelto: number;
     cantidad_cliente_dañada: number;
     cantidad_cliente_total: number;
+    cantidad_evento_deudor: number;
+    cantidad_evento_dañada: number;
+    cantidad_con_liquido: number;
     cantidad_total: number;
     almacenes_prestables_id: number;
 }
@@ -44,6 +47,12 @@ interface ResumenTipo {
     total: number;
 }
 
+interface ResumenFuera {
+    prestado: number;
+    dañada: number;
+    total: number;
+}
+
 interface StockPageProps {
     items: StockItem[];
     resumen: {
@@ -57,6 +66,10 @@ interface StockPageProps {
             canastillas: ResumenTipo;
             embases: ResumenTipo;
         };
+    };
+    resumenFuera: {
+        canastillas: ResumenFuera;
+        embases: ResumenFuera;
     };
     almacenes: Array<{ id: number; nombre: string }>;
 }
@@ -76,12 +89,22 @@ export default function StockClientesPage({
     items: initialItems,
     almacenes,
     resumen,
+    resumenFuera,
 }: StockPageProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [almacenFilter, setAlmacenFilter] = useState('');
     const [tipoFilter, setTipoFilter] = useState('');
     const [loading, setLoading] = useState(false);
     const [sortBy, setSortBy] = useState<'nombre' | 'disponible' | 'prestamo'>('nombre');
+
+    // Log en consola (datos ya calculados en backend)
+    console.log('📊 Stock Clientes Resumen (Backend):', {
+        canastillas_disponible: resumen.clientes.canastillas.disponible,
+        canastillas_fuera: resumenFuera.canastillas,
+        embases_disponible: resumen.clientes.embases.disponible,
+        embases_fuera: resumenFuera.embases,
+        timestamp: new Date().toLocaleString('es-ES'),
+    });
 
     // Función para obtener color según tipo de prestable
     const getRowColor = (tipo: string) => {
@@ -269,13 +292,16 @@ export default function StockClientesPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Deudor (Activo)', 'Devuelto', 'Dañada', 'Total Préstamo Cliente', 'Total General'];
+        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Con Líquido', 'Deudor (Evento)', 'Dañada (Evento)', 'Deudor (Cliente)', 'Devuelto', 'Dañada (Cliente)', 'Total Préstamo Cliente', 'Total General'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
             item.prestable_tipo,
             item.almacen_nombre,
             item.cantidad_disponible,
+            item.cantidad_con_liquido,
+            item.cantidad_evento_deudor,
+            item.cantidad_evento_dañada,
             item.cantidad_cliente_deudor,
             item.cantidad_cliente_devuelto,
             item.cantidad_cliente_dañada,
@@ -312,22 +338,6 @@ export default function StockClientesPage({
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.visit('/prestamos/ajustes/movimientos')}
-                            className="gap-2"
-                        >
-                            📋 Movimientos
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.visit('/prestamos/ajustes/historial')}
-                            className="gap-2"
-                        >
-                            📜 Historial Ajustes
-                        </Button> */}
                         <Button
                             variant="outline"
                             size="sm"
@@ -337,27 +347,17 @@ export default function StockClientesPage({
                             <Download className="h-4 w-4" />
                             Exportar
                         </Button>
-                        {/* <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleRefresh}
-                            disabled={loading}
-                            className="gap-2"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                            Actualizar
-                        </Button> */}
                     </div>
                 </div>
 
                 {/* Resumen de Totales - Card Contenedor */}
-                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2">
 
                     <div className="grid grid-cols-1 gap-6">
                         {/* Totales Clientes */}
                         <div className="space-y-2">
                             <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                👥 Totales Préstamos Clientes
+                                👥 Totales Préstamos
                             </h2>
 
                             {/* Canastillas + Embases lado a lado */}
@@ -379,8 +379,14 @@ export default function StockClientesPage({
                                             <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.canastillas.dañada.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-red-200 dark:border-red-700">
-                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                             <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.canastillas.total.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                            <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                {(resumen.clientes.canastillas.disponible + resumen.clientes.canastillas.deudor + resumen.clientes.canastillas.dañada + resumen.eventos.canastillas.deudor + resumen.eventos.canastillas.dañada).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -402,11 +408,70 @@ export default function StockClientesPage({
                                             <span className="font-bold text-sm text-orange-700 dark:text-orange-300">{resumen.clientes.embases.dañada.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-700">
-                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Préstamo</span>
                                             <span className="font-bold text-base text-violet-700 dark:text-violet-300">{resumen.clientes.embases.total.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded -mx-1">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Total General</span>
+                                            <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                {(resumen.clientes.embases.disponible + resumen.clientes.embases.deudor + resumen.clientes.embases.dañada + resumen.eventos.embases.deudor + resumen.eventos.embases.dañada).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Resumen Total Fuera del Almacén */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
+                                {/* Total Canastillas Fuera */}
+                                {/* <div className="rounded-lg border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-2">📊 Total Canastillas Fuera</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado (C+E)</span>
+                                            <span className="font-bold text-sm text-red-700 dark:text-red-300">
+                                                {resumenFuera.canastillas.prestado.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada (C+E)</span>
+                                            <span className="font-bold text-sm text-orange-700 dark:text-orange-300">
+                                                {resumenFuera.canastillas.dañada.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-purple-200 dark:border-purple-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Fuera</span>
+                                            <span className="font-bold text-base text-purple-700 dark:text-purple-300">
+                                                {resumenFuera.canastillas.total.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div> */}
+
+                                {/* Total Embases Fuera */}
+                                {/* <div className="rounded-lg border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/10 p-3">
+                                    <h3 className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-2">📊 Total Embases Fuera</h3>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Préstado (C+E)</span>
+                                            <span className="font-bold text-sm text-red-700 dark:text-red-300">
+                                                {resumenFuera.embases.prestado.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">Dañada (C+E)</span>
+                                            <span className="font-bold text-sm text-orange-700 dark:text-orange-300">
+                                                {resumenFuera.embases.dañada.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-indigo-200 dark:border-indigo-700">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Total Fuera</span>
+                                            <span className="font-bold text-base text-indigo-700 dark:text-indigo-300">
+                                                {resumenFuera.embases.total.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>
@@ -504,14 +569,23 @@ export default function StockClientesPage({
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Disponible
                                     </th>
+                                    <th className="px-4 py-3 text-center font-semibold bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200">
+                                        💧 Con Líquido
+                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Prestado (Activo)
-                                    </th>
+                                    </th>                                    
                                     {/* <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Devuelto
                                     </th> */}
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         🔴 Dañada
+                                    </th>
+                                    <th className="px-4 py-3 text-center font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200">
+                                        Deudor (Evento)
+                                    </th>
+                                    <th className="px-4 py-3 text-center font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200">
+                                        🔴 Dañada (Evento)
                                     </th>
                                     {/* <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
                                         Total
@@ -574,11 +648,17 @@ export default function StockClientesPage({
                                                                 {item.cantidad_disponible}
                                                             </span>
                                                         </td>
+                                                        <td className="px-4 py-3 text-center bg-green-50 dark:bg-green-900/10">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-200 font-semibold">
+                                                                {item.cantidad_con_liquido}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200 font-semibold">
                                                                 {item.cantidad_cliente_deudor}
                                                             </span>
                                                         </td>
+                                                        
                                                         {/* <td className="px-4 py-3 text-center">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200 font-semibold">
                                                                 {item.cantidad_cliente_devuelto}
@@ -589,6 +669,16 @@ export default function StockClientesPage({
                                                                 {item.cantidad_cliente_dañada}
                                                             </span>
                                                         </td>
+                                                        <td className="px-4 py-3 text-center bg-purple-50 dark:bg-purple-900/10">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-purple-200 dark:bg-purple-900/50 text-purple-900 dark:text-purple-200 font-semibold">
+                                                                {item.cantidad_evento_deudor}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center bg-purple-50 dark:bg-purple-900/10">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-purple-200 dark:bg-purple-900/50 text-purple-900 dark:text-purple-200 font-semibold">
+                                                                {item.cantidad_evento_dañada}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
                                                             <Button
                                                                 variant="outline"
@@ -596,7 +686,7 @@ export default function StockClientesPage({
                                                                 onClick={() => router.visit(`/prestamos/stock/clientes/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
                                                                 className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                                                             >
-                                                                Ajustar
+                                                                ⚙️
                                                             </Button>
                                                         </td>
                                                     </tr>

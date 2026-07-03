@@ -249,6 +249,7 @@ class PrestamoEventoService
                     'fecha_entrega' => $datos['fecha_entrega'] ?? null,
                     'fecha_esperada_devolucion' => $datos['fecha_esperada_devolucion'] ?? null,
                     'estado' => 'ACTIVO',
+                    'created_by' => auth()->id(), // ✅ Usuario que creó el préstamo
                 ]);
 
                 // ✅ Asociar múltiples ventas (relación many-to-many)
@@ -257,6 +258,25 @@ class PrestamoEventoService
                     Log::info('✅ Ventas asociadas al préstamo', [
                         'prestamo_evento_id' => $prestamo->id,
                         'ventas_ids' => $datos['ventas_ids'],
+                    ]);
+                }
+
+                // Crear ubicación si viene en los datos
+                if (isset($datos['ubicacion'])) {
+                    $datosUbicacion = $datos['ubicacion'];
+
+                    // Si es ubicación manual, validar que tenga localidad_id
+                    if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
+                        if (!isset($datosUbicacion['localidad_id'])) {
+                            throw new \Exception('Ubicación manual requiere localidad_id');
+                        }
+                    }
+
+                    $prestamo->ubicacion()->create($datosUbicacion);
+
+                    Log::info('✅ Ubicación del préstamo de evento creada', [
+                        'prestamo_evento_id' => $prestamo->id,
+                        'ubicacion_data' => $datosUbicacion
                     ]);
                 }
 
@@ -540,21 +560,21 @@ class PrestamoEventoService
                                 ]);
 
                                 // Obtener stock ANTES de devolver
-                                $stock = $this->stockService->obtenerStock($detallePrestamoEvento->prestable_id, $almacenIdDev);
-                                $disponibleAntes = $stock->cantidad_disponible;
-                                $eventoDeudorAntes = $stock->cantidad_evento_deudor;
-                                $eventoDañadaAntes = $stock->cantidad_evento_dañada;
+                                $stock = PrestableStock::where('prestable_id', $detallePrestamoEvento->prestable_id)
+                                    ->where('almacenes_prestables_id', $almacenIdDev)
+                                    ->first();
+                                $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                                $eventoDeudorAntes = $stock->cantidad_evento_deudor ?? 0;
+                                $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
 
                                 // ✅ Actualizar stock con devolución de evento
-                                $this->stockService->devolverDelEvento(
-                                    $detallePrestamoEvento->prestable_id,
-                                    $almacenIdDev,
-                                    $cantDevAlmacen,
-                                    $cantDanAlmacen
-                                );
-
-                                // Obtener stock DESPUÉS de devolver
-                                $stock->refresh();
+                                if ($stock) {
+                                    $stock->update([
+                                        'cantidad_disponible' => $stock->cantidad_disponible + $cantDevAlmacen,
+                                        'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $cantDevAlmacen),
+                                        'cantidad_evento_dañada' => $stock->cantidad_evento_dañada + $cantDanAlmacen,
+                                    ]);
+                                }
 
                                 // Registrar movimiento de devolución POR ALMACÉN
                                 $this->movimientoService->registrarMovimiento([

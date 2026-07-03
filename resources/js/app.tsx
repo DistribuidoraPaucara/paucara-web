@@ -39,7 +39,7 @@ const initializeCsrfToken = async () => {
             credentials: 'include',
             method: 'GET',
         });
-        console.log('✅ CSRF token inicializado desde /sanctum/csrf-cookie');
+        // console.log('✅ CSRF token inicializado desde /sanctum/csrf-cookie');
     } catch (error) {
         console.error('⚠️ Error inicializando CSRF token:', error);
     }

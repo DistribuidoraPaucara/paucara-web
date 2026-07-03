@@ -1059,6 +1059,133 @@ class PrestamoClienteService
     }
 
     /**
+     * Anular devolución - revierte movimientos y devuelve stock al estado anterior
+     * ✅ Itera por DevolucionClienteDetalleAlmacen (como se creó)
+     * Genera 1 movimiento de reversión por almacén
+     *
+     * @param int $prestamoId ID del préstamo
+     * @param int $devolucionId ID de la devolución a anular
+     * @param ?string $razonAnulacion Razón de la anulación
+     */
+    public function anularDevolucion(int $prestamoId, int $devolucionId, ?string $razonAnulacion = null): DevolucionCliente|false
+    {
+        try {
+            return DB::transaction(function () use ($prestamoId, $devolucionId, $razonAnulacion) {
+                $prestamo = PrestamoCliente::find($prestamoId);
+                if (!$prestamo) {
+                    throw new \Exception('Préstamo no encontrado');
+                }
+
+                $devolucion = DevolucionCliente::with(['detalles.devolucionesAlmacenes'])->find($devolucionId);
+                if (!$devolucion) {
+                    throw new \Exception('Devolución no encontrada');
+                }
+
+                if ($devolucion->prestamo_cliente_id !== $prestamoId) {
+                    throw new \Exception('La devolución no pertenece a este préstamo');
+                }
+
+                if ($devolucion->estado === 'ANULADA') {
+                    throw new \Exception('La devolución ya está anulada');
+                }
+
+                // ✅ ITERAR POR CADA DETALLE DE LA DEVOLUCIÓN
+                foreach ($devolucion->detalles as $detalleDevolucion) {
+                    // ✅ ITERAR POR CADA ALMACÉN (como se creó)
+                    foreach ($detalleDevolucion->devolucionesAlmacenes as $almacenDevolucion) {
+                        $almacenId = $almacenDevolucion->almacenes_prestables_id;
+                        $cantidadDevuelta = (int) $almacenDevolucion->cantidad_devuelta;
+                        $cantidadDañada = (int) $almacenDevolucion->cantidad_dañada_total;
+
+                        // Obtener stock ANTES de revertir
+                        $stock = PrestableStock::where('prestable_id', $detalleDevolucion->detallePrestamoCliente->prestable_id)
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->firstOrFail();
+
+                        $disponibleAntes = $stock->cantidad_disponible;
+                        $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                        $clienteDañadaAntes = $stock->cantidad_cliente_dañada;
+
+                        if ($cantidadDevuelta > 0 || $cantidadDañada > 0) {
+                            // Revertir: lo que se devolvió vuelve a ser deuda, lo dañado se quita de dañada
+                            $stock->update([
+                                'cantidad_disponible' => $stock->cantidad_disponible - $cantidadDevuelta,
+                                'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidadDevuelta + $cantidadDañada,
+                                'cantidad_cliente_dañada' => max(0, $stock->cantidad_cliente_dañada - $cantidadDañada),
+                            ]);
+
+                            // ✅ 1 MOVIMIENTO DE REVERSIÓN POR ALMACÉN
+                            $this->movimientoService->registrarMovimiento([
+                                'prestable_stock_id' => $stock->id,
+                                'almacenes_prestables_id' => $almacenId,
+                                'usuario_id' => auth()->id(),
+                                'tipo' => 'SALIDA',
+                                'cantidad' => -$cantidadDevuelta,
+                                'cantidad_dañada_registrada' => -$cantidadDañada,
+                                'disponible_anterior' => $disponibleAntes,
+                                'prestamo_cliente_anterior' => $prestamoClienteAntes,
+                                'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                                'disponible_posterior' => $stock->cantidad_disponible,
+                                'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                                'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                                'cantidad_cliente_dañada_anterior' => $clienteDañadaAntes,
+                                'cantidad_cliente_dañada_posterior' => $stock->cantidad_cliente_dañada,
+                                'categoria_afectada' => 'prestamo_cliente',
+                                'motivo' => 'Reversión por anulación de devolución',
+                                'numero_referencia' => $prestamo->id,
+                                'referencia_tipo' => 'DEVOLUCIO_CLIENTE_ANULADA',
+                                'referencia_id' => $devolucion->id,
+                                'observaciones' => $razonAnulacion,
+                            ]);
+
+                            Log::info('✅ Stock revertido por anulación de devolución (almacén específico)', [
+                                'prestamo_id' => $prestamo->id,
+                                'devolucion_id' => $devolucion->id,
+                                'almacen_id' => $almacenId,
+                                'cantidad_devuelta_revertida' => $cantidadDevuelta,
+                                'cantidad_dañada_revertida' => $cantidadDañada,
+                                'disponible_posterior' => $stock->cantidad_disponible,
+                            ]);
+                        }
+                    }
+                }
+
+                // Marcar devolución como ANULADA
+                $devolucion->update([
+                    'estado' => 'ANULADA',
+                    'razon_anulacion' => $razonAnulacion,
+                ]);
+
+                // Actualizar estado del préstamo si todas las devoluciones están anuladas
+                $devolucionesActivas = DevolucionCliente::where('prestamo_cliente_id', $prestamoId)
+                    ->where('estado', 'ACTIVA')
+                    ->count();
+
+                if ($devolucionesActivas === 0) {
+                    // Si no hay devoluciones activas, volver el préstamo a ACTIVO
+                    $prestamo->update(['estado' => 'ACTIVO']);
+                }
+
+                Log::info('✅ Devolución anulada correctamente', [
+                    'prestamo_id' => $prestamo->id,
+                    'devolucion_id' => $devolucion->id,
+                    'razon_anulacion' => $razonAnulacion,
+                ]);
+
+                return $devolucion;
+            });
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución', [
+                'error' => $e->getMessage(),
+                'prestamo_id' => $prestamoId,
+                'devolucion_id' => $devolucionId,
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Resolver almacén válido para operar un prestable en devoluciones/anulaciones.
      * Prioridad:
      * 1) Almacén donde actualmente hay préstamo cliente activo.

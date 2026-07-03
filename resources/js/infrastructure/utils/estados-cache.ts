@@ -48,7 +48,7 @@ export function isCacheValid(): boolean {
             return false;
         }
 
-        console.log('[EstadosCache] Cache hit: valid cache found');
+        // console.log('[EstadosCache] Cache hit: valid cache found');
         return true;
     } catch (error) {
         console.error('[EstadosCache] Error checking cache validity:', error);
@@ -84,9 +84,9 @@ export function getCachedEstados(
             return null;
         }
 
-        console.log(
+        /* console.log(
             `[EstadosCache] Retrieved ${estados.length} estados for ${categoria}`
-        );
+        ); */
         return estados;
     } catch (error) {
         console.error('[EstadosCache] Error getting cached estados:', error);
@@ -114,9 +114,9 @@ export function getAllCachedEstados(): Partial<
         const cache: EstadosCache = JSON.parse(cached);
         const categoriaKeys = Object.keys(cache.categorias);
 
-        console.log(
+        /* console.log(
             `[EstadosCache] Retrieved all cached datos: ${categoriaKeys.length} categories`
-        );
+        ); */
         return cache.categorias;
     } catch (error) {
         console.error('[EstadosCache] Error getting all cached estados:', error);
@@ -164,9 +164,9 @@ export function updateCachedEstados(
         }
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-        console.log(
+        /* console.log(
             `[EstadosCache] Cache updated for ${categoria} (${estados.length} estados)`
-        );
+        ); */
     } catch (error) {
         console.error('[EstadosCache] Error updating cache:', error);
     }
@@ -191,9 +191,9 @@ export function updateMultipleCachedEstados(
         localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
 
         const categoriaCount = Object.keys(estatusByCategoria).length;
-        console.log(
+        /* console.log(
             `[EstadosCache] Updated cache with ${categoriaCount} categories`
-        );
+        ); */
     } catch (error) {
         console.error('[EstadosCache] Error updating multiple cached estados:', error);
     }

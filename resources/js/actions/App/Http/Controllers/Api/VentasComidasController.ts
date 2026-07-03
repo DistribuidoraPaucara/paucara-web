@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
  * @see app/Http/Controllers/Api/VentasComidasController.php:55
@@ -32,6 +32,28 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\VentasComidasController::store
+ * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @route '/api/ventas-comidas'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\VentasComidasController::store
+ * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @route '/api/ventas-comidas'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 const VentasComidasController = { store }
 
 export default VentasComidasController

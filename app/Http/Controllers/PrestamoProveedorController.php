@@ -107,7 +107,7 @@ class PrestamoProveedorController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'proveedor']),
+                'data' => $prestamo->load(['detalles.prestable', 'proveedor', 'creador']),
                 'message' => 'Préstamo registrado exitosamente',
             ], 201);
         } catch (\Exception $e) {

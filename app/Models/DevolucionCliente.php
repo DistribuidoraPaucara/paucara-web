@@ -18,6 +18,8 @@ class DevolucionCliente extends Model
         'monto_excedido_garantia',
         'observaciones',
         'chofer_id',
+        'estado',
+        'razon_anulacion',
     ];
 
     protected $casts = [

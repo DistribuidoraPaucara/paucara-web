@@ -147,11 +147,11 @@ export function WebSocketProvider({
     const sanctumToken = (props?.auth as any)?.sanctumToken;
     const userId = (props?.auth as any)?.user?.id;
 
-    console.log('🔍 [WebSocketContext] Token disponible en props:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
-    console.log('🔍 [WebSocketContext] User ID:', userId);
+    // console.log('🔍 [WebSocketContext] Token disponible en props:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
+    // console.log('🔍 [WebSocketContext] User ID:', userId);
 
     if (sanctumToken && !connectionInitializedRef.current) {
-      console.log('🚀 Iniciando conexión automática del WebSocket Context con token de props...');
+      // console.log('🚀 Iniciando conexión automática del WebSocket Context con token de props...');
       connect(sanctumToken, userId);
     }
   }, [autoConnect, connect, (props?.auth as any)?.sanctumToken, (props?.auth as any)?.user?.id]);
@@ -161,7 +161,7 @@ export function WebSocketProvider({
    */
   useEffect(() => {
     const handleConnected = (data: any) => {
-      console.log('📡 Evento: WebSocket conectado', data);
+      // console.log('📡 Evento: WebSocket conectado', data);
       setSocketId(data.socketId);
       setStatus('connected');
     };

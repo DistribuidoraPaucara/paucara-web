@@ -150,29 +150,29 @@ export default function PrestamosClientesShow() {
 
     return (
         <AppLayout>
-            <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
+            <div className="py-6 px-4 space-y-6">
                 {/* ENCABEZADO */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Cliente</h3>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
                             {prestamo.cliente?.nombre || prestamo.cliente?.razon_social || 'N/D'}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
                             {prestamo.cliente?.nit && `NIT: ${prestamo.cliente.nit}`}
                         </p>
                     </Card>
 
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Estado</h3>
-                        <div className="mt-3">
+                        <div >
                             {getEstadoBadge(prestamo.estado)}
                         </div>
                     </Card>
 
-                    <Card className="p-6">
+                    <Card className="p-2">
                         <h3 className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Fechas</h3>
-                        <div className="space-y-2 mt-2">
+                        <div className="space-y-2">
                             <p className="text-sm">
                                 <span className="text-gray-600 dark:text-gray-300">Préstamo:</span>
                                 <span className="font-medium ml-2">
@@ -190,9 +190,9 @@ export default function PrestamosClientesShow() {
                 </div>
 
                 {/* INFORMACIÓN GENERAL */}
-                <Card className="p-6">
+                <Card className="p-2">
                     <h2 className="text-xl font-bold mb-4">Información General</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4">
                         <div>
                             <p className="text-gray-600 dark:text-gray-300 text-sm">Almacén</p>
                             <p className="font-bold">{prestamo.almacen?.nombre || 'N/D'}</p>
@@ -242,7 +242,7 @@ export default function PrestamosClientesShow() {
                                     <Card key={detalle.id} className="p-0 overflow-hidden">
                                         {/* HEADER */}
                                         <div
-                                            className="p-4 bg-gray-50 dark:bg-gray-700 border-b cursor-pointer hover:bg-gray-100 transition"
+                                            className="p-4 bg-gray-50 dark:bg-gray-700 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
                                             onClick={() => toggleDetalle(detalle.id)}
                                         >
                                             <div className="flex items-start justify-between">
@@ -307,10 +307,10 @@ export default function PrestamosClientesShow() {
                                                 )}
 
                                                 {/* GARANTÍA */}
-                                                <div className="p-3 bg-blue-50 rounded">
+                                                <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded">
                                                     <p className="text-sm">
-                                                        <span className="text-gray-700">Garantía por unidad:</span>
-                                                        <span className="font-bold ml-2">
+                                                        <span className="text-gray-700 dark:text-gray-300">Garantía por unidad:</span>
+                                                        <span className="font-bold ml-2 text-blue-700 dark:text-blue-300">
                                                             ${Number(detalle.prestable?.condiciones?.[0]?.monto_garantia || 0).toFixed(2)}
                                                         </span>
                                                     </p>
@@ -337,7 +337,7 @@ export default function PrestamosClientesShow() {
                                     <Card key={devolucion.id} className="p-0 overflow-hidden">
                                         {/* HEADER */}
                                         <div
-                                            className="p-4 bg-gray-50 dark:bg-gray-700 border-b cursor-pointer hover:bg-gray-100 transition"
+                                            className="p-4 bg-gray-50 dark:bg-gray-700 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
                                             onClick={() => toggleDevolucion(devolucion.id)}
                                         >
                                             <div className="flex items-start justify-between">
@@ -403,21 +403,21 @@ export default function PrestamosClientesShow() {
 
                                                 {/* RESUMEN */}
                                                 <div className="grid grid-cols-3 gap-4">
-                                                    <div className="p-3 bg-green-50 rounded">
-                                                        <p className="text-sm text-gray-700">Devuelto Buen Estado</p>
-                                                        <p className="text-xl font-bold text-green-700">
+                                                    <div className="p-3 bg-green-50 dark:bg-green-900 rounded">
+                                                        <p className="text-sm text-gray-700 dark:text-gray-300">Devuelto Buen Estado</p>
+                                                        <p className="text-xl font-bold text-green-700 dark:text-green-300">
                                                             {devolucion.detalles?.reduce((s: number, d: any) => s + (d.cantidad_devuelta || 0), 0) || 0}
                                                         </p>
                                                     </div>
-                                                    <div className="p-3 bg-orange-50 rounded">
-                                                        <p className="text-sm text-gray-700">Dañado Total</p>
-                                                        <p className="text-xl font-bold text-orange-700">
+                                                    <div className="p-3 bg-orange-50 dark:bg-orange-900 rounded">
+                                                        <p className="text-sm text-gray-700 dark:text-gray-300">Dañado Total</p>
+                                                        <p className="text-xl font-bold text-orange-700 dark:text-orange-300">
                                                             {devolucion.detalles?.reduce((s: number, d: any) => s + (d.cantidad_dañada_total || 0), 0) || 0}
                                                         </p>
                                                     </div>
-                                                    <div className="p-3 bg-blue-50 rounded">
-                                                        <p className="text-sm text-gray-700">Monto Daño Cobrado</p>
-                                                        <p className="text-xl font-bold text-blue-700">
+                                                    <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded">
+                                                        <p className="text-sm text-gray-700 dark:text-gray-300">Monto Daño Cobrado</p>
+                                                        <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
                                                             ${Number(devolucion.monto_cobrado_daño_total || 0).toFixed(2)}
                                                         </p>
                                                     </div>

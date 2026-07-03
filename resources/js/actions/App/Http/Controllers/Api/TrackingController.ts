@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
  * @see app/Http/Controllers/Api/TrackingController.php:16
@@ -64,6 +64,41 @@ obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4.head = (args: { entregaId: st
     /**
 * @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
  * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/entregas/{entregaId}/ubicaciones'
+ */
+    const obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4Form = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/entregas/{entregaId}/ubicaciones'
+ */
+        obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4Form.get = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/entregas/{entregaId}/ubicaciones'
+ */
+        obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4Form.head = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4.form = obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4Form
+    /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
  * @route '/api/tracking/ubicaciones/{entregaId}'
  */
 const obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6 = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -122,6 +157,42 @@ obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.head = (args: { entregaId: st
     url: obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/ubicaciones/{entregaId}'
+ */
+    const obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6Form = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/ubicaciones/{entregaId}'
+ */
+        obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6Form.get = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::obtenerUbicaciones
+ * @see app/Http/Controllers/Api/TrackingController.php:16
+ * @route '/api/tracking/ubicaciones/{entregaId}'
+ */
+        obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6Form.head = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6.form = obtenerUbicacionesf42f8fcb211059ed28ae845c4e0eb5a6Form
 
 export const obtenerUbicaciones = {
     '/api/tracking/entregas/{entregaId}/ubicaciones': obtenerUbicacionesea6f005e3f2f0b7c9c7cdfffbeedccb4,
@@ -193,6 +264,41 @@ ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528.head = (args: { entregaId: strin
     /**
 * @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
  * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/entregas/{entregaId}/ultima-ubicacion'
+ */
+    const ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528Form = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/entregas/{entregaId}/ultima-ubicacion'
+ */
+        ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528Form.get = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/entregas/{entregaId}/ultima-ubicacion'
+ */
+        ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528Form.head = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528.form = ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528Form
+    /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
  * @route '/api/tracking/ultima-ubicacion/{entregaId}'
  */
 const ultimaUbicacionfdc3628d74f6c816d18de12533df85de = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -252,6 +358,42 @@ ultimaUbicacionfdc3628d74f6c816d18de12533df85de.head = (args: { entregaId: strin
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/ultima-ubicacion/{entregaId}'
+ */
+    const ultimaUbicacionfdc3628d74f6c816d18de12533df85deForm = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: ultimaUbicacionfdc3628d74f6c816d18de12533df85de.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/ultima-ubicacion/{entregaId}'
+ */
+        ultimaUbicacionfdc3628d74f6c816d18de12533df85deForm.get = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ultimaUbicacionfdc3628d74f6c816d18de12533df85de.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::ultimaUbicacion
+ * @see app/Http/Controllers/Api/TrackingController.php:67
+ * @route '/api/tracking/ultima-ubicacion/{entregaId}'
+ */
+        ultimaUbicacionfdc3628d74f6c816d18de12533df85deForm.head = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ultimaUbicacionfdc3628d74f6c816d18de12533df85de.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    ultimaUbicacionfdc3628d74f6c816d18de12533df85de.form = ultimaUbicacionfdc3628d74f6c816d18de12533df85deForm
+
 export const ultimaUbicacion = {
     '/api/tracking/entregas/{entregaId}/ultima-ubicacion': ultimaUbicaciondcaf2cc4745dd6439ed40c530e4da528,
     '/api/tracking/ultima-ubicacion/{entregaId}': ultimaUbicacionfdc3628d74f6c816d18de12533df85de,
@@ -309,6 +451,28 @@ calcularETA.post = (args: { entregaId: string | number } | [entregaId: string | 
     url: calcularETA.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\TrackingController::calcularETA
+ * @see app/Http/Controllers/Api/TrackingController.php:119
+ * @route '/api/tracking/entregas/{entregaId}/calcular-eta'
+ */
+    const calcularETAForm = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: calcularETA.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TrackingController::calcularETA
+ * @see app/Http/Controllers/Api/TrackingController.php:119
+ * @route '/api/tracking/entregas/{entregaId}/calcular-eta'
+ */
+        calcularETAForm.post = (args: { entregaId: string | number } | [entregaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: calcularETA.url(args, options),
+            method: 'post',
+        })
+    
+    calcularETA.form = calcularETAForm
 const TrackingController = { obtenerUbicaciones, ultimaUbicacion, calcularETA }
 
 export default TrackingController

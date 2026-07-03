@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import type { PrestamoEvento } from '@/domain/entities/prestamos';
+import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
 import AppLayout from '@/layouts/app-layout';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
 import { useToast } from '@/presentation/hooks/useToast';
-import { Printer, MoreVertical, Eye, RotateCcw, Edit3 } from 'lucide-react';
-import type { PrestamoEvento } from '@/domain/entities/prestamos';
-import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
-import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Head } from '@inertiajs/react';
+import { Eye, MoreVertical, Printer, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     choferes?: Array<{ id: number; name: string; nombre?: string }>;
@@ -111,9 +111,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         if (query.trim().length === 0) {
             setChofersResults(choferesList);
         } else {
-            const filtered = choferesList.filter((chofer) =>
-                chofer.name?.toLowerCase().includes(query.toLowerCase())
-            );
+            const filtered = choferesList.filter((chofer) => chofer.name?.toLowerCase().includes(query.toLowerCase()));
             setChofersResults(filtered);
         }
     };
@@ -127,7 +125,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                 (vehiculo) =>
                     vehiculo.placa?.toLowerCase().includes(query.toLowerCase()) ||
                     vehiculo.marca?.toLowerCase().includes(query.toLowerCase()) ||
-                    vehiculo.modelo?.toLowerCase().includes(query.toLowerCase())
+                    vehiculo.modelo?.toLowerCase().includes(query.toLowerCase()),
             );
             setVehiculosResults(filtered);
         }
@@ -166,9 +164,15 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                 if (prestamo.detalles) {
                     prestamo.detalles.forEach((detalle: any, idx: number) => {
                         const totalPrestado = detalle.cantidad_prestada || 0;
-                        const totalDevuelto = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                        const totalDevuelto =
+                            detalle.devolucion_detalles?.reduce(
+                                (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                                0,
+                            ) || 0;
                         const falta = totalPrestado - totalDevuelto;
-                        console.log(`  Detalle ${idx + 1}: ${detalle.prestable?.nombre} | Prestado: ${totalPrestado} | Devuelto: ${totalDevuelto} | Falta: ${falta} | Estado: ${detalle.estado}`);
+                        console.log(
+                            `  Detalle ${idx + 1}: ${detalle.prestable?.nombre} | Prestado: ${totalPrestado} | Devuelto: ${totalDevuelto} | Falta: ${falta} | Estado: ${detalle.estado}`,
+                        );
                     });
                 }
                 console.groupEnd();
@@ -209,11 +213,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
             CANCELADO: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
         };
 
-        return (
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${estilos[estado] || 'bg-gray-100 text-gray-800'}`}>
-                {estado}
-            </span>
-        );
+        return <span className={`rounded-full px-3 py-1 text-xs font-medium ${estilos[estado] || 'bg-gray-100 text-gray-800'}`}>{estado}</span>;
     };
 
     const formatDate = (date: string | undefined) => {
@@ -221,15 +221,13 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         return new Date(date).toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
     // ✅ NUEVO: Calcular información de préstamos pendientes
     const calcularPendientes = () => {
-        const prestamosPendientes = prestamos.filter(p =>
-            p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO'
-        );
+        const prestamosPendientes = prestamos.filter((p) => p.estado === 'ACTIVO' || p.estado === 'PARCIALMENTE_DEVUELTO');
 
         const resumen = {
             totalPrestamos: prestamosPendientes.length,
@@ -238,11 +236,15 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
             montoGarantia: 0,
         };
 
-        prestamosPendientes.forEach(prestamo => {
+        prestamosPendientes.forEach((prestamo) => {
             resumen.montoGarantia += Number(prestamo.monto_garantia || 0);
             (prestamo.detalles || []).forEach((detalle: any) => {
                 const totalDetalle = Number(detalle.cantidad_prestada || 0);
-                const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+                const devueltoDetalle =
+                    detalle.devolucion_detalles?.reduce(
+                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                        0,
+                    ) || 0;
                 const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
                 if (detalle.prestable?.tipo === 'CANASTILLA') {
@@ -262,15 +264,26 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
     // ✅ NUEVO: Calcular pendientes por préstamo individual
     const calcularPendientesPorPrestamo = (prestamo: PrestamoEvento) => {
-        const resumen = { canastillas: 0, embases: 0 };
+        const resumen = {
+            canastillas_prestadas: 0,
+            embases_prestadas: 0,
+            canastillas: 0,
+            embases: 0,
+        };
         (prestamo.detalles || []).forEach((detalle: any) => {
             const totalDetalle = Number(detalle.cantidad_prestada || 0);
-            const devueltoDetalle = detalle.devolucion_detalles?.reduce((s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)), 0) || 0;
+            const devueltoDetalle =
+                detalle.devolucion_detalles?.reduce(
+                    (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                    0,
+                ) || 0;
             const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
             if (detalle.prestable?.tipo === 'CANASTILLA') {
+                resumen.canastillas_prestadas += totalDetalle;
                 resumen.canastillas += pendienteDetalle;
             } else if (detalle.prestable?.tipo === 'EMBASES') {
+                resumen.embases_prestadas += totalDetalle;
                 resumen.embases += pendienteDetalle;
             }
         });
@@ -282,37 +295,30 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
     return (
         <AppLayout>
             <Head title="Préstamos a Eventos" />
-            <div className="p-4 bg-white dark:bg-gray-950 min-h-screen">
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        🎉 Préstamos a Eventos
-                    </h1>
-                    <Button
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => window.location.href = '/prestamos/eventos/crear'}
-                    >
+            <div className="min-h-screen bg-white p-4 dark:bg-gray-950">
+                <div className="mb-6 flex items-center justify-between">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">🎉 Préstamos a Eventos</h1>
+                    <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => (window.location.href = '/prestamos/eventos/crear')}>
                         ➕ Nuevo Préstamo
                     </Button>
                 </div>
 
                 {error && (
-                    <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg border border-red-300 dark:border-red-700">
+                    <div className="mb-4 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
                         {error}
                     </div>
                 )}
 
                 {/* ✅ NUEVO: Cards de Resumen Pendiente */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
-                            ⚠️ Préstamos Pendientes
-                        </p>
+                <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-4 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
+                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">⚠️ Préstamos Pendientes</p>
                         <div className="space-y-2">
                             <div>
                                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{pendientes.totalPrestamos}</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">Préstamos activos</p>
                             </div>
-                            <div className="pt-2 border-t border-red-200 dark:border-red-700">
+                            <div className="border-t border-red-200 pt-2 dark:border-red-700">
                                 <p className="text-sm text-gray-700 dark:text-gray-300">
                                     <span className="font-semibold">Canastillas:</span> {pendientes.canastillas.pendientes} por devolver
                                 </p>
@@ -323,20 +329,20 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         </div>
                     </Card>
 
-                    <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-4 dark:border-orange-700 dark:from-orange-900/30 dark:to-orange-800/30">
+                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">
                             📊 Items Pendientes por Tipo
                         </p>
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-700 dark:text-gray-300">📦 Canastillas</span>
                                 <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.canastillas.pendientes}</span>
                             </div>
-                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                            <div className="flex items-center justify-between border-t border-orange-200 pt-2 dark:border-orange-700">
                                 <span className="text-sm text-gray-700 dark:text-gray-300">🥫 Embases</span>
                                 <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.embases.pendientes}</span>
                             </div>
-                            <div className="flex justify-between items-center border-t border-orange-200 dark:border-orange-700 pt-2">
+                            <div className="flex items-center justify-between border-t border-orange-200 pt-2 dark:border-orange-700">
                                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
                                 <span className="text-lg font-bold text-orange-700 dark:text-orange-300">
                                     {pendientes.canastillas.pendientes + pendientes.embases.pendientes}
@@ -345,10 +351,8 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         </div>
                     </Card>
 
-                    <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
-                            💰 Garantías en Riesgo
-                        </p>
+                    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 dark:border-purple-700 dark:from-purple-900/30 dark:to-purple-800/30">
+                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">💰 Garantías en Riesgo</p>
                         <div className="space-y-2">
                             <div>
                                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -356,10 +360,8 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                 </p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">Total en garantía</p>
                             </div>
-                            <div className="pt-2 border-t border-purple-200 dark:border-purple-700">
-                                <p className="text-xs text-purple-700 dark:text-purple-300">
-                                    💡 Recuperar para liberar garantías
-                                </p>
+                            <div className="border-t border-purple-200 pt-2 dark:border-purple-700">
+                                <p className="text-xs text-purple-700 dark:text-purple-300">💡 Recuperar para liberar garantías</p>
                             </div>
                         </div>
                     </Card>
@@ -369,7 +371,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                 <div className="mb-6">
                     <button
                         onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
                     >
                         <span>{mostrarFiltros ? '▼' : '▶'}</span>
                         {mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros'}
@@ -378,32 +380,28 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
                 {/* Filtros */}
                 {mostrarFiltros && (
-                    <Card className="p-4 mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                    <Card className="mb-6 border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div className="space-y-4">
                             {/* Primera fila de filtros */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        ID Préstamo
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">ID Préstamo</label>
                                     <input
                                         type="text"
                                         placeholder="Buscar por ID..."
                                         value={filtroId}
                                         onChange={(e) => setFiltroId(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        Nombre Evento
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre Evento</label>
                                     <input
                                         type="text"
                                         placeholder="Buscar por nombre de evento..."
                                         value={nombreEventoSearch}
                                         onChange={(e) => setNombreEventoSearch(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
@@ -442,7 +440,9 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                         renderItem={(vehiculo) => (
                                             <div>
                                                 <p className="font-medium">{vehiculo.placa}</p>
-                                                <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {vehiculo.marca} {vehiculo.modelo}
+                                                </p>
                                             </div>
                                         )}
                                         getItemId={(vehiculo) => vehiculo.id}
@@ -450,9 +450,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        Encargado Evento
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Encargado Evento</label>
                                     <input
                                         type="text"
                                         placeholder="Buscar por encargado..."
@@ -461,39 +459,35 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                             setEncargadoSearch(e.target.value);
                                             setEncargadoSeleccionado(e.target.value);
                                         }}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        Desde (Fecha Préstamo)
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Desde (Fecha Préstamo)</label>
                                     <input
                                         type="date"
                                         value={filtroFechaDesde}
                                         onChange={(e) => setFiltroFechaDesde(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Hasta (Fecha Devolución)
                                     </label>
                                     <input
                                         type="date"
                                         value={filtroFechaHasta}
                                         onChange={(e) => setFiltroFechaHasta(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        Estado
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
                                     <select
                                         value={filtroEstado}
                                         onChange={(e) => setFiltroEstado(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     >
                                         <option value="">Todos</option>
                                         <option value="ACTIVO">Activos</option>
@@ -502,146 +496,156 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                         <option value="CANCELADO">Cancelados</option>
                                     </select>
                                 </div>
-                                <div className="flex gap-2 items-end">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => cargarPrestamos()}
-                                        className="flex-1"
-                                    >
+                                <div className="flex items-end gap-2">
+                                    <Button variant="outline" onClick={() => cargarPrestamos()} className="flex-1">
                                         🔄 Buscar
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={limpiarFiltros}
-                                        className="flex-1"
-                                    >
+                                    <Button variant="outline" onClick={limpiarFiltros} className="flex-1">
                                         ✖️ Limpiar
                                     </Button>
                                 </div>
                             </div>
 
                             {/* Segunda fila de filtros */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3"></div>
 
                             {/* Cuarta fila: Estado y botones */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-
-
-                            </div>
+                            <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3"></div>
                         </div>
                     </Card>
                 )}
 
-
                 {/* Tabla de Préstamos */}
-                <Card className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <Card className="overflow-x-auto border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     {loading ? (
-                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            Cargando préstamos...
-                        </div>
+                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">Cargando préstamos...</div>
                     ) : prestamos.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            No hay préstamos a eventos
-                        </div>
+                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">No hay préstamos a eventos</div>
                     ) : (
                         <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Evento/Encargado</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Chofer/Vehiculo</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Garantía</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Préstamo</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Fecha Devolución</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Evento/Encargado</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Chofer/Vehiculo</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Garantía</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Prestados</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Préstamo</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Devolución</th>
                                     {/* ✅ NUEVO: Columna de Pendientes */}
                                     <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Pendientes</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
-                                    <th className="px-2 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {prestamos.map((prestamo) => (
                                     <tr key={prestamo.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {prestamo.id}
-                                        </td>
-                                        <td className="px-1 py-4 text-gray-900 dark:text-white">
+                                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-gray-300">{prestamo.id}</td>
+                                        <td className="px-1 py-4 text-center text-gray-900 dark:text-white">
                                             <p>{prestamo.nombre_evento}</p>
                                             {/* <p>{prestamo.cliente?.nombre || prestamo.cliente?.razon_social || '-'}</p> */}
                                             <p className="text-xs text-gray-600 dark:text-gray-300">
                                                 Encargado: <b> {prestamo.encargado_evento || '-'}</b>
                                             </p>
                                         </td>
-                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-center text-sm text-gray-600 dark:text-gray-300">
                                             <p>{prestamo.chofer?.name || prestamo.chofer?.nombre || '-'}</p>
-                                            <p className='text-xs'><b>Vehículo:</b> {prestamo.vehiculo_asignado || '-'}</p>
+                                            <p className="text-xs">
+                                                <b>Vehículo:</b> {prestamo.vehiculo_asignado || '-'}
+                                            </p>
                                         </td>
-                                        {/* <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                            {prestamo.cantidad}
-                                        </td> */}
-                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-center text-sm text-gray-600 dark:text-gray-300">
                                             Bs {Number(prestamo.monto_garantia).toFixed(2)}
                                         </td>
-                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-center text-sm text-gray-600 dark:text-gray-300">
                                             {formatDate(prestamo.fecha_prestamo)}
                                         </td>
-                                        <td className="px-1 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-1 py-4 text-center text-sm text-gray-600 dark:text-gray-300">
                                             {formatDate(prestamo.fecha_esperada_devolucion)}
                                         </td>
-                                        {/* ✅ NUEVO: Celda de Pendientes */}
-                                        <td className="px-1 py-4 text-center">
-                                            {(() => {
-                                                const pend = calcularPendientesPorPrestamo(prestamo);
-                                                const totalPendiente = pend.canastillas + pend.embases;
-                                                if (totalPendiente === 0) {
-                                                    return <span className="text-green-600 dark:text-green-400 font-semibold">✓ Completo</span>;
-                                                }
-                                                return (
-                                                    <div className="flex flex-col gap-1 text-sm">
-                                                        {pend.canastillas > 0 && (
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span>📦</span>
-                                                                <span className="font-semibold text-orange-600 dark:text-orange-400">{pend.canastillas}</span>
+                                        {/* Prestados y Pendientes - Calculado una sola vez */}
+                                        {(() => {
+                                            const pend = calcularPendientesPorPrestamo(prestamo);
+                                            const totalPendiente = pend.canastillas + pend.embases;
+                                            return (
+                                                <>
+                                                    {/* Prestados */}
+                                                    <td className="text-center">
+                                                        <div className="flex flex-col gap-1 text-sm">
+                                                            {pend.canastillas_prestadas > 0 && (
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <span>📦</span>
+                                                                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                                                        {pend.canastillas_prestadas}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {pend.embases_prestadas > 0 && (
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <span>🥫</span>
+                                                                    <span className="font-semibold text-purple-600 dark:text-purple-400">
+                                                                        {pend.embases_prestadas}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    {/* ✅ NUEVO: Celda de Pendientes */}
+                                                    <td className="text-center">
+                                                        {totalPendiente === 0 ? (
+                                                            <span className="font-semibold text-green-600 dark:text-green-400">✓ Completo</span>
+                                                        ) : (
+                                                            <div className="flex flex-col gap-1 text-sm">
+                                                                {pend.canastillas > 0 && (
+                                                                    <div className="flex items-center justify-center gap-1">
+                                                                        <span>📦</span>
+                                                                        <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                                                            {pend.canastillas}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {pend.embases > 0 && (
+                                                                    <div className="flex items-center justify-center gap-1">
+                                                                        <span>🥫</span>
+                                                                        <span className="font-semibold text-pink-600 dark:text-pink-400">
+                                                                            {pend.embases}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
-                                                        {pend.embases > 0 && (
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span>🥫</span>
-                                                                <span className="font-semibold text-pink-600 dark:text-pink-400">{pend.embases}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm">
-                                            {getEstadoBadge(prestamo.estado)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm">
+                                                    </td>
+                                                </>
+                                            );
+                                        })()}
+                                        <td className="px-2 py-4 text-center text-xs">{getEstadoBadge(prestamo.estado)}</td>
+                                        <td className="px-2 py-4 text-center text-sm">
                                             <div className="relative">
                                                 <button
                                                     data-dropdown-trigger
                                                     onClick={() => setOpenDropdown(openDropdown === prestamo.id ? null : prestamo.id)}
-                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                                                     title="Acciones"
                                                 >
-                                                    <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                                    <MoreVertical className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                                                 </button>
 
                                                 {/* Dropdown Menu */}
                                                 {openDropdown === prestamo.id && (
-                                                    <div data-dropdown-menu className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                                                    <div
+                                                        data-dropdown-menu
+                                                        className="absolute right-0 z-50 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                                                    >
                                                         {(prestamo.estado === 'ACTIVO' || prestamo.estado === 'PARCIALMENTE_DEVUELTO') && (
                                                             <button
                                                                 onClick={() => {
                                                                     window.location.href = `/prestamos/eventos/${prestamo.id}/devoluciones`;
                                                                     setOpenDropdown(null);
                                                                 }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
+                                                                className="flex w-full items-center gap-2 border-b border-gray-200 px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-green-900/20"
                                                             >
-                                                                <RotateCcw className="w-4 h-4 text-green-600" />
+                                                                <RotateCcw className="h-4 w-4 text-green-600" />
                                                                 Registrar Devolución
                                                             </button>
                                                         )}
@@ -650,9 +654,9 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                                                 handleImprimir(prestamo);
                                                                 setOpenDropdown(null);
                                                             }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
+                                                            className="flex w-full items-center gap-2 border-b border-gray-200 px-4 py-2 text-left text-sm text-gray-700 hover:bg-purple-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-purple-900/20"
                                                         >
-                                                            <Printer className="w-4 h-4 text-purple-600" />
+                                                            <Printer className="h-4 w-4 text-purple-600" />
                                                             Imprimir
                                                         </button>
                                                         <button
@@ -660,9 +664,9 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                                                 window.open(`/prestamos/eventos/${prestamo.id}`, '_blank');
                                                                 setOpenDropdown(null);
                                                             }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2"
+                                                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 dark:text-gray-300 dark:hover:bg-blue-900/20"
                                                         >
-                                                            <Eye className="w-4 h-4 text-blue-600" />
+                                                            <Eye className="h-4 w-4 text-blue-600" />
                                                             Ver Detalle
                                                         </button>
                                                     </div>
@@ -677,7 +681,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
                     {/* Controles de Paginación */}
                     {prestamos.length > 0 && (
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 p-4 md:flex-row dark:border-gray-700 dark:bg-gray-800">
                             {/* Información de resultados */}
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 Mostrando <span className="font-semibold text-gray-900 dark:text-white">{paginacion.from}</span> a{' '}
@@ -686,7 +690,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                             </div>
 
                             {/* Controles de navegación */}
-                            <div className="flex gap-2 items-center">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
                                     onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
@@ -699,9 +703,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                 {/* Números de página */}
                                 <div className="flex gap-1">
                                     {Array.from({ length: Math.min(5, paginacion.last_page) }, (_, i) => {
-                                        const numeroPagina = paginacion.current_page <= 3
-                                            ? i + 1
-                                            : Math.max(1, paginacion.current_page - 2 + i);
+                                        const numeroPagina = paginacion.current_page <= 3 ? i + 1 : Math.max(1, paginacion.current_page - 2 + i);
 
                                         if (numeroPagina > paginacion.last_page) return null;
 
@@ -710,7 +712,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                                 key={numeroPagina}
                                                 onClick={() => setPaginaActual(numeroPagina)}
                                                 variant={numeroPagina === paginacion.current_page ? 'default' : 'outline'}
-                                                className="w-10 h-10 p-0 text-sm"
+                                                className="h-10 w-10 p-0 text-sm"
                                             >
                                                 {numeroPagina}
                                             </Button>
