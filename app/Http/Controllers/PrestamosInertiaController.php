@@ -364,8 +364,9 @@ class PrestamosInertiaController extends Controller
             'devoluciones' => fn($q) => $q
                 ->with([
                     'detalles' => fn($q2) => $q2
-                        ->with('prestamoEventoDetalle.prestable') // Relación correcta
-                        ->with('devolucionesAlmacenes.almacen'), // Distribución por almacén
+                        ->with('prestamoEventoDetalle.prestable') // ✅ Prestable del detalle original
+                        ->with('devolucionesAlmacenes.almacen') // Almacén de devolución
+                        ->with('devolucionesAlmacenes.detalleDevolucionEvento.prestamoEventoDetalle.prestable'), // ✅ Prestable a través de relación
                     'creador', // Usuario que creó la devolución
                     'anulador', // Usuario que anuló la devolución
                 ]),

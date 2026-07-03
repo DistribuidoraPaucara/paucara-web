@@ -609,7 +609,4 @@ rechazar.post = (args: { id: string | number } | [id: string | number ] | string
             method: 'post',
         })
     
-    rechazar.form = rechazarForm
-const GastoController = { index, create, store, destroy, adminIndex, aprobar, rechazar }
-
-export default GastoController
+    recha
