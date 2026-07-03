@@ -142,18 +142,28 @@ export default function PrestamosEventosShow() {
         );
     };
 
-    const calcularTotalDevueltoDetalle = (detalle: any) => {
-        return detalle.devolucion_detalles?.reduce(
-            (sum: number, dev: any) => sum + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-            0
-        ) || 0;
+    const calcularTotalDevueltoDetalle = (detalleId: number, activas?: any[]) => {
+        const devolucionesActivas = activas || (prestamo?.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || []);
+
+        let total = 0;
+        devolucionesActivas.forEach((dev: any) => {
+            dev.detalles?.forEach((det: any) => {
+                if (det.prestamoEventoDetalle?.id === detalleId) {
+                    total += (det.cantidad_devuelta || 0) + (det.cantidad_dañada_total || 0);
+                }
+            });
+        });
+        return total;
     };
 
     const calcularResumenPrestamo = () => {
         if (!prestamo?.detalles) return { total: 0, devuelto: 0, faltante: 0, tasa: 0 };
 
+        // Filtrar solo devoluciones activas (excluir anuladas)
+        const devolucionesActivas = prestamo.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
+
         const total = prestamo.detalles.reduce((sum: number, d: any) => sum + (d.cantidad_prestada || 0), 0);
-        const devuelto = prestamo.detalles.reduce((sum: number, d: any) => sum + calcularTotalDevueltoDetalle(d), 0);
+        const devuelto = prestamo.detalles.reduce((sum: number, d: any) => sum + calcularTotalDevueltoDetalle(d.id, devolucionesActivas), 0);
         const faltante = Math.max(0, total - devuelto);
         const tasa = total > 0 ? Math.round((devuelto / total) * 100) : 0;
 

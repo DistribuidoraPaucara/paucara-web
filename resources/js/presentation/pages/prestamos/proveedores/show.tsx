@@ -10,9 +10,22 @@ import axios from 'axios';
 export default function PrestamosProveedoresShow() {
     const { url } = usePage();
     const prestamoId = url.split('/').pop();
-    const [prestamo, setPrestamo] = useState(null);
+    const [prestamo, setPrestamo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [expandedDevoluciones, setExpandedDevoluciones] = useState<number[]>([]);
+
+    const calcularTotalDevueltoDetalle = (detalleId: number) => {
+        const devolucionesActivas = prestamo?.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
+        let total = 0;
+        devolucionesActivas.forEach((dev: any) => {
+            dev.detalles?.forEach((det: any) => {
+                if (det.detalle_prestamo_proveedor?.id === detalleId) {
+                    total += (det.cantidad_devuelta || 0) + (det.cantidad_dañada_total || 0);
+                }
+            });
+        });
+        return total;
+    };
 
     useEffect(() => {
         if (prestamoId) {
@@ -47,6 +60,20 @@ export default function PrestamosProveedoresShow() {
                         });
                     });
                     console.groupEnd();
+                    // Calcular totales devueltos solo de devoluciones activas
+                    const devolucionesActivas = res.data.data.devoluciones?.filter(d => d.estado !== 'ANULADA') || [];
+                    res.data.data.detalles?.forEach((det, idx) => {
+                        const totalDevueltoActivas = devolucionesActivas.reduce((s, d) => {
+                            const detalle = d.detalles?.find(dd => dd.detalle_prestamo_proveedor?.id === det.id);
+                            return s + ((detalle?.cantidad_devuelta || 0) + (detalle?.cantidad_dañada_total || 0));
+                        }, 0);
+                        console.log(`  Detalle ${idx + 1} (excluida anuladas):`, {
+                            nombre: det.prestable?.nombre,
+                            prestada: det.cantidad_prestada,
+                            devuelto: totalDevueltoActivas,
+                            falta: det.cantidad_prestada - totalDevueltoActivas,
+                        });
+                    });
                     setPrestamo(res.data.data);
                 })
                 .catch(err => {
@@ -115,7 +142,7 @@ export default function PrestamosProveedoresShow() {
                                         <div>
                                             <h3 className="font-bold">{detalle.prestable?.nombre}</h3>
                                             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                                Prestado: {detalle.cantidad_prestada} | Devuelto: {detalle.devolucion_detalles?.reduce((s, d) => s + (d.cantidad_devuelta || 0) + (d.cantidad_dañada_total || 0), 0) || 0}
+                                                Prestado: {detalle.cantidad_prestada} | Devuelto: {calcularTotalDevueltoDetalle(detalle.id)}
                                             </p>
                                         </div>
                                     </div>
