@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ChoferCajaController::obtenerEstado
  * @see app/Http/Controllers/Api/ChoferCajaController.php:22
@@ -42,6 +42,41 @@ obtenerEstado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerEstado
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:22
+ * @route '/api/chofer/cajas/estado'
+ */
+    const obtenerEstadoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerEstado.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerEstado
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:22
+ * @route '/api/chofer/cajas/estado'
+ */
+        obtenerEstadoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerEstado.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerEstado
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:22
+ * @route '/api/chofer/cajas/estado'
+ */
+        obtenerEstadoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerEstado.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerEstado.form = obtenerEstadoForm
 /**
 * @see \App\Http\Controllers\Api\ChoferCajaController::abrirCaja
  * @see app/Http/Controllers/Api/ChoferCajaController.php:80
@@ -76,6 +111,27 @@ abrirCaja.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::abrirCaja
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:80
+ * @route '/api/chofer/cajas/abrir'
+ */
+    const abrirCajaForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: abrirCaja.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::abrirCaja
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:80
+ * @route '/api/chofer/cajas/abrir'
+ */
+        abrirCajaForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: abrirCaja.url(options),
+            method: 'post',
+        })
+    
+    abrirCaja.form = abrirCajaForm
 /**
 * @see \App\Http\Controllers\Api\ChoferCajaController::cerrarCaja
  * @see app/Http/Controllers/Api/ChoferCajaController.php:180
@@ -110,6 +166,27 @@ cerrarCaja.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::cerrarCaja
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:180
+ * @route '/api/chofer/cajas/cerrar'
+ */
+    const cerrarCajaForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: cerrarCaja.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::cerrarCaja
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:180
+ * @route '/api/chofer/cajas/cerrar'
+ */
+        cerrarCajaForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cerrarCaja.url(options),
+            method: 'post',
+        })
+    
+    cerrarCaja.form = cerrarCajaForm
 /**
 * @see \App\Http\Controllers\Api\ChoferCajaController::obtenerMovimientos
  * @see app/Http/Controllers/Api/ChoferCajaController.php:279
@@ -153,6 +230,41 @@ obtenerMovimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerMovimientos
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:279
+ * @route '/api/chofer/cajas/movimientos'
+ */
+    const obtenerMovimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerMovimientos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerMovimientos
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:279
+ * @route '/api/chofer/cajas/movimientos'
+ */
+        obtenerMovimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerMovimientos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerMovimientos
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:279
+ * @route '/api/chofer/cajas/movimientos'
+ */
+        obtenerMovimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerMovimientos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerMovimientos.form = obtenerMovimientosForm
 /**
 * @see \App\Http\Controllers\Api\ChoferCajaController::obtenerResumen
  * @see app/Http/Controllers/Api/ChoferCajaController.php:329
@@ -195,6 +307,42 @@ obtenerResumen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     url: obtenerResumen.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerResumen
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:329
+ * @route '/api/chofer/cajas/resumen'
+ */
+    const obtenerResumenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerResumen.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerResumen
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:329
+ * @route '/api/chofer/cajas/resumen'
+ */
+        obtenerResumenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerResumen.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ChoferCajaController::obtenerResumen
+ * @see app/Http/Controllers/Api/ChoferCajaController.php:329
+ * @route '/api/chofer/cajas/resumen'
+ */
+        obtenerResumenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerResumen.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerResumen.form = obtenerResumenForm
 const ChoferCajaController = { obtenerEstado, abrirCaja, cerrarCaja, obtenerMovimientos, obtenerResumen }
 
 export default ChoferCajaController

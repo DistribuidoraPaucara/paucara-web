@@ -478,6 +478,7 @@ class PrestamoEventoService
                     'monto_garantia_devuelta_total' => (float) ($datos['monto_garantia_devuelta_total'] ?? 0),
                     'observaciones' => $datos['observaciones'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
+                    'created_by' => $datos['created_by'] ?? null, // ✅ Usuario que creó la devolución
                 ]);
 
                 $almacenId = $datos['almacen_id'] ?? 1;
@@ -845,6 +846,133 @@ class PrestamoEventoService
             Log::error('❌ Error anulando préstamo a evento', [
                 'error' => $e->getMessage(),
                 'prestamo_evento_id' => $prestamoEventoId,
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Anular una devolución de evento con auditoría
+     * Genera movimientos inversos por cada almacén registrado en devolucion_evento_detalle_almacenes
+     */
+    public function anularDevolucion(int $prestamoEventoId, int $devolucionId, string $razonAnulacion): DevolucionEvento|false
+    {
+        try {
+            return DB::transaction(function () use ($prestamoEventoId, $devolucionId, $razonAnulacion) {
+                $prestamo = PrestamoEvento::findOrFail($prestamoEventoId);
+                $devolucion = DevolucionEvento::findOrFail($devolucionId);
+
+                // Validar que pertenece al préstamo y está ACTIVA
+                if ($devolucion->prestamo_evento_id !== $prestamoEventoId) {
+                    throw new \Exception('La devolución no pertenece a este préstamo');
+                }
+
+                if ($devolucion->estado === 'ANULADA') {
+                    throw new \Exception('Esta devolución ya está anulada');
+                }
+
+                Log::info('🔄 INICIANDO ANULACIÓN DE DEVOLUCIÓN EVENTO', [
+                    'prestamo_evento_id' => $prestamoEventoId,
+                    'devolucion_evento_id' => $devolucionId,
+                    'razon' => $razonAnulacion,
+                ]);
+
+                // Iterar sobre detalles de la devolución
+                $detalles = $devolucion->detalles()->with('detallePrestamoEvento')->get();
+
+                foreach ($detalles as $detalleDevolucion) {
+                    $detallePrestamoEvento = $detalleDevolucion->detallePrestamoEvento;
+
+                    // Iterar sobre almacenes registrados en esta devolución
+                    $devolucionesAlmacenes = DevolucionEventoDetalleAlmacen::where('devolucion_evento_detalle_id', $detalleDevolucion->id)
+                        ->get();
+
+                    foreach ($devolucionesAlmacenes as $almacenDev) {
+                        $almacenId = $almacenDev->almacenes_prestables_id;
+                        $cantDevuelta = $almacenDev->cantidad_devuelta;
+                        $cantDañada = $almacenDev->cantidad_dañada_total;
+
+                        // Obtener stock actual
+                        $stock = PrestableStock::where('prestable_id', $detallePrestamoEvento->prestable_id)
+                            ->where('almacenes_prestables_id', $almacenId)
+                            ->first();
+
+                        if (!$stock) {
+                            throw new \Exception("Stock no encontrado para prestable {$detallePrestamoEvento->prestable_id} en almacén {$almacenId}");
+                        }
+
+                        $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                        $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
+
+                        // Invertir cambios de stock (deshacer la devolución)
+                        $stock->update([
+                            'cantidad_disponible' => max(0, $stock->cantidad_disponible - $cantDevuelta),
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantDevuelta, // Vuelve a estar deudor
+                            'cantidad_evento_dañada' => max(0, $stock->cantidad_evento_dañada - $cantDañada),
+                        ]);
+
+                        // Obtener nombre del almacén para el log
+                        $almacenObj = AlmacenPrestable::find($almacenId);
+                        $almacenNombre = $almacenObj?->nombre ?? "Almacén #{$almacenId}";
+
+                        // Registrar movimiento INVERSO (SALIDA) por anulación
+                        $this->movimientoService->registrarMovimiento([
+                            'prestable_stock_id' => $stock->id,
+                            'almacenes_prestables_id' => $almacenId,
+                            'usuario_id' => auth()->id(),
+                            'tipo' => 'SALIDA',
+                            'cantidad' => $cantDevuelta,
+                            'cantidad_dañada_registrada' => $cantDañada,
+                            'disponible_anterior' => $disponibleAntes,
+                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
+                            'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada,
+                            'categoria_afectada' => 'evento_devolucion_anulada',
+                            'motivo' => 'Anulación de devolución de evento',
+                            'observaciones' => "Evento: {$prestamo->nombre_evento}, Almacén: {$almacenNombre}, Razón: {$razonAnulacion}",
+                            'numero_referencia' => $prestamo->id,
+                            'referencia_tipo' => 'ANULACION_DEVOLUCION_EVENTO',
+                            'referencia_id' => $devolucionId,
+                        ]);
+
+                        Log::info('✅ Movimiento inverso registrado para anulación', [
+                            'prestable_id' => $detallePrestamoEvento->prestable_id,
+                            'almacen_id' => $almacenId,
+                            'cantidad_devuelta_anulada' => $cantDevuelta,
+                            'cantidad_dañada_anulada' => $cantDañada,
+                        ]);
+                    }
+
+                    // Restaurar estado del detalle del préstamo
+                    // El detalle vuelve a PARCIALMENTE_DEVUELTO o al estado anterior
+                    if ($detalleDevolucion->quantity_type === 'parcial') {
+                        $detallePrestamoEvento->update(['estado' => 'PARCIALMENTE_DEVUELTO']);
+                    } else {
+                        $detallePrestamoEvento->update(['estado' => 'PENDIENTE']);
+                    }
+                }
+
+                // Actualizar devolución como anulada
+                $devolucion->update([
+                    'estado' => 'ANULADA',
+                    'anulada_por' => auth()->id(),
+                    'fecha_anulacion' => now(),
+                    'razon_anulacion' => $razonAnulacion,
+                ]);
+
+                Log::info('✅ DEVOLUCIÓN EVENTO ANULADA CORRECTAMENTE', [
+                    'prestamo_evento_id' => $prestamoEventoId,
+                    'devolucion_evento_id' => $devolucionId,
+                ]);
+
+                return $devolucion->refresh();
+            });
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución evento', [
+                'error' => $e->getMessage(),
+                'prestamo_evento_id' => $prestamoEventoId,
+                'devolucion_evento_id' => $devolucionId,
             ]);
 
             return false;

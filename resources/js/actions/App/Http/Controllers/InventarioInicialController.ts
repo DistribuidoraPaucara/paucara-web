@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioInicialController::index
  * @see app/Http/Controllers/InventarioInicialController.php:22
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::index
+ * @see app/Http/Controllers/InventarioInicialController.php:22
+ * @route '/inventario/inventario-inicial'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::index
+ * @see app/Http/Controllers/InventarioInicialController.php:22
+ * @route '/inventario/inventario-inicial'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::index
+ * @see app/Http/Controllers/InventarioInicialController.php:22
+ * @route '/inventario/inventario-inicial'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::store
  * @see app/Http/Controllers/InventarioInicialController.php:63
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::store
+ * @see app/Http/Controllers/InventarioInicialController.php:63
+ * @route '/inventario/inventario-inicial'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::store
+ * @see app/Http/Controllers/InventarioInicialController.php:63
+ * @route '/inventario/inventario-inicial'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::createOrGetDraft
  * @see app/Http/Controllers/InventarioInicialController.php:190
@@ -110,6 +166,27 @@ createOrGetDraft.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::createOrGetDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:190
+ * @route '/inventario/inventario-inicial/draft/create'
+ */
+    const createOrGetDraftForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: createOrGetDraft.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::createOrGetDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:190
+ * @route '/inventario/inventario-inicial/draft/create'
+ */
+        createOrGetDraftForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: createOrGetDraft.url(options),
+            method: 'post',
+        })
+    
+    createOrGetDraft.form = createOrGetDraftForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::getDraft
  * @see app/Http/Controllers/InventarioInicialController.php:251
@@ -172,6 +249,41 @@ getDraft.head = (args: { borrador: string | number } | [borrador: string | numbe
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::getDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+    const getDraftForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: getDraft.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::getDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+        getDraftForm.get = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getDraft.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::getDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+        getDraftForm.head = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getDraft.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    getDraft.form = getDraftForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::storeDraftItem
  * @see app/Http/Controllers/InventarioInicialController.php:212
@@ -225,6 +337,27 @@ storeDraftItem.post = (args: { borrador: string | number } | [borrador: string |
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::storeDraftItem
+ * @see app/Http/Controllers/InventarioInicialController.php:212
+ * @route '/inventario/inventario-inicial/draft/{borrador}/items'
+ */
+    const storeDraftItemForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: storeDraftItem.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::storeDraftItem
+ * @see app/Http/Controllers/InventarioInicialController.php:212
+ * @route '/inventario/inventario-inicial/draft/{borrador}/items'
+ */
+        storeDraftItemForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: storeDraftItem.url(args, options),
+            method: 'post',
+        })
+    
+    storeDraftItem.form = storeDraftItemForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::addProductosToDraft
  * @see app/Http/Controllers/InventarioInicialController.php:294
@@ -278,6 +411,27 @@ addProductosToDraft.post = (args: { borrador: string | number } | [borrador: str
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::addProductosToDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:294
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos'
+ */
+    const addProductosToDraftForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: addProductosToDraft.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::addProductosToDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:294
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos'
+ */
+        addProductosToDraftForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: addProductosToDraft.url(args, options),
+            method: 'post',
+        })
+    
+    addProductosToDraft.form = addProductosToDraftForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::loadProductsPaginated
  * @see app/Http/Controllers/InventarioInicialController.php:542
@@ -331,6 +485,27 @@ loadProductsPaginated.post = (args: { borrador: string | number } | [borrador: s
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::loadProductsPaginated
+ * @see app/Http/Controllers/InventarioInicialController.php:542
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/load-paginated'
+ */
+    const loadProductsPaginatedForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: loadProductsPaginated.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::loadProductsPaginated
+ * @see app/Http/Controllers/InventarioInicialController.php:542
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/load-paginated'
+ */
+        loadProductsPaginatedForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: loadProductsPaginated.url(args, options),
+            method: 'post',
+        })
+    
+    loadProductsPaginated.form = loadProductsPaginatedForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::searchProductosForSuggestions
  * @see app/Http/Controllers/InventarioInicialController.php:725
@@ -384,6 +559,27 @@ searchProductosForSuggestions.post = (args: { borrador: string | number } | [bor
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::searchProductosForSuggestions
+ * @see app/Http/Controllers/InventarioInicialController.php:725
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/suggestions'
+ */
+    const searchProductosForSuggestionsForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: searchProductosForSuggestions.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::searchProductosForSuggestions
+ * @see app/Http/Controllers/InventarioInicialController.php:725
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/suggestions'
+ */
+        searchProductosForSuggestionsForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: searchProductosForSuggestions.url(args, options),
+            method: 'post',
+        })
+    
+    searchProductosForSuggestions.form = searchProductosForSuggestionsForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::searchProductoInDraft
  * @see app/Http/Controllers/InventarioInicialController.php:769
@@ -437,6 +633,27 @@ searchProductoInDraft.post = (args: { borrador: string | number } | [borrador: s
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::searchProductoInDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:769
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/search'
+ */
+    const searchProductoInDraftForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: searchProductoInDraft.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::searchProductoInDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:769
+ * @route '/inventario/inventario-inicial/draft/{borrador}/productos/search'
+ */
+        searchProductoInDraftForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: searchProductoInDraft.url(args, options),
+            method: 'post',
+        })
+    
+    searchProductoInDraft.form = searchProductoInDraftForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::deleteDraftItem
  * @see app/Http/Controllers/InventarioInicialController.php:370
@@ -488,6 +705,37 @@ deleteDraftItem.delete = (args: { borrador: string | number, item: string | numb
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::deleteDraftItem
+ * @see app/Http/Controllers/InventarioInicialController.php:370
+ * @route '/inventario/inventario-inicial/draft/{borrador}/items/{item}'
+ */
+    const deleteDraftItemForm = (args: { borrador: string | number, item: string | number } | [borrador: string | number, item: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: deleteDraftItem.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::deleteDraftItem
+ * @see app/Http/Controllers/InventarioInicialController.php:370
+ * @route '/inventario/inventario-inicial/draft/{borrador}/items/{item}'
+ */
+        deleteDraftItemForm.delete = (args: { borrador: string | number, item: string | number } | [borrador: string | number, item: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: deleteDraftItem.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    deleteDraftItem.form = deleteDraftItemForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::completeDraft
  * @see app/Http/Controllers/InventarioInicialController.php:391
@@ -540,6 +788,28 @@ completeDraft.post = (args: { borrador: string | number } | [borrador: string | 
     url: completeDraft.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::completeDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:391
+ * @route '/inventario/inventario-inicial/draft/{borrador}/complete'
+ */
+    const completeDraftForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: completeDraft.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::completeDraft
+ * @see app/Http/Controllers/InventarioInicialController.php:391
+ * @route '/inventario/inventario-inicial/draft/{borrador}/complete'
+ */
+        completeDraftForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: completeDraft.url(args, options),
+            method: 'post',
+        })
+    
+    completeDraft.form = completeDraftForm
 const InventarioInicialController = { index, store, createOrGetDraft, getDraft, storeDraftItem, addProductosToDraft, loadProductsPaginated, searchProductosForSuggestions, searchProductoInDraft, deleteDraftItem, completeDraft }
 
 export default InventarioInicialController

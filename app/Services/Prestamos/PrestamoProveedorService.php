@@ -470,6 +470,7 @@ class PrestamoProveedorService
                     'monto_cobrado_daño_total' => (float) ($datos['monto_cobrado_daño_total'] ?? 0),
                     'monto_garantia_devuelta_total' => 0, // Se calculará de los detalles
                     'observaciones' => $datos['observaciones'] ?? null,
+                    'created_by' => $datos['created_by'] ?? null, // ✅ Usuario que creó la devolución
                 ]);
 
                 $detalles = $datos['detalles'] ?? [];
@@ -808,6 +809,120 @@ class PrestamoProveedorService
                 'error' => $e->getMessage(),
                 'prestamo_id' => $prestamoId,
             ]);
+            return false;
+        }
+    }
+
+    /**
+     * Anular una devolución de proveedor con auditoría
+     * Genera movimiento inverso
+     */
+    public function anularDevolucion(int $prestamoProveedorId, int $devolucionId, string $razonAnulacion): DevolucionProveedor|false
+    {
+        try {
+            return DB::transaction(function () use ($prestamoProveedorId, $devolucionId, $razonAnulacion) {
+                $prestamo = PrestamoProveedor::findOrFail($prestamoProveedorId);
+                $devolucion = DevolucionProveedor::findOrFail($devolucionId);
+
+                // Validar que pertenece al préstamo y está ACTIVA
+                if ($devolucion->prestamo_proveedor_id !== $prestamoProveedorId) {
+                    throw new \Exception('La devolución no pertenece a este préstamo');
+                }
+
+                if ($devolucion->estado === 'ANULADA') {
+                    throw new \Exception('Esta devolución ya está anulada');
+                }
+
+                Log::info('🔄 INICIANDO ANULACIÓN DE DEVOLUCIÓN PROVEEDOR', [
+                    'prestamo_proveedor_id' => $prestamoProveedorId,
+                    'devolucion_proveedor_id' => $devolucionId,
+                    'razon' => $razonAnulacion,
+                ]);
+
+                $almacenId = $prestamo->almacenes_prestables_id ?? $this->obtenerAlmacenProveedorId();
+
+                // Iterar sobre detalles de la devolución
+                $detalles = $devolucion->detalles()->with('detallePrestamoProveedor')->get();
+
+                foreach ($detalles as $detalleDevolucion) {
+                    $detallePrestamoProveedor = $detalleDevolucion->detallePrestamoProveedor;
+
+                    $cantidadDevuelta = $detalleDevolucion->cantidad_devuelta;
+                    $cantidadDañada = $detalleDevolucion->cantidad_dañada_total;
+
+                    // Obtener stock actual
+                    $stock = PrestableStock::where('prestable_id', $detallePrestamoProveedor->prestable_id)
+                        ->where('almacenes_prestables_id', $almacenId)
+                        ->first();
+
+                    if (!$stock) {
+                        throw new \Exception("Stock no encontrado para prestable {$detallePrestamoProveedor->prestable_id} en almacén {$almacenId}");
+                    }
+
+                    $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                    $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
+                    $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada ?? 0;
+
+                    // Invertir cambios de stock (deshacer la devolución)
+                    $stock->update([
+                        'cantidad_disponible' => max(0, $stock->cantidad_disponible - $cantidadDevuelta),
+                        'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta, // Vuelve a estar acreedor
+                        'cantidad_proveedor_dañada' => max(0, $stock->cantidad_proveedor_dañada - $cantidadDañada),
+                    ]);
+
+                    // Registrar movimiento INVERSO por anulación
+                    $this->movimientoService->registrarMovimiento([
+                        'prestable_stock_id' => $stock->id,
+                        'almacenes_prestables_id' => $almacenId,
+                        'usuario_id' => auth()->id(),
+                        'tipo' => 'ENTRADA',
+                        'cantidad' => -$cantidadDevuelta,
+                        'cantidad_dañada_registrada' => -$cantidadDañada,
+                        'cantidad_dañada_total' => -$cantidadDañada,
+                        'disponible_anterior' => $disponibleAntes,
+                        'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                        'disponible_posterior' => $stock->cantidad_disponible,
+                        'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                        'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
+                        'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada ?? 0,
+                        'categoria_afectada' => 'prestamo_proveedor_anulacion',
+                        'motivo' => 'Anulación de devolución a proveedor',
+                        'numero_referencia' => $prestamo->id,
+                        'referencia_tipo' => 'ANULACION_DEVOLUCION_PROVEEDOR',
+                        'referencia_id' => $devolucionId,
+                        'observaciones' => "Proveedor: {$prestamo->proveedor?->nombre}, Razón: {$razonAnulacion}",
+                    ]);
+
+                    Log::info('✅ Movimiento inverso registrado para anulación', [
+                        'prestable_id' => $detallePrestamoProveedor->prestable_id,
+                        'almacen_id' => $almacenId,
+                        'cantidad_devuelta_anulada' => $cantidadDevuelta,
+                        'cantidad_dañada_anulada' => $cantidadDañada,
+                    ]);
+                }
+
+                // Actualizar devolución como anulada
+                $devolucion->update([
+                    'estado' => 'ANULADA',
+                    'anulada_por' => auth()->id(),
+                    'fecha_anulacion' => now(),
+                    'razon_anulacion' => $razonAnulacion,
+                ]);
+
+                Log::info('✅ DEVOLUCIÓN PROVEEDOR ANULADA CORRECTAMENTE', [
+                    'prestamo_proveedor_id' => $prestamoProveedorId,
+                    'devolucion_proveedor_id' => $devolucionId,
+                ]);
+
+                return $devolucion->refresh();
+            });
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución proveedor', [
+                'error' => $e->getMessage(),
+                'prestamo_proveedor_id' => $prestamoProveedorId,
+                'devolucion_proveedor_id' => $devolucionId,
+            ]);
+
             return false;
         }
     }

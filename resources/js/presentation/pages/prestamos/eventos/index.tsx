@@ -8,7 +8,7 @@ import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
 import { useToast } from '@/presentation/hooks/useToast';
 import { Head } from '@inertiajs/react';
-import { Eye, MoreVertical, Printer, RotateCcw } from 'lucide-react';
+import { Eye, MoreVertical, Plus, Printer, RotateCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -296,11 +296,25 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         <AppLayout>
             <Head title="Préstamos a Eventos" />
             <div className="min-h-screen bg-white p-4 dark:bg-gray-950">
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">🎉 Préstamos a Eventos</h1>
-                    <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => (window.location.href = '/prestamos/eventos/crear')}>
-                        ➕ Nuevo Préstamo
-                    </Button>
+                    <div>
+                        <a href="/prestamos/eventos/crear">
+                            <Button className="gap-2">
+                                <Plus size={20} />
+                                Nuevo Préstamo
+                            </Button>
+                        </a>
+                        {/* Botón para mostrar/ocultar filtros */}
+                        <Button
+                            variant={mostrarFiltros ? 'default' : 'outline'}
+                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                            className="ml-2 gap-2"
+                        >
+                            <span>{mostrarFiltros ? '▼' : '▶'}</span>
+                            {mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                        </Button>
+                    </div>
                 </div>
 
                 {error && (
@@ -311,9 +325,11 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
                 {/* ✅ NUEVO: Cards de Resumen Pendiente */}
                 <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-4 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
-                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">⚠️ Préstamos Pendientes</p>
+                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-2 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
                         <div className="space-y-2">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                                ⚠️ Préstamos Pendientes
+                            </p>
                             <div>
                                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{pendientes.totalPrestamos}</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">Préstamos activos</p>
@@ -329,11 +345,11 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         </div>
                     </Card>
 
-                    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-4 dark:border-orange-700 dark:from-orange-900/30 dark:to-orange-800/30">
-                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">
-                            📊 Items Pendientes por Tipo
-                        </p>
+                    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-2 dark:border-orange-700 dark:from-orange-900/30 dark:to-orange-800/30">
                         <div className="space-y-3">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                                📊 Items Pendientes por Tipo
+                            </p>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-700 dark:text-gray-300">📦 Canastillas</span>
                                 <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{pendientes.canastillas.pendientes}</span>
@@ -351,9 +367,9 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         </div>
                     </Card>
 
-                    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 dark:border-purple-700 dark:from-purple-900/30 dark:to-purple-800/30">
-                        <p className="mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">💰 Garantías en Riesgo</p>
+                    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-2 dark:border-purple-700 dark:from-purple-900/30 dark:to-purple-800/30">
                         <div className="space-y-2">
+                            <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">💰 Garantías en Riesgo</p>
                             <div>
                                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                     Bs {pendientes.montoGarantia.toLocaleString('es-ES')}
@@ -365,17 +381,6 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                             </div>
                         </div>
                     </Card>
-                </div>
-
-                {/* Botón para mostrar/ocultar filtros */}
-                <div className="mb-6">
-                    <button
-                        onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-                    >
-                        <span>{mostrarFiltros ? '▼' : '▶'}</span>
-                        {mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-                    </button>
                 </div>
 
                 {/* Filtros */}
@@ -516,7 +521,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                 )}
 
                 {/* Tabla de Préstamos */}
-                <Card className="overflow-x-auto border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <div className="overflow-x-auto border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 rounded-lg">
                     {loading ? (
                         <div className="p-8 text-center text-gray-500 dark:text-gray-400">Cargando préstamos...</div>
                     ) : prestamos.length === 0 ? (
@@ -535,7 +540,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                                     {/* ✅ NUEVO: Columna de Pendientes */}
                                     <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Pendientes</th>
                                     <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
-                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
+                                    <th className="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">-</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -681,7 +686,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
 
                     {/* Controles de Paginación */}
                     {prestamos.length > 0 && (
-                        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 p-4 md:flex-row dark:border-gray-700 dark:bg-gray-800">
+                        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 p-2 md:flex-row dark:border-gray-700 dark:bg-gray-800">
                             {/* Información de resultados */}
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 Mostrando <span className="font-semibold text-gray-900 dark:text-white">{paginacion.from}</span> a{' '}
@@ -737,7 +742,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                             </div>
                         </div>
                     )}
-                </Card>
+                </div>
 
                 <ToastContainer toasts={toasts} onClose={removeToast} />
 

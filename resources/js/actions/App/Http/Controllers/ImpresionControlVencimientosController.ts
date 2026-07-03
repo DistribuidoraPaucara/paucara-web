@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ImpresionControlVencimientosController::imprimir
  * @see app/Http/Controllers/ImpresionControlVencimientosController.php:12
@@ -41,6 +41,42 @@ imprimir.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: imprimir.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ImpresionControlVencimientosController::imprimir
+ * @see app/Http/Controllers/ImpresionControlVencimientosController.php:12
+ * @route '/inventario/control-vencimientos/imprimir'
+ */
+    const imprimirForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ImpresionControlVencimientosController::imprimir
+ * @see app/Http/Controllers/ImpresionControlVencimientosController.php:12
+ * @route '/inventario/control-vencimientos/imprimir'
+ */
+        imprimirForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ImpresionControlVencimientosController::imprimir
+ * @see app/Http/Controllers/ImpresionControlVencimientosController.php:12
+ * @route '/inventario/control-vencimientos/imprimir'
+ */
+        imprimirForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 const ImpresionControlVencimientosController = { imprimir }
 
 export default ImpresionControlVencimientosController

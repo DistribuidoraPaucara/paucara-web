@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EmpresaController::index
  * @see app/Http/Controllers/EmpresaController.php:89
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::index
+ * @see app/Http/Controllers/EmpresaController.php:89
+ * @route '/empresas'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::index
+ * @see app/Http/Controllers/EmpresaController.php:89
+ * @route '/empresas'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\EmpresaController::index
+ * @see app/Http/Controllers/EmpresaController.php:89
+ * @route '/empresas'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\EmpresaController::create
  * @see app/Http/Controllers/EmpresaController.php:162
@@ -85,6 +120,41 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::create
+ * @see app/Http/Controllers/EmpresaController.php:162
+ * @route '/empresas/create'
+ */
+    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: create.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::create
+ * @see app/Http/Controllers/EmpresaController.php:162
+ * @route '/empresas/create'
+ */
+        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\EmpresaController::create
+ * @see app/Http/Controllers/EmpresaController.php:162
+ * @route '/empresas/create'
+ */
+        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    create.form = createForm
 /**
 * @see \App\Http\Controllers\EmpresaController::store
  * @see app/Http/Controllers/EmpresaController.php:141
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::store
+ * @see app/Http/Controllers/EmpresaController.php:141
+ * @route '/empresas'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::store
+ * @see app/Http/Controllers/EmpresaController.php:141
+ * @route '/empresas'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\EmpresaController::show
  * @see app/Http/Controllers/EmpresaController.php:0
@@ -181,6 +272,41 @@ show.head = (args: { empresa: string | number } | [empresa: string | number ] | 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::show
+ * @see app/Http/Controllers/EmpresaController.php:0
+ * @route '/empresas/{empresa}'
+ */
+    const showForm = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::show
+ * @see app/Http/Controllers/EmpresaController.php:0
+ * @route '/empresas/{empresa}'
+ */
+        showForm.get = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\EmpresaController::show
+ * @see app/Http/Controllers/EmpresaController.php:0
+ * @route '/empresas/{empresa}'
+ */
+        showForm.head = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\EmpresaController::edit
  * @see app/Http/Controllers/EmpresaController.php:123
@@ -243,6 +369,41 @@ edit.head = (args: { empresa: string | number } | [empresa: string | number ] | 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::edit
+ * @see app/Http/Controllers/EmpresaController.php:123
+ * @route '/empresas/{empresa}/edit'
+ */
+    const editForm = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::edit
+ * @see app/Http/Controllers/EmpresaController.php:123
+ * @route '/empresas/{empresa}/edit'
+ */
+        editForm.get = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\EmpresaController::edit
+ * @see app/Http/Controllers/EmpresaController.php:123
+ * @route '/empresas/{empresa}/edit'
+ */
+        editForm.head = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\EmpresaController::update
  * @see app/Http/Controllers/EmpresaController.php:171
@@ -305,6 +466,51 @@ update.patch = (args: { empresa: string | number } | [empresa: string | number ]
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\EmpresaController::update
+ * @see app/Http/Controllers/EmpresaController.php:171
+ * @route '/empresas/{empresa}'
+ */
+    const updateForm = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::update
+ * @see app/Http/Controllers/EmpresaController.php:171
+ * @route '/empresas/{empresa}'
+ */
+        updateForm.put = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\EmpresaController::update
+ * @see app/Http/Controllers/EmpresaController.php:171
+ * @route '/empresas/{empresa}'
+ */
+        updateForm.patch = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\EmpresaController::destroy
  * @see app/Http/Controllers/EmpresaController.php:244
@@ -357,6 +563,38 @@ destroy.delete = (args: { empresa: string | number } | [empresa: string | number
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\EmpresaController::destroy
+ * @see app/Http/Controllers/EmpresaController.php:244
+ * @route '/empresas/{empresa}'
+ */
+    const destroyForm = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\EmpresaController::destroy
+ * @see app/Http/Controllers/EmpresaController.php:244
+ * @route '/empresas/{empresa}'
+ */
+        destroyForm.delete = (args: { empresa: string | number } | [empresa: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const EmpresaController = { index, create, store, show, edit, update, destroy }
 
 export default EmpresaController

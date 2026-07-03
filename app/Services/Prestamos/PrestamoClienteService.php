@@ -476,7 +476,7 @@ class PrestamoClienteService
                     'observaciones' => $datos['observaciones'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
                     'estado' => 'ACTIVA',
-                    'created_by' => auth()->id(), // ✅ Registrar quién creó la devolución
+                    'created_by' => $datos['created_by'] ?? auth()->id(), // ✅ Usuario que creó la devolución
                 ]);
 
                 $montoGarantiaTotal = 0;
@@ -1226,4 +1226,5 @@ class PrestamoClienteService
 
         return (int) $almacenActivo->id;
     }
+
 }

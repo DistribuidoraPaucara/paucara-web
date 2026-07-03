@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\TipoOperacionController::index
  * @see app/Http/Controllers/Api/TipoOperacionController.php:49
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::index
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:49
+ * @route '/api/inventario/tipos-operacion'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::index
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:49
+ * @route '/api/inventario/tipos-operacion'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::index
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:49
+ * @route '/api/inventario/tipos-operacion'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\TipoOperacionController::show
  * @see app/Http/Controllers/Api/TipoOperacionController.php:76
@@ -109,6 +144,41 @@ show.head = (args: { tipoOperacion: number | { id: number } } | [tipoOperacion: 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::show
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:76
+ * @route '/api/inventario/tipos-operacion/{tipoOperacion}'
+ */
+    const showForm = (args: { tipoOperacion: number | { id: number } } | [tipoOperacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::show
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:76
+ * @route '/api/inventario/tipos-operacion/{tipoOperacion}'
+ */
+        showForm.get = (args: { tipoOperacion: number | { id: number } } | [tipoOperacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::show
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:76
+ * @route '/api/inventario/tipos-operacion/{tipoOperacion}'
+ */
+        showForm.head = (args: { tipoOperacion: number | { id: number } } | [tipoOperacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\TipoOperacionController::porDireccion
  * @see app/Http/Controllers/Api/TipoOperacionController.php:98
@@ -171,6 +241,41 @@ porDireccion.head = (args: { direccion: string | number } | [direccion: string |
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::porDireccion
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:98
+ * @route '/api/inventario/tipos-operacion/por-direccion/{direccion}'
+ */
+    const porDireccionForm = (args: { direccion: string | number } | [direccion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: porDireccion.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::porDireccion
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:98
+ * @route '/api/inventario/tipos-operacion/por-direccion/{direccion}'
+ */
+        porDireccionForm.get = (args: { direccion: string | number } | [direccion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: porDireccion.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::porDireccion
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:98
+ * @route '/api/inventario/tipos-operacion/por-direccion/{direccion}'
+ */
+        porDireccionForm.head = (args: { direccion: string | number } | [direccion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: porDireccion.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    porDireccion.form = porDireccionForm
 /**
 * @see \App\Http\Controllers\Api\TipoOperacionController::conRequisitos
  * @see app/Http/Controllers/Api/TipoOperacionController.php:135
@@ -213,6 +318,42 @@ conRequisitos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     url: conRequisitos.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::conRequisitos
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:135
+ * @route '/api/inventario/tipos-operacion/con-requisitos'
+ */
+    const conRequisitosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: conRequisitos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::conRequisitos
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:135
+ * @route '/api/inventario/tipos-operacion/con-requisitos'
+ */
+        conRequisitosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: conRequisitos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\TipoOperacionController::conRequisitos
+ * @see app/Http/Controllers/Api/TipoOperacionController.php:135
+ * @route '/api/inventario/tipos-operacion/con-requisitos'
+ */
+        conRequisitosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: conRequisitos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    conRequisitos.form = conRequisitosForm
 const TipoOperacionController = { index, show, porDireccion, conRequisitos }
 
 export default TipoOperacionController

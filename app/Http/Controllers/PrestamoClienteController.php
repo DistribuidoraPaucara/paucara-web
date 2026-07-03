@@ -413,6 +413,7 @@ class PrestamoClienteController extends Controller
             // Preparar datos para validación y servicio
             $datosValidacion = $request->all();
             $datosValidacion['prestamo_cliente_id'] = $prestamo->id;
+            $datosValidacion['created_by'] = auth()->id(); // ✅ Registrar quién creó la devolución
 
             Log::info('📨 INICIANDO DEVOLUCIÓN', [
                 'usuario_id' => $usuario->id,

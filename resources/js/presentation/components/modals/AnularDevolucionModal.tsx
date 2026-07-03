@@ -11,6 +11,7 @@ interface AnularDevolucionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAnulada: () => void; // Callback después de anular exitosamente
+    endpoint?: string; // Endpoint dinámico: /api/prestamos-cliente, /api/prestamos-evento, /api/prestamos-proveedor
 }
 
 export default function AnularDevolucionModal({
@@ -20,6 +21,7 @@ export default function AnularDevolucionModal({
     isOpen,
     onClose,
     onAnulada,
+    endpoint = '/api/prestamos-cliente', // Default endpoint
 }: AnularDevolucionModalProps) {
     const [razonAnulacion, setRazonAnulacion] = useState('');
     const [loading, setLoading] = useState(false);
@@ -36,7 +38,7 @@ export default function AnularDevolucionModal({
             setError(null);
 
             await axios.post(
-                `/api/prestamos-cliente/${prestamo_id}/devoluciones/${devolucion_id}/anular`,
+                `${endpoint}/${prestamo_id}/devoluciones/${devolucion_id}/anular`,
                 { razon_anulacion: razonAnulacion }
             );
 

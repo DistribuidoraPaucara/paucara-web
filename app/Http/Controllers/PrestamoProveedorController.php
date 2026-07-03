@@ -210,8 +210,9 @@ class PrestamoProveedorController extends Controller
                 }
             }
 
-            // Agregar prestamo_proveedor_id
+            // Agregar prestamo_proveedor_id y usuario creador
             $validated['prestamo_proveedor_id'] = $prestamo->id;
+            $validated['created_by'] = auth()->id(); // ✅ Registrar quién creó la devolución
 
             // Registrar devolución
             $devolución = $this->prestamoService->registrarDevolucion($validated);
@@ -375,6 +376,61 @@ class PrestamoProveedorController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('❌ Error anulando préstamo', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * POST /api/prestamos-proveedor/{prestamo}/devoluciones/{devolucion}/anular
+     * Anular una devolución de proveedor
+     */
+    public function anularDevolucion(Request $request, PrestamoProveedor $prestamo, \App\Models\DevolucionProveedor $devolucion): JsonResponse
+    {
+        try {
+            Log::info('📝 Anulando devolución de proveedor', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucion->id,
+            ]);
+
+            $validated = $request->validate([
+                'razon_anulacion' => 'required|string|min:10|max:500',
+            ]);
+
+            // Anular devolución
+            $devolucionAnulada = $this->prestamoService->anularDevolucion(
+                $prestamo->id,
+                $devolucion->id,
+                $validated['razon_anulacion']
+            );
+
+            if (!$devolucionAnulada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error anulando devolución',
+                ], 500);
+            }
+
+            Log::info('✅ Devolución de proveedor anulada correctamente', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucionAnulada->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $devolucionAnulada->load(['detalles.detallePrestamoProveedor.prestable', 'creador', 'anulador']),
+                'message' => 'Devolución anulada exitosamente',
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('⚠️ Validación fallida al anular devolución', [
+                'errores' => $e->errors()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errores' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución proveedor', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }

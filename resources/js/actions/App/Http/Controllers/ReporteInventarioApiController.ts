@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::estadisticasGenerales
  * @see app/Http/Controllers/ReporteInventarioApiController.php:42
@@ -42,6 +42,41 @@ estadisticasGenerales.head = (options?: RouteQueryOptions): RouteDefinition<'hea
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::estadisticasGenerales
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:42
+ * @route '/api/inventario/reportes/estadisticas'
+ */
+    const estadisticasGeneralesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticasGenerales.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::estadisticasGenerales
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:42
+ * @route '/api/inventario/reportes/estadisticas'
+ */
+        estadisticasGeneralesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasGenerales.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::estadisticasGenerales
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:42
+ * @route '/api/inventario/reportes/estadisticas'
+ */
+        estadisticasGeneralesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasGenerales.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticasGenerales.form = estadisticasGeneralesForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::stockBajo
  * @see app/Http/Controllers/ReporteInventarioApiController.php:70
@@ -85,6 +120,41 @@ stockBajo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::stockBajo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:70
+ * @route '/api/inventario/reportes/stock-bajo'
+ */
+    const stockBajoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: stockBajo.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::stockBajo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:70
+ * @route '/api/inventario/reportes/stock-bajo'
+ */
+        stockBajoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockBajo.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::stockBajo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:70
+ * @route '/api/inventario/reportes/stock-bajo'
+ */
+        stockBajoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockBajo.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    stockBajo.form = stockBajoForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::proximosVencer
  * @see app/Http/Controllers/ReporteInventarioApiController.php:99
@@ -128,6 +198,41 @@ proximosVencer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::proximosVencer
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:99
+ * @route '/api/inventario/reportes/proximos-vencer'
+ */
+    const proximosVencerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: proximosVencer.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::proximosVencer
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:99
+ * @route '/api/inventario/reportes/proximos-vencer'
+ */
+        proximosVencerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proximosVencer.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::proximosVencer
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:99
+ * @route '/api/inventario/reportes/proximos-vencer'
+ */
+        proximosVencerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proximosVencer.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    proximosVencer.form = proximosVencerForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::vencidos
  * @see app/Http/Controllers/ReporteInventarioApiController.php:128
@@ -171,6 +276,41 @@ vencidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::vencidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:128
+ * @route '/api/inventario/reportes/vencidos'
+ */
+    const vencidosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: vencidos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::vencidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:128
+ * @route '/api/inventario/reportes/vencidos'
+ */
+        vencidosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: vencidos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::vencidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:128
+ * @route '/api/inventario/reportes/vencidos'
+ */
+        vencidosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: vencidos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    vencidos.form = vencidosForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::movimientosPorPeriodo
  * @see app/Http/Controllers/ReporteInventarioApiController.php:157
@@ -214,6 +354,41 @@ movimientosPorPeriodo.head = (options?: RouteQueryOptions): RouteDefinition<'hea
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::movimientosPorPeriodo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:157
+ * @route '/api/inventario/reportes/movimientos-periodo'
+ */
+    const movimientosPorPeriodoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: movimientosPorPeriodo.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::movimientosPorPeriodo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:157
+ * @route '/api/inventario/reportes/movimientos-periodo'
+ */
+        movimientosPorPeriodoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientosPorPeriodo.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::movimientosPorPeriodo
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:157
+ * @route '/api/inventario/reportes/movimientos-periodo'
+ */
+        movimientosPorPeriodoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientosPorPeriodo.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    movimientosPorPeriodo.form = movimientosPorPeriodoForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::productosMasMovidos
  * @see app/Http/Controllers/ReporteInventarioApiController.php:204
@@ -257,6 +432,41 @@ productosMasMovidos.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::productosMasMovidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:204
+ * @route '/api/inventario/reportes/productos-mas-movidos'
+ */
+    const productosMasMovidosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: productosMasMovidos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::productosMasMovidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:204
+ * @route '/api/inventario/reportes/productos-mas-movidos'
+ */
+        productosMasMovidosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: productosMasMovidos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::productosMasMovidos
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:204
+ * @route '/api/inventario/reportes/productos-mas-movidos'
+ */
+        productosMasMovidosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: productosMasMovidos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    productosMasMovidos.form = productosMasMovidosForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::valorizacionInventario
  * @see app/Http/Controllers/ReporteInventarioApiController.php:241
@@ -300,6 +510,41 @@ valorizacionInventario.head = (options?: RouteQueryOptions): RouteDefinition<'he
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::valorizacionInventario
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:241
+ * @route '/api/inventario/reportes/valorizacion'
+ */
+    const valorizacionInventarioForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: valorizacionInventario.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::valorizacionInventario
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:241
+ * @route '/api/inventario/reportes/valorizacion'
+ */
+        valorizacionInventarioForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: valorizacionInventario.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::valorizacionInventario
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:241
+ * @route '/api/inventario/reportes/valorizacion'
+ */
+        valorizacionInventarioForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: valorizacionInventario.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    valorizacionInventario.form = valorizacionInventarioForm
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::generar
  * @see app/Http/Controllers/ReporteInventarioApiController.php:292
@@ -342,6 +587,42 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: generar.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::generar
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:292
+ * @route '/api/inventario/reportes/generar'
+ */
+    const generarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: generar.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::generar
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:292
+ * @route '/api/inventario/reportes/generar'
+ */
+        generarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: generar.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteInventarioApiController::generar
+ * @see app/Http/Controllers/ReporteInventarioApiController.php:292
+ * @route '/api/inventario/reportes/generar'
+ */
+        generarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: generar.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    generar.form = generarForm
 const ReporteInventarioApiController = { estadisticasGenerales, stockBajo, proximosVencer, vencidos, movimientosPorPeriodo, productosMasMovidos, valorizacionInventario, generar }
 
 export default ReporteInventarioApiController

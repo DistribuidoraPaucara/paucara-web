@@ -1721,6 +1721,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Rutas genéricas DESPUÉS
         Route::get('/{prestamo}', [PrestamoProveedorController::class, 'show']);
         Route::post('/{prestamo}/devolver', [PrestamoProveedorController::class, 'registrarDevolucion']);
+        Route::post('/{prestamo}/devoluciones/{devolucion}/anular', [PrestamoProveedorController::class, 'anularDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoProveedorController::class, 'anularPrestamo']);
     });
 
@@ -1731,6 +1732,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{prestamo}', [PrestamoEventoController::class, 'show']);
         Route::put('/{prestamo}', [PrestamoEventoController::class, 'update']);
         Route::post('/{prestamo}/devolver', [PrestamoEventoController::class, 'registrarDevolucion']);
+        Route::post('/{prestamo}/devoluciones/{devolucion}/anular', [PrestamoEventoController::class, 'anularDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoEventoController::class, 'anularPrestamo']);
     });
 

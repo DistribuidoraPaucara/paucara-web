@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\EntregaBatchController::preview
  * @see app/Http/Controllers/Api/EntregaBatchController.php:169
@@ -33,6 +33,27 @@ preview.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::preview
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:169
+ * @route '/api/entregas/lote/preview'
+ */
+    const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: preview.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::preview
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:169
+ * @route '/api/entregas/lote/preview'
+ */
+        previewForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: preview.url(options),
+            method: 'post',
+        })
+    
+    preview.form = previewForm
 /**
 * @see \App\Http\Controllers\Api\EntregaBatchController::store
  * @see app/Http/Controllers/Api/EntregaBatchController.php:37
@@ -67,6 +88,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::store
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:37
+ * @route '/api/entregas/lote'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::store
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:37
+ * @route '/api/entregas/lote'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\EntregaBatchController::optimizar
  * @see app/Http/Controllers/Api/EntregaBatchController.php:304
@@ -100,6 +142,28 @@ optimizar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: optimizar.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::optimizar
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:304
+ * @route '/api/entregas/lote/optimizar'
+ */
+    const optimizarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: optimizar.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\EntregaBatchController::optimizar
+ * @see app/Http/Controllers/Api/EntregaBatchController.php:304
+ * @route '/api/entregas/lote/optimizar'
+ */
+        optimizarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: optimizar.url(options),
+            method: 'post',
+        })
+    
+    optimizar.form = optimizarForm
 const EntregaBatchController = { preview, store, optimizar }
 
 export default EntregaBatchController

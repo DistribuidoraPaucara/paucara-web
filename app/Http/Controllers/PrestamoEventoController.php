@@ -436,6 +436,7 @@ class PrestamoEventoController extends Controller
             // Preparar datos para validación y servicio
             $datosValidacion = $request->all();
             $datosValidacion['prestamo_evento_id'] = $prestamo->id;
+            $datosValidacion['created_by'] = auth()->id(); // ✅ Registrar quién creó la devolución
 
             Log::info('📨 INICIANDO DEVOLUCIÓN EVENTO', [
                 'usuario_id' => $usuario->id,
@@ -554,6 +555,61 @@ class PrestamoEventoController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('❌ Error anulando préstamo a evento', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * POST /api/prestamos-evento/{prestamo}/devoluciones/{devolucion}/anular
+     * Anular una devolución de evento
+     */
+    public function anularDevolucion(Request $request, PrestamoEvento $prestamo, \App\Models\DevolucionEvento $devolucion): JsonResponse
+    {
+        try {
+            Log::info('📝 Anulando devolución de evento', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucion->id,
+            ]);
+
+            $validated = $request->validate([
+                'razon_anulacion' => 'required|string|min:10|max:500',
+            ]);
+
+            // Anular devolución
+            $devolucionAnulada = $this->prestamoService->anularDevolucion(
+                $prestamo->id,
+                $devolucion->id,
+                $validated['razon_anulacion']
+            );
+
+            if (!$devolucionAnulada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error anulando devolución',
+                ], 500);
+            }
+
+            Log::info('✅ Devolución de evento anulada correctamente', [
+                'prestamo_id' => $prestamo->id,
+                'devolucion_id' => $devolucionAnulada->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $devolucionAnulada->load(['detalles.detallePrestamoEvento.prestable', 'creador', 'anulador']),
+                'message' => 'Devolución anulada exitosamente',
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('⚠️ Validación fallida al anular devolución', [
+                'errores' => $e->errors()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errores' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ Error anulando devolución evento', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
