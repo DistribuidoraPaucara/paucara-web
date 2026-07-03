@@ -29,9 +29,9 @@ interface PrestamoEventoShow {
     estado: string;
     observaciones?: string;
     created_by?: number;
+    vehiculo_asignado?: string;
     almacen?: any;
     chofer?: any;
-    vehiculo?: any;
     creador?: any;
     detalles?: any[];
     devoluciones?: any[];
@@ -249,8 +249,8 @@ export default function PrestamosEventosShow() {
                                 <p className="font-bold">{prestamo.chofer?.name || 'N/D'}</p>
                             </div>
                             <div>
-                                <p className="text-gray-600 dark:text-gray-300 text-sm">Vehículo</p>
-                                <p className="font-bold">{prestamo.vehiculo?.placa || 'N/D'}</p>
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">Vehículo Asignado</p>
+                                <p className="font-bold">{prestamo.vehiculo_asignado || 'N/D'}</p>
                             </div>
                         </div>
                         <div className="space-y-3">
@@ -465,7 +465,7 @@ export default function PrestamosEventosShow() {
                                                                     {devolucion.detalles.map((detalle: any, idx: number) => (
                                                                         <TableRow key={idx}>
                                                                             <TableCell>
-                                                                                {detalle.detallePrestamoEvento?.prestable?.nombre || 'N/D'}
+                                                                                {detalle.prestamoEventoDetalle?.prestable?.nombre || 'N/D'}
                                                                             </TableCell>
                                                                             <TableCell className="text-right">
                                                                                 {detalle.cantidad_devuelta}
@@ -525,7 +525,7 @@ export default function PrestamosEventosShow() {
                                                                         (detalle.devolucionesAlmacenes || []).map((almacen: any, idx: number) => (
                                                                             <TableRow key={`${detalle.id}-${idx}`}>
                                                                                 <TableCell>
-                                                                                    {detalle.detallePrestamoEvento?.prestable?.nombre || 'N/D'}
+                                                                                    {detalle.prestamoEventoDetalle?.prestable?.nombre || 'N/D'}
                                                                                 </TableCell>
                                                                                 <TableCell>
                                                                                     {almacen.almacen?.nombre || `Almacén ${almacen.almacenes_prestables_id}`}

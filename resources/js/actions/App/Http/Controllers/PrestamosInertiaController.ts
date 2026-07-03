@@ -814,7 +814,7 @@ eventosShow.head = (args: { prestamo: number | { id: number } } | [prestamo: num
     eventosShow.form = eventosShowForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
 export const reportes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -829,7 +829,7 @@ reportes.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
 reportes.url = (options?: RouteQueryOptions) => {
@@ -838,7 +838,7 @@ reportes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
 reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -847,7 +847,7 @@ reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
 reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -857,7 +857,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
     const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -867,7 +867,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
         reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -876,7 +876,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:371
+ * @see app/Http/Controllers/PrestamosInertiaController.php:382
  * @route '/prestamos/reportes'
  */
         reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

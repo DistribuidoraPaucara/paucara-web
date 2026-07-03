@@ -355,9 +355,20 @@ class PrestamosInertiaController extends Controller
     public function eventosShow(\App\Models\PrestamoEvento $prestamo): Response
     {
         $prestamo->load([
-            'cliente',
+            'almacen',
             'chofer',
-            'detalles.prestable',
+            'creador', // Usuario que creó el préstamo
+            'detalles' => fn($q) => $q
+                ->with('prestable.condiciones')
+                ->with('almacenes.almacen'),
+            'devoluciones' => fn($q) => $q
+                ->with([
+                    'detalles' => fn($q2) => $q2
+                        ->with('prestamoEventoDetalle.prestable') // Relación correcta
+                        ->with('devolucionesAlmacenes.almacen'), // Distribución por almacén
+                    'creador', // Usuario que creó la devolución
+                    'anulador', // Usuario que anuló la devolución
+                ]),
         ]);
 
         return Inertia::render('prestamos/eventos/show', [
