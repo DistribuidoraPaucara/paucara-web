@@ -475,6 +475,8 @@ class PrestamoClienteService
                     'monto_garantia_devuelta_total' => 0, // Se calculará de los detalles
                     'observaciones' => $datos['observaciones'] ?? null,
                     'chofer_id' => $datos['chofer_id'] ?? null,
+                    'estado' => 'ACTIVA',
+                    'created_by' => auth()->id(), // ✅ Registrar quién creó la devolución
                 ]);
 
                 $montoGarantiaTotal = 0;
@@ -1155,6 +1157,8 @@ class PrestamoClienteService
                 $devolucion->update([
                     'estado' => 'ANULADA',
                     'razon_anulacion' => $razonAnulacion,
+                    'anulada_por' => auth()->id(), // ✅ Registrar quién anuló
+                    'fecha_anulacion' => now(), // ✅ Registrar cuándo se anuló
                 ]);
 
                 // Actualizar estado del préstamo si todas las devoluciones están anuladas

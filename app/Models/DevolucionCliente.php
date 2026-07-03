@@ -20,6 +20,9 @@ class DevolucionCliente extends Model
         'chofer_id',
         'estado',
         'razon_anulacion',
+        'created_by',
+        'anulada_por',
+        'fecha_anulacion',
     ];
 
     protected $casts = [
@@ -27,6 +30,7 @@ class DevolucionCliente extends Model
         'monto_garantia_devuelta_total' => 'decimal:2',
         'monto_excedido_garantia'       => 'decimal:2',
         'fecha_devolucion'              => 'date',
+        'fecha_anulacion'               => 'datetime',
     ];
 
     public function prestamo(): BelongsTo
@@ -42,5 +46,15 @@ class DevolucionCliente extends Model
     public function chofer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'chofer_id');
+    }
+
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function anulador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulada_por');
     }
 }
