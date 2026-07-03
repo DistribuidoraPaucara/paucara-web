@@ -58,6 +58,38 @@ export default function PrestamosEventosShow() {
             setLoading(true);
             const response = await axios.get(`/api/prestamos-evento/${id}`);
             const prestamo = response.data.data;
+
+            // 🔍 DEBUG: Ver qué datos llegan del backend
+            console.group('📥 DATOS DEL BACKEND - EVENTO #' + id);
+            console.log('✅ Préstamo completo:', prestamo);
+            console.log('👤 Creador del préstamo:', prestamo.creador);
+            console.log('📦 Detalles:', {
+                cantidad: prestamo.detalles?.length,
+                prestables: prestamo.detalles?.map((d: any) => ({
+                    nombre: d.prestable?.nombre,
+                    cantidad_prestada: d.cantidad_prestada,
+                    almacenes: d.almacenes?.length,
+                })),
+            });
+            console.log('🔄 Devoluciones:', {
+                cantidad: prestamo.devoluciones?.length,
+                items: prestamo.devoluciones?.map((dev: any) => ({
+                    id: dev.id,
+                    fecha: dev.fecha_devolucion,
+                    estado: dev.estado,
+                    creador: dev.creador?.name,
+                    anulador: dev.anulador?.name,
+                    detalles: dev.detalles?.length,
+                    almacenes_por_detalle: dev.detalles?.map((det: any) => ({
+                        prestable: det.prestamoEventoDetalle?.prestable?.nombre,
+                        almacenes: det.devolucionesAlmacenes?.length,
+                    })),
+                })),
+            });
+            console.log('🏢 Almacén:', prestamo.almacen);
+            console.log('👨‍✈️ Chofer:', prestamo.chofer);
+            console.groupEnd();
+
             setPrestamo(prestamo);
         } catch (err: any) {
             console.error('❌ Error cargando préstamo:', err.response?.data || err.message);
