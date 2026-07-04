@@ -48,6 +48,7 @@ export default function ProductosTable({
     detalles,
     onAddProduct,
     onUpdateDetail,
+    onUpdateDetailMultiple,
     onRemoveDetail,
     almacen_id,
     cliente_id,
@@ -67,7 +68,7 @@ export default function ProductosTable({
     proformaConvertida = false // ✅ NUEVO (2026-05-29): Ocultar disponibilidad si está convertida
 }: ProductosTableProps) {
     // ✅ DEBUG (2026-05-26): Verificar que permitirProductosSinStock llegue correctamente
-    console.log('📦 [ProductosTable] permitirProductosSinStock recibido:', permitirProductosSinStock);
+    // console.log('📦 [ProductosTable] permitirProductosSinStock recibido:', permitirProductosSinStock);
 
     // ✅ Estados para edición de campos
     const [editingField, setEditingField] = useState<{ index: number; field: string; value: string } | null>(null);
@@ -123,7 +124,7 @@ export default function ProductosTable({
                     incluido: item.es_obligatorio === true
                 }));
 
-                console.log('📦 [ProductosTable] Combo agregado:', {
+                /* console.log('📦 [ProductosTable] Combo agregado:', {
                     combo_id: comboId,
                     combo_nombre: ultimoDetalle.producto?.nombre,
                     items_cantidad: comboItems.length,
@@ -133,7 +134,7 @@ export default function ProductosTable({
                         cantidad: i.cantidad,
                         es_obligatorio: i.es_obligatorio
                     }))
-                });
+                }); */
 
                 setComboItemsMap(prev => ({
                     ...prev,
@@ -143,13 +144,14 @@ export default function ProductosTable({
         }
 
         // ✅ Inicializar select de tipo de precio (PRIORIDAD del backend)
-        if (tipo === 'venta' && !selectedTipoPrecio[ultimoIndice]) {
+        // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
+        if (tipo === 'venta' && !selectedTipoPrecio[ultimoDetalle.producto_id]) {
             // 1️⃣ PRIORIDAD: Si el detalle YA viene con tipo_precio_id del backend, usarlo
             if (ultimoDetalle.tipo_precio_id) {
                 console.log(`✅ [ProductosTable] Inicializando selectedTipoPrecio con backend: ${ultimoDetalle.tipo_precio_id}`);
                 setSelectedTipoPrecio(prev => ({
                     ...prev,
-                    [ultimoIndice]: String(ultimoDetalle.tipo_precio_id)
+                    [ultimoDetalle.producto_id]: String(ultimoDetalle.tipo_precio_id)
                 }));
             }
             // 2️⃣ Si no, usar el recomendado
@@ -157,7 +159,7 @@ export default function ProductosTable({
                 console.log(`ℹ️ [ProductosTable] Inicializando selectedTipoPrecio con recomendado: ${ultimoDetalle.tipo_precio_id_recomendado}`);
                 setSelectedTipoPrecio(prev => ({
                     ...prev,
-                    [ultimoIndice]: String(ultimoDetalle.tipo_precio_id_recomendado)
+                    [ultimoDetalle.producto_id]: String(ultimoDetalle.tipo_precio_id_recomendado)
                 }));
             }
             // 3️⃣ Si no hay nada, buscar un precio de venta
@@ -176,7 +178,7 @@ export default function ProductosTable({
                     console.log(`ℹ️ [ProductosTable] Inicializando selectedTipoPrecio con preciosVenta: ${precioVenta.tipo_precio_id}`);
                     setSelectedTipoPrecio(prev => ({
                         ...prev,
-                        [ultimoIndice]: String(precioVenta.tipo_precio_id)
+                        [ultimoDetalle.producto_id]: String(precioVenta.tipo_precio_id)
                     }));
                 }
             }
@@ -222,7 +224,7 @@ export default function ProductosTable({
                             };
                         });
 
-                        console.log(`📦 [ProductosTable] Inicializando combo ${comboId}: ${inicializados.filter((i: any) => i._isChecked).length} items checked (obligatorios + seleccionados)`, inicializados);
+                        // console.log(`📦 [ProductosTable] Inicializando combo ${comboId}: ${inicializados.filter((i: any) => i._isChecked).length} items checked (obligatorios + seleccionados)`, inicializados);
                         newComboItemsMap[comboId] = inicializados;
                     }
                 }
@@ -246,11 +248,19 @@ export default function ProductosTable({
                 (dr: any) => dr.producto_id === detalle.producto_id
             );
 
+            // ✅ CRÍTICO: No actualizar si:
+            // 1. El usuario seleccionó "OTROS" (tipo_precio_id === null)
+            // 2. El usuario cambió el tipo_precio_id manualmente
+            // 3. El rango sugiere cambiar el precio pero el usuario ya seleccionó manual
+            // ✅ REFACTORIZADO (2026-07-03): Usar producto_id en lugar de index
+            const tieneOtrosSeleccionado = detalle.tipo_precio_id === null;
+
             if (
                 detalleRango &&
                 detalleRango.tipo_precio_nombre !== null &&
                 detalleRango.tipo_precio_nombre !== detalle.tipo_precio_nombre &&
-                !manuallySelectedTipoPrecio[index]
+                !manuallySelectedTipoPrecio[detalle.producto_id] &&
+                !tieneOtrosSeleccionado  // ✅ NUEVO: No tocar si tiene "OTROS" seleccionado
             ) {
                 const nuevoSubtotal = detalleRango.cantidad * (detalleRango.precio_unitario || detalle.precio_unitario);
 
@@ -349,19 +359,30 @@ export default function ProductosTable({
                     accion: 'Limpiando tipo_precio_id y tipo_precio_nombre para que se muestren como "OTROS"'
                 });
 
-                // Actualizar el detalle con el nuevo precio y limpiar tipo_precio (null = "OTROS")
-                onUpdateDetail(index, field, value);
-                onUpdateDetail(index, 'tipo_precio_id', null);
-                onUpdateDetail(index, 'tipo_precio_nombre', null);
+                // ✅ CRÍTICO (2026-07-03): Actualizar el detalle con el nuevo precio y limpiar tipo_precio
+                // Hacer esto en UNA SOLA actualización de estado para evitar "stale closure"
+                if (onUpdateDetailMultiple) {
+                    // Usar la nueva función para consolidar múltiples actualizaciones
+                    onUpdateDetailMultiple(index, {
+                        precio_unitario: value,
+                        tipo_precio_id: null,
+                        tipo_precio_nombre: null
+                    });
+                } else {
+                    // Fallback: si no está disponible, hacer las llamadas individuales
+                    onUpdateDetail(index, field, value);
+                    onUpdateDetail(index, 'tipo_precio_id', null);
+                    onUpdateDetail(index, 'tipo_precio_nombre', null);
+                }
                 return;
             } else {
-                console.log('✅ [handleUpdateDetail] Precio coincide con tipo de precio registrado', {
+                /* console.log('✅ [handleUpdateDetail] Precio coincide con tipo de precio registrado', {
                     detalle_index: index,
                     producto: producto?.nombre,
                     precio_nuevo: precioUnitario,
                     tipo_precio_id: tipo_precio_id,
                     tipo_precio_nombre: tipo_precio_nombre
-                });
+                }); */
             }
         }
 
@@ -449,47 +470,47 @@ export default function ProductosTable({
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
                         <thead className="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-zinc-700 dark:to-zinc-800 border-b-2 border-gray-300 dark:border-zinc-600">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Producto
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     SKU
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Cantidad
                                 </th>
                                 {tipo === 'compra' && (
                                     <>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Precio Compra
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Lote
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Vencimiento
                                         </th>
                                     </>
                                 )}
                                 {tipo === 'venta' && (
-                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                    <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                         Precio Unitario
                                     </th>
                                 )}
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Subtotal
                                 </th>
-                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                 <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Categoría
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Unidad
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Marca
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                    Acciones
+                                <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                    -
                                 </th>
                             </tr>
                         </thead>

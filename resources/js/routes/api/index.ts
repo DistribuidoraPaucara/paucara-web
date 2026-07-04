@@ -25,6 +25,9 @@ import conciliacion from './conciliacion'
 import debug from './debug'
 import reportes from './reportes'
 import alertas from './alertas'
+import prestamosCliente from './prestamos-cliente'
+import prestamosEvento from './prestamos-evento'
+import prestamosProveedor from './prestamos-proveedor'
 import cuentasPorCobrar from './cuentas-por-cobrar'
 import dashboard from './dashboard'
 import codigosBarra from './codigos-barra'
@@ -356,6 +359,9 @@ debug,
 logs,
 reportes,
 alertas,
+prestamosCliente,
+prestamosEvento,
+prestamosProveedor,
 cuentasPorCobrar,
 dashboard,
 codigosBarra,

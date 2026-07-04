@@ -9,6 +9,7 @@ use App\Services\Prestamos\ValidacionPrestamosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PrestableStock;
 
 class PrestamoEventoController extends Controller
@@ -37,10 +38,26 @@ class PrestamoEventoController extends Controller
                 'chofer',
                 'almacen',
                 'ventas',
-                'ubicacion',
+                // ✅ MEJORADO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
+                'ubicacion' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
+                'ubicaciones' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
                 'devoluciones.detalles',
                 'creador', // ✅ Usuario que creó el préstamo
             ]);
+
+            // ✅ NUEVO (2026-07-03): Filtro por rol del usuario autenticado
+            $user = Auth::user();
+            if ($user && !$user->hasRole(['admin', 'Admin', 'ADMIN'])) {
+                // Si no es admin y tiene chofer_id, filtrar por su propio chofer_id
+                if ($user->id) {
+                    $query->where('chofer_id', $user->id);
+                    Log::info('🔒 Filtrando préstamos de eventos para chofer:', ['chofer_id' => $user->id]);
+                }
+            }
 
             // Filtro por ID
             if ($request->has('id')) {
@@ -242,7 +259,17 @@ class PrestamoEventoController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['cliente', 'detalles.prestable', 'detalles.prestable.condiciones', 'chofer', 'almacen', 'ventas', 'ubicacion', 'creador']),
+                'data' => $prestamo->load([
+                    'cliente',
+                    'detalles.prestable',
+                    'detalles.prestable.condiciones',
+                    'chofer',
+                    'almacen',
+                    'ventas',
+                    'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                    'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                    'creador'
+                ]),
                 'message' => 'Préstamo a evento creado exitosamente',
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -278,7 +305,13 @@ class PrestamoEventoController extends Controller
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'chofer',
                 'ventas',
-                'ubicacion',
+                // ✅ MEJORADO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
+                'ubicacion' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
+                'ubicaciones' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
                 'creador', // ✅ Usuario que creó el préstamo
                 // ✅ NUEVO: Cargar prestable en detalles de devoluciones + auditoría
                 'devoluciones.detalles.prestamoEventoDetalle.prestable',
@@ -622,30 +655,51 @@ class PrestamoEventoController extends Controller
      */
     public function imprimir(PrestamoEvento $prestamo, Request $request)
     {
-        $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
-        $accion  = $request->input('accion', 'download'); // download | stream
+        try {
+            $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
+            $accion  = $request->input('accion', 'download'); // download | stream
 
-        // Cargar relaciones necesarias para la impresión
-        // ✅ NO cargar 'venta' - usar accessor getVentaAttribute() que devuelve ventas->first()
-        $prestamo->load([
-            'detalles.prestable',
-            'detalles.prestable.condiciones',
-            'detalles.devoluciones',
-            'cliente',
-            'chofer',
-            'almacen',
-            'ventas', // ✅ Relación many-to-many
-            'devoluciones.detalles',
-        ]);
+            // Cargar relaciones necesarias para la impresión
+            // ✅ NO cargar 'venta' - usar accessor getVentaAttribute() que devuelve ventas->first()
+            $prestamo->load([
+                'detalles.prestable',
+                'detalles.prestable.condiciones',
+                'detalles.devoluciones',
+                'cliente',
+                'chofer',
+                'almacen',
+                'ventas', // ✅ Relación many-to-many
+                'devoluciones.detalles',
+                // ✅ NUEVO: Cargar ubicacion con localidad para impresión
+                'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+            ]);
 
-        // Generar PDF usando el tipo de documento "prestamo_evento"
-        $pdf = $this->impresionService->generarPDF('prestamo_evento', $prestamo, $formato);
+            // Generar PDF usando el tipo de documento "prestamo_evento"
+            $pdf = $this->impresionService->generarPDF('prestamo_evento', $prestamo, $formato);
 
-        $nombreArchivo = "prestamo_evento_{$prestamo->id}_{$formato}.pdf";
+            $nombreArchivo = "prestamo_evento_{$prestamo->id}_{$formato}.pdf";
 
-        return $accion === 'stream'
-            ? $pdf->stream($nombreArchivo)
-            : $pdf->download($nombreArchivo);
+            return $accion === 'stream'
+                ? $pdf->stream($nombreArchivo)
+                : $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            Log::error('❌ Error generando PDF de préstamo evento', [
+                'prestamo_id' => $prestamo->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Si es una llamada API, retornar JSON
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al generar PDF: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Si es web, retornar redirección
+            return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
+        }
     }
 
     /**

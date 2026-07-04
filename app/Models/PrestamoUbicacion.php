@@ -12,6 +12,7 @@ class PrestamoUbicacion extends Model
     protected $fillable = [
         'prestamo_cliente_id',
         'prestamo_evento_id',
+        'prestamo_proveedor_id',
         'direccion_cliente_id',
         'localidad_id',
         'es_ubicacion_manual',
@@ -43,11 +44,19 @@ class PrestamoUbicacion extends Model
     }
 
     /**
+     * Préstamo a proveedor
+     */
+    public function prestamoProveedor(): BelongsTo
+    {
+        return $this->belongsTo(PrestamoProveedor::class, 'prestamo_proveedor_id');
+    }
+
+    /**
      * Dirección del cliente (si se usa la relación)
      */
     public function direccionCliente(): BelongsTo
     {
-        return $this->belongsTo(DireccionesCliente::class, 'direccion_cliente_id');
+        return $this->belongsTo(DireccionCliente::class, 'direccion_cliente_id');
     }
 
     /**

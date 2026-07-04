@@ -10,6 +10,7 @@ use App\Services\Prestamos\PrestamoProveedorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PrestamoProveedorController extends Controller
 {
@@ -33,7 +34,24 @@ class PrestamoProveedorController extends Controller
                 'detalles.devolucionDetalles',
                 'almacen',
                 'chofer',
+                // ✅ NUEVO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
+                'ubicacion' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
+                'ubicaciones' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
             ]);
+
+            // ✅ NUEVO (2026-07-03): Filtro por rol del usuario autenticado
+            $user = Auth::user();
+            if ($user && !$user->hasRole(['admin', 'Admin', 'ADMIN'])) {
+                // Si no es admin y tiene chofer_id, filtrar por su propio chofer_id
+                if ($user->id) {
+                    $query->where('chofer_id', $user->id);
+                    Log::info('🔒 Filtrando préstamos de proveedor para chofer:', ['chofer_id' => $user->id]);
+                }
+            }
 
             // Filtro por proveedor
             if ($request->has('proveedor_id')) {
@@ -107,7 +125,14 @@ class PrestamoProveedorController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'proveedor', 'creador']),
+                'data' => $prestamo->load([
+                    'detalles.prestable',
+                    'proveedor',
+                    'creador',
+                    // ✅ NUEVO (2026-07-03): Cargar ubicacion con localidad
+                    'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                    'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                ]),
                 'message' => 'Préstamo registrado exitosamente',
             ], 201);
         } catch (\Exception $e) {
@@ -294,42 +319,64 @@ class PrestamoProveedorController extends Controller
      */
     public function imprimir(PrestamoProveedor $prestamo, Request $request)
     {
-        $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
-        $accion  = $request->input('accion', 'download'); // download | stream
+        try {
+            $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
+            $accion  = $request->input('accion', 'download'); // download | stream
 
-        // Cargar relaciones necesarias para la impresión
-        $prestamo->load(['detalles.prestable', 'detalles.devolucionDetalles', 'proveedor', 'compra', 'devoluciones.detalles']);
+            // Cargar relaciones necesarias para la impresión
+            $prestamo->load(['detalles.prestable', 'detalles.devolucionDetalles', 'proveedor', 'compra', 'devoluciones.detalles',
+                // ✅ NUEVO: Cargar ubicacion con localidad para impresión
+                'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+            ]);
 
-        // Resolver almacén asociado al préstamo desde el movimiento registrado
-        $movimiento = MovimientoPrestable::query()
-            ->where('referencia_tipo', 'PRESTAMO_PROVEEDOR')
-            ->where('referencia_id', $prestamo->id)
-            ->latest('id')
-            ->first();
+            // Resolver almacén asociado al préstamo desde el movimiento registrado
+            $movimiento = MovimientoPrestable::query()
+                ->where('referencia_tipo', 'PRESTAMO_PROVEEDOR')
+                ->where('referencia_id', $prestamo->id)
+                ->latest('id')
+                ->first();
 
-        $almacen = null;
+            $almacen = null;
 
-        if ($movimiento?->almacenes_prestables_id) {
-            $almacen = AlmacenPrestable::query()
-                ->select('id', 'nombre')
-                ->find($movimiento->almacenes_prestables_id);
+            if ($movimiento?->almacenes_prestables_id) {
+                $almacen = AlmacenPrestable::query()
+                    ->select('id', 'nombre')
+                    ->find($movimiento->almacenes_prestables_id);
+            }
+
+            // Atributo dinámico para usar en las vistas de impresión
+            $prestamo->setAttribute('almacen_impresion', $almacen);
+
+            // Monto cobrado por daños (acumulado de todas las devoluciones del préstamo)
+            $montoCobradoDanioTotal = (float) ($prestamo->devoluciones?->sum('monto_cobrado_daño_total') ?? 0);
+            $prestamo->setAttribute('monto_cobrado_danio_total_impresion', $montoCobradoDanioTotal);
+
+            // Generar PDF usando el tipo de documento "prestamo_proveedor"
+            $pdf = $this->impresionService->generarPDF('prestamo_proveedor', $prestamo, $formato);
+
+            $nombreArchivo = "prestamo_proveedor_{$prestamo->id}_{$formato}.pdf";
+
+            return $accion === 'stream'
+                ? $pdf->stream($nombreArchivo)
+                : $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            Log::error('❌ Error generando PDF de préstamo proveedor', [
+                'prestamo_id' => $prestamo->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Si es una llamada API, retornar JSON
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al generar PDF: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Si es web, retornar redirección
+            return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
         }
-
-        // Atributo dinámico para usar en las vistas de impresión
-        $prestamo->setAttribute('almacen_impresion', $almacen);
-
-        // Monto cobrado por daños (acumulado de todas las devoluciones del préstamo)
-        $montoCobradoDanioTotal = (float) ($prestamo->devoluciones?->sum('monto_cobrado_daño_total') ?? 0);
-        $prestamo->setAttribute('monto_cobrado_danio_total_impresion', $montoCobradoDanioTotal);
-
-        // Generar PDF usando el tipo de documento "prestamo_proveedor"
-        $pdf = $this->impresionService->generarPDF('prestamo_proveedor', $prestamo, $formato);
-
-        $nombreArchivo = "prestamo_proveedor_{$prestamo->id}_{$formato}.pdf";
-
-        return $accion === 'stream'
-            ? $pdf->stream($nombreArchivo)
-            : $pdf->download($nombreArchivo);
     }
 
     /**

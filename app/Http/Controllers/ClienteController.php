@@ -726,7 +726,9 @@ class ClienteController extends Controller
             'user'             => function ($query) {
                 $query->select('id', 'name', 'email', 'usernick', 'activo');
             },
-            'direcciones',
+            'direcciones' => function ($query) {
+                $query->with('localidad');
+            },
             'localidad',
             'categorias'       => function ($query) {
                 $query->select('categorias_cliente.id', 'categorias_cliente.clave', 'categorias_cliente.nombre', 'categorias_cliente.descripcion', 'categorias_cliente.activo');

@@ -83,9 +83,15 @@ class PrestamoEvento extends Model
         return $this->hasMany(DevolucionEvento::class, 'prestamo_evento_id');
     }
 
-    public function ubicacion(): HasMany
+    public function ubicaciones(): HasMany
     {
         return $this->hasMany(PrestamoUbicacion::class, 'prestamo_evento_id');
+    }
+
+    // ✅ NUEVO: Relación para obtener la PRIMERA ubicación (más usada en vistas)
+    public function ubicacion()
+    {
+        return $this->hasOne(PrestamoUbicacion::class, 'prestamo_evento_id')->latestOfMany();
     }
 
     public function creador(): BelongsTo

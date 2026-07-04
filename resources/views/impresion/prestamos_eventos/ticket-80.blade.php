@@ -48,7 +48,7 @@
 
         <!-- ESTADO DESTACADO -->
         <p style="text-align: center; padding: 3px; font-weight: bold; font-size: 12px; margin: 3px 0;">
-            {{ $estadoClass }}
+            {{ $documento->estado }}
         </p>
 
         <!-- SEPARADOR -->
@@ -106,9 +106,9 @@
         </table>
 
         <!-- UBICACIÓN DEL PRÉSTAMO -->
-        @if($documento->ubicacion && count($documento->ubicacion) > 0)
+        @if($documento->ubicacion)
             @php
-                $ubicacion = $documento->ubicacion->first();
+                $ubicacion = $documento->ubicacion;
             @endphp
             <div style="padding-left: 4px; margin: 2px 0; font-size: 12px; padding: 2px;">
                 @if($ubicacion->direccion)

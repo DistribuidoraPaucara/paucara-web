@@ -76,11 +76,11 @@ export default function ProductoTableRow({
                 : ''
             }`}>
             {/* Producto Info */}
-            <td className="px-4 py-4">
+            <td className="px-2 py-4">
                 <div className="text-sm font-bold text-gray-900 dark:text-white">
                     {productoInfo?.nombre || 'Producto no encontrado'}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5 text-left mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-left mt-1">
                     {productoInfo?.codigo_barras && productoInfo.codigo_barras !== productoInfo.sku && (
                         <div>Cod Barras: {productoInfo.codigo_barras}</div>
                     )}
@@ -103,9 +103,9 @@ export default function ProductoTableRow({
             </td>
 
             {/* SKU */}
-            <td className="px-4 py-4 whitespace-nowrap">
+            <td className="px-2 py-4">
                 {(productoInfo?.sku || productoInfo?.codigo) ? (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                    <span className="items-center px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold">
                         {productoInfo.sku || productoInfo.codigo}
                     </span>
                 ) : (
@@ -114,7 +114,7 @@ export default function ProductoTableRow({
             </td>
 
             {/* Cantidad */}
-            <td className="px-4 py-4 whitespace-nowrap">
+            <td className="px-2 py-4">
                 <div className="flex items-center gap-2">
                     <input
                         type="text"
@@ -146,13 +146,13 @@ export default function ProductoTableRow({
                         onBlur={() => {
                             setEditingField(null);
                         }}
-                        className="w-32 px-2.5 py-2 text-sm font-semibold border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+                        className="w-24 px-1 py-1 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed font-mono"
                     />
                     {!proformaConvertida && (() => {
                         const stockDisponible = (productoInfo as any)?.stock_disponible_calc ?? (productoInfo as any)?.stock_disponible ?? (productoInfo as any)?.stock ?? 0;
                         const stockTotal = (productoInfo as any)?.stock_total_calc ?? (productoInfo as any)?.stock_total ?? 0;
                         return (
-                            <span className={`inline-flex items-center px-2 py-1 rounded text-[11px] font-semibold whitespace-nowrap ${stockDisponible === 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200' :
+                            <span className={`items-center p-1 rounded font-semibold ${stockDisponible === 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200' :
                                 stockDisponible < 5 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200' :
                                     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200'
                                 }`}>
@@ -166,7 +166,7 @@ export default function ProductoTableRow({
             {/* Precio Unitario (Compra) */}
             {tipo === 'compra' && (
                 <>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4">
                         <input
                             type="text"
                             inputMode="decimal"
@@ -197,7 +197,7 @@ export default function ProductoTableRow({
                             onBlur={() => {
                                 setEditingField(null);
                             }}
-                            className={`w-28 px-2.5 py-2 text-sm font-semibold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed font-mono ${tieneDiferencia
+                            className={`w-28 px-2 py-2 text-sm font-semibold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed font-mono ${tieneDiferencia
                                 ? esAumento
                                     ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20'
                                     : 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20'
@@ -213,7 +213,7 @@ export default function ProductoTableRow({
                             </div>
                         )}
                         {detalle.es_fraccionado && detalle.conversiones && detalle.conversiones.length > 0 && (
-                            <div className="whitespace-nowrap">
+                            <div>
                                 {(() => {
                                     const unidadActual = detalle.unidad_venta_id || detalle.unidad_medida_id;
 
@@ -249,7 +249,7 @@ export default function ProductoTableRow({
                     </td>
 
                     {/* Lote */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4">
                         <input
                             type="text"
                             disabled={readOnly}
@@ -258,12 +258,12 @@ export default function ProductoTableRow({
                             onChange={(e) => {
                                 onUpdateDetail(index, 'lote', e.target.value);
                             }}
-                            className="w-28 px-2.5 py-2 text-sm font-semibold border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-28 px-2 py-2 text-sm font-semibold border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </td>
 
                     {/* Fecha Vencimiento */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4">
                         <input
                             type="date"
                             disabled={readOnly}
@@ -271,7 +271,7 @@ export default function ProductoTableRow({
                             onChange={(e) => {
                                 onUpdateDetail(index, 'fecha_vencimiento', e.target.value);
                             }}
-                            className="w-32 px-2.5 py-2 text-sm font-semibold border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-32 px-2 py-2 text-sm font-semibold border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </td>
                 </>
@@ -279,7 +279,7 @@ export default function ProductoTableRow({
 
             {/* Precio Venta + Tipo Precio */}
             {tipo === 'venta' && (
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-2 py-4">
                     <input
                         type="text"
                         inputMode="decimal"
@@ -300,24 +300,36 @@ export default function ProductoTableRow({
                             setEditingField(prev => prev && prev.index === index
                                 ? { ...prev, value: valor }
                                 : prev);
-                            if (valor === '' || /^\d+$/.test(valor)) {
-                                const num = valor === '' ? 0 : parseInt(valor, 10);
+                            // ✅ MEJORADO: Permitir decimales y validación más flexible
+                            if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                                const num = valor === '' ? 0 : parseFloat(valor);
                                 if (num >= 0) {
+                                    // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
+                                    // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                    if (onManualTipoPrecioChange) {
+                                        onManualTipoPrecioChange(detalle.producto_id);
+                                    }
                                     onUpdateDetail(index, 'precio_unitario', num);
                                 }
                             }
                         }}
                         onBlur={(e) => {
                             const valor = e.target.value;
-                            if (valor === '' || /^\d+$/.test(valor)) {
-                                const num = valor === '' ? 0 : parseInt(valor, 10);
+                            // ✅ MEJORADO: Permitir decimales y validación más flexible
+                            if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                                const num = valor === '' ? 0 : parseFloat(valor);
                                 if (num >= 0) {
+                                    // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
+                                    // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                    if (onManualTipoPrecioChange) {
+                                        onManualTipoPrecioChange(detalle.producto_id);
+                                    }
                                     onUpdateDetail(index, 'precio_unitario', num);
                                 }
                             }
                             setEditingField(null);
                         }}
-                        className="w-32 px-1.5 py-1 text-xs border border-gray-300 dark:border-zinc-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-32 px-1 py-1 text-xs border border-gray-300 dark:border-zinc-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <br />
 
@@ -342,9 +354,11 @@ export default function ProductoTableRow({
                         // 2. Si tipo_precio_id === null → mostrar "OTROS"
                         // 3. Si tiene tipo_precio_id → usarlo (del detalle del backend)
                         // 4. Fallback: tipo_precio_id_recomendado o default
+                        // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
+                        const productoId = detalle.producto_id;
                         const valorInicial =
-                            selectedTipoPrecio[index] !== undefined
-                                ? String(selectedTipoPrecio[index]) // Usuario seleccionó algo
+                            selectedTipoPrecio[productoId] !== undefined
+                                ? String(selectedTipoPrecio[productoId]) // Usuario seleccionó algo
                                 : detalle.tipo_precio_id === null
                                     ? 'otros' // Mostrar "OTROS" si es null
                                     : detalle.tipo_precio_id
@@ -365,12 +379,13 @@ export default function ProductoTableRow({
                                     // ✅ NUEVO: Manejar opción "OTROS"
                                     if (tipoPrecioIdSeleccionado === 'otros') {
                                         if (onManualTipoPrecioChange) {
-                                            onManualTipoPrecioChange(index);
+                                            // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                            onManualTipoPrecioChange(detalle.producto_id);
                                         }
 
                                         setSelectedTipoPrecio(prev => ({
                                             ...prev,
-                                            [index]: 'otros'
+                                            [productoId]: 'otros'
                                         }));
 
                                         // Limpiar tipo_precio pero mantener el precio actual
@@ -383,12 +398,13 @@ export default function ProductoTableRow({
 
                                     if (precioSeleccionado) {
                                         if (onManualTipoPrecioChange) {
-                                            onManualTipoPrecioChange(index);
+                                            // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                            onManualTipoPrecioChange(detalle.producto_id);
                                         }
 
                                         setSelectedTipoPrecio(prev => ({
                                             ...prev,
-                                            [index]: tipoPrecioIdSeleccionado
+                                            [productoId]: tipoPrecioIdSeleccionado
                                         }));
 
                                         onUpdateDetail(index, 'tipo_precio_id', precioSeleccionado.tipo_precio_id);
@@ -396,7 +412,7 @@ export default function ProductoTableRow({
                                         onUpdateDetail(index, 'precio_unitario', precioSeleccionado.precio || 0);
                                     }
                                 }}
-                                className="mt-1 px-2.5 py-1.5 min-w-max text-xs font-medium border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-1 px-1 py-1 text-xs border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {!valorInicial && <option value="">Seleccionar tipo de precio</option>}
                                 {preciosVenta.map((precio) => (
@@ -415,35 +431,35 @@ export default function ProductoTableRow({
             )}
 
             {/* Subtotal */}
-            <td className="px-4 py-4 whitespace-nowrap">
+            <td className="px-2 py-4">
                 <span className="text-sm font-bold text-gray-900 dark:text-white">
                     {formatCurrencyMinimalDecimals(detalle.subtotal)}
                 </span>
             </td>
 
             {/* Categoría */}
-            <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+            <td className="px-2 py-4">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.categoria === 'string' ? productoInfo.categoria : productoInfo?.categoria?.nombre || '-'}
                 </span>
             </td>
 
             {/* Unidad */}
-            <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+            <td className="px-2 py-4">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                     {detalle.unidad_medida_nombre || productoInfo?.unidad_medida?.nombre || '-'}
                 </span>
             </td>
 
             {/* Marca */}
-            <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+            <td className="px-2 py-4">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.marca === 'string' ? productoInfo.marca : productoInfo?.marca?.nombre || '-'}
                 </span>
             </td>
 
             {/* Acciones */}
-            <td className="px-4 py-4 whitespace-nowrap">
+            <td className="px-2 py-4">
                 <div className="flex items-center justify-center gap-1">
                     {/* Botón expandir/contraer combo */}
                     {detalle.producto && (detalle.producto as any).es_combo && (

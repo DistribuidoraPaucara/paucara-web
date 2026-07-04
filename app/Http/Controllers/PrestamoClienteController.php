@@ -10,6 +10,7 @@ use App\Services\Prestamos\ValidacionPrestamosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PrestableStock;
 
 class PrestamoClienteController extends Controller
@@ -39,7 +40,13 @@ class PrestamoClienteController extends Controller
                 'almacen',
                 'chofer',
                 'vehiculo',
-                'ubicacion',
+                // ✅ MEJORADO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
+                'ubicacion' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
+                'ubicaciones' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
                 'creador',
                 // ✅ MEJORADO: Cargar devoluciones con sus detalles y prestables
                 'devoluciones' => function ($query) {
@@ -55,12 +62,22 @@ class PrestamoClienteController extends Controller
                 }
             ]);
 
-            // Filtro por cliente
+            // ✅ NUEVO (2026-07-03): Filtro por rol del usuario autenticado
+            $user = Auth::user();
+            if ($user && !$user->hasRole(['admin', 'Admin', 'ADMIN'])) {
+                // Si no es admin y tiene chofer_id, filtrar por su propio chofer_id
+                if ($user->id) {
+                    $query->where('chofer_id', $user->id);
+                    Log::info('🔒 Filtrando préstamos para chofer:', ['chofer_id' => $user->id]);
+                }
+            }
+
+            // Filtro por cliente (si es admin o tiene permiso)
             if ($request->has('cliente_id')) {
                 $query->where('cliente_id', $request->integer('cliente_id'));
             }
 
-            // Filtro por chofer
+            // Filtro por chofer (solo si es admin o busca específicamente)
             if ($request->has('chofer_id')) {
                 $query->where('chofer_id', $request->integer('chofer_id'));
             }
@@ -264,7 +281,12 @@ class PrestamoClienteController extends Controller
                 'chofer',
                 'vehiculo',
                 'venta',
-                'ubicacion',
+                'ubicacion' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
+                'ubicaciones' => function ($query) {
+                    $query->with(['direccionCliente.localidad', 'localidad']);
+                },
                 'creador',
                 'devoluciones' => function ($query) {
                     $query->with([
@@ -275,6 +297,13 @@ class PrestamoClienteController extends Controller
                     ]);
                 }
             ]);
+
+            Log::info('📍 [UBICACIONES CARGADAS]', [
+                'prestamo_id' => $prestamo->id,
+                'ubicacion_singular' => $prestamo->ubicacion,
+                'ubicaciones_array' => $prestamo->ubicaciones,
+            ]);
+
             $resumen = $this->prestamoService->obtenerResumenPrestamo($prestamo->id);
 
             return response()->json([
@@ -509,27 +538,48 @@ class PrestamoClienteController extends Controller
      */
     public function imprimir(PrestamoCliente $prestamo, Request $request)
     {
-        $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
-        $accion  = $request->input('accion', 'download'); // download | stream
+        try {
+            $formato = $request->input('formato', 'A4');      // A4 | TICKET_80
+            $accion  = $request->input('accion', 'download'); // download | stream
 
-        // Cargar relaciones necesarias para la impresión
-        $prestamo->load([
-            'detalles.prestable',
-            'detalles.devoluciones.detallePrestamoCliente.prestable',
-            'cliente',
-            'chofer',
-            'venta',
-            'devoluciones'
-        ]);
+            // Cargar relaciones necesarias para la impresión
+            $prestamo->load([
+                'detalles.prestable',
+                'detalles.devoluciones.detallePrestamoCliente.prestable',
+                'cliente',
+                'chofer',
+                'venta',
+                'devoluciones',
+                // ✅ NUEVO: Cargar ubicacion con localidad para impresión
+                'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+                'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+            ]);
 
-        // Generar PDF usando el tipo de documento "prestamo_cliente"
-        $pdf = $this->impresionService->generarPDF('prestamo_cliente', $prestamo, $formato);
+            // Generar PDF usando el tipo de documento "prestamo_cliente"
+            $pdf = $this->impresionService->generarPDF('prestamo_cliente', $prestamo, $formato);
 
-        $nombreArchivo = "prestamo_cliente_{$prestamo->id}_{$formato}.pdf";
+            $nombreArchivo = "prestamo_cliente_{$prestamo->id}_{$formato}.pdf";
 
-        return $accion === 'stream'
-            ? $pdf->stream($nombreArchivo)
-            : $pdf->download($nombreArchivo);
+            return $accion === 'stream'
+                ? $pdf->stream($nombreArchivo)
+                : $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            Log::error('❌ Error generando PDF de préstamo cliente', [
+                'prestamo_id' => $prestamo->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Si es una llamada API, retornar JSON
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al generar PDF: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Si es web, retornar redirección
+            return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -39,7 +39,7 @@ $totalExcedido += $devolucion->monto_excedido_garantia ?? 0;
     <div style="border-top: 2px solid #000; margin: 3px 0;"></div>
     <!-- ESTADO DESTACADO -->
     <p style="text-align: center; padding: 3px; font-weight: bold; font-size: 12px; margin: 3px 0;">
-        {{ $estadoClass }}
+        {{ $documento->estado }}
     </p>
     <!-- FECHAS Y GARANTÍA -->
     <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 3px 0; line-height: 1.3;">

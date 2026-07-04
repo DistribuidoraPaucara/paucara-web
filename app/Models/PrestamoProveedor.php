@@ -78,4 +78,16 @@ class PrestamoProveedor extends Model
     {
         return $this->belongsTo(User::class, 'anulada_por');
     }
+
+    // ✅ Relación con ubicaciones del préstamo
+    public function ubicaciones(): HasMany
+    {
+        return $this->hasMany(PrestamoUbicacion::class, 'prestamo_proveedor_id');
+    }
+
+    // ✅ NUEVO: Relación para obtener la PRIMERA ubicación (más usada en vistas)
+    public function ubicacion()
+    {
+        return $this->hasOne(PrestamoUbicacion::class, 'prestamo_proveedor_id')->latestOfMany();
+    }
 }

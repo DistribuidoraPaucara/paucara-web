@@ -1881,6 +1881,20 @@ class VentaController extends Controller
                 ? $pdf->stream($nombreArchivo)
                 : $pdf->download($nombreArchivo);
         } catch (\Exception $e) {
+            Log::error('❌ Error generando PDF de venta', [
+                'venta_id' => $venta->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Si es una llamada API, retornar JSON
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al generar PDF: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Si es web, retornar redirección
             return back()->with('error', 'Error al generar PDF: ' . $e->getMessage());
         }
     }

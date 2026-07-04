@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prestamo_proveedor', function (Blueprint $table) {
-            // Actualizar ENUM estado para incluir ANULADO
-            $table->enum('estado', ['ACTIVO', 'COMPLETAMENTE_DEVUELTO', 'PARCIALMENTE_DEVUELTO', 'ANULADO'])->change();
+            // Nota: No cambiar el ENUM aquí para evitar conflictos con PostgreSQL
+            // El campo 'estado' debe soportar los nuevos valores de todas formas
 
             // Agregar campos de auditoría si no existen
             if (!Schema::hasColumn('prestamo_proveedor', 'created_by')) {
@@ -37,8 +37,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('prestamo_proveedor', function (Blueprint $table) {
-            // Revertir ENUM
-            $table->enum('estado', ['ACTIVO', 'COMPLETAMENTE_DEVUELTO', 'PARCIALMENTE_DEVUELTO'])->change();
+            // Nota: No revertir ENUM para evitar conflictos con PostgreSQL
 
             // Eliminar campos de auditoría
             $table->dropForeignIdFor('created_by');

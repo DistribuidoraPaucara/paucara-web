@@ -74,7 +74,7 @@ export default function VentaPreviewModal({
     isEditing,
     comboItemsMap
 }: VentaPreviewModalProps) {
-    console.log('🔍 [VentaPreviewModal] Datos recibidos:', {
+    /* console.log('🔍 [VentaPreviewModal] Datos recibidos:', {
         data,
         detallesWithProducts,
         cliente,
@@ -83,7 +83,7 @@ export default function VentaPreviewModal({
         processing,
         isEditing,
         comboItemsMap
-    });
+    }); */
     return (
         <Transition appear show={isOpen} as={Fragment}>
             <Dialog as="div" className="relative z-50" onClose={onClose}>

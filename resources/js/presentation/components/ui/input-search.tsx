@@ -128,8 +128,8 @@ export default function InputSearch({
 
     // Actualizar valor seleccionado cuando cambia el value (solo desde el exterior)
     useEffect(() => {
-        console.log('🔄 InputSearch useEffect - value:', value, 'displayValue:', displayValue, 'isUserTyping:', isUserTypingRef.current);
-        console.log('📊 selectedOption actual:', selectedOption);
+        /* console.log('🔄 InputSearch useEffect - value:', value, 'displayValue:', displayValue, 'isUserTyping:', isUserTypingRef.current);
+        console.log('📊 selectedOption actual:', selectedOption); */
 
         // Si hay displayValue y el query actual no coincide, forzar actualización
         if (displayValue && query !== displayValue && !isUserTypingRef.current) {

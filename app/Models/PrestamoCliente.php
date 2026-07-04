@@ -77,8 +77,14 @@ class PrestamoCliente extends Model
         return $this->hasMany(DevolucionCliente::class, 'prestamo_cliente_id');
     }
 
-    public function ubicacion(): HasMany
+    public function ubicaciones(): HasMany
     {
         return $this->hasMany(PrestamoUbicacion::class, 'prestamo_cliente_id');
+    }
+
+    // ✅ NUEVO: Relación para obtener la PRIMERA ubicación (más usada en vistas)
+    public function ubicacion()
+    {
+        return $this->hasOne(PrestamoUbicacion::class, 'prestamo_cliente_id')->latestOfMany();
     }
 }

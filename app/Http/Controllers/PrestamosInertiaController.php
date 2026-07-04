@@ -370,6 +370,11 @@ class PrestamosInertiaController extends Controller
                     'creador', // Usuario que creó la devolución
                     'anulador', // Usuario que anuló la devolución
                 ]),
+            // ✅ NUEVO (2026-07-03): Cargar ubicaciones con relaciones
+            'ubicacion' => fn($q) => $q
+                ->with(['direccionCliente.localidad', 'localidad']),
+            'ubicaciones' => fn($q) => $q
+                ->with(['direccionCliente.localidad', 'localidad']),
         ]);
 
         return Inertia::render('prestamos/eventos/show', [

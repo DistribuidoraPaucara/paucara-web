@@ -1,38 +1,31 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useCajaWarning } from '@/application/hooks/use-caja-warning';
-import { AlertSinCaja } from '@/presentation/components/cajas/alert-sin-caja';
+import AppLayout from '@/layouts/app-layout';
 import VentaPreviewModal from '@/presentation/components/VentaPreviewModal';
+import { AlertSinCaja } from '@/presentation/components/cajas/alert-sin-caja';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Importar componentes y hooks adicionales
-import InputSearch from '@/presentation/components/ui/input-search';
-import SearchSelect, { SelectOption } from '@/presentation/components/ui/search-select';
-import { SearchableSelect } from '@/presentation/components/ui/searchable-select';
 import { useClienteSearch } from '@/infrastructure/hooks/use-api-search';
-import ModalCrearCliente from '@/presentation/components/ui/modal-crear-cliente';
 import ProductosTable, { DetalleProducto } from '@/presentation/components/ProductosTable';
 import EntregaSearchSelector from '@/presentation/components/entregas/EntregaSearchSelector';
+import InputSearch from '@/presentation/components/ui/input-search';
+import ModalCrearCliente from '@/presentation/components/ui/modal-crear-cliente';
+import SearchSelect, { SelectOption } from '@/presentation/components/ui/search-select';
 
 // Importar servicios adicionales
-import { NotificationService } from '@/infrastructure/services/notification.service';
 import { usePrecioRangoCarrito } from '@/application/hooks/use-precio-rango-carrito';
+import { NotificationService } from '@/infrastructure/services/notification.service';
 
 // Importar tipos del domain y servicio
-import type {
-    Producto,
-    Moneda,
-    EstadoDocumento,
-    DetalleVentaFormData,
-    Venta
-} from '@/domain/entities/ventas';
-import type { TipoPago } from '@/domain/entities/tipos-pago';
-import type { TipoDocumento } from '@/domain/entities/tipos-documento';
 import type { Cliente } from '@/domain/entities/clientes';
+import type { TipoDocumento } from '@/domain/entities/tipos-documento';
+import type { TipoPago } from '@/domain/entities/tipos-pago';
+import type { DetalleVentaFormData, EstadoDocumento, Moneda, Producto, Venta } from '@/domain/entities/ventas';
 
 import ventasService from '@/infrastructure/services/ventas.service';
-import { formatCurrencyWith2Decimals, formatCurrencyMinimalDecimals } from '@/lib/utils';
+import { formatCurrencyMinimalDecimals } from '@/lib/utils';
 
 interface TipoPrecio {
     id: number;
@@ -61,33 +54,29 @@ interface PageProps extends InertiaPageProps {
 }
 
 export default function VentaForm() {
-    const { clientes, productos, monedas, estados_documento, tipos_pago, tipos_documento, tipos_precio, almacen_id_empresa, es_farmacia, logistica_envios, auth, venta } = usePage<PageProps>().props;
+    const {
+        clientes,
+        productos,
+        monedas,
+        estados_documento,
+        tipos_pago,
+        tipos_documento,
+        tipos_precio,
+        almacen_id_empresa,
+        es_farmacia,
+        logistica_envios,
+        auth,
+        venta,
+    } = usePage<PageProps>().props;
     const isEditing = Boolean(venta);
     const isFarmacia = Boolean(es_farmacia);
     const { shouldShowBanner } = useCajaWarning();
-
-    // ✅ DEBUG: Log INICIAL de valores desde Inertia
-    console.log('🔥 [VentaForm] VALORES INICIALES DESDE INERTIA:', {
-        es_farmacia,
-        logistica_envios,
-        tipo_logistica_envios: typeof logistica_envios,
-        es_booleano: logistica_envios === true || logistica_envios === false,
-    });
 
     // ✅ DEBUG: Detectar cambios en es_farmacia y logistica_envios
     useEffect(() => {
         // Si cambió el valor, recarga la página para obtener datos frescos
         console.warn('⚠️ Si cambiaste es_farmacia o logistica_envios en Empresa, necesitas refrescar los datos');
     }, [es_farmacia, logistica_envios]);
-
-    // ✅ NUEVO: Función para refrescar los datos desde el servidor
-    const refrescarDatos = () => {
-        router.visit(window.location.href, {
-            method: 'get',
-            replace: true,
-            preserveState: false // No preserva el estado, fuerza cargar props frescos
-        });
-    };
 
     // Validaciones defensivas para evitar errores usando useMemo
     const clientesSeguro = useMemo(() => clientes || [], [clientes]);
@@ -99,33 +88,37 @@ export default function VentaForm() {
 
     // ✅ Obtener el ID del documento Recibo (REC) por defecto
     const tipoDocumentoReciboId = useMemo(() => {
-        const recibo = tiposDocumentoSeguro.find(doc => doc.codigo === 'REC' || doc.nombre === 'Recibo');
+        const recibo = tiposDocumentoSeguro.find((doc) => doc.codigo === 'REC' || doc.nombre === 'Recibo');
         return recibo?.id || 3; // Fallback a 3 si no se encuentra
     }, [tiposDocumentoSeguro]);
 
     // ✅ Obtener el ID del estado APROBADO por defecto
     const estadoDocumentoAprobadoId = useMemo(() => {
-        const aprobado = estadosSeguro.find(estado => estado.codigo === 'APROBADO');
-        return aprobado?.id || (estadosSeguro[0]?.id || 0); // Fallback al primer estado
+        const aprobado = estadosSeguro.find((estado) => estado.codigo === 'APROBADO');
+        return aprobado?.id || estadosSeguro[0]?.id || 0; // Fallback al primer estado
     }, [estadosSeguro]);
 
     // Mapeo de iconos para tipos de pago
     const getIconoEmoji = (icono?: string): string => {
-        return {
-            'Banknote': '💵',
-            'Send': '📤',
-            'CreditCard': '💳',
-            'DollarSign': '💰',
-        }[icono || ''] || '💰';
+        return (
+            {
+                Banknote: '💵',
+                Send: '📤',
+                CreditCard: '💳',
+                DollarSign: '💰',
+            }[icono || ''] || '💰'
+        );
     };
 
     // Opciones para SearchSelect
-    const tiposPagoOptions: SelectOption[] = useMemo(() =>
-        tiposPagoSeguro.map(tipo => ({
-            value: tipo.id,
-            label: `${getIconoEmoji(tipo.icono)} ${tipo.nombre}`,
-            description: tipo.codigo
-        })), [tiposPagoSeguro]
+    const tiposPagoOptions: SelectOption[] = useMemo(
+        () =>
+            tiposPagoSeguro.map((tipo) => ({
+                value: tipo.id,
+                label: `${getIconoEmoji(tipo.icono)} ${tipo.nombre}`,
+                description: tipo.codigo,
+            })),
+        [tiposPagoSeguro],
     );
 
     const [detallesWithProducts, setDetallesWithProducts] = useState<DetalleProducto[]>([]);
@@ -133,13 +126,15 @@ export default function VentaForm() {
     const [stockValido, setStockValido] = useState(true);
 
     // ✅ NUEVO: Estados para direcciones del cliente
-    const [direccionesDisponibles, setDireccionesDisponibles] = useState<Array<{
-        id: number;
-        direccion: string;
-        localidad?: string;
-        es_principal?: boolean;
-        activa?: boolean;
-    }>>([]);
+    const [direccionesDisponibles, setDireccionesDisponibles] = useState<
+        Array<{
+            id: number;
+            direccion: string;
+            localidad?: string;
+            es_principal?: boolean;
+            activa?: boolean;
+        }>
+    >([]);
     const [cargandoDirecciones, setCargandoDirecciones] = useState(false);
 
     // ✅ NUEVO: Estados para preventistas
@@ -180,9 +175,7 @@ export default function VentaForm() {
 
     // ✅ NUEVO: Obtener ID del tipo de precio LICORERIA desde props
     const tipoPrecioLicoreriId = useMemo(() => {
-        const licoreria = tipos_precio?.find(tp =>
-            tp.codigo === 'LICORERIA' || tp.nombre?.toUpperCase() === 'LICORERIA'
-        );
+        const licoreria = tipos_precio?.find((tp) => tp.codigo === 'LICORERIA' || tp.nombre?.toUpperCase() === 'LICORERIA');
         return licoreria?.id || null;
     }, [tipos_precio]);
 
@@ -285,9 +278,8 @@ export default function VentaForm() {
         // ✅ NUEVO: Preventista (User con rol de preventista)
         preventista_id: (venta?.preventista_id ? Number(venta.preventista_id) : null) as number | null,
         // ✅ NUEVO: Entrega (para asignar venta a una entrega existente)
-        entrega_id: (venta?.entrega_id ? Number(venta.entrega_id) : null) as number | null
+        entrega_id: (venta?.entrega_id ? Number(venta.entrega_id) : null) as number | null,
     });
-
 
     // ✅ NUEVO (2026-04-21): Estado para múltiples pagos por venta
     interface Pago {
@@ -300,7 +292,7 @@ export default function VentaForm() {
 
     // ✅ NUEVO (2026-05-02): Estados para desglose de pago (Efectivo + Transferencia/QR)
     const [montoEfectivo, setMontoEfectivo] = useState<number | ''>('');
-    const [montoTransferencia, setMontoTransferencia] = useState<number | ''> ('');
+    const [montoTransferencia, setMontoTransferencia] = useState<number | ''>('');
 
     // ✅ NUEVO (2026-05-03): Auto-seleccionar tipo de pago y actualizar monto_pagado_inicial basado en montos de pago
     useEffect(() => {
@@ -332,9 +324,14 @@ export default function VentaForm() {
                 efectivo,
                 transferencia,
                 tipo_pago_id: tipoPagoIdAutomatico,
-                tipo_pago_nombre: tipoPagoIdAutomatico === 1 ? 'EFECTIVO' :
-                                  tipoPagoIdAutomatico === 2 ? 'TRANSFERENCIA/QR' :
-                                  tipoPagoIdAutomatico === 4 ? 'MIXTO' : 'OTRO'
+                tipo_pago_nombre:
+                    tipoPagoIdAutomatico === 1
+                        ? 'EFECTIVO'
+                        : tipoPagoIdAutomatico === 2
+                          ? 'TRANSFERENCIA/QR'
+                          : tipoPagoIdAutomatico === 4
+                            ? 'MIXTO'
+                            : 'OTRO',
             });
         }
 
@@ -346,7 +343,7 @@ export default function VentaForm() {
                 efectivo,
                 transferencia,
                 total_pagado: totalPagado,
-                cambio: totalPagado - data.total
+                cambio: totalPagado - data.total,
             });
         } else if (totalPagado === 0 && data.monto_pagado_inicial > 0) {
             // Si ambos inputs se vacían, resetear monto_pagado_inicial a 0
@@ -356,13 +353,7 @@ export default function VentaForm() {
         }
     }, [isFarmacia, montoEfectivo, montoTransferencia, data.monto_pagado_inicial]);
 
-    useEffect(() => {
-        console.log('🚚 [VentaForm] requiere_envio cambió:', {
-            requiere_envio: data.requiere_envio,
-            direccion_cliente_id: data.direccion_cliente_id,
-        });
-    }, [data.requiere_envio, data.direccion_cliente_id]);
-
+    useEffect(() => {}, [data.requiere_envio, data.direccion_cliente_id]);
 
     // ✅ NUEVO: Guardar automáticamente en localStorage con debounce
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -382,10 +373,10 @@ export default function VentaForm() {
                     clienteValue,
                     clienteDisplay,
                     clienteSeleccionado,
-                    manuallySelectedTipoPrecio
+                    manuallySelectedTipoPrecio,
                 };
                 localStorage.setItem('venta-create-draft', JSON.stringify(datosAGuardar));
-                console.log('✅ Venta guardada en localStorage');
+                // console.log('✅ Venta guardada en localStorage');
             } catch (error) {
                 console.error('❌ Error guardando venta en localStorage:', error);
             }
@@ -444,15 +435,17 @@ export default function VentaForm() {
     // Inicializar detalles con productos y combo items map
     useEffect(() => {
         if (venta?.detalles) {
-            setDetallesWithProducts(venta.detalles.map((d) => ({
-                id: d.id,
-                producto_id: d.producto_id,
-                cantidad: d.cantidad,
-                precio_unitario: d.precio_unitario,
-                descuento: d.descuento || 0,
-                subtotal: d.subtotal,
-                producto: d.producto
-            })));
+            setDetallesWithProducts(
+                venta.detalles.map((d) => ({
+                    id: d.id,
+                    producto_id: d.producto_id,
+                    cantidad: d.cantidad,
+                    precio_unitario: d.precio_unitario,
+                    descuento: d.descuento || 0,
+                    subtotal: d.subtotal,
+                    producto: d.producto,
+                })),
+            );
 
             // ✅ NUEVO: Inicializar comboItemsMap desde combo_items_seleccionados guardados
             const nuevoComboMap: Record<number, any[]> = {};
@@ -463,14 +456,14 @@ export default function VentaForm() {
                         id: item.combo_item_id,
                         producto_id: item.producto_id,
                         cantidad: item.cantidad,
-                        incluido: item.incluido !== false
+                        incluido: item.incluido !== false,
                     }));
                     nuevoComboMap[index] = comboItemsDelDB;
 
-                    console.log(`📦 [Inicializar venta] Combo desde DB (index ${index}):`, {
+                    /* console.log(`📦 [Inicializar venta] Combo desde DB (index ${index}):`, {
                         producto_id: d.producto_id,
                         items: comboItemsDelDB
-                    });
+                    }); */
                 }
             });
 
@@ -505,20 +498,43 @@ export default function VentaForm() {
                 try {
                     const response = await fetch(`/api/clientes/${data.cliente_id}`, {
                         headers: {
-                            'Accept': 'application/json',
+                            Accept: 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
-                        }
+                        },
                     });
                     if (response.ok) {
                         const result = await response.json();
                         if (result.success && result.data?.direcciones) {
                             const direccionesActivas = result.data.direcciones.filter((d: any) => d.activa !== false);
+                            console.log('📍 [DIRECCIONES CARGADAS] Estructura completa:', direccionesActivas);
+                            console.log('📍 [DIRECCIONES] Primera dirección keys:', Object.keys(direccionesActivas[0] || {}));
+                            direccionesActivas.forEach((dir: any, idx: number) => {
+                                console.log(`📍 Dirección ${idx + 1}:`, {
+                                    id: dir.id,
+                                    direccion: dir.direccion,
+                                    localidad: dir.localidad,
+                                    localidad_nombre: typeof dir.localidad === 'object' ? dir.localidad?.nombre : dir.localidad,
+                                    observaciones: dir.observaciones,
+                                    es_principal: dir.es_principal,
+                                    activa: dir.activa,
+                                    keys: Object.keys(dir),
+                                });
+                            });
                             setDireccionesDisponibles(direccionesActivas);
-                            // ✅ MEJORADO (2026-03-03): Si solo hay una dirección activa, seleccionarla automáticamente
-                            // Esto funciona siempre, independientemente de requiere_envio
-                            if (direccionesActivas.length === 1 && !data.direccion_cliente_id) {
-                                const unica = direccionesActivas[0];
-                                setData('direccion_cliente_id', unica.id);
+
+                            // ✅ MEJORADO: Auto-seleccionar dirección automáticamente
+                            if (!data.direccion_cliente_id && direccionesActivas.length > 0) {
+                                // Prioridad 1: Seleccionar la dirección principal
+                                const direccionPrincipal = direccionesActivas.find((d: any) => d.es_principal);
+                                if (direccionPrincipal) {
+                                    console.log('✅ Auto-seleccionando dirección principal:', direccionPrincipal);
+                                    setData('direccion_cliente_id', direccionPrincipal.id);
+                                } else if (direccionesActivas.length === 1) {
+                                    // Prioridad 2: Si solo hay una, seleccionarla
+                                    const unica = direccionesActivas[0];
+                                    console.log('✅ Auto-seleccionando única dirección:', unica);
+                                    setData('direccion_cliente_id', unica.id);
+                                }
                             }
                         } else {
                             setDireccionesDisponibles([]);
@@ -545,9 +561,9 @@ export default function VentaForm() {
                 try {
                     const response = await fetch(`/api/clientes/${data.cliente_id}`, {
                         headers: {
-                            'Accept': 'application/json',
+                            Accept: 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
-                        }
+                        },
                     });
                     if (response.ok) {
                         const result = await response.json();
@@ -565,7 +581,7 @@ export default function VentaForm() {
 
     // ✅ NUEVO: Buscar y seleccionar automáticamente cliente GENERAL al cargar el componente
     useEffect(() => {
-        console.group('🔍 [useEffect] Buscando cliente GENERAL automáticamente');
+        // console.group('🔍 [useEffect] Buscando cliente GENERAL automáticamente');
 
         // Solo al cargar por primera vez y sin edición
         if (isEditing) {
@@ -586,14 +602,14 @@ export default function VentaForm() {
             return;
         }
 
-        console.log('📋 Clientes disponibles:', {
+        /* console.log('📋 Clientes disponibles:', {
             cantidad: clientesSeguro.length,
             clientes: clientesSeguro.map((c: Cliente) => ({
                 id: c.id,
                 nombre: c.nombre,
                 codigo_cliente: c.codigo_cliente
             }))
-        });
+        }); */
 
         // Buscar cliente con código_cliente === 'GENERAL'
         const clienteGeneral = clientesSeguro.find((c: Cliente) => c.codigo_cliente === 'GENERAL');
@@ -605,7 +621,10 @@ export default function VentaForm() {
             setClienteSeleccionado(clienteGeneral);
         } else {
             console.log('❌ Cliente GENERAL NO ENCONTRADO en la lista de clientes');
-            console.log('   Códigos disponibles:', clientesSeguro.map((c: Cliente) => c.codigo_cliente));
+            console.log(
+                '   Códigos disponibles:',
+                clientesSeguro.map((c: Cliente) => c.codigo_cliente),
+            );
         }
 
         console.groupEnd();
@@ -620,11 +639,11 @@ export default function VentaForm() {
         if (tipoPagoSeleccionado?.codigo === 'CREDITO') {
             // Si es CREDITO, cambiar política de pago a CREDITO
             setData('politica_pago', 'CREDITO');
-            console.log(`💳 Tipo de pago CREDITO seleccionado - Política de pago actualizada a CREDITO`);
+            // console.log(`💳 Tipo de pago CREDITO seleccionado - Política de pago actualizada a CREDITO`);
         } else if (data.politica_pago === 'CREDITO') {
             // Si no es CREDITO pero la política era CREDITO, revertir a ANTICIPADO_100
             setData('politica_pago', 'ANTICIPADO_100');
-            console.log(`💵 Tipo de pago no-CREDITO seleccionado - Política de pago revertida a ANTICIPADO_100`);
+            // console.log(`💵 Tipo de pago no-CREDITO seleccionado - Política de pago revertida a ANTICIPADO_100`);
         }
     }, [data.tipo_pago_id]);
 
@@ -648,14 +667,14 @@ export default function VentaForm() {
             cliente.nombre,
             cliente.nit ? `NIT/CI: ${cliente.nit}` : '',
             cliente.telefono ? `Tel: ${cliente.telefono}` : '',
-            cliente.email ? `Email: ${cliente.email}` : ''
-        ].filter(Boolean).join(' • ');
+            cliente.email ? `Email: ${cliente.email}` : '',
+        ]
+            .filter(Boolean)
+            .join(' • ');
 
         // Mostrar notificación detallada del cliente creado y seleccionado
         try {
-            NotificationService.success(
-                `✅ Cliente creado y seleccionado: ${descripcionCliente}`
-            );
+            NotificationService.success(`✅ Cliente creado y seleccionado: ${descripcionCliente}`);
         } catch (error) {
             console.error('Error en NotificationService:', error);
             // Fallback: mostrar mensaje básico
@@ -666,16 +685,15 @@ export default function VentaForm() {
     };
 
     const addProductToDetail = (producto: Producto) => {
-
         // Verificar si el producto ya está en los detalles
-        const existingDetail = detallesWithProducts.find(d => d.producto_id === producto.id);
+        const existingDetail = detallesWithProducts.find((d) => d.producto_id === producto.id);
 
         if (existingDetail) {
             // ✅ NUEVO: En lugar de rechazar, incrementar la cantidad
-            const updatedDetalles = detallesWithProducts.map(d => {
+            const updatedDetalles = detallesWithProducts.map((d) => {
                 if (d.producto_id === producto.id) {
                     const newCantidad = d.cantidad + 1;
-                    const newSubtotal = (newCantidad * d.precio_unitario) - d.descuento;
+                    const newSubtotal = newCantidad * d.precio_unitario - d.descuento;
                     return {
                         ...d,
                         cantidad: newCantidad,
@@ -683,7 +701,7 @@ export default function VentaForm() {
                         // ✅ NUEVO: Preservar información de conversiones y unidad_venta_id
                         es_fraccionado: d.es_fraccionado || (producto as any).es_fraccionado || false,
                         conversiones: d.conversiones || (producto as any).conversiones || [],
-                        unidad_venta_id: d.unidad_venta_id // ✅ PRESERVADO: Mantener la unidad_venta_id actual
+                        unidad_venta_id: d.unidad_venta_id, // ✅ PRESERVADO: Mantener la unidad_venta_id actual
                     };
                 }
                 return d;
@@ -694,13 +712,16 @@ export default function VentaForm() {
             // Recalcular precios según rangos con la nueva cantidad
             // ✅ COMENTADO: Deshabilitado temporalmente para evitar cambios automáticos de precio
             // ✅ NO calcular si el cliente es GENERAL (no se deben aplicar rangos)
+            // ✅ NUEVO (2026-07-03): EXCLUIR productos con tipo_precio_id === null (OTROS)
             if (clienteSeleccionado?.codigo_cliente !== 'GENERAL') {
                 precioRango.calcularCarritoDebounced(
-                    updatedDetalles.map(d => ({
-                        producto_id: d.producto_id,
-                        cantidad: d.cantidad,
-                        tipo_precio_id: d.tipo_precio_id // ✅ NUEVO: Respetar tipo_precio_id seleccionado
-                    }))
+                    updatedDetalles
+                        .filter((d) => d.tipo_precio_id !== null) // ✅ EXCLUIR productos con OTROS
+                        .map((d) => ({
+                            producto_id: d.producto_id,
+                            cantidad: d.cantidad,
+                            tipo_precio_id: d.tipo_precio_id,
+                        })),
                 );
             }
 
@@ -712,24 +733,10 @@ export default function VentaForm() {
             return;
         }
 
-        // ✅ DEBUG: Loguear información del producto
-        console.log('📦 [addProductToDetail] Producto que se agrega:', {
-            id: producto.id,
-            nombre: producto.nombre,
-            es_fraccionado: (producto as any).es_fraccionado,
-            unidad_medida_id: (producto as any).unidad_medida_id,
-            unidad_medida_nombre: (producto as any).unidad_medida_nombre,
-            conversiones: (producto as any).conversiones,
-            producto_keys: Object.keys(producto),
-            producto_completo: producto
-        });
-
         // ✅ NUEVO: Determinar unidad_venta_id inicial - usar primera conversión si es fraccionado
         const conversiones = (producto as any).conversiones || [];
         const esProductoFraccionado = (producto as any).es_fraccionado && conversiones.length > 0;
-        const unidadVentaInicial = esProductoFraccionado
-            ? conversiones[0].unidad_destino_id
-            : (producto as any).unidad_medida_id;
+        const unidadVentaInicial = esProductoFraccionado ? conversiones[0].unidad_destino_id : (producto as any).unidad_medida_id;
 
         // ✅ MODIFICADO (2026-02-17): Usar tipo_precio_id que viene del backend PRIMERO
         // El backend devuelve tipo_precio_id_recomendado basado en el código VENTA
@@ -738,15 +745,14 @@ export default function VentaForm() {
 
         // ✅ NUEVO (2026-02-17): Obtener el precio específico del tipo_precio_recomendado ANTES de usarlo
         // En lugar de usar precio_venta genérico, buscar el precio específico del tipo_precio_id
-        const precioDelTipoPrecio = (producto as any).precios?.find(
-            (p: any) => p.tipo_precio_id === tipoPrecioIdRecomendado
-        )?.precio;
+        const precioDelTipoPrecio = (producto as any).precios?.find((p: any) => p.tipo_precio_id === tipoPrecioIdRecomendado)?.precio;
 
         // ✅ DEBUG: Loguear los IDs de precios disponibles para verificar coincidencias
-        const preciosConIds = (producto as any).precios?.map((p: any) => ({
-            nombre: p.nombre,
-            tipo_precio_id: p.tipo_precio_id
-        })) || [];
+        const preciosConIds =
+            (producto as any).precios?.map((p: any) => ({
+                nombre: p.nombre,
+                tipo_precio_id: p.tipo_precio_id,
+            })) || [];
         // ✅ NUEVO (2026-02-17): Calcular precio según la unidad de venta inicial
         // Usar el precio específico del tipo_precio_recomendado, no el genérico precio_venta
         const precioBase = precioDelTipoPrecio || producto.precio_venta || 0;
@@ -776,23 +782,35 @@ export default function VentaForm() {
             tipo_precio_nombre: tipoPrecioNombreRecomendado,
             // ✅ CRÍTICO: Pasar propiedades de tipo_precio recomendado para que ProductosTable pueda usarlas en el select inicial
             tipo_precio_id_recomendado: (producto as any).tipo_precio_id_recomendado,
-            tipo_precio_nombre_recomendado: (producto as any).tipo_precio_nombre_recomendado
+            tipo_precio_nombre_recomendado: (producto as any).tipo_precio_nombre_recomendado,
         };
 
         // ✅ MODIFICADO: Agregar el producto al INICIO de la lista, no al final
         const newDetalles = [newDetail, ...detallesWithProducts];
         setDetallesWithProducts(newDetalles);
 
+        // ✅ NUEVO (2026-07-03): Limpiar manuallySelectedTipoPrecio del nuevo producto para que use el tipo de precio por defecto
+        // Esto asegura que respete la regla: GENERAL → LICORERIA, OTRO CLIENTE → VENTA
+        // ✅ REFACTORIZADO (2026-07-03): Usar producto_id en lugar de índice
+        setManuallySelectedTipoPrecio((prev) => {
+            const updated = { ...prev };
+            delete updated[producto.id]; // Limpiar la entrada del nuevo producto por su producto_id
+            return updated;
+        });
+
         // 🔑 NUEVO: Calcular precios según rangos
         // ✅ COMENTADO: Deshabilitado temporalmente para evitar cambios automáticos de precio
         // ✅ NO calcular si el cliente es GENERAL (no se deben aplicar rangos)
+        // ✅ NUEVO (2026-07-03): EXCLUIR productos con tipo_precio_id === null (OTROS/Precio Personalizado)
         if (clienteSeleccionado?.codigo_cliente !== 'GENERAL') {
             precioRango.calcularCarritoDebounced(
-                newDetalles.map(d => ({
-                    producto_id: d.producto_id,
-                    cantidad: d.cantidad,
-                    tipo_precio_id: d.tipo_precio_id // ✅ NUEVO: Respetar tipo_precio_id seleccionado
-                }))
+                newDetalles
+                    .filter((d) => d.tipo_precio_id !== null) // ✅ EXCLUIR productos con OTROS
+                    .map((d) => ({
+                        producto_id: d.producto_id,
+                        cantidad: d.cantidad,
+                        tipo_precio_id: d.tipo_precio_id,
+                    })),
             );
         }
 
@@ -810,14 +828,63 @@ export default function VentaForm() {
             unidad_venta_id: unidadDestinoId,
             precio_unitario: nuevoPrecio,
             // Recalcular subtotal con el nuevo precio
-            subtotal: (updatedDetalles[index].cantidad * nuevoPrecio) - (updatedDetalles[index].descuento || 0)
+            subtotal: updatedDetalles[index].cantidad * nuevoPrecio - (updatedDetalles[index].descuento || 0),
         };
 
         console.log(`🔄 [updateDetailUnidadConPrecio] Detalle #${index}:`, {
             unidad_venta_id: unidadDestinoId,
             precio_unitario: nuevoPrecio,
-            subtotal: updatedDetalles[index].subtotal
+            subtotal: updatedDetalles[index].subtotal,
         });
+
+        setDetallesWithProducts(updatedDetalles);
+        calculateTotals(updatedDetalles);
+        calculatePeso(updatedDetalles);
+    };
+
+    // ✅ CRÍTICO (2026-07-03): Función para actualizar múltiples campos de un detalle de una sola vez
+    // Esto evita el problema de "stale closure" donde cada updateDetail usa estado anterior
+    const updateDetailMultiple = (index: number, updates: Record<string, number | string | null>) => {
+        const updatedDetalles = [...detallesWithProducts];
+
+        // Aplicar todos los cambios al detalle
+        Object.entries(updates).forEach(([field, value]) => {
+            const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value === null ? null : value;
+            (updatedDetalles[index] as any)[field] = numericValue;
+        });
+
+        // Recalcular subtotal si fue necesario
+        if (updates.cantidad || updates.precio_unitario || updates.descuento) {
+            const cantidad =
+                updates.cantidad !== undefined
+                    ? typeof updates.cantidad === 'string'
+                        ? parseFloat(updates.cantidad)
+                        : updates.cantidad
+                    : updatedDetalles[index].cantidad;
+            const precio =
+                updates.precio_unitario !== undefined
+                    ? typeof updates.precio_unitario === 'string'
+                        ? parseFloat(updates.precio_unitario)
+                        : updates.precio_unitario
+                    : updatedDetalles[index].precio_unitario;
+            const descuento =
+                updates.descuento !== undefined
+                    ? typeof updates.descuento === 'string'
+                        ? parseFloat(updates.descuento)
+                        : updates.descuento
+                    : updatedDetalles[index].descuento;
+
+            updatedDetalles[index].subtotal = Number(cantidad) * Number(precio) - Number(descuento);
+        }
+
+        /* console.log(`💰 [updateDetailMultiple] Actualizando detalle #${index} con:`, {
+            updates,
+            resultado: {
+                precio_unitario: updatedDetalles[index].precio_unitario,
+                tipo_precio_id: updatedDetalles[index].tipo_precio_id,
+                tipo_precio_nombre: updatedDetalles[index].tipo_precio_nombre
+            }
+        }); */
 
         setDetallesWithProducts(updatedDetalles);
         calculateTotals(updatedDetalles);
@@ -835,11 +902,11 @@ export default function VentaForm() {
             const precio = field === 'precio_unitario' ? numericValue : updatedDetalles[index].precio_unitario;
             const descuento = field === 'descuento' ? numericValue : updatedDetalles[index].descuento;
 
-            updatedDetalles[index].subtotal = (Number(cantidad) * Number(precio)) - Number(descuento);
+            updatedDetalles[index].subtotal = Number(cantidad) * Number(precio) - Number(descuento);
         }
 
         // ✅ DEBUG: Loguear cambios en detalles
-        if (field === 'unidad_venta_id') {
+        /* if (field === 'unidad_venta_id') {
             console.log(`🔄 [updateDetail] Cambio de unidad_venta_id para detalle #${index}:`, {
                 anterior: detallesWithProducts[index].unidad_venta_id,
                 nuevo: numericValue,
@@ -848,6 +915,28 @@ export default function VentaForm() {
                 detalle_antes: detallesWithProducts[index],
                 detalle_despues: updatedDetalles[index]
             });
+        } */
+
+        // ✅ CRÍTICO: Log del estado actual antes de actualizar
+        if (field === 'precio_unitario') {
+            console.log(`💰 [updateDetail] ANTES - Precio #${index}:`, {
+                precio_anterior: detallesWithProducts[index].precio_unitario,
+                precio_nuevo: numericValue,
+                tipo_precio_id: updatedDetalles[index].tipo_precio_id,
+                tipo_precio_nombre: updatedDetalles[index].tipo_precio_nombre,
+                detalles_array: detallesWithProducts.map((d, i) => (i === index ? '🎯 THIS' : '✓')),
+            });
+        }
+
+        setDetallesWithProducts(updatedDetalles);
+
+        // ✅ CRÍTICO: Log del estado después de actualizar
+        if (field === 'precio_unitario') {
+            console.log(`💰 [updateDetail] DESPUÉS - Precio #${index}:`, {
+                precio_guardado: updatedDetalles[index].precio_unitario,
+                tipo_precio_id: updatedDetalles[index].tipo_precio_id,
+                tipo_precio_nombre: updatedDetalles[index].tipo_precio_nombre,
+            });
         }
 
         console.log(`📊 [updateDetail] Estado ANTES de setDetallesWithProducts, detalle #${index}:`, {
@@ -855,35 +944,35 @@ export default function VentaForm() {
             valor_nuevo: numericValue,
             unidad_venta_id: updatedDetalles[index].unidad_venta_id,
             es_fraccionado: (updatedDetalles[index] as any).es_fraccionado,
-            all_detalles: updatedDetalles
+            all_detalles: updatedDetalles,
         });
-
-        setDetallesWithProducts(updatedDetalles);
 
         console.log(`📊 [updateDetail] Estado DESPUÉS de setDetallesWithProducts, detalle #${index}:`, {
             field,
             valor_nuevo: numericValue,
-            unidad_venta_id_guardado: updatedDetalles[index].unidad_venta_id
+            unidad_venta_id_guardado: updatedDetalles[index].unidad_venta_id,
         });
 
         // ✅ MODIFICADO: Si cambió la cantidad O unidad de venta, recalcular precios por rango
         // PERO: No recalcular si cambió precio_unitario (es cambio manual del usuario)
         // y tampoco si cambió unidad_venta_id (el usuario está seleccionando otra unidad)
         const esProductoFraccionado = (updatedDetalles[index] as any).es_fraccionado;
-        const esUnidadOPrecioFraccionado = esProductoFraccionado &&
-            (field === 'unidad_venta_id' || field === 'precio_unitario');
+        const esUnidadOPrecioFraccionado = esProductoFraccionado && (field === 'unidad_venta_id' || field === 'precio_unitario');
 
         if (field === 'cantidad' && !esUnidadOPrecioFraccionado) {
             console.log(`📊 [updateDetail] Recalculando rango para cantidad de producto ${updatedDetalles[index].producto_id}`);
             // ✅ COMENTADO: Deshabilitado temporalmente para evitar cambios automáticos de precio
             // ✅ NO calcular si el cliente es GENERAL (no se deben aplicar rangos)
+            // ✅ NUEVO (2026-07-03): EXCLUIR productos con tipo_precio_id === null (OTROS)
             if (clienteSeleccionado?.codigo_cliente !== 'GENERAL') {
                 precioRango.calcularCarritoDebounced(
-                    updatedDetalles.map(d => ({
-                        producto_id: d.producto_id,
-                        cantidad: d.cantidad,
-                        tipo_precio_id: d.tipo_precio_id // ✅ NUEVO: Respetar tipo_precio_id seleccionado
-                    }))
+                    updatedDetalles
+                        .filter((d) => d.tipo_precio_id !== null) // ✅ EXCLUIR productos con OTROS
+                        .map((d) => ({
+                            producto_id: d.producto_id,
+                            cantidad: d.cantidad,
+                            tipo_precio_id: d.tipo_precio_id,
+                        })),
                 );
             }
         }
@@ -897,7 +986,7 @@ export default function VentaForm() {
         setDetallesWithProducts(updatedDetalles);
 
         // ✅ NUEVO: Limpiar el estado de selección manual para el índice removido
-        setManuallySelectedTipoPrecio(prev => {
+        setManuallySelectedTipoPrecio((prev) => {
             const updated = { ...prev };
             delete updated[index];
             return updated;
@@ -906,13 +995,16 @@ export default function VentaForm() {
         // 🔑 NUEVO: Recalcular rangos cuando se elimina un producto
         // ✅ COMENTADO: Deshabilitado temporalmente para evitar cambios automáticos de precio
         // ✅ NO calcular si el cliente es GENERAL (no se deben aplicar rangos)
+        // ✅ NUEVO (2026-07-03): EXCLUIR productos con tipo_precio_id === null (OTROS)
         if (updatedDetalles.length > 0 && clienteSeleccionado?.codigo_cliente !== 'GENERAL') {
             precioRango.calcularCarritoDebounced(
-                updatedDetalles.map(d => ({
-                    producto_id: d.producto_id,
-                    cantidad: d.cantidad,
-                    tipo_precio_id: d.tipo_precio_id // ✅ NUEVO: Respetar tipo_precio_id seleccionado
-                }))
+                updatedDetalles
+                    .filter((d) => d.tipo_precio_id !== null) // ✅ EXCLUIR productos con OTROS
+                    .map((d) => ({
+                        producto_id: d.producto_id,
+                        cantidad: d.cantidad,
+                        tipo_precio_id: d.tipo_precio_id,
+                    })),
             );
         }
 
@@ -921,17 +1013,18 @@ export default function VentaForm() {
     };
 
     // ✅ MEMOIZADO: Callbacks para ProductosTable (evitar re-renders infinitos)
-    const handleManualTipoPrecioChange = useCallback((index: number) => {
-        setManuallySelectedTipoPrecio(prev => ({
+    // ✅ REFACTORIZADO (2026-07-03): Recibir producto_id en lugar de index
+    const handleManualTipoPrecioChange = useCallback((productoId: number) => {
+        setManuallySelectedTipoPrecio((prev) => ({
             ...prev,
-            [index]: true
+            [productoId]: true,
         }));
     }, []);
 
     const handleComboItemsChange = useCallback((detailIndex: number, items: any[]) => {
-        setComboItemsMap(prev => ({
+        setComboItemsMap((prev) => ({
             ...prev,
-            [detailIndex]: items
+            [detailIndex]: items,
         }));
         console.log(`🔄 [create.tsx] Items del combo actualizado (índice ${detailIndex}):`, items);
     }, []);
@@ -947,7 +1040,7 @@ export default function VentaForm() {
         // ✅ SIMPLIFICADO: Usar directamente el subtotal ya calculado en cada detalle
         let subtotal = 0;
 
-        detalles.forEach(detalle => {
+        detalles.forEach((detalle) => {
             subtotal += detalle.subtotal || 0;
         });
 
@@ -955,10 +1048,10 @@ export default function VentaForm() {
         // Por ahora no se suma impuesto al total
         const total = subtotal - descuentoGeneral;
 
-        setData(prev => ({
+        setData((prev) => ({
             ...prev,
             subtotal: subtotal,
-            total: total
+            total: total,
         }));
     };
 
@@ -971,17 +1064,17 @@ export default function VentaForm() {
         let pesoTotal = 0;
 
         // 🔑 Iterar cada detalle y sumar: cantidad * peso_producto
-        detalles.forEach(detalle => {
-            const peso = detalle.producto?.peso || 0;  // Peso del producto en kg
-            const cantidad = detalle.cantidad || 0;     // Cantidad vendida
+        detalles.forEach((detalle) => {
+            const peso = detalle.producto?.peso || 0; // Peso del producto en kg
+            const cantidad = detalle.cantidad || 0; // Cantidad vendida
 
             // Sumar: cantidad × peso
             pesoTotal += Number(cantidad) * Number(peso);
         });
 
-        setData(prev => ({
+        setData((prev) => ({
             ...prev,
-            peso_total_estimado: pesoTotal
+            peso_total_estimado: pesoTotal,
         }));
     };
 
@@ -1011,9 +1104,7 @@ export default function VentaForm() {
         if (!es_farmacia) return false;
 
         // Si es farmacia, verificar que TODOS los productos permitan venta sin stock
-        return detallesWithProducts.every(detalle =>
-            (detalle.producto as any)?.permite_venta_sin_stock === true
-        );
+        return detallesWithProducts.every((detalle) => (detalle.producto as any)?.permite_venta_sin_stock === true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -1033,18 +1124,18 @@ export default function VentaForm() {
         // Validar usando el servicio
         const dataToValidate = {
             ...data,
-            detalles: detallesWithProducts.map(d => ({
+            detalles: detallesWithProducts.map((d) => ({
                 id: d.id,
                 producto_id: d.producto_id,
                 cantidad: d.cantidad,
                 precio_unitario: d.precio_unitario,
                 descuento: d.descuento,
-                subtotal: d.subtotal
-            }))
+                subtotal: d.subtotal,
+            })),
         };
         const validationErrors = await ventasService.validateData(dataToValidate);
         if (validationErrors.length > 0) {
-            validationErrors.forEach(error => NotificationService.error(error));
+            validationErrors.forEach((error) => NotificationService.error(error));
             return;
         }
 
@@ -1066,7 +1157,7 @@ export default function VentaForm() {
             tipoPagoSeleccionado: tipoPagoSeleccionado?.nombre,
             codigoTipoPago: tipoPagoSeleccionado?.codigo,
             politicaPagoOriginal: data.politica_pago,
-            politicaPagoFinal
+            politicaPagoFinal,
         });
 
         const submitData = {
@@ -1074,15 +1165,15 @@ export default function VentaForm() {
             // ✅ IMPORTANTE: Asegurar que estos campos se envíen explícitamente
             requiere_envio: data.requiere_envio ?? false,
             direccion_cliente_id: data.requiere_envio ? (data.direccion_cliente_id ?? null) : null,
-            tipo_pago_id: data.tipo_pago_id ?? 1,  // ✅ NUEVO: Tipo de pago seleccionado
-            politica_pago: politicaPagoFinal,  // ✅ MODIFICADO: Usar politica_pago calculada
+            tipo_pago_id: data.tipo_pago_id ?? 1, // ✅ NUEVO: Tipo de pago seleccionado
+            politica_pago: politicaPagoFinal, // ✅ MODIFICADO: Usar politica_pago calculada
             estado_pago: data.estado_pago ?? 'PAGADO',
-            preventista_id: data.preventista_id ?? null,  // ✅ ASEGURAR: Null si no está seleccionado
+            preventista_id: data.preventista_id ?? null, // ✅ ASEGURAR: Null si no está seleccionado
             detalles: detallesWithProducts.map((d, detailIndex) => {
                 // ✅ MODIFICADO: Usar siempre d.precio_unitario (ya contiene valor editado manualmente o del tipo de precio)
                 // NO usar precioRango para no sobrescribir ediciones manuales
                 const precioFinal = d.precio_unitario;
-                const subtotalFinal = (Number(d.cantidad) * Number(precioFinal)) - Number(d.descuento);
+                const subtotalFinal = Number(d.cantidad) * Number(precioFinal) - Number(d.descuento);
 
                 const detalle: any = {
                     id: d.id,
@@ -1096,19 +1187,19 @@ export default function VentaForm() {
                     unidad_venta_id: d.unidad_venta_id || undefined,
                     // ✅ NUEVO: Enviar tipo de precio seleccionado para guardar en BD
                     tipo_precio_id: d.tipo_precio_id || undefined,
-                    tipo_precio_nombre: d.tipo_precio_nombre || undefined
+                    tipo_precio_nombre: d.tipo_precio_nombre || undefined,
                 };
 
                 // ✅ NUEVO: Si es combo, agregar items seleccionados
                 if ((d.producto as any)?.es_combo) {
-                    const comboItems = comboItemsMap[detailIndex] || ((d.producto as any).combo_items || []);
+                    const comboItems = comboItemsMap[detailIndex] || (d.producto as any).combo_items || [];
                     // ✅ IMPORTANTE: Incluir cantidad de cada item para que aparezca en impresión
                     detalle.combo_items_seleccionados = comboItems.map((item: any) => ({
                         combo_item_id: item.id,
                         producto_id: item.producto_id,
                         cantidad: item.cantidad || 0, // ✅ NUEVO: Incluir cantidad del item
                         precio_unitario: item.precio_unitario || item.producto?.precio_venta || 0, // ✅ NUEVO (2026-06-02): Precio del componente
-                        incluido: item.incluido !== false // true si está incluido, false si está excluido
+                        incluido: item.incluido !== false, // true si está incluido, false si está excluido
                     }));
 
                     console.log(`📦 [handleConfirmSubmit] Combo ${d.producto?.nombre}:`, {
@@ -1120,14 +1211,14 @@ export default function VentaForm() {
                             id: i.id,
                             producto_id: i.producto_id,
                             cantidad: i.cantidad,
-                            incluido: i.incluido
+                            incluido: i.incluido,
                         })),
-                        detalles_enviados: detalle.combo_items_seleccionados
+                        detalles_enviados: detalle.combo_items_seleccionados,
                     });
                 }
 
                 return detalle;
-            })
+            }),
         };
 
         // ✅ NUEVO (2026-05-03): Preparar pagos según es_farmacia
@@ -1141,25 +1232,25 @@ export default function VentaForm() {
             if (efectivo > 0) {
                 pagosAEnviar.push({
                     tipo_pago_id: 1, // EFECTIVO
-                    monto: efectivo
+                    monto: efectivo,
                 });
             }
 
             if (transferencia > 0) {
                 pagosAEnviar.push({
                     tipo_pago_id: 2, // TRANSFERENCIA/QR
-                    monto: transferencia
+                    monto: transferencia,
                 });
             }
 
             console.log('💳 [VentaForm] Pagos desglosados (FARMACIA) a enviar:', {
                 cantidad_formas_pago: pagosAEnviar.length,
-                detalle_pagos: pagosAEnviar.map(p => ({
+                detalle_pagos: pagosAEnviar.map((p) => ({
                     tipo_pago_id: p.tipo_pago_id,
                     tipo_pago: p.tipo_pago_id === 1 ? 'EFECTIVO' : p.tipo_pago_id === 2 ? 'TRANSFERENCIA/QR' : 'OTRO',
-                    monto: p.monto
+                    monto: p.monto,
                 })),
-                total_pagado: pagosAEnviar.reduce((sum, p) => sum + p.monto, 0)
+                total_pagado: pagosAEnviar.reduce((sum, p) => sum + p.monto, 0),
             });
         } else {
             // 🏪 NO FARMACIA: Monto único con tipo_pago_id seleccionado
@@ -1168,16 +1259,22 @@ export default function VentaForm() {
             if (montoPagado > 0 && data.tipo_pago_id) {
                 pagosAEnviar.push({
                     tipo_pago_id: data.tipo_pago_id,
-                    monto: montoPagado
+                    monto: montoPagado,
                 });
 
                 console.log('💳 [VentaForm] Pago único (NO FARMACIA) a enviar:', {
                     tipo_pago_id: data.tipo_pago_id,
-                    tipo_pago_nombre: data.tipo_pago_id === 1 ? 'EFECTIVO' :
-                                     data.tipo_pago_id === 2 ? 'TRANSFERENCIA/QR' :
-                                     data.tipo_pago_id === 3 ? 'CRÉDITO' :
-                                     data.tipo_pago_id === 4 ? 'MIXTO' : 'OTRO',
-                    monto: montoPagado
+                    tipo_pago_nombre:
+                        data.tipo_pago_id === 1
+                            ? 'EFECTIVO'
+                            : data.tipo_pago_id === 2
+                              ? 'TRANSFERENCIA/QR'
+                              : data.tipo_pago_id === 3
+                                ? 'CRÉDITO'
+                                : data.tipo_pago_id === 4
+                                  ? 'MIXTO'
+                                  : 'OTRO',
+                    monto: montoPagado,
                 });
             }
         }
@@ -1203,21 +1300,24 @@ export default function VentaForm() {
             const requestBody = JSON.stringify(submitData);
             console.group(`📤 PETICIÓN AL BACKEND - ${method} ${url}`);
             console.log('Datos enviados (objeto):', submitData);
-            console.log('Detalles:', submitData.detalles.map((d, i) => ({
-                index: i,
-                producto_id: d.producto_id,
-                cantidad: d.cantidad,
-                precio_unitario: d.precio_unitario,
-                descuento: d.descuento,
-                subtotal: d.subtotal,
-                es_fraccionado: d.es_fraccionado,
-                unidad_venta_id: d.unidad_venta_id
-            })));
+            console.log(
+                'Detalles:',
+                submitData.detalles.map((d, i) => ({
+                    index: i,
+                    producto_id: d.producto_id,
+                    cantidad: d.cantidad,
+                    precio_unitario: d.precio_unitario,
+                    descuento: d.descuento,
+                    subtotal: d.subtotal,
+                    es_fraccionado: d.es_fraccionado,
+                    unidad_venta_id: d.unidad_venta_id,
+                })),
+            );
             console.log('Totales:', {
                 subtotal: submitData.subtotal,
                 descuento: submitData.descuento,
                 impuesto: submitData.impuesto,
-                total: submitData.total
+                total: submitData.total,
             });
             console.log('JSON a enviar:', requestBody);
             console.groupEnd();
@@ -1228,7 +1328,7 @@ export default function VentaForm() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || '',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                 },
                 body: requestBody,
             });
@@ -1273,7 +1373,7 @@ export default function VentaForm() {
                 setVentaCreada({
                     id: ventaId,
                     numero: result.data.numero,
-                    fecha: result.data.fecha
+                    fecha: result.data.fecha,
                 });
                 setShowOutputModal(true);
             } else {
@@ -1332,7 +1432,7 @@ export default function VentaForm() {
             console.error('❌ Error en la petición:', {
                 error: error,
                 mensaje: error instanceof Error ? error.message : 'Error desconocido',
-                stack: error instanceof Error ? error.stack : undefined
+                stack: error instanceof Error ? error.stack : undefined,
             });
             NotificationService.error('Error al procesar la venta. Intente nuevamente.');
         } finally {
@@ -1342,36 +1442,40 @@ export default function VentaForm() {
     };
 
     // ✅ MODIFICADO: Obtener entidades relacionadas - usar clienteSeleccionado si está cargado
-    const selectedCliente = clienteSeleccionado || clientesSeguro.find(c => c.id === data.cliente_id);
-    const selectedClienteForModal = selectedCliente ? {
-        id: selectedCliente.id,
-        nombre: selectedCliente.nombre,
-        nit: selectedCliente.nit || undefined,
-        telefono: selectedCliente.telefono || undefined,
-        email: selectedCliente.email || undefined,
-        direccion: selectedCliente.direccion || undefined,
-    } : undefined;
-    const selectedMoneda = monedasSeguro.find(m => m.id === data.moneda_id);
-    const selectedEstado = estadosSeguro.find(e => e.id === data.estado_documento_id);
+    const selectedCliente = clienteSeleccionado || clientesSeguro.find((c) => c.id === data.cliente_id);
+    const selectedClienteForModal = selectedCliente
+        ? {
+              id: selectedCliente.id,
+              nombre: selectedCliente.nombre,
+              nit: selectedCliente.nit || undefined,
+              telefono: selectedCliente.telefono || undefined,
+              email: selectedCliente.email || undefined,
+              direccion: selectedCliente.direccion || undefined,
+          }
+        : undefined;
+    const selectedMoneda = monedasSeguro.find((m) => m.id === data.moneda_id);
+    const selectedEstado = estadosSeguro.find((e) => e.id === data.estado_documento_id);
 
     // Mostrar alert si no hay caja abierta
     if (!cargandoCaja && !cajaInfo?.tiene_caja_abierta) {
         return (
-            <AppLayout breadcrumbs={[
-                { title: 'Ventas', href: '/ventas' },
-                { title: 'Nueva venta', href: '#' }
-            ]}>
+            <AppLayout
+                breadcrumbs={[
+                    { title: 'Ventas', href: '/ventas' },
+                    { title: 'Nueva venta', href: '#' },
+                ]}
+            >
                 <Head title="Nueva venta" />
-                <div className="p-6 space-y-4">
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-500 rounded-lg p-4">
+                <div className="space-y-4 p-6">
+                    <div className="rounded-lg border border-red-500 bg-red-50 p-4 dark:bg-red-900/20">
                         <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">🚫 Caja Cerrada</h3>
-                        <p className="text-red-600 dark:text-red-300 mt-2">
+                        <p className="mt-2 text-red-600 dark:text-red-300">
                             No puedes crear una venta sin una caja abierta. Por favor, abre una caja primero desde el módulo de Cajas.
                         </p>
                     </div>
                     <Link
                         href="/cajas"
-                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                        className="inline-block rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                     >
                         Ir a Cajas
                     </Link>
@@ -1381,18 +1485,20 @@ export default function VentaForm() {
     }
 
     return (
-        <AppLayout breadcrumbs={[
-            { title: 'Ventas', href: '/ventas' },
-            { title: isEditing ? 'Editar venta' : 'Nueva venta', href: '#' }
-        ]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Ventas', href: '/ventas' },
+                { title: isEditing ? 'Editar venta' : 'Nueva venta', href: '#' },
+            ]}
+        >
             <Head title={isEditing ? 'Editar venta' : 'Nueva venta'} />
 
-            <form onSubmit={handleSubmit} className="space-y-6 py-2 px-4">
+            <form onSubmit={handleSubmit} className="space-y-6 px-4 py-2">
                 {/* Indicador de verificación de caja */}
                 {cargandoCaja && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 rounded-lg p-4">
-                        <div className="text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                            <span className="inline-block w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+                    <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-900/20">
+                        <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent"></span>
                             Verificando estado de caja...
                         </div>
                     </div>
@@ -1401,22 +1507,15 @@ export default function VentaForm() {
                 {/* Banner de advertencia - caja sin abrir */}
                 {shouldShowBanner && (
                     <div className="mb-4">
-                        <AlertSinCaja
-                            onAbrir={() => router.visit('/cajas')}
-                            onVerCajas={() => router.visit('/cajas')}
-                        />
+                        <AlertSinCaja onAbrir={() => router.visit('/cajas')} onVerCajas={() => router.visit('/cajas')} />
                     </div>
                 )}
 
                 {/* Información básica */}
-                <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {/* Campo número oculto - se genera automáticamente */}
-                        <input
-                            type="hidden"
-                            value={data.numero}
-                            onChange={(e) => setData('numero', e.target.value)}
-                        />
+                        <input type="hidden" value={data.numero} onChange={(e) => setData('numero', e.target.value)} />
                         <div>
                             <InputSearch
                                 id="cliente_search"
@@ -1449,17 +1548,21 @@ export default function VentaForm() {
                             {selectedCliente && (
                                 <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
                                     {selectedCliente.telefono && <span>📱 {selectedCliente.telefono}</span>}
-                                    {selectedCliente.nit && <span>{selectedCliente.telefono ? ' • ' : ''}NIT: {selectedCliente.nit}</span>}
-                                    {selectedCliente.email && <span>{selectedCliente.telefono || selectedCliente.nit ? ' • ' : ''}Email: {selectedCliente.email}</span>}
+                                    {selectedCliente.nit && (
+                                        <span>
+                                            {selectedCliente.telefono ? ' • ' : ''}NIT: {selectedCliente.nit}
+                                        </span>
+                                    )}
+                                    {selectedCliente.email && (
+                                        <span>
+                                            {selectedCliente.telefono || selectedCliente.nit ? ' • ' : ''}Email: {selectedCliente.email}
+                                        </span>
+                                    )}
                                 </p>
                             )}
                         </div>
                         {/* Campo moneda oculto - se establece automáticamente a BOB */}
-                        <input
-                            type="hidden"
-                            value={data.moneda_id}
-                            onChange={(e) => setData('moneda_id', Number(e.target.value))}
-                        />
+                        <input type="hidden" value={data.moneda_id} onChange={(e) => setData('moneda_id', Number(e.target.value))} />
 
                         <div>
                             <SearchSelect
@@ -1475,41 +1578,38 @@ export default function VentaForm() {
                             />
                         </div>
 
-                        {/* ✅ NUEVO: Botón de Logística (Requiere Envío) - Toggle moderno */}
+                        {/* ✅ REFACTORIZADO (2026-07-03): Toggle Switch elegante en lugar de dos botones */}
                         {logistica_envios && (
-                            <div className="flex flex-col justify-end">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="flex flex-col justify-end gap-2">
+                                {/* <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     🚚 Requiere Envío
-                                </label>
-                                <div className="flex gap-2">
+                                </label> */}
+                                <div className="flex items-center gap-3">
+                                    {/* Toggle Switch */}
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            console.log('🚚 [VentaForm] Seleccionado requiere_envio = true');
-                                            setData('requiere_envio', true);
+                                            const nuevoValor = !data.requiere_envio;
+                                            console.log('🚚 [VentaForm] Requiere envío:', nuevoValor);
+                                            setData('requiere_envio', nuevoValor);
+                                            if (!nuevoValor) {
+                                                setData('direccion_cliente_id', null);
+                                            }
                                         }}
-                                        className={`flex-1 px-3 py-1.5 rounded-lg border-2 font-semibold text-xs transition-all ${
-                                            data.requiere_envio
-                                                ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700'
+                                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${
+                                            data.requiere_envio ? 'bg-green-500 dark:bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
                                         }`}
                                     >
-                                        ✅ Sí
+                                        <span
+                                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                                                data.requiere_envio ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                        />
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setData('requiere_envio', false);
-                                            setData('direccion_cliente_id', null);
-                                        }}
-                                        className={`flex-1 px-3 py-1.5 rounded-lg border-2 font-semibold text-xs transition-all ${
-                                            !data.requiere_envio
-                                                ? 'border-red-600 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 shadow-sm'
-                                                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:border-red-300 dark:hover:border-red-700'
-                                        }`}
-                                    >
-                                        ❌ No
-                                    </button>
+                                    {/* Etiqueta descriptiva */}
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {data.requiere_envio ? '✅ Sí, requiere envío' : '❌ No requiere envío'}
+                                    </span>
                                 </div>
                             </div>
                         )}
@@ -1517,164 +1617,210 @@ export default function VentaForm() {
 
                     {/* Sección de Envío - Solo visible si logistica_envios = true Y requiere_envio = true */}
                     {logistica_envios && data.requiere_envio && (
-                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-zinc-700">
-                            <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">
-                                🚚 Detalles de Envío
-                            </h3>
+                        <div className="mt-2 border-t border-gray-200 pt-2 dark:border-zinc-700">
+                            <h3 className="text-md mb-2 font-medium text-gray-900 dark:text-white">🚚 Detalles de Envío</h3>
 
                             {/* Campos de envío */}
-                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 space-y-4">
+                            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     {/* ✅ NUEVO: Selector de política de pago para envíos - Moderno */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                            💳 Política de Pago
-                                        </label>
-                                        <div className="flex gap-2 flex-wrap">
+                                        {/* <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">💳 Política de Pago</label> */}
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
                                             <button
                                                 type="button"
                                                 onClick={() => setData('politica_pago', 'CONTRA_ENTREGA')}
-                                                className={`flex-1 min-w-[150px] px-3 py-2 rounded-lg border-2 transition-all font-medium text-sm ${
+                                                className={`rounded-lg border-2 p-2 text-left transition-all duration-200 ${
                                                     data.politica_pago === 'CONTRA_ENTREGA'
-                                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-md'
-                                                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-blue-500'
+                                                        ? 'border-blue-500 bg-blue-50 shadow-md dark:border-blue-500 dark:bg-blue-900/40'
+                                                        : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-gray-500'
                                                 }`}
                                             >
-                                                <div className="text-left">
-                                                    <p className="font-semibold text-sm">Contra Entrega</p>
-                                                    <p className="text-xs opacity-75">Al recibir</p>
+                                                <div
+                                                    className={`text-2xl ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
+                                                >
+                                                    <p
+                                                        className={`text-sm font-semibold ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-gray-100'}`}
+                                                    >
+                                                        🚚 Contra Entrega
+                                                    </p>
+                                                    <p
+                                                        className={`text-xs ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
+                                                    >
+                                                        Pago al recibir
+                                                    </p>
                                                 </div>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setData('politica_pago', 'ANTICIPADO_100')}
-                                                className={`flex-1 min-w-[150px] px-3 py-2 rounded-lg border-2 transition-all font-medium text-sm ${
+                                                className={`rounded-lg border-2 p-2 text-left transition-all duration-200 ${
                                                     data.politica_pago === 'ANTICIPADO_100'
-                                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-md'
-                                                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-blue-500'
+                                                        ? 'border-green-500 bg-green-50 shadow-md dark:border-green-500 dark:bg-green-900/40'
+                                                        : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-gray-500'
                                                 }`}
                                             >
-                                                <div className="text-left">
-                                                    <p className="font-semibold text-sm">Anticipado 100%</p>
-                                                    <p className="text-xs opacity-75">Antes de enviar</p>
-                                                </div>
+                                                <p
+                                                    className={`text-sm font-semibold ${data.politica_pago === 'ANTICIPADO_100' ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-gray-100'}`}
+                                                >
+                                                    ⚡Anticipado 100%
+                                                </p>
+                                                <p
+                                                    className={`text-xs ${data.politica_pago === 'ANTICIPADO_100' ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
+                                                >
+                                                    Antes de enviar
+                                                </p>
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* ✅ NUEVO: Selector de direcciones del cliente */}
-                                    {clienteSeleccionado && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                📍 Direcciones del Cliente
-                                            </label>
-                                            {cargandoDirecciones ? (
-                                                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                                                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                                                    <span className="text-sm">Cargando direcciones...</span>
-                                                </div>
-                                            ) : direccionesDisponibles.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {direccionesDisponibles.map((dir) => (
-                                                        <button
-                                                            key={dir.id}
-                                                            type="button"
-                                                            onClick={() => setData('direccion_cliente_id', dir.id)}
-                                                            className={`w-full text-left px-3 py-2 rounded-lg border-2 transition-all ${
-                                                                data.direccion_cliente_id === dir.id
-                                                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 shadow-sm'
-                                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 hover:border-blue-300 dark:hover:border-blue-700'
-                                                            }`}
-                                                        >
-                                                            {/* ✅ NUEVO (2026-03-03): Observaciones como dato principal */}
-                                                            {dir.observaciones ? (
-                                                                <>
-                                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                                        🏷️ {dir.observaciones}
-                                                                    </p>
-                                                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                                                                        📍 {dir.direccion}
-                                                                    </p>
-                                                                    {dir.es_principal && <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 px-2 py-0.5 rounded">Principal</span>}
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                                        {dir.direccion}
-                                                                    </p>
-                                                                    {dir.localidad && <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">📍 {dir.localidad}</p>}
-                                                                    {dir.es_principal && <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 px-2 py-0.5 rounded">Principal</span>}
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-amber-600 dark:text-amber-400">
-                                                    ⚠️ El cliente no tiene direcciones registradas. Completa la dirección manualmente a continuación.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
                                     {/* ✅ NUEVO: Campo de Logística de Envíos - mostrar solo si logistica_envios (prop global) = true */}
                                     {(() => {
                                         const mostrar = logistica_envios;
-                                        return mostrar && (
-                                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                {/* ✅ NUEVO: Selector de Preventista */}
-                                                <div className="border-t border-green-200 dark:border-green-800 pt-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                        👤 Preventista (Opcional)
-                                                    </label>
-                                                    {cargandoPrevenstitas ? (
-                                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                                                            <div className="animate-spin h-4 w-4 border-2 border-green-600 border-t-transparent rounded-full"></div>
-                                                            <span className="text-sm">Cargando preventistas...</span>
-                                                        </div>
-                                                    ) : preventistas.length > 0 ? (
-                                                        <select
-                                                            value={data.preventista_id || ''}
-                                                            onChange={(e) => setData('preventista_id', e.target.value ? Number(e.target.value) : null)}
-                                                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-zinc-800 dark:text-white"
-                                                        >
-                                                            <option value="">-- Selecciona un preventista --</option>
-                                                            {preventistas.map((prev) => (
-                                                                <option key={prev.id} value={prev.id}>
-                                                                    {prev.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <p className="text-sm text-amber-600 dark:text-amber-400">
-                                                            ⚠️ No hay preventistas disponibles
-                                                        </p>
-                                                    )}
-                                                    <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-                                                        ℹ️ Asigna un preventista responsable de esta venta
-                                                    </p>
-                                                </div>
+                                        return (
+                                            mostrar && (
+                                                <div className="grid grid-cols-1 gap-3 rounded-lg border border-green-200 bg-green-50 p-3 sm:grid-cols-1 dark:border-green-800 dark:bg-green-900/20">
+                                                    {/* ✅ NUEVO: Selector de Preventista */}
+                                                    <div className="dark:border-green-800">
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            👤 Preventista (Opcional)
+                                                        </label>
+                                                        {cargandoPrevenstitas ? (
+                                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+                                                                <span className="text-sm">Cargando preventistas...</span>
+                                                            </div>
+                                                        ) : preventistas.length > 0 ? (
+                                                            <select
+                                                                value={data.preventista_id || ''}
+                                                                onChange={(e) =>
+                                                                    setData('preventista_id', e.target.value ? Number(e.target.value) : null)
+                                                                }
+                                                                className="w-full rounded-md border border-gray-300 px-2 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                                            >
+                                                                <option value="">-- Selecciona un preventista --</option>
+                                                                {preventistas.map((prev) => (
+                                                                    <option key={prev.id} value={prev.id}>
+                                                                        {prev.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-sm text-amber-600 dark:text-amber-400">
+                                                                ⚠️ No hay preventistas disponibles
+                                                            </p>
+                                                        )}
+                                                    </div>
 
-                                                {/* ✅ NUEVO: Selector de Entrega con Búsqueda */}
-                                                <div className="border-t border-green-200 dark:border-green-800 pt-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                        🚚 Asignar a Entrega (Opcional)
-                                                    </label>
-                                                    <EntregaSearchSelector
-                                                        value={data.entrega_id}
-                                                        onValueChange={(value) => setData('entrega_id', value ? Number(value) : null)}
-                                                    />
-                                                    <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-                                                        ℹ️ Asigna esta venta a una entrega existente (opcional)
-                                                    </p>
+                                                    {/* ✅ NUEVO: Selector de Entrega con Búsqueda */}
+                                                    <div className="dark:border-green-800">
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            🚚 Asignar a Entrega (Opcional)
+                                                        </label>
+                                                        <EntregaSearchSelector
+                                                            value={data.entrega_id}
+                                                            onValueChange={(value) => setData('entrega_id', value ? Number(value) : null)}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )
                                         );
                                     })()}
 
-                                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                                        ℹ️ Los datos del cliente se pre-rellenan automáticamente. Modifica si es necesario.
-                                    </p>
+                                    {/* ✅ NUEVO: Card de información del cliente */}
+                                    {clienteSeleccionado && (
+                                        <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
+                                            {/* Selector de direcciones */}
+                                            <div className="dark:border-amber-800">
+                                                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                                    📍 Direcciones Disponibles
+                                                </label>
+                                                {cargandoDirecciones ? (
+                                                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent"></div>
+                                                        <span className="text-sm">Cargando direcciones...</span>
+                                                    </div>
+                                                ) : direccionesDisponibles.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {direccionesDisponibles.map((dir) => (
+                                                            <button
+                                                                key={dir.id}
+                                                                type="button"
+                                                                onClick={() => setData('direccion_cliente_id', dir.id)}
+                                                                className={`w-full rounded-lg border-2 px-3 py-3 text-left transition-all ${
+                                                                    data.direccion_cliente_id === dir.id
+                                                                        ? 'border-blue-500 bg-blue-50 shadow-md dark:border-blue-500 dark:bg-blue-900/30'
+                                                                        : 'border-gray-300 bg-white hover:border-blue-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-blue-500'
+                                                                }`}
+                                                            >
+                                                                {/* Observaciones como dato principal */}
+                                                                {dir.observaciones ? (
+                                                                    <>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <p className="text-sm font-semibold text-gray-900 dark:text-white uppercase">
+                                                                                🏷️ {dir.observaciones}
+                                                                            </p>
+                                                                            {dir.es_principal && (
+                                                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                                                    Principal
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {/* <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                                            📮 {dir.direccion}
+                                                                        </p> */}
+                                                                        {dir.localidad && (
+                                                                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
+                                                                                🏘️{' '}
+                                                                                {typeof dir.localidad === 'string'
+                                                                                    ? dir.localidad
+                                                                                    : dir.localidad?.nombre}
+                                                                            </p>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                📮 {dir.direccion}
+                                                                            </p>
+                                                                            {dir.es_principal && (
+                                                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                                                    Principal
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {dir.localidad && (
+                                                                            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                                                🏘️{' '}
+                                                                                {typeof dir.localidad === 'string'
+                                                                                    ? dir.localidad
+                                                                                    : dir.localidad?.nombre}
+                                                                            </p>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                                {data.direccion_cliente_id === dir.id && (
+                                                                    <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                                        ✅ Seleccionada
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="rounded bg-amber-100 p-2 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                                                        ⚠️ El cliente no tiene direcciones registradas. Completa la dirección manualmente a
+                                                        continuación.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    
                                 </div>
+                            </div>
                         </div>
                     )}
                     <br />
@@ -1683,6 +1829,7 @@ export default function VentaForm() {
                         detalles={detallesWithProducts}
                         onAddProduct={addProductToDetail}
                         onUpdateDetail={updateDetail}
+                        onUpdateDetailMultiple={updateDetailMultiple} // ✅ NUEVO (2026-07-03): Actualizar múltiples campos de una sola vez
                         onRemoveDetail={removeDetail}
                         onTotalsChange={calculateTotals}
                         tipo="venta"
@@ -1703,14 +1850,11 @@ export default function VentaForm() {
                 </div>
                 {/* Totales */}
                 {detallesWithProducts.length > 0 && (
-                    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
-
+                    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                         <div className={`grid grid-cols-1 gap-4 ${es_farmacia ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                             {/* Descuento general */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Descuento general
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descuento general</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -1724,7 +1868,7 @@ export default function VentaForm() {
                                             setData('total', data.subtotal - descuento);
                                         }
                                     }}
-                                    className="w-full p-1 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white text-right"
+                                    className="w-full rounded-md border border-gray-300 p-1 text-right shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                                     placeholder="0.00"
                                 />
                             </div>
@@ -1734,9 +1878,7 @@ export default function VentaForm() {
                                 <>
                                     {/* Desglose de Pagos: Efectivo */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Efectivo
-                                        </label>
+                                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Efectivo</label>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
                                             <input
@@ -1750,7 +1892,7 @@ export default function VentaForm() {
                                                 }}
                                                 onWheel={(e) => e.preventDefault()}
                                                 disabled={isSubmitting}
-                                                className="flex-1 p-1 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white text-right disabled:opacity-50 [&::-webkit-outer-spin-button]:[appearance:none] [&::-webkit-inner-spin-button]:[appearance:none] [appearance:textfield]"
+                                                className="flex-1 [appearance:textfield] rounded-md border border-gray-300 p-1 text-right shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white [&::-webkit-inner-spin-button]:[appearance:none] [&::-webkit-outer-spin-button]:[appearance:none]"
                                                 placeholder="0.00"
                                             />
                                         </div>
@@ -1758,9 +1900,7 @@ export default function VentaForm() {
 
                                     {/* Desglose de Pagos: Transferencia/QR */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Transferencia/QR
-                                        </label>
+                                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Transferencia/QR</label>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
                                             <input
@@ -1774,7 +1914,7 @@ export default function VentaForm() {
                                                 }}
                                                 onWheel={(e) => e.preventDefault()}
                                                 disabled={isSubmitting}
-                                                className="flex-1 p-1 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white text-right disabled:opacity-50 [&::-webkit-outer-spin-button]:[appearance:none] [&::-webkit-inner-spin-button]:[appearance:none] [appearance:textfield]"
+                                                className="flex-1 [appearance:textfield] rounded-md border border-gray-300 p-1 text-right shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white [&::-webkit-inner-spin-button]:[appearance:none] [&::-webkit-outer-spin-button]:[appearance:none]"
                                                 placeholder="0.00"
                                             />
                                         </div>
@@ -1783,16 +1923,18 @@ export default function VentaForm() {
                             ) : (
                                 /* ✅ NO FARMACIA: Input único de Monto Pagado */
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Monto Pagado
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Monto Pagado</label>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             min="0"
-                                            value={data.monto_pagado_inicial === 0 && data.monto_pagado_inicial.toString() === '0' ? '' : data.monto_pagado_inicial}
+                                            value={
+                                                data.monto_pagado_inicial === 0 && data.monto_pagado_inicial.toString() === '0'
+                                                    ? ''
+                                                    : data.monto_pagado_inicial
+                                            }
                                             onChange={(e) => {
                                                 const valor = e.target.value;
                                                 const montoPagado = valor === '' ? 0 : parseFloat(valor);
@@ -1802,7 +1944,7 @@ export default function VentaForm() {
                                             }}
                                             onWheel={(e) => e.preventDefault()}
                                             disabled={false}
-                                            className="flex-1 p-1 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white text-right disabled:opacity-50 [&::-webkit-outer-spin-button]:[appearance:none] [&::-webkit-inner-spin-button]:[appearance:none] [appearance:textfield]"
+                                            className="flex-1 [appearance:textfield] rounded-md border border-gray-300 p-1 text-right shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white [&::-webkit-inner-spin-button]:[appearance:none] [&::-webkit-outer-spin-button]:[appearance:none]"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -1811,40 +1953,51 @@ export default function VentaForm() {
                         </div>
 
                         {/* ✅ NUEVO: Resumen completo de la transacción */}
-                        <div className='mt-2'>
+                        <div className="mt-2">
                             {data.descuento > 0 && (
                                 <>
-                                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-zinc-700 space-y-2">
-                                        <div className="flex justify-between items-center text-sm">
+                                    <div className="mt-6 space-y-2 border-t border-gray-200 pt-4 dark:border-zinc-700">
+                                        <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-700 dark:text-gray-300">Subtotal:</span>
-                                            <span className="text-gray-900 dark:text-white font-medium text-right">{formatCurrencyMinimalDecimals(data.subtotal)}</span>
+                                            <span className="text-right font-medium text-gray-900 dark:text-white">
+                                                {formatCurrencyMinimalDecimals(data.subtotal)}
+                                            </span>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm">
+                                        <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-700 dark:text-gray-300">Descuento:</span>
-                                            <span className="text-red-600 dark:text-red-400 font-medium text-right">-{formatCurrencyMinimalDecimals(data.descuento)}</span>
+                                            <span className="text-right font-medium text-red-600 dark:text-red-400">
+                                                -{formatCurrencyMinimalDecimals(data.descuento)}
+                                            </span>
                                         </div>
                                     </div>
                                 </>
                             )}
 
-                            <div className="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200 dark:border-zinc-700">
+                            <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-lg font-bold dark:border-zinc-700">
                                 <span className="text-gray-900 dark:text-white">Total:</span>
-                                <span className="text-gray-900 dark:text-white text-right">{formatCurrencyMinimalDecimals(data.total)}</span>
+                                <span className="text-right text-gray-900 dark:text-white">{formatCurrencyMinimalDecimals(data.total)}</span>
                             </div>
 
                             {data.monto_pagado_inicial > 0 && (
                                 <>
-                                    <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200 dark:border-zinc-700">
+                                    <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm dark:border-zinc-700">
                                         <span className="text-gray-700 dark:text-gray-300">Monto Pagado:</span>
-                                        <span className="text-gray-900 dark:text-white font-medium text-right">{formatCurrencyMinimalDecimals(data.monto_pagado_inicial)}</span>
+                                        <span className="text-right font-medium text-gray-900 dark:text-white">
+                                            {formatCurrencyMinimalDecimals(data.monto_pagado_inicial)}
+                                        </span>
                                     </div>
 
-                                    <div className={`flex justify-between items-center text-sm font-medium ${data.monto_pagado_inicial - data.total < 0
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-green-600 dark:text-green-400'
-                                        }`}>
+                                    <div
+                                        className={`flex items-center justify-between text-sm font-medium ${
+                                            data.monto_pagado_inicial - data.total < 0
+                                                ? 'text-red-600 dark:text-red-400'
+                                                : 'text-green-600 dark:text-green-400'
+                                        }`}
+                                    >
                                         <span>Cambio:</span>
-                                        <span className="text-right">{formatCurrencyMinimalDecimals(Math.max(0, data.monto_pagado_inicial - data.total))}</span>
+                                        <span className="text-right">
+                                            {formatCurrencyMinimalDecimals(Math.max(0, data.monto_pagado_inicial - data.total))}
+                                        </span>
                                     </div>
                                 </>
                             )}
@@ -1856,7 +2009,7 @@ export default function VentaForm() {
                 <div className="flex justify-end space-x-3">
                     <Link
                         href="/ventas"
-                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
                     >
                         Cancelar
                     </Link>
@@ -1865,7 +2018,7 @@ export default function VentaForm() {
                     <button
                         type="button"
                         onClick={limpiarBorrador}
-                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-900 transition-colors"
+                        className="inline-flex items-center rounded-md border border-gray-300 bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-900"
                         title="Limpiar el borrador de venta guardado en localStorage"
                     >
                         🗑️ Limpiar borrador
@@ -1891,17 +2044,19 @@ export default function VentaForm() {
                             <button
                                 type="submit"
                                 disabled={buttonDisabled}
-                                className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${!stockValido && !isCreditoPayment
-                                    ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                                    : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                                    }`}
+                                className={`inline-flex items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900 ${
+                                    !stockValido && !isCreditoPayment
+                                        ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                        : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                                }`}
                             >
                                 {isSubmitting
                                     ? 'Guardando...'
-                                    : (!stockValido && !isCreditoPayment)
-                                        ? 'Stock insuficiente'
-                                        : (isEditing ? 'Actualizar venta' : 'Crear venta')
-                                }
+                                    : !stockValido && !isCreditoPayment
+                                      ? 'Stock insuficiente'
+                                      : isEditing
+                                        ? 'Actualizar venta'
+                                        : 'Crear venta'}
                             </button>
                         );
                     })()}
@@ -1943,10 +2098,10 @@ export default function VentaForm() {
                     tipoDocumento="venta"
                     documentoInfo={{
                         numero: ventaCreada.numero,
-                        fecha: ventaCreada.fecha
+                        fecha: ventaCreada.fecha,
                     }}
                 />
             )}
-        </AppLayout >
+        </AppLayout>
     );
 }

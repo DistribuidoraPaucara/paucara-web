@@ -58,6 +58,7 @@ export interface ProductosTableProps {
     detalles: DetalleProducto[];
     onAddProduct: (producto: Producto) => void;
     onUpdateDetail: (index: number, field: keyof DetalleProducto, value: number | string) => void;
+    onUpdateDetailMultiple?: (index: number, updates: Record<string, number | string | null>) => void; // ✅ NUEVO (2026-07-03): Actualizar múltiples campos de una sola vez
     onRemoveDetail: (index: number) => void;
     onTotalsChange: (detalles: DetalleProducto[]) => void;
     tipo: 'compra' | 'venta';
@@ -66,11 +67,11 @@ export interface ProductosTableProps {
     almacen_id?: number; // ✅ NUEVO: Almacén para búsqueda API
     cliente_id?: number | null; // ✅ NUEVO: Cliente para filtrar tipos_precio (LICORERIA vs VENTA)
     isClienteGeneral?: boolean; // ✅ NUEVO: Indicar si es cliente GENERAL para seleccionar tipo de precio LICORERIA
-    manuallySelectedTipoPrecio?: Record<number, boolean>; // ✅ NUEVO: Track cuáles fueron selecciones manuales del usuario
+    manuallySelectedTipoPrecio?: Record<number, boolean>; // ✅ NUEVO: Track cuáles fueron selecciones manuales del usuario (clave: producto_id)
     isCalculatingPrices?: boolean; // ✅ NUEVO: Mostrar indicador de carga al calcular precios
     readOnly?: boolean; // ✅ NUEVO: Deshabilitar edición de detalles (para APROBADO+)
     onUpdateDetailUnidadConPrecio?: (index: number, unidadId: number, precio: number) => void; // ✅ NUEVO: Actualizar unidad y precio juntos
-    onManualTipoPrecioChange?: (index: number) => void; // ✅ NUEVO: Notificar cuando usuario selecciona manualmente un tipo de precio
+    onManualTipoPrecioChange?: (productoId: number) => void; // ✅ REFACTORIZADO (2026-07-03): Notificar cuando usuario selecciona manualmente un tipo de precio (recibe producto_id)
     onComboItemsChange?: (detailIndex: number, items: any[]) => void; // ✅ NUEVO: Notificar cuando cambian los items opcionales del combo
     default_tipo_precio_id?: number | string; // ✅ NUEVO: ID del tipo de precio por defecto (fallback cuando no hay tipo asignado)
     carritoCalculado?: any; // ✅ NUEVO (2026-02-17): Datos de rangos aplicados para actualizar precios automáticamente

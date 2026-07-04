@@ -97,9 +97,9 @@ if($documento->devoluciones && count($documento->devoluciones) > 0) {
     </table>
 
     <!-- INFORMACIÓN DE UBICACIÓN DEL PRÉSTAMO -->
-    @if($documento->ubicacion && count($documento->ubicacion) > 0)
+    @if($documento->ubicacion)
     @php
-    $ubicacion = $documento->ubicacion->first();
+    $ubicacion = $documento->ubicacion;
     @endphp
     <div style="padding-left: 4px; margin: 3px 0; font-size: 12px; background: #f9f9f9; padding: 3px;">
         <!-- <p style="margin: 1px 0; font-weight: bold;">Ubicación del Préstamo:</p> -->

@@ -1696,6 +1696,47 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{prestableStock}', [PrestableStockController::class, 'destroy']);
     });
 
+    // ✅ PRÉSTAMOS: PDF Download (Impresión de comprobantes) - ANTES de rutas principales
+    // Esto asegura que se procesen ANTES que las rutas genéricas
+    Route::group(['prefix' => 'prestamos-cliente'], function () {
+        // 🖨️ Descargar préstamo como PDF (múltiples formatos)
+        Route::get('{prestamo}/imprimir', [PrestamoClienteController::class, 'imprimir'])
+            ->name('api.prestamos-cliente.imprimir');
+
+        // 🖨️ Descargar devoluciones como PDF
+        Route::get('{prestamo}/devoluciones/imprimir', [PrestamoClienteController::class, 'imprimirTodasLasDevoluciones'])
+            ->name('api.prestamos-cliente.devoluciones.imprimir');
+
+        Route::get('{prestamo}/devoluciones/{devolucion}/imprimir', [PrestamoClienteController::class, 'imprimirDevolucion'])
+            ->name('api.prestamos-cliente.devolucion.imprimir');
+    });
+
+    Route::group(['prefix' => 'prestamos-evento'], function () {
+        // 🖨️ Descargar préstamo como PDF (múltiples formatos)
+        Route::get('{prestamo}/imprimir', [PrestamoEventoController::class, 'imprimir'])
+            ->name('api.prestamos-evento.imprimir');
+
+        // 🖨️ Descargar devoluciones como PDF
+        Route::get('{prestamo}/devoluciones/imprimir', [PrestamoEventoController::class, 'imprimirTodasLasDevoluciones'])
+            ->name('api.prestamos-evento.devoluciones.imprimir');
+
+        Route::get('{prestamo}/devoluciones/{devolucion}/imprimir', [PrestamoEventoController::class, 'imprimirDevolucion'])
+            ->name('api.prestamos-evento.devolucion.imprimir');
+    });
+
+    Route::group(['prefix' => 'prestamos-proveedor'], function () {
+        // 🖨️ Descargar préstamo como PDF (múltiples formatos)
+        Route::get('{prestamo}/imprimir', [PrestamoProveedorController::class, 'imprimir'])
+            ->name('api.prestamos-proveedor.imprimir');
+
+        // 🖨️ Descargar devoluciones como PDF
+        Route::get('{prestamo}/devoluciones/imprimir', [PrestamoProveedorController::class, 'imprimirTodasLasDevoluciones'])
+            ->name('api.prestamos-proveedor.devoluciones.imprimir');
+
+        Route::get('{prestamo}/devoluciones/{devolucion}/imprimir', [PrestamoProveedorController::class, 'imprimirDevolucion'])
+            ->name('api.prestamos-proveedor.devolucion.imprimir');
+    });
+
     // Préstamos a Clientes
     Route::prefix('prestamos-cliente')->group(function () {
         Route::get('/', [PrestamoClienteController::class, 'index']);
@@ -1705,8 +1746,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{prestamo}/devolver', [PrestamoClienteController::class, 'registrarDevolucion']);
         Route::post('/{prestamo}/anular', [PrestamoClienteController::class, 'anularPrestamo']);
         Route::post('/{prestamo}/devoluciones/{devolucion}/anular', [PrestamoClienteController::class, 'anularDevolucion']);
-        Route::get('/{prestamo}/devoluciones/imprimir', [PrestamoClienteController::class, 'imprimirTodasLasDevoluciones']);
-        Route::get('/{prestamo}/devoluciones/{devolucion}/imprimir', [PrestamoClienteController::class, 'imprimirDevolucion']);
         Route::get('/chofer/{choferId}/pendientes', [PrestamoClienteController::class, 'obtenerPendientesChofer']);
         Route::get('/cliente/{clienteId}/activos', [PrestamoClienteController::class, 'obtenerActivosCliente']);
     });

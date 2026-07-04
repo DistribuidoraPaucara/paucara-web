@@ -154,11 +154,11 @@ export default function EntregaSearchSelector({
             )}
 
             {/* Mensaje de ayuda */}
-            {!selectedEntrega && (
+            {/* {!selectedEntrega && (
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                     💡 Ingresa el número de entrega, chofer, vehículo o estado y presiona "Buscar"
                 </p>
-            )}
+            )} */}
         </div>
     );
 }

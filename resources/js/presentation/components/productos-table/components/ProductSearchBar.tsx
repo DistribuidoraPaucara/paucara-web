@@ -129,7 +129,7 @@ export default function ProductSearchBar({
                 return;
             }
 
-            console.log(`💊 [ProductSearchBar] Cargando ${productos.length} productos inyectables`);
+            // console.log(`💊 [ProductSearchBar] Cargando ${productos.length} productos inyectables`);
             productos.forEach((producto: Producto) => {
                 handleAgregarProductoYLimpiar(producto);
             });
@@ -305,7 +305,7 @@ export default function ProductSearchBar({
                                                         const esCompra = tipo === 'compra';
                                                         const tieneRecomendado = !!producto.tipo_precio_nombre_recomendado;
 
-                                                        console.log(`🏷️ [ProductSearchBar-Badge] ${producto.nombre} | tipo='${tipo}' esCompra=${esCompra} tieneRecomendado=${tieneRecomendado} valor='${producto.tipo_precio_nombre_recomendado}'`);
+                                                        // console.log(`🏷️ [ProductSearchBar-Badge] ${producto.nombre} | tipo='${tipo}' esCompra=${esCompra} tieneRecomendado=${tieneRecomendado} valor='${producto.tipo_precio_nombre_recomendado}'`);
 
                                                         if (esCompra) {
                                                             return (

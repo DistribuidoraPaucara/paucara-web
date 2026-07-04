@@ -36,8 +36,8 @@ import PrestableStockController from './PrestableStockController'
 import PrestamoVendidoController from './PrestamoVendidoController'
 import CompraPrestableController from './CompraPrestableController'
 import PrestamoClienteController from './PrestamoClienteController'
-import PrestamoProveedorController from './PrestamoProveedorController'
 import PrestamoEventoController from './PrestamoEventoController'
+import PrestamoProveedorController from './PrestamoProveedorController'
 import ReportesController from './ReportesController'
 import Prestamos from './Prestamos'
 import VentaPublicController from './VentaPublicController'
@@ -144,8 +144,8 @@ PrestableStockController,
 PrestamoVendidoController,
 CompraPrestableController,
 PrestamoClienteController,
-PrestamoProveedorController,
 PrestamoEventoController,
+PrestamoProveedorController,
 ReportesController,
 Prestamos,
 VentaPublicController,
