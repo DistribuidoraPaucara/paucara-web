@@ -1,4 +1,4 @@
-import { useUnifiedNotifications } from '@/application/hooks/use-unified-notifications';
+import { useNotifications } from '@/application/contexts/notifications-context';
 import { useAuth } from '@/application/hooks/use-auth';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 import type { NotificationType } from '@/domain/entities/websocket-events';
 
 export default function ProformaNotificationPanel() {
-  const { user, roles } = useAuth();
+  const { user } = useAuth();
 
   const {
     notifications,
@@ -23,14 +23,7 @@ export default function ProformaNotificationPanel() {
     markAsRead,
     clearNotifications,
     requestNotificationPermission,
-  } = useUnifiedNotifications({
-    userRoles: roles.map((r) => r.toLowerCase()),
-    filterByRoles: true,
-    autoSubscribePublic: true,
-    autoSubscribeUser: user?.id,
-    userId: user?.id,
-    fetchAlertasVencidas: true,
-  });
+  } = useNotifications();
 
   // Detectar si hay alertas críticas de créditos no leídas
   const hasUnreadCreditos = notifications.some(

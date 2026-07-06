@@ -29,24 +29,35 @@ class PrestamoEventoController extends Controller
     {
         try {
             $query = PrestamoEvento::with([
+                'creador', // ✅ Usuario que creó el préstamo
                 'cliente',
                 'detalles.prestable',
-                'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
-                'detalles.almacenes',
-                'detalles.devolucionDetalles',  // ✅ CORREGIDO: era 'devoluciones'
+                'detalles.prestamosPorAlmacenes.almacen',
                 'chofer',
                 'almacen',
                 'ventas',
-                // ✅ MEJORADO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
-                'ubicacion' => function ($query) {
-                    $query->with(['direccionCliente.localidad', 'localidad']);
-                },
                 'ubicaciones' => function ($query) {
                     $query->with(['direccionCliente.localidad', 'localidad']);
-                },
-                'devoluciones.detalles',
-                'creador', // ✅ Usuario que creó el préstamo
+                },                
+                'devoluciones.detalles.prestamoEventoDetalle',
+                'devoluciones.detalles.prestamoEventoDetalle.prestable',
+                'devoluciones.detalles.devolucionEvento',
+                'devoluciones.detalles.devolucionesAlmacenes.almacen',
+                // 'devoluciones.detalles.devolucionesAlmacenes.almacen',  
+                /* 'devoluciones' => function ($query) {
+                    $query->with([
+                        'detalles' => function ($q) {
+                            $q->with([
+                                'detallePrestamoEvento' => function ($dq) {
+                                    $dq->with('prestable:id,tipo,nombre');
+                                },
+                                // ✅ NUEVO: Cargar almacenes de devoluciones con sus datos
+                                // 'devolucionesAlmacenes.almacen'
+                            ]);
+                        }
+                    ]);
+                }    */           
             ]);
 
             // ✅ NUEVO (2026-07-03): Filtro por rol del usuario autenticado
@@ -162,6 +173,8 @@ class PrestamoEventoController extends Controller
                 'ubicacion.localidad_id' => 'nullable|integer|exists:localidades,id',
                 'ubicacion.direccion' => 'nullable|string|max:255',
                 'ubicacion.es_ubicacion_manual' => 'nullable|boolean',
+                'ubicacion.latitud' => 'nullable|numeric|between:-90,90',
+                'ubicacion.longitud' => 'nullable|numeric|between:-180,180',
                 'detalles' => 'required|array|min:1',
                 'detalles.*.prestable_id' => 'required|exists:prestables,id',
                 'detalles.*.cantidad' => 'required|integer|min:1',
@@ -361,6 +374,8 @@ class PrestamoEventoController extends Controller
                 'ubicacion.localidad_id' => 'nullable|integer|exists:localidades,id',
                 'ubicacion.direccion' => 'nullable|string|max:255',
                 'ubicacion.es_ubicacion_manual' => 'nullable|boolean',
+                'ubicacion.latitud' => 'nullable|numeric|between:-90,90',
+                'ubicacion.longitud' => 'nullable|numeric|between:-180,180',
             ]);
 
             // Validar ubicación si viene
@@ -664,12 +679,15 @@ class PrestamoEventoController extends Controller
             $prestamo->load([
                 'detalles.prestable',
                 'detalles.prestable.condiciones',
+                // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                'detalles.almacenes.almacen',
                 'detalles.devoluciones',
                 'cliente',
                 'chofer',
                 'almacen',
                 'ventas', // ✅ Relación many-to-many
-                'devoluciones.detalles',
+                'devoluciones.detalles.prestamoEventoDetalle.prestable',
+                'devoluciones.detalles.devolucionesAlmacenes.almacen',
                 // ✅ NUEVO: Cargar ubicacion con localidad para impresión
                 'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
                 'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),

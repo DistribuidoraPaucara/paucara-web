@@ -37,12 +37,12 @@ class PrinterService
         $this->paperWidth = config('printer.paper_width', env('PRINTER_PAPER_WIDTH', 58));
         $this->enabled = config('printer.enabled', env('PRINTER_ENABLED', false));
 
-        Log::info('🖨️ PrinterService inicializado', [
+        /* Log::info('🖨️ PrinterService inicializado', [
             'host' => $this->printerHost,
             'port' => $this->printerPort,
             'paperWidth' => $this->paperWidth,
             'enabled' => $this->enabled,
-        ]);
+        ]); */
     }
 
     /**

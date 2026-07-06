@@ -31,31 +31,27 @@ class PrestamoClienteController extends Controller
     {
         try {
             $query = PrestamoCliente::with([
+                'creador',
                 'detalles.prestable',
-                'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
-                'detalles.devolucionDetalles',
-                'detalles.almacenes',
+                'detalles.prestamoPorAlmacenes.almacen',
                 'cliente',
                 'almacen',
                 'chofer',
                 'vehiculo',
-                // ✅ MEJORADO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
-                'ubicacion' => function ($query) {
-                    $query->with(['direccionCliente.localidad', 'localidad']);
-                },
                 'ubicaciones' => function ($query) {
                     $query->with(['direccionCliente.localidad', 'localidad']);
                 },
-                'creador',
-                // ✅ MEJORADO: Cargar devoluciones con sus detalles y prestables
+                // ✅ MEJORADO: Cargar devoluciones con sus detalles, prestables y almacenes
                 'devoluciones' => function ($query) {
                     $query->with([
                         'detalles' => function ($q) {
                             $q->with([
                                 'detallePrestamoCliente' => function ($dq) {
                                     $dq->with('prestable:id,tipo,nombre');
-                                }
+                                },
+                                // ✅ NUEVO: Cargar almacenes de devoluciones con sus datos
+                                'devolucionesAlmacenes.almacen'
                             ]);
                         }
                     ]);
@@ -87,7 +83,7 @@ class PrestamoClienteController extends Controller
                 $query->where('estado', $request->string('estado'));
             }
 
-            $prestamos = $query->orderByDesc('fecha_prestamo')->paginate($request->integer('per_page', 15));
+            $prestamos = $query->orderByDesc('id')->paginate($request->integer('per_page', 15));
 
             return response()->json([
                 'success' => true,
@@ -135,6 +131,8 @@ class PrestamoClienteController extends Controller
                     'localidad_id' => 'nullable|integer|exists:localidades,id',
                     'direccion' => 'nullable|string|max:255',
                     'es_ubicacion_manual' => 'nullable|boolean',
+                    'latitud' => 'nullable|numeric|between:-90,90',
+                    'longitud' => 'nullable|numeric|between:-180,180',
                 ]);
 
                 if ($validacionUbicacion->fails()) {
@@ -254,7 +252,19 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'detalles.prestable.condiciones', 'detalles.prestable.precios', 'cliente', 'almacen', 'chofer', 'vehiculo', 'ubicacion', 'creador']),
+                'data' => $prestamo->load([
+                    'detalles.prestable',
+                    'detalles.prestable.condiciones',
+                    'detalles.prestable.precios',
+                    // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                    'detalles.almacenes.almacen',
+                    'cliente',
+                    'almacen',
+                    'chofer',
+                    'vehiculo',
+                    'ubicacion',
+                    'creador'
+                ]),
                 'message' => 'Préstamo creado exitosamente',
             ], 201);
         } catch (\Exception $e) {
@@ -274,7 +284,8 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable',
                 'detalles.prestable.condiciones',
                 'detalles.prestable.precios',
-                'detalles.almacenes',
+                // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                'detalles.almacenes.almacen',
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'cliente',
                 'almacen',
@@ -383,7 +394,14 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamo->load(['detalles.prestable', 'cliente', 'chofer', 'ubicacion']),
+                'data' => $prestamo->load([
+                    'detalles.prestable',
+                    // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                    'detalles.almacenes.almacen',
+                    'cliente',
+                    'chofer',
+                    'ubicacion'
+                ]),
                 'message' => 'Préstamo actualizado exitosamente',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -545,6 +563,8 @@ class PrestamoClienteController extends Controller
             // Cargar relaciones necesarias para la impresión
             $prestamo->load([
                 'detalles.prestable',
+                // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                'detalles.almacenes.almacen',
                 'detalles.devoluciones.detallePrestamoCliente.prestable',
                 'cliente',
                 'chofer',
@@ -635,6 +655,8 @@ class PrestamoClienteController extends Controller
             // Cargar todas las devoluciones con sus detalles y relaciones
             $prestamo->load([
                 'detalles.prestable',
+                // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                'detalles.almacenes.almacen',
                 'devoluciones.detalles.detallePrestamoCliente.prestable',
                 'cliente'
             ]);
@@ -696,7 +718,13 @@ class PrestamoClienteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $prestamoAnulado->load(['detalles.prestable', 'cliente', 'chofer']),
+                'data' => $prestamoAnulado->load([
+                    'detalles.prestable',
+                    // ✅ CORREGIDO: Cargar almacenes con sus datos completos
+                    'detalles.almacenes.almacen',
+                    'cliente',
+                    'chofer'
+                ]),
                 'message' => 'Préstamo anulado exitosamente',
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {

@@ -253,7 +253,7 @@ export default function PrestablesSelectionTable({
                                     isAutomaticEmbase: i.isAutomaticEmbase
                                 })));
 
-                                items.forEach((item) => {
+                                items.forEach((item, index) => {
                                     // Usar clave única que incluya si es automático o no
                                     const itemKey = `${item.prestable_id}-${item.isAutomaticEmbase === true ? 'auto' : 'manual'}`;
                                     if (processedItems.has(itemKey)) {
@@ -285,7 +285,7 @@ export default function PrestablesSelectionTable({
                                         const bgColor = 'bg-blue-50 dark:bg-blue-900/20';
 
                                         rows.push(
-                                            <tr key={`canastilla-${item.prestable_id}`} className={`transition ${bgColor} border-b-2 border-blue-200 dark:border-blue-800`}>
+                                            <tr key={`cn-${index}-${item.prestable_id}`} className={`transition ${bgColor} border-b-2 border-blue-200 dark:border-blue-800`}>
                                                 <td className="px-2 py-2 text-center">
                                                     <span className="text-lg">{icon}</span>
                                                 </td>
@@ -394,7 +394,7 @@ export default function PrestablesSelectionTable({
                                             const bgColor = 'bg-green-50 dark:bg-green-900/10';
 
                                             rows.push(
-                                                <tr key={`embase-${embaseItem.prestable_id}`} className={`transition ${bgColor} border-l-4 border-green-300 dark:border-green-700`}>
+                                                <tr key={`em-sub-${item.prestable_id}-${embaseItem.prestable_id}`} className={`transition ${bgColor} border-l-4 border-green-300 dark:border-green-700`}>
                                                     <td className="px-2 py-2 text-center pl-6">
                                                         <span className="text-lg">{icon}</span>
                                                     </td>
@@ -485,7 +485,7 @@ export default function PrestablesSelectionTable({
                                         const bgColor = 'bg-orange-50 dark:bg-orange-900/20';
 
                                         rows.push(
-                                            <tr key={`embase-suelto-${item.prestable_id}`} className={`transition ${bgColor}`}>
+                                            <tr key={`embase-suelto-${index}-${item.prestable_id}`} className={`transition ${bgColor}`}>
                                                 <td className="px-2 py-2 text-center">
                                                     <span className="text-lg">{icon}</span>
                                                 </td>
@@ -587,7 +587,7 @@ export default function PrestablesSelectionTable({
                                         const bgColor = 'bg-slate-50 dark:bg-slate-900/20';
 
                                         rows.push(
-                                            <tr key={`item-${item.prestable_id}`} className={`transition ${bgColor}`}>
+                                            <tr key={`item-${index}-${item.prestable_id}`} className={`transition ${bgColor}`}>
                                                 <td className="px-2 py-2 text-center">
                                                     <span className="text-lg">{icon}</span>
                                                 </td>

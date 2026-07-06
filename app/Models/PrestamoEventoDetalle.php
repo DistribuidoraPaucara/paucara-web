@@ -53,6 +53,11 @@ class PrestamoEventoDetalle extends Model
         return $this->hasMany(PrestamoEventoAlmacen::class, 'prestamo_evento_detalle_id');
     }
 
+    public function prestamosPorAlmacenes(): HasMany
+    {
+        return $this->hasMany(PrestamoEventoAlmacen::class, 'prestamo_evento_detalle_id');
+    }
+
     public function devoluciones(): HasMany
     {
         return $this->hasMany(DevolucionEventoDetalle::class, 'prestamo_evento_detalle_id');

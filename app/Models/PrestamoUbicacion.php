@@ -17,10 +17,14 @@ class PrestamoUbicacion extends Model
         'localidad_id',
         'es_ubicacion_manual',
         'direccion',
+        'longitud',
+        'latitud',
     ];
 
     protected $casts = [
         'es_ubicacion_manual' => 'boolean',
+        'longitud' => 'decimal:8',
+        'latitud' => 'decimal:8',
     ];
 
     // ============================================

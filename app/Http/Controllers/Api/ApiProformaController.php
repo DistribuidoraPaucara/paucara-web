@@ -11,6 +11,7 @@ use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proforma;
 use App\Services\ComboStockService;
+use App\Services\NumeroSecuencialService;             // ✅ NUEVO: Genera números sin saltos
 use App\Services\PagoVentaService;
 use App\Services\Reservas\ReservaDistribucionService; // ✅ NUEVO: Servicio centralizado
 use App\Services\Stock\MovimientoStockService;        // ✅ CORREGIDO: namespace correcto
@@ -484,7 +485,7 @@ class ApiProformaController extends Controller
             ]);
 
             $proforma = Proforma::create([
-                'numero'                          => Proforma::generarNumeroProforma(),
+                'numero'                          => app(NumeroSecuencialService::class)->generar('PROFORMA'),
                 'fecha'                           => now(),
                 'fecha_vencimiento'               => $fechaVencimiento,
                 'cliente_id'                      => $requestData['cliente_id'],
@@ -496,8 +497,8 @@ class ApiProformaController extends Controller
                 'impuesto'                        => $impuesto,
                 'total'                           => $total,
                 'moneda_id'                       => 1, // Bolivianos por defecto
-                                                        // Usuario creador: el usuario asociado al cliente
-                                                        // IMPORTANTE: esto es user_id, NO cliente_id
+                // Usuario creador: el usuario asociado al cliente
+                // IMPORTANTE: esto es user_id, NO cliente_id
                 'usuario_creador_id'              => $usuarioCreador,
                 // ✅ NUEVO (2026-04-06): Asignar preventista_id si el usuario es preventista
                 'preventista_id'                  => $preventistaId,
@@ -789,7 +790,7 @@ class ApiProformaController extends Controller
 
         // ✅ NUEVO: Mejorar estructura de detalles para combos
         if (isset($responseData['detalles']) && is_array($responseData['detalles'])) {
-            $responseData['detalles'] = collect($responseData['detalles'])->map(function ($detalle) {
+            $responseData['detalles'] = collect($responseData['detalles'])->map(function ($detalle) use ($proforma) {
                 // Incluir combo_items_seleccionados si existen en el modelo
                 if (!isset($detalle['combo_items_seleccionados']) && isset($detalle['id'])) {
                     $detalleOriginal = $proforma->detalles->find($detalle['id']);
@@ -2493,7 +2494,7 @@ class ApiProformaController extends Controller
 
             // 5. Crear la proforma
             $proforma = Proforma::create([
-                'numero'             => Proforma::generarNumeroProforma(),
+                'numero'             => app(NumeroSecuencialService::class)->generar('PROFORMA'),
                 'fecha'              => now(),
                 'fecha_vencimiento'  => now()->addDays(7), // 7 días para aprobar
                 'cliente_id'         => $cliente->id,

@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
         $sessionData = $request->session()->all();
         $sanctumToken = $request->session()->get('sanctum_token');
 
-        \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] Estado completo de sesión:', [
+        /* \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] Estado completo de sesión:', [
             'session_id' => $sessionId,
             'session_keys' => array_keys($sessionData),
             'has_sanctum_token' => isset($sessionData['sanctum_token']),
@@ -55,16 +55,15 @@ class HandleInertiaRequests extends Middleware
             'user_id' => $request->user()?->id,
             'user_name' => $request->user()?->name,
             'request_path' => $request->getPathInfo(),
-        ]);
+        ]); */
 
-        if ($sanctumToken) {
-            \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] ✅ Token ENCONTRADO en sesión:', [
+        if (!$sanctumToken) {
+            /* \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] ✅ Token ENCONTRADO en sesión:', [
                 'token_preview' => substr($sanctumToken, 0, 20) . '...',
                 'user_id' => $request->user()?->id,
                 'user_name' => $request->user()?->name,
                 'session_id' => $sessionId,
-            ]);
-        } else {
+            ]); */
             \Illuminate\Support\Facades\Log::warning('⚠️  [HandleInertiaRequests] ❌ NO hay token en sesión - Se enviarán props con sanctumToken = null', [
                 'session_id' => $sessionId,
                 'user_id' => $request->user()?->id,

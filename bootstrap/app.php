@@ -5,6 +5,7 @@ use App\Http\Middleware\CheckCajaAbierta;
 use App\Http\Middleware\CheckPlatformAccess;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\CheckUserAttributes;
+use App\Http\Middleware\ExecutionTracer;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            ExecutionTracer::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             CheckUserActive::class,
@@ -46,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
+            ExecutionTracer::class,
             CheckUserActive::class,
             CheckUserAttributes::class,
         ]);

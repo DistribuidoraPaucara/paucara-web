@@ -99,6 +99,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             direccion: '',
             observaciones: undefined as string | undefined,
             es_ubicacion_manual: false,
+            latitud: undefined as number | undefined,
+            longitud: undefined as number | undefined,
         },
     });
 
@@ -172,7 +174,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
     // ✅ Nuevo: Sincronizar automáticamente formData.ubicacion con ubicacionSeleccionada
     useEffect(() => {
-        if (ubicacionSeleccionada && (ubicacionSeleccionada.localidad_id || ubicacionSeleccionada.direccion)) {
+        if (ubicacionSeleccionada && (ubicacionSeleccionada.localidad_id || ubicacionSeleccionada.direccion || ubicacionSeleccionada.latitud)) {
             console.log('%c🔗 AUTO-SINCRONIZANDO: ubicacionSeleccionada → formData.ubicacion', 'color: #4caf50; font-weight: bold; font-size: 12px', {
                 ubicacionSeleccionada,
             });
@@ -184,6 +186,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     observaciones: ubicacionSeleccionada.observaciones,
                     es_ubicacion_manual: ubicacionSeleccionada.es_ubicacion_manual ?? false,
                     direccion_cliente_id: ubicacionSeleccionada.direccion_cliente_id,
+                    latitud: ubicacionSeleccionada.latitud,
+                    longitud: ubicacionSeleccionada.longitud,
                 },
             }));
         }
@@ -348,6 +352,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 es_ubicacion_manual: false,
                                 direccion_cliente_id: direccionClienteId,
                                 observaciones,
+                                latitud,
+                                longitud,
                             },
                         };
                         console.log('%c📋 handleSelectVenta - Actualizando formData.ubicacion', 'color: #9c27b0; font-weight: bold; font-size: 12px', {
@@ -357,6 +363,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             direccionTexto,
                             direccionClienteId,
                             observaciones,
+                            latitud,
+                            longitud,
                         });
                         return nuevoFormData;
                     });
@@ -575,9 +583,20 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         direccion?: string;
         es_ubicacion_manual?: boolean;
     }) => {
+        console.log('%c📍 UBICACIÓN SELECCIONADA EN MAPA', 'color: #00ff00; font-weight: bold; font-size: 12px', {
+            latitud: ubicacion.latitud,
+            longitud: ubicacion.longitud,
+            localidad_id: ubicacion.localidad_id,
+            direccion: ubicacion.direccion,
+            es_ubicacion_manual: ubicacion.es_ubicacion_manual,
+        });
+
         setUbicacionSeleccionada({
             localidad_id: ubicacion.localidad_id,
             direccion: ubicacion.direccion,
+            latitud: ubicacion.latitud,
+            longitud: ubicacion.longitud,
+            es_ubicacion_manual: ubicacion.es_ubicacion_manual,
         });
 
         setFormData({
@@ -586,6 +605,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 localidad_id: ubicacion.localidad_id,
                 direccion: ubicacion.direccion || '',
                 es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
+                latitud: ubicacion.latitud,
+                longitud: ubicacion.longitud,
             },
         });
 
@@ -904,17 +925,19 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             console.log('%c📍 DEBUG: formData.ubicacion ANTES de verificar', 'color: #ff1744; font-weight: bold; font-size: 12px', formData.ubicacion);
             console.log('%c📍 DEBUG: ubicacionSeleccionada ANTES de verificar', 'color: #ff1744; font-weight: bold; font-size: 12px', ubicacionSeleccionada);
 
-            if (formData.ubicacion?.localidad_id || formData.ubicacion?.direccion) {
+            if (formData.ubicacion?.localidad_id || formData.ubicacion?.direccion || formData.ubicacion?.latitud) {
                 payload.ubicacion = {
                     localidad_id: formData.ubicacion.localidad_id || undefined,
-                    direccion: formData.ubicacion.observaciones || undefined,
+                    direccion: formData.ubicacion.direccion || undefined,
                     es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
                     direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
                     observaciones: formData.ubicacion.observaciones || undefined,
+                    latitud: formData.ubicacion.latitud || undefined,
+                    longitud: formData.ubicacion.longitud || undefined,
                 };
                 console.log('%c✅ Ubicación AGREGADA al payload', 'color: #4caf50; font-weight: bold; font-size: 12px', payload.ubicacion);
             } else {
-                console.log('%c❌ Ubicación NO agregada (localidad_id y direccion vacías)', 'color: #ff9800; font-weight: bold; font-size: 12px');
+                console.log('%c❌ Ubicación NO agregada (localidad_id, direccion y latitud vacías)', 'color: #ff9800; font-weight: bold; font-size: 12px');
             }
 
             console.log('📤 Enviando préstamo con detalles:', payload);

@@ -29,18 +29,18 @@ class PrestamoProveedorController extends Controller
         try {
             $query = PrestamoProveedor::with([
                 'detalles.prestable',
-                'detalles.almacenes',
                 'proveedor',
                 'detalles.devolucionDetalles',
+                'detalles.prestamosPorAlmacenes.almacen',
                 'almacen',
                 'chofer',
-                // ✅ NUEVO (2026-07-03): Cargar ubicacion con localidad y direccionCliente
-                'ubicacion' => function ($query) {
+                'creador',
+                'anulador',
+                /* 'ubicaciones' => function ($query) {
                     $query->with(['direccionCliente.localidad', 'localidad']);
-                },
-                'ubicaciones' => function ($query) {
-                    $query->with(['direccionCliente.localidad', 'localidad']);
-                },
+                }, */
+                'devoluciones.detalles',
+                'devoluciones.detalles.detallePrestamoProveedor.prestable',
             ]);
 
             // ✅ NUEVO (2026-07-03): Filtro por rol del usuario autenticado

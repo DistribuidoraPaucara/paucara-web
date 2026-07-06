@@ -100,6 +100,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             localidad_id: undefined as number | undefined,
             direccion: '',
             es_ubicacion_manual: false,
+            latitud: undefined as number | undefined,
+            longitud: undefined as number | undefined,
         },
     });
 
@@ -176,6 +178,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                     observaciones: ubicacionSeleccionada.observaciones,
                     es_ubicacion_manual: ubicacionSeleccionada.es_ubicacion_manual ?? false,
                     direccion_cliente_id: ubicacionSeleccionada.direccion_cliente_id,
+                    latitud: ubicacionSeleccionada.latitud,
+                    longitud: ubicacionSeleccionada.longitud,
                 },
             }));
         }
@@ -544,9 +548,20 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         direccion?: string;
         es_ubicacion_manual?: boolean;
     }) => {
+        console.log('%c📍 UBICACIÓN SELECCIONADA EN MAPA', 'color: #00ff00; font-weight: bold; font-size: 12px', {
+            latitud: ubicacion.latitud,
+            longitud: ubicacion.longitud,
+            localidad_id: ubicacion.localidad_id,
+            direccion: ubicacion.direccion,
+            es_ubicacion_manual: ubicacion.es_ubicacion_manual,
+        });
+
         setUbicacionSeleccionada({
             localidad_id: ubicacion.localidad_id,
             direccion: ubicacion.direccion,
+            latitud: ubicacion.latitud,
+            longitud: ubicacion.longitud,
+            es_ubicacion_manual: ubicacion.es_ubicacion_manual,
         });
 
         setFormData({
@@ -555,6 +570,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 localidad_id: ubicacion.localidad_id,
                 direccion: ubicacion.direccion || '',
                 es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
+                latitud: ubicacion.latitud,
+                longitud: ubicacion.longitud,
             },
         });
 
@@ -829,13 +846,15 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             };
 
             // ✅ Agregar ubicación si está seleccionada
-            if (formData.ubicacion.localidad_id || formData.ubicacion.direccion) {
+            if (formData.ubicacion.localidad_id || formData.ubicacion.direccion || formData.ubicacion.latitud) {
                 payload.ubicacion = {
                     localidad_id: formData.ubicacion.localidad_id || undefined,
                     direccion: formData.ubicacion.direccion || undefined,
                     es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
                     direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
                     observaciones: formData.ubicacion.observaciones || undefined,
+                    latitud: formData.ubicacion.latitud || undefined,
+                    longitud: formData.ubicacion.longitud || undefined,
                 };
             }
 

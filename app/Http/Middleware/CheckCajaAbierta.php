@@ -61,13 +61,13 @@ class CheckCajaAbierta
                 $fechaApertura = $cajaAbierta->fecha->toDateString();
                 $hoy = today()->toDateString();
 
-                if ($fechaApertura < $hoy) {
+                /* if ($fechaApertura < $hoy) {
                     Log::warning('CheckCajaAbierta: Usuario usando caja abierta de día anterior', [
                         'user_id' => $user->id,
                         'fecha_apertura' => $fechaApertura,
                         'caja_id' => $cajaAbierta->caja_id,
                     ]);
-                }
+                } */
             }
         }
 

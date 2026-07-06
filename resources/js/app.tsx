@@ -15,6 +15,7 @@ import { ToastContainer } from 'react-toastify';
 import { initializeTheme } from '@/presentation/hooks/use-appearance';
 import { configureAxios } from '@/infrastructure/config/axios.config';
 import { EstadosProvider } from '@/application/contexts/EstadosContext';
+import { NotificationsProvider } from '@/application/contexts/notifications-context';
 
 // Get appName from window props injected by Laravel, fallback to env, then 'Laravel'
 const getAppName = (): string => {
@@ -54,10 +55,16 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
+        // ✅ Obtener datos del usuario de las props de Inertia
+        const userId = (props.auth?.user as any)?.id || undefined;
+        const userRoles = (props.auth?.roles as any) || [];
+
         root.render(
             <>
                 <EstadosProvider>
-                    <App {...props} />
+                    <NotificationsProvider userId={userId} userRoles={userRoles}>
+                        <App {...props} />
+                    </NotificationsProvider>
                 </EstadosProvider>
                 <ToastContainer
                     position="top-right"

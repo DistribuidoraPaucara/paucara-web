@@ -70,8 +70,8 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
     // Map event names to titles and messages
     const notificationMap: Record<string, { title: string; message: (data: any) => string }> = {
       'proforma.creada': {
-        title: '📋 Nueva Proforma',
-        message: (d) => `${d.clienteNombre || d.cliente?.nombre || 'Cliente'} - ${d.numero || d.proforma_numero}`,
+        title: '📋 Nueva Pedido',
+        message: (d) => `${d.clienteNombre || d.cliente?.nombre || 'Cliente'} - Folio #${d.id}`,
       },
       'proforma.aprobada': {
         title: '✅ Proforma Aprobada',
