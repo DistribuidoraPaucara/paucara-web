@@ -3,84 +3,57 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Filter, Loader, AlertCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { formatCurrencyWith2Decimals } from '@/lib/utils';
 
 interface Filtros {
     chofer_id: number | null;
     fecha_desde: string;
     fecha_hasta: string;
-    estado_logistico: string;
-    estado_documento: string;
-    estado_venta_logistica: string;
-    tipo_entrega: string;
 }
 
-interface Confirmacion {
-    id: number;
-    tipo_entrega: string;
-    tipo_confirmacion: string;
-    fecha: string;
-    observaciones: string;
-}
-
-interface Producto {
-    id: number;
+interface ProductoDetalle {
+    producto_id: number;
     nombre: string;
     sku: string;
+    unidad_medida: string;
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
 }
 
-interface Venta {
-    id: number;
-    numero: string;
+interface VentaAgrupada {
+    venta_id: number;
+    numero_venta: string;
     cliente: {
         id: number;
         nombre: string;
         nit: string;
     };
-    estado_documento: {
-        id: number;
-        codigo: string;
-        nombre: string;
-    };
-    total: number;
-    productos: Producto[];
-    confirmaciones: Confirmacion[];
-}
-
-interface Entrega {
-    id: number;
-    numero_entrega: string;
-    fecha_entrega: string;
-    estado_logistico: {
-        id: number;
-        codigo: string;
-        nombre: string;
-    };
-    ventas: Venta[];
+    total_venta: number;
+    tipo_confirmacion: 'COMPLETA' | 'DEVOLUCION_PARCIAL';
+    confirmado_en: string;
+    monto_devuelto: number;
+    productos: ProductoDetalle[];
 }
 
 interface Resumen {
-    total_entregas: number;
-    entregas_completas: number;
-    entregas_con_novedad: number;
+    total_confirmaciones: number;
+    confirmaciones_completas: number;
+    devoluciones_parciales: number;
     total_ventas: number;
     total_productos: number;
     total_monetario: number;
-    fecha_desde: string;
-    fecha_hasta: string;
+    total_devuelto: number;
 }
 
 interface ProductoResumen {
-    id: number;
+    producto_id: number;
     nombre: string;
     sku: string;
-    cantidad: number;
-    subtotal: number;
     unidad_medida: string;
+    cantidad_total: number;
+    valor_total: number;
 }
 
 interface Reporte {
@@ -92,18 +65,11 @@ interface Reporte {
     filtros: Filtros;
     resumen: Resumen;
     productos_resumen: ProductoResumen[];
-    total_ventas: number;
-    entregas: Entrega[];
+    productos_por_venta: VentaAgrupada[];
 }
 
 interface Chofer {
     id: number;
-    nombre: string;
-}
-
-interface EstadoLogistico {
-    id: number;
-    codigo: string;
     nombre: string;
 }
 
@@ -121,54 +87,14 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
         chofer_id: null,
         fecha_desde: primeroDeMes,
         fecha_hasta: hoy,
-        estado_logistico: '',
-        estado_documento: '',
-        estado_venta_logistica: '',
-        tipo_entrega: '',
     });
 
     const [reporte, setReporte] = useState<Reporte | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(true);
-    const [activeTab, setActiveTab] = useState<'entregas' | 'productos'>('entregas');
-    const [estadosLogisticos, setEstadosLogisticos] = useState<EstadoLogistico[]>([]);
-    const [estadosDocumento, setEstadosDocumento] = useState<EstadoLogistico[]>([]);
-    const [estadosVentaLogistica, setEstadosVentaLogistica] = useState<EstadoLogistico[]>([]);
+    const [activeTab, setActiveTab] = useState<'ventas' | 'productos'>('ventas');
 
-    // Cargar estados al montar el componente
-    useEffect(() => {
-        const cargarEstados = async () => {
-            try {
-                // Cargar estados logísticos (entregas)
-                const responseEntrega = await fetch('/api/estados/entrega');
-                if (responseEntrega.ok) {
-                    const dataEntrega = await responseEntrega.json();
-                    setEstadosLogisticos(dataEntrega.data || []);
-                }
-
-                // Cargar estados de documento
-                const responseDocumento = await fetch('/api/estados-documento');
-                if (responseDocumento.ok) {
-                    const dataDocumento = await responseDocumento.json();
-                    setEstadosDocumento(dataDocumento.data || []);
-                }
-
-                // Cargar estados de venta logística
-                const responseVentaLogistica = await fetch('/api/estados/venta_logistica');
-                if (responseVentaLogistica.ok) {
-                    const dataVentaLogistica = await responseVentaLogistica.json();
-                    setEstadosVentaLogistica(dataVentaLogistica.data || []);
-                }
-            } catch (err) {
-                console.error('Error cargando estados:', err);
-            }
-        };
-
-        cargarEstados();
-    }, []);
-
-    // Obtener reporte
     const handleBuscar = async () => {
         if (!filtros.chofer_id) {
             setError('Selecciona un chofer');
@@ -182,10 +108,6 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
             const params = new URLSearchParams({
                 fecha_desde: filtros.fecha_desde,
                 fecha_hasta: filtros.fecha_hasta,
-                ...(filtros.estado_logistico && { estado_logistico: filtros.estado_logistico }),
-                ...(filtros.estado_documento && { estado_documento: filtros.estado_documento }),
-                ...(filtros.estado_venta_logistica && { estado_venta_logistica: filtros.estado_venta_logistica }),
-                ...(filtros.tipo_entrega && { tipo_entrega: filtros.tipo_entrega }),
             });
 
             const response = await fetch(
@@ -198,6 +120,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
 
             const data = await response.json();
             setReporte(data.data);
+            setActiveTab('ventas');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al obtener reporte');
         } finally {
@@ -205,16 +128,11 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
         }
     };
 
-    // Resetear filtros
     const handleReset = () => {
         setFiltros({
             chofer_id: null,
             fecha_desde: primeroDeMes,
             fecha_hasta: hoy,
-            estado_logistico: '',
-            estado_documento: '',
-            estado_venta_logistica: '',
-            tipo_entrega: '',
         });
         setReporte(null);
     };
@@ -228,42 +146,39 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit',
         }).format(date);
     };
 
-    const getTipoEntregaColor = (tipo: string) => {
+    const getEstadoConfirmacionColor = (tipo: 'COMPLETA' | 'DEVOLUCION_PARCIAL') => {
         switch (tipo) {
             case 'COMPLETA':
                 return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200';
-            case 'CON_NOVEDAD':
+            case 'DEVOLUCION_PARCIAL':
                 return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200';
         }
     };
 
-    const getEstadoLogisticoColor = (codigo: string) => {
-        switch (codigo) {
-            case 'ENTREGADA':
-                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200';
-            case 'EN_TRANSITO':
-                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
-            case 'PROGRAMADO':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200';
+    const getEstadoConfirmacionLabel = (tipo: 'COMPLETA' | 'DEVOLUCION_PARCIAL') => {
+        switch (tipo) {
+            case 'COMPLETA':
+                return '✅ Completa';
+            case 'DEVOLUCION_PARCIAL':
+                return '⚠️ Devolución Parcial';
             default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200';
+                return 'Desconocido';
         }
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Logística', href: '#' }, { title: 'Reporte Entregas Chofer' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Logística', href: '#' }, { title: 'Reporte Entregas Chofer', href: '#' }]}>
             <Head title="Reporte Entregas Chofer" />
 
             <div className="px-6 py-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reporte de Entregas</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reporte de Entregas por Confirmación</h1>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
@@ -329,89 +244,6 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                 />
                             </div>
-
-                            {/* Estado Logístico */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Estado Logístico
-                                </label>
-                                <select
-                                    value={filtros.estado_logistico}
-                                    onChange={(e) =>
-                                        setFiltros({ ...filtros, estado_logistico: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">Todos</option>
-                                    {estadosLogisticos.map((estado) => (
-                                        <option key={estado.id} value={estado.codigo}>
-                                            {estado.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Estado Documento */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Estado Documento
-                                </label>
-                                <select
-                                    value={filtros.estado_documento}
-                                    onChange={(e) =>
-                                        setFiltros({ ...filtros, estado_documento: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">Todos</option>
-                                    {estadosDocumento.map((estado) => (
-                                        <option key={estado.id} value={estado.codigo}>
-                                            {estado.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Estado Venta Logística */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Estado Venta Logística
-                                </label>
-                                <select
-                                    value={filtros.estado_venta_logistica}
-                                    onChange={(e) =>
-                                        setFiltros({ ...filtros, estado_venta_logistica: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">Todos</option>
-                                    {estadosVentaLogistica.map((estado) => (
-                                        <option key={estado.id} value={estado.codigo}>
-                                            {estado.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Tipo Entrega */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Tipo Entrega
-                                </label>
-                                <select
-                                    value={filtros.tipo_entrega}
-                                    onChange={(e) =>
-                                        setFiltros({ ...filtros, tipo_entrega: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="COMPLETA">Completa</option>
-                                    <option value="CON_NOVEDAD">Con Novedad</option>
-                                    <option value="RECHAZADA">Rechazada</option>
-                                    <option value="CLIENTE_CERRADO">Cliente Cerrado</option>
-                                </select>
-                            </div>
                         </div>
 
                         {/* Botones */}
@@ -447,18 +279,18 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                         </div>
 
                         {/* Resumen Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Entregas</p>
-                                <p className="text-2xl font-bold">{reporte.resumen.total_entregas}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Confirmaciones</p>
+                                <p className="text-2xl font-bold">{reporte.resumen.total_confirmaciones}</p>
                             </div>
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Completas</p>
-                                <p className="text-2xl font-bold text-green-600">{reporte.resumen.entregas_completas}</p>
+                                <p className="text-2xl font-bold text-green-600">{reporte.resumen.confirmaciones_completas}</p>
                             </div>
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Con Novedad</p>
-                                <p className="text-2xl font-bold text-orange-600">{reporte.resumen.entregas_con_novedad}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Devoluciones Parciales</p>
+                                <p className="text-2xl font-bold text-orange-600">{reporte.resumen.devoluciones_parciales}</p>
                             </div>
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Monetario</p>
@@ -466,127 +298,127 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                     {formatCurrencyWith2Decimals(reporte.resumen.total_monetario, 'BOB')}
                                 </p>
                             </div>
-                            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Ventas</p>
-                                <p className="text-2xl font-bold">{reporte.resumen.total_ventas}</p>
-                            </div>
                         </div>
+
+                        {/* Card adicional para devoluciones */}
+                        {reporte.resumen.total_devuelto > 0 && (
+                            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">
+                                    Total Devuelto: {formatCurrencyWith2Decimals(reporte.resumen.total_devuelto, 'BOB')}
+                                </p>
+                            </div>
+                        )}
 
                         {/* Pestañas */}
                         <div className="flex gap-4 border-b border-gray-200 dark:border-gray-800">
                             <button
-                                onClick={() => setActiveTab('entregas')}
-                                className={`px-4 py-3 font-semibold border-b-2 transition ${activeTab === 'entregas'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                                    }`}
+                                onClick={() => setActiveTab('ventas')}
+                                className={`px-4 py-3 font-semibold border-b-2 transition ${
+                                    activeTab === 'ventas'
+                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                }`}
                             >
-                                Entregas
+                                Ventas Entregadas
                             </button>
                             <button
                                 onClick={() => setActiveTab('productos')}
-                                className={`px-4 py-3 font-semibold border-b-2 transition ${activeTab === 'productos'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                                    }`}
+                                className={`px-4 py-3 font-semibold border-b-2 transition ${
+                                    activeTab === 'productos'
+                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                }`}
                             >
                                 Resumen de Productos
                             </button>
                         </div>
 
-                        {/* Contenido Entregas */}
-                        {activeTab === 'entregas' && (
+                        {/* Contenido Ventas */}
+                        {activeTab === 'ventas' && (
                             <div className="space-y-4">
-                                <h3 className="text-lg font-bold">Entregas</h3>
-                                {reporte.entregas.map((entrega) => (
-                                    <div
-                                        key={entrega.id}
-                                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6"
-                                    >
-                                        {/* Header Entrega */}
-                                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-                                            <div>
-                                                <h4 className="font-bold text-lg">{entrega.numero_entrega}</h4>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {formatearFecha(entrega.fecha_entrega)}
-                                                </p>
-                                            </div>
-                                            <Badge className={getEstadoLogisticoColor(entrega.estado_logistico.codigo)}>
-                                                {entrega.estado_logistico.nombre}
-                                            </Badge>
-                                        </div>
-
-                                        {/* Ventas */}
-                                        <div className="space-y-4">
-                                            {entrega.ventas.map((venta) => (
-                                                <div
-                                                    key={venta.id}
-                                                    className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3"
-                                                >
-                                                    {/* Venta Header */}
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="font-semibold">{venta.numero}</p>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                {venta.cliente.nombre}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-bold">
-                                                                {formatCurrencyWith2Decimals(venta.total, 'BOB')}
-                                                            </p>
-                                                            <Badge className="mt-1">
-                                                                {venta.estado_documento.nombre}
-                                                            </Badge>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Confirmaciones */}
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {venta.confirmaciones.map((conf) => (
-                                                            <Badge
-                                                                key={conf.id}
-                                                                className={getTipoEntregaColor(conf.tipo_entrega)}
-                                                            >
-                                                                {conf.tipo_entrega}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Productos */}
-                                                    <div className="text-sm">
-                                                        <p className="font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                                                            Productos ({venta.productos.length})
-                                                        </p>
-                                                        <div className="space-y-1">
-                                                            {venta.productos.map((prod) => (
-                                                                <div
-                                                                    key={prod.id}
-                                                                    className="flex items-center justify-between text-gray-600 dark:text-gray-400"
-                                                                >
-                                                                    <span>
-                                                                        {prod.nombre} ({prod.sku}) - {prod.cantidad} unidades
-                                                                    </span>
-                                                                    <span>
-                                                                        {formatCurrencyWith2Decimals(prod.subtotal, 'BOB')}
-                                                                    </span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                <h3 className="text-lg font-bold">Ventas Entregadas</h3>
+                                {reporte.productos_por_venta.length === 0 ? (
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                                        <p className="text-yellow-800 dark:text-yellow-200">No hay confirmaciones para los filtros seleccionados</p>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                ) : (
+                                    reporte.productos_por_venta.map((ventaAgrupada) => (
+                                        <div
+                                            key={ventaAgrupada.venta_id}
+                                            className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6"
+                                        >
+                                            {/* Header Venta */}
+                                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
+                                                <div>
+                                                    <h4 className="font-bold text-lg">{ventaAgrupada.numero_venta}</h4>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Cliente: {ventaAgrupada.cliente.nombre} (NIT: {ventaAgrupada.cliente.nit})
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <Badge className={getEstadoConfirmacionColor(ventaAgrupada.tipo_confirmacion)}>
+                                                        {getEstadoConfirmacionLabel(ventaAgrupada.tipo_confirmacion)}
+                                                    </Badge>
+                                                </div>
+                                            </div>
 
-                        {/* Sin resultados Entregas */}
-                        {activeTab === 'entregas' && reporte.entregas.length === 0 && (
-                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-center gap-3">
-                                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                                <p className="text-yellow-800 dark:text-yellow-200">No hay entregas para los filtros seleccionados</p>
+                                            {/* Info de la Venta */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
+                                                <div>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Venta</p>
+                                                    <p className="font-bold">
+                                                        {formatCurrencyWith2Decimals(ventaAgrupada.total_venta, 'BOB')}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">Confirmado En</p>
+                                                    <p className="font-bold text-sm">{formatearFecha(ventaAgrupada.confirmado_en)}</p>
+                                                </div>
+                                                {ventaAgrupada.monto_devuelto > 0 && (
+                                                    <div>
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">Monto Devuelto</p>
+                                                        <p className="font-bold text-orange-600">
+                                                            {formatCurrencyWith2Decimals(ventaAgrupada.monto_devuelto, 'BOB')}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Productos */}
+                                            <div>
+                                                <p className="font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                                                    Productos ({ventaAgrupada.productos.length})
+                                                </p>
+                                                <div className="space-y-2">
+                                                    {ventaAgrupada.productos.map((prod) => (
+                                                        <div
+                                                            key={prod.producto_id}
+                                                            className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-sm"
+                                                        >
+                                                            <div>
+                                                                <p className="font-semibold text-gray-900 dark:text-white">
+                                                                    {prod.nombre}
+                                                                </p>
+                                                                <p className="text-gray-600 dark:text-gray-400">
+                                                                    SKU: {prod.sku} | Unidad: {prod.unidad_medida}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="font-semibold">
+                                                                    {prod.cantidad.toFixed(2)} x{' '}
+                                                                    {formatCurrencyWith2Decimals(prod.precio_unitario, 'BOB')}
+                                                                </p>
+                                                                <p className="text-gray-600 dark:text-gray-400">
+                                                                    {formatCurrencyWith2Decimals(prod.subtotal, 'BOB')}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
 
@@ -598,37 +430,67 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">#</th>
-                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Producto</th>
-                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">SKU</th>
-                                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Cantidad</th>
-                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Unidad</th>
-                                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Subtotal</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                                        #
+                                                    </th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Producto
+                                                    </th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                                        SKU
+                                                    </th>
+                                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Cantidad Total
+                                                    </th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Unidad
+                                                    </th>
+                                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Valor Total
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                                 {reporte.productos_resumen.map((producto, index) => (
-                                                    <tr key={producto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
-                                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{index + 1}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{producto.nombre}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{producto.sku}</td>
-                                                        <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                                                            {producto.cantidad.toFixed(2)}
+                                                    <tr
+                                                        key={producto.producto_id}
+                                                        className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                                                    >
+                                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                                            {index + 1}
                                                         </td>
-                                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{producto.unidad_medida}</td>
-                                                        <td className="px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                            {formatCurrencyWith2Decimals(producto.subtotal, 'BOB')}
+                                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                            {producto.nombre}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                                            {producto.sku}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                            {producto.cantidad_total.toFixed(2)}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                                            {producto.unidad_medida}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                            {formatCurrencyWith2Decimals(producto.valor_total, 'BOB')}
                                                         </td>
                                                     </tr>
                                                 ))}
                                                 <tr className="bg-gray-100 dark:bg-gray-800 font-semibold border-t-2 border-gray-200 dark:border-gray-700">
-                                                    <td colSpan={3} className="px-6 py-4 text-sm text-gray-900 dark:text-white">TOTAL</td>
+                                                    <td colSpan={3} className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                        TOTAL
+                                                    </td>
                                                     <td className="px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                        {reporte.productos_resumen.reduce((sum, p) => sum + p.cantidad, 0).toFixed(2)}
+                                                        {reporte.productos_resumen
+                                                            .reduce((sum, p) => sum + p.cantidad_total, 0)
+                                                            .toFixed(2)}
                                                     </td>
                                                     <td></td>
                                                     <td className="px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                        {formatCurrencyWith2Decimals(reporte.productos_resumen.reduce((sum, p) => sum + p.subtotal, 0), 'BOB')}
+                                                        {formatCurrencyWith2Decimals(
+                                                            reporte.productos_resumen.reduce((sum, p) => sum + p.valor_total, 0),
+                                                            'BOB'
+                                                        )}
                                                     </td>
                                                 </tr>
                                             </tbody>
