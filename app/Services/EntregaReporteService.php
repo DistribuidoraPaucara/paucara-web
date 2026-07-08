@@ -58,6 +58,7 @@ class EntregaReporteService
 
     /**
      * Obtener confirmaciones filtradas
+     * IMPORTANTE: Solo la última confirmación por venta_id (id DESC)
      */
     private function obtenerConfirmacionesFiltradas(
         int $chofer,
@@ -65,7 +66,7 @@ class EntregaReporteService
         string $fechaHasta,
         array $estadosValidos
     ): Collection {
-        return EntregaVentaConfirmacion::where('confirmado_por', $chofer)
+        $confirmaciones = EntregaVentaConfirmacion::where('confirmado_por', $chofer)
             ->whereBetween('confirmado_en', [
                 $fechaDesde . ' 00:00:00',
                 $fechaHasta . ' 23:59:59',
@@ -77,8 +78,11 @@ class EntregaReporteService
                 'entrega',
                 'confirmadoPor',
             ])
-            ->orderByDesc('confirmado_en')
+            ->orderByDesc('id')  // Ordenar por id DESC para tomar la más reciente
             ->get();
+
+        // Tomar solo la última confirmación por venta_id
+        return $confirmaciones->uniqueStrict('venta_id');
     }
 
     /**
