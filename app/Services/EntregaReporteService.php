@@ -83,6 +83,7 @@ class EntregaReporteService
 
     /**
      * Calcular resumen general de confirmaciones
+     * IMPORTANTE: Contar solo productos entregados (resta devueltos)
      */
     private function calcularResumen(Collection $confirmaciones, array $estadosValidos): array
     {
@@ -111,8 +112,25 @@ class EntregaReporteService
             if ($confirmacion->venta) {
                 $resumen['total_monetario'] += (float) $confirmacion->venta->total;
 
-                // Contar productos en la venta
-                $resumen['total_productos'] += $confirmacion->venta->detalles->count();
+                // Obtener productos devueltos (si hay DEVOLUCION_PARCIAL)
+                $productosDevueltos = [];
+                if ($confirmacion->tipo_confirmacion === 'DEVOLUCION_PARCIAL' && is_array($confirmacion->productos_devueltos)) {
+                    foreach ($confirmacion->productos_devueltos as $productoDevuelto) {
+                        $productosDevueltos[$productoDevuelto['producto_id'] ?? null] = (float) ($productoDevuelto['cantidad'] ?? 0);
+                    }
+                }
+
+                // Contar solo productos efectivamente entregados (no devueltos)
+                foreach ($confirmacion->venta->detalles as $detalle) {
+                    $cantidadEntregada = (float) $detalle->cantidad;
+                    $cantidadDevuelta = $productosDevueltos[$detalle->producto_id] ?? 0;
+                    $cantidadNeta = $cantidadEntregada - $cantidadDevuelta;
+
+                    // Solo contar si hay cantidad neta positiva
+                    if ($cantidadNeta > 0) {
+                        $resumen['total_productos']++;
+                    }
+                }
 
                 // Acumular devoluciones
                 if ($confirmacion->tipo_confirmacion === 'DEVOLUCION_PARCIAL') {
@@ -126,6 +144,7 @@ class EntregaReporteService
 
     /**
      * Agrupar productos por venta entregada
+     * IMPORTANTE: Resta los productos devueltos en DEVOLUCION_PARCIAL
      */
     private function agruparProductosPorVenta(Collection $confirmaciones, array $estadosValidos): array
     {
@@ -155,9 +174,24 @@ class EntregaReporteService
                 ];
             }
 
-            // Agregar productos de esta venta
+            // Obtener productos devueltos (si hay DEVOLUCION_PARCIAL)
+            $productosDevueltos = [];
+            if ($confirmacion->tipo_confirmacion === 'DEVOLUCION_PARCIAL' && is_array($confirmacion->productos_devueltos)) {
+                foreach ($confirmacion->productos_devueltos as $productoDevuelto) {
+                    $productosDevueltos[$productoDevuelto['producto_id'] ?? null] = (float) ($productoDevuelto['cantidad'] ?? 0);
+                }
+            }
+
+            // Agregar productos de esta venta (restando los devueltos)
             foreach ($confirmacion->venta->detalles as $detalle) {
                 $productoId = $detalle->producto_id;
+                $cantidadEntregada = (float) $detalle->cantidad;
+                $cantidadDevuelta = $productosDevueltos[$productoId] ?? 0;
+
+                // Si la cantidad devuelta es >= cantidad total, no incluir el producto
+                if ($cantidadEntregada - $cantidadDevuelta <= 0) {
+                    continue;
+                }
 
                 if (!isset($productosAgrupados[$ventaId]['productos'][$productoId])) {
                     $productosAgrupados[$ventaId]['productos'][$productoId] = [
@@ -171,8 +205,12 @@ class EntregaReporteService
                     ];
                 }
 
-                $productosAgrupados[$ventaId]['productos'][$productoId]['cantidad'] += (float) $detalle->cantidad;
-                $productosAgrupados[$ventaId]['productos'][$productoId]['subtotal'] += (float) $detalle->subtotal;
+                // Calcular cantidad y subtotal NETO (entregado - devuelto)
+                $cantidadNeta = $cantidadEntregada - $cantidadDevuelta;
+                $subtotalNeto = $cantidadNeta * (float) $detalle->precio_unitario;
+
+                $productosAgrupados[$ventaId]['productos'][$productoId]['cantidad'] += $cantidadNeta;
+                $productosAgrupados[$ventaId]['productos'][$productoId]['subtotal'] += $subtotalNeto;
             }
 
             // Convertir array de productos a valores indexados
