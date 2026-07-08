@@ -71,6 +71,7 @@ class EmpresaController extends Controller
             'logo_principal' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_compacto' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_footer' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
+            'fav_ico' => ['nullable', 'file', 'max:2048', 'mimes:x-icon,image/png,image/svg+xml,png,svg'],
             'mensaje_footer' => ['nullable', 'string', 'max:500'],
             'mensaje_legal' => ['nullable', 'string'],
             'activo' => ['nullable', 'boolean'],
@@ -193,12 +194,12 @@ class EmpresaController extends Controller
     }
 
     /**
-     * Procesar y guardar logos
+     * Procesar y guardar logos + favicon
      *
      * @param Request $request
      * @param array $data
-     * @param Empresa|null $empresa Empresa existente (para borrar logos viejos)
-     * @return array Datos con URLs de logos
+     * @param Empresa|null $empresa Empresa existente (para borrar archivos viejos)
+     * @return array Datos con URLs de logos y favicon
      */
     private function procesarLogos(Request $request, array $data, ?Empresa $empresa = null): array
     {
@@ -210,31 +211,47 @@ class EmpresaController extends Controller
             if ($request->hasFile($field)) {
                 // Eliminar logo anterior si existe
                 if ($empresa && $empresa->$field) {
-                    // Extraer la ruta relativa del logo anterior
                     $logoAnterior = $empresa->$field;
-                    // Si es URL, extraer la parte relativa; si ya es relativa, usarla directa
                     if (strpos($logoAnterior, 'http') === 0) {
                         $path = str_replace(Storage::disk('public')->url(''), '', $logoAnterior);
                     } else {
                         $path = $logoAnterior;
                     }
-                    // Limpiar la ruta
                     $path = ltrim($path, '/');
                     Storage::disk('public')->delete($path);
                 }
 
-                // Guardar nuevo logo
                 $file = $request->file($field);
                 $storagePath = $file->store('empresas', 'public');
-
-                // Guardar solo la ruta relativa (sin dominio)
-                // Formato: storage/empresas/nombre-archivo.png
                 $data[$field] = '/storage/' . $storagePath;
             } else {
-                // Si no hay archivo nuevo, mantener el anterior
                 if ($empresa && isset($data[$field])) {
                     unset($data[$field]);
                 }
+            }
+        }
+
+        // Procesar favicon
+        if ($request->hasFile('fav_ico')) {
+            // Eliminar favicon anterior si existe
+            if ($empresa && $empresa->fav_ico) {
+                $favAnterior = $empresa->fav_ico;
+                if (strpos($favAnterior, 'http') === 0) {
+                    $path = str_replace(Storage::disk('public')->url(''), '', $favAnterior);
+                } else {
+                    $path = $favAnterior;
+                }
+                $path = ltrim($path, '/');
+                Storage::disk('public')->delete($path);
+            }
+
+            // Guardar nuevo favicon
+            $file = $request->file('fav_ico');
+            $storagePath = $file->store('empresas/favicons', 'public');
+            $data['fav_ico'] = '/storage/' . $storagePath;
+        } else {
+            if ($empresa && isset($data['fav_ico'])) {
+                unset($data['fav_ico']);
             }
         }
 

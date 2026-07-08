@@ -16,13 +16,14 @@ export interface Empresa extends BaseEntity {
   logo_principal?: string | null;
   logo_compacto?: string | null;
   logo_footer?: string | null;
+  fav_ico?: string | null;
   mensaje_footer?: string | null;
   mensaje_legal?: string | null;
   configuracion_impresion?: Record<string, any>;
   activo: boolean;
   es_principal: boolean;
-  permite_productos_fraccionados?: boolean; // ✨ NUEVO
-  es_farmacia?: boolean; // ✨ NUEVO
+  permite_productos_fraccionados?: boolean;
+  es_farmacia?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -41,10 +42,11 @@ export interface EmpresaFormData extends BaseFormData {
   logo_principal?: File | string | null;
   logo_compacto?: File | string | null;
   logo_footer?: File | string | null;
+  fav_ico?: File | string | null;
   mensaje_footer?: string | null;
   mensaje_legal?: string | null;
   activo?: boolean;
   es_principal?: boolean;
-  permite_productos_fraccionados?: boolean; // ✨ NUEVO
-  es_farmacia?: boolean; // ✨ NUEVO
+  permite_productos_fraccionados?: boolean;
+  es_farmacia?: boolean;
 }

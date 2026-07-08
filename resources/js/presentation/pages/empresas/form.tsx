@@ -32,12 +32,13 @@ const initialEmpresaData: EmpresaFormData = {
   logo_principal: null,
   logo_compacto: null,
   logo_footer: null,
+  fav_ico: null,
   mensaje_footer: '',
   mensaje_legal: '',
   activo: true,
   es_principal: false,
-  permite_productos_fraccionados: false, // ✨ NUEVO
-  es_farmacia: false, // ✨ NUEVO
+  permite_productos_fraccionados: false,
+  es_farmacia: false,
 };
 
 export default function EmpresaForm({ empresa }: EmpresaFormPageProps) {

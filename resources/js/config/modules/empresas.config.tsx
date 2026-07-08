@@ -115,6 +115,13 @@ export const empresasConfig: ModuleConfig<Empresa, EmpresaFormData> = {
       description: 'Sube el logo para footer (JPEG, PNG, JPG, GIF - máx 4MB)',
       validation: { maxSize: 4096 }
     },
+    {
+      key: 'fav_ico',
+      label: 'Favicon',
+      type: 'file',
+      description: 'Sube el favicon (ICO, PNG, SVG - máx 2MB)',
+      validation: { maxSize: 2048 }
+    },
 
     // Mensajes
     {

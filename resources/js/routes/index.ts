@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../wayfinder'
 /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
 home.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
     const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
         homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:11
+ * @see routes/web.php:12
  * @route '/'
  */
         homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -70,6 +70,84 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     home.form = homeForm
+/**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+export const favicon = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: favicon.url(options),
+    method: 'get',
+})
+
+favicon.definition = {
+    methods: ["get","head"],
+    url: '/dynamic-favicon',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+favicon.url = (options?: RouteQueryOptions) => {
+    return favicon.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+favicon.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: favicon.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+favicon.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: favicon.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+    const faviconForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: favicon.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+        faviconForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: favicon.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\FaviconController::__invoke
+ * @see app/Http/Controllers/FaviconController.php:12
+ * @route '/dynamic-favicon'
+ */
+        faviconForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: favicon.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    favicon.form = faviconForm
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
  * @see app/Http/Controllers/DashboardController.php:21

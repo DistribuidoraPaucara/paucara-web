@@ -93,7 +93,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(true);
-    const [activeTab, setActiveTab] = useState<'ventas' | 'productos'>('ventas');
+    const [activeTab, setActiveTab] = useState<'ventas' | 'productos'>('productos');
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
     const toggleRowExpanded = (ventaId: number) => {
@@ -335,13 +335,13 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                         </div>
 
                         {/* Card adicional para devoluciones */}
-                        {reporte.resumen.total_devuelto > 0 && (
+                        {/* {reporte.resumen.total_devuelto > 0 && (
                             <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
                                 <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">
                                     Total Devuelto: {formatCurrencyWith2Decimals(reporte.resumen.total_devuelto, 'BOB')}
                                 </p>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Pestañas */}
                         <div className="flex gap-4 border-b border-gray-200 dark:border-gray-800">

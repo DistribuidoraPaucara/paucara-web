@@ -293,6 +293,14 @@ export default function GenericFormFields<F extends BaseFormData>({
         {
           const fileValue = value as File | string | null | undefined;
           const previewValue = (data as any)[`${String(field.key)}_preview`];
+          const fieldKey = String(field.key);
+
+          // Determinar accept attribute basado en el nombre del campo o configuración
+          let acceptAttribute = (field as any).accept || 'image/*';
+          if (fieldKey.includes('fav') || fieldKey.includes('favicon')) {
+            acceptAttribute = 'image/*,.ico,image/x-icon,image/svg+xml';
+          }
+
           let previewSrc: string | null = null;
 
           if (fileValue instanceof File) {
@@ -306,11 +314,11 @@ export default function GenericFormFields<F extends BaseFormData>({
           return (
             <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 p-6 bg-gray-50/60 dark:bg-neutral-900/40 transition-all duration-200 hover:border-primary/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <label htmlFor={String(field.key)} className="flex-1 w-full">
+                <label htmlFor={fieldKey} className="flex-1 w-full">
                   <input
-                    id={String(field.key)}
+                    id={fieldKey}
                     type="file"
-                    accept="image/*"
+                    accept={acceptAttribute}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(field.key, e.target.files && e.target.files[0] ? e.target.files[0] : null)}
                     disabled={fieldDisabled}
                     className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${error ? 'border-red-500' : ''}`}
@@ -335,7 +343,7 @@ export default function GenericFormFields<F extends BaseFormData>({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {fileValue instanceof File ? fileValue.name : 'Imagen actual'}
+                      {fileValue instanceof File ? fileValue.name : 'Archivo actual'}
                     </p>
                     {fileValue instanceof File && (
                       <p className="text-xs text-muted-foreground mt-1">
@@ -348,7 +356,7 @@ export default function GenericFormFields<F extends BaseFormData>({
 
               {!previewSrc && (
                 <p className="mt-3 text-xs text-center text-muted-foreground">
-                  📁 Formatos: JPG, PNG, GIF • Tamaño máx: 5MB
+                  📁 {fieldKey.includes('fav') ? 'Formatos: ICO, PNG, SVG • Tamaño máx: 2MB' : 'Formatos: JPG, PNG, GIF • Tamaño máx: 5MB'}
                 </p>
               )}
             </div>

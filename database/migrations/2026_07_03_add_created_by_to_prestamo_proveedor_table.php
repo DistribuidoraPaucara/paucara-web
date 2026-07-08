@@ -8,13 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('prestamo_proveedor', function (Blueprint $table) {
-            $table->foreignId('created_by')
-                ->nullable()
-                ->after('id')
-                ->constrained('users')
-                ->onDelete('set null');
-        });
+        if (!Schema::hasColumn('prestamo_proveedor', 'created_by')) {
+            Schema::table('prestamo_proveedor', function (Blueprint $table) {
+                $table->foreignId('created_by')
+                    ->nullable()
+                    ->after('id')
+                    ->constrained('users')
+                    ->onDelete('set null');
+            });
+        }
     }
 
     public function down(): void

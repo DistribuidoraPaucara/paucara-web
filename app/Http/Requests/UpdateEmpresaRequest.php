@@ -32,12 +32,13 @@ class UpdateEmpresaRequest extends FormRequest
             'logo_principal' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_compacto' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_footer' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
+            'fav_ico' => ['nullable', 'file', 'max:2048', 'mimes:x-icon,image/png,image/svg+xml,png,svg'],
             'mensaje_footer' => ['nullable', 'string', 'max:500'],
             'mensaje_legal' => ['nullable', 'string'],
             'activo' => ['nullable', 'boolean'],
             'es_principal' => ['nullable', 'boolean'],
-            'permite_productos_fraccionados' => ['nullable', 'boolean'], // ✨ NUEVO
-            'es_farmacia' => ['nullable', 'boolean'], // ✨ NUEVO - Para habilitar campos de medicamentos
+            'permite_productos_fraccionados' => ['nullable', 'boolean'],
+            'es_farmacia' => ['nullable', 'boolean'],
         ];
     }
 
@@ -106,11 +107,14 @@ class UpdateEmpresaRequest extends FormRequest
             'logo_footer.image' => 'El logo de footer debe ser una imagen válida.',
             'logo_footer.max' => 'El logo de footer no puede exceder 4MB.',
             'logo_footer.mimes' => 'El logo de footer debe ser JPEG, PNG, JPG o GIF.',
+            'fav_ico.file' => 'El favicon debe ser un archivo válido.',
+            'fav_ico.max' => 'El favicon no puede exceder 2MB.',
+            'fav_ico.mimes' => 'El favicon debe ser ICO, PNG o SVG.',
             'mensaje_footer.max' => 'El mensaje de footer no puede exceder 500 caracteres.',
             'activo.boolean' => 'El estado activo debe ser verdadero o falso.',
             'es_principal.boolean' => 'El indicador de empresa principal debe ser verdadero o falso.',
-            'permite_productos_fraccionados.boolean' => 'La opción de productos fraccionados debe ser verdadera o falsa.', // ✨ NUEVO
-            'es_farmacia.boolean' => 'La opción de farmacia debe ser verdadera o falsa.', // ✨ NUEVO
+            'permite_productos_fraccionados.boolean' => 'La opción de productos fraccionados debe ser verdadera o falsa.',
+            'es_farmacia.boolean' => 'La opción de farmacia debe ser verdadera o falsa.'
         ];
     }
 
@@ -132,12 +136,13 @@ class UpdateEmpresaRequest extends FormRequest
             'logo_principal' => 'logo principal',
             'logo_compacto' => 'logo compacto',
             'logo_footer' => 'logo de footer',
+            'fav_ico' => 'favicon',
             'mensaje_footer' => 'mensaje de footer',
             'mensaje_legal' => 'mensaje legal',
             'activo' => 'estado activo',
             'es_principal' => 'empresa principal',
-            'permite_productos_fraccionados' => 'productos fraccionados', // ✨ NUEVO
-            'es_farmacia' => 'farmacia', // ✨ NUEVO
+            'permite_productos_fraccionados' => 'productos fraccionados',
+            'es_farmacia' => 'farmacia',
         ];
     }
 }

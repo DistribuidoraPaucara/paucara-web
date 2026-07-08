@@ -5,6 +5,7 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\EstadosLogisticaController;
 use App\Http\Controllers\EstadosDocumentoController;
 use App\Http\Controllers\TipoOperacionCajaController;
+use App\Http\Controllers\FaviconController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,6 +16,53 @@ Route::get('/', function () {
 
     return redirect()->route('login');
 })->name('home');
+
+// Favicon dinámico desde BD (ruta que pasa a través de Laravel)
+Route::get('/dynamic-favicon', FaviconController::class)->name('favicon');
+
+// 🔍 DEBUG: Endpoint para verificar el favicon
+Route::get('/debug/favicon', function () {
+    $empresa = \App\Models\Empresa::principal();
+
+    if (!$empresa || !$empresa->fav_ico) {
+        return response()->json([
+            'error' => 'No hay empresa principal o favicon',
+            'empresa_id' => $empresa?->id,
+            'fav_ico' => $empresa?->fav_ico,
+        ], 404);
+    }
+
+    $faviconPath = $empresa->fav_ico;
+    if (strpos($faviconPath, '/storage/') === 0) {
+        $faviconPath = str_replace('/storage/', '', $faviconPath);
+    }
+
+    $diskPath = \Illuminate\Support\Facades\Storage::disk('public')->path($faviconPath);
+    $fileExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($faviconPath);
+    $phpFileExists = file_exists($diskPath);
+    $fileSize = $fileExists ? \Illuminate\Support\Facades\Storage::disk('public')->size($faviconPath) : 0;
+
+    return response()->json([
+        'empresa' => [
+            'id' => $empresa->id,
+            'nombre' => $empresa->nombre_comercial,
+            'fav_ico_raw' => $empresa->fav_ico,
+            'fav_ico_cleaned' => $faviconPath,
+            'updated_at' => $empresa->updated_at,
+        ],
+        'file_check' => [
+            'disk_path' => $diskPath,
+            'storage_exists' => $fileExists,
+            'php_file_exists' => $phpFileExists,
+            'file_size' => $fileSize . ' bytes',
+            'is_readable' => is_readable($diskPath),
+        ],
+        'url_endpoints' => [
+            'favicon_ico' => '/favicon.ico',
+            'storage_url' => \Illuminate\Support\Facades\Storage::url($faviconPath),
+        ],
+    ]);
+});
 
 // Ruta de prueba para verificar CSRF token
 Route::post('/test-csrf', function () {

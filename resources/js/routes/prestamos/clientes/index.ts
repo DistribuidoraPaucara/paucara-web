@@ -212,7 +212,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     store.form = storeForm
 /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
 export const show = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -226,7 +226,7 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.url = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -253,7 +253,7 @@ show.url = (args: { prestamo: string | number } | [prestamo: string | number ] |
 }
 
 /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.get = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -261,7 +261,7 @@ show.get = (args: { prestamo: string | number } | [prestamo: string | number ] |
     method: 'get',
 })
 /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.head = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -270,7 +270,7 @@ show.head = (args: { prestamo: string | number } | [prestamo: string | number ] 
 })
 
     /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
     const showForm = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -279,7 +279,7 @@ show.head = (args: { prestamo: string | number } | [prestamo: string | number ] 
     })
 
             /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
         showForm.get = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -287,7 +287,7 @@ show.head = (args: { prestamo: string | number } | [prestamo: string | number ] 
             method: 'get',
         })
             /**
- * @see routes/web.php:833
+ * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
  */
         showForm.head = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -404,7 +404,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
     
     imprimir.form = imprimirForm
 /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -418,7 +418,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -450,7 +450,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -458,7 +458,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -467,7 +467,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
 })
 
     /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
     const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -476,7 +476,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     })
 
             /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -484,7 +484,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
             method: 'get',
         })
             /**
- * @see routes/web.php:841
+ * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
         registrarDevolucionForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -499,7 +499,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     
     registrarDevolucion.form = registrarDevolucionForm
 /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -513,7 +513,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -545,7 +545,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -553,7 +553,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -562,7 +562,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
 })
 
     /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
     const devolucionesForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -571,7 +571,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     })
 
             /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
         devolucionesForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -579,7 +579,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
             method: 'get',
         })
             /**
- * @see routes/web.php:847
+ * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
         devolucionesForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

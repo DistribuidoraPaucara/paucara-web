@@ -25,6 +25,7 @@ class Empresa extends Model
         'logo_principal',
         'logo_compacto',
         'logo_footer',
+        'fav_ico',
         'configuracion_impresion',
         'mensaje_footer',
         'mensaje_legal',
@@ -119,7 +120,35 @@ class Empresa extends Model
             return null;
         }
 
-        return Storage::url($this->$campo);
+        $value = $this->$campo;
+
+        // Si ya empieza con /storage/, devolverlo tal cual
+        if (strpos($value, '/storage/') === 0) {
+            return $value;
+        }
+
+        // Si no, agregamos /storage/
+        return Storage::url($value);
+    }
+
+    /**
+     * Obtener URL pública del favicon
+     *
+     * @return string|null
+     */
+    public function getFaviconUrl(): ?string
+    {
+        if (!$this->fav_ico) {
+            return null;
+        }
+
+        // Si ya empieza con /storage/, devolverlo tal cual
+        if (strpos($this->fav_ico, '/storage/') === 0) {
+            return $this->fav_ico;
+        }
+
+        // Si no, agregamos /storage/
+        return Storage::url($this->fav_ico);
     }
 
     /**

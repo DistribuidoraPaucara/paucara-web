@@ -44,12 +44,16 @@
         html.dark {
             background-color: oklch(0.145 0 0);
         }
-
     </style>
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    <link rel="icon" href="{{ env('FAVICON_ICO', '/favicon.ico') }}" sizes="any">
+    {{-- Favicon dinámico desde BD con versioning para evitar caché --}}
+    @php
+        $empresa = \App\Models\Empresa::principal();
+        $faviconVersion = $empresa && $empresa->fav_ico ? md5($empresa->updated_at->timestamp) : '';
+    @endphp
+    <link rel="icon" href="/dynamic-favicon{{ $faviconVersion ? '?v=' . $faviconVersion : '' }}" sizes="any">
     <link rel="icon" href="{{ env('FAVICON_SVG', '/favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ env('APPLE_TOUCH_ICON', '/apple-touch-icon.png') }}">
 
