@@ -290,7 +290,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                         </div>
 
                         {/* Resumen Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Confirmaciones</p>
                                 <p className="text-2xl font-bold">{reporte.resumen.total_confirmaciones}</p>
@@ -307,6 +307,19 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Monetario</p>
                                 <p className="text-2xl font-bold">
                                     {formatCurrencyWith2Decimals(reporte.resumen.total_monetario, 'BOB')}
+                                </p>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
+                                <p className="text-sm text-blue-600 dark:text-blue-300 mb-1">Productos Únicos</p>
+                                <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{reporte.productos_resumen.length}</p>
+                            </div>
+                            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 p-4">
+                                <p className="text-sm text-indigo-600 dark:text-indigo-300 mb-1">Total Valor Productos</p>
+                                <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-200">
+                                    {formatCurrencyWith2Decimals(
+                                        reporte.productos_resumen.reduce((sum, p) => sum + p.valor_total, 0),
+                                        'BOB'
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -357,7 +370,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                                                    <th className="px-4 py-3 w-8 text-center"></th>
+                                                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white"></th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Venta</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmado</th>
@@ -367,13 +380,14 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                             </thead>
                                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                                 {reporte.productos_por_venta.map((ventaAgrupada) => (
-                                                    <tbody key={ventaAgrupada.venta_id}>
+                                                    <>
                                                         {/* Fila Principal - Venta */}
                                                         <tr
+                                                            key={ventaAgrupada.venta_id}
                                                             className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition cursor-pointer"
                                                             onClick={() => toggleRowExpanded(ventaAgrupada.venta_id)}
                                                         >
-                                                            <td className="px-4 py-3 text-center w-8">
+                                                            <td className="px-4 py-3 text-center">
                                                                 {expandedRows.has(ventaAgrupada.venta_id) ? (
                                                                     <ChevronDown className="w-4 h-4 text-gray-600" />
                                                                 ) : (
@@ -412,41 +426,43 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                                         {expandedRows.has(ventaAgrupada.venta_id) && (
                                                             <>
                                                                 {ventaAgrupada.productos.map((producto, idx) => (
-                                                                    <tr
-                                                                        key={`${ventaAgrupada.venta_id}-prod-${idx}`}
-                                                                        className="bg-gray-50 dark:bg-gray-800/25 border-l-4 border-l-blue-400"
-                                                                    >
-                                                                        <td className="px-4 py-3"></td>
-                                                                        <td colSpan={6} className="px-4 py-3">
-                                                                            <div className="flex items-center justify-between text-sm">
-                                                                                <div className="flex-1">
-                                                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                                                        {producto.nombre}
-                                                                                    </p>
-                                                                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                                                        SKU: {producto.sku} | Unidad: {producto.unidad_medida}
-                                                                                    </p>
+                                                                    <>
+                                                                        <tr
+                                                                            key={`${ventaAgrupada.venta_id}-prod-${idx}`}
+                                                                            className="bg-gray-50 dark:bg-gray-800/25 border-l-4 border-l-blue-400"
+                                                                        >
+                                                                            <td className="px-4 py-3"></td>
+                                                                            <td colSpan={5} className="px-4 py-3">
+                                                                                <div className="flex items-center justify-between text-sm">
+                                                                                    <div className="flex-1">
+                                                                                        <p className="font-medium text-gray-900 dark:text-white">
+                                                                                            {producto.nombre}
+                                                                                        </p>
+                                                                                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                                                            SKU: {producto.sku} | Unidad: {producto.unidad_medida}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <div className="text-right ml-4">
+                                                                                        <p className="text-gray-900 dark:text-white">
+                                                                                            <span className="font-semibold">{producto.cantidad.toFixed(2)}</span>
+                                                                                            {' × '}
+                                                                                            <span className="text-gray-600 dark:text-gray-400">
+                                                                                                {formatCurrencyWith2Decimals(producto.precio_unitario, 'BOB')}
+                                                                                            </span>
+                                                                                        </p>
+                                                                                        <p className="font-semibold text-gray-900 dark:text-white">
+                                                                                            {formatCurrencyWith2Decimals(producto.subtotal, 'BOB')}
+                                                                                        </p>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="text-right ml-4">
-                                                                                    <p className="text-gray-900 dark:text-white">
-                                                                                        <span className="font-semibold">{producto.cantidad.toFixed(2)}</span>
-                                                                                        {' × '}
-                                                                                        <span className="text-gray-600 dark:text-gray-400">
-                                                                                            {formatCurrencyWith2Decimals(producto.precio_unitario, 'BOB')}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                    <p className="font-semibold text-gray-900 dark:text-white">
-                                                                                        {formatCurrencyWith2Decimals(producto.subtotal, 'BOB')}
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </>
                                                                 ))}
                                                                 {ventaAgrupada.monto_devuelto > 0 && (
                                                                     <tr className="bg-orange-50/50 dark:bg-orange-900/10 border-l-4 border-l-orange-400">
                                                                         <td className="px-4 py-3"></td>
-                                                                        <td colSpan={6} className="px-4 py-3">
+                                                                        <td colSpan={5} className="px-4 py-3">
                                                                             <div className="flex justify-end text-sm">
                                                                                 <div className="text-right">
                                                                                     <p className="text-gray-600 dark:text-gray-400">Monto Devuelto:</p>
@@ -460,7 +476,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                                                 )}
                                                             </>
                                                         )}
-                                                    </tbody>
+                                                    </>
                                                 ))}
                                             </tbody>
                                         </table>
