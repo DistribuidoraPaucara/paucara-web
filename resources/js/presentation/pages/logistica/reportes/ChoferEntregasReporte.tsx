@@ -289,8 +289,8 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                             </p>
                         </div>
 
-                        {/* Resumen Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                        {/* Resumen Cards - Primera Fila */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Confirmaciones</p>
                                 <p className="text-2xl font-bold">{reporte.resumen.total_confirmaciones}</p>
@@ -309,9 +309,19 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                     {formatCurrencyWith2Decimals(reporte.resumen.total_monetario, 'BOB')}
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Resumen Cards - Segunda Fila (Productos) */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
                                 <p className="text-sm text-blue-600 dark:text-blue-300 mb-1">Productos Únicos</p>
                                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{reporte.productos_resumen.length}</p>
+                            </div>
+                            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 p-4">
+                                <p className="text-sm text-purple-600 dark:text-purple-300 mb-1">Cantidad Total Productos</p>
+                                <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">
+                                    {reporte.productos_resumen.reduce((sum, p) => sum + p.cantidad_total, 0).toFixed(2)}
+                                </p>
                             </div>
                             <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 p-4">
                                 <p className="text-sm text-indigo-600 dark:text-indigo-300 mb-1">Total Valor Productos</p>
