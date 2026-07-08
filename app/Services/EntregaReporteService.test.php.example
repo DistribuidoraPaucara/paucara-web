@@ -1,0 +1,212 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\EntregaVentaConfirmacion;
+use App\Models\User;
+use App\Models\Venta;
+use App\Models\Entrega;
+use App\Services\EntregaReporteService;
+use Carbon\Carbon;
+use Tests\TestCase;
+
+/**
+ * Ejemplos de pruebas para EntregaReporteService
+ *
+ * Ejecutar con: php artisan test app/Services/EntregaReporteService.test.php
+ */
+class EntregaReporteServiceTest extends TestCase
+{
+    private EntregaReporteService $service;
+    private User $chofer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->service = app(EntregaReporteService::class);
+        $this->chofer = User::factory()->create(['rol' => 'chofer']);
+    }
+
+    /**
+     * Prueba: Generar reporte con confirmaciones completas
+     */
+    public function test_generar_reporte_confirmaciones_completas()
+    {
+        // Crear entrega
+        $entrega = Entrega::factory()->create(['chofer_id' => $this->chofer->id]);
+
+        // Crear venta con detalles
+        $venta = Venta::factory()->create();
+        $venta->detalles()->createMany([
+            ['producto_id' => 1, 'cantidad' => 5, 'precio_unitario' => 100, 'subtotal' => 500],
+            ['producto_id' => 2, 'cantidad' => 3, 'precio_unitario' => 50, 'subtotal' => 150],
+        ]);
+
+        // Crear confirmación COMPLETA
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_entrega' => 'COMPLETA',
+            'tipo_confirmacion' => 'COMPLETA',
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => now(),
+            'estado_pago' => 'PAGADO',
+        ]);
+
+        // Generar reporte
+        $reporte = $this->service->generarReporteConfirmaciones($this->chofer->id);
+
+        // Validaciones
+        $this->assertEquals(1, $reporte['resumen']['total_confirmaciones']);
+        $this->assertEquals(1, $reporte['resumen']['confirmaciones_completas']);
+        $this->assertEquals(0, $reporte['resumen']['devoluciones_parciales']);
+        $this->assertEquals(1, $reporte['resumen']['total_ventas']);
+        $this->assertEquals(2, $reporte['resumen']['total_productos']);
+        $this->assertEquals(650, $reporte['resumen']['total_monetario']);
+
+        // Validar productos resumen
+        $this->assertCount(2, $reporte['productos_resumen']);
+        $this->assertEquals(5, $reporte['productos_resumen'][0]['cantidad_total']);
+        $this->assertEquals(500, $reporte['productos_resumen'][0]['valor_total']);
+    }
+
+    /**
+     * Prueba: Generar reporte con devoluciones parciales
+     */
+    public function test_generar_reporte_devoluciones_parciales()
+    {
+        $entrega = Entrega::factory()->create(['chofer_id' => $this->chofer->id]);
+        $venta = Venta::factory()->create(['total' => 1000]);
+
+        // Crear confirmación DEVOLUCION_PARCIAL
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_entrega' => 'COMPLETA',
+            'tipo_confirmacion' => 'DEVOLUCION_PARCIAL',
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => now(),
+            'monto_devuelto' => 250,
+            'monto_aceptado' => 750,
+        ]);
+
+        $reporte = $this->service->generarReporteConfirmaciones($this->chofer->id);
+
+        $this->assertEquals(1, $reporte['resumen']['devoluciones_parciales']);
+        $this->assertEquals(250, $reporte['resumen']['total_devuelto']);
+    }
+
+    /**
+     * Prueba: Filtrar solo confirmaciones del mes actual
+     */
+    public function test_filtrar_confirmaciones_por_rango_fecha()
+    {
+        $entrega = Entrega::factory()->create(['chofer_id' => $this->chofer->id]);
+        $venta = Venta::factory()->create();
+
+        // Confirmación de hoy
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_entrega' => 'COMPLETA',
+            'tipo_confirmacion' => 'COMPLETA',
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => Carbon::now(),
+        ]);
+
+        // Confirmación del mes anterior
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_entrega' => 'COMPLETA',
+            'tipo_confirmacion' => 'COMPLETA',
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => Carbon::now()->subMonth(),
+        ]);
+
+        // Reporte del mes actual
+        $reporte = $this->service->generarReporteConfirmaciones($this->chofer->id);
+
+        // Solo debe contar la confirmación de hoy
+        $this->assertEquals(1, $reporte['resumen']['total_confirmaciones']);
+    }
+
+    /**
+     * Prueba: Agrupar productos correctamente por venta
+     */
+    public function test_agrupar_productos_por_venta()
+    {
+        $entrega = Entrega::factory()->create(['chofer_id' => $this->chofer->id]);
+
+        // Crear 2 ventas con productos
+        $venta1 = Venta::factory()->create(['total' => 500]);
+        $venta1->detalles()->create([
+            'producto_id' => 1,
+            'cantidad' => 10,
+            'precio_unitario' => 50,
+            'subtotal' => 500,
+        ]);
+
+        $venta2 = Venta::factory()->create(['total' => 300]);
+        $venta2->detalles()->create([
+            'producto_id' => 1,
+            'cantidad' => 6,
+            'precio_unitario' => 50,
+            'subtotal' => 300,
+        ]);
+
+        // Crear confirmaciones
+        foreach ([$venta1, $venta2] as $venta) {
+            EntregaVentaConfirmacion::create([
+                'entrega_id' => $entrega->id,
+                'venta_id' => $venta->id,
+                'tipo_entrega' => 'COMPLETA',
+                'tipo_confirmacion' => 'COMPLETA',
+                'confirmado_por' => $this->chofer->id,
+                'confirmado_en' => now(),
+            ]);
+        }
+
+        $reporte = $this->service->generarReporteConfirmaciones($this->chofer->id);
+
+        // Validar resumen global
+        $this->assertEquals(16, $reporte['productos_resumen'][0]['cantidad_total']); // 10 + 6
+        $this->assertEquals(800, $reporte['productos_resumen'][0]['valor_total']); // 500 + 300
+
+        // Validar agrupación por venta
+        $this->assertCount(2, $reporte['productos_por_venta']);
+        $this->assertEquals(10, $reporte['productos_por_venta'][0]['productos'][0]['cantidad']);
+        $this->assertEquals(6, $reporte['productos_por_venta'][1]['productos'][0]['cantidad']);
+    }
+
+    /**
+     * Prueba: Excluir confirmaciones con estados no válidos
+     */
+    public function test_excluir_confirmaciones_estados_no_validos()
+    {
+        $entrega = Entrega::factory()->create(['chofer_id' => $this->chofer->id]);
+        $venta = Venta::factory()->create();
+
+        // Crear confirmaciones con diferentes estados
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_confirmacion' => 'COMPLETA',
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => now(),
+        ]);
+
+        EntregaVentaConfirmacion::create([
+            'entrega_id' => $entrega->id,
+            'venta_id' => $venta->id,
+            'tipo_confirmacion' => 'RECHAZADO', // No debe incluirse
+            'confirmado_por' => $this->chofer->id,
+            'confirmado_en' => now(),
+        ]);
+
+        $reporte = $this->service->generarReporteConfirmaciones($this->chofer->id);
+
+        // Solo debe contar 1 (COMPLETA)
+        $this->assertEquals(1, $reporte['resumen']['total_confirmaciones']);
+    }
+}
