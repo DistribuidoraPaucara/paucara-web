@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Badge } from '@/presentation/components/ui/badge';
-import { Filter, Loader, AlertCircle } from 'lucide-react';
+import { Filter, Loader, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { formatCurrencyWith2Decimals } from '@/lib/utils';
 
@@ -94,6 +94,17 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
     const [error, setError] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(true);
     const [activeTab, setActiveTab] = useState<'ventas' | 'productos'>('ventas');
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleRowExpanded = (ventaId: number) => {
+        const newExpanded = new Set(expandedRows);
+        if (newExpanded.has(ventaId)) {
+            newExpanded.delete(ventaId);
+        } else {
+            newExpanded.add(ventaId);
+        }
+        setExpandedRows(newExpanded);
+    };
 
     const handleBuscar = async () => {
         if (!filtros.chofer_id) {
@@ -333,7 +344,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                             </button>
                         </div>
 
-                        {/* Contenido Ventas */}
+                        {/* Contenido Ventas - Tabla Expandible */}
                         {activeTab === 'ventas' && (
                             <div className="space-y-4">
                                 <h3 className="text-lg font-bold">Ventas Entregadas</h3>
@@ -342,82 +353,124 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                         <p className="text-yellow-800 dark:text-yellow-200">No hay confirmaciones para los filtros seleccionados</p>
                                     </div>
                                 ) : (
-                                    reporte.productos_por_venta.map((ventaAgrupada) => (
-                                        <div
-                                            key={ventaAgrupada.venta_id}
-                                            className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6"
-                                        >
-                                            {/* Header Venta */}
-                                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-                                                <div>
-                                                    <h4 className="font-bold text-lg">{ventaAgrupada.numero_venta}</h4>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                        Cliente: {ventaAgrupada.cliente.nombre} (NIT: {ventaAgrupada.cliente.nit})
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <Badge className={getEstadoConfirmacionColor(ventaAgrupada.tipo_confirmacion)}>
-                                                        {getEstadoConfirmacionLabel(ventaAgrupada.tipo_confirmacion)}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-
-                                            {/* Info de la Venta */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-                                                <div>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Venta</p>
-                                                    <p className="font-bold">
-                                                        {formatCurrencyWith2Decimals(ventaAgrupada.total_venta, 'BOB')}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400">Confirmado En</p>
-                                                    <p className="font-bold text-sm">{formatearFecha(ventaAgrupada.confirmado_en)}</p>
-                                                </div>
-                                                {ventaAgrupada.monto_devuelto > 0 && (
-                                                    <div>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400">Monto Devuelto</p>
-                                                        <p className="font-bold text-orange-600">
-                                                            {formatCurrencyWith2Decimals(ventaAgrupada.monto_devuelto, 'BOB')}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Productos */}
-                                            <div>
-                                                <p className="font-semibold mb-3 text-gray-700 dark:text-gray-300">
-                                                    Productos ({ventaAgrupada.productos.length})
-                                                </p>
-                                                <div className="space-y-2">
-                                                    {ventaAgrupada.productos.map((prod) => (
-                                                        <div
-                                                            key={prod.producto_id}
-                                                            className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-sm"
+                                    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white w-8"></th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Venta</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmado</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tipo Entrega</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
+                                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                                {reporte.productos_por_venta.map((ventaAgrupada) => (
+                                                    <tbody key={ventaAgrupada.venta_id}>
+                                                        {/* Fila Principal - Venta */}
+                                                        <tr
+                                                            className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition cursor-pointer"
+                                                            onClick={() => toggleRowExpanded(ventaAgrupada.venta_id)}
                                                         >
-                                                            <div>
-                                                                <p className="font-semibold text-gray-900 dark:text-white">
-                                                                    {prod.nombre}
-                                                                </p>
-                                                                <p className="text-gray-600 dark:text-gray-400">
-                                                                    SKU: {prod.sku} | Unidad: {prod.unidad_medida}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="font-semibold">
-                                                                    {prod.cantidad.toFixed(2)} x{' '}
-                                                                    {formatCurrencyWith2Decimals(prod.precio_unitario, 'BOB')}
-                                                                </p>
-                                                                <p className="text-gray-600 dark:text-gray-400">
-                                                                    {formatCurrencyWith2Decimals(prod.subtotal, 'BOB')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
+                                                            <td className="px-4 py-3 text-center">
+                                                                {expandedRows.has(ventaAgrupada.venta_id) ? (
+                                                                    <ChevronDown className="w-4 h-4 text-gray-600" />
+                                                                ) : (
+                                                                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                                                                )}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
+                                                                {ventaAgrupada.numero_venta}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                                <div>
+                                                                    <p className="font-medium text-gray-900 dark:text-white">{ventaAgrupada.cliente.nombre}</p>
+                                                                    <p className="text-xs text-gray-500">NIT: {ventaAgrupada.cliente.nit}</p>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                                <div className="text-xs">
+                                                                    {new Date(ventaAgrupada.confirmado_en).toLocaleDateString('es-ES')}
+                                                                    <br />
+                                                                    <span className="text-xs opacity-70">
+                                                                        {new Date(ventaAgrupada.confirmado_en).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-sm">
+                                                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 text-xs">
+                                                                    DELIVERY
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-sm">
+                                                                <Badge className={getEstadoConfirmacionColor(ventaAgrupada.tipo_confirmacion)}>
+                                                                    {getEstadoConfirmacionLabel(ventaAgrupada.tipo_confirmacion)}
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                                {formatCurrencyWith2Decimals(ventaAgrupada.total_venta, 'BOB')}
+                                                            </td>
+                                                        </tr>
+
+                                                        {/* Filas Expandibles - Productos */}
+                                                        {expandedRows.has(ventaAgrupada.venta_id) && (
+                                                            <>
+                                                                {ventaAgrupada.productos.map((producto, idx) => (
+                                                                    <tr
+                                                                        key={`${ventaAgrupada.venta_id}-prod-${idx}`}
+                                                                        className="bg-gray-50 dark:bg-gray-800/25 border-l-4 border-l-blue-400"
+                                                                    >
+                                                                        <td className="px-4 py-3"></td>
+                                                                        <td colSpan={6} className="px-4 py-3">
+                                                                            <div className="flex items-center justify-between text-sm">
+                                                                                <div className="flex-1">
+                                                                                    <p className="font-medium text-gray-900 dark:text-white">
+                                                                                        {producto.nombre}
+                                                                                    </p>
+                                                                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                                                        SKU: {producto.sku} | Unidad: {producto.unidad_medida}
+                                                                                    </p>
+                                                                                </div>
+                                                                                <div className="text-right ml-4">
+                                                                                    <p className="text-gray-900 dark:text-white">
+                                                                                        <span className="font-semibold">{producto.cantidad.toFixed(2)}</span>
+                                                                                        {' × '}
+                                                                                        <span className="text-gray-600 dark:text-gray-400">
+                                                                                            {formatCurrencyWith2Decimals(producto.precio_unitario, 'BOB')}
+                                                                                        </span>
+                                                                                    </p>
+                                                                                    <p className="font-semibold text-gray-900 dark:text-white">
+                                                                                        {formatCurrencyWith2Decimals(producto.subtotal, 'BOB')}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                                {ventaAgrupada.monto_devuelto > 0 && (
+                                                                    <tr className="bg-orange-50/50 dark:bg-orange-900/10 border-l-4 border-l-orange-400">
+                                                                        <td className="px-4 py-3"></td>
+                                                                        <td colSpan={6} className="px-4 py-3">
+                                                                            <div className="flex justify-end text-sm">
+                                                                                <div className="text-right">
+                                                                                    <p className="text-gray-600 dark:text-gray-400">Monto Devuelto:</p>
+                                                                                    <p className="font-semibold text-orange-600 dark:text-orange-400">
+                                                                                        {formatCurrencyWith2Decimals(ventaAgrupada.monto_devuelto, 'BOB')}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </tbody>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 )}
                             </div>
                         )}
