@@ -357,11 +357,10 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white w-8"></th>
+                                                    <th className="px-4 py-3 w-8 text-center"></th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Venta</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmado</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tipo Entrega</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
                                                     <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Total</th>
                                                 </tr>
@@ -374,7 +373,7 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                                             className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition cursor-pointer"
                                                             onClick={() => toggleRowExpanded(ventaAgrupada.venta_id)}
                                                         >
-                                                            <td className="px-4 py-3 text-center">
+                                                            <td className="px-4 py-3 text-center w-8">
                                                                 {expandedRows.has(ventaAgrupada.venta_id) ? (
                                                                     <ChevronDown className="w-4 h-4 text-gray-600" />
                                                                 ) : (
@@ -398,11 +397,6 @@ export default function ChoferEntregasReporte({ choferes }: Props) {
                                                                         {new Date(ventaAgrupada.confirmado_en).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}
                                                                     </span>
                                                                 </div>
-                                                            </td>
-                                                            <td className="px-4 py-3 text-sm">
-                                                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 text-xs">
-                                                                    DELIVERY
-                                                                </Badge>
                                                             </td>
                                                             <td className="px-4 py-3 text-sm">
                                                                 <Badge className={getEstadoConfirmacionColor(ventaAgrupada.tipo_confirmacion)}>
