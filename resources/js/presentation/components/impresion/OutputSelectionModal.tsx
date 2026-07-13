@@ -185,6 +185,24 @@ export function OutputSelectionModal({
     const [loading, setLoading] = useState(false);
     const [cargarImpresoras, setCargarImpresoras] = useState(false);
 
+    // ✅ NUEVO: Función para formatear fecha ISO a formato legible
+    const formatearFecha = (fechaISO?: string): string | undefined => {
+        if (!fechaISO) return undefined;
+        try {
+            const fecha = new Date(fechaISO);
+            return fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+            });
+        } catch {
+            return fechaISO; // Si falla, devolver la fecha original
+        }
+    };
+
     // ✅ NUEVO (2026-06-02): Filtrar formatos según modo de reporte
     const todosLosFormatos = FORMATO_CONFIG[tipoDocumento];
     const formatosDisponibles = modoReporte === 'entrega'
@@ -637,7 +655,7 @@ export function OutputSelectionModal({
                                         <p className="text-sm text-blue-900 dark:text-blue-300">
                                             {documentoInfo.numero && <span>Documento: {documentoInfo.numero}</span>}
                                             {documentoInfo.numero && documentoInfo.fecha && <span> • </span>}
-                                            {documentoInfo.fecha && <span>{documentoInfo.fecha}</span>}
+                                            {documentoInfo.fecha && <span>{formatearFecha(documentoInfo.fecha)}</span>}
                                         </p>
                                     </div>
                                 )}

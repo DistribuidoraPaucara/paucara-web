@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrega #{{ $entrega->numero_entrega }}</title>
+    <title>Entrega #{{ $entrega->id }}</title>
     <style>
         * {
             margin: 0;
@@ -23,8 +23,11 @@
             padding: 0;
         }
         .copia {
-            width: 49%;
-            padding: 2px;
+            width: 49.7%;
+            padding: 2px !important;
+            /* padding-left: 0px !important; */
+            padding-left: 2px !important;
+            padding-right: 0px !important;
             box-sizing: border-box;
             border-right: 2px dashed #999;
             font-size: 12px;

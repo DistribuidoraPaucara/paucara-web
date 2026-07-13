@@ -1,6 +1,6 @@
 @extends('impresion.layouts.base-a4')
 
-@section('titulo', 'Entrega #' . $entrega->numero_entrega)
+@section('titulo', 'Entrega #' . $entrega->id)
 
 @section('estilos-adicionales')
 <style>
