@@ -438,7 +438,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                                 className="gap-2 border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:hover:bg-orange-900/20"
                                                                             >
                                                                                 <Navigation className="h-4 w-4" />
-                                                                                🚚 Reasignar
+                                                                                🚚 Reasignar Entrega
                                                                             </Button>
                                                                         </div>
                                                                     </div>

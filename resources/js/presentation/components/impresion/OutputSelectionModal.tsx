@@ -64,7 +64,7 @@ type Accion = 'imprimir' | 'excel' | 'pdf' | 'imagen' | null;
 const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
     venta: [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     proforma: [
@@ -77,18 +77,18 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
     ],
     pago: [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     caja: [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     inventario: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
         { formato: 'TICKET_80', nombre: 'Ticket 80mm', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
     ],
     ajuste: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
@@ -96,33 +96,33 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
     merma: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
         { formato: 'TICKET_80', nombre: 'Ticket 80mm', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
     ],
     entrega: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
-        { formato: 'B1', nombre: 'Hoja Grande (B1)', descripcion: 'Formato B1 - 707mm × 1000mm' },
+        // { formato: 'B1', nombre: 'Hoja Grande (B1)', descripcion: 'Formato B1 - 707mm × 1000mm' },
         { formato: 'TICKET_80', nombre: 'Ticket 80mm', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
     ],
     movimiento: [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     'cuenta-por-cobrar': [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     'cuenta-por-pagar': [
         { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     stock: [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
         { formato: 'TICKET_80', nombre: 'Ticket 80mm', descripcion: 'Impresora térmica 80mm' },
-        { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
+        // { formato: 'TICKET_58', nombre: 'Ticket 58mm', descripcion: 'Impresora térmica 58mm' },
     ],
     'reporte-productos-vendidos': [
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
@@ -619,7 +619,7 @@ export function OutputSelectionModal({
                         >
                             <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 p-6 text-left align-middle shadow-xl transition-all">
                                 {/* Header */}
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-3">
                                         {accion && (
                                             <button
@@ -651,7 +651,7 @@ export function OutputSelectionModal({
 
                                 {/* Información del documento */}
                                 {documentoInfo && (documentoInfo.numero || documentoInfo.fecha) && (
-                                    <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <div className="mb-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                         <p className="text-sm text-blue-900 dark:text-blue-300">
                                             {documentoInfo.numero && <span>Documento: {documentoInfo.numero}</span>}
                                             {documentoInfo.numero && documentoInfo.fecha && <span> • </span>}
@@ -762,14 +762,14 @@ export function OutputSelectionModal({
                                         )}
 
                                         {/* Advertencia si no hay impresoras */}
-                                        {accion === 'imprimir' && impresoras.length === 0 && (
+                                        {/* {accion === 'imprimir' && impresoras.length === 0 && (
                                             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 flex gap-2">
                                                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                                                 <p className="text-sm text-amber-700 dark:text-amber-300">
                                                     Se usará el diálogo de impresión del navegador para seleccionar la impresora
                                                 </p>
                                             </div>
-                                        )}
+                                        )} */}
 
                                         {/* Selector de Formato - solo para Imprimir y PDF */}
                                         {(accion === 'imprimir' || accion === 'pdf' || accion === 'imagen') && (
@@ -782,7 +782,7 @@ export function OutputSelectionModal({
                                                         <button
                                                             key={formato.formato}
                                                             onClick={() => setFormatoSeleccionado(formato.formato)}
-                                                            className={`w-full p-3 text-left rounded-lg border transition ${(formatoSeleccionado || formatoDefault) === formato.formato
+                                                            className={`w-full p-2 text-left rounded-lg border transition ${(formatoSeleccionado || formatoDefault) === formato.formato
                                                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                                                     : 'border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600'
                                                                 }`}

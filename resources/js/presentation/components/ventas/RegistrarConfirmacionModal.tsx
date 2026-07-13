@@ -93,7 +93,8 @@ export default function RegistrarConfirmacionModal({
     }, [tipoConfirmacion]);
 
     // Determinar qué campos mostrar
-    const mostrarCamposPago = tipoEntrega === 'COMPLETA' || ( tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL') && !esCredito;
+    // ✅ CORREGIDO: No mostrar campos de pago si es CREDITO (promesa de pago)
+    const mostrarCamposPago = !esCredito && (tipoEntrega === 'COMPLETA' || (tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL'));
     const mostrarTablaProductos = tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL';
     const mostrarSoloFotosYObservaciones =
         (tipoEntrega === 'CON_NOVEDAD' && (tipoConfirmacion === 'RECHAZADO' || tipoConfirmacion === 'CLIENTE_CERRADO' || tipoConfirmacion === 'DEVOLUCION_PARCIAL'));
