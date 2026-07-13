@@ -2914,7 +2914,7 @@ class EntregaController extends Controller
             // ✅ CRÍTICO: Filtrar SOLO ventas NO a crédito (excluir CREDITO del resumen)
             // Las ventas a crédito NO generan dinero en caja y se manejan separadamente
             $ventasParaResumen = $entrega->ventas->filter(function ($v) {
-                return $v->estado_pago !== 'CREDITO';
+                return ($v->tipoPago?->codigo ?? '') !== 'CREDITO';
             });
 
             // Obtener todas las confirmaciones de las ventas NO crédito de esta entrega
