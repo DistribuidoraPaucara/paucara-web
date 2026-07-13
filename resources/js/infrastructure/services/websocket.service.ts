@@ -31,10 +31,15 @@ class WebSocketService {
       try {
         // Priority: config.url > runtime config > env variable > fallback
         const appConfig = (window as any).__APP_CONFIG__ || {};
+
+        // Fallback dinámico: usar la misma máquina que sirve la app web
+        const hostname = window.location.hostname || 'localhost';
+        const fallbackUrl = `http://${hostname}:3001`;
+
         const baseUrl = config.url ||
                         appConfig.websocketUrl ||
                         import.meta.env.VITE_WEBSOCKET_URL ||
-                        'ws://localhost:3001';
+                        fallbackUrl;
 
         /* console.log('🔌 WebSocket URL (resolved):', baseUrl);
         console.log('🔍 Debug info:');
