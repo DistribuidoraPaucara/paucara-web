@@ -50,7 +50,7 @@ export default function Create({ modulosPadre, totalModulos = 0 }: PageProps) {
         post(modulosService.storeUrl(), {
             onSuccess: () => {
                 toast.success('Módulo creado exitosamente.')
-                router.visit('/admin/permisos?tab=modulos')
+                router.visit('/modulos-sidebar')
             },
             onError: () => {
                 toast.error('Error al crear el módulo.')
@@ -68,7 +68,7 @@ export default function Create({ modulosPadre, totalModulos = 0 }: PageProps) {
     }
 
     const handleCancel = () => {
-        router.visit('/admin/permisos?tab=modulos')
+        router.visit('/modulos-sidebar')
     }
 
     return (
@@ -84,7 +84,7 @@ export default function Create({ modulosPadre, totalModulos = 0 }: PageProps) {
                         </p>
                     </div>
                     <Button variant="outline" asChild>
-                        <Link href="/admin/permisos?tab=modulos">
+                        <Link href="/modulos-sidebar">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Volver
                         </Link>

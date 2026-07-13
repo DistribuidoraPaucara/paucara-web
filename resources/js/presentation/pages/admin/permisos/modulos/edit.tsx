@@ -69,7 +69,7 @@ export default function Edit({
         put(modulosService.updateUrl(modulo.id), {
             onSuccess: () => {
                 toast.success('Módulo actualizado exitosamente.')
-                router.visit('/admin/permisos?tab=modulos')
+                router.visit('/modulos-sidebar')
             },
             onError: () => {
                 toast.error('Error al actualizar el módulo.')
@@ -87,7 +87,7 @@ export default function Edit({
     }
 
     const handleCancel = () => {
-        router.visit('/admin/permisos?tab=modulos')
+        router.visit('/modulos-sidebar')
     }
 
     return (
