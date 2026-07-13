@@ -77,11 +77,11 @@ const TipoEntregaBadge = ({
 
     return (
         <div className="flex flex-wrap items-center gap-2">
-            {tieneEntrega && (
+            {/* {tieneEntrega && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${entregaClase}`}>
                     {tipoEntregaVal === 'COMPLETA' ? '✅' : '⚠️'} {entregaTexto}
                 </span>
-            )}
+            )} */}
 
             {tieneConfirmacion && (
                 <span
@@ -92,13 +92,13 @@ const TipoEntregaBadge = ({
                 </span>
             )}
 
-            {tieneNovedad && (
+            {/* {tieneNovedad && (
                 <span
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${novedadClases[tipoNovedad || ''] || 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'}`}
                 >
                     <AlertCircle size={14} /> {novedadTexto[tipoNovedad || ''] || `Novedad: ${tipoNovedad}`}
                 </span>
-            )}
+            )} */}
         </div>
     );
 };

@@ -382,7 +382,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             className="w-full text-sm sm:text-base"
                         >
                             <Printer className="w-4 h-4 mr-2 flex-shrink-0" />
-                            <span className="truncate">Imprimir</span>
+                            {/* <span className="truncate">Imprimir</span> */}
                         </Button>
                     </div>
 

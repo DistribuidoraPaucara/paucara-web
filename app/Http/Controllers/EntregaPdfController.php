@@ -734,7 +734,7 @@ class EntregaPdfController extends Controller
 
             // Filtrar SOLO ventas NO a crédito (CRÍTICO: excluir CREDITO del resumen)
             $ventasParaResumen = $ventasCargas->filter(function ($v) {
-                return $v->estado_pago !== 'CREDITO';
+                return ($v->tipoPago?->codigo ?? '') !== 'CREDITO';
             });
 
             // Obtener todas las confirmaciones de las ventas NO crédito de esta entrega
@@ -865,7 +865,10 @@ class EntregaPdfController extends Controller
             // Calcular totales
             $totalEsperado = $resumen['total_esperado'];
             $totalRecibido = $resumen['total_recibido'];
-            $totalCredito = (float) $entrega->ventas->where('estado_pago', 'CREDITO')->sum('total');
+            // ✅ CORREGIDO: Filtrar por tipoPago->codigo === 'CREDITO' en lugar de estado_pago
+            $totalCredito = (float) $entrega->ventas->filter(function ($v) {
+                return ($v->tipoPago?->codigo ?? '') === 'CREDITO';
+            })->sum('total');
 
             $resumenFinal = array_merge($resumen, [
                 'total_credito' => $totalCredito,
