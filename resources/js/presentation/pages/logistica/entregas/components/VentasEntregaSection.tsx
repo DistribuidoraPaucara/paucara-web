@@ -794,7 +794,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                     ventaId={Number(ventaSeleccionadaModal.id)}
                     ventaNumero={ventaSeleccionadaModal.numero || ''}
                     entregaId={entrega?.id}
-                    politicaPago={ventaSeleccionadaModal.politica_pago || ''}
+                    politicaPago={ventaSeleccionadaModal.tipoPago?.codigo || ''}
                     detalles={ventaSeleccionadaModal.detalles || []}
                     onClose={() => setShowRegistrarConfirmacionModal(false)}
                     onSuccess={() => {

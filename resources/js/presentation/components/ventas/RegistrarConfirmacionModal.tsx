@@ -546,16 +546,6 @@ export default function RegistrarConfirmacionModal({
                                 </div>
                                 {(montoEfectivo || montoTransferencia || true) && (
                                     <div className="mt-4 grid grid-cols-2 md:grid-cols-2 gap-4">
-                                        {/* Total de la Venta */}
-                                        {/* <div className="p-3 bg-gray-50 dark:bg-slate-900/30 rounded-lg border border-gray-200 dark:border-slate-700">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-700 dark:text-gray-300">Total de Venta:</span>
-                                                <span className="font-bold text-gray-900 dark:text-white">
-                                                    Bs {detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0).toFixed(2)}
-                                                </span>
-                                            </div>
-                                        </div> */}
-
                                         {/* Total Pagado */}
                                         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                             <div className="flex justify-between items-center">
