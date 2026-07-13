@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
 export const choferEntregas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ choferEntregas.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
 choferEntregas.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ choferEntregas.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
 choferEntregas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ choferEntregas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
 choferEntregas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ choferEntregas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
     /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
     const choferEntregasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ choferEntregas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
             /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
         choferEntregasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ choferEntregas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
         })
             /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2661
+ * @see app/Http/Controllers/EntregaController.php:2669
  * @route '/logistica/reportes/chofer-entregas'
  */
         choferEntregasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
