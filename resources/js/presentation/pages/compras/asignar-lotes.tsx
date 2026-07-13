@@ -39,6 +39,8 @@ interface PageProps extends InertiaPageProps {
     stock_registrados: Array<{
       id: number;
       cantidad: number;
+      cantidad_disponible: number;
+      cantidad_reservada: number;
       lote: string | null;
       fecha_vencimiento: string | null;
     }>;
@@ -140,6 +142,17 @@ export default function AsignarLotes() {
       acc[detalle.id] = false;
       return acc;
     }, {} as Record<number, boolean>)
+  );
+
+  // Estado para controlar si la información del lote está expandida
+  const [lotesExpandidos, setLotesExpandidos] = useState<Record<string, boolean>>(
+    detalles.reduce((acc, detalle) => {
+      const loteKeys = detalle.stock_registrados.map(s => `${detalle.id}-${s.id}`);
+      loteKeys.forEach(key => {
+        acc[key] = false;
+      });
+      return acc;
+    }, {} as Record<string, boolean>)
   );
 
   // Estado para mostrar modal de confirmación
@@ -267,14 +280,14 @@ export default function AsignarLotes() {
 
       // Verificar si este detalle tiene cambios
       const tieneAlgoParaActualizar = Object.values(anteriores).some(stock => stock.nuevo_lote || stock.nueva_fecha);
-      const tieneAlgoParaCrear = nuevos.some(stock => stock.cantidad > 0);
+      const tieneAlgoParaCrear = nuevos.some(stock => stock.cantidad > 0 || stock.lote || stock.fecha_vencimiento);
 
       if (tieneAlgoParaActualizar || tieneAlgoParaCrear) {
         tieneAlgunCambio = true;
 
-        // Validar que los nuevos stocks tengan lote o fecha si tienen cantidad
+        // Validar que los nuevos stocks tengan al menos lote o fecha (incluso si cantidad=0)
         for (const nuevoStock of nuevos) {
-          if (nuevoStock.cantidad > 0 && !nuevoStock.lote && !nuevoStock.fecha_vencimiento) {
+          if ((nuevoStock.cantidad > 0 || nuevoStock.lote || nuevoStock.fecha_vencimiento) && !nuevoStock.lote && !nuevoStock.fecha_vencimiento) {
             NotificationService.error(
               `Todo nuevo stock debe tener al menos lote o fecha de vencimiento`
             );
@@ -326,7 +339,7 @@ export default function AsignarLotes() {
             fecha: data.nueva_fecha,
           }));
 
-        const creaciones = nuevos.filter(s => s.cantidad > 0);
+        const creaciones = nuevos.filter(s => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
         const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
 
         if (actualizacionesConCambios.length === 0 && creaciones.length === 0 && transferenciasValidas.length === 0) return null;
@@ -367,7 +380,7 @@ export default function AsignarLotes() {
         const anteriores = stockAnteriorActualizar[detalle.id] || {};
         const nuevos = stockNuevo[detalle.id] || [];
         const trans = transferencias[detalle.id] || [];
-        const stocksNuevosFiltrados = nuevos.filter(s => s.cantidad > 0);
+        const stocksNuevosFiltrados = nuevos.filter(s => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
         const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
 
         // Si hay nuevos stocks, buscar el stock sin lote/sin fecha y restar automáticamente
@@ -715,19 +728,19 @@ export default function AsignarLotes() {
 
                       {/* Resumen */}
                       <div className="px-3 pb-3 border-t border-amber-200 dark:border-amber-800">
-                        <div className="grid grid-cols-6 gap-6 pt-3">
+                        <div className="grid grid-cols-4 gap-6 pt-3">
                           <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
                             <p className="text-xs text-green-700 dark:text-green-300">Cantidad Comprada</p>
                             <p className="text-sm font-bold text-green-900 dark:text-green-100">{detalle.cantidad_original}</p>
                           </div>
-                          <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
+                          {/* <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
                             <p className="text-xs text-green-700 dark:text-green-300">Entradas</p>
                             <p className="text-sm font-bold text-green-900 dark:text-green-100">+{entradas.toFixed(2)}</p>
                           </div>
                           <div className="text-center p-2 bg-red-100 dark:bg-red-900/20 rounded">
                             <p className="text-xs text-red-700 dark:text-red-300">Salidas</p>
                             <p className="text-sm font-bold text-red-900 dark:text-red-100">-{salidas.toFixed(2)}</p>
-                          </div>
+                          </div> */}
                           <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/20 rounded">
                             <span className="text-xs text-blue-700 dark:text-blue-300">Stock Total:</span>
                             <p className="font-bold text-blue-900 dark:text-blue-100">{detalle.stock_total.toFixed(2)}</p>
@@ -811,6 +824,47 @@ export default function AsignarLotes() {
                   <div className="space-y-3">
                     {detalle.stock_registrados.map((stock) => (
                       <div key={stock.id} className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+                        {/* Información del Lote - Collapsible */}
+                        <div className="mb-3 pb-3 border-b border-green-200 dark:border-green-700">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const key = `${detalle.id}-${stock.id}`;
+                              setLotesExpandidos(prev => ({
+                                ...prev,
+                                [key]: !prev[key]
+                              }));
+                            }}
+                            className="w-full flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-900/20 p-2 -mx-2 -my-2 rounded transition"
+                          >
+                            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                              🏷️ Lote: <span className="text-green-700 dark:text-green-300 font-mono">{stock.lote || 'Sin lote'}</span>
+                            </p>
+                            {lotesExpandidos[`${detalle.id}-${stock.id}`] ? (
+                              <ChevronUp className="w-4 h-4 text-green-700 dark:text-green-300" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-green-700 dark:text-green-300" />
+                            )}
+                          </button>
+
+                          {lotesExpandidos[`${detalle.id}-${stock.id}`] && (
+                            <div className="grid grid-cols-3 gap-2 mt-3">
+                              <div className="bg-blue-100 dark:bg-blue-900/30 rounded px-2 py-1">
+                                <p className="text-xs text-blue-700 dark:text-blue-300">Total</p>
+                                <p className="text-sm font-bold text-blue-900 dark:text-blue-100">{stock.cantidad}</p>
+                              </div>
+                              <div className="bg-green-100 dark:bg-green-900/30 rounded px-2 py-1">
+                                <p className="text-xs text-green-700 dark:text-green-300">Disponible</p>
+                                <p className="text-sm font-bold text-green-900 dark:text-green-100">{stock.cantidad_disponible}</p>
+                              </div>
+                              <div className="bg-orange-100 dark:bg-orange-900/30 rounded px-2 py-1">
+                                <p className="text-xs text-orange-700 dark:text-orange-300">Reservado</p>
+                                <p className="text-sm font-bold text-orange-900 dark:text-orange-100">{stock.cantidad_reservada}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="grid grid-cols-3 gap-3">
                           {/* Cantidad - EDITABLE */}
                           <div className="flex gap-2 items-end">

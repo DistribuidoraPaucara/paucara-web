@@ -544,23 +544,25 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                     Cliente
                                                                                 </th>
                                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Tipo Entrega
+                                                                                    Tipo de Pago
                                                                                 </th>
+                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Monto
+                                                                                </th>
+                                                                                {/* <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                    Tipo Entrega
+                                                                                </th> */}
                                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                                                                     Confirmación
                                                                                 </th>
                                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                                                                     Estado Logístico
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Monto
-                                                                                </th>
+                                                                                
                                                                                 <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
                                                                                     Peso
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Tipo de Pago
-                                                                                </th>
+                                                                                
                                                                             </tr>
                                                                         </thead>
 
@@ -603,8 +605,31 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                             {venta.cliente?.nombre || '-'}
                                                                                         </td>
 
-                                                                                        {/* Tipo Entrega */}
+                                                                                        {/* Tipo de Pago */}
                                                                                         <td className="px-3 py-3">
+                                                                                            {venta.tipo_pago ? (
+                                                                                                <Badge
+                                                                                                    className={
+                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
+                                                                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
+                                                                                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                                                                    }
+                                                                                                >
+                                                                                                    💳 {venta.tipo_pago.nombre}
+                                                                                                </Badge>
+                                                                                            ) : (
+                                                                                                <span className="text-gray-400 dark:text-gray-600">
+                                                                                                    -
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </td>
+                                                                                        {/* Monto */}
+                                                                                        <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                                                                            Bs. {montoTotal.toFixed(2)}
+                                                                                        </td>
+
+                                                                                        {/* Tipo Entrega */}
+                                                                                        {/* <td className="px-3 py-3">
                                                                                             {venta.confirmacion_entrega?.tipo_entrega ? (
                                                                                                 <Badge
                                                                                                     className={
@@ -625,7 +650,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                                     -
                                                                                                 </span>
                                                                                             )}
-                                                                                        </td>
+                                                                                        </td> */}
 
                                                                                         {/* Confirmación */}
                                                                                         <td className="px-3 py-3">
@@ -681,10 +706,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                             )}
                                                                                         </td>
 
-                                                                                        {/* Monto */}
-                                                                                        <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                                                                                            Bs. {montoTotal.toFixed(2)}
-                                                                                        </td>
+                                                                                        
 
                                                                                         {/* Peso */}
                                                                                         <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
@@ -693,24 +715,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                                                                                                 : '-'}
                                                                                         </td>
 
-                                                                                        {/* Tipo de Pago */}
-                                                                                        <td className="px-3 py-3">
-                                                                                            {venta.tipo_pago ? (
-                                                                                                <Badge
-                                                                                                    className={
-                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
-                                                                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
-                                                                                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                                                                                                    }
-                                                                                                >
-                                                                                                    💳 {venta.tipo_pago.nombre}
-                                                                                                </Badge>
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 dark:text-gray-600">
-                                                                                                    -
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </td>
+                                                                                        
                                                                                     </tr>
                                                                                 );
                                                                             })}

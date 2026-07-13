@@ -37,9 +37,9 @@ export default function ComprasIndex() {
     <AppLayout breadcrumbs={[{ title: 'Compras', href: '/compras' }]}>
       <Head title="Compras" />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-2 p-2">
         {/* Header */}
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-2">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Compras</h1>
             <p className="text-gray-600 dark:text-gray-400">

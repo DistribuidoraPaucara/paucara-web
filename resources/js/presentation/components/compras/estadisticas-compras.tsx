@@ -23,9 +23,9 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
     };
 
     return (
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 ${className}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-2 ${className}`}>
             {/* Total de Compras */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Compras</p>
@@ -38,7 +38,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
                     </div>
                 </div>
                 {estadisticas.mes_actual.variacion_compras !== 0 && (
-                    <div className="mt-2 flex items-center">
+                    <div className="flex items-center">
                         <div className={`flex items-center ${getVariacionColor(estadisticas.mes_actual.variacion_compras)}`}>
                             {getVariacionIcon(estadisticas.mes_actual.variacion_compras)}
                             <span className="text-sm font-medium ml-1">
@@ -51,7 +51,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
             </div>
 
             {/* Monto Total */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monto Total</p>
@@ -64,7 +64,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
                     </div>
                 </div>
                 {estadisticas.mes_actual.variacion_monto !== 0 && (
-                    <div className="mt-2 flex items-center">
+                    <div className="mt-1 flex items-center">
                         <div className={`flex items-center ${getVariacionColor(estadisticas.mes_actual.variacion_monto)}`}>
                             {getVariacionIcon(estadisticas.mes_actual.variacion_monto)}
                             <span className="text-sm font-medium ml-1">
@@ -77,7 +77,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
             </div>
 
             {/* Promedio por Compra */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio por Compra</p>
@@ -89,7 +89,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
                         <FileText className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                     </div>
                 </div>
-                <div className="mt-2">
+                <div className="mt-1">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                         Compras este mes: {estadisticas.mes_actual.compras.toLocaleString()}
                     </span>
@@ -97,7 +97,7 @@ export default function EstadisticasCompras({ estadisticas, className = '' }: Pr
             </div>
 
             {/* Estados */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-3">
                     <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Por Estado</p>

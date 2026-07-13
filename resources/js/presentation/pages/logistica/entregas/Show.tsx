@@ -465,10 +465,10 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 {/* Información del Lote - Entregas con mismo chofer y vehículo */}
                 {entrega.chofer && entrega.vehiculo && (
                     <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-2">
-                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-purple-900 dark:text-purple-200">
+                        {/* <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-purple-900 dark:text-purple-200">
                             <Package className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                             <span>Contexto del Lote</span>
-                        </h2>
+                        </h2> */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                             <div>
                                 <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Chofer Asignado</p>
@@ -504,7 +504,6 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                                     {entrega.peso_kg ? `${entrega.peso_kg} kg` : 'N/A'}
                                 </p>
                             </div>
-
                         </div>
                     </div>
                 )}

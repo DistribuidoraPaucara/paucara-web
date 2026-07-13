@@ -1,13 +1,13 @@
-import { Link, router } from '@inertiajs/react';
-import { formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/application/hooks/use-auth';
-import { Eye, Edit, ChevronUp, ChevronDown, AlertCircle, Printer } from 'lucide-react';
+import { ComprasService } from '@/infrastructure/services/compras.service';
+import { formatCurrency } from '@/lib/utils';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Link } from '@inertiajs/react';
+import { AlertCircle, ChevronDown, ChevronUp, Edit, Eye, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import EliminarCompraDialog from './eliminar-compra-dialog';
 import AnularCompraModal from './AnularCompraModal';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { ComprasService } from '@/infrastructure/services/compras.service';
+import EliminarCompraDialog from './eliminar-compra-dialog';
 
 // Importar tipos del domain
 import type { Compra, EstadoDocumento } from '@/domain/entities/compras';
@@ -116,17 +116,15 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
 
     const getSortIcon = (field: string) => {
         if (sortBy !== field) return null;
-        return sortDir === 'asc'
-            ? <ChevronUp className="h-4 w-4 ml-1" />
-            : <ChevronDown className="h-4 w-4 ml-1" />;
+        return sortDir === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />;
     };
 
     const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
         <th
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="cursor-pointer px-2 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600"
             onClick={() => handleSort(field)}
         >
-            <div className="flex items-center">
+            <div className="flex items-center justify-center gap-1 text-center">
                 {children}
                 {getSortIcon(field)}
             </div>
@@ -135,23 +133,26 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
 
     if (comprasSeguras.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
+            <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
                 <div className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center">
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
                         </svg>
                         <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Sin compras</h3>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            No se encontraron compras con los filtros aplicados.
-                        </p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">No se encontraron compras con los filtros aplicados.</p>
                         {can('compras.create') && (
                             <div className="mt-6">
                                 <Link
                                     href="/compras/create"
-                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                                 >
-                                    <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="mr-2 -ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
                                     Nueva compra
@@ -165,66 +166,56 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
     }
 
     return (
-        <div className={`bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg ${className}`}>
+        <div className={`overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800 ${className}`}>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
+                            <SortableHeader field="id">FOLIO</SortableHeader>
                             <SortableHeader field="numero">Número</SortableHeader>
+                            <SortableHeader field="estadoDocumento">Estado</SortableHeader>
                             <SortableHeader field="proveedor">Proveedor</SortableHeader>
                             <SortableHeader field="total">Total</SortableHeader>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Acciones
-                            </th>
+                            <SortableHeader field="created_at">Fecha</SortableHeader>
+                            <th className="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">-</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                         {comprasSeguras.map((compra) => (
-                            <tr key={compra.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                    Folio: {compra.id} | {compra.numero}
-                                    <div className="font-medium">
-                                        {new Date(compra.created_at).toLocaleString('es-ES', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            second: '2-digit'
-                                        })}
-                                    </div>
-                                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getEstadoColor(compra.estado_documento)}`}>
+                            <tr key={compra.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-2 py-4 text-center text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
+                                    #{compra.id}
+                                </td>
+                                <td className="px-2 py-4 text-xs font-mono whitespace-nowrap text-gray-900 dark:text-white">
+                                    {compra.numero}
+
+                                    <p>
+                                        {compra.numero_factura && (
+                                            <span className="mt-2 rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+                                                Factura: #{compra.numero_factura}
+                                            </span>
+                                        )}
+                                    </p>
+                                </td>
+                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                    <span
+                                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getEstadoColor(compra.estado_documento)}`}
+                                    >
                                         {compra.estado_documento?.nombre ?? 'Sin estado'}
                                     </span>
-                                    <p>
-                                        {compra.numero_factura ? (
-                                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-mono">
-                                            {compra.numero_factura}
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-400 text-xs">Sin factura</span>
-                                    )}
+                                </td>
+
+                                <td className="px-2 py-4 text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                    <p className="text-xs font-medium">{compra.proveedor?.nombre ?? 'Sin proveedor'}</p>
+                                    <p className="text-xs text-gray-400">
+                                        <strong>Creador: </strong>
+                                        {compra.usuario?.name}
                                     </p>
                                 </td>
 
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                    <div className="flex items-center">
-                                        <div>
-                                            <div className="font-medium">
-                                                {compra.proveedor?.nombre ?? 'Sin proveedor'}
-                                            </div>
-                                            <div className="text-xs text-gray-400">
-                                                <strong>Creador: </strong>{compra.usuario?.name}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
-                                    <div className="font-mono">
-                                        <div className="font-semibold">
-                                            {formatCurrency(Number(compra.total), compra.moneda?.simbolo)}
-                                        </div>
+                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                    <div className="font-mono text-xs">
+                                        <div className="font-semibold">{formatCurrency(Number(compra.total), compra.moneda?.simbolo)}</div>
                                         {compra.descuento > 0 && (
                                             <div className="text-xs text-gray-500">
                                                 Desc: {formatCurrency(Number(compra.descuento), compra.moneda?.simbolo)}
@@ -232,23 +223,38 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                                         )}
                                     </div>
                                     {compra.tipo_pago ? (
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${compra.tipo_pago.codigo === 'CONTADO'
-                                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                                            : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
-                                            }`}>
+                                        <span
+                                            className={`inline-flex rounded px-2 py-1 text-xs font-medium ${
+                                                compra.tipo_pago.codigo === 'CONTADO'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                                            }`}
+                                        >
                                             {compra.tipo_pago.nombre}
                                         </span>
                                     ) : (
-                                        <span className="text-gray-400 text-xs">Sin tipo</span>
+                                        <span className="text-xs text-gray-400">Sin tipo</span>
                                     )}
                                 </td>
+                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                    <div className="font-medium">
+                                        {new Date(compra.created_at).toLocaleString('es-ES', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                        })}
+                                    </div>
+                                </td>
 
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-2 py-4 text-right text-sm font-medium whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
                                         {can('compras.show') && (
                                             <Link
                                                 href={`/compras/${compra.id}`}
-                                                className="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                className="inline-flex items-center rounded p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                                                 title="Ver detalle"
                                             >
                                                 <Eye className="h-4 w-4" />
@@ -259,7 +265,7 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                                         {can('compras.show') && (
                                             <button
                                                 onClick={() => setOutputModal({ isOpen: true, compra })}
-                                                className="inline-flex items-center p-2 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                className="inline-flex items-center rounded p-2 text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                                                 title="Imprimir documento"
                                             >
                                                 <Printer className="h-4 w-4" />
@@ -270,7 +276,7 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                                         {can('compras.update') && (
                                             <Link
                                                 href={`/compras/${compra.id}/edit`}
-                                                className="inline-flex items-center p-2 text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
+                                                className="inline-flex items-center rounded p-2 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/20 dark:hover:text-amber-300"
                                                 title="Editar"
                                             >
                                                 <Edit className="h-4 w-4" />
@@ -282,19 +288,14 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                                             <button
                                                 onClick={() => openAnularModal(compra)}
                                                 disabled={isAnulando}
-                                                className="inline-flex items-center p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="inline-flex items-center rounded p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                                 title="Anular compra"
                                             >
                                                 <AlertCircle className="h-4 w-4" />
                                             </button>
                                         )}
 
-                                        {can('compras.delete') && (
-                                            <EliminarCompraDialog
-                                                compra={compra}
-                                                onSuccess={() => window.location.reload()}
-                                            />
-                                        )}
+                                        {can('compras.delete') && <EliminarCompraDialog compra={compra} onSuccess={() => window.location.reload()} />}
                                     </div>
                                 </td>
                             </tr>

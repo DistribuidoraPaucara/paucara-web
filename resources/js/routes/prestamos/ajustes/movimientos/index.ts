@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 export const clientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ clientes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ clientes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ clientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
     const clientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -48,7 +48,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
         clientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
         clientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -71,7 +71,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     clientes.form = clientesForm
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 export const proveedores = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -85,7 +85,7 @@ proveedores.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.url = (options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ proveedores.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +101,7 @@ proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -110,7 +110,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
     const proveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -119,7 +119,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
         proveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -127,7 +127,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
         proveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     proveedores.form = proveedoresForm
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 export const eventos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -156,7 +156,7 @@ eventos.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.url = (options?: RouteQueryOptions) => {
@@ -164,7 +164,7 @@ eventos.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ eventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -181,7 +181,7 @@ eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
     const eventosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -190,7 +190,7 @@ eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
         eventosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -198,7 +198,7 @@ eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
         eventosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

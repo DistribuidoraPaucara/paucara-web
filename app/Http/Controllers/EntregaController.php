@@ -1547,9 +1547,128 @@ class EntregaController extends Controller
                 'ventas_asignadas'   => $entrega->ventas->count(),
             ]);
 
+            // ✅ TRANSFORMER: Usar el mismo formato que la versión web para consistencia
+            $entregaData = [
+                'id' => $entrega->id,
+                'numero_entrega' => $entrega->numero_entrega,
+                'numero_envio' => $entrega->numero_envio,
+                'estado' => $entrega->estado,
+                'estado_entrega_id' => $entrega->estado_entrega_id,
+                'estado_entrega_codigo' => $entrega->estado_entrega_codigo,
+                'estado_entrega_nombre' => $entrega->estado_entrega_nombre,
+                'estado_entrega_color' => $entrega->estado_entrega_color,
+                'estado_entrega_icono' => $entrega->estado_entrega_icono,
+                'estado_entrega' => $entrega->estadoEntrega ? [
+                    'id' => $entrega->estadoEntrega->id,
+                    'codigo' => $entrega->estadoEntrega->codigo,
+                    'nombre' => $entrega->estadoEntrega->nombre,
+                    'color' => $entrega->estadoEntrega->color,
+                    'icono' => $entrega->estadoEntrega->icono,
+                ] : null,
+                'chofer' => $entrega->chofer ? [
+                    'id' => $entrega->chofer->id,
+                    'name' => $entrega->chofer->name,
+                    'nombre' => $entrega->chofer->nombre,
+                ] : null,
+                'entregador' => $entrega->entregador ? [
+                    'id' => $entrega->entregador->id,
+                    'name' => $entrega->entregador->name,
+                    'nombre' => $entrega->entregador->nombre,
+                ] : null,
+                'vehiculo' => $entrega->vehiculo ? [
+                    'id' => $entrega->vehiculo->id,
+                    'placa' => $entrega->vehiculo->placa,
+                    'marca' => $entrega->vehiculo->marca,
+                    'modelo' => $entrega->vehiculo->modelo,
+                ] : null,
+                'localidad' => $entrega->localidad ? [
+                    'id' => $entrega->localidad->id,
+                    'nombre' => $entrega->localidad->nombre,
+                ] : null,
+                'ventas' => $entrega->ventas ? $entrega->ventas->map(function ($venta) {
+                    $confirmacion = $venta->confirmacion_entrega;
+
+                    return [
+                        'id' => $venta->id,
+                        'numero' => $venta->numero,
+                        'cliente' => $venta->cliente ? [
+                            'id' => $venta->cliente->id,
+                            'nombre' => $venta->cliente->nombre,
+                            'telefono' => $venta->cliente->telefono,
+                            'foto_perfil' => $venta->cliente->foto_perfil,
+                        ] : null,
+                        'total' => (float) $venta->total,
+                        'subtotal' => (float) $venta->subtotal,
+                        'impuesto' => (float) $venta->impuesto,
+                        'peso_total_estimado' => $venta->peso_total_estimado,
+                        'estado_logistico_id' => $venta->estado_logistico_id,
+                        'direccion_cliente_id' => $venta->direccion_cliente_id,
+                        'tipo_pago' => $venta->tipoPago ? [
+                            'id' => $venta->tipoPago->id,
+                            'nombre' => $venta->tipoPago->nombre,
+                            'codigo' => $venta->tipoPago->codigo,
+                        ] : null,
+                        'direccion_cliente' => $venta->direccionCliente ? [
+                            'id' => $venta->direccionCliente->id,
+                            'direccion' => $venta->direccionCliente->direccion,
+                            'latitud' => (float) ($venta->direccionCliente->latitud ?? 0),
+                            'longitud' => (float) ($venta->direccionCliente->longitud ?? 0),
+                            'observaciones' => $venta->direccionCliente->observaciones,
+                            'localidad' => $venta->direccionCliente->localidad ? [
+                                'id' => $venta->direccionCliente->localidad->id,
+                                'nombre' => $venta->direccionCliente->localidad->nombre,
+                                'codigo' => $venta->direccionCliente->localidad->codigo,
+                            ] : null,
+                        ] : null,
+                        'estado_logistica' => $venta->estadoLogistica ? [
+                            'id' => $venta->estadoLogistica->id,
+                            'codigo' => $venta->estadoLogistica->codigo,
+                            'nombre' => $venta->estadoLogistica->nombre,
+                            'color' => $venta->estadoLogistica->color,
+                            'icono' => $venta->estadoLogistica->icono,
+                        ] : null,
+                        'estado_documento' => $venta->estadoDocumento ? [
+                            'id' => $venta->estadoDocumento->id,
+                            'nombre' => $venta->estadoDocumento->nombre,
+                            'codigo' => $venta->estadoDocumento->codigo,
+                            'color' => $venta->estadoDocumento->color ?? null,
+                        ] : null,
+                        'confirmacion_entrega' => $confirmacion ? [
+                            'id' => $confirmacion->id,
+                            'tipo_entrega' => $confirmacion->tipo_entrega,
+                            'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+                            'tuvo_problema' => $confirmacion->tuvo_problema,
+                            'estado_pago' => $confirmacion->estado_pago,
+                            'total_dinero_recibido' => (float) ($confirmacion->total_dinero_recibido ?? 0),
+                            'monto_pendiente' => (float) ($confirmacion->monto_pendiente ?? 0),
+                            'observaciones_logistica' => $confirmacion->observaciones_logistica,
+                            'confirmado_en' => $confirmacion->confirmado_en,
+                        ] : null,
+                        'detalles' => $venta->detalles ? $venta->detalles->map(function ($detalle) {
+                            return [
+                                'id' => $detalle->id,
+                                'producto' => $detalle->producto ? [
+                                    'id' => $detalle->producto->id,
+                                    'nombre' => $detalle->producto->nombre,
+                                ] : null,
+                                'cantidad' => $detalle->cantidad,
+                                'precio_unitario' => (float) $detalle->precio_unitario,
+                                'subtotal' => (float) $detalle->subtotal,
+                            ];
+                        })->toArray() : [],
+                    ];
+                })->toArray() : [],
+                'fecha_asignacion' => $entrega->fecha_asignacion,
+                'fecha_entrega' => $entrega->fecha_entrega,
+                'fecha_programada' => $entrega->fecha_programada,
+                'created_at' => $entrega->created_at,
+                'peso_kg' => $entrega->peso_kg,
+                'confirmacionesVentas' => $entrega->confirmacionesVentas->toArray(),
+            ];
+
             return response()->json([
                 'success'   => true,
-                'data'      => $entrega,
+                'data'      => $entregaData,
                 'productos' => $productosGenerico->toArray(), // ✅ Convertir Collection a array
             ]);
         }

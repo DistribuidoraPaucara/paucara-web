@@ -2348,6 +2348,8 @@ class CompraController extends Controller
                 'stock_registrados' => $stockProductos->map(fn($sp) => [
                     'id' => $sp->id,
                     'cantidad' => (float)$sp->cantidad,
+                    'cantidad_disponible' => (float)$sp->cantidad_disponible,
+                    'cantidad_reservada' => (float)$sp->cantidad_reservada,
                     'lote' => $sp->lote,
                     'fecha_vencimiento' => $sp->fecha_vencimiento,
                 ])->toArray(),
@@ -2439,6 +2441,8 @@ class CompraController extends Controller
                 ]);
 
                 // 1. ACTUALIZAR stocks anteriores
+                $totalReservadaTransferida = 0; // Guardar para transferir al nuevo stock
+
                 foreach ($stocksAActualizar as $stockActual) {
                     if (empty($stockActual['stock_id'])) {
                         continue;
@@ -2449,10 +2453,23 @@ class CompraController extends Controller
                     // Capturar valores anteriores para auditoría
                     $cantidadAnterior = $stock->cantidad;
                     $cantidadDisponibleAnterior = $stock->cantidad_disponible;
+                    $cantidadReservadaAnterior = $stock->cantidad_reservada;
 
                     // Calcular la diferencia de cantidad
                     $nuevaCantidad = (float)($stockActual['cantidad'] ?? $stock->cantidad);
                     $diferencia = $nuevaCantidad - $cantidadAnterior;
+
+                    // TRANSFERENCIA COMPLETA: si se reduce cantidad, transfiere TODO lo reservado
+                    $nuevaCantidadReservada = $cantidadReservadaAnterior;
+                    $nuevaCantidadDisponible = $cantidadDisponibleAnterior + $diferencia;
+
+                    if ($diferencia < 0) { // Se reduce cantidad
+                        // Transferir TODA la cantidad_reservada
+                        $totalReservadaTransferida += $cantidadReservadaAnterior;
+                        $nuevaCantidadReservada = 0;
+                        // Garantizar que cantidad = disponible + reservada
+                        $nuevaCantidadDisponible = $nuevaCantidad - $nuevaCantidadReservada;
+                    }
 
                     // Convertir strings vacíos a null
                     $nuevoLote = !empty($stockActual['nuevo_lote']) ? $stockActual['nuevo_lote'] : null;
@@ -2460,7 +2477,8 @@ class CompraController extends Controller
 
                     $stock->update([
                         'cantidad' => $nuevaCantidad,
-                        'cantidad_disponible' => $cantidadDisponibleAnterior + $diferencia,
+                        'cantidad_disponible' => max(0, $nuevaCantidadDisponible),
+                        'cantidad_reservada' => max(0, $nuevaCantidadReservada),
                         'lote' => $nuevoLote,
                         'fecha_vencimiento' => $nuevaFecha,
                     ]);
@@ -2475,9 +2493,9 @@ class CompraController extends Controller
                             'cantidad_total_anterior' => $cantidadAnterior,
                             'cantidad_total_posterior' => $nuevaCantidad,
                             'cantidad_disponible_anterior' => $cantidadDisponibleAnterior,
-                            'cantidad_disponible_posterior' => $cantidadDisponibleAnterior + $diferencia,
-                            'cantidad_reservada_anterior' => $stock->cantidad_reservada,
-                            'cantidad_reservada_posterior' => $stock->cantidad_reservada,
+                            'cantidad_disponible_posterior' => max(0, $nuevaCantidadDisponible),
+                            'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
+                            'cantidad_reservada_posterior' => max(0, $nuevaCantidadReservada),
                             'fecha' => now(),
                             'observacion' => 'Ajuste de cantidad en asignación de compra #' . $compra->numero,
                             'tipo' => 'AJUSTE_ASIGNACION_COMPRA',
@@ -2492,6 +2510,9 @@ class CompraController extends Controller
                         'stock_id' => $stock->id,
                         'cantidad_anterior' => $cantidadAnterior,
                         'cantidad_nueva' => $nuevaCantidad,
+                        'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
+                        'cantidad_reservada_nueva' => (int)$nuevaCantidadReservada,
+                        'reservada_transferida' => ($diferencia < 0) ? $cantidadReservadaAnterior : 0,
                         'nuevo_lote' => $stockActual['nuevo_lote'],
                         'nueva_fecha' => $stockActual['nueva_fecha_vencimiento'],
                     ]);
@@ -2499,51 +2520,65 @@ class CompraController extends Controller
 
                 // 2. CREAR nuevos stocks
                 foreach ($stocksACrear as $nuevoStockData) {
-                    if ($nuevoStockData['cantidad'] <= 0) {
-                        continue;
-                    }
-
                     // Convertir strings vacíos a null
                     $loteNuevo = !empty($nuevoStockData['lote']) ? $nuevoStockData['lote'] : null;
                     $fechaNueva = !empty($nuevoStockData['fecha_vencimiento']) ? $nuevoStockData['fecha_vencimiento'] : null;
 
+                    // Permitir crear lotes nuevos incluso con cantidad=0, si tienen lote o fecha
+                    $cantidad = (float)$nuevoStockData['cantidad'];
+                    if ($cantidad <= 0 && !$loteNuevo && !$fechaNueva) {
+                        continue;
+                    }
+
+                    // TRANSFERENCIA COMPLETA: Asignar toda la cantidad_reservada transferida
+                    $cantidadReservadaNueva = $totalReservadaTransferida;
+
+                    // Validar regla: cantidad = disponible + reservada
+                    $cantidadDisponibleNueva = max(0, $cantidad - $cantidadReservadaNueva);
+
                     $nuevoStock = StockProducto::create([
                         'producto_id' => $detalle->producto_id,
                         'almacen_id' => $compra->almacen_id,
-                        'cantidad' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_disponible' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_reservada' => 0,
+                        'cantidad' => $cantidad,
+                        'cantidad_disponible' => $cantidadDisponibleNueva,
+                        'cantidad_reservada' => $cantidadReservadaNueva,
                         'lote' => $loteNuevo,
                         'fecha_vencimiento' => $fechaNueva,
                         'numero_compra' => $compra->numero,
                         'tipo_movimiento' => 'ENTRADA',
                     ]);
 
-                    // Crear movimiento de inventario para el nuevo stock
-                    MovimientoInventario::create([
-                        'stock_producto_id' => $nuevoStock->id,
-                        'cantidad' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_anterior' => 0,
-                        'cantidad_posterior' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_total_anterior' => 0,
-                        'cantidad_total_posterior' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_disponible_anterior' => 0,
-                        'cantidad_disponible_posterior' => (float)$nuevoStockData['cantidad'],
-                        'cantidad_reservada_anterior' => 0,
-                        'cantidad_reservada_posterior' => 0,
-                        'fecha' => now(),
-                        'observacion' => 'Nuevo lote creado en asignación de compra #' . $compra->numero,
-                        'tipo' => 'ENTRADA_AJUSTE_COMPRA',
-                        'numero_documento' => $compra->numero,
-                        'user_id' => Auth::id(),
-                        'referencia_tipo' => 'compra',
-                        'referencia_id' => $compra->id,
-                    ]);
+                    // Solo crear movimiento de inventario si hay cantidad > 0
+                    if ($cantidad > 0) {
+                        MovimientoInventario::create([
+                            'stock_producto_id' => $nuevoStock->id,
+                            'cantidad' => $cantidad,
+                            'cantidad_anterior' => 0,
+                            'cantidad_posterior' => $cantidad,
+                            'cantidad_total_anterior' => 0,
+                            'cantidad_total_posterior' => $cantidad,
+                            'cantidad_disponible_anterior' => 0,
+                            'cantidad_disponible_posterior' => $cantidadDisponibleNueva,
+                            'cantidad_reservada_anterior' => 0,
+                            'cantidad_reservada_posterior' => $cantidadReservadaNueva,
+                            'fecha' => now(),
+                            'observacion' => 'Nuevo lote creado en asignación de compra #' . $compra->numero,
+                            'tipo' => 'ENTRADA_AJUSTE_COMPRA',
+                            'numero_documento' => $compra->numero,
+                            'user_id' => Auth::id(),
+                            'referencia_tipo' => 'compra',
+                            'referencia_id' => $compra->id,
+                        ]);
+                    }
 
                     Log::info('Nuevo stock creado', [
                         'stock_id' => $nuevoStock->id,
-                        'cantidad' => $nuevoStockData['cantidad'],
-                        'lote' => $nuevoStockData['lote'],
+                        'cantidad' => $cantidad,
+                        'cantidad_disponible' => $cantidadDisponibleNueva,
+                        'cantidad_reservada' => $cantidadReservadaNueva,
+                        'lote' => $loteNuevo,
+                        'con_cantidad' => $cantidad > 0,
+                        'reservada_transferida' => $cantidadReservadaNueva > 0,
                     ]);
                 }
 
@@ -2563,22 +2598,55 @@ class CompraController extends Controller
 
                     $cantidadATransferir = (float)$transferencia['cantidad'];
 
-                    // ORIGEN: Restar cantidad, disponible y reservada
+                    // ORIGEN: Obtener valores anteriores
                     $cantidadOrigenAnterior = $stockOrigen->cantidad;
                     $cantidadDisponibleOrigenAnterior = $stockOrigen->cantidad_disponible;
                     $cantidadReservadaOrigenAnterior = $stockOrigen->cantidad_reservada;
 
+                    // TRANSFERENCIA COMPLETA vs PARCIAL
+                    // Si se transfiere TODO el stock, transfiere TODO (no proporcional)
+                    // Si es parcial, transfiere proporcionalmente
+                    $esTransferenciaCompleta = abs($cantidadATransferir - $cantidadOrigenAnterior) < 0.01;
+
+                    if ($esTransferenciaCompleta) {
+                        // Transferencia completa: pasar TODO
+                        $disponibleATransferir = $cantidadDisponibleOrigenAnterior;
+                        $reservadaATransferir = $cantidadReservadaOrigenAnterior;
+                    } else {
+                        // Transferencia parcial: calcular proporcionalmente
+                        $proporcionDisponible = $cantidadOrigenAnterior > 0
+                            ? ($cantidadDisponibleOrigenAnterior / $cantidadOrigenAnterior)
+                            : 0;
+                        $proporcionReservada = $cantidadOrigenAnterior > 0
+                            ? ($cantidadReservadaOrigenAnterior / $cantidadOrigenAnterior)
+                            : 0;
+
+                        // Calcular cuánto de disponible y reservada se transfiere
+                        $disponibleATransferir = $cantidadATransferir * $proporcionDisponible;
+                        $reservadaATransferir = $cantidadATransferir * $proporcionReservada;
+
+                        // Validar que no exceda los valores disponibles
+                        $disponibleATransferir = min($disponibleATransferir, $cantidadDisponibleOrigenAnterior);
+                        $reservadaATransferir = min($reservadaATransferir, $cantidadReservadaOrigenAnterior);
+                    }
+
+                    // Calcular nuevos valores ORIGEN (restar)
                     $nuevaCantidadOrigen = $cantidadOrigenAnterior - $cantidadATransferir;
-                    $nuevaCantidadDisponibleOrigen = max(0, $cantidadDisponibleOrigenAnterior - $cantidadATransferir);
-                    // Transferir también la cantidad reservada proporcionalmente
-                    $proporcionReservada = $cantidadOrigenAnterior > 0 ? ($cantidadReservadaOrigenAnterior / $cantidadOrigenAnterior) : 0;
-                    $cantidadReservadaATransferir = min($cantidadReservadaOrigenAnterior, $cantidadATransferir * $proporcionReservada);
-                    $nuevaCantidadReservadaOrigen = max(0, $cantidadReservadaOrigenAnterior - $cantidadReservadaATransferir);
+                    $nuevaCantidadDisponibleOrigen = $cantidadDisponibleOrigenAnterior - $disponibleATransferir;
+                    $nuevaCantidadReservadaOrigen = $cantidadReservadaOrigenAnterior - $reservadaATransferir;
+
+                    // Validar regla: cantidad = disponible + reservada
+                    $sumaOrigen = $nuevaCantidadDisponibleOrigen + $nuevaCantidadReservadaOrigen;
+                    if (abs($sumaOrigen - $nuevaCantidadOrigen) > 0.01) {
+                        // Ajustar si hay desviación por redondeo
+                        $diferencia = $nuevaCantidadOrigen - $sumaOrigen;
+                        $nuevaCantidadDisponibleOrigen += $diferencia;
+                    }
 
                     $stockOrigen->update([
-                        'cantidad' => $nuevaCantidadOrigen,
-                        'cantidad_disponible' => $nuevaCantidadDisponibleOrigen,
-                        'cantidad_reservada' => $nuevaCantidadReservadaOrigen,
+                        'cantidad' => max(0, $nuevaCantidadOrigen),
+                        'cantidad_disponible' => max(0, $nuevaCantidadDisponibleOrigen),
+                        'cantidad_reservada' => max(0, $nuevaCantidadReservadaOrigen),
                     ]);
 
                     // Registrar movimiento en origen
@@ -2586,13 +2654,13 @@ class CompraController extends Controller
                         'stock_producto_id' => $stockOrigen->id,
                         'cantidad' => -$cantidadATransferir,
                         'cantidad_anterior' => $cantidadOrigenAnterior,
-                        'cantidad_posterior' => $nuevaCantidadOrigen,
+                        'cantidad_posterior' => max(0, $nuevaCantidadOrigen),
                         'cantidad_total_anterior' => $cantidadOrigenAnterior,
-                        'cantidad_total_posterior' => $nuevaCantidadOrigen,
+                        'cantidad_total_posterior' => max(0, $nuevaCantidadOrigen),
                         'cantidad_disponible_anterior' => $cantidadDisponibleOrigenAnterior,
-                        'cantidad_disponible_posterior' => $nuevaCantidadDisponibleOrigen,
+                        'cantidad_disponible_posterior' => max(0, $nuevaCantidadDisponibleOrigen),
                         'cantidad_reservada_anterior' => $cantidadReservadaOrigenAnterior,
-                        'cantidad_reservada_posterior' => $nuevaCantidadReservadaOrigen,
+                        'cantidad_reservada_posterior' => max(0, $nuevaCantidadReservadaOrigen),
                         'fecha' => now(),
                         'observacion' => 'Transferencia entre lotes en asignación de compra #' . $compra->numero,
                         'tipo' => 'SALIDA_TRANSFERENCIA_LOTES',
@@ -2607,9 +2675,18 @@ class CompraController extends Controller
                     $cantidadDisponibleDestinoAnterior = $stockDestino->cantidad_disponible;
                     $cantidadReservadaDestinoAnterior = $stockDestino->cantidad_reservada;
 
+                    // Calcular nuevos valores DESTINO (sumar)
                     $nuevaCantidadDestino = $cantidadDestinoAnterior + $cantidadATransferir;
-                    $nuevaCantidadDisponibleDestino = $cantidadDisponibleDestinoAnterior + $cantidadATransferir;
-                    $nuevaCantidadReservadaDestino = $cantidadReservadaDestinoAnterior + $cantidadReservadaATransferir;
+                    $nuevaCantidadDisponibleDestino = $cantidadDisponibleDestinoAnterior + $disponibleATransferir;
+                    $nuevaCantidadReservadaDestino = $cantidadReservadaDestinoAnterior + $reservadaATransferir;
+
+                    // Validar regla: cantidad = disponible + reservada
+                    $sumaDestino = $nuevaCantidadDisponibleDestino + $nuevaCantidadReservadaDestino;
+                    if (abs($sumaDestino - $nuevaCantidadDestino) > 0.01) {
+                        // Ajustar si hay desviación por redondeo
+                        $diferencia = $nuevaCantidadDestino - $sumaDestino;
+                        $nuevaCantidadDisponibleDestino += $diferencia;
+                    }
 
                     $stockDestino->update([
                         'cantidad' => $nuevaCantidadDestino,
@@ -2642,10 +2719,20 @@ class CompraController extends Controller
                         'stock_origen_id' => $stockOrigen->id,
                         'stock_destino_id' => $stockDestino->id,
                         'cantidad_transferida' => $cantidadATransferir,
+                        'disponible_transferido' => $disponibleATransferir,
+                        'reservada_transferido' => $reservadaATransferir,
                         'origen_cantidad_anterior' => $cantidadOrigenAnterior,
-                        'origen_cantidad_nueva' => $nuevaCantidadOrigen,
+                        'origen_cantidad_nueva' => max(0, $nuevaCantidadOrigen),
+                        'origen_disponible_anterior' => $cantidadDisponibleOrigenAnterior,
+                        'origen_disponible_nueva' => max(0, $nuevaCantidadDisponibleOrigen),
+                        'origen_reservada_anterior' => $cantidadReservadaOrigenAnterior,
+                        'origen_reservada_nueva' => max(0, $nuevaCantidadReservadaOrigen),
                         'destino_cantidad_anterior' => $cantidadDestinoAnterior,
                         'destino_cantidad_nueva' => $nuevaCantidadDestino,
+                        'destino_disponible_anterior' => $cantidadDisponibleDestinoAnterior,
+                        'destino_disponible_nueva' => $nuevaCantidadDisponibleDestino,
+                        'destino_reservada_anterior' => $cantidadReservadaDestinoAnterior,
+                        'destino_reservada_nueva' => $nuevaCantidadReservadaDestino,
                     ]);
                 }
 
