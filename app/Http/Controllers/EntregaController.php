@@ -1495,6 +1495,7 @@ class EntregaController extends Controller
                 $q->with([
                     'venta.cliente',      // ✅ FIXED (2026-02-17): Cliente de la venta
                     'confirmadoPor',      // ✅ NEW: Usuario que confirmó la entrega
+                    'tipoPago',           // ✅ NUEVO: Tipo de pago de la confirmación
                 ]);
             },
         ]);
@@ -1663,7 +1664,56 @@ class EntregaController extends Controller
                 'fecha_programada' => $entrega->fecha_programada,
                 'created_at' => $entrega->created_at,
                 'peso_kg' => $entrega->peso_kg,
-                'confirmacionesVentas' => $entrega->confirmacionesVentas->toArray(),
+                // ✅ NUEVO: Transformar confirmacionesVentas para incluir tipo_pago completo
+                'confirmacionesVentas' => $entrega->confirmacionesVentas->map(function ($confirmacion) {
+                    return [
+                        'id' => $confirmacion->id,
+                        'entrega_id' => $confirmacion->entrega_id,
+                        'venta_id' => $confirmacion->venta_id,
+                        'firma_digital_url' => $confirmacion->firma_digital_url,
+                        'fotos' => $confirmacion->fotos,
+                        'observaciones_logistica' => $confirmacion->observaciones_logistica,
+                        'tienda_abierta' => $confirmacion->tienda_abierta,
+                        'cliente_presente' => $confirmacion->cliente_presente,
+                        'motivo_rechazo' => $confirmacion->motivo_rechazo,
+                        'estado_pago' => $confirmacion->estado_pago,
+                        'monto_recibido' => $confirmacion->monto_recibido,
+                        'tipo_pago_id' => $confirmacion->tipo_pago_id,
+                        // ✅ NUEVO: Incluir tipo_pago completo
+                        'tipo_pago' => $confirmacion->tipoPago ? [
+                            'id' => $confirmacion->tipoPago->id,
+                            'nombre' => $confirmacion->tipoPago->nombre,
+                            'codigo' => $confirmacion->tipoPago->codigo,
+                        ] : null,
+                        'motivo_no_pago' => $confirmacion->motivo_no_pago,
+                        'confirmado_por' => $confirmacion->confirmadoPor ? [
+                            'id' => $confirmacion->confirmadoPor->id,
+                            'name' => $confirmacion->confirmadoPor->name,
+                        ] : null,
+                        'confirmado_en' => $confirmacion->confirmado_en,
+                        'created_at' => $confirmacion->created_at,
+                        'updated_at' => $confirmacion->updated_at,
+                        'foto_comprobante' => $confirmacion->foto_comprobante,
+                        'tipo_entrega' => $confirmacion->tipo_entrega,
+                        'tipo_novedad' => $confirmacion->tipo_novedad,
+                        'tuvo_problema' => $confirmacion->tuvo_problema,
+                        'desglose_pagos' => $confirmacion->desglose_pagos,
+                        'total_dinero_recibido' => $confirmacion->total_dinero_recibido,
+                        'monto_pendiente' => $confirmacion->monto_pendiente,
+                        'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+                        'productos_devueltos' => $confirmacion->productos_devueltos,
+                        'monto_devuelto' => $confirmacion->monto_devuelto,
+                        'monto_aceptado' => $confirmacion->monto_aceptado,
+                        'venta' => $confirmacion->venta ? [
+                            'id' => $confirmacion->venta->id,
+                            'numero' => $confirmacion->venta->numero,
+                            'cliente' => $confirmacion->venta->cliente ? [
+                                'id' => $confirmacion->venta->cliente->id,
+                                'nombre' => $confirmacion->venta->cliente->nombre,
+                            ] : null,
+                        ] : null,
+                    ];
+                })->toArray(),
             ];
 
             return response()->json([

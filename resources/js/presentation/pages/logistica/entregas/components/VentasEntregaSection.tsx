@@ -469,7 +469,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                         </div>
                                                                         {/* ✅ Mostrar dinero recibido solo si es COMPLETA o DEVOLUCION_PARCIAL */}
                                                                         {(confirmacion.tipo_confirmacion === 'COMPLETA' ||
-                                                                            confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && (
+                                                                            confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' ) && (
                                                                             <div>
                                                                                 <p className="text-xs font-semibold text-green-700 uppercase dark:text-green-300">
                                                                                     Dinero Recibido
