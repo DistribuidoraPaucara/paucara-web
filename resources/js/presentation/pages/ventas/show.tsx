@@ -1143,7 +1143,7 @@ export default function VentaShow() {
                 ventaId={venta.id}
                 ventaNumero={venta.numero}
                 entregaId={venta.entrega?.id}
-                politicaPago={venta.tipoPago?.codigo || ''}
+                politicaPago={venta.tipo_pago?.codigo || ''}
                 detalles={venta.detalles}
                 onClose={() => setShowRegistrarConfirmacionModal(false)}
                 onSuccess={() => {
