@@ -67,6 +67,22 @@ export default function RegistrarConfirmacionModal({
     // Determinar si es CREDITO
     const esCredito = politicaPago?.toUpperCase() === 'CREDITO';
 
+    // ✅ DEBUG: Loguear cuando el modal se abre
+    React.useEffect(() => {
+        if (isOpen) {
+            console.log('📝 [RegistrarConfirmacionModal] Modal abierto con:', {
+                ventaId,
+                ventaNumero,
+                entregaId,
+                politicaPago,
+                esCredito,
+                tipoEntrega,
+                tipoConfirmacion,
+                detallesCount: detalles.length,
+            });
+        }
+    }, [isOpen, ventaId, politicaPago]);
+
     // Lógica para determinar tipos según tipo_entrega
     const tiposConfirmacionDisponibles = useMemo(() => {
         if (tipoEntrega === 'COMPLETA') {
@@ -95,6 +111,19 @@ export default function RegistrarConfirmacionModal({
     // Determinar qué campos mostrar
     // ✅ CORREGIDO: No mostrar campos de pago si es CREDITO (promesa de pago)
     const mostrarCamposPago = !esCredito && (tipoEntrega === 'COMPLETA' || (tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL'));
+
+    // ✅ DEBUG: Loguear cuando cambia mostrarCamposPago
+    React.useEffect(() => {
+        if (isOpen) {
+            console.log('🔍 [RegistrarConfirmacionModal] Estado de campos:', {
+                esCredito,
+                tipoEntrega,
+                tipoConfirmacion,
+                mostrarCamposPago,
+                condicion: `!esCredito && (tipoEntrega === 'COMPLETA' || (tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL'))`,
+            });
+        }
+    }, [isOpen, esCredito, tipoEntrega, tipoConfirmacion, mostrarCamposPago]);
     const mostrarTablaProductos = tipoEntrega === 'CON_NOVEDAD' && tipoConfirmacion === 'DEVOLUCION_PARCIAL';
     const mostrarSoloFotosYObservaciones =
         (tipoEntrega === 'CON_NOVEDAD' && (tipoConfirmacion === 'RECHAZADO' || tipoConfirmacion === 'CLIENTE_CERRADO' || tipoConfirmacion === 'DEVOLUCION_PARCIAL'));
