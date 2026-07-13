@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/pre
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Eye, EyeOff, Search, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Eye, EyeOff, Search, Plus, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { BreadcrumbItem } from '@/types';
 import type { ModuloSidebar } from '@/domain/entities/admin-permisos';
@@ -64,20 +64,59 @@ export default function Index({ modulos }: Props) {
     router.visit(modulosService.editUrl(modulo.id));
   };
 
-  // Eliminar módulo con confirmación
-  const handleDelete = async (modulo: ModuloSidebar) => {
-    if (confirm(`¿Está seguro de que desea eliminar el módulo "${modulo.titulo}"? Esta acción no se puede deshacer.`)) {
-      setLoading(true);
-      try {
-        await modulosService.delete(modulo.id);
-        // Actualizar la lista local
-        setModulosList(modulosList.filter((m) => m.id !== modulo.id));
-        toast.success(`Módulo ${modulo.titulo} eliminado exitosamente`);
-      } catch (error) {
-        toast.error('Error al eliminar el módulo');
-        console.error(error);
-      } finally {
-        setLoading(false);
+  // Eliminar módulo con confirmación mediante toast
+  const handleDelete = (modulo: ModuloSidebar) => {
+    toast.custom((t) => (
+      <div className="flex flex-col gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 shadow-lg max-w-sm">
+        <div className="flex gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-red-900 dark:text-red-200">
+              ¿Eliminar módulo?
+            </p>
+            <p className="text-sm text-red-800 dark:text-red-300 mt-1">
+              El módulo "{modulo.titulo}" será eliminado. Esta acción no se puede deshacer.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end pt-2 border-t border-red-200 dark:border-red-800">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.dismiss(t.id)}
+            className="text-xs"
+          >
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => performDelete(modulo, t.id)}
+            disabled={loading}
+            className="text-xs"
+          >
+            {loading ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: 'top-center',
+    });
+  };
+
+  // Realizar eliminación después de confirmación
+  const performDelete = async (modulo: ModuloSidebar, toastId: string) => {
+    setLoading(true);
+    try {
+      await modulosService.delete(modulo.id);
+      // Actualizar la lista local
+      setModulosList(modulosList.filter((m) => m.id !== modulo.id));
+      toast.dismiss(toastId);
+      toast.success(`Módulo ${modulo.titulo} eliminado exitosamente`);
+    } catch (error) {
+      toast.error('Error al eliminar el módulo');
+      console.error(error);
       }
     }
   };
