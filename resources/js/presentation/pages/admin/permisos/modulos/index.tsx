@@ -117,7 +117,8 @@ export default function Index({ modulos }: Props) {
     } catch (error) {
       toast.error('Error al eliminar el módulo');
       console.error(error);
-      }
+    } finally {
+      setLoading(false);
     }
   };
 
