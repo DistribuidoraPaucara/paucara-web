@@ -467,10 +467,10 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                                           : '❓ ' + confirmacion.tipo_confirmacion}
                                                                             </Badge>
                                                                         </div>
-                                                                        {/* ✅ Mostrar dinero recibido solo si es COMPLETA o DEVOLUCION_PARCIAL y NO es PROMESA */}
+                                                                        {/* ✅ Mostrar dinero recibido solo si es COMPLETA o DEVOLUCION_PARCIAL y NO es CREDITO */}
                                                                         {(confirmacion.tipo_confirmacion === 'COMPLETA' ||
                                                                             confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' ) &&
-                                                                            confirmacion.venta?.tipo_pago?.codigo !== 'PROMESA' && (
+                                                                            confirmacion.venta?.tipo_pago?.codigo !== 'CREDITO' && (
                                                                             <div>
                                                                                 <p className="text-xs font-semibold text-green-700 uppercase dark:text-green-300">
                                                                                     Dinero Recibido
@@ -513,8 +513,9 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                             </div>
                                                                         )}
 
-                                                                    {/* Monto Pendiente */}
-                                                                    {Number(confirmacion.monto_pendiente || 0) > 0 && (
+                                                                    {/* Monto Pendiente - No mostrar si es CREDITO (promesa de pago) */}
+                                                                    {Number(confirmacion.monto_pendiente || 0) > 0 &&
+                                                                        confirmacion.venta?.tipo_pago?.codigo !== 'CREDITO' && (
                                                                         <div className="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                                                                             <p className="text-xs font-semibold text-orange-700 uppercase dark:text-orange-300">
                                                                                 ⚠️ Monto Pendiente
