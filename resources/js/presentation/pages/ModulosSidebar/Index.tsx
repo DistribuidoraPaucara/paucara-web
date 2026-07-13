@@ -133,7 +133,7 @@ export default function Index({ modulos }: Props) {
         <AppLayout>
             <Head title="Gestión de Módulos del Sidebar" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-2">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">

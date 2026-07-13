@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Badge } from '@/presentation/components/ui/badge';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/pre
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Eye, EyeOff, Search } from 'lucide-react';
+import { Eye, EyeOff, Search, Plus, Trash2, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { BreadcrumbItem } from '@/types';
 import type { ModuloSidebar } from '@/domain/entities/admin-permisos';
@@ -59,27 +59,37 @@ export default function Index({ modulos }: Props) {
     }
   };
 
-  // Navegar a edición (Fase 2)
+  // Navegar a edición
   const handleEdit = (modulo: ModuloSidebar) => {
-    toast(`Edición disponible en Fase 2`, { icon: 'ℹ️' });
-    // router.visit(modulosService.editUrl(modulo.id));
+    router.visit(modulosService.editUrl(modulo.id));
   };
 
-  const handleDelete = (modulo: ModuloSidebar) => {
-    toast(`Eliminación disponible en Fase 2`, { icon: 'ℹ️' });
-    // if (confirm(`¿Está seguro de eliminar el módulo "${modulo.titulo}"?`)) {
-    //   modulosService.destroy(modulo.id);
-    // }
+  // Eliminar módulo con confirmación
+  const handleDelete = async (modulo: ModuloSidebar) => {
+    if (confirm(`¿Está seguro de que desea eliminar el módulo "${modulo.titulo}"? Esta acción no se puede deshacer.`)) {
+      setLoading(true);
+      try {
+        await modulosService.delete(modulo.id);
+        // Actualizar la lista local
+        setModulosList(modulosList.filter((m) => m.id !== modulo.id));
+        toast.success(`Módulo ${modulo.titulo} eliminado exitosamente`);
+      } catch (error) {
+        toast.error('Error al eliminar el módulo');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Módulos del Sidebar" />
 
-      <div className="py-12">
-        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div className="py-2">
+        <div className="sm:px-2 lg:px-4">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Módulos del Sidebar
@@ -88,11 +98,13 @@ export default function Index({ modulos }: Props) {
                 Gestiona los módulos y menús disponibles en el sidebar de la aplicación
               </p>
             </div>
-            <Link href="/admin/permisos">
-              <Button variant="outline">
-                ← Volver al Centro de Permisos
-              </Button>
-            </Link>
+            <Button
+              onClick={() => router.visit(modulosService.createUrl())}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Crear Módulo
+            </Button>
           </div>
 
           {/* Card con tabla */}
@@ -207,19 +219,21 @@ export default function Index({ modulos }: Props) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEdit(modulo)}
-                                disabled
-                                title="Disponible en Fase 2"
+                                disabled={loading}
+                                title="Editar módulo"
                               >
+                                <Edit2 className="h-4 w-4 mr-1" />
                                 Editar
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDelete(modulo)}
-                                disabled
+                                disabled={loading}
                                 className="text-red-600 hover:text-red-700"
-                                title="Disponible en Fase 2"
+                                title="Eliminar módulo"
                               >
+                                <Trash2 className="h-4 w-4 mr-1" />
                                 Eliminar
                               </Button>
                             </div>
@@ -232,10 +246,10 @@ export default function Index({ modulos }: Props) {
               </div>
 
               {/* Info Box */}
-              <div className="mt-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
-                <p className="text-sm text-blue-900">
-                  <strong>ℹ️ Fase 1:</strong> Visualización de módulos y cambio de estado (activo/inactivo).
-                  Las funciones de crear, editar y eliminar estarán disponibles en las próximas fases.
+              <div className="mt-6 rounded-lg bg-green-50 border border-green-200 p-4">
+                <p className="text-sm text-green-900">
+                  <strong>✅ Implementado:</strong> CRUD completo de módulos del sidebar (crear, leer, actualizar, eliminar).
+                  Puedes gestionar todos los módulos desde esta interfaz.
                 </p>
               </div>
             </CardContent>
