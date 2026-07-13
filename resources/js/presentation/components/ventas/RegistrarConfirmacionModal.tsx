@@ -279,7 +279,7 @@ export default function RegistrarConfirmacionModal({
 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                <div className="bg-white dark:bg-slate-950 rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto">
+                <div className="bg-white dark:bg-slate-950 rounded-lg shadow-xl w-full max-h-[95vh] overflow-y-auto">
                     {/* Header */}
                     <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900/70 dark:to-blue-800/60 px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ export default function RegistrarConfirmacionModal({
                                         {productosDevueltos.length > 0 && (
                                             <div className="mt-4 space-y-4">
                                                 {/* Detalle de Productos Devueltos */}
-                                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                {/* <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                                                     <h4 className="font-semibold text-orange-900 dark:text-orange-200 mb-3">📦 Detalle de Devoluciones</h4>
                                                     <div className="space-y-2 text-sm">
                                                         {productosDevueltos.map((prod) => (
@@ -496,7 +496,7 @@ export default function RegistrarConfirmacionModal({
                                                             </div>
                                                         ))}
                                                     </div>
-                                                </div>
+                                                </div> */}
 
                                                 {/* Resumen Financiero */}
                                                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -534,6 +534,23 @@ export default function RegistrarConfirmacionModal({
                                         )}
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Mensaje si es CREDITO (no se registra pago) */}
+                        {esCredito && (
+                            <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                                <div className="flex gap-3">
+                                    <span className="text-xl">💳</span>
+                                    <div>
+                                        <p className="font-semibold text-orange-900 dark:text-orange-100">
+                                            Venta a Crédito (Promesa de Pago)
+                                        </p>
+                                        <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
+                                            Esta venta es una promesa de pago. No es necesario registrar detalles de pago en este momento.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
