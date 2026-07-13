@@ -90,8 +90,8 @@ const getEstadoDocumentoColor = (codigo?: string) => {
 };
 
 export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, onConfirmarEntrega }: VentasEntregaSectionProps) {
-    console.log('🚀 ~ file: VentasEntregaSection.tsx:1 ~ VentasEntregaSection ~ entrega:', entrega);
-    console.log('🚀 ~ file: VentasEntregaSection.tsx:1 ~ VentasEntregaSection ~ ventas:', ventas);
+    // console.log('🚀 ~ file: VentasEntregaSection.tsx:1 ~ VentasEntregaSection ~ entrega:', entrega);
+    // console.log('🚀 ~ file: VentasEntregaSection.tsx:1 ~ VentasEntregaSection ~ ventas:', ventas);
     const [expandedVentaId, setExpandedVentaId] = useState<number | null>(null);
     const [reasignarModalOpen, setReasignarModalOpen] = useState(false);
     const [ventaAReasignar, setVentaAReasignar] = useState<VentaEntrega | undefined>(undefined);
@@ -163,12 +163,12 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                             <tr className="border-b border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-900/80">
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
-                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Peso</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Monto</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado Venta</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Logistica</th>
-                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Entrega</th>
+                                {/* <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Entrega</th> */}
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmacion</th>
+                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Peso</th>
                                 <th className="w-12 px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">-</th>
                             </tr>
                         </thead>
@@ -195,7 +195,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                             <td className="px-2 py-4">
                                                 <p className="text-xs text-gray-900 dark:text-white">{venta.cliente?.nombre || 'N/A'}</p>
                                             </td>
-                                            <td className="px-2 py-4 text-left text-xs text-gray-900 dark:text-white">{pesoVenta} kg</td>
+
                                             <td className="px-2 py-4 text-left">
                                                 <p>
                                                     <span className="font-semibold text-green-600 dark:text-green-400">
@@ -217,11 +217,35 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                 })()}
                                             </td>
                                             <td className="px-2 py-4 text-left">
-                                                <Badge className={getEstadoColor(venta.estado_logistica?.codigo || 'PROGRAMADO')}>
-                                                    {venta.estado_logistica?.codigo || 'PROGRAMADO'}
-                                                </Badge>
+                                                {(() => {
+                                                    const estado = venta.estado_logistica;
+                                                    if (!estado) {
+                                                        return <Badge className={getEstadoColor('PROGRAMADO')}>📦 PROGRAMADO</Badge>;
+                                                    }
+
+                                                    // ✅ NUEVO: Usar color e icono del backend
+                                                    const bgColor = estado.color || '#e5e7eb';
+                                                    const textColor = estado.color
+                                                        ? `hsl(0, 0%, 100%)`
+                                                        : '#1f2937';
+
+                                                    return (
+                                                        <div
+                                                            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+                                                            style={{
+                                                                backgroundColor: bgColor + '20', // 20% opacity
+                                                                color: bgColor,
+                                                                border: `1.5px solid ${bgColor}`,
+                                                            }}
+                                                            title={estado.nombre}
+                                                        >
+                                                            <span className="text-base leading-none">{estado.icono || '📦'}</span>
+                                                            <span className="font-semibold">{estado.nombre || estado.codigo}</span>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </td>
-                                            <td className="px-2 py-4 text-left">
+                                            {/* <td className="px-2 py-4 text-left">
                                                 {(() => {
                                                     const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
                                                     if (!confirmacion) {
@@ -243,7 +267,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                         </div>
                                                     );
                                                 })()}
-                                            </td>
+                                            </td> */}
                                             <td className="px-2 py-4 text-left">
                                                 {(() => {
                                                     const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
@@ -267,6 +291,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     );
                                                 })()}
                                             </td>
+                                            <td className="px-2 py-4 text-left text-xs text-gray-900 dark:text-white">{pesoVenta} kg</td>
 
                                             <td className="px-1 py-2 text-center">
                                                 {venta.detalles && venta.detalles.length > 0 && (
@@ -304,36 +329,47 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                             }
 
                                                             return (
-                                                                <div className={`space-y-4 rounded-lg border p-4 ${
-                                                                    confirmacion.tipo_entrega === 'COMPLETA'
-                                                                        ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10'
-                                                                        : 'border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-900/10'
-                                                                }`}>
-                                                                    {/* Encabezado de Confirmación */}
-                                                                    <div className={`flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between ${
+                                                                <div
+                                                                    className={`space-y-4 rounded-lg border p-4 ${
                                                                         confirmacion.tipo_entrega === 'COMPLETA'
-                                                                            ? 'border-green-200 dark:border-green-800'
-                                                                            : 'border-orange-200 dark:border-orange-800'
-                                                                    }`}>
+                                                                            ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10'
+                                                                            : 'border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-900/10'
+                                                                    }`}
+                                                                >
+                                                                    {/* Encabezado de Confirmación */}
+                                                                    <div
+                                                                        className={`flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between ${
+                                                                            confirmacion.tipo_entrega === 'COMPLETA'
+                                                                                ? 'border-green-200 dark:border-green-800'
+                                                                                : 'border-orange-200 dark:border-orange-800'
+                                                                        }`}
+                                                                    >
                                                                         <div className="flex flex-col gap-1">
-                                                                            <h4 className={`flex items-center gap-2 text-sm font-semibold ${
-                                                                                confirmacion.tipo_entrega === 'COMPLETA'
-                                                                                    ? 'text-green-900 dark:text-green-100'
-                                                                                    : 'text-orange-900 dark:text-orange-100'
-                                                                            }`}>
-                                                                                <CheckCircle className={`h-5 w-5 ${
+                                                                            <h4
+                                                                                className={`flex items-center gap-2 text-sm font-semibold ${
                                                                                     confirmacion.tipo_entrega === 'COMPLETA'
-                                                                                        ? 'text-green-600 dark:text-green-400'
-                                                                                        : 'text-orange-600 dark:text-orange-400'
-                                                                                }`} />
-                                                                                {confirmacion.tipo_entrega === 'COMPLETA' ? '✅' : '⚠️'} Confirmación de Entrega
+                                                                                        ? 'text-green-900 dark:text-green-100'
+                                                                                        : 'text-orange-900 dark:text-orange-100'
+                                                                                }`}
+                                                                            >
+                                                                                <CheckCircle
+                                                                                    className={`h-5 w-5 ${
+                                                                                        confirmacion.tipo_entrega === 'COMPLETA'
+                                                                                            ? 'text-green-600 dark:text-green-400'
+                                                                                            : 'text-orange-600 dark:text-orange-400'
+                                                                                    }`}
+                                                                                />
+                                                                                {confirmacion.tipo_entrega === 'COMPLETA' ? '✅' : '⚠️'} Confirmación
+                                                                                de Entrega
                                                                             </h4>
                                                                             {confirmacion.confirmado_en && (
-                                                                                <span className={`text-xs ${
-                                                                                    confirmacion.tipo_entrega === 'COMPLETA'
-                                                                                        ? 'text-green-700 dark:text-green-300'
-                                                                                        : 'text-orange-700 dark:text-orange-300'
-                                                                                }`}>
+                                                                                <span
+                                                                                    className={`text-xs ${
+                                                                                        confirmacion.tipo_entrega === 'COMPLETA'
+                                                                                            ? 'text-green-700 dark:text-green-300'
+                                                                                            : 'text-orange-700 dark:text-orange-300'
+                                                                                    }`}
+                                                                                >
                                                                                     {new Date(confirmacion.confirmado_en).toLocaleDateString(
                                                                                         'es-ES',
                                                                                         {
@@ -348,11 +384,13 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                             )}
                                                                             {/* CONFIRMADO POR */}
                                                                             {confirmacion.confirmado_por && (
-                                                                                <span className={`text-xs ${
-                                                                                    confirmacion.tipo_entrega === 'COMPLETA'
-                                                                                        ? 'text-green-700 dark:text-green-300'
-                                                                                        : 'text-orange-700 dark:text-orange-300'
-                                                                                }`}>
+                                                                                <span
+                                                                                    className={`text-xs ${
+                                                                                        confirmacion.tipo_entrega === 'COMPLETA'
+                                                                                            ? 'text-green-700 dark:text-green-300'
+                                                                                            : 'text-orange-700 dark:text-orange-300'
+                                                                                    }`}
+                                                                                >
                                                                                     Confirmado por: {confirmacion.confirmado_por.name}
                                                                                 </span>
                                                                             )}
@@ -400,11 +438,11 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                     </div>
 
                                                                     {/* Grid: Tipo Confirmación y Monto Recibido */}
-                                                                    <div className={`grid gap-2 ${confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' ? 'grid-cols-2 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                                                                    <div
+                                                                        className={`grid gap-2 ${confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' ? 'grid-cols-2 sm:grid-cols-2' : 'grid-cols-1'}`}
+                                                                    >
                                                                         <div>
-                                                                            <p className="text-xs font-semibold uppercase">
-                                                                                Tipo Confirmación
-                                                                            </p>
+                                                                            <p className="text-xs font-semibold uppercase">Tipo Confirmación</p>
                                                                             <Badge
                                                                                 className={
                                                                                     confirmacion.tipo_confirmacion === 'COMPLETA'
@@ -424,7 +462,8 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                             </Badge>
                                                                         </div>
                                                                         {/* ✅ Mostrar dinero recibido solo si es COMPLETA o DEVOLUCION_PARCIAL */}
-                                                                        {(confirmacion.tipo_confirmacion === 'COMPLETA' || confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && (
+                                                                        {(confirmacion.tipo_confirmacion === 'COMPLETA' ||
+                                                                            confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') && (
                                                                             <div>
                                                                                 <p className="text-xs font-semibold text-green-700 uppercase dark:text-green-300">
                                                                                     Dinero Recibido
