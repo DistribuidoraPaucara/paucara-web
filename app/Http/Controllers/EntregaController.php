@@ -1494,6 +1494,7 @@ class EntregaController extends Controller
             'confirmacionesVentas' => function ($q) {
                 $q->with([
                     'venta.cliente',      // ✅ FIXED (2026-02-17): Cliente de la venta
+                    'venta.tipoPago',     // ✅ NUEVO: Tipo de pago de la venta
                     'confirmadoPor',      // ✅ NEW: Usuario que confirmó la entrega
                     'tipoPago',           // ✅ NUEVO: Tipo de pago de la confirmación
                 ]);
@@ -1707,6 +1708,13 @@ class EntregaController extends Controller
                         'venta' => $confirmacion->venta ? [
                             'id' => $confirmacion->venta->id,
                             'numero' => $confirmacion->venta->numero,
+                            'tipo_pago_id' => $confirmacion->venta->tipo_pago_id,
+                            // ✅ NUEVO: Incluir tipo_pago completo de la venta
+                            'tipo_pago' => $confirmacion->venta->tipoPago ? [
+                                'id' => $confirmacion->venta->tipoPago->id,
+                                'nombre' => $confirmacion->venta->tipoPago->nombre,
+                                'codigo' => $confirmacion->venta->tipoPago->codigo,
+                            ] : null,
                             'cliente' => $confirmacion->venta->cliente ? [
                                 'id' => $confirmacion->venta->cliente->id,
                                 'nombre' => $confirmacion->venta->cliente->nombre,
