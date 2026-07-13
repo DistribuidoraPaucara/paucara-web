@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Badge } from '@/presentation/components/ui/badge';
@@ -7,8 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/pre
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Eye, EyeOff, Search, Plus, Trash2, Edit2, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Search, Plus, Trash2, Edit2, AlertTriangle, MoreVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
 import type { BreadcrumbItem } from '@/types';
 import type { ModuloSidebar } from '@/domain/entities/admin-permisos';
 import { modulosService } from '@/infrastructure/services/modulos.service';
@@ -183,8 +191,7 @@ export default function Index({ modulos }: Props) {
                       <TableHead>Ícono</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead>Orden</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                      <TableHead className="text-right">Opciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -232,51 +239,58 @@ export default function Index({ modulos }: Props) {
                           <TableCell className="text-sm text-center">
                             {modulo.orden}
                           </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleActivo(modulo)}
-                              disabled={loading}
-                              className={modulo.activo ? 'text-green-600' : 'text-red-600'}
-                            >
-                              {modulo.activo ? (
-                                <>
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="h-4 w-4 mr-1" />
-                                  <Badge variant="secondary">Inactivo</Badge>
-                                </>
-                              )}
-                            </Button>
-                          </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(modulo)}
-                                disabled={loading}
-                                title="Editar módulo"
-                              >
-                                <Edit2 className="h-4 w-4 mr-1" />
-                                Editar
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(modulo)}
-                                disabled={loading}
-                                className="text-red-600 hover:text-red-700"
-                                title="Eliminar módulo"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Eliminar
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={loading}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Estado</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleActivo(modulo)}
+                                  disabled={loading}
+                                  className="cursor-pointer"
+                                >
+                                  {modulo.activo ? (
+                                    <>
+                                      <EyeOff className="h-4 w-4 mr-2" />
+                                      <span>Desactivar módulo</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      <span>Activar módulo</span>
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => handleEdit(modulo)}
+                                  disabled={loading}
+                                  className="cursor-pointer"
+                                >
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  <span>Editar</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(modulo)}
+                                  disabled={loading}
+                                  variant="destructive"
+                                  className="cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  <span>Eliminar</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
