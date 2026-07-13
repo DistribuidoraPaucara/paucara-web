@@ -100,10 +100,16 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
     const [ventaSeleccionadaModal, setVentaSeleccionadaModal] = useState<VentaEntrega | null>(null);
     const [showRegistrarConfirmacionModal, setShowRegistrarConfirmacionModal] = useState(false);
 
-    // ✅ Helper para obtener la confirmación de una venta
+    // ✅ Helper para obtener la ÚLTIMA confirmación de una venta
     const obtenerConfirmacionVenta = (ventaId: number) => {
         if (!entrega?.confirmacionesVentas) return null;
         return entrega.confirmacionesVentas.find((c: any) => c.venta_id === ventaId);
+    };
+
+    // ✅ NUEVO: Helper para obtener TODAS las confirmaciones de una venta
+    const obtenerTodasConfirmacionesVenta = (ventaId: number) => {
+        if (!entrega?.confirmacionesVentas) return [];
+        return entrega.confirmacionesVentas.filter((c: any) => c.venta_id === ventaId);
     };
 
     if (!ventas || ventas.length === 0) {
@@ -231,7 +237,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
 
                                                     return (
                                                         <div
-                                                            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+                                                            className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs"
                                                             style={{
                                                                 backgroundColor: bgColor + '20', // 20% opacity
                                                                 color: bgColor,
@@ -770,7 +776,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                 <ConfirmacionesModal
                     open={showConfirmacionesModal}
                     onOpenChange={setShowConfirmacionesModal}
-                    confirmaciones={ventaSeleccionadaModal.confirmaciones}
+                    confirmaciones={obtenerTodasConfirmacionesVenta(Number(ventaSeleccionadaModal.id))}
                     venta={ventaSeleccionadaModal}
                     onConfirmacionDeleted={() => {
                         setShowConfirmacionesModal(false);

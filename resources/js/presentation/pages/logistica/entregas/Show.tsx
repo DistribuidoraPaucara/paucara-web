@@ -55,7 +55,8 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
 
     // ✅ DEBUG: Ver qué datos llegan del backend
     useEffect(() => {
-        console.log('📦 [SHOW] Datos de entrega recibida del backend:', {
+        console.log('📦 [SHOW] Datos de entrega recibida del backend:', initialEntrega);
+        /* console.log('📦 [SHOW] Datos de entrega recibida del backend:', {
             entrega_id: initialEntrega.id,
             numero_entrega: initialEntrega.numero_entrega,
             estado: initialEntrega.estado_entrega_codigo,
@@ -68,7 +69,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 todas_propiedades: v
             })),
             todo_entrega: initialEntrega,
-        });
+        }); */
     }, [initialEntrega]);
 
     // ✅ Cargar confirmación existente cuando se selecciona una venta
