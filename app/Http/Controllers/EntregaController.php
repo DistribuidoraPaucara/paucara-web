@@ -2686,4 +2686,88 @@ class EntregaController extends Controller
             'choferes' => $choferes,
         ]);
     }
+
+    /**
+     * Obtener resumen de pagos de una entrega
+     * Excluye ventas con tipo_pago CREDITO (promesas de pago)
+     * GET /api/chofer/entregas/{id}/resumen-pagos
+     */
+    public function obtenerResumenPagos(Entrega $entrega): JsonResponse
+    {
+        try {
+            // Cargar ventas con sus confirmaciones, excluyendo CREDITO
+            $entrega->load([
+                'ventas' => function ($query) {
+                    $query->with(['tipoPago', 'confirmacionesVentas'])
+                        ->whereHas('tipoPago', function ($q) {
+                            $q->where('codigo', '!=', 'CREDITO');
+                        });
+                },
+            ]);
+
+            $ventas = $entrega->ventas;
+
+            // Calcular resumen de pagos
+            $resumen = [
+                'total_ventas' => $ventas->count(),
+                'monto_total' => 0,
+                'por_tipo_pago' => [],
+                'confirmadas' => 0,
+                'pendientes' => 0,
+                'rechazadas' => 0,
+            ];
+
+            foreach ($ventas as $venta) {
+                $subtotal = (float) $venta->subtotal;
+                $resumen['monto_total'] += $subtotal;
+
+                // Agrupar por tipo de pago
+                $tipoPagoCodigo = $venta->tipoPago->codigo ?? 'DESCONOCIDO';
+                $tipoPagoNombre = $venta->tipoPago->nombre ?? 'Desconocido';
+
+                if (!isset($resumen['por_tipo_pago'][$tipoPagoCodigo])) {
+                    $resumen['por_tipo_pago'][$tipoPagoCodigo] = [
+                        'nombre' => $tipoPagoNombre,
+                        'cantidad_ventas' => 0,
+                        'monto_total' => 0,
+                    ];
+                }
+
+                $resumen['por_tipo_pago'][$tipoPagoCodigo]['cantidad_ventas']++;
+                $resumen['por_tipo_pago'][$tipoPagoCodigo]['monto_total'] += $subtotal;
+
+                // Contar estados de confirmación
+                $confirmacion = $venta->confirmacionesVentas->first();
+                if ($confirmacion) {
+                    if ($confirmacion->tipo_confirmacion === 'COMPLETA') {
+                        $resumen['confirmadas']++;
+                    } elseif ($confirmacion->tipo_confirmacion === 'RECHAZADO') {
+                        $resumen['rechazadas']++;
+                    } else {
+                        $resumen['pendientes']++;
+                    }
+                } else {
+                    $resumen['pendientes']++;
+                }
+            }
+
+            // Convertir el array de tipos de pago a una lista con índice numérico
+            $resumen['por_tipo_pago'] = array_values($resumen['por_tipo_pago']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $resumen,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener resumen de pagos de entrega', [
+                'entrega_id' => $entrega->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener resumen de pagos: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
