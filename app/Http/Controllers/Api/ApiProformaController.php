@@ -1268,15 +1268,19 @@ class ApiProformaController extends Controller
         $query = Proforma::query();
 
         // ========================================
-        // FILTRADO POR ROL DE USUARIO
+        // FILTRADO POR ROL Y PERMISOS
         // ========================================
+        // ✅ NUEVA LÓGICA:
+        // - Si es CLIENTE → Solo sus proformas
+        // - Si tiene permiso proformas.index → Todas las proformas
+        // - Si no cumple nada → Acceso denegado
 
         // Verificar rol del usuario (case-insensitive)
         $userRoles = $user->roles->pluck('name')->map(fn($role) => strtolower($role))->toArray();
+        $tienePermisoProformas = $user->can('proformas.index');
 
         if (in_array('cliente', $userRoles)) {
-                                       // CLIENTE: Solo sus propias proformas
-                                       // Buscar el cliente asociado al usuario autenticado
+            // CLIENTE: Solo sus propias proformas
             $cliente = $user->cliente; // Relación HasOne en el modelo User
 
             if (! $cliente) {
@@ -1287,17 +1291,14 @@ class ApiProformaController extends Controller
             }
 
             $query->where('cliente_id', $cliente->id);
-        } elseif (in_array('preventista', $userRoles)) {
-            // PREVENTISTA: Solo las proformas que él creó
-            $query->where('usuario_creador_id', $user->id);
-        } elseif (array_intersect(['logistica', 'admin', 'cajero', 'manager', 'encargado', 'chofer'], $userRoles)) {
-            // DASHBOARD: Todas las proformas (sin filtro adicional)
-            // Opcionalmente se puede filtrar por canal_origen, estado, etc.
+        } elseif ($tienePermisoProformas) {
+            // ✅ NUEVO: Si tiene permiso proformas.index → Ver TODAS las proformas
+            // Sin filtro adicional - puede listar y filtrar cualquier proforma
         } else {
-            // Usuario sin rol reconocido: sin acceso
+            // Usuario sin acceso
             return response()->json([
                 'success' => false,
-                'message' => 'No tiene permisos para ver proformas',
+                'message' => 'No tienes permiso para listar proformas. Requiere permiso: proformas.index',
             ], 403);
         }
 

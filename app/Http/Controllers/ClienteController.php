@@ -103,7 +103,6 @@ class ClienteController extends Controller
 
         // Construir query
         $query = ClienteModel::query()
-            ->forCurrentUser() // ✅ NUEVO: Filtrar por usuario actual (Preventista ve solo sus clientes)
             ->leftJoin('localidades', 'clientes.localidad_id', '=', 'localidades.id')
             ->when($q, function ($query) use ($q, $options) {
                 // Convertir búsqueda a minúsculas para hacer búsqueda case-insensitive
@@ -166,8 +165,10 @@ class ClienteController extends Controller
     public function index(Request $request)
     {
         try {
-            // ✅ Autorizar: Solo roles permitidos pueden ver listado de clientes
-            // ✅ Remover autorización para permitir a todos los usuarios ver clientes
+            // ✅ Verificar permiso: clientes.index
+            if (!auth()->user()->can('clientes.index')) {
+                return $this->errorResponse('No tienes permiso para listar clientes', null, null, [], 403);
+            }
 
             // Configurar opciones según el tipo de request
             $options = $this->isApiRequest() ? [
@@ -1002,6 +1003,11 @@ class ClienteController extends Controller
      */
     public function buscarApi(Request $request): JsonResponse
     {
+        // ✅ Verificar permiso: clientes.index
+        if (!auth()->user()->can('clientes.index')) {
+            return ApiResponse::error('No tienes permiso para buscar clientes', 403);
+        }
+
         $q      = $request->string('q');
         $limite = $request->integer('limite', 10);
 
@@ -1011,7 +1017,7 @@ class ClienteController extends Controller
 
         // Convertir búsqueda a minúsculas para hacer búsqueda case-insensitive
         $searchLower = strtolower($q);
-        $clientes    = ClienteModel::forCurrentUser() // ✅ NUEVO: Filtrar por usuario actual
+        $clientes    = ClienteModel::query()
             ->select(['id', 'nombre', 'razon_social', 'nit', 'telefono', 'email'])
             ->where('activo', true)
             ->where(function ($query) use ($searchLower) {
@@ -2549,6 +2555,59 @@ class ClienteController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Actualizar contraseña de un usuario a través de su cliente
+     * Endpoint: POST /api/clientes/{cliente}/actualizar-password
+     * Body: { password, password_confirmation }
+     */
+    public function actualizarPassword(ClienteModel $cliente, Request $request): JsonResponse
+    {
+        try {
+            // Validar que password === password_confirmation
+            $validated = $request->validate([
+                'password' => 'required|string|min:6|confirmed',
+            ]);
+
+            // Obtener el usuario del cliente
+            $user = $cliente->user;
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El cliente no tiene usuario asociado',
+                ], 404);
+            }
+
+            // Actualizar contraseña
+            $user->update([
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Contraseña del usuario actualizada exitosamente',
+                'user_id' => $user->id,
+                'cliente_id' => $cliente->id,
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Las contraseñas no coinciden o no cumplen los requisitos',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar contraseña', [
+                'cliente_id' => $cliente->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la contraseña',
             ], 500);
         }
     }

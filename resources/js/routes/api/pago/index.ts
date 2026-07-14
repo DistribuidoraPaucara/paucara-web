@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1453
+ * @see app/Http/Controllers/ClienteController.php:1459
  * @route '/api/clientes/pagos/{pago}/anular'
  */
 export const anular = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ anular.definition = {
 
 /**
 * @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1453
+ * @see app/Http/Controllers/ClienteController.php:1459
  * @route '/api/clientes/pagos/{pago}/anular'
  */
 anular.url = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ anular.url = (args: { pago: string | number } | [pago: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1453
+ * @see app/Http/Controllers/ClienteController.php:1459
  * @route '/api/clientes/pagos/{pago}/anular'
  */
 anular.post = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -54,7 +54,7 @@ anular.post = (args: { pago: string | number } | [pago: string | number ] | stri
 
     /**
 * @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1453
+ * @see app/Http/Controllers/ClienteController.php:1459
  * @route '/api/clientes/pagos/{pago}/anular'
  */
     const anularForm = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -64,7 +64,7 @@ anular.post = (args: { pago: string | number } | [pago: string | number ] | stri
 
             /**
 * @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1453
+ * @see app/Http/Controllers/ClienteController.php:1459
  * @route '/api/clientes/pagos/{pago}/anular'
  */
         anularForm.post = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

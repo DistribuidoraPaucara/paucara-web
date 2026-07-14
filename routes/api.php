@@ -761,6 +761,9 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         // Cambio de credenciales para clientes autenticados
         Route::post('cambiar-credenciales', [ClienteController::class, 'cambiarCredenciales']);
 
+        // ✅ NUEVO: Actualizar contraseña de un usuario a través del cliente
+        Route::post('{cliente}/actualizar-password', [ClienteController::class, 'actualizarPassword']);
+
         // Gestión de direcciones
         Route::get('{cliente}/direcciones', [DireccionClienteApiController::class, 'index']);
         Route::post('{cliente}/direcciones', [DireccionClienteApiController::class, 'store']);
@@ -830,6 +833,7 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         Route::put('{categoria}', [CategoriaClienteController::class, 'updateApi']);
         Route::delete('{categoria}', [CategoriaClienteController::class, 'destroyApi']);
     });
+
 });
 
 // ==========================================

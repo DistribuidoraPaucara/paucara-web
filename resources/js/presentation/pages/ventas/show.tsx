@@ -392,7 +392,7 @@ export default function VentaShow() {
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-                                                        V. Estado Logístico
+                                                        Estado Logístico
                                                     </p>
                                                     <div className="mt-1">
                                                         <div
@@ -433,9 +433,7 @@ export default function VentaShow() {
                                                             Tipo Entrega
                                                         </p>
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                            {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
-                                                                ? 'Completa'
-                                                                : 'Con Novedad'}
+                                                            {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion}
                                                         </p>
                                                     </div>
                                                 </div>
