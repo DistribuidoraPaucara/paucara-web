@@ -164,41 +164,88 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         setVehiculosResults(vehiculos);
     }, []);
 
-    // ✅ NUEVO (2026-07-16): Leer query params y pre-cargar datos desde creación de venta
+    // ✅ NUEVO (2026-07-16): Leer query params y cargar venta automáticamente
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const ventaId = params.get('venta_id');
-        const prestablesJson = params.get('prestables');
 
-        if (ventaId && prestablesJson) {
-            try {
-                console.log('✅ Detectados parámetros de venta en URL, pre-cargando datos para evento...');
-                const prestablesArray = JSON.parse(prestablesJson);
+        if (ventaId) {
+            (async () => {
+                try {
+                    console.log('✅ Detectado venta_id en URL, cargando detalles desde venta para evento...');
 
-                // Pre-cargar venta_id en formData
-                setFormData((prev) => {
-                    const nuevoFormData = { ...prev };
-                    nuevoFormData.ventas_ids = [Number(ventaId)];
-                    return nuevoFormData;
-                });
+                    // Fetch de la venta completa
+                    const response = await fetch(`/api/ventas/${ventaId}`, {
+                        headers: { Accept: 'application/json' },
+                    });
+                    const data = await response.json();
+                    const ventaData = data.data || data;
 
-                // Pre-cargar prestables
-                const nuevosPrestables: PrestamoItem[] = prestablesArray.map(
-                    (prest: { prestable_id: number; cantidad: number; tipo: string; nombre: string }) => ({
-                        prestable_id: prest.prestable_id,
-                        cantidad: prest.cantidad,
-                        almacenes_ids: [],
-                        prestable: prestables.find((p) => p.id === prest.prestable_id),
-                    })
-                );
-                setPrestablesAgregados(nuevosPrestables);
+                    // Agregar venta_id a formData
+                    setFormData((prev) => {
+                        const nuevoFormData = { ...prev };
+                        nuevoFormData.ventas_ids = [Number(ventaId)];
+                        return nuevoFormData;
+                    });
 
-                toastSuccess('✅ Datos de venta cargados automáticamente');
-            } catch (error) {
-                console.error('⚠️ Error al parsear prestables del URL:', error);
-            }
+                    // Procesar prestables de detalles (similar a handleSelectVenta en clientes)
+                    const nuevosPrestables: PrestamoItem[] = [];
+                    if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
+                        ventaData.detalles.forEach((detalle: any) => {
+                            const producto = detalle.producto;
+                            const cantidad = detalle.cantidad || 0;
+
+                            if (
+                                producto &&
+                                producto.prestables &&
+                                Array.isArray(producto.prestables) &&
+                                producto.prestables.length > 0 &&
+                                cantidad > 0
+                            ) {
+                                // Buscar CANASTILLA
+                                const prestableCanastilla = producto.prestables.find((p: any) => p.tipo === 'CANASTILLA');
+
+                                if (prestableCanastilla) {
+                                    const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
+                                    const capacidadCanastilla = prestableCanastilla.capacidad || 0;
+
+                                    // Agregar CANASTILLA
+                                    nuevosPrestables.push({
+                                        prestable_id: canastillaId,
+                                        cantidad: cantidad,
+                                        almacenes_ids: [],
+                                        prestable: prestableCanastilla,
+                                    });
+
+                                    // Agregar EMBASES relacionados
+                                    const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
+                                    embasesEnProducto.forEach((embase: any) => {
+                                        const embaseId = Number(embase.id || embase.prestable_id);
+                                        const cantidadEmbases = cantidad * capacidadCanastilla;
+                                        nuevosPrestables.push({
+                                            prestable_id: embaseId,
+                                            cantidad: cantidadEmbases,
+                                            almacenes_ids: [],
+                                            prestable: embase,
+                                            isAutomaticEmbase: true,
+                                        });
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    // Cargar prestables
+                    if (nuevosPrestables.length > 0) {
+                        setPrestablesAgregados(nuevosPrestables);
+                        toastSuccess(`✅ Cargados ${nuevosPrestables.length} prestables desde la venta`);
+                    }
+                } catch (error) {
+                    console.error('⚠️ Error al cargar venta desde URL:', error);
+                }
+            })();
         }
-    }, [prestables]);
+    }, []); // Solo ejecutar una vez al montar
 
     // ✅ Nuevo: Sincronizar automáticamente formData.ubicacion con ubicacionSeleccionada
     useEffect(() => {
