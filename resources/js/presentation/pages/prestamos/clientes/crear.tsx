@@ -530,6 +530,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 });
             }
 
+            // ✅ CRÍTICO (2026-07-16): Actualizar ventaSeleccionada con datos completos del API
+            setVentaSeleccionada(ventaData);
+
             setFormData({
                 ...formData,
                 venta_id: venta.id,
@@ -1124,12 +1127,12 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 }}
                                 renderItem={(venta) => (
                                     <div>
-                                        <p className="font-medium">{venta.numero}</p>
+                                        <p className="font-medium">#{venta.id}</p>
                                         <p className="text-xs text-gray-500">{venta.cliente?.nombre}</p>
                                     </div>
                                 )}
                                 getItemId={(venta) => venta.id}
-                                getDisplayValue={(venta) => `${venta.numero} - ${venta.cliente?.nombre}`}
+                                getDisplayValue={(venta) => `#${venta.id} - ${venta.cliente?.nombre}`}
                             />
                             {/* Chofer - Pre cargados (sin búsqueda) */}
                             <DynamicSearchSelect
