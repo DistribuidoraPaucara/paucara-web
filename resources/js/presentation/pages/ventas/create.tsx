@@ -1399,6 +1399,14 @@ export default function VentaForm() {
                                 // Obtener código del cliente para determinar tipo de préstamo
                                 const clienteCodigo = ventaCompleta.data.cliente?.codigo;
 
+                                // ✅ DEBUG: Mostrar información del cliente
+                                console.group('%c👥 CLIENTE INFORMACIÓN', 'color: #9c27b0; font-weight: bold; font-size: 12px');
+                                console.log('ID:', ventaCompleta.data.cliente_id);
+                                console.log('Nombre:', ventaCompleta.data.cliente?.nombre);
+                                console.log('Código:', clienteCodigo);
+                                console.log('Es EVENTO:', clienteCodigo === 'EVENTO');
+                                console.groupEnd();
+
                                 // Abrir pantalla de préstamo en nueva ventana
                                 abrirPantallaPrestamoEnNuevaVentana(
                                     ventaCompleta.data.cliente_id,

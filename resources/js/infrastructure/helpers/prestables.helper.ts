@@ -111,6 +111,16 @@ export function abrirPantallaPrestamoEnNuevaVentana(
     const esEvento = clienteCodigo === 'EVENTO';
     const rutaBase = esEvento ? '/prestamos/eventos/crear' : '/prestamos/clientes/crear';
 
+    // ✅ DEBUG: Mostrar decisión de tipo de préstamo
+    console.group('%c🎯 DECISIÓN DE TIPO DE PRÉSTAMO', 'color: #ff6b6b; font-weight: bold; font-size: 13px');
+    console.log('Código del cliente:', clienteCodigo);
+    console.log('Es EVENTO:', esEvento);
+    console.log('Ruta a abrir:', rutaBase);
+    console.log('Cliente ID:', clienteId);
+    console.log('Venta ID:', ventaId);
+    console.log('Total prestables:', prestables.length);
+    console.groupEnd();
+
     // Preparar query params
     const params = new URLSearchParams({
         venta_id: String(ventaId),
