@@ -97,7 +97,7 @@ export function calcularPrestamesParaVenta(detalles: DetalleVentaPrestable[]) {
 }
 
 /**
- * Abre la pantalla de crear préstamo en una nueva ventana
+ * Abre la pantalla de crear préstamo en una nueva pestaña del navegador
  * Determina automáticamente si es evento o cliente basándose en cliente.codigo
  */
 export function abrirPantallaPrestamoEnNuevaVentana(
@@ -122,7 +122,7 @@ export function abrirPantallaPrestamoEnNuevaVentana(
         params.append('direccion_cliente_id', String(direccionClienteId));
     }
 
-    // Abrir en nueva ventana
+    // Abrir en nueva pestaña (sin parámetros de tamaño para usar pestaña, no ventana separada)
     const url = `${rutaBase}?${params.toString()}`;
-    window.open(url, '_blank', 'width=1200,height=800');
+    window.open(url, '_blank');
 }
