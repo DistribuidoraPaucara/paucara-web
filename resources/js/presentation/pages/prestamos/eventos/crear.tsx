@@ -181,6 +181,16 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                     const data = await response.json();
                     const ventaData = data.data || data;
 
+                    // ✅ NUEVO (2026-07-16): Agregar venta a ventasSeleccionadas para mostrarla como cargada
+                    const ventaParaMostrar = {
+                        id: ventaData.id,
+                        numero: ventaData.numero,
+                        cliente_id: ventaData.cliente_id,
+                        cliente: ventaData.cliente,
+                    };
+                    setVentasSeleccionadas([ventaParaMostrar]);
+                    console.log('✅ Venta agregada a ventasSeleccionadas:', ventaParaMostrar);
+
                     // Agregar venta_id a formData
                     setFormData((prev) => {
                         const nuevoFormData = { ...prev };
