@@ -151,6 +151,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         | null
     >(null);
 
+    // ✅ NUEVO (2026-07-16): Estados para seleccionar dirección alternativa del cliente
+    const [mostrarSelectorDirecciones, setMostrarSelectorDirecciones] = useState(false);
+    const [direccionesClienteDisponibles, setDireccionesClienteDisponibles] = useState<any[]>([]);
+
     // ✅ Nuevo: Preselectionar primer almacén no proveedor al cargar
     useEffect(() => {
         const almacenNoProveedor = almacenes.find((a) => !a.es_proveedor);
@@ -347,9 +351,21 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 longitud: direccion?.longitud,
             });
 
+            // ✅ NUEVO (2026-07-16): Si venta no tiene dirección, usar dirección principal del cliente
+            let direccionACargar = ventaData.direccion_cliente;
+
+            if (!direccionACargar && ventaData.cliente?.direcciones && Array.isArray(ventaData.cliente.direcciones)) {
+                // Buscar dirección principal del cliente
+                const direccionPrincipal = ventaData.cliente.direcciones.find((d: any) => d.es_principal);
+                if (direccionPrincipal) {
+                    direccionACargar = direccionPrincipal;
+                    console.log('✅ Usando dirección principal del cliente (venta sin dirección asignada):', direccionPrincipal);
+                }
+            }
+
             // ✅ Nuevo: Si el cliente tiene dirección registrada, cargar en el mapa
-            if (ventaData.direccion_cliente) {
-                const dirCliente = ventaData.direccion_cliente;
+            if (direccionACargar) {
+                const dirCliente = direccionACargar;
 
                 // Extraer ID de localidad (puede venir de localidad_id o como objeto)
                 let localidadId = null;
@@ -532,6 +548,53 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         } catch (error) {
             console.error('Error obteniendo venta:', error);
             toastError('Error al cargar datos de la venta');
+        }
+    };
+
+    // ✅ NUEVO (2026-07-16): Manejar selección de dirección alternativa del cliente
+    const handleAbrirSelectorDirecciones = () => {
+        if (clienteSeleccionado && clienteSeleccionado.direcciones && Array.isArray(clienteSeleccionado.direcciones)) {
+            setDireccionesClienteDisponibles(clienteSeleccionado.direcciones);
+            setMostrarSelectorDirecciones(true);
+        } else {
+            toastWarning('El cliente no tiene direcciones registradas');
+        }
+    };
+
+    const handleSeleccionarDireccionAlternativa = (direccion: any) => {
+        if (direccion.localidad_id || direccion.localidad?.id) {
+            const localidadId = direccion.localidad_id || direccion.localidad?.id;
+            const direccionTexto = direccion.direccion || '';
+            const latitud = direccion.latitud;
+            const longitud = direccion.longitud;
+            const direccionClienteId = direccion.id;
+            const observaciones = direccion.observaciones;
+
+            setUbicacionSeleccionada({
+                localidad_id: localidadId,
+                direccion: direccionTexto,
+                latitud,
+                longitud,
+                direccion_cliente_id: direccionClienteId,
+                observaciones,
+            });
+
+            setFormData((prev) => {
+                const nuevoFormData = { ...prev };
+                nuevoFormData.ubicacion = {
+                    localidad_id: localidadId,
+                    direccion: direccionTexto,
+                    es_ubicacion_manual: false,
+                    direccion_cliente_id: direccionClienteId,
+                    observaciones,
+                    latitud,
+                    longitud,
+                };
+                return nuevoFormData;
+            });
+
+            toastSuccess(`✅ Dirección seleccionada: ${direccionTexto}`);
+            setMostrarSelectorDirecciones(false);
         }
     };
 
