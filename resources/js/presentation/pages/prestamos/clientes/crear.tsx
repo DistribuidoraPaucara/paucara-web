@@ -163,6 +163,60 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }
     }, [almacenes]);
 
+    // ✅ NUEVO (2026-07-16): Leer query params y pre-cargar datos desde creación de venta
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const ventaId = params.get('venta_id');
+        const clienteId = params.get('cliente_id');
+        const prestablesJson = params.get('prestables');
+        const direccionClienteId = params.get('direccion_cliente_id');
+
+        if (ventaId && clienteId && prestablesJson) {
+            try {
+                console.log('✅ Detectados parámetros de venta en URL, pre-cargando datos...');
+                const prestablesArray = JSON.parse(prestablesJson);
+
+                // Pre-cargar cliente en formData
+                setFormData((prev) => {
+                    const nuevoFormData = { ...prev };
+                    nuevoFormData.cliente_id = Number(clienteId);
+                    nuevoFormData.venta_id = Number(ventaId);
+                    nuevoFormData.es_venta = true;
+                    if (direccionClienteId) {
+                        nuevoFormData.direccion_cliente_id = Number(direccionClienteId);
+                    }
+                    return nuevoFormData;
+                });
+
+                // Pre-cargar prestables
+                const nuevosPrestables: PrestamoItem[] = prestablesArray.map(
+                    (prest: { prestable_id: number; cantidad: number; tipo: string; nombre: string }) => ({
+                        prestable_id: prest.prestable_id,
+                        cantidad: prest.cantidad,
+                        almacenes_ids: [],
+                        prestable: prestables.find((p) => p.id === prest.prestable_id),
+                    })
+                );
+                setPrestablesAgregados(nuevosPrestables);
+
+                // Obtener teléfono del cliente
+                const clienteInfo = clientes.find((c) => c.id === Number(clienteId));
+                if (clienteInfo) {
+                    setClienteSeleccionado(clienteInfo);
+                    setFormData((prev) => {
+                        const nuevoFormData = { ...prev };
+                        nuevoFormData.telefono_cliente_1 = clienteInfo.telefono || '';
+                        return nuevoFormData;
+                    });
+                }
+
+                toastSuccess('✅ Datos cargados desde venta');
+            } catch (error) {
+                console.error('⚠️ Error al parsear prestables del URL:', error);
+            }
+        }
+    }, [clientes, prestables]);
+
     // ✅ DEBUG: Monitorear cambios en formData.ubicacion
     useEffect(() => {
         console.log('%c🔍 CAMBIO EN formData.ubicacion', 'color: #e91e63; font-weight: bold; font-size: 13px', {

@@ -164,6 +164,42 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
         setVehiculosResults(vehiculos);
     }, []);
 
+    // ✅ NUEVO (2026-07-16): Leer query params y pre-cargar datos desde creación de venta
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const ventaId = params.get('venta_id');
+        const prestablesJson = params.get('prestables');
+
+        if (ventaId && prestablesJson) {
+            try {
+                console.log('✅ Detectados parámetros de venta en URL, pre-cargando datos para evento...');
+                const prestablesArray = JSON.parse(prestablesJson);
+
+                // Pre-cargar venta_id en formData
+                setFormData((prev) => {
+                    const nuevoFormData = { ...prev };
+                    nuevoFormData.ventas_ids = [Number(ventaId)];
+                    return nuevoFormData;
+                });
+
+                // Pre-cargar prestables
+                const nuevosPrestables: PrestamoItem[] = prestablesArray.map(
+                    (prest: { prestable_id: number; cantidad: number; tipo: string; nombre: string }) => ({
+                        prestable_id: prest.prestable_id,
+                        cantidad: prest.cantidad,
+                        almacenes_ids: [],
+                        prestable: prestables.find((p) => p.id === prest.prestable_id),
+                    })
+                );
+                setPrestablesAgregados(nuevosPrestables);
+
+                toastSuccess('✅ Datos de venta cargados automáticamente');
+            } catch (error) {
+                console.error('⚠️ Error al parsear prestables del URL:', error);
+            }
+        }
+    }, [prestables]);
+
     // ✅ Nuevo: Sincronizar automáticamente formData.ubicacion con ubicacionSeleccionada
     useEffect(() => {
         if (ubicacionSeleccionada && (ubicacionSeleccionada.localidad_id || ubicacionSeleccionada.direccion)) {

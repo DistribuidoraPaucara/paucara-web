@@ -26,6 +26,7 @@ import type { DetalleVentaFormData, EstadoDocumento, Moneda, Producto, Venta } f
 
 import ventasService from '@/infrastructure/services/ventas.service';
 import { formatCurrencyMinimalDecimals } from '@/lib/utils';
+import { abrirPantallaPrestamoEnNuevaVentana, calcularPrestamesParaVenta, tieneProductosPrestables } from '@/infrastructure/helpers/prestables.helper';
 
 interface TipoPrecio {
     id: number;
@@ -1375,6 +1376,45 @@ export default function VentaForm() {
                     numero: result.data.numero,
                     fecha: result.data.fecha,
                 });
+
+                // ✅ NUEVO (2026-07-16): Detectar si hay prestables y abrir pantalla de préstamo
+                (async () => {
+                    try {
+                        // Obtener detalles completos de la venta (incluyendo prestables)
+                        const ventaCompleta = await fetch(`/api/ventas/${ventaId}`, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Accept: 'application/json',
+                            },
+                        }).then((res) => res.json());
+
+                        if (ventaCompleta.success && ventaCompleta.data?.detalles) {
+                            // Verificar si hay productos con prestables
+                            if (tieneProductosPrestables(ventaCompleta.data.detalles)) {
+                                console.log('✅ Detectados productos con prestables, abriendo pantalla de préstamo...');
+
+                                // Calcular prestables para la venta
+                                const prestables = calcularPrestamesParaVenta(ventaCompleta.data.detalles);
+
+                                // Obtener código del cliente para determinar tipo de préstamo
+                                const clienteCodigo = ventaCompleta.data.cliente?.codigo;
+
+                                // Abrir pantalla de préstamo en nueva ventana
+                                abrirPantallaPrestamoEnNuevaVentana(
+                                    ventaCompleta.data.cliente_id,
+                                    clienteCodigo,
+                                    ventaId,
+                                    prestables,
+                                    ventaCompleta.data.direccion_cliente_id
+                                );
+                            }
+                        }
+                    } catch (error) {
+                        console.error('⚠️ Error al detectar prestables:', error);
+                        // No fallar el flujo si hay error al obtener detalles de prestables
+                    }
+                })();
+
                 setShowOutputModal(true);
             } else {
                 // ❌ ERROR: Mostrar mensaje y mantener formulario

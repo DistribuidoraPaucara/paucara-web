@@ -802,6 +802,7 @@ class VentaController extends Controller
                 'detalles.producto.imagenes',                     // ✅ NUEVO: Cargar imágenes del producto (relación correcta: imagenes, no imagenesProducto)
                 'detalles.producto.marca',                        // ✅ NUEVO: Cargar marca del producto
                 'detalles.producto.unidad',                       // ✅ NUEVO: Cargar unidad del producto
+                'detalles.producto.prestables.embaseAsociado',    // ✅ NUEVO (2026-07-16): Cargar prestables relacionados con embase asociado
                 'detalles.producto.comboItems.producto.imagenes', // ✅ NUEVO: Cargar productos dentro de combos
                 'detalles.producto.comboItems.producto.marca',    // ✅ NUEVO: Cargar marca de productos en combos
                 'detalles.producto.comboItems.producto.unidad',   // ✅ NUEVO: Cargar unidad de productos en combos
