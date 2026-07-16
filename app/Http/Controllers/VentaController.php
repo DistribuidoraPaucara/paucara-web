@@ -857,7 +857,7 @@ class VentaController extends Controller
                             'id'           => $venta->cliente->id,
                             'nombre'       => $venta->cliente->nombre,
                             'nit'          => $venta->cliente->nit,
-                            'codigo'       => $venta->cliente->codigo,                                    // ✅ NUEVO (2026-07-16): Código del cliente (ej: 'EVENTO')
+                            'codigo'       => $venta->cliente->codigo_cliente,                            // ✅ NUEVO (2026-07-16): Código del cliente (ej: 'EVENTO') - Columna: codigo_cliente
                             'telefono'     => $venta->cliente->telefono,
                             'foto_perfil'  => $venta->cliente->foto_perfil,  // ✅ NUEVO: Foto del cliente
                             'razon_social' => $venta->cliente->razon_social, // ✅ NUEVO: Razón social para clientes empresa
