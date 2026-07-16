@@ -790,7 +790,7 @@ class VentaController extends Controller
     {
         try {
             $venta = Venta::with([
-                'cliente', // ✅ Cargar localidad de la dirección del cliente
+                'cliente.direcciones',                              // ✅ NUEVO (2026-07-16): Todas las direcciones del cliente
                 'direccionCliente.localidad',
                 'usuario',
                 'preventista',                                     // ✅ Preventista (relación preventista_id → user_id)
@@ -861,15 +861,15 @@ class VentaController extends Controller
                             'telefono'     => $venta->cliente->telefono,
                             'foto_perfil'  => $venta->cliente->foto_perfil,  // ✅ NUEVO: Foto del cliente
                             'razon_social' => $venta->cliente->razon_social, // ✅ NUEVO: Razón social para clientes empresa
-                            'direccionCliente' => $venta->direccionCliente ? [  // ✅ NUEVO (2026-07-16): Relación de dirección del cliente
-                                'id'            => $venta->direccionCliente->id,
-                                'direccion'     => $venta->direccionCliente->direccion,
-                                'localidad'     => $venta->direccionCliente->localidad,
-                                'observaciones' => $venta->direccionCliente->observaciones,
-                                'latitud'       => (float) ($venta->direccionCliente->latitud ?? 0),
-                                'longitud'      => (float) ($venta->direccionCliente->longitud ?? 0),
-                                'es_principal'  => (bool) $venta->direccionCliente->es_principal,
-                            ] : null,
+                            'direcciones'  => $venta->cliente->direcciones ? $venta->cliente->direcciones->map(fn($d) => [  // ✅ NUEVO (2026-07-16): Todas las direcciones del cliente
+                                'id'            => $d->id,
+                                'direccion'     => $d->direccion,
+                                'localidad'     => $d->localidad,
+                                'observaciones' => $d->observaciones,
+                                'latitud'       => (float) ($d->latitud ?? 0),
+                                'longitud'      => (float) ($d->longitud ?? 0),
+                                'es_principal'  => (bool) $d->es_principal,
+                            ])->toArray() : [],
                         ] : null,
                         'direccion_cliente'             => $venta->direccionCliente ? [
                             'id'            => $venta->direccionCliente->id,
