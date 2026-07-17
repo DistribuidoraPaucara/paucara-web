@@ -1,12 +1,14 @@
 import AppLayout from '@/layouts/app-layout';
 import AnularDevolucionModal from '@/presentation/components/modals/AnularDevolucionModal';
+import { UbicacionMapModal } from '@/presentation/pages/prestamos/clientes/components/UbicacionMapModal';
 import { Badge } from '@/presentation/components/ui/badge';
+import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertCircle, Calendar, ChevronDown, ChevronUp, Trash2, User } from 'lucide-react';
+import { AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PrestamoClienteShow {
@@ -42,6 +44,7 @@ export default function PrestamosClientesShow() {
     const [expandedDevoluciones, setExpandedDevoluciones] = useState<number[]>([]);
     const [modalAnularOpen, setModalAnularOpen] = useState(false);
     const [devolucionSeleccionada, setDevolucionSeleccionada] = useState<{ id: number; numero: number } | null>(null);
+    const [modalUbicacionOpen, setModalUbicacionOpen] = useState(false);
 
     useEffect(() => {
         if (prestamoId) {
@@ -253,6 +256,17 @@ export default function PrestamosClientesShow() {
                         <div>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Dirección</p>
                             <p className="font-medium">{prestamo.ubicacion.direccion || 'No especificada'}</p>
+                            {prestamo.ubicacion.latitud && prestamo.ubicacion.longitud && (
+                                <Button
+                                    onClick={() => setModalUbicacionOpen(true)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2 w-fit gap-2"
+                                >
+                                    <MapPin className="h-4 w-4" />
+                                    Ver en Mapa
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </Card>
@@ -601,6 +615,21 @@ export default function PrestamosClientesShow() {
                                 cargarPrestamo(prestamoId as string);
                             }
                         }}
+                    />
+                )}
+
+                {/* MODAL VER UBICACIÓN EN MAPA */}
+                {prestamo.ubicacion && (
+                    <UbicacionMapModal
+                        isOpen={modalUbicacionOpen}
+                        onClose={() => setModalUbicacionOpen(false)}
+                        onSelect={() => setModalUbicacionOpen(false)}
+                        localidades={[]}
+                        ubicacionInicial={{
+                            latitud: parseFloat(prestamo.ubicacion.latitud),
+                            longitud: parseFloat(prestamo.ubicacion.longitud),
+                        }}
+                        mostrarSelectLocalidad={false}
                     />
                 )}
             </div>
