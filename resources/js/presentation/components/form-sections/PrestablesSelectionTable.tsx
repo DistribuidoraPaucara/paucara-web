@@ -372,6 +372,7 @@ export default function PrestablesSelectionTable({
                                                 )}
                                                 <td className="px-2 py-2 text-center">
                                                     <button
+                                                        type="button"
                                                         onClick={() => onDeleteItem(item.prestable_id)}
                                                         className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                                     >
@@ -465,6 +466,7 @@ export default function PrestablesSelectionTable({
                                                     )}
                                                     <td className="px-2 py-2 text-center">
                                                         <button
+                                                            type="button"
                                                             onClick={() => onDeleteItem(embaseItem.prestable_id)}
                                                             className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                                         >
@@ -568,6 +570,7 @@ export default function PrestablesSelectionTable({
                                                 )}
                                                 <td className="px-2 py-2 text-center">
                                                     <button
+                                                        type="button"
                                                         onClick={() => onDeleteItem(item.prestable_id)}
                                                         className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                                     >
@@ -669,6 +672,7 @@ export default function PrestablesSelectionTable({
                                                 )}
                                                 <td className="px-2 py-2 text-center">
                                                     <button
+                                                        type="button"
                                                         onClick={() => onDeleteItem(item.prestable_id)}
                                                         className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                                     >
