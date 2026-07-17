@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteInventarioApiController::generar
  * @see app/Http/Controllers/ReporteInventarioApiController.php:292
@@ -41,39 +41,3 @@ generar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: generar.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ReporteInventarioApiController::generar
- * @see app/Http/Controllers/ReporteInventarioApiController.php:292
- * @route '/api/inventario/reportes/generar'
- */
-    const generarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: generar.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteInventarioApiController::generar
- * @see app/Http/Controllers/ReporteInventarioApiController.php:292
- * @route '/api/inventario/reportes/generar'
- */
-        generarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generar.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteInventarioApiController::generar
- * @see app/Http/Controllers/ReporteInventarioApiController.php:292
- * @route '/api/inventario/reportes/generar'
- */
-        generarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generar.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    generar.form = generarForm

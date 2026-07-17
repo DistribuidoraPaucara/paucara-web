@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoEventoController::imprimir
  * @see app/Http/Controllers/PrestamoEventoController.php:727
@@ -60,42 +60,6 @@ imprimir.head = (args: { prestamo: string | number, devolucion: number | { id: n
     url: imprimir.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:727
- * @route '/api/prestamos-evento/{prestamo}/devoluciones/{devolucion}/imprimir'
- */
-    const imprimirForm = (args: { prestamo: string | number, devolucion: number | { id: number } } | [prestamo: string | number, devolucion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:727
- * @route '/api/prestamos-evento/{prestamo}/devoluciones/{devolucion}/imprimir'
- */
-        imprimirForm.get = (args: { prestamo: string | number, devolucion: number | { id: number } } | [prestamo: string | number, devolucion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:727
- * @route '/api/prestamos-evento/{prestamo}/devoluciones/{devolucion}/imprimir'
- */
-        imprimirForm.head = (args: { prestamo: string | number, devolucion: number | { id: number } } | [prestamo: string | number, devolucion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 const devolucion = {
     imprimir,
 }

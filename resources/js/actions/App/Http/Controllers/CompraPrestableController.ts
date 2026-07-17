@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CompraPrestableController::index
  * @see app/Http/Controllers/CompraPrestableController.php:26
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::index
- * @see app/Http/Controllers/CompraPrestableController.php:26
- * @route '/api/compras-prestables'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::index
- * @see app/Http/Controllers/CompraPrestableController.php:26
- * @route '/api/compras-prestables'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::index
- * @see app/Http/Controllers/CompraPrestableController.php:26
- * @route '/api/compras-prestables'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::store
  * @see app/Http/Controllers/CompraPrestableController.php:128
@@ -111,27 +76,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:128
- * @route '/api/compras-prestables'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::store
- * @see app/Http/Controllers/CompraPrestableController.php:128
- * @route '/api/compras-prestables'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::showApi
  * @see app/Http/Controllers/CompraPrestableController.php:106
@@ -199,41 +143,6 @@ showApi.head = (args: { compra: number | { id: number } } | [compra: number | { 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:106
- * @route '/api/compras-prestables/{compra}'
- */
-    const showApiForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: showApi.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:106
- * @route '/api/compras-prestables/{compra}'
- */
-        showApiForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showApi.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::showApi
- * @see app/Http/Controllers/CompraPrestableController.php:106
- * @route '/api/compras-prestables/{compra}'
- */
-        showApiForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showApi.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    showApi.form = showApiForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
  * @see app/Http/Controllers/CompraPrestableController.php:220
@@ -292,27 +201,6 @@ agregarDetalle.post = (args: { compra: number | { id: number } } | [compra: numb
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:220
- * @route '/api/compras-prestables/{compra}/agregar-detalle'
- */
-    const agregarDetalleForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: agregarDetalle.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::agregarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:220
- * @route '/api/compras-prestables/{compra}/agregar-detalle'
- */
-        agregarDetalleForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: agregarDetalle.url(args, options),
-            method: 'post',
-        })
-    
-    agregarDetalle.form = agregarDetalleForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
  * @see app/Http/Controllers/CompraPrestableController.php:289
@@ -368,37 +256,6 @@ eliminarDetalle.delete = (args: { compra: number | { id: number }, detalle: numb
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:289
- * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
- */
-    const eliminarDetalleForm = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: eliminarDetalle.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::eliminarDetalle
- * @see app/Http/Controllers/CompraPrestableController.php:289
- * @route '/api/compras-prestables/{compra}/detalles/{detalle}'
- */
-        eliminarDetalleForm.delete = (args: { compra: number | { id: number }, detalle: number | { id: number } } | [compra: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: eliminarDetalle.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    eliminarDetalle.form = eliminarDetalleForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::confirmar
  * @see app/Http/Controllers/CompraPrestableController.php:324
@@ -457,27 +314,6 @@ confirmar.post = (args: { compra: number | { id: number } } | [compra: number | 
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:324
- * @route '/api/compras-prestables/{compra}/confirmar'
- */
-    const confirmarForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: confirmar.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::confirmar
- * @see app/Http/Controllers/CompraPrestableController.php:324
- * @route '/api/compras-prestables/{compra}/confirmar'
- */
-        confirmarForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: confirmar.url(args, options),
-            method: 'post',
-        })
-    
-    confirmar.form = confirmarForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::cancelar
  * @see app/Http/Controllers/CompraPrestableController.php:352
@@ -536,27 +372,6 @@ cancelar.post = (args: { compra: number | { id: number } } | [compra: number | {
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:352
- * @route '/api/compras-prestables/{compra}/cancelar'
- */
-    const cancelarForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancelar.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::cancelar
- * @see app/Http/Controllers/CompraPrestableController.php:352
- * @route '/api/compras-prestables/{compra}/cancelar'
- */
-        cancelarForm.post = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancelar.url(args, options),
-            method: 'post',
-        })
-    
-    cancelar.form = cancelarForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::imprimir
  * @see app/Http/Controllers/CompraPrestableController.php:386
@@ -624,41 +439,6 @@ imprimir.head = (args: { compra: number | { id: number } } | [compra: number | {
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:386
- * @route '/api/compras-prestables/{compra}/imprimir'
- */
-    const imprimirForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:386
- * @route '/api/compras-prestables/{compra}/imprimir'
- */
-        imprimirForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::imprimir
- * @see app/Http/Controllers/CompraPrestableController.php:386
- * @route '/api/compras-prestables/{compra}/imprimir'
- */
-        imprimirForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CompraPrestableController::show
  * @see app/Http/Controllers/CompraPrestableController.php:85
@@ -725,42 +505,6 @@ show.head = (args: { compra: number | { id: number } } | [compra: number | { id:
     url: show.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:85
- * @route '/prestamos/compras/{compra}'
- */
-    const showForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:85
- * @route '/prestamos/compras/{compra}'
- */
-        showForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CompraPrestableController::show
- * @see app/Http/Controllers/CompraPrestableController.php:85
- * @route '/prestamos/compras/{compra}'
- */
-        showForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 const CompraPrestableController = { index, store, showApi, agregarDetalle, eliminarDetalle, confirmar, cancelar, imprimir, show }
 
 export default CompraPrestableController

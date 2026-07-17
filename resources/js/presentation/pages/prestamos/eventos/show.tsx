@@ -10,6 +10,7 @@ import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { type BreadcrumbItem } from '@/types';
 
 interface PrestamoEventoShow {
     id: number;
@@ -33,6 +34,10 @@ interface PrestamoEventoShow {
     telefono_uno?: string;
     telefono_dos?: string;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Préstamos', href: '/prestamos/eventos' },
+];
 
 export default function PrestamosEventosShow() {
     const { url } = usePage();
@@ -173,21 +178,21 @@ export default function PrestamosEventosShow() {
     const resumen = calcularResumenPrestamo();
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <div className="space-y-6 px-4 py-6">
                 {/* AUDITORÍA DEL PRÉSTAMO */}
                 <Card className="border-l-4 border-purple-500 bg-purple-50 p-4 dark:bg-purple-900/20">
                     <h2 className="flex items-center gap-2 text-lg font-bold">
                         <User className="h-5 w-5" />
                         {prestamo.nombre_evento || 'N/D'} {getEstadoBadge(prestamo.estado)}
+                        <p className="text-xs text-gray-500">{new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}</p>
                     </h2>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
                         <div>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Creado por</p>
-                            <p className="text-lg font-bold">{prestamo.creador?.name || 'Sistema'}</p>
-                            <p className="text-xs text-gray-500">{new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}</p>
+                            <p className="text-lg font-bold">{prestamo.creador?.name || 'Sistema'}</p>                            
                             <p className="text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Devolución esperada:</span>
+                                <span className="text-gray-600 dark:text-gray-300">Devolución:</span>
                                 <span className="ml-2 font-medium">{new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}</span>
                             </p>
                         </div>
@@ -255,7 +260,7 @@ export default function PrestamosEventosShow() {
                 </Card>
 
                 {/* RESUMEN DE PRÉSTAMO (KPIs) */}
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
                     <div className="rounded-md border-blue-200 bg-blue-50 p-2 dark:bg-blue-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Total Prestado</p>
                         <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{resumen.total}</p>
@@ -268,10 +273,10 @@ export default function PrestamosEventosShow() {
                         <p className="text-sm text-gray-600 dark:text-gray-300">Faltante</p>
                         <p className="text-3xl font-bold text-red-700 dark:text-red-300">{resumen.faltante}</p>
                     </div>
-                    <div className="rounded-md border-purple-200 bg-purple-50 p-2 dark:bg-purple-900/20">
+                    {/* <div className="rounded-md border-purple-200 bg-purple-50 p-2 dark:bg-purple-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Tasa Devolución</p>
                         <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{resumen.tasa}%</p>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* TABS */}

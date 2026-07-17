@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 import credito from './credito'
 import pago from './pago'
 /**
@@ -68,41 +68,6 @@ creditoDetalles.head = (args: { cliente: number | { id: number } } | [cliente: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ClienteController::creditoDetalles
- * @see app/Http/Controllers/ClienteController.php:1095
- * @route '/api/clientes/{cliente}/credito-detalles'
- */
-    const creditoDetallesForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: creditoDetalles.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::creditoDetalles
- * @see app/Http/Controllers/ClienteController.php:1095
- * @route '/api/clientes/{cliente}/credito-detalles'
- */
-        creditoDetallesForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: creditoDetalles.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ClienteController::creditoDetalles
- * @see app/Http/Controllers/ClienteController.php:1095
- * @route '/api/clientes/{cliente}/credito-detalles'
- */
-        creditoDetallesForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: creditoDetalles.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    creditoDetalles.form = creditoDetallesForm
 /**
 * @see \App\Http\Controllers\ClienteController::cuentasPendientes
  * @see app/Http/Controllers/ClienteController.php:1763
@@ -170,41 +135,6 @@ cuentasPendientes.head = (args: { cliente: number | { id: number } } | [cliente:
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ClienteController::cuentasPendientes
- * @see app/Http/Controllers/ClienteController.php:1763
- * @route '/api/clientes/{cliente}/cuentas-pendientes'
- */
-    const cuentasPendientesForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: cuentasPendientes.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::cuentasPendientes
- * @see app/Http/Controllers/ClienteController.php:1763
- * @route '/api/clientes/{cliente}/cuentas-pendientes'
- */
-        cuentasPendientesForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: cuentasPendientes.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ClienteController::cuentasPendientes
- * @see app/Http/Controllers/ClienteController.php:1763
- * @route '/api/clientes/{cliente}/cuentas-pendientes'
- */
-        cuentasPendientesForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: cuentasPendientes.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    cuentasPendientes.form = cuentasPendientesForm
 /**
 * @see \App\Http\Controllers\ClienteController::cuentasVencidas
  * @see app/Http/Controllers/ClienteController.php:1781
@@ -272,41 +202,6 @@ cuentasVencidas.head = (args: { cliente: number | { id: number } } | [cliente: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ClienteController::cuentasVencidas
- * @see app/Http/Controllers/ClienteController.php:1781
- * @route '/api/clientes/{cliente}/cuentas-vencidas'
- */
-    const cuentasVencidasForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: cuentasVencidas.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::cuentasVencidas
- * @see app/Http/Controllers/ClienteController.php:1781
- * @route '/api/clientes/{cliente}/cuentas-vencidas'
- */
-        cuentasVencidasForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: cuentasVencidas.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ClienteController::cuentasVencidas
- * @see app/Http/Controllers/ClienteController.php:1781
- * @route '/api/clientes/{cliente}/cuentas-vencidas'
- */
-        cuentasVencidasForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: cuentasVencidas.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    cuentasVencidas.form = cuentasVencidasForm
 /**
 * @see \App\Http\Controllers\ClienteController::pagos
  * @see app/Http/Controllers/ClienteController.php:1799
@@ -374,41 +269,6 @@ pagos.head = (args: { cliente: number | { id: number } } | [cliente: number | { 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ClienteController::pagos
- * @see app/Http/Controllers/ClienteController.php:1799
- * @route '/api/clientes/{cliente}/pagos'
- */
-    const pagosForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: pagos.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::pagos
- * @see app/Http/Controllers/ClienteController.php:1799
- * @route '/api/clientes/{cliente}/pagos'
- */
-        pagosForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: pagos.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ClienteController::pagos
- * @see app/Http/Controllers/ClienteController.php:1799
- * @route '/api/clientes/{cliente}/pagos'
- */
-        pagosForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: pagos.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    pagos.form = pagosForm
 /**
 * @see \App\Http\Controllers\ClienteController::registrarPago
  * @see app/Http/Controllers/ClienteController.php:1251
@@ -467,27 +327,6 @@ registrarPago.post = (args: { cliente: number | { id: number } } | [cliente: num
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ClienteController::registrarPago
- * @see app/Http/Controllers/ClienteController.php:1251
- * @route '/api/clientes/{cliente}/registrar-pago'
- */
-    const registrarPagoForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: registrarPago.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::registrarPago
- * @see app/Http/Controllers/ClienteController.php:1251
- * @route '/api/clientes/{cliente}/registrar-pago'
- */
-        registrarPagoForm.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: registrarPago.url(args, options),
-            method: 'post',
-        })
-    
-    registrarPago.form = registrarPagoForm
 /**
 * @see \App\Http\Controllers\ClienteController::ajustarLimite
  * @see app/Http/Controllers/ClienteController.php:2024
@@ -545,28 +384,6 @@ ajustarLimite.post = (args: { cliente: number | { id: number } } | [cliente: num
     url: ajustarLimite.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\ClienteController::ajustarLimite
- * @see app/Http/Controllers/ClienteController.php:2024
- * @route '/api/clientes/{cliente}/ajustar-limite'
- */
-    const ajustarLimiteForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: ajustarLimite.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::ajustarLimite
- * @see app/Http/Controllers/ClienteController.php:2024
- * @route '/api/clientes/{cliente}/ajustar-limite'
- */
-        ajustarLimiteForm.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: ajustarLimite.url(args, options),
-            method: 'post',
-        })
-    
-    ajustarLimite.form = ajustarLimiteForm
 const cliente = {
     creditoDetalles,
 cuentasPendientes,

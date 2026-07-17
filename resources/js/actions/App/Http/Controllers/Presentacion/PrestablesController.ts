@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Presentacion\PrestablesController::index
  * @see app/Http/Controllers/Presentacion/PrestablesController.php:12
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::index
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:12
- * @route '/prestamos/prestables'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::index
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:12
- * @route '/prestamos/prestables'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::index
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:12
- * @route '/prestamos/prestables'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Presentacion\PrestablesController::create
  * @see app/Http/Controllers/Presentacion/PrestablesController.php:17
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::create
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:17
- * @route '/prestamos/prestables/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::create
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:17
- * @route '/prestamos/prestables/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::create
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:17
- * @route '/prestamos/prestables/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\Presentacion\PrestablesController::show
  * @see app/Http/Controllers/Presentacion/PrestablesController.php:37
@@ -222,41 +152,6 @@ show.head = (args: { prestable: number | { id: number } } | [prestable: number |
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::show
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:37
- * @route '/prestamos/prestables/{prestable}'
- */
-    const showForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::show
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:37
- * @route '/prestamos/prestables/{prestable}'
- */
-        showForm.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::show
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:37
- * @route '/prestamos/prestables/{prestable}'
- */
-        showForm.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Presentacion\PrestablesController::edit
  * @see app/Http/Controllers/Presentacion/PrestablesController.php:22
@@ -323,42 +218,6 @@ edit.head = (args: { prestable: number | { id: number } } | [prestable: number |
     url: edit.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::edit
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:22
- * @route '/prestamos/prestables/{prestable}/edit'
- */
-    const editForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::edit
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:22
- * @route '/prestamos/prestables/{prestable}/edit'
- */
-        editForm.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Presentacion\PrestablesController::edit
- * @see app/Http/Controllers/Presentacion/PrestablesController.php:22
- * @route '/prestamos/prestables/{prestable}/edit'
- */
-        editForm.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 const PrestablesController = { index, create, show, edit }
 
 export default PrestablesController

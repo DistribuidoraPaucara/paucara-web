@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::index
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:13
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::index
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:13
- * @route '/inventario/tipos-ajuste-inventario'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::index
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:13
- * @route '/inventario/tipos-ajuste-inventario'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::index
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:13
- * @route '/inventario/tipos-ajuste-inventario'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::create
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:33
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::create
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:33
- * @route '/inventario/tipos-ajuste-inventario/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::create
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:33
- * @route '/inventario/tipos-ajuste-inventario/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::create
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:33
- * @route '/inventario/tipos-ajuste-inventario/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::store
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:40
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::store
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:40
- * @route '/inventario/tipos-ajuste-inventario'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::store
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:40
- * @route '/inventario/tipos-ajuste-inventario'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::show
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { tipoAjusteInventario: string | number } | [tipoAjusteInvent
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::show
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:0
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-    const showForm = (args: { tipoAjusteInventario: string | number } | [tipoAjusteInventario: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::show
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:0
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-        showForm.get = (args: { tipoAjusteInventario: string | number } | [tipoAjusteInventario: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::show
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:0
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-        showForm.head = (args: { tipoAjusteInventario: string | number } | [tipoAjusteInventario: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::edit
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:54
@@ -374,41 +248,6 @@ edit.head = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjus
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::edit
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:54
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}/edit'
- */
-    const editForm = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::edit
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:54
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}/edit'
- */
-        editForm.get = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::edit
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:54
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}/edit'
- */
-        editForm.head = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::update
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:61
@@ -476,51 +315,6 @@ update.patch = (args: { tipoAjusteInventario: number | { id: number } } | [tipoA
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::update
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:61
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-    const updateForm = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::update
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:61
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-        updateForm.put = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::update
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:61
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-        updateForm.patch = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\TipoAjusteInventarioController::destroy
  * @see app/Http/Controllers/TipoAjusteInventarioController.php:74
@@ -578,38 +372,6 @@ destroy.delete = (args: { tipoAjusteInventario: number | { id: number } } | [tip
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::destroy
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:74
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-    const destroyForm = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\TipoAjusteInventarioController::destroy
- * @see app/Http/Controllers/TipoAjusteInventarioController.php:74
- * @route '/inventario/tipos-ajuste-inventario/{tipoAjusteInventario}'
- */
-        destroyForm.delete = (args: { tipoAjusteInventario: number | { id: number } } | [tipoAjusteInventario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const TipoAjusteInventarioController = { index, create, store, show, edit, update, destroy }
 
 export default TipoAjusteInventarioController

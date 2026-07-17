@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::index
  * @see app/Http/Controllers/EstadosLogisticaController.php:149
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:149
- * @route '/estados-logistica'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:149
- * @route '/estados-logistica'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::index
- * @see app/Http/Controllers/EstadosLogisticaController.php:149
- * @route '/estados-logistica'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::create
  * @see app/Http/Controllers/EstadosLogisticaController.php:88
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:88
- * @route '/estados-logistica/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:88
- * @route '/estados-logistica/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::create
- * @see app/Http/Controllers/EstadosLogisticaController.php:88
- * @route '/estados-logistica/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::store
  * @see app/Http/Controllers/EstadosLogisticaController.php:177
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::store
- * @see app/Http/Controllers/EstadosLogisticaController.php:177
- * @route '/estados-logistica'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::store
- * @see app/Http/Controllers/EstadosLogisticaController.php:177
- * @route '/estados-logistica'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::show
  * @see app/Http/Controllers/EstadosLogisticaController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { estados_logistica: string | number } | [estados_logistica: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::show
- * @see app/Http/Controllers/EstadosLogisticaController.php:0
- * @route '/estados-logistica/{estados_logistica}'
- */
-    const showForm = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::show
- * @see app/Http/Controllers/EstadosLogisticaController.php:0
- * @route '/estados-logistica/{estados_logistica}'
- */
-        showForm.get = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::show
- * @see app/Http/Controllers/EstadosLogisticaController.php:0
- * @route '/estados-logistica/{estados_logistica}'
- */
-        showForm.head = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::edit
  * @see app/Http/Controllers/EstadosLogisticaController.php:109
@@ -369,41 +243,6 @@ edit.head = (args: { estados_logistica: string | number } | [estados_logistica: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:109
- * @route '/estados-logistica/{estados_logistica}/edit'
- */
-    const editForm = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:109
- * @route '/estados-logistica/{estados_logistica}/edit'
- */
-        editForm.get = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::edit
- * @see app/Http/Controllers/EstadosLogisticaController.php:109
- * @route '/estados-logistica/{estados_logistica}/edit'
- */
-        editForm.head = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::update
  * @see app/Http/Controllers/EstadosLogisticaController.php:222
@@ -466,51 +305,6 @@ update.patch = (args: { estados_logistica: string | number } | [estados_logistic
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::update
- * @see app/Http/Controllers/EstadosLogisticaController.php:222
- * @route '/estados-logistica/{estados_logistica}'
- */
-    const updateForm = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::update
- * @see app/Http/Controllers/EstadosLogisticaController.php:222
- * @route '/estados-logistica/{estados_logistica}'
- */
-        updateForm.put = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::update
- * @see app/Http/Controllers/EstadosLogisticaController.php:222
- * @route '/estados-logistica/{estados_logistica}'
- */
-        updateForm.patch = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\EstadosLogisticaController::destroy
  * @see app/Http/Controllers/EstadosLogisticaController.php:244
@@ -563,38 +357,6 @@ destroy.delete = (args: { estados_logistica: string | number } | [estados_logist
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\EstadosLogisticaController::destroy
- * @see app/Http/Controllers/EstadosLogisticaController.php:244
- * @route '/estados-logistica/{estados_logistica}'
- */
-    const destroyForm = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EstadosLogisticaController::destroy
- * @see app/Http/Controllers/EstadosLogisticaController.php:244
- * @route '/estados-logistica/{estados_logistica}'
- */
-        destroyForm.delete = (args: { estados_logistica: string | number } | [estados_logistica: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const estadosLogistica = {
     index,
 create,

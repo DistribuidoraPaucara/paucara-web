@@ -12,6 +12,7 @@ import { useToast } from '@/presentation/hooks/useToast';
 import { Head } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { UbicacionMapModal } from './components/UbicacionMapModal';
+import { type BreadcrumbItem } from '@/types';
 
 /**
  * ============================================
@@ -71,6 +72,11 @@ interface PrestamoItem {
     prestable?: Prestable;
     isAutomaticEmbase?: boolean;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Préstamos', href: '/prestamos/eventos' },
+    { title: 'Crear Préstamo a Cliente', href: '/prestamos/clientes/crear' },
+];
 
 export default function CrearPrestamoCliente({ clientes, choferes, almacenes, vehiculos, ventas, prestables, localidades }: Props) {
     // ✅ Cambio: usar prestables del prop en lugar de fetchear del API
@@ -1068,10 +1074,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     }, 0);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Préstamo a Cliente" />
             <div className="min-h-screen bg-white p-2 dark:bg-gray-950">
-                <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">👥 Nuevo Préstamo a Cliente</h1>
+                {/* <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">👥 Nuevo Préstamo a Cliente</h1> */}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
@@ -1208,7 +1214,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getDisplayValue={(cliente) => cliente.nombre}
                             />
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 1 (Opcional)
                                 </label>
                                 <input
@@ -1227,7 +1233,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 2 (Opcional)
                                 </label>
                                 <input
@@ -1246,8 +1252,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             </div>
 
                             {/* ✅ Nuevo: Sección de Ubicación en Mapa */}
-                            <div>
-                                <div className="mb-2 flex items-end justify-between">
+                            <div className="flex flex-center flex-col gap-2">
+                                <div className="flex items-end justify-between">
                                     <Button
                                         type="button"
                                         size="sm"
@@ -1310,7 +1316,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
                         <div className="grid grid-cols-3 gap-4 md:grid-cols-3">
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -1333,7 +1339,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 </p>
                             </div>
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
                                 <input
                                     type="date"
                                     required
@@ -1344,7 +1350,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Fecha Esperada de Devolución (7 días) *
                                 </label>
                                 <input
@@ -1382,20 +1388,22 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     </Card>
 
                     {/* Botones de Acción */}
-                    <div className="flex gap-2">
-                        <Button
-                            type="submit"
-                            disabled={loading || prestablesAgregados.length === 0}
-                            className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {loading ? 'Registrando...' : '✅ Registrar Préstamo'}
-                        </Button>
-                        <a href="/prestamos/clientes">
-                            <Button type="button" variant="outline">
-                                Cancelar
-                            </Button>
-                        </a>
-                    </div>
+                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                        <div className="flex justify-end gap-2">
+                            <a href="/prestamos/clientes">
+                                <Button type="button" variant="outline">
+                                    Cancelar
+                                </Button>
+                            </a>
+                            <Button
+                                type="submit"
+                                disabled={loading || prestablesAgregados.length === 0}
+                                className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {loading ? 'Creando...' : '✅ Crear Préstamo'}
+                            </Button>                            
+                        </div>
+                    </Card>
                 </form>
             </div>
 

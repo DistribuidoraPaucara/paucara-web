@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteCargaPdfController::generarPdf
  * @see app/Http/Controllers/ReporteCargaPdfController.php:27
@@ -66,41 +66,6 @@ generarPdf.head = (args: { reporte: number | { id: number } } | [reporte: number
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:27
- * @route '/api/reportes-carga/{reporte}/pdf'
- */
-    const generarPdfForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: generarPdf.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:27
- * @route '/api/reportes-carga/{reporte}/pdf'
- */
-        generarPdfForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generarPdf.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:27
- * @route '/api/reportes-carga/{reporte}/pdf'
- */
-        generarPdfForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generarPdf.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    generarPdf.form = generarPdfForm
 /**
 * @see \App\Http\Controllers\ReporteCargaPdfController::generarPdfDetallado
  * @see app/Http/Controllers/ReporteCargaPdfController.php:75
@@ -168,41 +133,6 @@ generarPdfDetallado.head = (args: { reporte: number | { id: number } } | [report
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdfDetallado
- * @see app/Http/Controllers/ReporteCargaPdfController.php:75
- * @route '/api/reportes-carga/{reporte}/pdf-detallado'
- */
-    const generarPdfDetalladoForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: generarPdfDetallado.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdfDetallado
- * @see app/Http/Controllers/ReporteCargaPdfController.php:75
- * @route '/api/reportes-carga/{reporte}/pdf-detallado'
- */
-        generarPdfDetalladoForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generarPdfDetallado.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::generarPdfDetallado
- * @see app/Http/Controllers/ReporteCargaPdfController.php:75
- * @route '/api/reportes-carga/{reporte}/pdf-detallado'
- */
-        generarPdfDetalladoForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: generarPdfDetallado.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    generarPdfDetallado.form = generarPdfDetalladoForm
 /**
 * @see \App\Http\Controllers\ReporteCargaPdfController::previewPdf
  * @see app/Http/Controllers/ReporteCargaPdfController.php:126
@@ -269,42 +199,6 @@ previewPdf.head = (args: { reporte: number | { id: number } } | [reporte: number
     url: previewPdf.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::previewPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:126
- * @route '/api/reportes-carga/{reporte}/pdf-preview'
- */
-    const previewPdfForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: previewPdf.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::previewPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:126
- * @route '/api/reportes-carga/{reporte}/pdf-preview'
- */
-        previewPdfForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewPdf.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargaPdfController::previewPdf
- * @see app/Http/Controllers/ReporteCargaPdfController.php:126
- * @route '/api/reportes-carga/{reporte}/pdf-preview'
- */
-        previewPdfForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewPdf.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    previewPdf.form = previewPdfForm
 const ReporteCargaPdfController = { generarPdf, generarPdfDetallado, previewPdf }
 
 export default ReporteCargaPdfController

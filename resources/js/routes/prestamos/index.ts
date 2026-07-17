@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 import prestables from './prestables'
 import stock from './stock'
 import ajustes from './ajustes'
@@ -50,41 +50,6 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboard
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos'
- */
-    const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: dashboard.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboard
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos'
- */
-        dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboard
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos'
- */
-        dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    dashboard.form = dashboardForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::stock
  * @see app/Http/Controllers/Prestamos/StockController.php:17
@@ -128,41 +93,6 @@ stock.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Prestamos\StockController::stock
- * @see app/Http/Controllers/Prestamos/StockController.php:17
- * @route '/prestamos/stock'
- */
-    const stockForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: stock.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Prestamos\StockController::stock
- * @see app/Http/Controllers/Prestamos/StockController.php:17
- * @route '/prestamos/stock'
- */
-        stockForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: stock.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Prestamos\StockController::stock
- * @see app/Http/Controllers/Prestamos/StockController.php:17
- * @route '/prestamos/stock'
- */
-        stockForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: stock.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    stock.form = stockForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
  * @see app/Http/Controllers/PrestamosInertiaController.php:388
@@ -206,41 +136,6 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
- * @route '/prestamos/reportes'
- */
-    const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: reportes.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
- * @route '/prestamos/reportes'
- */
-        reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: reportes.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
- * @route '/prestamos/reportes'
- */
-        reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: reportes.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    reportes.form = reportesForm
 /**
 * @see \App\Http\Controllers\Prestamos\DashboardController::dashboardAlt
  * @see app/Http/Controllers/Prestamos/DashboardController.php:19
@@ -284,41 +179,6 @@ dashboardAlt.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboardAlt
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos/dashboard'
- */
-    const dashboardAltForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: dashboardAlt.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboardAlt
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos/dashboard'
- */
-        dashboardAltForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboardAlt.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Prestamos\DashboardController::dashboardAlt
- * @see app/Http/Controllers/Prestamos/DashboardController.php:19
- * @route '/prestamos/dashboard'
- */
-        dashboardAltForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboardAlt.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    dashboardAlt.form = dashboardAltForm
 /**
 * @see \App\Http\Controllers\Prestamos\AlertasController::alertas
  * @see app/Http/Controllers/Prestamos/AlertasController.php:16
@@ -361,42 +221,6 @@ alertas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: alertas.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Prestamos\AlertasController::alertas
- * @see app/Http/Controllers/Prestamos/AlertasController.php:16
- * @route '/prestamos/alertas'
- */
-    const alertasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: alertas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Prestamos\AlertasController::alertas
- * @see app/Http/Controllers/Prestamos/AlertasController.php:16
- * @route '/prestamos/alertas'
- */
-        alertasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: alertas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Prestamos\AlertasController::alertas
- * @see app/Http/Controllers/Prestamos/AlertasController.php:16
- * @route '/prestamos/alertas'
- */
-        alertasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: alertas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    alertas.form = alertasForm
 const prestamos = {
     dashboard,
 prestables,

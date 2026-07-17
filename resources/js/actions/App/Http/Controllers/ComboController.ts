@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ComboController::capacidad
  * @see app/Http/Controllers/ComboController.php:457
@@ -69,41 +69,6 @@ capacidad846084a2de090f9b97d43e7ff28bcb6e.head = (args: { combo: number | { id: 
     /**
 * @see \App\Http\Controllers\ComboController::capacidad
  * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-    const capacidad846084a2de090f9b97d43e7ff28bcb6eForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidad846084a2de090f9b97d43e7ff28bcb6e.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-        capacidad846084a2de090f9b97d43e7ff28bcb6eForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad846084a2de090f9b97d43e7ff28bcb6e.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-        capacidad846084a2de090f9b97d43e7ff28bcb6eForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad846084a2de090f9b97d43e7ff28bcb6e.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidad846084a2de090f9b97d43e7ff28bcb6e.form = capacidad846084a2de090f9b97d43e7ff28bcb6eForm
-    /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
  * @route '/combos/{combo}/capacidad'
  */
 const capacidad8a51494bec4b5c6f65e8defa80a35ae4 = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -167,42 +132,6 @@ capacidad8a51494bec4b5c6f65e8defa80a35ae4.head = (args: { combo: number | { id: 
     url: capacidad8a51494bec4b5c6f65e8defa80a35ae4.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/combos/{combo}/capacidad'
- */
-    const capacidad8a51494bec4b5c6f65e8defa80a35ae4Form = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidad8a51494bec4b5c6f65e8defa80a35ae4.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/combos/{combo}/capacidad'
- */
-        capacidad8a51494bec4b5c6f65e8defa80a35ae4Form.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad8a51494bec4b5c6f65e8defa80a35ae4.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/combos/{combo}/capacidad'
- */
-        capacidad8a51494bec4b5c6f65e8defa80a35ae4Form.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad8a51494bec4b5c6f65e8defa80a35ae4.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidad8a51494bec4b5c6f65e8defa80a35ae4.form = capacidad8a51494bec4b5c6f65e8defa80a35ae4Form
 
 export const capacidad = {
     '/api/combos/{combo}/capacidad': capacidad846084a2de090f9b97d43e7ff28bcb6e,
@@ -279,41 +208,6 @@ capacidadDetalles8c1c2cbd137826747613cf22686f0810.head = (args: { combo: number 
     /**
 * @see \App\Http\Controllers\ComboController::capacidadDetalles
  * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-    const capacidadDetalles8c1c2cbd137826747613cf22686f0810Form = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidadDetalles8c1c2cbd137826747613cf22686f0810.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetalles8c1c2cbd137826747613cf22686f0810Form.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetalles8c1c2cbd137826747613cf22686f0810.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetalles8c1c2cbd137826747613cf22686f0810Form.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetalles8c1c2cbd137826747613cf22686f0810.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidadDetalles8c1c2cbd137826747613cf22686f0810.form = capacidadDetalles8c1c2cbd137826747613cf22686f0810Form
-    /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
  * @route '/combos/{combo}/capacidad-detalles'
  */
 const capacidadDetallesd44ef2cba773f5dac914147e448437ea = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -377,42 +271,6 @@ capacidadDetallesd44ef2cba773f5dac914147e448437ea.head = (args: { combo: number 
     url: capacidadDetallesd44ef2cba773f5dac914147e448437ea.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/combos/{combo}/capacidad-detalles'
- */
-    const capacidadDetallesd44ef2cba773f5dac914147e448437eaForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidadDetallesd44ef2cba773f5dac914147e448437ea.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetallesd44ef2cba773f5dac914147e448437eaForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetallesd44ef2cba773f5dac914147e448437ea.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetallesd44ef2cba773f5dac914147e448437eaForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetallesd44ef2cba773f5dac914147e448437ea.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidadDetallesd44ef2cba773f5dac914147e448437ea.form = capacidadDetallesd44ef2cba773f5dac914147e448437eaForm
 
 export const capacidadDetalles = {
     '/api/combos/{combo}/capacidad-detalles': capacidadDetalles8c1c2cbd137826747613cf22686f0810,
@@ -486,41 +344,6 @@ combosDelProducto.head = (args: { producto: number | { id: number } } | [product
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::combosDelProducto
- * @see app/Http/Controllers/ComboController.php:506
- * @route '/api/productos/{producto}/combos'
- */
-    const combosDelProductoForm = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: combosDelProducto.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::combosDelProducto
- * @see app/Http/Controllers/ComboController.php:506
- * @route '/api/productos/{producto}/combos'
- */
-        combosDelProductoForm.get = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: combosDelProducto.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::combosDelProducto
- * @see app/Http/Controllers/ComboController.php:506
- * @route '/api/productos/{producto}/combos'
- */
-        combosDelProductoForm.head = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: combosDelProducto.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    combosDelProducto.form = combosDelProductoForm
 /**
 * @see \App\Http\Controllers\ComboController::index
  * @see app/Http/Controllers/ComboController.php:23
@@ -564,41 +387,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::index
- * @see app/Http/Controllers/ComboController.php:23
- * @route '/combos'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::index
- * @see app/Http/Controllers/ComboController.php:23
- * @route '/combos'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::index
- * @see app/Http/Controllers/ComboController.php:23
- * @route '/combos'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ComboController::create
  * @see app/Http/Controllers/ComboController.php:47
@@ -642,41 +430,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::create
- * @see app/Http/Controllers/ComboController.php:47
- * @route '/combos/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::create
- * @see app/Http/Controllers/ComboController.php:47
- * @route '/combos/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::create
- * @see app/Http/Controllers/ComboController.php:47
- * @route '/combos/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\ComboController::store
  * @see app/Http/Controllers/ComboController.php:52
@@ -711,27 +464,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::store
- * @see app/Http/Controllers/ComboController.php:52
- * @route '/combos'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::store
- * @see app/Http/Controllers/ComboController.php:52
- * @route '/combos'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\ComboController::show
  * @see app/Http/Controllers/ComboController.php:108
@@ -799,41 +531,6 @@ show.head = (args: { combo: number | { id: number } } | [combo: number | { id: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::show
- * @see app/Http/Controllers/ComboController.php:108
- * @route '/combos/{combo}'
- */
-    const showForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::show
- * @see app/Http/Controllers/ComboController.php:108
- * @route '/combos/{combo}'
- */
-        showForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::show
- * @see app/Http/Controllers/ComboController.php:108
- * @route '/combos/{combo}'
- */
-        showForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\ComboController::edit
  * @see app/Http/Controllers/ComboController.php:120
@@ -901,41 +598,6 @@ edit.head = (args: { combo: number | { id: number } } | [combo: number | { id: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::edit
- * @see app/Http/Controllers/ComboController.php:120
- * @route '/combos/{combo}/edit'
- */
-    const editForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::edit
- * @see app/Http/Controllers/ComboController.php:120
- * @route '/combos/{combo}/edit'
- */
-        editForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::edit
- * @see app/Http/Controllers/ComboController.php:120
- * @route '/combos/{combo}/edit'
- */
-        editForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\ComboController::update
  * @see app/Http/Controllers/ComboController.php:135
@@ -1003,51 +665,6 @@ update.patch = (args: { combo: number | { id: number } } | [combo: number | { id
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::update
- * @see app/Http/Controllers/ComboController.php:135
- * @route '/combos/{combo}'
- */
-    const updateForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::update
- * @see app/Http/Controllers/ComboController.php:135
- * @route '/combos/{combo}'
- */
-        updateForm.put = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::update
- * @see app/Http/Controllers/ComboController.php:135
- * @route '/combos/{combo}'
- */
-        updateForm.patch = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\ComboController::destroy
  * @see app/Http/Controllers/ComboController.php:175
@@ -1105,38 +722,6 @@ destroy.delete = (args: { combo: number | { id: number } } | [combo: number | { 
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\ComboController::destroy
- * @see app/Http/Controllers/ComboController.php:175
- * @route '/combos/{combo}'
- */
-    const destroyForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::destroy
- * @see app/Http/Controllers/ComboController.php:175
- * @route '/combos/{combo}'
- */
-        destroyForm.delete = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const ComboController = { capacidad, capacidadDetalles, combosDelProducto, index, create, store, show, edit, update, destroy }
 
 export default ComboController

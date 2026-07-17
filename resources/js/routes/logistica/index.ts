@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 import envios from './envios'
 import entregas from './entregas'
 import reportes from './reportes'
@@ -45,41 +45,6 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estadisticas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
@@ -114,27 +79,6 @@ resincronizar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
- * @route '/api/logistica/resincronizar'
- */
-    const resincronizarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: resincronizar.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
- * @route '/api/logistica/resincronizar'
- */
-        resincronizarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: resincronizar.url(options),
-            method: 'post',
-        })
-    
-    resincronizar.form = resincronizarForm
 /**
 * @see \App\Http\Controllers\Web\LogisticaController::dashboard
  * @see app/Http/Controllers/Web/LogisticaController.php:18
@@ -178,43 +122,8 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Web\LogisticaController::dashboard
- * @see app/Http/Controllers/Web/LogisticaController.php:18
- * @route '/logistica/dashboard'
- */
-    const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: dashboard.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Web\LogisticaController::dashboard
- * @see app/Http/Controllers/Web/LogisticaController.php:18
- * @route '/logistica/dashboard'
- */
-        dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Web\LogisticaController::dashboard
- * @see app/Http/Controllers/Web/LogisticaController.php:18
- * @route '/logistica/dashboard'
- */
-        dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    dashboard.form = dashboardForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:967
  * @route '/logistica/proformas-pendientes'
  */
 export const proformasPendientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -228,7 +137,7 @@ proformasPendientes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:967
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.url = (options?: RouteQueryOptions) => {
@@ -236,7 +145,7 @@ proformasPendientes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:967
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -244,46 +153,13 @@ proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> 
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:967
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: proformasPendientes.url(options),
     method: 'head',
 })
-
-    /**
- * @see [serialized-closure]:2
- * @route '/logistica/proformas-pendientes'
- */
-    const proformasPendientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: proformasPendientes.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see [serialized-closure]:2
- * @route '/logistica/proformas-pendientes'
- */
-        proformasPendientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: proformasPendientes.url(options),
-            method: 'get',
-        })
-            /**
- * @see [serialized-closure]:2
- * @route '/logistica/proformas-pendientes'
- */
-        proformasPendientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: proformasPendientes.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    proformasPendientes.form = proformasPendientesForm
 const logistica = {
     estadisticas,
 resincronizar,

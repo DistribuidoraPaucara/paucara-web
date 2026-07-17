@@ -1,6 +1,6 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
- * @see [serialized-closure]:2
+ * @see vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
  * @route '/storage/{path}'
  */
 export const local = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ local.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
  * @route '/storage/{path}'
  */
 local.url = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -41,7 +41,7 @@ local.url = (args: { path: string | number } | [path: string | number ] | string
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
  * @route '/storage/{path}'
  */
 local.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -49,46 +49,13 @@ local.get = (args: { path: string | number } | [path: string | number ] | string
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
  * @route '/storage/{path}'
  */
 local.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: local.url(args, options),
     method: 'head',
 })
-
-    /**
- * @see [serialized-closure]:2
- * @route '/storage/{path}'
- */
-    const localForm = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: local.url(args, options),
-        method: 'get',
-    })
-
-            /**
- * @see [serialized-closure]:2
- * @route '/storage/{path}'
- */
-        localForm.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: local.url(args, options),
-            method: 'get',
-        })
-            /**
- * @see [serialized-closure]:2
- * @route '/storage/{path}'
- */
-        localForm.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: local.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    local.form = localForm
 const storage = {
     local,
 }

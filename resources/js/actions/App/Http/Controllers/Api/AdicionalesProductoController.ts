@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdicionalesProductoController::productosComida
  * @see app/Http/Controllers/Api/AdicionalesProductoController.php:98
@@ -42,41 +42,6 @@ productosComida.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::productosComida
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:98
- * @route '/api/productos-comida'
- */
-    const productosComidaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: productosComida.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::productosComida
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:98
- * @route '/api/productos-comida'
- */
-        productosComidaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: productosComida.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::productosComida
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:98
- * @route '/api/productos-comida'
- */
-        productosComidaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: productosComida.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    productosComida.form = productosComidaForm
 /**
 * @see \App\Http\Controllers\Api\AdicionalesProductoController::obtenerPorProducto
  * @see app/Http/Controllers/Api/AdicionalesProductoController.php:16
@@ -144,41 +109,6 @@ obtenerPorProducto.head = (args: { producto: number | { id: number } } | [produc
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::obtenerPorProducto
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:16
- * @route '/api/productos-comida/{producto}/adicionales'
- */
-    const obtenerPorProductoForm = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: obtenerPorProducto.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::obtenerPorProducto
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:16
- * @route '/api/productos-comida/{producto}/adicionales'
- */
-        obtenerPorProductoForm.get = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerPorProducto.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::obtenerPorProducto
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:16
- * @route '/api/productos-comida/{producto}/adicionales'
- */
-        obtenerPorProductoForm.head = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerPorProducto.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    obtenerPorProducto.form = obtenerPorProductoForm
 /**
 * @see \App\Http\Controllers\Api\AdicionalesProductoController::store
  * @see app/Http/Controllers/Api/AdicionalesProductoController.php:32
@@ -213,27 +143,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::store
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:32
- * @route '/api/productos-comida/adicionales'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::store
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:32
- * @route '/api/productos-comida/adicionales'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\AdicionalesProductoController::update
  * @see app/Http/Controllers/Api/AdicionalesProductoController.php:63
@@ -292,37 +201,6 @@ update.patch = (args: { adicional: number | { id: number } } | [adicional: numbe
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::update
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:63
- * @route '/api/productos-comida/adicionales/{adicional}'
- */
-    const updateForm = (args: { adicional: number | { id: number } } | [adicional: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::update
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:63
- * @route '/api/productos-comida/adicionales/{adicional}'
- */
-        updateForm.patch = (args: { adicional: number | { id: number } } | [adicional: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\AdicionalesProductoController::destroy
  * @see app/Http/Controllers/Api/AdicionalesProductoController.php:85
@@ -380,38 +258,6 @@ destroy.delete = (args: { adicional: number | { id: number } } | [adicional: num
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::destroy
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:85
- * @route '/api/productos-comida/adicionales/{adicional}'
- */
-    const destroyForm = (args: { adicional: number | { id: number } } | [adicional: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdicionalesProductoController::destroy
- * @see app/Http/Controllers/Api/AdicionalesProductoController.php:85
- * @route '/api/productos-comida/adicionales/{adicional}'
- */
-        destroyForm.delete = (args: { adicional: number | { id: number } } | [adicional: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const AdicionalesProductoController = { productosComida, obtenerPorProducto, store, update, destroy }
 
 export default AdicionalesProductoController

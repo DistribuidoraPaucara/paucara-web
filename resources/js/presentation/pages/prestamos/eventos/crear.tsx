@@ -102,6 +102,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             es_ubicacion_manual: false,
             latitud: undefined as number | undefined,
             longitud: undefined as number | undefined,
+            observaciones: undefined as string | null | undefined,
+            direccion_cliente_id: undefined as number | undefined,
         },
     });
 
@@ -382,193 +384,193 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
         // ✅ Cargar detalles y dirección de TODAS las ventas
         try {
-                const response = await fetch(`/api/ventas/${venta.id}`, {
-                    headers: { Accept: 'application/json' },
-                });
-                const data = await response.json();
-                const ventaData = data.data || data;
+            const response = await fetch(`/api/ventas/${venta.id}`, {
+                headers: { Accept: 'application/json' },
+            });
+            const data = await response.json();
+            const ventaData = data.data || data;
 
-                console.log('%c============================================', 'color: #0066cc; font-weight: bold');
-                console.log('%c📍 ENDPOINT: GET /api/ventas/{id}', 'color: #00aa00; font-weight: bold; font-size: 14px');
-                console.log('%c============================================', 'color: #0066cc; font-weight: bold');
-                console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
-                    id: ventaData.cliente?.id,
-                    nombre: ventaData.cliente?.nombre,
-                    nit: ventaData.cliente?.nit,
-                    telefono: ventaData.cliente?.telefono,
-                    foto_perfil: ventaData.cliente?.foto_perfil,
-                    razon_social: ventaData.cliente?.razon_social,
-                });
-                console.log('%c📍 DIRECCIÓN DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
-                    id: ventaData.direccionCliente?.id,
-                    direccion: ventaData.direccionCliente?.direccion,
-                    localidad: ventaData.direccionCliente?.localidad,
-                    observaciones: ventaData.direccionCliente?.observaciones,
-                    latitud: ventaData.direccionCliente?.latitud,
-                    longitud: ventaData.direccionCliente?.longitud,
-                    es_principal: ventaData.direccionCliente?.es_principal,
+            console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+            console.log('%c📍 ENDPOINT: GET /api/ventas/{id}', 'color: #00aa00; font-weight: bold; font-size: 14px');
+            console.log('%c============================================', 'color: #0066cc; font-weight: bold');
+            console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                id: ventaData.cliente?.id,
+                nombre: ventaData.cliente?.nombre,
+                nit: ventaData.cliente?.nit,
+                telefono: ventaData.cliente?.telefono,
+                foto_perfil: ventaData.cliente?.foto_perfil,
+                razon_social: ventaData.cliente?.razon_social,
+            });
+            console.log('%c📍 DIRECCIÓN DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+                id: ventaData.direccionCliente?.id,
+                direccion: ventaData.direccionCliente?.direccion,
+                localidad: ventaData.direccionCliente?.localidad,
+                observaciones: ventaData.direccionCliente?.observaciones,
+                latitud: ventaData.direccionCliente?.latitud,
+                longitud: ventaData.direccionCliente?.longitud,
+                es_principal: ventaData.direccionCliente?.es_principal,
+            });
+
+            // ✅ NUEVO: Cargar prestables desde productos de la venta
+            const nuevosPrestables: PrestamoItem[] = [];
+            if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
+                console.log('%c🛒 PROCESANDO DETALLES DE VENTA (EVENTOS)', 'color: #ff6b6b; font-weight: bold; font-size: 12px', {
+                    total_detalles: ventaData.detalles.length,
+                    detalles: ventaData.detalles.map((d: any) => ({
+                        id: d.id,
+                        cantidad: d.cantidad,
+                        producto_nombre: d.producto?.nombre,
+                        prestables_count: d.producto?.prestables?.length || 0,
+                    })),
                 });
 
-                // ✅ NUEVO: Cargar prestables desde productos de la venta
-                const nuevosPrestables: PrestamoItem[] = [];
-                if (ventaData.detalles && Array.isArray(ventaData.detalles)) {
-                    console.log('%c🛒 PROCESANDO DETALLES DE VENTA (EVENTOS)', 'color: #ff6b6b; font-weight: bold; font-size: 12px', {
-                        total_detalles: ventaData.detalles.length,
-                        detalles: ventaData.detalles.map((d: any) => ({
-                            id: d.id,
-                            cantidad: d.cantidad,
-                            producto_nombre: d.producto?.nombre,
-                            prestables_count: d.producto?.prestables?.length || 0,
+                ventaData.detalles.forEach((detalle: any, index: number) => {
+                    const producto = detalle.producto;
+                    const cantidad = detalle.cantidad || 0;
+
+                    console.log(`%c📋 DETALLE ${index + 1}/${ventaData.detalles.length}`, 'color: #4ecdc4; font-weight: bold; font-size: 11px', {
+                        producto_nombre: producto?.nombre,
+                        cantidad,
+                        prestables_disponibles: producto?.prestables?.map((p: any) => ({
+                            prestable_id: p.prestable_id,
+                            tipo_en_maestro: prestables.find((pr) => pr.id === p.prestable_id)?.tipo,
                         })),
                     });
 
-                    ventaData.detalles.forEach((detalle: any, index: number) => {
-                        const producto = detalle.producto;
-                        const cantidad = detalle.cantidad || 0;
+                    // ✅ Validar que el producto tenga prestables relacionados
+                    if (producto && producto.prestables && Array.isArray(producto.prestables) && producto.prestables.length > 0 && cantidad > 0) {
+                        console.log('%c🔍 BUSCANDO CANASTILLA EN PRODUCTO', 'color: #ff9ff3; font-weight: bold; font-size: 11px', {
+                            prestables_array: producto.prestables,
+                        });
 
-                        console.log(
-                            `%c📋 DETALLE ${index + 1}/${ventaData.detalles.length}`,
-                            'color: #4ecdc4; font-weight: bold; font-size: 11px',
-                            {
-                                producto_nombre: producto?.nombre,
-                                cantidad,
-                                prestables_disponibles: producto?.prestables?.map((p: any) => ({
-                                    prestable_id: p.prestable_id,
-                                    tipo_en_maestro: prestables.find((pr) => pr.id === p.prestable_id)?.tipo,
+                        // 1️⃣ Buscar CANASTILLA en el array de prestables del producto (DIRECTAMENTE DEL BACKEND)
+                        const prestableCanastilla = producto.prestables.find((p: any) => {
+                            console.log(`   Verificando: ${p.nombre} (tipo: ${p.tipo})`);
+                            return p.tipo === 'CANASTILLA';
+                        });
+
+                        if (prestableCanastilla) {
+                            const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
+                            const capacidadCanastilla = prestableCanastilla.capacidad || 0;
+
+                            console.log('%b✅ CANASTILLA ENCONTRADA EN PRODUCTO', 'color: #00b894; font-weight: bold; font-size: 11px', {
+                                canastilla_id: canastillaId,
+                                canastilla_nombre: prestableCanastilla.nombre,
+                                cantidad_canastillas: cantidad,
+                                capacidad: capacidadCanastilla,
+                                cantidad_embases_calculada: cantidad * capacidadCanastilla,
+                            });
+
+                            // ✅ Agregar CANASTILLA
+                            nuevosPrestables.push({
+                                prestable_id: canastillaId,
+                                cantidad: cantidad,
+                                almacenes_ids: [],
+                                prestable: prestableCanastilla,
+                            });
+
+                            // ✅ Buscar EMBASES en el array de prestables del producto
+                            const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
+
+                            console.log('%c🥫 EMBASES EN PRODUCTO', 'color: #fdcb6e; font-weight: bold; font-size: 11px', {
+                                total_embases: embasesEnProducto.length,
+                                embases: embasesEnProducto.map((e: any) => ({
+                                    id: e.id || e.prestable_id,
+                                    nombre: e.nombre,
+                                    cantidad_a_prestar: cantidad * capacidadCanastilla,
                                 })),
-                            },
-                        );
-
-                        // ✅ Validar que el producto tenga prestables relacionados
-                        if (producto && producto.prestables && Array.isArray(producto.prestables) && producto.prestables.length > 0 && cantidad > 0) {
-                            console.log('%c🔍 BUSCANDO CANASTILLA EN PRODUCTO', 'color: #ff9ff3; font-weight: bold; font-size: 11px', {
-                                prestables_array: producto.prestables,
                             });
 
-                            // 1️⃣ Buscar CANASTILLA en el array de prestables del producto (DIRECTAMENTE DEL BACKEND)
-                            const prestableCanastilla = producto.prestables.find((p: any) => {
-                                console.log(`   Verificando: ${p.nombre} (tipo: ${p.tipo})`);
-                                return p.tipo === 'CANASTILLA';
-                            });
-
-                            if (prestableCanastilla) {
-                                const canastillaId = Number(prestableCanastilla.id || prestableCanastilla.prestable_id);
-                                const capacidadCanastilla = prestableCanastilla.capacidad || 0;
-
-                                console.log('%b✅ CANASTILLA ENCONTRADA EN PRODUCTO', 'color: #00b894; font-weight: bold; font-size: 11px', {
-                                    canastilla_id: canastillaId,
-                                    canastilla_nombre: prestableCanastilla.nombre,
-                                    cantidad_canastillas: cantidad,
-                                    capacidad: capacidadCanastilla,
-                                    cantidad_embases_calculada: cantidad * capacidadCanastilla,
-                                });
-
-                                // ✅ Agregar CANASTILLA
+                            // ✅ Agregar cada EMBASE encontrado
+                            embasesEnProducto.forEach((embase: any) => {
+                                const embaseId = Number(embase.id || embase.prestable_id);
+                                const cantidadEmbases = cantidad * capacidadCanastilla;
                                 nuevosPrestables.push({
-                                    prestable_id: canastillaId,
-                                    cantidad: cantidad,
+                                    prestable_id: embaseId,
+                                    cantidad: cantidadEmbases,
                                     almacenes_ids: [],
-                                    prestable: prestableCanastilla,
+                                    prestable: embase,
+                                    isAutomaticEmbase: true,
                                 });
 
-                                // ✅ Buscar EMBASES en el array de prestables del producto
-                                const embasesEnProducto = producto.prestables.filter((p: any) => p.tipo === 'EMBASES');
-
-                                console.log('%c🥫 EMBASES EN PRODUCTO', 'color: #fdcb6e; font-weight: bold; font-size: 11px', {
-                                    total_embases: embasesEnProducto.length,
-                                    embases: embasesEnProducto.map((e: any) => ({
-                                        id: e.id || e.prestable_id,
-                                        nombre: e.nombre,
-                                        cantidad_a_prestar: cantidad * capacidadCanastilla,
-                                    })),
-                                });
-
-                                // ✅ Agregar cada EMBASE encontrado
-                                embasesEnProducto.forEach((embase: any) => {
-                                    const embaseId = Number(embase.id || embase.prestable_id);
-                                    const cantidadEmbases = cantidad * capacidadCanastilla;
-                                    nuevosPrestables.push({
-                                        prestable_id: embaseId,
-                                        cantidad: cantidadEmbases,
-                                        almacenes_ids: [],
-                                        prestable: embase,
-                                        isAutomaticEmbase: true,
-                                    });
-
-                                    console.log(`   ✅ Agregado EMBASE: ${embase.nombre} (ID: ${embaseId}) x ${cantidadEmbases}`);
-                                });
-                            } else {
-                                console.warn('⚠️ No se encontró CANASTILLA en el producto:', {
-                                    producto_nombre: producto.nombre,
-                                    prestables_en_producto: producto.prestables.map((p: any) => ({
-                                        id: p.prestable_id,
-                                        nombre: p.nombre,
-                                        tipo: p.tipo,
-                                    })),
-                                });
-                            }
+                                console.log(`   ✅ Agregado EMBASE: ${embase.nombre} (ID: ${embaseId}) x ${cantidadEmbases}`);
+                            });
+                        } else {
+                            console.warn('⚠️ No se encontró CANASTILLA en el producto:', {
+                                producto_nombre: producto.nombre,
+                                prestables_en_producto: producto.prestables.map((p: any) => ({
+                                    id: p.prestable_id,
+                                    nombre: p.nombre,
+                                    tipo: p.tipo,
+                                })),
+                            });
                         }
-                    });
-                }
-
-                // Agregar prestables cargados
-                if (nuevosPrestables.length > 0) {
-                    setPrestablesAgregados([...prestablesAgregados, ...nuevosPrestables]);
-                    toastSuccess(`✅ Cargados ${nuevosPrestables.length} prestables desde la venta`);
-                }
-
-                // Cargar ubicación del cliente en el mapa si existe (solo en la PRIMERA venta)
-                if (ventasSeleccionadas.length === 0 && ventaData.direccionCliente) {
-                    const dirCliente = ventaData.direccionCliente;
-
-                    // Extraer ID de localidad (puede venir de localidad_id o como objeto)
-                    let localidadId = null;
-                    if (dirCliente.localidad_id) {
-                        localidadId = dirCliente.localidad_id;
-                    } else if (dirCliente.localidad?.id) {
-                        localidadId = dirCliente.localidad.id;
-                    } else if (dirCliente.localidad && typeof dirCliente.localidad === 'object') {
-                        localidadId = dirCliente.localidad.id;
                     }
-
-                    if (localidadId) {
-                        const direccionTexto = dirCliente.direccion || '';
-                        const latitud = dirCliente.latitud;
-                        const longitud = dirCliente.longitud;
-                        const direccionClienteId = dirCliente.id;
-                        const observaciones = dirCliente.observaciones;
-
-                        setUbicacionSeleccionada({
-                            localidad_id: localidadId,
-                            direccion: direccionTexto,
-                            latitud,
-                            longitud,
-                            direccion_cliente_id: direccionClienteId,
-                            observaciones,
-                        });
-
-                        setFormData((prev) => ({
-                            ...prev,
-                            ubicacion: {
-                                localidad_id: localidadId,
-                                direccion: direccionTexto,
-                                es_ubicacion_manual: false,
-                            },
-                        }));
-
-                        console.log('✅ Ubicación del cliente cargada automáticamente:', {
-                            localidad_id: localidadId,
-                            direccion: direccionTexto,
-                            latitud,
-                            longitud,
-                        });
-
-                        toastSuccess('✓ Ubicación del cliente cargada automáticamente');
-                    }
-                }
-            } catch (error) {
-                console.error('Error cargando dirección del cliente:', error);
+                });
             }
+
+            // Agregar prestables cargados
+            if (nuevosPrestables.length > 0) {
+                setPrestablesAgregados([...prestablesAgregados, ...nuevosPrestables]);
+                toastSuccess(`✅ Cargados ${nuevosPrestables.length} prestables desde la venta`);
+            }
+
+            // Cargar ubicación del cliente en el mapa si existe (solo en la PRIMERA venta)
+            if (ventasSeleccionadas.length === 0 && ventaData.direccionCliente) {
+                const dirCliente = ventaData.direccionCliente;
+
+                // Extraer ID de localidad (puede venir de localidad_id o como objeto)
+                let localidadId = null;
+                if (dirCliente.localidad_id) {
+                    localidadId = dirCliente.localidad_id;
+                } else if (dirCliente.localidad?.id) {
+                    localidadId = dirCliente.localidad.id;
+                } else if (dirCliente.localidad && typeof dirCliente.localidad === 'object') {
+                    localidadId = dirCliente.localidad.id;
+                }
+
+                if (localidadId) {
+                    const direccionTexto = dirCliente.direccion || '';
+                    const latitud = dirCliente.latitud;
+                    const longitud = dirCliente.longitud;
+                    const direccionClienteId = dirCliente.id;
+                    const observaciones = dirCliente.observaciones;
+
+                    setUbicacionSeleccionada({
+                        localidad_id: localidadId,
+                        direccion: direccionTexto,
+                        latitud,
+                        longitud,
+                        direccion_cliente_id: direccionClienteId,
+                        observaciones,
+                    });
+
+                    setFormData((prev) => ({
+                        ...prev,
+                        ubicacion: {
+                            localidad_id: localidadId,
+                            direccion: direccionTexto,
+                            es_ubicacion_manual: false,
+                            latitud,
+                            longitud,
+                            observaciones,
+                            direccion_cliente_id: direccionClienteId,
+                        },
+                    }));
+
+                    console.log('✅ Ubicación del cliente cargada automáticamente:', {
+                        localidad_id: localidadId,
+                        direccion: direccionTexto,
+                        latitud,
+                        longitud,
+                    });
+
+                    toastSuccess('✓ Ubicación del cliente cargada automáticamente');
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando dirección del cliente:', error);
+        }
     };
 
     const handleRemoveVenta = (ventaId: number) => {
@@ -665,6 +667,8 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                 es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
                 latitud: ubicacion.latitud,
                 longitud: ubicacion.longitud,
+                observaciones: undefined,
+                direccion_cliente_id: undefined,
             },
         });
 
@@ -1028,20 +1032,51 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
                     {/* ✅ Nuevo: Sección de Ubicación en Mapa */}
                     <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
-                        <div className="flex items-center justify-between">
-                            <div className="mb-2 flex items-end justify-between">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex flex-wrap gap-2 items-start">
+                                {/* Almacén */}
+                                <DynamicSearchSelect
+                                    label="📦 Almacén"
+                                    placeholder="Buscar almacén..."
+                                    selectedItem={
+                                        formData.almacenes_prestables_id
+                                            ? almacenesResults.find((a) => a.id === formData.almacenes_prestables_id) ||
+                                            almacenes.find((a) => a.id === formData.almacenes_prestables_id)
+                                            : null
+                                    }
+                                    items={almacenesResults}
+                                    isLoading={almacenesLoading}
+                                    searchValue={almacenesSearch}
+                                    onSearch={handleSearchAlmacenes}
+                                    onSelect={handleSelectAlmacen}
+                                    onClear={() => {
+                                        setFormData({ ...formData, almacenes_prestables_id: undefined });
+                                        setAlmacenesSearch('');
+                                        setAlmacenesResults([]);
+                                    }}
+                                    renderItem={(almacen) => (
+                                        <div>
+                                            <p className="font-medium">{almacen.nombre}</p>
+                                            <p className="text-xs text-gray-500">{almacen.es_proveedor ? '🏭 Proveedor' : '📦 Almacén Distribuidora'}</p>
+                                        </div>
+                                    )}
+                                    getItemId={(almacen) => almacen.id}
+                                    getDisplayValue={(almacen) => `${almacen.nombre} (${almacen.es_proveedor ? 'Proveedor' : 'Distribuidora'})`}
+                                />
                                 {/* Cliente Automático */}
-                                <Card className="mr-2 border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
-                                    <div className="flex items-center">
+                                <div className="p-1">
+                                    <div className="flex items-center gap-2">
                                         <div className="text-2xl">👤</div>
                                         <div>
                                             <p className="text-xs font-medium text-blue-900 dark:text-blue-300">Cliente Asignado</p>
                                             <p className="text-xs font-bold text-blue-600 dark:text-blue-400">EVENTOS</p>
                                         </div>
                                     </div>
-                                </Card>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-start gap-2">
                                 {ubicacionSeleccionada && (
-                                    <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-950/30">
+                                    <div className="shrink-0 rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-950/30">
                                         <div className="flex items-start gap-3">
                                             <div className="flex-1">
                                                 {ubicacionSeleccionada.localidad_id && (
@@ -1062,48 +1097,48 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                         </div>
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="mb-2 flex items-end justify-between">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => setMostrarModalUbicacion(true)}
-                                    className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
-                                >
-                                    📍 Seleccionar en Mapa
-                                </Button>
-                                {ubicacionSeleccionada && (
+                                <div className="flex items-end gap-2">
                                     <Button
                                         type="button"
                                         size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                            setUbicacionSeleccionada(null);
-                                            setFormData({
-                                                ...formData,
-                                                ubicacion: {
-                                                    localidad_id: undefined,
-                                                    direccion: '',
-                                                    es_ubicacion_manual: false,
-                                                },
-                                            });
-                                        }}
-                                        className="mt-2 ml-2 border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
+                                        onClick={() => setMostrarModalUbicacion(true)}
+                                        className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
                                     >
-                                        ✗ Limpiar
+                                        📍 Seleccionar en Mapa
                                     </Button>
-                                )}
+                                    {ubicacionSeleccionada && (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setUbicacionSeleccionada(null);
+                                                setFormData({
+                                                    ...formData,
+                                                    ubicacion: {
+                                                        localidad_id: undefined,
+                                                        direccion: '',
+                                                        es_ubicacion_manual: false,
+                                                        latitud: undefined,
+                                                        longitud: undefined,
+                                                        observaciones: undefined,
+                                                        direccion_cliente_id: undefined,
+                                                    },
+                                                });
+                                            }}
+                                            className="border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
+                                        >
+                                            ✗ Limpiar
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </Card>
 
                     {/* Información del Evento */}
                     <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
-                        {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            📋 Información del Evento
-                        </h2> */}
-
                         <div className="grid grid-cols-4 gap-4">
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🎉Nombre Evento *</label>
@@ -1147,17 +1182,6 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
-
-                            {/* <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
-                                <input
-                                    type="text"
-                                    value={formData.direccion_evento}
-                                    onChange={(e) => setFormData({ ...formData, direccion_evento: e.target.value })}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                    placeholder="Calle, número, ciudad"
-                                />
-                            </div> */}
                         </div>
                     </Card>
 
@@ -1183,12 +1207,12 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                         }}
                                         renderItem={(venta) => (
                                             <div>
-                                                <p className="font-medium">{venta.numero}</p>
+                                                <p className="font-medium">Folio #{venta.id}</p>
                                                 <p className="text-xs text-gray-500">{venta.cliente?.nombre}</p>
                                             </div>
                                         )}
                                         getItemId={(venta) => venta.id}
-                                        getDisplayValue={(venta) => `${venta.numero} - ${venta.cliente?.nombre}`}
+                                        getDisplayValue={(venta) => `#${venta.id} - ${venta.cliente?.nombre}`}
                                     />
                                     {/* Mostrar ventas seleccionadas como chips */}
                                     {ventasSeleccionadas.length > 0 && (
@@ -1198,7 +1222,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                                                     key={venta.id}
                                                     className="inline-flex items-center gap-2 rounded-full bg-blue-200 px-3 py-1 text-sm text-blue-900 dark:bg-blue-700 dark:text-blue-100"
                                                 >
-                                                    {venta.numero} - {venta.cliente?.nombre}
+                                                    Folio #{venta.id} - {venta.cliente?.nombre}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveVenta(venta.id)}
@@ -1214,36 +1238,6 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
-                            {/* Almacén */}
-                            <DynamicSearchSelect
-                                label="📦 Almacén"
-                                placeholder="Buscar almacén..."
-                                selectedItem={
-                                    formData.almacenes_prestables_id
-                                        ? almacenesResults.find((a) => a.id === formData.almacenes_prestables_id) ||
-                                          almacenes.find((a) => a.id === formData.almacenes_prestables_id)
-                                        : null
-                                }
-                                items={almacenesResults}
-                                isLoading={almacenesLoading}
-                                searchValue={almacenesSearch}
-                                onSearch={handleSearchAlmacenes}
-                                onSelect={handleSelectAlmacen}
-                                onClear={() => {
-                                    setFormData({ ...formData, almacenes_prestables_id: undefined });
-                                    setAlmacenesSearch('');
-                                    setAlmacenesResults([]);
-                                }}
-                                renderItem={(almacen) => (
-                                    <div>
-                                        <p className="font-medium">{almacen.nombre}</p>
-                                        <p className="text-xs text-gray-500">{almacen.es_proveedor ? '🏭 Proveedor' : '📦 Almacén Distribuidora'}</p>
-                                    </div>
-                                )}
-                                getItemId={(almacen) => almacen.id}
-                                getDisplayValue={(almacen) => `${almacen.nombre} (${almacen.es_proveedor ? 'Proveedor' : 'Distribuidora'})`}
-                            />
-
                             {/* Chofer */}
                             <DynamicSearchSelect
                                 label="Chofer Encargado (Opcional)"
@@ -1292,7 +1286,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
 
                             {/* Monto Garantía */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Monto Garantía (Opcional)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Monto Garantía (Opcional)</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -1364,8 +1358,6 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
                             ? {
                                   latitud: ubicacionSeleccionada.latitud,
                                   longitud: ubicacionSeleccionada.longitud,
-                                  localidad_id: ubicacionSeleccionada.localidad_id,
-                                  direccion: ubicacionSeleccionada.direccion,
                               }
                             : undefined
                     }

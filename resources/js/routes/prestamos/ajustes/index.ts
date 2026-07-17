@@ -1,7 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 import movimientos from './movimientos'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:864
  * @route '/prestamos/ajustes/historial'
  */
 export const historial = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,7 +15,7 @@ historial.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:864
  * @route '/prestamos/ajustes/historial'
  */
 historial.url = (options?: RouteQueryOptions) => {
@@ -23,7 +23,7 @@ historial.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:864
  * @route '/prestamos/ajustes/historial'
  */
 historial.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ historial.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:864
  * @route '/prestamos/ajustes/historial'
  */
 historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,40 +39,8 @@ historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/historial'
- */
-    const historialForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: historial.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/historial'
- */
-        historialForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: historial.url(options),
-            method: 'get',
-        })
-            /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/historial'
- */
-        historialForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: historial.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    historial.form = historialForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:865
  * @route '/prestamos/ajustes/movimientos'
  */
 export const movimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -86,7 +54,7 @@ movimientos.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:865
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.url = (options?: RouteQueryOptions) => {
@@ -94,7 +62,7 @@ movimientos.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:865
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -102,46 +70,13 @@ movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:865
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: movimientos.url(options),
     method: 'head',
 })
-
-    /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/movimientos'
- */
-    const movimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: movimientos.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/movimientos'
- */
-        movimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: movimientos.url(options),
-            method: 'get',
-        })
-            /**
- * @see [serialized-closure]:2
- * @route '/prestamos/ajustes/movimientos'
- */
-        movimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: movimientos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    movimientos.form = movimientosForm
 const ajustes = {
     historial,
 movimientos,
