@@ -62,6 +62,10 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
     const [vehiculosFiltered, setVehiculosFiltered] = useState(vehiculos || []);
     const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState<any>(null);
 
+    const [choferesSearch, setChoferesSearch] = useState('');
+    const [choferesFiltered, setChoferesFiltered] = useState(choferes || []);
+    const [choferSeleccionado, setChoferSeleccionado] = useState<any>(null);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [mostrarModalImpresion, setMostrarModalImpresion] = useState(false);
@@ -314,6 +318,25 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         setFormData({ ...formData, vehiculo_asignado: vehiculo.placa });
     };
 
+    // Búsqueda de choferes
+    const handleSearchChoferes = (query: string) => {
+        setChoferesSearch(query);
+        if (!query.trim()) {
+            setChoferesFiltered(choferes || []);
+            return;
+        }
+        const filtered = (choferes || []).filter(c =>
+            c.nombre.toLowerCase().includes(query.toLowerCase())
+        );
+        setChoferesFiltered(filtered);
+    };
+
+    const handleSelectChofer = (chofer: any) => {
+        setChoferSeleccionado(chofer);
+        setChoferesSearch('');
+        setFormData({ ...formData, chofer_id: chofer.id });
+    };
+
     const handleEliminarPrestable = (prestable_id: number) => {
         // Si es una canastilla, eliminar también sus embases relacionados
         const prestable = prestables.find(p => Number(p.id) === prestable_id);
@@ -505,56 +528,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                     {/* Sección 1: Información del Préstamo */}
                     <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            {/* Columna 1: Compra (REQUERIDA) */}
-                            <DynamicSearchSelect
-                                label="📦 Compra *"
-                                placeholder="Buscar compra..."
-                                selectedItem={compraSeleccionada}
-                                items={comprasResults}
-                                isLoading={comprasLoading}
-                                searchValue={comprasSearch}
-                                onSearch={handleSearchCompras}
-                                onSelect={handleSelectCompra}
-                                onClear={() => {
-                                    setCompraSeleccionada(null);
-                                    setComprasSearch('');
-                                    setFormData({ ...formData, compra_id: undefined, proveedor_id: undefined });
-                                }}
-                                renderItem={(compra) => (
-                                    <div>
-                                        <p className="font-medium">{compra.numero}</p>
-                                        <p className="text-xs text-gray-500">{compra.proveedor?.nombre}</p>
-                                    </div>
-                                )}
-                                getItemId={(compra) => compra.id}
-                                getDisplayValue={(compra) => compra.numero}
-                            />
-
-                            {/* Columna 2: Proveedor (AUTO-CARGADO) */}
-                            <DynamicSearchSelect
-                                label="🏭 Proveedor *"
-                                placeholder="Se cargará automáticamente..."
-                                selectedItem={proveedorSeleccionado}
-                                items={proveedoresFiltered}
-                                isLoading={false}
-                                searchValue={proveedoresSearch}
-                                onSearch={handleSearchProveedores}
-                                onSelect={handleSelectProveedor}
-                                onClear={() => {
-                                    setProveedorSeleccionado(null);
-                                    setProveedoresSearch('');
-                                }}
-                                renderItem={(proveedor) => (
-                                    <div>
-                                        <p className="font-medium">{proveedor.nombre}</p>
-                                        <p className="text-xs text-gray-500">{proveedor.razon_social}</p>
-                                    </div>
-                                )}
-                                getItemId={(proveedor) => proveedor.id}
-                                getDisplayValue={(proveedor) => proveedor.nombre}
-                            />
-
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                             {/* Columna 3: Almacén Destino */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -579,33 +553,77 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                     ))}
                                 </select>
                             </div>
-                        </div>
+                            {/* Columna 1: Compra (REQUERIDA) */}
+                            <DynamicSearchSelect
+                                label="📦 Compra *"
+                                placeholder="Buscar compra..."
+                                selectedItem={compraSeleccionada}
+                                items={comprasResults}
+                                isLoading={comprasLoading}
+                                searchValue={comprasSearch}
+                                onSearch={handleSearchCompras}
+                                onSelect={handleSelectCompra}
+                                onClear={() => {
+                                    setCompraSeleccionada(null);
+                                    setComprasSearch('');
+                                    setFormData({ ...formData, compra_id: undefined, proveedor_id: undefined });
+                                }}
+                                renderItem={(compra) => (
+                                    <div>
+                                        <p className="font-small">Folio #{compra.id}</p>
+                                        <p className="text-xs text-gray-500">{compra.proveedor?.nombre}</p>
+                                    </div>
+                                )}
+                                getItemId={(compra) => compra.id}
+                                getDisplayValue={(compra) => `Folio #${compra.id}`}
+                            />
 
-                        {/* Fila: Chofer y Vehículo */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {/* Columna 2: Proveedor (AUTO-CARGADO) */}
+                            <DynamicSearchSelect
+                                label="🏭 Proveedor *"
+                                placeholder="Se cargará automáticamente..."
+                                selectedItem={proveedorSeleccionado}
+                                items={proveedoresFiltered}
+                                isLoading={false}
+                                searchValue={proveedoresSearch}
+                                onSearch={handleSearchProveedores}
+                                onSelect={handleSelectProveedor}
+                                onClear={() => {
+                                    setProveedorSeleccionado(null);
+                                    setProveedoresSearch('');
+                                }}
+                                renderItem={(proveedor) => (
+                                    <div>
+                                        <p className="font-small">{proveedor.nombre}</p>
+                                        <p className="text-xs text-gray-500">{proveedor.razon_social}</p>
+                                    </div>
+                                )}
+                                getItemId={(proveedor) => proveedor.id}
+                                getDisplayValue={(proveedor) => proveedor.nombre}
+                            />
                             {/* Chofer (Opcional) */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    🚗 Chofer (Opcional)
-                                </label>
-                                <select
-                                    value={formData.chofer_id || ''}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            chofer_id: e.target.value ? Number(e.target.value) : undefined,
-                                        })
-                                    }
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
-                                    <option value="">Selecciona chofer...</option>
-                                    {choferes && choferes.map((chofer) => (
-                                        <option key={chofer.id} value={chofer.id}>
-                                            {chofer.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            <DynamicSearchSelect
+                                label="🚗 Chofer (Opcional)"
+                                placeholder="Buscar chofer..."
+                                selectedItem={choferSeleccionado}
+                                items={choferesFiltered}
+                                isLoading={false}
+                                searchValue={choferesSearch}
+                                onSearch={handleSearchChoferes}
+                                onSelect={handleSelectChofer}
+                                onClear={() => {
+                                    setChoferSeleccionado(null);
+                                    setChoferesSearch('');
+                                    setFormData({ ...formData, chofer_id: undefined });
+                                }}
+                                renderItem={(chofer) => (
+                                    <div>
+                                        <p className="font-medium">{chofer.nombre}</p>
+                                    </div>
+                                )}
+                                getItemId={(chofer) => chofer.id}
+                                getDisplayValue={(chofer) => chofer.nombre}
+                            />
 
                             {/* Vehículo Asignado (Opcional) */}
                             <DynamicSearchSelect
