@@ -41,6 +41,7 @@ export function UbicacionMapModal({
         localidadPreseleccionada,
         mostrarSelectLocalidad,
         ubicacionInicial,
+        'observaciones en ubicacionInicial': ubicacionInicial?.observaciones,
         localidades: localidades.length,
     });
 

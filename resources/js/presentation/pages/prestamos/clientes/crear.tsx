@@ -662,6 +662,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             latitud: ubicacion.latitud,
             longitud: ubicacion.longitud,
             es_ubicacion_manual: ubicacion.es_ubicacion_manual,
+            observaciones: ubicacion.observaciones, // ✅ Incluir observaciones del modal
         });
 
         setFormData({
@@ -672,6 +673,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 es_ubicacion_manual: ubicacion.es_ubicacion_manual || false,
                 latitud: ubicacion.latitud,
                 longitud: ubicacion.longitud,
+                observaciones: ubicacion.observaciones, // ✅ Incluir observaciones del modal
             },
         });
 
@@ -1385,6 +1387,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 })()}
 
             {/* ✅ Nuevo: Modal de Ubicación en Mapa */}
+            {console.log('%c📍 UBICACION SELECCIONADA EN CREAR.TSX', 'color: #27ae60; font-weight: bold; font-size: 12px', {
+                ubicacionSeleccionada,
+                'observaciones': ubicacionSeleccionada?.observaciones,
+            })}
             <UbicacionMapModal
                 isOpen={mostrarModalUbicacion}
                 onClose={() => setMostrarModalUbicacion(false)}
