@@ -473,14 +473,10 @@ class PrestableController extends Controller
                 ]);
             })->toArray();
 
-            // Calcular stock resumido
-            $almacenId = auth()->user()->empresa->almacenes_prestables_id ?? 1;
-            $resumenStock = $this->stockService->obtenerResumen($prestable->id, $almacenId);
-
+            // ✅ Stock resumido ya está calculado arriba (total_canastillas, total_embases)
             return response()->json([
                 'success' => true,
                 'data' => $data,
-                'stock_resumen' => $resumenStock,
             ]);
         } catch (\Exception $e) {
             Log::error('❌ Error obteniendo prestable', ['error' => $e->getMessage()]);
