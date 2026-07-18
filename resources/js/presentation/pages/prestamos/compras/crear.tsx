@@ -318,11 +318,12 @@ export default function CrearCompraPrestable() {
                         const embases = prestables.filter((p: any) => p.tipo === 'EMBASES');
 
                         canastillas.forEach((prestable: any) => {
-                            // ✅ Usar precio_compra de la relación prestables_precios
-                            const precioCompra = prestable.precios?.[0]?.precio_compra || prestable.precio_compra_referencial || 0;
+                            // ✅ Obtener precio de tipo COMPRA desde la relación prestables_precios
+                            const precioCOMPRA = prestable.precios?.find((p: any) => p.tipo_precio === 'COMPRA');
+                            const precioCompra = precioCOMPRA?.valor || prestable.precio_compra_referencial || 0;
 
                             console.log(`📦 Procesando prestable: ${prestable.nombre} (tipo: ${prestable.tipo})`);
-                            console.log(`💰 Precio desde precios (relación):`, prestable.precios?.[0]?.precio_compra, `| Precio referencial:`, prestable.precio_compra_referencial, `| Precio final: ${precioCompra}`);
+                            console.log(`💰 Precio COMPRA:`, precioCOMPRA?.valor, `| Precio referencial:`, prestable.precio_compra_referencial, `| Precio final: ${precioCompra}`);
 
                             // Agregar CANASTILLA
                             nuevosPrestables.push({
@@ -353,8 +354,9 @@ export default function CrearCompraPrestable() {
                             if (embases.length > 0) {
                                 embases.forEach((embase: any) => {
                                     const cantidadEmbase = cantidad * (prestable.capacidad || 1);
-                                    // ✅ Usar precio_compra del embase desde su propia relación prestables_precios
-                                    const precioEmbase = embase.precios?.[0]?.precio_compra || embase.precio_compra_referencial || 0;
+                                    // ✅ Obtener precio de tipo COMPRA del embase desde su propia relación prestables_precios
+                                    const precioCOMPRAEmbase = embase.precios?.find((p: any) => p.tipo_precio === 'COMPRA');
+                                    const precioEmbase = precioCOMPRAEmbase?.valor || embase.precio_compra_referencial || 0;
 
                                     nuevosPrestables.push({
                                         id: `${Date.now()}-${Math.random()}`,
