@@ -226,7 +226,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 ...prev,
                 ubicacion: {
                     localidad_id: ubicacionSeleccionada.localidad_id,
-                    direccion: ubicacionSeleccionada.direccion || '',
+                    direccion: ubicacionSeleccionada.observaciones || '',
                     observaciones: ubicacionSeleccionada.observaciones,
                     es_ubicacion_manual: ubicacionSeleccionada.es_ubicacion_manual ?? false,
                     direccion_cliente_id: ubicacionSeleccionada.direccion_cliente_id,
@@ -305,27 +305,27 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             const data = await response.json();
             const ventaData = data.data || data;
 
-            console.log('📋 DETALLE DE VENTA SELECCIONADA - Respuesta del backend:', {
+            /* console.log('📋 DETALLE DE VENTA SELECCIONADA - Respuesta del backend:', {
                 respuesta_completa: data,
                 venta_data: ventaData,
                 detalles: ventaData.detalles,
                 estructura_primer_detalle: ventaData.detalles?.[0],
                 producto_primer_detalle: ventaData.detalles?.[0]?.producto,
                 prestables_en_producto: ventaData.detalles?.[0]?.producto?.prestables,
-            });
+            }); */
 
             // ✅ Nuevo: Log detallado del cliente y su información
             console.log('%c============================================', 'color: #0066cc; font-weight: bold');
             console.log('%c📍 ENDPOINT: GET /api/ventas/{id}', 'color: #00aa00; font-weight: bold; font-size: 14px');
             console.log('%c============================================', 'color: #0066cc; font-weight: bold');
-            console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+            /* console.log('%c👥 DATOS DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
                 id: ventaData.cliente?.id,
                 nombre: ventaData.cliente?.nombre,
                 nit: ventaData.cliente?.nit,
                 telefono: ventaData.cliente?.telefono,
                 foto_perfil: ventaData.cliente?.foto_perfil,
                 razon_social: ventaData.cliente?.razon_social,
-            });
+            }); */
             console.log('%c📍 DIRECCIÓN DEL CLIENTE', 'color: #0066cc; font-weight: bold; font-size: 12px', {
                 id: ventaData.direccion_cliente?.id,
                 direccion: ventaData.direccion_cliente?.direccion,
@@ -335,14 +335,14 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 longitud: ventaData.direccion_cliente?.longitud,
                 es_principal: ventaData.direccion_cliente?.es_principal,
             });
-            console.log('%c🛒 DATOS DE LA VENTA', 'color: #0066cc; font-weight: bold; font-size: 12px', {
+            /* console.log('%c🛒 DATOS DE LA VENTA', 'color: #0066cc; font-weight: bold; font-size: 12px', {
                 venta_id: ventaData.id,
                 numero: ventaData.numero,
                 fecha: ventaData.fecha,
                 cliente_id: ventaData.cliente_id,
                 direccion_cliente_id: ventaData.direccion_cliente_id,
                 total: ventaData.total,
-            });
+            }); */
 
             const clienteId = ventaData.cliente_id;
             const telefonoVenta = (ventaData?.cliente?.telefono || '').trim();
@@ -366,6 +366,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 if (direccionPrincipal) {
                     direccionACargar = direccionPrincipal;
                     console.log('✅ Usando dirección principal del cliente (venta sin dirección asignada):', direccionPrincipal);
+                    // mostrar direccion selector modal
+                    console.log('📍 modal direccion', direccionPrincipal.direccion);
+                    // mostrar observaciones modal
+                    console.log('📍 modal observaciones', direccionPrincipal.observaciones);
                 }
             }
 
@@ -384,11 +388,13 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 }
 
                 if (localidadId) {
-                    const direccionTexto = dirCliente.direccion || '';
+                    const direccionTexto = dirCliente.observaciones || '';
                     const latitud = dirCliente.latitud;
                     const longitud = dirCliente.longitud;
                     const direccionClienteId = dirCliente.id;
                     const observaciones = dirCliente.observaciones;
+
+                    console.log('📍 veririficando direccion:', direccionTexto);
 
                     setUbicacionSeleccionada({
                         localidad_id: localidadId,
@@ -557,53 +563,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         } catch (error) {
             console.error('Error obteniendo venta:', error);
             toastError('Error al cargar datos de la venta');
-        }
-    };
-
-    // ✅ NUEVO (2026-07-16): Manejar selección de dirección alternativa del cliente
-    const handleAbrirSelectorDirecciones = () => {
-        if (clienteSeleccionado && clienteSeleccionado.direcciones && Array.isArray(clienteSeleccionado.direcciones)) {
-            setDireccionesClienteDisponibles(clienteSeleccionado.direcciones);
-            setMostrarSelectorDirecciones(true);
-        } else {
-            toastWarning('El cliente no tiene direcciones registradas');
-        }
-    };
-
-    const handleSeleccionarDireccionAlternativa = (direccion: any) => {
-        if (direccion.localidad_id || direccion.localidad?.id) {
-            const localidadId = direccion.localidad_id || direccion.localidad?.id;
-            const direccionTexto = direccion.direccion || '';
-            const latitud = direccion.latitud;
-            const longitud = direccion.longitud;
-            const direccionClienteId = direccion.id;
-            const observaciones = direccion.observaciones;
-
-            setUbicacionSeleccionada({
-                localidad_id: localidadId,
-                direccion: direccionTexto,
-                latitud,
-                longitud,
-                direccion_cliente_id: direccionClienteId,
-                observaciones,
-            });
-
-            setFormData((prev) => {
-                const nuevoFormData = { ...prev };
-                nuevoFormData.ubicacion = {
-                    localidad_id: localidadId,
-                    direccion: direccionTexto,
-                    es_ubicacion_manual: false,
-                    direccion_cliente_id: direccionClienteId,
-                    observaciones,
-                    latitud,
-                    longitud,
-                };
-                return nuevoFormData;
-            });
-
-            toastSuccess(`✅ Dirección seleccionada: ${direccionTexto}`);
-            setMostrarSelectorDirecciones(false);
         }
     };
 
@@ -802,70 +761,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }
     };
 
-    const handleGuardarAlmacenes = (almacenesSeleccionados: Array<{ almacenes_prestables_id: number; cantidad: number }>) => {
-        if (indexEnEdicion !== null && prestamoItemEnEdicion) {
-            const nuevosItems = [...prestablesAgregados];
-            const itemActual = nuevosItems[indexEnEdicion];
-            const prestableActual = prestables.find((p) => p.id === itemActual.prestable_id);
-
-            // Actualizar el item actual con los almacenes seleccionados
-            nuevosItems[indexEnEdicion] = {
-                ...itemActual,
-                almacenes: almacenesSeleccionados,
-                almacenes_ids: almacenesSeleccionados.map((a) => a.almacenes_prestables_id),
-            };
-
-            // Si es CANASTILLA, actualizar automáticamente los EMBASES relacionados
-            if (prestableActual?.tipo === 'CANASTILLA') {
-                const capacidadCanastilla = prestableActual.capacidad || 0;
-
-                // Encontrar embases automáticos relacionados a esta canastilla
-                const embasesRelacionados = nuevosItems
-                    .map((item, idx) => {
-                        const prestableEmbase = prestables.find((p) => p.id === item.prestable_id);
-                        const esEmbaseAuto = item.isAutomaticEmbase === true;
-                        const estaRelacionado = (prestableEmbase as any)?.prestable_relacionado_id === prestableActual.id;
-
-                        if (prestableEmbase?.tipo === 'EMBASES' && esEmbaseAuto && estaRelacionado) {
-                            return { index: idx, item, prestableEmbase };
-                        }
-                        return null;
-                    })
-                    .filter(Boolean) as Array<{ index: number; item: PrestamoItem; prestableEmbase: Prestable }>;
-
-                // Actualizar cantidades de embases proporcionalmente
-                embasesRelacionados.forEach(({ index }) => {
-                    // Calcular cantidad de embases = cantidad canastilla × capacidad
-                    const cantidadEmbasesNueva = itemActual.cantidad * capacidadCanastilla;
-
-                    // Los embases usan la misma distribución de almacenes que la canastilla
-                    const almacenesEmbase = almacenesSeleccionados.map((almData) => ({
-                        almacenes_prestables_id: almData.almacenes_prestables_id,
-                        cantidad: Math.round((almData.cantidad / itemActual.cantidad) * cantidadEmbasesNueva) || 0,
-                    }));
-
-                    nuevosItems[index] = {
-                        ...nuevosItems[index],
-                        cantidad: cantidadEmbasesNueva,
-                        almacenes: almacenesEmbase,
-                        almacenes_ids: almacenesEmbase.map((a) => a.almacenes_prestables_id),
-                    };
-                });
-
-                console.log('✅ Embases automáticos actualizados:', {
-                    canastilla: prestableActual.nombre,
-                    capacidad: capacidadCanastilla,
-                    embasesActualizados: embasesRelacionados.length,
-                });
-            }
-
-            setPrestablesAgregados(nuevosItems);
-            setMostrarModalAlmacenes(false);
-            setPrestamoItemEnEdicion(null);
-            setIndexEnEdicion(null);
-        }
-    };
-
     const handleAgregarCanastilla = (prestable: Prestable) => {
         // ✅ MODIFICADO: NO cargar con almacén de cabecera
         // Los prestables se cargan VACÍOS en almacenes
@@ -1034,7 +929,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             if (formData.ubicacion?.localidad_id || formData.ubicacion?.direccion || formData.ubicacion?.latitud) {
                 payload.ubicacion = {
                     localidad_id: formData.ubicacion.localidad_id || undefined,
-                    direccion: formData.ubicacion.direccion || undefined,
+                    direccion: formData.ubicacion.observaciones || undefined,
                     es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
                     direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
                     observaciones: formData.ubicacion.observaciones || undefined,
@@ -1068,11 +963,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }
     };
 
-    const totalGarantia = prestablesAgregados.reduce((sum, item) => {
-        const garantia = item.prestable?.condiciones?.[0]?.monto_garantia || 0;
-        return sum + Number(garantia) * item.cantidad;
-    }, 0);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Préstamo a Cliente" />
@@ -1087,7 +977,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     )}
 
                     {/* Sección 1: Información del Préstamo */}
-                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="border rounded-lg border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
                         <div className="grid grid-cols-3 gap-4 md:grid-cols-4">
                             {/* Almacén - Búsqueda */}
                             <DynamicSearchSelect
@@ -1214,7 +1104,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 getDisplayValue={(cliente) => cliente.nombre}
                             />
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 1 (Opcional)
                                 </label>
                                 <input
@@ -1227,13 +1117,13 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         })
                                     }
                                     maxLength={25}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ej: 71234567"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">
                                     Teléfono Cliente 2 (Opcional)
                                 </label>
                                 <input
@@ -1246,19 +1136,19 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         })
                                     }
                                     maxLength={25}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ej: 76543210"
                                 />
                             </div>
 
                             {/* ✅ Nuevo: Sección de Ubicación en Mapa */}
                             <div className="flex flex-center flex-col gap-2">
-                                <div className="flex items-end justify-between">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <Button
                                         type="button"
                                         size="sm"
                                         onClick={() => setMostrarModalUbicacion(true)}
-                                        className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
                                     >
                                         📍 Seleccionar en Mapa
                                     </Button>
@@ -1279,7 +1169,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                                     },
                                                 });
                                             }}
-                                            className="mt-2 rounded-lg border border-red-200 px-2 py-1 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
+                                            className="rounded-lg border border-red-200 px-2 py-1 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/30"
                                         >
                                             ✗ Limpiar
                                         </Button>
@@ -1287,7 +1177,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 </div>
 
                                 {ubicacionSeleccionada && (
-                                    <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-950/30">
+                                    <div className="rounded-lg border border-green-200 bg-green-50 p-1 dark:border-green-800 dark:bg-green-950/30">
                                         <div className="flex items-start gap-3">
                                             <div className="flex-1">
                                                 {/* <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
@@ -1313,10 +1203,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                 )}
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-3 gap-4 md:grid-cols-3">
+                        <div className="grid grid-cols-3 gap-4 md:grid-cols-3 mt-2">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -1331,26 +1220,26 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                         }
                                     }}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="0.00"
                                 />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {/* <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     Escribe la garantía manualmente (Sugerencia: {totalGarantia.toFixed(2)})
-                                </p>
+                                </p> */}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
                                 <input
                                     type="date"
                                     required
                                     value={formData.fecha_prestamo}
                                     onChange={(e) => handleFechaPrestamo(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">
                                     Fecha Esperada de Devolución (7 días) *
                                 </label>
                                 <input
@@ -1363,15 +1252,15 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                                             fecha_esperada_devolucion: e.target.value,
                                         })
                                     }
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                         </div>
-                    </Card>
+                    </div>
 
                     {/* Sección 2: Prestables */}
-                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📦 Seleccionar Prestables</h2>
+                    <div className="border rounded-lg border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+                        {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📦 Seleccionar Prestables</h2> */}
 
                         <PrestablesSelectionTable
                             prestables={prestables}
@@ -1385,7 +1274,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             loading={loadingPrestables}
                             almacen_prestable_id={formData.almacenes_prestables_id}
                         />
-                    </Card>
+                    </div>
 
                     {/* Botones de Acción */}
                     <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
@@ -1508,6 +1397,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                               longitud: ubicacionSeleccionada.longitud,
                               localidad_id: ubicacionSeleccionada.localidad_id,
                               direccion: ubicacionSeleccionada.direccion,
+                              observaciones: ubicacionSeleccionada.observaciones,
                           }
                         : undefined
                 }

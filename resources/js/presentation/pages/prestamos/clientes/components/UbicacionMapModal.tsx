@@ -21,7 +21,7 @@ interface UbicacionMapModalProps {
     onClose: () => void;
     onSelect: (ubicacion: UbicacionSeleccionada) => void;
     localidades: Localidad[];
-    ubicacionInicial?: { latitud: number; longitud: number };
+    ubicacionInicial?: { latitud: number; longitud: number; observaciones?: string };
     localidadPreseleccionada?: number; // ✅ Nuevo: ID de localidad preseleccionada
     mostrarSelectLocalidad?: boolean; // ✅ Nuevo: Si mostrar el select de localidad
 }
@@ -51,7 +51,8 @@ export function UbicacionMapModal({
     } | null>(ubicacionInicial ? { lat: ubicacionInicial.latitud, lng: ubicacionInicial.longitud } : null);
 
     const [localidadSeleccionada, setLocalidadSeleccionada] = useState<number | undefined>(localidadPreseleccionada);
-    const [direccionManual, setDireccionManual] = useState('');
+    // ✅ Inicializar direccionManual con observaciones de ubicacionInicial
+    const [direccionManual, setDireccionManual] = useState(ubicacionInicial?.observaciones || '');
     const [mensaje, setMensaje] = useState('');
     const [cargandoUbicacion, setCargandoUbicacion] = useState(false);
 
@@ -73,6 +74,7 @@ export function UbicacionMapModal({
             localidadSeleccionada,
             mostrarSelectLocalidad,
             localidadNombre: localidades.find(l => l.id === localidadSeleccionada)?.nombre || 'No encontrada',
+            
         });
     }, [localidadSeleccionada, localidades]);
 
@@ -93,6 +95,7 @@ export function UbicacionMapModal({
     // ✅ Nuevo: Obtener ubicación actual del usuario cuando se abre el modal
     useEffect(() => {
         if (!isOpen) return;
+
 
         console.log('%c🗺️ MODAL ABIERTO - ESTADO ACTUAL', 'color: #a29bfe; font-weight: bold; font-size: 12px', {
             isOpen,
