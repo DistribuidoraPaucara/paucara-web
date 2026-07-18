@@ -28,12 +28,14 @@ if($documento->devoluciones && count($documento->devoluciones) > 0) {
 @endphp
 
 <div class="ticket" style="font-size: 12px; font-family: Arial, sans-serif;">
+     <!-- SEPARADOR -->
+    <div style="border-top: 1px solid #000; margin: 4px 0;"></div>
     <div style="text-align: center;">
-        <h3 class="text-center text-sm font-bold mb-1">Préstamos # <strong>{{ $documento->id }}</strong></h3>
-        <p style="font-size: 12px; font-weight: bold;">PRÉSTAMO DE CANASTILLAS / EMBASES</p>
+        <h3 class="text-center text-sm font-bold mb-1"><strong>Prestamos Clientes</strong></h3>
+        <p class="text-center text-sm font-bold mb-1"><strong>Folio: #{{ $documento->id }}</strong></p>
         @if($documento->venta)
         <p class="text-xs mb-1">
-            Folio Venta: <strong> #{{ $documento->venta->id ?? 'N/D' }}</strong>
+            <strong>Folio Venta: #{{ $documento->venta->id ?? 'N/D' }}</strong>
         </p>
         @endif
         <strong>{{ $documento->estado }}</strong><br>
@@ -105,7 +107,7 @@ if($documento->devoluciones && count($documento->devoluciones) > 0) {
         <!-- <p style="margin: 1px 0; font-weight: bold;">Ubicación del Préstamo:</p> -->
         @if($ubicacion->direccion)
         <p style="margin: 1px 0; font-size: 12px;">
-            <strong>Dirección:</strong> {{ $ubicacion->direccion }}
+            <strong>Dirección:</strong> {{ $ubicacion->direccion ?? $ubicacion->direccion ?? 'N/D' }}
         </p>
         @endif
         @if($ubicacion->localidad)

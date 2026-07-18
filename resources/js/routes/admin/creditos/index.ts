@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
- * @see routes/web.php:159
+ * @see [serialized-closure]:2
  * @route '/admin/creditos/importar'
  */
 export const importar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ importar.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:159
+ * @see [serialized-closure]:2
  * @route '/admin/creditos/importar'
  */
 importar.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ importar.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:159
+ * @see [serialized-closure]:2
  * @route '/admin/creditos/importar'
  */
 importar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ importar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:159
+ * @see [serialized-closure]:2
  * @route '/admin/creditos/importar'
  */
 importar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

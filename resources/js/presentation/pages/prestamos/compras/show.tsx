@@ -145,9 +145,9 @@ export default function ShowCompra({ compra }: { compra: Compra }) {
 
     return (
         <AppLayout>
-            <Head title={`Compra ${compra.numero_compra}`} />
+            <Head title={`Compra #${compra.id}`} />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-2">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>

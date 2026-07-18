@@ -196,7 +196,7 @@ export default function ListadoCompras() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Listado de Compras de Prestables" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-2">
                 {/* Header */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
@@ -205,34 +205,10 @@ export default function ListadoCompras() {
                             Listado de todas las compras registradas
                         </p>
                     </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => (window.location.href = '/prestamos/compras/crear')}>
-                        ➕ Nueva Compra
-                    </Button>
-                </div>
-
-                {/* Cards de Resumen */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Compras</p>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.total}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Confirmadas</p>
-                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">Bs {totales.confirmadas.toFixed(2)}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">En Borrador</p>
-                        <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.borrador.toFixed(2)}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Canceladas</p>
-                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.canceladas}</p>
-                    </Card>
-                </div>
-
-                {/* Panel de Filtros */}
-                <div className="mb-6">
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex gap-2">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => (window.location.href = '/prestamos/compras/crear')}>
+                            ➕ Nueva Compra
+                        </Button>
                         <Button
                             variant={mostrarFiltros ? 'default' : 'outline'}
                             onClick={() => setMostrarFiltros(!mostrarFiltros)}
@@ -246,12 +222,34 @@ export default function ListadoCompras() {
                             </Button>
                         )}
                     </div>
+                </div>
 
+                {/* Cards de Resumen */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <Card className="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Compras</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.total}</p>
+                    </Card>
+                    <Card className="p-2 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Confirmadas</p>
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">Bs {totales.confirmadas.toFixed(2)}</p>
+                    </Card>
+                    {/* <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">En Borrador</p>
+                        <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.borrador.toFixed(2)}</p>
+                    </Card> */}
+                    <Card className="p-2 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Canceladas</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.canceladas}</p>
+                    </Card>
+                </div>
+
+                {/* Panel de Filtros */}
                     {mostrarFiltros && (
-                        <Card className="p-6 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                        <Card className="p-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
                             <div className="space-y-4">
                                 {/* Fila 1: Búsqueda, Estado, Proveedor */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             🔍 Búsqueda
@@ -343,7 +341,6 @@ export default function ListadoCompras() {
                             </div>
                         </Card>
                     )}
-                </div>
 
                 {/* Tabla de Compras */}
                 <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">

@@ -207,7 +207,7 @@ proveedoresPrestamosCrear.head = (options?: RouteQueryOptions): RouteDefinition<
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 export const proveedoresComprasCrear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -222,7 +222,7 @@ proveedoresComprasCrear.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 proveedoresComprasCrear.url = (options?: RouteQueryOptions) => {
@@ -231,7 +231,7 @@ proveedoresComprasCrear.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 proveedoresComprasCrear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -240,7 +240,7 @@ proveedoresComprasCrear.get = (options?: RouteQueryOptions): RouteDefinition<'ge
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 proveedoresComprasCrear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -250,7 +250,7 @@ proveedoresComprasCrear.head = (options?: RouteQueryOptions): RouteDefinition<'h
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 export const proveedoresStore = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -265,7 +265,7 @@ proveedoresStore.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 proveedoresStore.url = (options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ proveedoresStore.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 proveedoresStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -284,7 +284,7 @@ proveedoresStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 export const eventosIndex = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -299,7 +299,7 @@ eventosIndex.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 eventosIndex.url = (options?: RouteQueryOptions) => {
@@ -308,7 +308,7 @@ eventosIndex.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 eventosIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -317,7 +317,7 @@ eventosIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 eventosIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -327,7 +327,7 @@ eventosIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 export const eventosCrear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -342,7 +342,7 @@ eventosCrear.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 eventosCrear.url = (options?: RouteQueryOptions) => {
@@ -351,7 +351,7 @@ eventosCrear.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 eventosCrear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -360,7 +360,7 @@ eventosCrear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 eventosCrear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -370,7 +370,7 @@ eventosCrear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 export const eventosStore = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -385,7 +385,7 @@ eventosStore.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 eventosStore.url = (options?: RouteQueryOptions) => {
@@ -394,7 +394,7 @@ eventosStore.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 eventosStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -404,7 +404,7 @@ eventosStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 export const eventosShow = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -419,7 +419,7 @@ eventosShow.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 eventosShow.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -452,7 +452,7 @@ eventosShow.url = (args: { prestamo: number | { id: number } } | [prestamo: numb
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 eventosShow.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -461,7 +461,7 @@ eventosShow.get = (args: { prestamo: number | { id: number } } | [prestamo: numb
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 eventosShow.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -471,7 +471,7 @@ eventosShow.head = (args: { prestamo: number | { id: number } } | [prestamo: num
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
  * @route '/prestamos/reportes'
  */
 export const reportes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -486,7 +486,7 @@ reportes.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
  * @route '/prestamos/reportes'
  */
 reportes.url = (options?: RouteQueryOptions) => {
@@ -495,7 +495,7 @@ reportes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
  * @route '/prestamos/reportes'
  */
 reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -504,7 +504,7 @@ reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
- * @see app/Http/Controllers/PrestamosInertiaController.php:388
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
  * @route '/prestamos/reportes'
  */
 reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

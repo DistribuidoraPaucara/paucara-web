@@ -375,7 +375,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
 })
 
 /**
- * @see routes/web.php:146
+ * @see [serialized-closure]:2
  * @route '/clientes/{cliente}/credito'
  */
 export const credito = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -389,7 +389,7 @@ credito.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:146
+ * @see [serialized-closure]:2
  * @route '/clientes/{cliente}/credito'
  */
 credito.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -421,7 +421,7 @@ credito.url = (args: { cliente: number | { id: number } } | [cliente: number | {
 }
 
 /**
- * @see routes/web.php:146
+ * @see [serialized-closure]:2
  * @route '/clientes/{cliente}/credito'
  */
 credito.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -429,7 +429,7 @@ credito.get = (args: { cliente: number | { id: number } } | [cliente: number | {
     method: 'get',
 })
 /**
- * @see routes/web.php:146
+ * @see [serialized-closure]:2
  * @route '/clientes/{cliente}/credito'
  */
 credito.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

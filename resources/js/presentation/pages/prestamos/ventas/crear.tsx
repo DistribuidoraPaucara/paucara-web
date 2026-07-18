@@ -109,6 +109,16 @@ export default function CrearVentaPrestable() {
         cargarAlmacenes();
     }, [cargarAlmacenes]);
 
+    // Auto-seleccionar almacén con es_proveedor=false
+    useEffect(() => {
+        if (almacenes.length > 0 && !almacenSeleccionado) {
+            const almacenCliente = almacenes.find((a) => !a.es_proveedor);
+            if (almacenCliente) {
+                setAlmacenSeleccionado(almacenCliente);
+            }
+        }
+    }, [almacenes]);
+
     // Cerrar sugerencias al hacer click fuera
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -510,64 +520,21 @@ export default function CrearVentaPrestable() {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Nueva Venta de Canastillas / Embases', href: '/prestamos/ventas/crear' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos/prestables' }, { title: 'Nueva Venta de Canastillas / Embases', href: '/prestamos/ventas/crear' }]}>
             <Head title="Crear Venta de Canastillas / Embases" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-6">
+            <div className="flex h-full flex-1 flex-col gap-4 p-2">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                             Nueva Venta de Canastillas / Embases
                         </h1>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Contenedor con 2 columnas responsivas */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {/* Selector de Cliente - Componente Genérico */}
-                    <DynamicSearchSelect
-                        label="👤 Cliente (Requerido)"
-                        placeholder="Buscar por nombre o NIT..."
-                        selectedItem={clienteSeleccionado}
-                        items={clientes}
-                        isLoading={buscandoClientes}
-                        searchValue={busquedaCliente}
-                        onSearch={(query) => {
-                            setBusquedaCliente(query);
-                            buscarClientes(query);
-                        }}
-                        onSelect={(cliente) => {
-                            setClienteSeleccionado(cliente);
-                            setBusquedaCliente('');
-                            setClientes([]);
-                        }}
-                        onClear={() => {
-                            setClienteSeleccionado(null);
-                            setBusquedaCliente('');
-                            setClientes([]);
-                        }}
-                        getItemId={(cliente) => cliente.id}
-                        getDisplayValue={(cliente) => cliente.nombre}
-                        renderItem={(cliente) => (
-                            <div>
-                                <div className="font-medium text-slate-900 dark:text-slate-100">
-                                    {cliente.nombre}
-                                </div>
-                                {cliente.razon_social && (
-                                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                                        {cliente.razon_social}
-                                    </div>
-                                )}
-                                {cliente.nit && (
-                                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                                        NIT: {cliente.nit}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    />
-
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                     {/* Selector de Almacén de Prestables - Componente Genérico */}
                     <DynamicSearchSelect
                         label="📦 Almacén de Prestables (Requerido)"
@@ -609,6 +576,48 @@ export default function CrearVentaPrestable() {
                             </div>
                         )}
                     />
+                    {/* Selector de Cliente - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="👤 Cliente (Requerido)"
+                        placeholder="Buscar por nombre o NIT..."
+                        selectedItem={clienteSeleccionado}
+                        items={clientes}
+                        isLoading={buscandoClientes}
+                        searchValue={busquedaCliente}
+                        onSearch={(query) => {
+                            setBusquedaCliente(query);
+                            buscarClientes(query);
+                        }}
+                        onSelect={(cliente) => {
+                            setClienteSeleccionado(cliente);
+                            setBusquedaCliente('');
+                            setClientes([]);
+                        }}
+                        onClear={() => {
+                            setClienteSeleccionado(null);
+                            setBusquedaCliente('');
+                            setClientes([]);
+                        }}
+                        getItemId={(cliente) => cliente.id}
+                        getDisplayValue={(cliente) => cliente.nombre}
+                        renderItem={(cliente) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {cliente.nombre}
+                                </div>
+                                {cliente.razon_social && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        {cliente.razon_social}
+                                    </div>
+                                )}
+                                {cliente.nit && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        NIT: {cliente.nit}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />                    
                 </div>
 
                 {/* Búsqueda y Tabla de Prestables - Componente Genérico */}
@@ -642,6 +651,32 @@ export default function CrearVentaPrestable() {
                                 return <span className="text-xs text-slate-500">—</span>;
                             }
                         },
+                        // codigo prestable
+                        {
+                            key: 'codigo',
+                            label: 'Código',
+                            render: (item) => (
+                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    {item.prestable?.codigo}
+                                </span>
+                            ),
+                        },
+                        // capacidad (solo para canastilla)
+                        {
+                            key: 'capacidad',
+                            label: 'Capacidad',
+                            align: 'center',
+                            render: (item) => {
+                                if (item.tipo === 'CANASTILLA' && item.capacidad) {
+                                    return (
+                                        <span className="inline-flex items-center text-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                            {item.capacidad}
+                                        </span>
+                                    );
+                                }
+                                return <span className="text-xs text-slate-500 text-center">1</span>;
+                            }
+                        },
                         {
                             key: 'prestable',
                             label: 'Prestable',
@@ -650,14 +685,14 @@ export default function CrearVentaPrestable() {
                                     <p className="font-semibold text-slate-900 dark:text-slate-100">
                                         {item.prestable?.nombre}
                                     </p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {/* <p className="text-xs text-slate-500 dark:text-slate-400">
                                         ID: {item.prestable?.id} | Código: {item.prestable?.codigo}
                                         {item.tipo === 'CANASTILLA' && item.capacidad && (
                                             <span className="ml-2 inline-block rounded bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                                                 Cap: {item.capacidad}
                                             </span>
                                         )}
-                                    </p>
+                                    </p> */}
                                 </div>
                             ),
                         },
@@ -696,7 +731,7 @@ export default function CrearVentaPrestable() {
                         {
                             key: 'subtotal',
                             label: 'Subtotal',
-                            align: 'left',
+                            align: 'center',
                             render: (item) => (
                                 <span className="font-bold text-slate-900 dark:text-slate-100">
                                     {(parseFloat(item.subtotal ?? 0)).toFixed(2)}

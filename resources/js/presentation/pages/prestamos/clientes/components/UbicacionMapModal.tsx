@@ -1,6 +1,6 @@
 import { Button } from '@/presentation/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
-import { MapPin, Satellite, Loader } from 'lucide-react';
+import { Loader, MapPin, Satellite } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface UbicacionSeleccionada {
@@ -74,8 +74,7 @@ export function UbicacionMapModal({
         console.log('%c📍 LOCALIDAD SELECCIONADA CAMBIÓ', 'color: #4ecdc4; font-weight: bold; font-size: 12px', {
             localidadSeleccionada,
             mostrarSelectLocalidad,
-            localidadNombre: localidades.find(l => l.id === localidadSeleccionada)?.nombre || 'No encontrada',
-            
+            localidadNombre: localidades.find((l) => l.id === localidadSeleccionada)?.nombre || 'No encontrada',
         });
     }, [localidadSeleccionada, localidades]);
 
@@ -106,7 +105,6 @@ export function UbicacionMapModal({
     // ✅ Nuevo: Obtener ubicación actual del usuario cuando se abre el modal
     useEffect(() => {
         if (!isOpen) return;
-
 
         console.log('%c🗺️ MODAL ABIERTO - ESTADO ACTUAL', 'color: #a29bfe; font-weight: bold; font-size: 12px', {
             isOpen,
@@ -142,7 +140,7 @@ export function UbicacionMapModal({
                     setMensaje('📍 Usando ubicación por defecto (La Paz)');
                     setCargandoUbicacion(false);
                 },
-                { timeout: 5000 }
+                { timeout: 5000 },
             );
         } else {
             // Fallback si no tiene soporte de geolocalización
@@ -286,7 +284,7 @@ export function UbicacionMapModal({
 
         console.log('%c✅ GUARDANDO UBICACIÓN', 'color: #00b894; font-weight: bold; font-size: 12px', {
             ubicacion,
-            localidadNombre: localidades.find(l => l.id === localidadSeleccionada)?.nombre,
+            localidadNombre: localidades.find((l) => l.id === localidadSeleccionada)?.nombre,
         });
 
         onSelect(ubicacion);
@@ -304,12 +302,21 @@ export function UbicacionMapModal({
                                 Seleccionar Ubicación en Mapa
                             </DialogTitle>
                             <DialogDescription>
-                                Haz clic en el mapa para seleccionar una ubicación, luego especifica la localidad y dirección
+                                
+                                {/* Coordenadas seleccionadas */}
+                                {ubicacionSeleccionada && (
+                                    <div>
+                                        <div className="font-small text-blue-900 dark:text-blue-100">📍 Haz clic en el mapa para seleccionar una ubicación, luego especifica la localidad y dirección</div>
+                                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                                            Latitud: {ubicacionSeleccionada.lat.toFixed(6)} | Longitud: {ubicacionSeleccionada.lng.toFixed(6)}
+                                        </p>
+                                    </div>
+                                )}
                             </DialogDescription>
                         </div>
 
                         {/* Selector de tipo de mapa */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                             <Button
                                 size="sm"
                                 variant={tipoMapa === 'osm' ? 'default' : 'outline'}
@@ -327,6 +334,48 @@ export function UbicacionMapModal({
                             >
                                 <Satellite className="h-4 w-4" />
                                 Satélite
+                            </Button>
+                            {/* Botón para obtener ubicación actual */}
+                            <Button
+                                onClick={() => {
+                                    setCargandoUbicacion(true);
+                                    if ('geolocation' in navigator) {
+                                        navigator.geolocation.getCurrentPosition(
+                                            (position) => {
+                                                const { latitude, longitude } = position.coords;
+                                                setUbicacionSeleccionada({
+                                                    lat: latitude,
+                                                    lng: longitude,
+                                                });
+                                                setMensaje(`✓ Ubicación actual: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                                                setCargandoUbicacion(false);
+                                            },
+                                            (error) => {
+                                                console.warn('Error obteniendo ubicación:', error);
+                                                setMensaje('❌ Error al obtener tu ubicación. Asegúrate de permitir acceso a la ubicación');
+                                                setCargandoUbicacion(false);
+                                            },
+                                            { timeout: 5000 },
+                                        );
+                                    } else {
+                                        setMensaje('❌ Tu navegador no soporta geolocalización');
+                                        setCargandoUbicacion(false);
+                                    }
+                                }}
+                                disabled={cargandoUbicacion}
+                                className="w-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                            >
+                                {cargandoUbicacion ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader className="h-4 w-4 animate-spin" />
+                                        Obteniendo ubicación...
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4" />
+                                        Mi Ubicación Actual
+                                    </div>
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -348,62 +397,19 @@ export function UbicacionMapModal({
 
                     {/* Columna 2: Panel de configuración */}
                     <div className="flex w-96 flex-col border-l bg-gray-50 dark:bg-gray-900">
-                        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                            {/* Botón para obtener ubicación actual */}
-                            <Button
-                                onClick={() => {
-                                    setCargandoUbicacion(true);
-                                    if ('geolocation' in navigator) {
-                                        navigator.geolocation.getCurrentPosition(
-                                            (position) => {
-                                                const { latitude, longitude } = position.coords;
-                                                setUbicacionSeleccionada({
-                                                    lat: latitude,
-                                                    lng: longitude,
-                                                });
-                                                setMensaje(`✓ Ubicación actual: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-                                                setCargandoUbicacion(false);
-                                            },
-                                            (error) => {
-                                                console.warn('Error obteniendo ubicación:', error);
-                                                setMensaje('❌ Error al obtener tu ubicación. Asegúrate de permitir acceso a la ubicación');
-                                                setCargandoUbicacion(false);
-                                            },
-                                            { timeout: 5000 }
-                                        );
-                                    } else {
-                                        setMensaje('❌ Tu navegador no soporta geolocalización');
-                                        setCargandoUbicacion(false);
-                                    }
-                                }}
-                                disabled={cargandoUbicacion}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white"
-                            >
-                                {cargandoUbicacion ? (
-                                    <div className="flex items-center gap-2">
-                                        <Loader className="h-4 w-4 animate-spin" />
-                                        Obteniendo ubicación...
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4" />
-                                        Mi Ubicación Actual
-                                    </div>
-                                )}
-                            </Button>
-
+                        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
                             {/* Cargando ubicación */}
                             {cargandoUbicacion && (
-                                <div className="p-3 rounded text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-2">
+                                <div className="flex items-center gap-2 rounded bg-blue-100 p-3 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                                     <Loader className="h-4 w-4 animate-spin" />
                                     Obteniendo tu ubicación actual...
                                 </div>
                             )}
 
                             {/* Mensaje */}
-                            {mensaje && !cargandoUbicacion && (
+                            {/* {mensaje && !cargandoUbicacion && (
                                 <div
-                                    className={`p-3 rounded text-sm ${
+                                    className={`rounded p-3 text-sm ${
                                         mensaje.startsWith('✓')
                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
@@ -411,29 +417,16 @@ export function UbicacionMapModal({
                                 >
                                     {mensaje}
                                 </div>
-                            )}
-
-                            {/* Coordenadas seleccionadas */}
-                            {ubicacionSeleccionada && (
-                                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800">
-                                    <div className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📍 Coordenadas Seleccionadas</div>
-                                    <div className="text-sm text-blue-800 dark:text-blue-300">
-                                        <div>Latitud: {ubicacionSeleccionada.lat.toFixed(6)}</div>
-                                        <div>Longitud: {ubicacionSeleccionada.lng.toFixed(6)}</div>
-                                    </div>
-                                </div>
-                            )}
+                            )} */}
 
                             {/* ✅ Nuevo: Seleccionar Localidad - Solo si mostrarSelectLocalidad es true */}
                             {mostrarSelectLocalidad && (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                        📌 Localidad (Opcional)
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">📌 Localidad (Opcional)</label>
                                     <select
                                         value={localidadSeleccionada || ''}
                                         onChange={(e) => setLocalidadSeleccionada(e.target.value ? parseInt(e.target.value) : undefined)}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     >
                                         <option value="">Selecciona localidad...</option>
                                         {localidades.map((localidad) => (
@@ -447,41 +440,34 @@ export function UbicacionMapModal({
 
                             {/* Dirección Manual */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    🏠 Dirección (Opcional)
-                                </label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🏠 Dirección (Opcional)</label>
                                 <textarea
                                     value={direccionManual}
                                     onChange={(e) => setDireccionManual(e.target.value)}
                                     placeholder="Ej: Calle Principal 123, esquina con Avenida Central..."
                                     maxLength={255}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none h-24"
+                                    className="h-24 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {direccionManual.length}/255
-                                </p>
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{direccionManual.length}/255</p>
                             </div>
 
                             {/* Info */}
-                            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
-                                💡 Haz clic en el mapa para seleccionar una ubicación. Puedes cambiar entre vista de mapa y satélite para mejor precisión.
-                            </div>
+                            {/* <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                                💡 Haz clic en el mapa para seleccionar una ubicación. Puedes cambiar entre vista de mapa y satélite para mejor
+                                precisión.
+                            </div> */}
                         </div>
 
                         {/* Botones de acción */}
-                        <div className="flex-shrink-0 border-t bg-white dark:bg-gray-800 p-4 flex gap-2">
+                        <div className="flex flex-shrink-0 gap-2 border-t bg-white p-4 dark:bg-gray-800">
                             <Button
                                 onClick={handleGuardarUbicacion}
                                 disabled={!ubicacionSeleccionada}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white"
+                                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                             >
                                 ✓ Guardar Ubicación
                             </Button>
-                            <Button
-                                onClick={onClose}
-                                variant="outline"
-                                className="flex-1"
-                            >
+                            <Button onClick={onClose} variant="outline" className="flex-1">
                                 Cancelar
                             </Button>
                         </div>

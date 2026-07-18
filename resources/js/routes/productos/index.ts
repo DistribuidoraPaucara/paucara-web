@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
- * @see routes/web.php:169
+ * @see [serialized-closure]:2
  * @route '/productos/carga-masiva'
  */
 export const cargaMasiva = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ cargaMasiva.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:169
+ * @see [serialized-closure]:2
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ cargaMasiva.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:169
+ * @see [serialized-closure]:2
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ cargaMasiva.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:169
+ * @see [serialized-closure]:2
  * @route '/productos/carga-masiva'
  */
 cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ cargaMasiva.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:177
+ * @see [serialized-closure]:2
  * @route '/productos/historial-cargas'
  */
 export const historialCargas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ historialCargas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:177
+ * @see [serialized-closure]:2
  * @route '/productos/historial-cargas'
  */
 historialCargas.url = (options?: RouteQueryOptions) => {
@@ -61,7 +61,7 @@ historialCargas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:177
+ * @see [serialized-closure]:2
  * @route '/productos/historial-cargas'
  */
 historialCargas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -69,7 +69,7 @@ historialCargas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
     method: 'get',
 })
 /**
- * @see routes/web.php:177
+ * @see [serialized-closure]:2
  * @route '/productos/historial-cargas'
  */
 historialCargas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

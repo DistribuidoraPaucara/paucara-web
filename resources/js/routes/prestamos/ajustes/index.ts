@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 import movimientos from './movimientos'
 /**
- * @see routes/web.php:864
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/historial'
  */
 export const historial = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,7 +15,7 @@ historial.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:864
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/historial'
  */
 historial.url = (options?: RouteQueryOptions) => {
@@ -23,7 +23,7 @@ historial.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:864
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/historial'
  */
 historial.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ historial.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:864
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/historial'
  */
 historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:865
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos'
  */
 export const movimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -54,7 +54,7 @@ movimientos.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:865
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.url = (options?: RouteQueryOptions) => {
@@ -62,7 +62,7 @@ movimientos.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:865
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -70,7 +70,7 @@ movimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:865
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos'
  */
 movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

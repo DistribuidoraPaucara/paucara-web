@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefa
 import prestamos from './prestamos'
 import compras from './compras'
 /**
- * @see routes/web.php:906
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:906
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -48,7 +48,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see routes/web.php:906
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -56,7 +56,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see routes/web.php:906
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -65,7 +65,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
 })
 
 /**
- * @see routes/web.php:911
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -79,7 +79,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:911
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -111,7 +111,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see routes/web.php:911
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,7 +119,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see routes/web.php:911
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -172,7 +172,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -187,7 +187,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -196,7 +196,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:261
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
  * @route '/prestamos/proveedores'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -205,7 +205,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
- * @see routes/web.php:926
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}'
  */
 export const show = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -219,7 +219,7 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:926
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}'
  */
 show.url = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -246,7 +246,7 @@ show.url = (args: { prestamo: string | number } | [prestamo: string | number ] |
 }
 
 /**
- * @see routes/web.php:926
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}'
  */
 show.get = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -254,7 +254,7 @@ show.get = (args: { prestamo: string | number } | [prestamo: string | number ] |
     method: 'get',
 })
 /**
- * @see routes/web.php:926
+ * @see [serialized-closure]:2
  * @route '/prestamos/proveedores/{prestamo}'
  */
 show.head = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

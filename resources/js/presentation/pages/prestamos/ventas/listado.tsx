@@ -1,18 +1,12 @@
+import AppLayout from '@/layouts/app-layout';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Badge } from '@/presentation/components/ui/badge';
+import { Button } from '@/presentation/components/ui/button';
+import { Card } from '@/presentation/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
+import { Input } from '@/presentation/components/ui/input';
 import { Head } from '@inertiajs/react';
 import React, { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/presentation/components/ui/button';
-import { Input } from '@/presentation/components/ui/input';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Card } from '@/presentation/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/presentation/components/ui/dialog';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import toast from 'react-hot-toast';
 
 interface Cliente {
@@ -162,9 +156,9 @@ export default function ListadoVentas() {
         const data = ventas.data;
         return {
             total: data.length,
-            confirmadas: data.filter(v => v.estado === 'CONFIRMADA').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
-            borrador: data.filter(v => v.estado === 'BORRADOR').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
-            canceladas: data.filter(v => v.estado === 'CANCELADA').length,
+            confirmadas: data.filter((v) => v.estado === 'CONFIRMADA').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
+            borrador: data.filter((v) => v.estado === 'BORRADOR').reduce((sum, v) => sum + (Number(v.total) || 0), 0),
+            canceladas: data.filter((v) => v.estado === 'CANCELADA').length,
         };
     };
 
@@ -190,176 +184,156 @@ export default function ListadoVentas() {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">🛒 Ventas de Prestables</h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Listado de todas las ventas registradas
-                        </p>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Listado de todas las ventas registradas</p>
                     </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => (window.location.href = '/prestamos/ventas/crear')}>
-                        ➕ Nueva Venta
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                            onClick={() => (window.location.href = '/prestamos/ventas/crear')}
+                        >
+                            ➕ Nueva Venta
+                        </Button>
+                        <div className="mb-3 flex gap-2">
+                            <Button
+                                variant={mostrarFiltros ? 'default' : 'outline'}
+                                onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                                className="gap-2"
+                            >
+                                <span>🔍 Filtros{filtrosActivos > 0 ? ` · ${filtrosActivos}` : ''}</span>
+                            </Button>
+                            {filtrosActivos > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={limpiarFiltros}
+                                    className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                                >
+                                    ✕ Limpiar
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Cards de Resumen */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Ventas</p>
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totales.total}</p>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-2 dark:border-blue-700 dark:from-blue-900/30 dark:to-blue-800/30">
+                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">Total Ventas</p>
+                        <p className="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">{totales.total}</p>
                     </Card>
-                    <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Confirmadas</p>
-                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">Bs {totales.confirmadas.toFixed(2)}</p>
+                    <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 p-2 dark:border-green-700 dark:from-green-900/30 dark:to-green-800/30">
+                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">Confirmadas</p>
+                        <p className="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">Bs {totales.confirmadas.toFixed(2)}</p>
                     </Card>
-                    <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
+                    {/* <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border-amber-200 dark:border-amber-700">
                         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">En Borrador</p>
                         <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">Bs {totales.borrador.toFixed(2)}</p>
-                    </Card>
-                    <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Canceladas</p>
-                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{totales.canceladas}</p>
+                    </Card> */}
+                    <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100 p-2 dark:border-red-700 dark:from-red-900/30 dark:to-red-800/30">
+                        <p className="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">Canceladas</p>
+                        <p className="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">{totales.canceladas}</p>
                     </Card>
                 </div>
 
                 {/* Panel de Filtros */}
-                <div className="mb-6">
-                    <div className="flex gap-2 mb-3">
-                        <Button
-                            variant={mostrarFiltros ? 'default' : 'outline'}
-                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                            className="gap-2"
-                        >
-                            <span>🔍 Filtros{filtrosActivos > 0 ? ` · ${filtrosActivos}` : ''}</span>
-                        </Button>
-                        {filtrosActivos > 0 && (
-                            <Button variant="ghost" onClick={limpiarFiltros} className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                ✕ Limpiar
-                            </Button>
-                        )}
-                    </div>
-
-                    {mostrarFiltros && (
-                        <Card className="p-6 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                            <div className="space-y-4">
-                                {/* Fila 1: Búsqueda, Estado, Cliente */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            🔍 Búsqueda
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            placeholder="Número venta..."
-                                            value={buscar}
-                                            onChange={(e) => {
-                                                setBuscar(e.target.value);
-                                                setPage(1);
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Estado
-                                        </label>
-                                        <select
-                                            value={estadoFiltro}
-                                            onChange={(e) => {
-                                                setEstadoFiltro(e.target.value);
-                                                setPage(1);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        >
-                                            <option value="">Todos</option>
-                                            <option value="BORRADOR">Borrador</option>
-                                            <option value="CONFIRMADA">Confirmada</option>
-                                            <option value="CANCELADA">Cancelada</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            👤 Cliente
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            placeholder="Nombre cliente..."
-                                            value={filtroCliente}
-                                            onChange={(e) => {
-                                                setFiltroCliente(e.target.value);
-                                                setPage(1);
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
+                {mostrarFiltros && (
+                    <Card className="border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/20">
+                        <div className="space-y-4">
+                            {/* Fila 1: Búsqueda, Estado, Cliente */}
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">🔍 Búsqueda</label>
+                                    <Input
+                                        type="text"
+                                        placeholder="Número venta..."
+                                        value={buscar}
+                                        onChange={(e) => {
+                                            setBuscar(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="w-full"
+                                    />
                                 </div>
-
-                                {/* Fila 2: Fechas */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            📅 Fecha Desde
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={filtroFechaDesde}
-                                            onChange={(e) => {
-                                                setFiltroFechaDesde(e.target.value);
-                                                setPage(1);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            📅 Fecha Hasta
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={filtroFechaHasta}
-                                            onChange={(e) => {
-                                                setFiltroFechaHasta(e.target.value);
-                                                setPage(1);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                                    <select
+                                        value={estadoFiltro}
+                                        onChange={(e) => {
+                                            setEstadoFiltro(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    >
+                                        <option value="">Todos</option>
+                                        <option value="BORRADOR">Borrador</option>
+                                        <option value="CONFIRMADA">Confirmada</option>
+                                        <option value="CANCELADA">Cancelada</option>
+                                    </select>
                                 </div>
-
-                                {/* Resultados */}
-                                <div className="pt-3 border-t border-blue-200 dark:border-blue-800">
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                                        📊 Filtros activos: <strong>{filtrosActivos}</strong>
-                                    </p>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">👤 Cliente</label>
+                                    <Input
+                                        type="text"
+                                        placeholder="Nombre cliente..."
+                                        value={filtroCliente}
+                                        onChange={(e) => {
+                                            setFiltroCliente(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="w-full"
+                                    />
                                 </div>
                             </div>
-                        </Card>
-                    )}
-                </div>
+
+                            {/* Fila 2: Fechas */}
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">📅 Fecha Desde</label>
+                                    <input
+                                        type="date"
+                                        value={filtroFechaDesde}
+                                        onChange={(e) => {
+                                            setFiltroFechaDesde(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">📅 Fecha Hasta</label>
+                                    <input
+                                        type="date"
+                                        value={filtroFechaHasta}
+                                        onChange={(e) => {
+                                            setFiltroFechaHasta(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Resultados */}
+                            <div className="border-t border-blue-200 pt-3 dark:border-blue-800">
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    📊 Filtros activos: <strong>{filtrosActivos}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                )}
 
                 {/* Tabla de Ventas */}
                 <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Folio
-                                </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Cliente
-                                </th>
-                                <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-                                    Total
-                                </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Estado
-                                </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Fecha
-                                </th>
-                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Usuario
-                                </th>
-                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                    Acciones
-                                </th>
+                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Folio</th>
+                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Cliente</th>
+                                <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">Total</th>
+                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Estado</th>
+                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Fecha</th>
+                                <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Usuario</th>
+                                <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -380,9 +354,7 @@ export default function ListadoVentas() {
                                                 venta.estado === 'CANCELADA' ? 'bg-red-50 opacity-60 dark:bg-red-900/10' : ''
                                             }`}
                                         >
-                                            <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                                                {venta.id}
-                                            </td>
+                                            <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{venta.id}</td>
                                             <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                                                 {venta.cliente?.nombre || '(Sin cliente)'}
                                             </td>
@@ -393,24 +365,15 @@ export default function ListadoVentas() {
                                                 {(Number(venta.total) || 0).toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge className={`${estilo.bg} ${estilo.text}`}>
-                                                    {venta.estado}
-                                                </Badge>
+                                                <Badge className={`${estilo.bg} ${estilo.text}`}>{venta.estado}</Badge>
                                             </td>
                                             <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                                                 {new Date(venta.fecha_venta).toLocaleDateString('es-ES')}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                                                {venta.usuario.name}
-                                            </td>
+                                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{venta.usuario.name}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <div className="flex justify-center gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => verDetalle(venta.id)}
-                                                        title="Ver detalle"
-                                                    >
+                                                    <Button size="sm" variant="outline" onClick={() => verDetalle(venta.id)} title="Ver detalle">
                                                         👁️
                                                     </Button>
 
@@ -455,22 +418,13 @@ export default function ListadoVentas() {
                 {ventas && ventas.last_page > 1 && (
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-slate-600 dark:text-slate-400">
-                            Mostrando página {ventas.current_page} de {ventas.last_page}
-                            {' '} ({ventas.total} ventas totales)
+                            Mostrando página {ventas.current_page} de {ventas.last_page} ({ventas.total} ventas totales)
                         </div>
                         <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setPage(page - 1)}
-                                disabled={page === 1}
-                            >
+                            <Button variant="outline" onClick={() => setPage(page - 1)} disabled={page === 1}>
                                 ← Anterior
                             </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setPage(page + 1)}
-                                disabled={page === ventas.last_page}
-                            >
+                            <Button variant="outline" onClick={() => setPage(page + 1)} disabled={page === ventas.last_page}>
                                 Siguiente →
                             </Button>
                         </div>
@@ -503,20 +457,19 @@ export default function ListadoVentas() {
                         </DialogHeader>
                         {ventaCancelar && (
                             <div className="space-y-4">
-                                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                                     <p className="text-sm text-red-900 dark:text-red-100">
-                                        <span className="font-semibold">Venta #{ventaCancelar.numero_venta}</span> - {ventaCancelar.cliente?.nombre || '(Sin cliente)'}
+                                        <span className="font-semibold">Venta #{ventaCancelar.numero_venta}</span> -{' '}
+                                        {ventaCancelar.cliente?.nombre || '(Sin cliente)'}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Motivo de cancelación *
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Motivo de cancelación *</label>
                                     <textarea
                                         value={motivoCancelacion}
                                         onChange={(e) => setMotivoCancelacion(e.target.value)}
                                         placeholder="Describe el motivo de la cancelación..."
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
                                         rows={3}
                                     />
                                 </div>

@@ -946,7 +946,7 @@ export default function CrearPrestamoEvento({ choferes, almacenes, ventas, vehic
             if (formData.ubicacion.localidad_id || formData.ubicacion.direccion || formData.ubicacion.latitud) {
                 payload.ubicacion = {
                     localidad_id: formData.ubicacion.localidad_id || undefined,
-                    direccion: formData.ubicacion.direccion || undefined,
+                    direccion: formData.ubicacion.observaciones || undefined,
                     es_ubicacion_manual: formData.ubicacion.es_ubicacion_manual,
                     direccion_cliente_id: formData.ubicacion.direccion_cliente_id || undefined,
                     observaciones: formData.ubicacion.observaciones || undefined,

@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:978
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/asignadas'
  */
 export const asignadas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ asignadas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:978
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/asignadas'
  */
 asignadas.url = (options?: RouteQueryOptions) => {
@@ -66,7 +66,7 @@ asignadas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:978
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/asignadas'
  */
 asignadas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -74,7 +74,7 @@ asignadas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:978
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/asignadas'
  */
 asignadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -83,7 +83,7 @@ asignadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:979
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/en-transito'
  */
 export const enTransito = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ enTransito.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:979
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/en-transito'
  */
 enTransito.url = (options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ enTransito.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:979
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/en-transito'
  */
 enTransito.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ enTransito.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:979
+ * @see [serialized-closure]:2
  * @route '/logistica/entregas/en-transito'
  */
 enTransito.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
- * @see routes/web.php:417
+ * @see [serialized-closure]:2
  * @route '/ventas-comidas'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ index.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:417
+ * @see [serialized-closure]:2
  * @route '/ventas-comidas'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ index.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:417
+ * @see [serialized-closure]:2
  * @route '/ventas-comidas'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:417
+ * @see [serialized-closure]:2
  * @route '/ventas-comidas'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

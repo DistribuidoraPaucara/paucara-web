@@ -300,10 +300,10 @@ class PrestamoVendidoController extends Controller
             }
 
             $validated = $request->validate([
-                'motivo' => 'required|string|max:500',
+                'motivo' => 'nullable|string|max:500',
             ]);
 
-            $ventaCancelada = $this->service->cancelarVenta($venta, $validated['motivo']);
+            $ventaCancelada = $this->service->cancelarVenta($venta, $validated['motivo'] ?? '');
 
             return response()->json([
                 'success' => true,

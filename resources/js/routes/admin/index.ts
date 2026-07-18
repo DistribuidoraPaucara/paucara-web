@@ -4,7 +4,7 @@ import reportesProductosDanados from './reportes-productos-danados'
 import bannersPublicitarios from './banners-publicitarios'
 import categoriasCliente from './categorias-cliente'
 /**
- * @see routes/web.php:248
+ * @see [serialized-closure]:2
  * @route '/admin/image-backup'
  */
 export const imageBackup = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -18,7 +18,7 @@ imageBackup.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:248
+ * @see [serialized-closure]:2
  * @route '/admin/image-backup'
  */
 imageBackup.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ imageBackup.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:248
+ * @see [serialized-closure]:2
  * @route '/admin/image-backup'
  */
 imageBackup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ imageBackup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:248
+ * @see [serialized-closure]:2
  * @route '/admin/image-backup'
  */
 imageBackup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

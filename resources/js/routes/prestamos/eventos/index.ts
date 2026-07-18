@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefa
 import devolucion from './devolucion'
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
- * @see app/Http/Controllers/PrestamosInertiaController.php:270
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
  * @route '/prestamos/eventos'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 export const crear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ crear.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 crear.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ crear.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -78,7 +78,7 @@ crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:292
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
  * @route '/prestamos/eventos/crear'
  */
 crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -88,7 +88,7 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -103,7 +103,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -112,7 +112,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:346
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
  * @route '/prestamos/eventos'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -122,7 +122,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::show
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 export const show = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -137,7 +137,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::show
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 show.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -170,7 +170,7 @@ show.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { 
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::show
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 show.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -179,7 +179,7 @@ show.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { 
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::show
- * @see app/Http/Controllers/PrestamosInertiaController.php:355
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
  * @route '/prestamos/eventos/{prestamo}'
  */
 show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -188,7 +188,7 @@ show.head = (args: { prestamo: number | { id: number } } | [prestamo: number | {
 })
 
 /**
- * @see routes/web.php:940
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -202,7 +202,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:940
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -234,7 +234,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see routes/web.php:940
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -242,7 +242,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see routes/web.php:940
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -251,7 +251,7 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
 })
 
 /**
- * @see routes/web.php:946
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -265,7 +265,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:946
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -297,7 +297,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see routes/web.php:946
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -305,7 +305,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see routes/web.php:946
+ * @see [serialized-closure]:2
  * @route '/prestamos/eventos/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

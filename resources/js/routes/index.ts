@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../wayfinder'
 /**
- * @see routes/web.php:12
+ * @see [serialized-closure]:2
  * @route '/'
  */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:12
+ * @see [serialized-closure]:2
  * @route '/'
  */
 home.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:12
+ * @see [serialized-closure]:2
  * @route '/'
  */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:12
+ * @see [serialized-closure]:2
  * @route '/'
  */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -125,7 +125,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/settings.php:21
+ * @see [serialized-closure]:2
  * @route '/settings/appearance'
  */
 export const appearance = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -139,7 +139,7 @@ appearance.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/settings.php:21
+ * @see [serialized-closure]:2
  * @route '/settings/appearance'
  */
 appearance.url = (options?: RouteQueryOptions) => {
@@ -147,7 +147,7 @@ appearance.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/settings.php:21
+ * @see [serialized-closure]:2
  * @route '/settings/appearance'
  */
 appearance.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -155,7 +155,7 @@ appearance.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/settings.php:21
+ * @see [serialized-closure]:2
  * @route '/settings/appearance'
  */
 appearance.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

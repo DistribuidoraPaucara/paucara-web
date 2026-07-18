@@ -209,7 +209,7 @@ export default function MovimientosPrestables() {
         <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Movimientos de Stock', href: '/prestamos/ajustes/movimientos' }]}>
             <Head title="Movimientos de Stock de Prestables" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-2">
                 {/* Header */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
@@ -221,7 +221,7 @@ export default function MovimientosPrestables() {
                 </div>
 
                 {/* Filtros */}
-                <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900/50">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                         <div>
                             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -282,7 +282,7 @@ export default function MovimientosPrestables() {
                 </div>
 
                 {/* Leyenda de Columnas */}
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-900/30 dark:bg-blue-900/10">
                     <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-300">📋 Leyenda de Columnas (Estados Antes/Después):</h3>
                     <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-5">
                         <div className="flex items-center gap-2">
@@ -322,9 +322,9 @@ export default function MovimientosPrestables() {
                                 <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Prestable
                                 </th>
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
+                                {/* <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Tipo
-                                </th>
+                                </th> */}
                                 <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                     Almacén
                                 </th>
@@ -381,16 +381,12 @@ export default function MovimientosPrestables() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-2 py-3">
+                                            {/* <td className="px-2 py-3 text-xs">
                                                 <Badge className={`${estilo.bg} ${estilo.text}`}>
                                                     {getTipoLabel(movimiento.tipo)}
                                                 </Badge>
-                                                {movimiento.anulado && (
-                                                    <Badge className="mt-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                        ⛔ Anulado
-                                                    </Badge>
-                                                )}
-                                            </td>
+                                                
+                                            </td> */}
                                             <td className="px-2 py-3 text-slate-700 dark:text-slate-300 text-xs">
                                                 {movimiento.prestable_stock?.almacen_prestable?.nombre || '-'}
                                             </td>
@@ -398,7 +394,7 @@ export default function MovimientosPrestables() {
                                                 {movimiento.referencia_id ? (
                                                     <div className="flex flex-col">
                                                         <span className="font-xs text-slate-900 dark:text-slate-100">
-                                                            #{movimiento.referencia_id}
+                                                            Folio #{movimiento.referencia_id}
                                                         </span>
                                                         <span className="text-xs text-slate-500 dark:text-slate-400">
                                                             {movimiento.referencia_tipo || '-'}
@@ -406,6 +402,11 @@ export default function MovimientosPrestables() {
                                                     </div>
                                                 ) : (
                                                     <span className="text-slate-400 dark:text-slate-500">-</span>
+                                                )}
+                                                {movimiento.anulado && (
+                                                    <Badge className="mt-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs">
+                                                        ⛔ Anulado
+                                                    </Badge>
                                                 )}
                                             </td>
                                             <td className="px-2 py-3 text-center bg-blue-50 dark:bg-blue-900/10">

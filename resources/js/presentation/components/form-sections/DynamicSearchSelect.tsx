@@ -57,13 +57,13 @@ export default function DynamicSearchSelect<T>({
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                 {label}
             </label>
 
             {selectedItem && (
                 <div className="mb-2 flex items-center justify-between rounded-lg bg-blue-50 p-2 dark:bg-blue-900/20">
-                    <span className="text-sm text-blue-900 dark:text-blue-200">
+                    <span className="text-xs text-blue-900 dark:text-blue-200">
                         {getDisplayValue(selectedItem)}
                     </span>
                     <button
@@ -88,7 +88,7 @@ export default function DynamicSearchSelect<T>({
                             setShowDropdown(true);
                         }}
                         onFocus={() => setShowDropdown(true)}
-                        className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                        className="w-full text-xs rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-2 text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                     />
                     {isLoading && (
                         <div className="absolute right-3 top-2.5">

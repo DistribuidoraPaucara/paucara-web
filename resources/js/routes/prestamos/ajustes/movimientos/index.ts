@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 export const clientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ clientes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ clientes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ clientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:866
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/clientes'
  */
 clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 export const proveedores = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ proveedores.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.url = (options?: RouteQueryOptions) => {
@@ -61,7 +61,7 @@ proveedores.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -69,7 +69,7 @@ proveedores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:867
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/proveedores'
  */
 proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -78,7 +78,7 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 export const eventos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -92,7 +92,7 @@ eventos.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.url = (options?: RouteQueryOptions) => {
@@ -100,7 +100,7 @@ eventos.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -108,7 +108,7 @@ eventos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:868
+ * @see [serialized-closure]:2
  * @route '/prestamos/ajustes/movimientos/eventos'
  */
 eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

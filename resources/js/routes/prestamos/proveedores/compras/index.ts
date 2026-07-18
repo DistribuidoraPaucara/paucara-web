@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 export const crear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ crear.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 crear.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ crear.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
- * @see app/Http/Controllers/PrestamosInertiaController.php:230
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
  * @route '/prestamos/proveedores/compras/crear'
  */
 crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

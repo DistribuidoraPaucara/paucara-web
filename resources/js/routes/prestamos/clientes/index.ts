@@ -121,7 +121,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
- * @see routes/web.php:881
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}'
  */
 export const show = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -135,7 +135,7 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:881
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.url = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ show.url = (args: { prestamo: string | number } | [prestamo: string | number ] |
 }
 
 /**
- * @see routes/web.php:881
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.get = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -170,7 +170,7 @@ show.get = (args: { prestamo: string | number } | [prestamo: string | number ] |
     method: 'get',
 })
 /**
- * @see routes/web.php:881
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}'
  */
 show.head = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -246,7 +246,7 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
 })
 
 /**
- * @see routes/web.php:889
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 export const registrarDevolucion = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -260,7 +260,7 @@ registrarDevolucion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:889
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ registrarDevolucion.url = (args: { prestamo: number | { id: number } } | [presta
 }
 
 /**
- * @see routes/web.php:889
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -300,7 +300,7 @@ registrarDevolucion.get = (args: { prestamo: number | { id: number } } | [presta
     method: 'get',
 })
 /**
- * @see routes/web.php:889
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
  */
 registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -309,7 +309,7 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
 })
 
 /**
- * @see routes/web.php:895
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 export const devoluciones = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -323,7 +323,7 @@ devoluciones.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:895
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -355,7 +355,7 @@ devoluciones.url = (args: { prestamo: number | { id: number } } | [prestamo: num
 }
 
 /**
- * @see routes/web.php:895
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -363,7 +363,7 @@ devoluciones.get = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'get',
 })
 /**
- * @see routes/web.php:895
+ * @see [serialized-closure]:2
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
  */
 devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

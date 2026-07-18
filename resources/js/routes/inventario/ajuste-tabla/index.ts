@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
- * @see routes/web.php:767
+ * @see [serialized-closure]:2
  * @route '/inventario/ajuste-tabla'
  */
 export const form = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ form.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:767
+ * @see [serialized-closure]:2
  * @route '/inventario/ajuste-tabla'
  */
 form.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ form.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:767
+ * @see [serialized-closure]:2
  * @route '/inventario/ajuste-tabla'
  */
 form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:767
+ * @see [serialized-closure]:2
  * @route '/inventario/ajuste-tabla'
  */
 form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

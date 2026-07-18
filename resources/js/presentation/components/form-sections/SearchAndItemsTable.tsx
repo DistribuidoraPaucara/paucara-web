@@ -79,7 +79,7 @@ export default function SearchAndItemsTable<T>({
     };
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
             {/* Buscador */}
             <div className="relative">
                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -139,7 +139,7 @@ export default function SearchAndItemsTable<T>({
                                     key={column.key}
                                     className={`px-2 py-1 text-sm font-semibold text-slate-900 dark:text-slate-100 ${
                                         column.align === 'right'
-                                            ? 'text-left'
+                                            ? 'text-right'
                                             : column.align === 'center'
                                               ? 'text-center'
                                               : 'text-left'
@@ -149,7 +149,7 @@ export default function SearchAndItemsTable<T>({
                                 </th>
                             ))}
                             <th className="px-2 py-1 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                Acción
+                                -
                             </th>
                         </tr>
                     </thead>

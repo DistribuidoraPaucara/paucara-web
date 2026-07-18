@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import type { Prestable } from '@/domain/entities/prestamos';
+import prestamoProveedorService from '@/infrastructure/services/prestamo-proveedor.service';
 import AppLayout from '@/layouts/app-layout';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import ToastContainer from '@/presentation/components/ui/toast-container';
-import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
-import prestamoProveedorService from '@/infrastructure/services/prestamo-proveedor.service';
-import { usePrestables } from '@/stores/usePrestables';
 import { useToast } from '@/presentation/hooks/useToast';
-import type { Prestable } from '@/domain/entities/prestamos';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import PrestablesSelectionTable from '@/presentation/components/form-sections/PrestablesSelectionTable';
+import { usePrestables } from '@/stores/usePrestables';
+import { Head } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
+import { type BreadcrumbItem } from '@/types';
 
 interface Props {
     proveedores: Array<{ id: number; nombre: string; razon_social?: string }>;
@@ -24,8 +25,13 @@ interface PrestamoItem {
     prestable_id: number;
     cantidad: number;
     prestable?: Prestable;
-    isAutomaticEmbase?: boolean;  // ✅ NUEVO: marca si fue cargado automáticamente con una canastilla
+    isAutomaticEmbase?: boolean; // ✅ NUEVO: marca si fue cargado automáticamente con una canastilla
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Préstamos', href: '/prestamos/proveedores' },
+    { title: 'Crear Préstamo a Proveedor', href: '/prestamos/proveedores/crear' },
+];
 
 export default function CrearPrestamoProveedor({ proveedores, compras, almacenes_proveedor, choferes, vehiculos }: Props) {
     const { prestables, loading: loadingPrestables, fetchPrestables } = usePrestables();
@@ -119,7 +125,6 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         }
     }, [almacenes_proveedor]);
 
-
     function getDateAdd7Days() {
         const date = new Date();
         date.setDate(date.getDate() + 7);
@@ -149,7 +154,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         setComprasLoading(true);
         try {
             const response = await fetch(`/api/compras/con-prestables/search?q=${encodeURIComponent(query)}`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { Accept: 'application/json' },
             });
             const data = await response.json();
             const compras = data.data || [];
@@ -176,7 +181,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
         try {
             const response = await fetch(`/api/compras/${compra.id}/detalles`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { Accept: 'application/json' },
             });
             const data = await response.json();
             const compraData = data.data || data;
@@ -190,7 +195,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 compra_id: compra.id,
                 proveedor_id: proveedorId,
             });
-            setProveedorSeleccionado(proveedores.find(p => p.id === proveedorId));
+            setProveedorSeleccionado(proveedores.find((p) => p.id === proveedorId));
 
             // ✅ NUEVO: Cargar prestables automáticamente desde los detalles de la compra
             const nuevosPrestables: PrestamoItem[] = [];
@@ -264,7 +269,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
             console.log('%c📋 Prestables cargados automáticamente', 'color: #4caf50; font-weight: bold', {
                 cantidad_prestables: nuevosPrestables.length,
-                prestables: nuevosPrestables.map(p => ({ id: p.prestable_id, nombre: p.prestable?.nombre })),
+                prestables: nuevosPrestables.map((p) => ({ id: p.prestable_id, nombre: p.prestable?.nombre })),
             });
 
             // Reemplazar con los prestables cargados automáticamente
@@ -285,9 +290,8 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
             setProveedoresFiltered(proveedores);
             return;
         }
-        const filtered = proveedores.filter(p =>
-            p.nombre.toLowerCase().includes(query.toLowerCase()) ||
-            p.razon_social?.toLowerCase().includes(query.toLowerCase())
+        const filtered = proveedores.filter(
+            (p) => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.razon_social?.toLowerCase().includes(query.toLowerCase()),
         );
         setProveedoresFiltered(filtered);
     };
@@ -304,10 +308,11 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
             setVehiculosFiltered(vehiculos || []);
             return;
         }
-        const filtered = (vehiculos || []).filter(v =>
-            v.placa.toLowerCase().includes(query.toLowerCase()) ||
-            v.marca?.toLowerCase().includes(query.toLowerCase()) ||
-            v.modelo?.toLowerCase().includes(query.toLowerCase())
+        const filtered = (vehiculos || []).filter(
+            (v) =>
+                v.placa.toLowerCase().includes(query.toLowerCase()) ||
+                v.marca?.toLowerCase().includes(query.toLowerCase()) ||
+                v.modelo?.toLowerCase().includes(query.toLowerCase()),
         );
         setVehiculosFiltered(filtered);
     };
@@ -325,9 +330,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
             setChoferesFiltered(choferes || []);
             return;
         }
-        const filtered = (choferes || []).filter(c =>
-            c.nombre.toLowerCase().includes(query.toLowerCase())
-        );
+        const filtered = (choferes || []).filter((c) => c.nombre.toLowerCase().includes(query.toLowerCase()));
         setChoferesFiltered(filtered);
     };
 
@@ -339,51 +342,46 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
     const handleEliminarPrestable = (prestable_id: number) => {
         // Si es una canastilla, eliminar también sus embases relacionados
-        const prestable = prestables.find(p => Number(p.id) === prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === prestable_id);
         if (prestable?.tipo === 'CANASTILLA') {
-            const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id
-            );
-            const idsAEliminar = [prestable_id, ...embasesRelacionados.map(e => e.id)];
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id))
-            );
+            const embasesRelacionados = prestables.filter((p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === prestable_id);
+            const idsAEliminar = [prestable_id, ...embasesRelacionados.map((e) => e.id)];
+            setPrestablesAgregados(prestablesAgregados.filter((p) => !idsAEliminar.includes(p.prestable_id)));
         } else {
-            setPrestablesAgregados(
-                prestablesAgregados.filter((p) => p.prestable_id !== prestable_id)
-            );
+            setPrestablesAgregados(prestablesAgregados.filter((p) => p.prestable_id !== prestable_id));
         }
     };
 
     const getStockDisponibleTotal = (prestable: Prestable) => {
-        return (prestable.stocks || []).reduce(
-            (sum, stock) => sum + Number(stock.cantidad_disponible || 0),
-            0
-        );
+        return (prestable.stocks || []).reduce((sum, stock) => sum + Number(stock.cantidad_disponible || 0), 0);
     };
 
     const handleCambiarCantidad = (itemIndex: number, nueva_cantidad: number) => {
         const itemActualizado = prestablesAgregados[itemIndex];
         if (!itemActualizado) return;
 
-        const prestable = prestables.find(p => Number(p.id) === itemActualizado.prestable_id);
+        const prestable = prestables.find((p) => Number(p.id) === itemActualizado.prestable_id);
 
-        setPrestablesAgregados(prestablesAgregados.map((item, idx) => {
-            // Actualizar solo el item específico por índice
-            if (idx === itemIndex) {
-                return { ...item, cantidad: nueva_cantidad };
-            }
+        setPrestablesAgregados(
+            prestablesAgregados.map((item, idx) => {
+                // Actualizar solo el item específico por índice
+                if (idx === itemIndex) {
+                    return { ...item, cantidad: nueva_cantidad };
+                }
 
-            // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
-            if (prestable?.tipo === 'CANASTILLA' &&
-                item.isAutomaticEmbase === true &&  // ✅ SOLO embases automáticos
-                (item.prestable as any)?.prestable_relacionado_id === prestable?.id) {
-                const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
-                return { ...item, cantidad: cantidadEmbasesAutomatica };
-            }
+                // Si el item actualizado es canastilla, actualizar SOLO embases automáticos relacionados
+                if (
+                    prestable?.tipo === 'CANASTILLA' &&
+                    item.isAutomaticEmbase === true && // ✅ SOLO embases automáticos
+                    (item.prestable as any)?.prestable_relacionado_id === prestable?.id
+                ) {
+                    const cantidadEmbasesAutomatica = nueva_cantidad * (prestable.capacidad || 0);
+                    return { ...item, cantidad: cantidadEmbasesAutomatica };
+                }
 
-            return item;
-        }));
+                return item;
+            }),
+        );
     };
 
     const handleAgregarCanastilla = (prestable: Prestable) => {
@@ -401,12 +399,10 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
         if (prestable.tipo === 'CANASTILLA') {
             const embasesRelacionados = prestables.filter(
-                p => p.tipo === 'EMBASES'
-                    && (p as any).prestable_relacionado_id === Number(prestable.id)
-                    && getStockDisponibleTotal(p) > 0
+                (p) => p.tipo === 'EMBASES' && (p as any).prestable_relacionado_id === Number(prestable.id) && getStockDisponibleTotal(p) > 0,
             );
 
-            embasesRelacionados.forEach(embase => {
+            embasesRelacionados.forEach((embase) => {
                 const cantidadEmbasesAutomatica = 1 * (prestable.capacidad || 0);
 
                 nuevosItems.push({
@@ -420,12 +416,15 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
         const actualizado = [...prestablesAgregados, ...nuevosItems];
         console.log('🔵 handleAgregarCanastilla - Prestable:', prestable.nombre, prestable.tipo);
-        console.log('   Items nuevos:', nuevosItems.map(i => ({
-            id: i.prestable_id,
-            nombre: i.prestable?.nombre,
-            tipo: i.prestable?.tipo,
-            isAutomaticEmbase: i.isAutomaticEmbase,
-        })));
+        console.log(
+            '   Items nuevos:',
+            nuevosItems.map((i) => ({
+                id: i.prestable_id,
+                nombre: i.prestable?.nombre,
+                tipo: i.prestable?.tipo,
+                isAutomaticEmbase: i.isAutomaticEmbase,
+            })),
+        );
         toastWarning('⚠️ Especifica los almacenes para este prestable en el modal');
         setPrestablesAgregados(actualizado);
     };
@@ -468,7 +467,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 fecha_esperada_devolucion: formData.fecha_esperada_devolucion,
                 monto_garantia: formData.monto_garantia,
                 observaciones: '',
-                detalles: prestablesAgregados.map(item => ({
+                detalles: prestablesAgregados.map((item) => ({
                     prestable_id: item.prestable_id,
                     cantidad: item.cantidad,
                 })),
@@ -510,30 +509,25 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
     }, 0);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Préstamo a Proveedor" />
             <ToastContainer toasts={toasts} onClose={removeToast} />
-            <div className="p-2 bg-white dark:bg-gray-950 min-h-screen">
-                <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-                    🏭 Nuevo Préstamo a Proveedor
-                </h1>
+            <div className="min-h-screen bg-white p-2 dark:bg-gray-950">
+                {/* <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">🏭 Nuevo Préstamo a Proveedor</h1> */}
 
                 <form onSubmit={handleSubmit} className="space-y-2">
                     {error && (
-                        <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg border border-red-300 dark:border-red-700">
+                        <div className="rounded-lg border border-red-300 bg-red-100 p-4 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
                             {error}
                         </div>
                     )}
 
                     {/* Sección 1: Información del Préstamo */}
-                    <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
                             {/* Columna 3: Almacén Destino */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    🏭 Almacén Destino *
-                                </label>
+                                <label className="block text-xs font-small text-gray-700 dark:text-gray-300">🏭 Almacén Destino *</label>
                                 <select
                                     required
                                     value={formData.almacenes_prestables_id || ''}
@@ -543,14 +537,15 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                             almacenes_prestables_id: e.target.value ? Number(e.target.value) : undefined,
                                         })
                                     }
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 >
                                     <option value="">Selecciona almacén...</option>
-                                    {almacenes_proveedor && almacenes_proveedor.map((almacen) => (
-                                        <option key={almacen.id} value={almacen.id}>
-                                            {almacen.nombre}
-                                        </option>
-                                    ))}
+                                    {almacenes_proveedor &&
+                                        almacenes_proveedor.map((almacen) => (
+                                            <option key={almacen.id} value={almacen.id}>
+                                                {almacen.nombre}
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
                             {/* Columna 1: Compra (REQUERIDA) */}
@@ -643,7 +638,9 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                 renderItem={(vehiculo) => (
                                     <div>
                                         <p className="font-medium">{vehiculo.placa}</p>
-                                        <p className="text-xs text-gray-500">{vehiculo.marca} {vehiculo.modelo}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {vehiculo.marca} {vehiculo.modelo}
+                                        </p>
                                     </div>
                                 )}
                                 getItemId={(vehiculo) => vehiculo.id}
@@ -652,12 +649,10 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                         </div>
 
                         {/* Fila: Fechas */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                             {/* Fila: Garantía */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Garantía Total (Opcional)
-                                </label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Garantía Total (Opcional)</label>
                                 <input
                                     type="text"
                                     inputMode="decimal"
@@ -672,25 +667,23 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                         }
                                     }}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     placeholder="0.00"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Fecha de Préstamo *
-                                </label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Fecha de Préstamo *</label>
                                 <input
                                     type="date"
                                     required
                                     value={formData.fecha_prestamo}
                                     onChange={(e) => handleFechaPrestamo(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                                     Fecha Esperada de Devolución (7 días) *
                                 </label>
                                 <input
@@ -703,36 +696,33 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                             fecha_esperada_devolucion: e.target.value,
                                         })
                                     }
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                             </div>
                         </div>
                     </Card>
 
                     {/* Sección 2: Seleccionar Prestables */}
-                    <Card className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <Card className="border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+                        {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             📦 Seleccionar Prestables
-                        </h2>
+                        </h2> */}
 
                         {/* Usar componente PrestablesSelectionTable */}
                         <PrestablesSelectionTable
-                            label="📦 Prestables Disponibles"
+                            label="📦 Detalles"
                             placeholder="Buscar prestable..."
-                            prestables={prestables.filter(p => p.activo)}
+                            prestables={prestables.filter((p) => p.activo)}
                             items={prestablesAgregados}
                             onSelectItem={handleAgregarCanastilla}
                             onDeleteItem={handleEliminarPrestable}
                             onUpdateCantidad={handleCambiarCantidad}
-                            onToggleAlmacen={() => { }}
+                            onToggleAlmacen={() => {}}
                             hideAlmacenesSelection={true}
                             almacen_prestable_id={formData.almacenes_prestables_id}
                             esPrestamoProveedor={true}
                             getStockDisponibleTotal={(prestable) =>
-                                (prestable.stocks || []).reduce(
-                                    (sum, stock) => sum + Number(stock.cantidad_disponible || 0),
-                                    0
-                                )
+                                (prestable.stocks || []).reduce((sum, stock) => sum + Number(stock.cantidad_disponible || 0), 0)
                             }
                             getAlmacenesConStock={(prestable) => {
                                 const almacenes = (prestable.stocks || [])
@@ -758,20 +748,22 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                     </Card>
 
                     {/* Botones de Acción */}
-                    <div className="flex gap-2">
-                        <Button
-                            type="submit"
-                            disabled={loading || prestablesAgregados.length === 0}
-                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white"
-                        >
-                            {loading ? 'Registrando...' : '✅ Registrar Préstamo'}
-                        </Button>
-                        <a href="/prestamos/proveedores">
-                            <Button type="button" variant="outline">
-                                Cancelar
+                    <Card className="border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                        <div className="flex justify-end gap-2">
+                            <a href="/prestamos/proveedores">
+                                <Button type="button" variant="outline">
+                                    Cancelar
+                                </Button>
+                            </a>
+                            <Button
+                                type="submit"
+                                disabled={loading || prestablesAgregados.length === 0}
+                                className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {loading ? 'Registrando...' : '✅ Registrar Préstamo'}
                             </Button>
-                        </a>
-                    </div>
+                        </div>
+                    </Card>
                 </form>
             </div>
 

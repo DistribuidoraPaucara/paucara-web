@@ -158,7 +158,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:720
+ * @see [serialized-closure]:2
  * @route '/cajas/admin/conciliacion'
  */
 export const conciliacion = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ conciliacion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:720
+ * @see [serialized-closure]:2
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.url = (options?: RouteQueryOptions) => {
@@ -180,7 +180,7 @@ conciliacion.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:720
+ * @see [serialized-closure]:2
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -188,7 +188,7 @@ conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:720
+ * @see [serialized-closure]:2
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

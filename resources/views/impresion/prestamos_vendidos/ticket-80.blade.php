@@ -7,10 +7,12 @@
 <div class="separador"></div>
 
 {{-- ==================== INFO DEL DOCUMENTO ==================== --}}
-<div class="documento-titulo" style="font-size:12px;">VENTA PRESTABLES Folio°{{ $documento->id }}</div>
+<div class="documento-titulo" style="font-size:12px;">VENTA PRESTABLES</div>
+<div class="documento-titulo" style="font-size:12px;">Folio #{{ $documento->id }}</div>
 <div class="center" style="margin-top: 3px; font-size:11px">
     <p style="margin: 2px 0;"><strong>Fecha:</strong> {{ $documento->fecha_venta->format('d/m/Y H:i') }}</p>
     <p style="margin: 2px 0;"><strong>Emisión:</strong> {{ now()->format('d/m/Y H:i') }}</p>
+    <p style="margin: 2px 0;"><strong>{{ $documento->estado }}</strong> </p>
 </div>
 
 <div class="separador"></div>

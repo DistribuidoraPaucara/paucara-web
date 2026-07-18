@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
- * @see routes/api.php:1479
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs/clear'
  */
 export const clear = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -14,7 +14,7 @@ clear.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see routes/api.php:1479
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs/clear'
  */
 clear.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ clear.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:1479
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs/clear'
  */
 clear.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

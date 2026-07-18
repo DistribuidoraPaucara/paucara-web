@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
- * @see routes/web.php:869
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 export const listado = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ listado.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:869
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ listado.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:869
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,7 +30,7 @@ listado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:869
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas'
  */
 listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -39,7 +39,7 @@ listado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:870
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 export const crear = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ crear.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:870
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.url = (options?: RouteQueryOptions) => {
@@ -61,7 +61,7 @@ crear.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:870
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -69,7 +69,7 @@ crear.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:870
+ * @see [serialized-closure]:2
  * @route '/prestamos/ventas/crear'
  */
 crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

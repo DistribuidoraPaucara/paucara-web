@@ -123,7 +123,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
- * @see routes/web.php:967
+ * @see [serialized-closure]:2
  * @route '/logistica/proformas-pendientes'
  */
 export const proformasPendientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -137,7 +137,7 @@ proformasPendientes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:967
+ * @see [serialized-closure]:2
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.url = (options?: RouteQueryOptions) => {
@@ -145,7 +145,7 @@ proformasPendientes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:967
+ * @see [serialized-closure]:2
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -153,7 +153,7 @@ proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> 
     method: 'get',
 })
 /**
- * @see routes/web.php:967
+ * @see [serialized-closure]:2
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

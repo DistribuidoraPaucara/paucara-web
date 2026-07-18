@@ -245,18 +245,21 @@ export default function PrestamosClientesShow() {
                                 <p className="font-medium">{prestamo.telefono_cliente_2}</p>
                             </div>
                         )}
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">Localidad</p>
-                            <p className="font-medium">{prestamo.ubicacion.localidad?.nombre || 'No especificada'}</p>
-                            {prestamo.ubicacion.es_ubicacion_manual && (
-                                <Badge variant="outline" className="w-fit">
-                                    📍 Ubicación Manual
-                                </Badge>
-                            )}
-                        </div>
-                        <div>
+                        
+                        {prestamo.ubicacion && (
+                            <div>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">Localidad</p>
+                                <p className="font-medium">{prestamo.ubicacion.localidad?.nombre || 'No especificada'}</p>
+                                {prestamo.ubicacion.es_ubicacion_manual && (
+                                    <Badge variant="outline" className="w-fit">
+                                        📍 Ubicación Manual
+                                    </Badge>
+                                )}
+                            </div>
+                        )}
+                        {prestamo.ubicacion && (<div>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Dirección</p>
-                            <p className="font-medium">{prestamo.ubicacion.observaciones || 'No especificada'}</p>
+                            <p className="font-medium">{prestamo.ubicacion.direccion || 'No especificada'}</p>
                             {prestamo.ubicacion.latitud && prestamo.ubicacion.longitud && (
                                 <Button
                                     onClick={() => setModalUbicacionOpen(true)}
@@ -268,7 +271,7 @@ export default function PrestamosClientesShow() {
                                     Ver en Mapa
                                 </Button>
                             )}
-                        </div>
+                        </div>)}
                     </div>
                 </Card>
 

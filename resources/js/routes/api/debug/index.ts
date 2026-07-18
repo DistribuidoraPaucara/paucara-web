@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 import logs from './logs'
 /**
- * @see routes/api.php:1428
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,7 +15,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/api.php:1428
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -23,7 +23,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:1428
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/api.php:1428
+ * @see [serialized-closure]:2
  * @route '/api/debug/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
