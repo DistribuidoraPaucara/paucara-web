@@ -360,10 +360,10 @@ class CompraPrestableController extends Controller
             }
 
             $validated = $request->validate([
-                'motivo' => 'required|string|max:500',
+                'motivo' => 'nullable|string|max:500',
             ]);
 
-            $compraCancel = $this->service->cancelarCompra($compra, $validated['motivo']);
+            $compraCancel = $this->service->cancelarCompra($compra, $validated['motivo'] ?? '');
 
             return response()->json([
                 'success' => true,
