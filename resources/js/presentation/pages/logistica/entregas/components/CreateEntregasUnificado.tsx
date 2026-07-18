@@ -1,15 +1,15 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { AlertCircle, Package, CheckCircle2, Plus, Calendar, Trash2 } from 'lucide-react';
-import { Card } from '@/presentation/components/ui/card';
-import { Button } from '@/presentation/components/ui/button';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import BatchVentaSelector from './BatchVentaSelector';
-import ConsolidacionAutomaticaModal from './ConsolidacionAutomaticaModal';
-import { VehicleRecommendationCard } from '@/presentation/components/entrega/VehicleRecommendationCard';
 import { useEntregaBatch } from '@/application/hooks/use-entrega-batch';
 import { useVehiculoRecomendado } from '@/application/hooks/use-vehiculo-recomendado';
-import type { VentaConDetalles, VehiculoCompleto, ChoferEntrega } from '@/domain/entities/entregas';
+import type { ChoferEntrega, VehiculoCompleto, VentaConDetalles } from '@/domain/entities/entregas';
 import type { Id } from '@/domain/entities/shared';
+import { VehicleRecommendationCard } from '@/presentation/components/entrega/VehicleRecommendationCard';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { Button } from '@/presentation/components/ui/button';
+import { Card } from '@/presentation/components/ui/card';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Package, Plus, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import BatchVentaSelector from './BatchVentaSelector';
+import ConsolidacionAutomaticaModal from './ConsolidacionAutomaticaModal';
 
 interface Entrega {
     id: number;
@@ -93,16 +93,14 @@ export default function CreateEntregasUnificado({
     // 🔍 LOG: Ventas recibidas del backend
     console.log('📥 [CreateEntregasUnificado] Ventas recibidas del backend:', {
         total: ventas.length,
-        ids: ventas.map(v => v.id),
+        ids: ventas.map((v) => v.id),
         ventaPreseleccionada,
-        contiene_preseleccionada: ventaPreseleccionada ? ventas.some(v => v.id === ventaPreseleccionada) : 'N/A',
+        contiene_preseleccionada: ventaPreseleccionada ? ventas.some((v) => v.id === ventaPreseleccionada) : 'N/A',
         primera_venta: ventas[0],
     });
     // Estado de selección de ventas
     // Usar Id en lugar de number para ser compatible con VentaConDetalles.id
-    const [selectedVentaIds, setSelectedVentaIds] = useState<Id[]>(
-        ventaPreseleccionada ? [ventaPreseleccionada] : []
-    );
+    const [selectedVentaIds, setSelectedVentaIds] = useState<Id[]>(ventaPreseleccionada ? [ventaPreseleccionada] : []);
 
     // Estado del modal de consolidación automática
     const [isConsolidacionModalOpen, setIsConsolidacionModalOpen] = useState(false);
@@ -113,6 +111,12 @@ export default function CreateEntregasUnificado({
 
     // ✅ NUEVO: Estado para almacenar resultados de búsqueda desde BatchVentaSelector
     const [searchResults, setSearchResults] = useState<VentaConDetalles[]>([]);
+
+    // ✅ NUEVO: Estado para acumular ventas seleccionadas (PERSISTE entre búsquedas)
+    const [ventasAcumuladas, setVentasAcumuladas] = useState<VentaConDetalles[]>([]);
+
+    // ✅ NUEVO: Estado para controlar si el carrito está expandido
+    const [isCarritoExpanded, setIsCarritoExpanded] = useState(false);
 
     // Hooks para batch (2+ ventas)
     const {
@@ -126,20 +130,29 @@ export default function CreateEntregasUnificado({
 
     // Memoized callbacks para vehicle recommendation
     // Estos callbacks deben ser estables para que el useEffect en VehicleRecommendationCard funcione correctamente
-    const handleSelectVehiculo = useCallback((vehiculoId: Id) => {
-        console.log('📍 Actualizando vehiculo_id:', vehiculoId);
-        updateFormData({ vehiculo_id: vehiculoId });
-    }, [updateFormData]);
+    const handleSelectVehiculo = useCallback(
+        (vehiculoId: Id) => {
+            console.log('📍 Actualizando vehiculo_id:', vehiculoId);
+            updateFormData({ vehiculo_id: vehiculoId });
+        },
+        [updateFormData],
+    );
 
-    const handleSelectChofer = useCallback((choferId: Id) => {
-        console.log('👤 Actualizando chofer_id:', choferId);
-        updateFormData({ chofer_id: choferId });
-    }, [updateFormData]);
+    const handleSelectChofer = useCallback(
+        (choferId: Id) => {
+            console.log('👤 Actualizando chofer_id:', choferId);
+            updateFormData({ chofer_id: choferId });
+        },
+        [updateFormData],
+    );
 
-    const handleSelectEntregador = useCallback((entregadorId: Id) => {
-        console.log('📦 Actualizando entregador_id:', entregadorId);
-        updateFormData({ entregador_id: entregadorId });
-    }, [updateFormData]);
+    const handleSelectEntregador = useCallback(
+        (entregadorId: Id) => {
+            console.log('📦 Actualizando entregador_id:', entregadorId);
+            updateFormData({ entregador_id: entregadorId });
+        },
+        [updateFormData],
+    );
 
     // Hook para recomendación de vehículo (batch mode)
     // ⚠️ En edit mode, NO usar el hook porque el backend ya envía peso_kg + ventas asignadas
@@ -147,24 +160,24 @@ export default function CreateEntregasUnificado({
     const allVentasForHook = useMemo(() => {
         const combined = [...ventas, ...searchResults];
         // Remover duplicados
-        return Array.from(new Map(combined.map(v => [v.id, v])).values());
+        return Array.from(new Map(combined.map((v) => [v.id, v])).values());
     }, [ventas, searchResults]);
 
     const hookResult = isEditMode
         ? {
-            recomendado: null,
-            disponibles: [],
-            pesoTotal: 0,
-            isLoading: false,
-            error: null,
-            alerta: null,
-        }
+              recomendado: null,
+              disponibles: [],
+              pesoTotal: 0,
+              isLoading: false,
+              error: null,
+              alerta: null,
+          }
         : useVehiculoRecomendado(
-            selectedVentaIds,
-            allVentasForHook, // ✅ MEJORADO: Usar ventas + resultados de búsqueda
-            true, // Auto-select recomendado
-            handleSelectVehiculo
-        );
+              selectedVentaIds,
+              allVentasForHook, // ✅ MEJORADO: Usar ventas + resultados de búsqueda
+              true, // Auto-select recomendado
+              handleSelectVehiculo,
+          );
 
     const {
         recomendado,
@@ -281,44 +294,35 @@ export default function CreateEntregasUnificado({
         }
     }, [selectedCount, selectedVentaIds, ventas, isEditMode]);
 
-    // Totales seleccionados - En edit mode, calcular dinámicamente cuando cambian las ventas
+    // Totales seleccionados - Usar ventasAcumuladas como fuente de verdad
     const totals = useMemo(() => {
-        // ✅ MEJORADO: Combinar ventas iniciales + resultados de búsqueda
-        // En edit mode: combinar ventasAsignadas (ya en la entrega) + ventasDisponibles (nuevas) + resultados de búsqueda
-        // En modo crear: solo usar ventasDisponibles + resultados de búsqueda
-        const allVentas = isEditMode
-            ? [...ventasAsignadas, ...ventas, ...searchResults]
-            : [...ventas, ...searchResults];
-
-        // Remover duplicados por ID
-        const ventasUnicas = Array.from(
-            new Map(allVentas.map(v => [v.id, v])).values()
-        );
-
-        const selectedVentas = ventasUnicas.filter((v) => selectedVentaIds.includes(v.id));
-        const pesoCalculado = selectedVentas.reduce((sum, v) => {
+        // ✅ MEJORADO: Usar ventasAcumuladas (que persiste entre búsquedas)
+        const pesoCalculado = ventasAcumuladas.reduce((sum, v) => {
             const peso = parseFloat(v.peso_total_estimado as any) || parseFloat(v.peso_estimado as any) || 0;
             return sum + peso;
         }, 0);
 
-        if (isEditMode || searchResults.length > 0) {
-            console.log('📊 Totales calculados:', {
-                ventasAsignadas: ventasAsignadas.length,
-                ventasDisponibles: ventas.length,
-                ventasSearchResults: searchResults.length,
-                ventasUnicas: ventasUnicas.length,
-                ventasSeleccionadas: selectedVentaIds.length,
-                pesoCalculado,
-                pesoBackend: entrega?.peso_kg,
-            });
-        }
+        const montoCalculado = ventasAcumuladas.reduce((sum, v) => sum + (parseFloat(v.subtotal as any) ?? 0), 0);
+
+        console.log('📊 Totales Acumulados:', {
+            ventasAcumuladas: ventasAcumuladas.length,
+            ids: ventasAcumuladas.map((v) => v.id),
+            pesoTotal: pesoCalculado.toFixed(1),
+            montoTotal: montoCalculado.toLocaleString('es-BO', { minimumFractionDigits: 2 }),
+            detalles: ventasAcumuladas.map((v) => ({
+                id: v.id,
+                numero: v.numero_venta,
+                peso: parseFloat(v.peso_total_estimado as any) || parseFloat(v.peso_estimado as any) || 0,
+                subtotal: v.subtotal,
+            })),
+        });
 
         return {
-            count: selectedVentaIds.length,
+            count: ventasAcumuladas.length,
             pesoTotal: pesoCalculado,
-            montoTotal: selectedVentas.reduce((sum, v) => sum + (parseFloat(v.subtotal as any) ?? 0), 0),
+            montoTotal: montoCalculado,
         };
-    }, [ventas, ventasAsignadas, selectedVentaIds, isEditMode, searchResults]);
+    }, [ventasAcumuladas]);
 
     // Validaciones para batch - DEBE IR ANTES del useEffect que lo usa
     const selectedVehiculo = vehiculos.find((v) => v.id === formData.vehiculo_id);
@@ -352,7 +356,7 @@ export default function CreateEntregasUnificado({
         const confirmed = window.confirm('¿Estás seguro de que deseas eliminar esta venta de la entrega?');
         if (!confirmed) return;
 
-        setVentasEliminando(prev => new Set([...prev, ventaId]));
+        setVentasEliminando((prev) => new Set([...prev, ventaId]));
         setErrorEliminar(null);
 
         try {
@@ -372,7 +376,7 @@ export default function CreateEntregasUnificado({
             }
 
             // Remover de selectedVentaIds
-            setSelectedVentaIds(prev => prev.filter(id => id !== ventaId));
+            setSelectedVentaIds((prev) => prev.filter((id) => id !== ventaId));
             console.log('✅ Venta eliminada:', ventaId);
 
             // Recargar la página después de 500ms para asegurar que el backend procesó todo
@@ -384,7 +388,7 @@ export default function CreateEntregasUnificado({
             setErrorEliminar(message);
             console.error('❌ Error al eliminar venta:', error);
         } finally {
-            setVentasEliminando(prev => {
+            setVentasEliminando((prev) => {
                 const next = new Set(prev);
                 next.delete(ventaId);
                 return next;
@@ -395,22 +399,49 @@ export default function CreateEntregasUnificado({
     // Handlers
     const handleToggleVenta = (ventaId: Id) => {
         setSelectedVentaIds((prev) => {
-            const updated = prev.includes(ventaId)
-                ? prev.filter((id) => id !== ventaId)
-                : [...prev, ventaId];
+            const isAdding = !prev.includes(ventaId);
+            const updated = isAdding ? [...prev, ventaId] : prev.filter((id) => id !== ventaId);
+
+            // ✅ NUEVO: Acumular/remover venta en ventasAcumuladas
+            if (isAdding) {
+                // Buscar la venta en todas las fuentes
+                const allVentas = [...ventas, ...searchResults, ...ventasAcumuladas];
+                const ventaUnica = Array.from(new Map(allVentas.map((v) => [v.id, v])).values());
+                const ventaToAdd = ventaUnica.find((v) => v.id === ventaId);
+
+                if (ventaToAdd && !ventasAcumuladas.some((v) => v.id === ventaId)) {
+                    setVentasAcumuladas((prev) => [...prev, ventaToAdd]);
+                    console.log('✅ Venta agregada al carrito:', { id: ventaId, numero: ventaToAdd.numero_venta });
+                }
+            } else {
+                // Remover venta
+                setVentasAcumuladas((prev) => prev.filter((v) => v.id !== ventaId));
+                console.log('❌ Venta removida del carrito:', ventaId);
+            }
 
             // Log de selección
-            const selectedVentas = ventas.filter((v) => updated.includes(v.id));
-            console.log('📦 Ventas Seleccionadas:', {
+            const allVentasForLog = [...ventas, ...searchResults, ...ventasAcumuladas];
+            const ventasUnicasForLog = Array.from(new Map(allVentasForLog.map((v) => [v.id, v])).values());
+            const selectedVentas = ventasUnicasForLog.filter((v) => updated.includes(v.id));
+
+            const pesoTotal = selectedVentas.reduce(
+                (sum, v) => sum + (parseFloat(v.peso_total_estimado as any) || parseFloat(v.peso_estimado as any) || 0),
+                0,
+            );
+            const montoTotal = selectedVentas.reduce((sum, v) => sum + (parseFloat(v.subtotal as any) ?? 0), 0);
+
+            console.log('📦 Ventas Seleccionadas Actualizadas:', {
                 count: updated.length,
                 ventaIds: updated,
-                ventas: selectedVentas.map(v => ({
+                pesoTotal: pesoTotal.toFixed(1),
+                montoTotal: montoTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 }),
+                ventas: selectedVentas.map((v) => ({
                     id: v.id,
                     numero_venta: v.numero_venta,
                     cliente: v.cliente?.nombre,
-                    peso_estimado: v.peso_estimado,
+                    peso: parseFloat(v.peso_total_estimado as any) || parseFloat(v.peso_estimado as any) || 0,
                     subtotal: v.subtotal,
-                }))
+                })),
             });
 
             return updated;
@@ -418,11 +449,24 @@ export default function CreateEntregasUnificado({
     };
 
     const handleSelectAll = () => {
-        setSelectedVentaIds(ventas.map((v) => v.id));
+        // ✅ NUEVO: Agregar todas las ventas al carrito
+        const allVentasToAdd = [...ventas, ...searchResults];
+        const ventasUnicas = Array.from(new Map(allVentasToAdd.map((v) => [v.id, v])).values());
+
+        setSelectedVentaIds(ventasUnicas.map((v) => v.id));
+        setVentasAcumuladas(ventasUnicas);
+
+        console.log('✅ Todas las ventas agregadas al carrito:', {
+            cantidad: ventasUnicas.length,
+            ids: ventasUnicas.map((v) => v.id),
+        });
     };
 
     const handleClearSelection = () => {
         setSelectedVentaIds([]);
+        setVentasAcumuladas([]); // ✅ NUEVO: Limpiar carrito también
+
+        console.log('❌ Carrito limpiado');
     };
 
     // Helper para obtener fecha actual en formato datetime-local (YYYY-MM-DDTHH:MM)
@@ -453,23 +497,25 @@ export default function CreateEntregasUnificado({
         // Caso 0: Sin selección
         if (isEmptyMode) {
             return (
-                <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
                     <div className="p-12 text-center">
-                        <Package className="mx-auto h-16 w-16 text-blue-400 mb-4" />
-                        <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                            Selecciona ventas para comenzar
-                        </h3>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-6">
+                        <Package className="mx-auto mb-4 h-16 w-16 text-blue-400" />
+                        <h3 className="mb-2 text-xl font-semibold text-blue-900 dark:text-blue-100">Selecciona ventas para comenzar</h3>
+                        <p className="mb-6 text-sm text-blue-700 dark:text-blue-300">
                             Puedes seleccionar una o múltiples ventas desde el listado de la izquierda
                         </p>
-                        <ul className="text-sm text-left inline-block space-y-2 text-blue-700 dark:text-blue-300">
+                        <ul className="inline-block space-y-2 text-left text-sm text-blue-700 dark:text-blue-300">
                             <li className="flex items-center gap-2">
                                 <span className="text-lg">✓</span>
-                                <span><strong>1 venta</strong> → Recomendación inteligente + opciones de programación</span>
+                                <span>
+                                    <strong>1 venta</strong> → Recomendación inteligente + opciones de programación
+                                </span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <span className="text-lg">✓</span>
-                                <span><strong>2+ ventas</strong> → Recomendación inteligente + consolidación</span>
+                                <span>
+                                    <strong>2+ ventas</strong> → Recomendación inteligente + consolidación
+                                </span>
                             </li>
                         </ul>
                     </div>
@@ -480,37 +526,81 @@ export default function CreateEntregasUnificado({
         // Caso 1+: Una o múltiples ventas - Batch UI Unificado
         return (
             <>
-                {/* BLOQUE 1: Resumen de Selección */}
-                <Card className="bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800 p-4 mb-6">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Ventas</p>
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">{selectedCount}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Peso Total</p>
-                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1 font-mono">{totals.pesoTotal.toFixed(1)} kg</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Monto</p>
-                            <p className="text-xl font-bold text-blue-900 dark:text-blue-100 mt-1 font-mono">
-                                Bs {totals.montoTotal.toLocaleString('es-BO', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
-                            </p>
-                        </div>
+                {/* BLOQUE 0: Carrito de Ventas Acumuladas (Colapsable) */}
+                {ventasAcumuladas.length > 0 && (
+                    <div className="rounded-md border-green-200 bg-gradient-to-r from-green-50 to-green-50/50 dark:border-green-800 dark:from-green-900/20 dark:to-green-900/10">
+                        {/* Header clickeable */}
+                        <button
+                            onClick={() => setIsCarritoExpanded(!isCarritoExpanded)}
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-900/30 rounded-t transition-colors"
+                        >
+                            <h3 className="text-base font-semibold text-green-900 dark:text-green-100">
+                                🛒 Ventas Agregadas ({ventasAcumuladas.length})
+                            </h3>
+                            {isCarritoExpanded ? (
+                                <ChevronUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            ) : (
+                                <ChevronDown className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            )}
+                        </button>
+
+                        {/* Contenido colapsable */}
+                        {isCarritoExpanded && (
+                            <div className="px-4 pb-4 border-t border-green-200 dark:border-green-800">
+                                <div className="flex flex-wrap gap-2 pt-4">
+                                    {ventasAcumuladas.map((venta) => (
+                                        <div
+                                            key={venta.id}
+                                            className="flex flex-wrap items-center justify-between rounded border border-green-200 bg-white p-2 dark:border-green-800 dark:bg-slate-800"
+                                        >
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.id}</p>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">{venta.cliente?.nombre}</p>
+                                            </div>
+                                            <div className="ml-3 text-right">
+                                                <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                                    {(parseFloat(venta.peso_total_estimado as any) || parseFloat(venta.peso_estimado as any) || 0).toFixed(1)}{' '}
+                                                    kg
+                                                </p>
+                                                <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                                    Bs {(parseFloat(venta.subtotal as any) ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Totales */}
+                                {/* <div className="border-t border-green-200 dark:border-green-800 pt-3 mt-3">
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Ventas</p>
+                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">{ventasAcumuladas.length}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Peso Total</p>
+                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">{totals.pesoTotal.toFixed(1)} kg</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Monto Total</p>
+                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">
+                                                Bs {totals.montoTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div> */}
+                            </div>
+                        )}
                     </div>
-                </Card>
+                )}
 
                 {/* Mensajes de Estado (Error/Éxito) */}
                 {submitError && (
-                    <Card className="mb-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 p-4">
+                    <Card className="mb-4 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
                         <div className="flex items-start gap-3">
-                            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
                             <div className="flex-1">
                                 <h3 className="font-semibold text-red-800 dark:text-red-200">Error al crear entregas</h3>
-                                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{submitError}</p>
+                                <p className="mt-1 text-sm text-red-700 dark:text-red-300">{submitError}</p>
 
                                 {submitError.includes('no está disponible') && (
                                     <div className="mt-3 flex gap-2">
@@ -519,7 +609,7 @@ export default function CreateEntregasUnificado({
                                                 updateFormData({ vehiculo_id: null, chofer_id: null });
                                                 console.log('🔄 Limpiando selección para solicitar nueva recomendación');
                                             }}
-                                            className="text-sm px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                                            className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700"
                                         >
                                             Solicitar nueva recomendación
                                         </button>
@@ -531,27 +621,27 @@ export default function CreateEntregasUnificado({
                 )}
 
                 {successMessage && (
-                    <Card className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 p-4">
+                    <Card className="mb-4 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
                         <div className="flex items-start gap-3">
-                            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
                             <div>
                                 <h3 className="font-semibold text-green-800 dark:text-green-200">¡Éxito!</h3>
-                                <p className="text-sm text-green-700 dark:text-green-300 mt-1">{successMessage}</p>
+                                <p className="mt-1 text-sm text-green-700 dark:text-green-300">{successMessage}</p>
                             </div>
                         </div>
                     </Card>
                 )}
 
                 {/* BLOQUE 2: Asignación de Recursos */}
-                <div className="space-y-4 mb-6 pb-6 border-b border-gray-200 dark:border-slate-700">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="mb-2 space-y-4 border-b border-gray-200 pb-2 dark:border-slate-700">
+                    {/* <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
                         Asignación de Recursos
-                    </h2>
+                    </h2> */}
 
                     {/* ✅ DEBUG: Mostrar estado de renderización */}
                     {isEditMode && (
-                        <div className="text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-2 rounded text-blue-700 dark:text-blue-300">
+                        <div className="rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                             DEBUG - Edit Mode: vehiculo_id={formData.vehiculo_id}, chofer_id={formData.chofer_id}
                         </div>
                     )}
@@ -562,7 +652,7 @@ export default function CreateEntregasUnificado({
                         // En create mode: mostrar si hay recomendación o estado del hook
                         const shouldRender = isEditMode
                             ? selectedCount > 0
-                            : (recomendado || alertaRecomendacion || errorRecomendacion || loadingRecomendacion);
+                            : recomendado || alertaRecomendacion || errorRecomendacion || loadingRecomendacion;
 
                         console.log('🎯 [VehicleRecommendationCard] shouldRender:', shouldRender, {
                             isEditMode,
@@ -573,7 +663,7 @@ export default function CreateEntregasUnificado({
                                 alerta: !!alertaRecomendacion,
                                 error: !!errorRecomendacion,
                                 loading: loadingRecomendacion,
-                            }
+                            },
                         });
                         return shouldRender;
                     })() && (
@@ -581,7 +671,8 @@ export default function CreateEntregasUnificado({
                             recomendado={recomendado}
                             disponibles={disponibles}
                             todosVehiculos={vehiculos}
-                            pesoTotal={isEditMode ? totals.pesoTotal : pesoRecomendacion}
+                            pesoTotal={totals.pesoTotal}
+                            montoTotal={totals.montoTotal}
                             isLoading={loadingRecomendacion}
                             error={errorRecomendacion}
                             alerta={alertaRecomendacion}
@@ -598,15 +689,15 @@ export default function CreateEntregasUnificado({
 
                     {/* ✅ NUEVO: Mostrar ventas asignadas en modo edición */}
                     {isEditMode && selectedCount > 0 && (
-                        <Card className="dark:bg-slate-900 dark:border-slate-700 p-4 border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                        <Card className="border-l-4 border-blue-200 border-l-blue-500 bg-blue-50 p-4 dark:border-blue-800 dark:border-slate-700 dark:bg-blue-900/10 dark:bg-slate-900">
+                            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
                                 <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                 Ventas Asignadas a esta Entrega
                             </h3>
 
                             {/* Mostrar error si existe */}
                             {errorEliminar && (
-                                <div className="mb-3 p-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded text-xs text-red-700 dark:text-red-300">
+                                <div className="mb-3 rounded border border-red-300 bg-red-100 p-2 text-xs text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
                                     ❌ {errorEliminar}
                                 </div>
                             )}
@@ -614,13 +705,15 @@ export default function CreateEntregasUnificado({
                             <div className="space-y-2">
                                 {ventasAsignadas && ventasAsignadas.length > 0 ? (
                                     ventasAsignadas.map((venta) => (
-                                        <div key={venta.id} className="flex items-center justify-between p-2 bg-white dark:bg-slate-800 rounded border border-gray-200 dark:border-slate-700">
+                                        <div
+                                            key={venta.id}
+                                            className="flex items-center justify-between rounded border border-gray-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800"
+                                        >
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    #{venta.numero_venta}
-                                                </p>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.numero_venta}</p>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                    {venta.cliente?.nombre} • Bs {(venta.subtotal ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
+                                                    {venta.cliente?.nombre} • Bs{' '}
+                                                    {(venta.subtotal ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -632,7 +725,7 @@ export default function CreateEntregasUnificado({
                                                 <button
                                                     onClick={() => handleEliminarVenta(venta.id)}
                                                     disabled={ventasEliminando.has(venta.id)}
-                                                    className="flex-shrink-0 p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="flex-shrink-0 rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                                     title="Eliminar venta de esta entrega"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -641,16 +734,13 @@ export default function CreateEntregasUnificado({
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Sin ventas asignadas
-                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Sin ventas asignadas</p>
                                 )}
                             </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                            <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
                                 {ventasAsignadas?.length === 1
                                     ? '1 venta asignada a esta entrega'
-                                    : `${ventasAsignadas?.length ?? 0} ventas asignadas a esta entrega`
-                                }
+                                    : `${ventasAsignadas?.length ?? 0} ventas asignadas a esta entrega`}
                             </p>
                         </Card>
                     )}
@@ -678,35 +768,33 @@ export default function CreateEntregasUnificado({
 
                 {/* BLOQUE 3: Opciones & Validación */}
                 <div className="space-y-3">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
                         <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                         Validación & Opciones
                     </h2>
 
                     {/* Tipo de Reporte */}
-                    <Card className="dark:bg-slate-900 dark:border-slate-700 p-3 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                        <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <Card className="border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:border-slate-700 dark:bg-blue-900/20 dark:bg-slate-900">
+                        <p className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                            <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                             <span>
                                 {selectedCount === 1
                                     ? `Se creará 1 reporte individual`
-                                    : `Se creará 1 reporte consolidado para ${selectedCount} entregas`
-                                }
+                                    : `Se creará 1 reporte consolidado para ${selectedCount} entregas`}
                             </span>
                         </p>
                     </Card>
 
                     {/* Advertencias */}
                     {capacidadInsuficiente && (
-                        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 p-3">
+                        <Card className="border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                             <div className="flex items-start gap-3">
-                                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
                                 <div>
-                                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                                        Capacidad insuficiente
-                                    </p>
-                                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                                        Peso: {totals.pesoTotal.toFixed(1)} kg / Capacidad: {(parseFloat(selectedVehiculo?.capacidad_kg as any) ?? 0).toFixed(1)} kg
+                                    <p className="text-sm font-medium text-red-800 dark:text-red-200">Capacidad insuficiente</p>
+                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        Peso: {totals.pesoTotal.toFixed(1)} kg / Capacidad:{' '}
+                                        {(parseFloat(selectedVehiculo?.capacidad_kg as any) ?? 0).toFixed(1)} kg
                                     </p>
                                 </div>
                             </div>
@@ -718,12 +806,12 @@ export default function CreateEntregasUnificado({
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 p-4">
+        <div className="min-h-screen bg-white p-4 dark:bg-slate-950">
             {/* Barra de Progreso - Aparece cuando se está enviando */}
             {isSubmitting && (
-                <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 z-50 overflow-hidden">
+                <div className="fixed top-0 right-0 left-0 z-50 h-1 overflow-hidden bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700">
                     <div
-                        className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 animate-pulse"
+                        className="h-full animate-pulse bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400"
                         style={{
                             animation: 'progress 2s ease-in-out infinite',
                             width: '100%',
@@ -739,25 +827,23 @@ export default function CreateEntregasUnificado({
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto">
+            <div className="mx-auto max-w-7xl">
                 {/* Header */}
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                             {isEditMode ? 'Editar Entrega' : `Crear Entregas (${selectedCount} Seleccionada${selectedCount !== 1 ? 's' : ''})`}
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-gray-600 dark:text-gray-400">
                             {isEditMode ? 'Modifica la entrega según sea necesario' : 'Selecciona una o más ventas para continuar'}
                         </p>
                     </div>
 
                     {/* Estado de Envío */}
                     {isSubmitting && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-                            <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                                Creando entregas...
-                            </span>
+                        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20">
+                            <div className="h-3 w-3 animate-pulse rounded-full bg-blue-500" />
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Creando entregas...</span>
                         </div>
                     )}
                 </div>
@@ -765,7 +851,7 @@ export default function CreateEntregasUnificado({
                 {/* Layout Principal: Vertical Stack */}
                 <div className="space-y-8">
                     {/* SECCIÓN 1: Selector de Ventas */}
-                    <Card className="dark:bg-slate-900 dark:border-slate-700 p-4">
+                    <Card className="p-4 dark:border-slate-700 dark:bg-slate-900">
                         <BatchVentaSelector
                             ventas={ventas}
                             selectedIds={selectedVentaIds}
@@ -780,34 +866,27 @@ export default function CreateEntregasUnificado({
                     {/* SECCIÓN 2: Configuración de Entregas */}
                     {selectedCount >= 1 && (
                         <div className="space-y-6">
-
                             {/* Panel de Configuración */}
-                            <div className="space-y-6">
-                                {renderDynamicFormPanel()}
-                            </div>
+                            <div className="space-y-6">{renderDynamicFormPanel()}</div>
 
                             {/* Botón Cancelar en sección */}
-                            <div className="pt-4">
-                                <Button
-                                    onClick={handleClearSelection}
-                                    variant="outline"
-                                    className="w-full"
-                                >
+                            {/* <div className="pt-4">
+                                <Button onClick={handleClearSelection} variant="outline" className="w-full">
                                     Cancelar Selección
                                 </Button>
-                            </div>
+                            </div> */}
                         </div>
                     )}
                 </div>
 
                 {/* Botón Flotante (FAB) - Crear Entrega */}
                 {selectedCount >= 1 && (
-                    <div className="fixed bottom-6 right-6 z-50">
+                    <div className="fixed right-6 bottom-6 z-50">
                         {/* Barra de progreso del botón flotante */}
                         {isSubmitting && (
-                            <div className="absolute -top-2 left-0 right-0 h-1 bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 rounded-full overflow-hidden shadow-lg">
+                            <div className="absolute -top-2 right-0 left-0 h-1 overflow-hidden rounded-md bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 shadow-lg">
                                 <div
-                                    className="h-full bg-gradient-to-r from-green-300 via-emerald-300 to-teal-300 animate-pulse"
+                                    className="h-full animate-pulse bg-gradient-to-r from-green-300 via-emerald-300 to-teal-300"
                                     style={{
                                         animation: 'progress-small 1.5s ease-in-out infinite',
                                         width: '100%',
@@ -831,58 +910,56 @@ export default function CreateEntregasUnificado({
                                     setShowOutputSelection(true);
                                 });
                             }}
-                            disabled={
-                                !formData.vehiculo_id || !formData.chofer_id || capacidadInsuficiente || isSubmitting
-                            }
+                            disabled={!formData.vehiculo_id || !formData.chofer_id || capacidadInsuficiente || isSubmitting}
                             title={
                                 !formData.vehiculo_id || !formData.chofer_id
                                     ? 'Selecciona vehículo y chofer'
                                     : capacidadInsuficiente
-                                        ? 'Revisa la capacidad del vehículo'
-                                        : isEditMode ? 'Guardar cambios' : 'Crear entregas'
+                                      ? 'Revisa la capacidad del vehículo'
+                                      : isEditMode
+                                        ? 'Guardar cambios'
+                                        : 'Crear entregas'
                             }
-                            className={`
-                                flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-white shadow-lg
-                                transition-all duration-300 transform
-                                ${isSubmitting ? 'scale-105 hover:scale-105' : 'hover:scale-110 active:scale-95'}
-                                ${!formData.vehiculo_id || !formData.chofer_id || capacidadInsuficiente || isSubmitting
-                                    ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-                                    : 'bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 hover:shadow-xl'
-                                }
-                            `}
+                            className={`flex transform items-center justify-center gap-2 rounded-md px-2 py-2 font-semibold text-white shadow-lg transition-all duration-300 ${isSubmitting ? 'scale-105 hover:scale-105' : 'hover:scale-110 active:scale-95'} ${
+                                !formData.vehiculo_id || !formData.chofer_id || capacidadInsuficiente || isSubmitting
+                                    ? 'cursor-not-allowed bg-gray-400 dark:bg-gray-600'
+                                    : 'bg-green-600 hover:bg-green-700 hover:shadow-xl dark:bg-green-700 dark:hover:bg-green-600'
+                            } `}
                         >
                             {isSubmitting ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent border-r-transparent rounded-full animate-spin" />
-                                    <span className="hidden sm:inline text-sm font-medium">
-                                        {isEditMode ? 'Editando...' : 'Creando...'}
-                                    </span>
-                                    <span className="sm:hidden text-sm">...</span>
+                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent border-r-transparent" />
+                                    <span className="hidden text-sm font-medium sm:inline">{isEditMode ? 'Editando...' : 'Creando...'}</span>
+                                    <span className="text-sm sm:hidden">...</span>
                                 </>
                             ) : (
                                 <>
                                     <Plus className="h-5 w-5" />
-                                    <span className="hidden sm:inline text-sm">
-                                        {isEditMode
-                                            ? 'Editar Entrega'
-                                            : `${selectedCount} ${selectedCount === 1 ? 'Entrega' : 'Entregas'}`
-                                        }
+                                    <span className="hidden text-sm sm:inline">
+                                        {isEditMode ? 'Editar Entrega' : `${selectedCount} ${selectedCount === 1 ? 'Entrega' : 'Entregas'}`}
                                     </span>
                                 </>
                             )}
                         </button>
 
+                        {/* Botón Cancelar en sección */}
+                        <div className="pt-2">
+                            <Button onClick={handleClearSelection} variant="outline" className="w-full">
+                                Limpiar Todo
+                            </Button>
+                        </div>
+
                         {/* Indicador de estado */}
                         {(capacidadInsuficiente || !formData.vehiculo_id || !formData.chofer_id) && (
                             <div className="absolute -top-12 right-0 whitespace-nowrap">
-                                <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-3 py-1 rounded-full border border-red-200 dark:border-red-800 shadow-sm">
+                                <div className="rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
                                     {capacidadInsuficiente
                                         ? '⚠️ Revisar capacidad'
                                         : !formData.vehiculo_id && !formData.chofer_id
-                                            ? '⏳ Vehículo + Chofer'
-                                            : !formData.vehiculo_id
-                                                ? '⏳ Vehículo'
-                                                : '⏳ Chofer'}
+                                          ? '⏳ Vehículo + Chofer'
+                                          : !formData.vehiculo_id
+                                            ? '⏳ Vehículo'
+                                            : '⏳ Chofer'}
                                 </div>
                             </div>
                         )}
@@ -890,7 +967,7 @@ export default function CreateEntregasUnificado({
                         {/* Indicador de éxito */}
                         {formData.vehiculo_id && formData.chofer_id && !capacidadInsuficiente && (
                             <div className="absolute -top-12 right-0 whitespace-nowrap">
-                                <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-3 py-1 rounded-full border border-green-200 dark:border-green-800 shadow-sm">
+                                <div className="rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs text-green-700 shadow-sm dark:border-green-800 dark:bg-green-900/30 dark:text-green-400">
                                     ✅ {isEditMode ? 'Listo para guardar' : 'Listo para crear'}
                                 </div>
                             </div>
@@ -899,10 +976,7 @@ export default function CreateEntregasUnificado({
                 )}
 
                 {/* Modal de Consolidación Automática */}
-                <ConsolidacionAutomaticaModal
-                    isOpen={isConsolidacionModalOpen}
-                    onClose={() => setIsConsolidacionModalOpen(false)}
-                />
+                <ConsolidacionAutomaticaModal isOpen={isConsolidacionModalOpen} onClose={() => setIsConsolidacionModalOpen(false)} />
 
                 {/* ✅ NUEVO: Modal OutputSelectionModal para imprimir entrega */}
                 {entregaParaImprimir && (

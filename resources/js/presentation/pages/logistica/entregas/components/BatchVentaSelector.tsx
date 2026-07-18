@@ -1,11 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import type { VentaConDetalles } from '@/domain/entities/entregas';
+import type { Id } from '@/domain/entities/shared';
+import { Badge } from '@/presentation/components/ui/badge';
 import { Card } from '@/presentation/components/ui/card';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Badge } from '@/presentation/components/ui/badge';
-import { CheckCircle2, Package, Search, MapPin, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
-import type { VentaConDetalles } from '@/domain/entities/entregas';
-import type { Id } from '@/domain/entities/shared';
+import { Calendar, CheckCircle2, ChevronDown, ChevronUp, MapPin, Package, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // ✅ NUEVO: Función helper para parsear fechas sin problemas de timezone
 const parsearFecha = (fechaStr: string) => {
@@ -70,7 +70,8 @@ export default function BatchVentaSelector({
             if (fechaDesde) params.append('fecha_desde', fechaDesde);
             if (fechaHasta) params.append('fecha_hasta', fechaHasta);
             if (tipoFecha && tipoFecha !== 'fecha_entrega_comprometida') params.append('tipo_fecha', tipoFecha); // ✅ NUEVO
-            if (hora) params.append('hora', hora); // ✅ NUEVO: Hora específica
+            if (hora)
+                params.append('hora', hora); // ✅ NUEVO: Hora específica
             else if (turno) params.append('turno', turno); // ✅ NUEVO: Turno (si no hay hora específica)
             params.append('page', '1');
 
@@ -121,46 +122,23 @@ export default function BatchVentaSelector({
         }
     }, [searchInputValue, fechaDesde, fechaHasta, tipoFecha, turno, hora]); // ✅ NUEVO: Agregados tipoFecha, turno y hora
 
-    // Función para limpiar filtros y cargar ventas de hoy
-    const handleClearSearch = useCallback(async () => {
+    // Función para limpiar filtros
+    const handleClearSearch = useCallback(() => {
         // Reset de todos los filtros
         setSearchInputValue('');
         setSearchTerm('');
+        setFechaDesde('');
+        setFechaHasta('');
+        setTipoFecha('fecha_entrega_comprometida');
         setTurno('');
         setHora('');
-        setTipoFecha('fecha_entrega_comprometida');
         setSearchError(null);
         setCurrentPage(1);
+        setSearchResults([]);
+        setHasSearched(false);
 
-        // ✅ NUEVO: Establecer fecha_desde y fecha_hasta a HOY
-        const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        setFechaDesde(hoy);
-        setFechaHasta(hoy);
-
-        // ✅ Buscar ventas de hoy
-        setIsSearching(true);
-        try {
-            const params = new URLSearchParams();
-            params.append('fecha_desde', hoy);
-            params.append('fecha_hasta', hoy);
-            params.append('tipo_fecha', 'fecha_entrega_comprometida');
-            params.append('page', '1');
-
-            const response = await fetch(`/logistica/entregas/ventas/search?${params.toString()}`);
-            if (response.ok) {
-                const data = await response.json();
-                setSearchResults(data.data);
-                setTotalPages(data.pagination.last_page);
-                setHasSearched(true);
-                console.log('🧹 [BatchVentaSelector] Filtros limpiados, cargadas ventas de hoy');
-                console.log('✅ [BatchVentaSelector] Selección mantenida:', selectedIds);
-            }
-        } catch (error) {
-            console.error('Error al cargar ventas de hoy:', error);
-        } finally {
-            setIsSearching(false);
-        }
-    }, [selectedIds]);
+        console.log('🧹 [BatchVentaSelector] Todos los filtros limpiados');
+    }, []);
 
     // Manejar Enter en el input
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -173,7 +151,7 @@ export default function BatchVentaSelector({
     const filteredVentas = useMemo(() => {
         // Si hay búsqueda activa, mostrar resultados de búsqueda (incluso si son 0)
         if (hasSearched) {
-            return searchResults;  // ✅ FIX: Mostrar resultados aunque estén vacíos
+            return searchResults; // ✅ FIX: Mostrar resultados aunque estén vacíos
         }
         // Sino, usar datos iniciales cargados
         return ventas;
@@ -181,14 +159,15 @@ export default function BatchVentaSelector({
 
     // ✅ NUEVO: Notificar al padre cuando hay resultados de búsqueda
     useEffect(() => {
-        if (hasSearched && onSearchResultsChange) {
+        // Notificar cuando hay búsqueda activa Y hay resultados
+        if (hasSearched && searchResults.length > 0 && onSearchResultsChange) {
             console.log('📢 [BatchVentaSelector] Notificando resultados de búsqueda al padre:', {
                 cantidad: searchResults.length,
-                ids: searchResults.map(v => v.id),
+                ids: searchResults.map((v) => v.id),
             });
             onSearchResultsChange(searchResults);
         }
-    }, [hasSearched, searchResults, onSearchResultsChange]);
+    }, [searchResults, onSearchResultsChange]);
 
     // Agrupar ventas por localidad
     const ventasPorLocalidad = useMemo(() => {
@@ -229,41 +208,37 @@ export default function BatchVentaSelector({
     const totalSeleccionado = useMemo(() => {
         return {
             cantidad: selectedIds.length,
-            peso: ventas
-                .filter((v) => selectedIds.includes(v.id))
-                .reduce((sum, v) => sum + (v.peso_total_estimado || v.peso_estimado || 0), 0),  // ✅ Usar peso_total_estimado
-            monto: ventas
-                .filter((v) => selectedIds.includes(v.id))
-                .reduce((sum, v) => sum + (v.subtotal || 0), 0),  // ✅ Usar subtotal (sin impuesto)
+            peso: ventas.filter((v) => selectedIds.includes(v.id)).reduce((sum, v) => sum + (v.peso_total_estimado || v.peso_estimado || 0), 0), // ✅ Usar peso_total_estimado
+            monto: ventas.filter((v) => selectedIds.includes(v.id)).reduce((sum, v) => sum + (v.subtotal || 0), 0), // ✅ Usar subtotal (sin impuesto)
         };
     }, [ventas, selectedIds]);
 
     return (
         <div className="space-y-4">
             {/* Encabezado y búsqueda - STICKY */}
-            <div className="space-y-3 sticky top-0 bg-gradient-to-b from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 dark:to-transparent z-10 pb-2">
+            <div className="sticky top-0 z-10 space-y-3 bg-gradient-to-b from-white via-white to-transparent pb-2 dark:from-slate-900 dark:via-slate-900 dark:to-transparent">
                 <div className="flex items-center justify-between">
-                    <Label className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Seleccionar Ventas
-                    </Label>
-                    <div className="flex items-center gap-3">
+                    <Label className="text-lg font-semibold text-gray-900 dark:text-white">Seleccionar Ventas</Label>
+                    <div className="flex items-center gap-2">
                         {/* Toggle Compacto/Detallado */}
-                        <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
+                        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
                             <button
                                 onClick={() => setViewMode('detailed')}
-                                className={`px-2 py-1 text-xs font-medium rounded transition-all ${viewMode === 'detailed'
+                                className={`rounded px-2 py-1 text-xs font-medium transition-all ${
+                                    viewMode === 'detailed'
                                         ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                                    }`}
+                                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                                }`}
                             >
                                 Detallada
                             </button>
                             <button
                                 onClick={() => setViewMode('compact')}
-                                className={`px-2 py-1 text-xs font-medium rounded transition-all ${viewMode === 'compact'
+                                className={`rounded px-2 py-1 text-xs font-medium transition-all ${
+                                    viewMode === 'compact'
                                         ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                                    }`}
+                                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                                }`}
                             >
                                 Compacta
                             </button>
@@ -273,72 +248,70 @@ export default function BatchVentaSelector({
 
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedIds.length} seleccionadas
-                    {hasSearched && (
-                        <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
-                            • Búsqueda activa
-                        </span>
-                    )}
+                    {hasSearched && <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">• Búsqueda activa</span>}
                 </div>
 
                 {/* Búsqueda con Botón */}
                 <div className="space-y-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Busca por: ID venta • Número • Cliente • Teléfono • NIT • Localidad
-                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Busca por: ID venta • Número • Cliente • Teléfono • NIT • Localidad</p>
                     <div className="relative flex gap-2">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                             <Input
                                 placeholder="Id, número, cliente, teléfono, NIT o localidad..."
                                 value={searchInputValue}
                                 onChange={(e) => setSearchInputValue(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 disabled={isSearching}
-                                className="pl-10 dark:bg-slate-800 dark:border-slate-600 dark:text-white disabled:opacity-50"
+                                className="pl-10 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                             />
                         </div>
                         <button
                             onClick={handleSearch}
-                            disabled={!searchInputValue || isSearching}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white dark:text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                            disabled={(!searchInputValue && !fechaDesde && !fechaHasta && !turno && !hora) || isSearching}
+                            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300 dark:text-white dark:disabled:bg-gray-700"
                         >
                             {isSearching ? (
                                 <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     <span>Buscando...</span>
                                 </>
                             ) : (
                                 'Buscar'
                             )}
                         </button>
+                        {/* ✅ NUEVO: Filtros de Fecha Avanzados - Collapsible */}
+                        <button
+                            onClick={() => setIsDateFilterExpanded(!isDateFilterExpanded)}
+                            className={`flex items-center justify-between rounded-lg p-2 transition-all ${
+                                isDateFilterExpanded
+                                    ? 'border border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800'
+                                    : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                                {/* <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Filtros de Fecha y Turno</span> */}
+                                {(fechaDesde || fechaHasta || turno) && (
+                                    <Badge variant="secondary" className="text-xs">
+                                        ✓ Activo
+                                    </Badge>
+                                )}
+                            </div>
+                            {isDateFilterExpanded ? (
+                                <ChevronUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            )}
+                        </button>
                     </div>
 
                     {/* Error en búsqueda */}
                     {searchError && (
-                        <div className="flex items-center justify-between text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
-                            <span className="text-red-700 dark:text-red-300">
-                                ❌ {searchError}
-                            </span>
-                            <button
-                                onClick={() => setSearchError(null)}
-                                className="text-red-600 dark:text-red-400 hover:underline font-medium"
-                            >
+                        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-2 text-xs dark:border-red-800 dark:bg-red-900/20">
+                            <span className="text-red-700 dark:text-red-300">❌ {searchError}</span>
+                            <button onClick={() => setSearchError(null)} className="font-medium text-red-600 hover:underline dark:text-red-400">
                                 Cerrar
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Indicador de búsqueda activa */}
-                    {hasSearched && !searchError && (
-                        <div className="flex items-center justify-between text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <span className="text-blue-700 dark:text-blue-300">
-                                🔍 {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
-                            </span>
-                            <button
-                                onClick={handleClearSearch}
-                                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                            >
-                                Limpiar búsqueda
                             </button>
                         </div>
                     )}
@@ -346,6 +319,16 @@ export default function BatchVentaSelector({
                     {/* ✅ NUEVO: Chips de Filtros Activos */}
                     {(searchInputValue || fechaDesde || fechaHasta || turno || hora) && (
                         <div className="flex flex-wrap gap-2">
+                            {hasSearched && !searchError && (
+                                <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs dark:border-blue-800 dark:bg-blue-900/20">
+                                    <span className="text-blue-700 dark:text-blue-300 mr-2">
+                                        🔍 {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
+                                    </span>
+                                    <button onClick={handleClearSearch} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                                        Limpiar búsqueda
+                                    </button>
+                                </div>
+                            )}
                             {searchInputValue && (
                                 <Badge variant="secondary" className="text-xs">
                                     🔎 Búsqueda: {searchInputValue}
@@ -378,144 +361,121 @@ export default function BatchVentaSelector({
                             )}
                         </div>
                     )}
-                </div>
 
-                {/* ✅ NUEVO: Filtros de Fecha Avanzados - Collapsible */}
-                <button
-                    onClick={() => setIsDateFilterExpanded(!isDateFilterExpanded)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
-                        isDateFilterExpanded
-                            ? 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600'
-                            : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Filtros de Fecha y Turno
-                        </span>
-                        {(fechaDesde || fechaHasta || turno) && (
-                            <Badge variant="secondary" className="text-xs">
-                                ✓ Activo
-                            </Badge>
-                        )}
-                    </div>
-                    {isDateFilterExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                    ) : (
-                        <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                    )}
-                </button>
+                    {/* Indicador de búsqueda activa */}
+                    {/* {hasSearched && !searchError && (
+                        <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs dark:border-blue-800 dark:bg-blue-900/20">
+                            <span className="text-blue-700 dark:text-blue-300">
+                                🔍 {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
+                            </span>
+                            <button onClick={handleClearSearch} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                                Limpiar búsqueda
+                            </button>
+                        </div>
+                    )} */}
+                </div>
 
                 {/* ✅ NUEVO: Contenido de filtros avanzados */}
                 {isDateFilterExpanded && (
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
-                        {/* Selector de tipo de fecha */}
-                        <div>
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-2 block font-medium">
-                                Tipo de Fecha
-                            </label>
-                            <div className="flex gap-3">
-                                <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <input
-                                        type="radio"
-                                        name="tipo_fecha"
-                                        value="fecha_entrega_comprometida"
-                                        checked={tipoFecha !== 'created_at'}
-                                        onChange={() => setTipoFecha('fecha_entrega_comprometida')}
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="text-slate-700 dark:text-slate-300">📅 Fecha de Entrega Comprometida</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                    <input
-                                        type="radio"
-                                        name="tipo_fecha"
-                                        value="created_at"
-                                        checked={tipoFecha === 'created_at'}
-                                        onChange={() => setTipoFecha('created_at')}
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="text-slate-700 dark:text-slate-300">📝 Fecha de Creación</span>
-                                </label>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Selector de tipo de fecha */}
+                            <div>
+                                <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">Tipo de Fecha</label>
+                                <div className="flex gap-3">
+                                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                                        <input
+                                            type="radio"
+                                            name="tipo_fecha"
+                                            value="fecha_entrega_comprometida"
+                                            checked={tipoFecha !== 'created_at'}
+                                            onChange={() => setTipoFecha('fecha_entrega_comprometida')}
+                                            className="h-4 w-4"
+                                        />
+                                        <span className="text-slate-700 dark:text-slate-300">📅 Fecha de Entrega Comprometida</span>
+                                    </label>
+                                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                                        <input
+                                            type="radio"
+                                            name="tipo_fecha"
+                                            value="created_at"
+                                            checked={tipoFecha === 'created_at'}
+                                            onChange={() => setTipoFecha('created_at')}
+                                            className="h-4 w-4"
+                                        />
+                                        <span className="text-slate-700 dark:text-slate-300">📝 Fecha de Creación</span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Botones rápidos de fecha */}
-                        <div>
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-2 block font-medium">
-                                Fechas Rápidas
-                            </label>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
-                                        setFechaDesde(ayer);
-                                        setFechaHasta(ayer);
-                                        handleSearch();
-                                    }}
-                                    className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-                                >
-                                    ← Ayer
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const hoy = new Date().toISOString().split('T')[0];
-                                        setFechaDesde(hoy);
-                                        setFechaHasta(hoy);
-                                        handleSearch();
-                                    }}
-                                    className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-                                >
-                                    Hoy
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
-                                        setFechaDesde(manana);
-                                        setFechaHasta(manana);
-                                        handleSearch();
-                                    }}
-                                    className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-                                >
-                                    Mañana →
-                                </button>
+                            {/* Botones rápidos de fecha */}
+                            <div>
+                                <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">Fechas Rápidas</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+                                            setFechaDesde(ayer);
+                                            setFechaHasta(ayer);
+                                            handleSearch();
+                                        }}
+                                        className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700 transition-colors hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                                    >
+                                        ← Ayer
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const hoy = new Date().toISOString().split('T')[0];
+                                            setFechaDesde(hoy);
+                                            setFechaHasta(hoy);
+                                            handleSearch();
+                                        }}
+                                        className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700 transition-colors hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                                    >
+                                        Hoy
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
+                                            setFechaDesde(manana);
+                                            setFechaHasta(manana);
+                                            handleSearch();
+                                        }}
+                                        className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700 transition-colors hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                                    >
+                                        Mañana →
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {/* Inputs de fecha manual */}
                         <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
-                                    Desde
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={fechaDesde}
-                                    onChange={(e) => setFechaDesde(e.target.value)}
-                                    className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm h-9"
-                                />
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="mb-1 block text-xs text-slate-600 dark:text-slate-400">Desde</label>
+                                    <Input
+                                        type="date"
+                                        value={fechaDesde}
+                                        onChange={(e) => setFechaDesde(e.target.value)}
+                                        className="h-9 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs text-slate-600 dark:text-slate-400">Hasta</label>
+                                    <Input
+                                        type="date"
+                                        value={fechaHasta}
+                                        onChange={(e) => setFechaHasta(e.target.value)}
+                                        className="h-9 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
-                                    Hasta
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={fechaHasta}
-                                    onChange={(e) => setFechaHasta(e.target.value)}
-                                    className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-sm h-9"
-                                />
-                            </div>
-                        </div>
-
-                        {/* ✅ NUEVO: Selector de turno con horas individuales */}
-                        <div className="space-y-3">
+                            {/* ✅ NUEVO: Selector de turno con horas individuales */}
+                        <div className="grid grid-cols-2 gap-2">
                             {/* Turno Mañana */}
                             <div>
-                                <label className="text-xs text-slate-600 dark:text-slate-400 mb-2 block font-medium">
-                                    ☀ Mañana (08:00-12:00)
-                                </label>
+                                <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">☀ Mañana (08:00-12:00)</label>
                                 <div className="flex flex-wrap gap-2">
                                     {[8, 9, 10, 11].map((h) => {
                                         const horaStr = String(h).padStart(2, '0') + ':00';
@@ -532,10 +492,10 @@ export default function BatchVentaSelector({
                                                         setTimeout(() => handleSearch(), 0);
                                                     }
                                                 }}
-                                                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
+                                                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                                                     isSelected
                                                         ? 'bg-blue-600 text-white'
-                                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                                                 }`}
                                             >
                                                 {horaStr}
@@ -547,9 +507,7 @@ export default function BatchVentaSelector({
 
                             {/* Turno Tarde */}
                             <div>
-                                <label className="text-xs text-slate-600 dark:text-slate-400 mb-2 block font-medium">
-                                    🌇 Tarde (14:00-18:00)
-                                </label>
+                                <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">🌇 Tarde (14:00-18:00)</label>
                                 <div className="flex flex-wrap gap-2">
                                     {[14, 15, 16, 17].map((h) => {
                                         const horaStr = String(h).padStart(2, '0') + ':00';
@@ -566,10 +524,10 @@ export default function BatchVentaSelector({
                                                         setTimeout(() => handleSearch(), 0);
                                                     }
                                                 }}
-                                                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
+                                                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                                                     isSelected
                                                         ? 'bg-blue-600 text-white'
-                                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
                                                 }`}
                                             >
                                                 {horaStr}
@@ -579,90 +537,51 @@ export default function BatchVentaSelector({
                                 </div>
                             </div>
                         </div>
+                        </div>
+                        
 
                         {/* Limpiar filtros */}
                         {(fechaDesde || fechaHasta || turno || hora) && (
                             <button
-                                onClick={handleClearSearch}  // ✅ FIX: Llamar a handleClearSearch en lugar de setStates inline
-                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                onClick={handleClearSearch} // ✅ FIX: Llamar a handleClearSearch en lugar de setStates inline
+                                className="text-xs text-blue-600 hover:underline dark:text-blue-400"
                             >
                                 ✕ Limpiar todos los filtros
                             </button>
                         )}
                     </div>
                 )}
-
-                {/* ✅ NUEVO: Botón Buscar General (aplica todos los filtros) */}
-                <button
-                    onClick={handleSearch}
-                    disabled={isSearching || (!searchInputValue && !fechaDesde && !fechaHasta && !turno && !hora)}
-                    className={`w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                        isSearching || (!searchInputValue && !fechaDesde && !fechaHasta && !turno && !hora)
-                            ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white'
-                    }`}
-                >
-                    {isSearching ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            Buscando...
-                        </>
-                    ) : (
-                        <>
-                            <Search className="h-4 w-4" />
-                            Buscar Ventas
-                        </>
-                    )}
-                </button>
-
-                {/* Botones de acción */}
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => onSelectAll(ventas.map((v) => v.id))}
-                        className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200"
-                    >
-                        Seleccionar Todo
-                    </button>
-                    <button
-                        onClick={onClearSelection}
-                        className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
-                    >
-                        Limpiar Formulario de Entrega
-                    </button>
-                </div>
             </div>
 
             {/* Lista de ventas agrupadas por localidad */}
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 overflow-y-auto">
                 {ventasPorLocalidad.length === 0 ? (
-                    <Card className="p-4 text-center text-gray-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-400">
+                    <Card className="p-4 text-center text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-400">
                         No hay ventas disponibles
                     </Card>
                 ) : (
                     ventasPorLocalidad.map((grupo) => {
                         const isExpanded = expandedLocalidades.has(grupo.nombre);
-                        const localidadVentasSeleccionadas = grupo.ventas.filter((v) =>
-                            selectedIds.includes(v.id)
-                        ).length;
+                        const localidadVentasSeleccionadas = grupo.ventas.filter((v) => selectedIds.includes(v.id)).length;
 
                         return (
                             <div key={grupo.nombre} className="space-y-2">
                                 {/* Encabezado de localidad */}
                                 <button
                                     onClick={() => toggleLocalidad(grupo.nombre)}
-                                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${isExpanded
-                                        ? 'bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-900/20 border border-blue-300 dark:border-blue-700'
-                                        : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700'
-                                        }`}
+                                    className={`flex w-full items-center justify-between rounded-lg p-3 transition-all ${
+                                        isExpanded
+                                            ? 'border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 dark:border-blue-700 dark:from-blue-900/40 dark:to-blue-900/20'
+                                            : 'border border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700'
+                                    }`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                         <div className="text-left">
-                                            <p className="font-semibold text-gray-900 dark:text-white">
-                                                {grupo.nombre}
-                                            </p>
+                                            <p className="font-semibold text-gray-900 dark:text-white">{grupo.nombre}</p>
                                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                {grupo.ventas.length} venta{grupo.ventas.length !== 1 ? 's' : ''} • {localidadVentasSeleccionadas} seleccionada{localidadVentasSeleccionadas !== 1 ? 's' : ''}
+                                                {grupo.ventas.length} venta{grupo.ventas.length !== 1 ? 's' : ''} • {localidadVentasSeleccionadas}{' '}
+                                                seleccionada{localidadVentasSeleccionadas !== 1 ? 's' : ''}
                                             </p>
                                         </div>
                                     </div>
@@ -680,7 +599,7 @@ export default function BatchVentaSelector({
 
                                 {/* Ventas de la localidad */}
                                 {isExpanded && (
-                                    <div className={`space-y-2 pl-4 border-l-2 border-blue-300 dark:border-blue-700`}>
+                                    <div className={`space-y-2 border-l-2 border-blue-300 p-4 dark:border-blue-700`}>
                                         {grupo.ventas.map((venta) => {
                                             const isSelected = selectedIds.includes(venta.id);
                                             const isAsignada = ventasAsignadas.includes(venta.id);
@@ -692,29 +611,38 @@ export default function BatchVentaSelector({
                                                     <Card
                                                         key={venta.id}
                                                         onClick={() => onToggleVenta(venta.id)}
-                                                        className={`cursor-pointer transition-all p-2 ${isSelected
-                                                            ? isNueva
-                                                                ? 'ring-2 ring-green-500 dark:ring-green-400 bg-green-50 dark:bg-green-900/20'
-                                                                : 'ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                                            : 'hover:shadow-md dark:hover:bg-slate-800'
-                                                            } dark:bg-slate-900 dark:border-slate-700`}
+                                                        className={`cursor-pointer p-2 transition-all ${
+                                                            isSelected
+                                                                ? isNueva
+                                                                    ? 'bg-green-50 ring-2 ring-green-500 dark:bg-green-900/20 dark:ring-green-400'
+                                                                    : 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-900/20 dark:ring-blue-400'
+                                                                : 'hover:shadow-md dark:hover:bg-slate-800'
+                                                        } dark:border-slate-700 dark:bg-slate-900`}
                                                     >
                                                         <div className="flex items-center gap-2 text-xs">
                                                             {isSelected ? (
-                                                                <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${isNueva ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
+                                                                <CheckCircle2
+                                                                    className={`h-4 w-4 flex-shrink-0 ${isNueva ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}
+                                                                />
                                                             ) : (
-                                                                <div className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                                                <div className="h-4 w-4 flex-shrink-0 rounded border border-gray-300 dark:border-gray-600" />
                                                             )}
-                                                            <span className="font-mono font-semibold text-gray-900 dark:text-white min-w-fit">
-                                                                Folio: {venta.id}  | {venta.numero_venta}
+                                                            <span className="min-w-fit font-mono font-semibold text-gray-900 dark:text-white">
+                                                                Folio: #{venta.id}
                                                             </span>
-                                                            <span className="text-gray-600 dark:text-gray-400">
-                                                                {venta.cliente.nombre}
-                                                            </span>
-                                                            {isNueva && <Badge variant="default" className="ml-auto text-xs bg-green-600">✨ Nueva</Badge>}
-                                                            {isAsignada && isSelected && <Badge variant="secondary" className="ml-auto text-xs">✓ Asignada</Badge>}
-                                                            <span className="text-gray-600 dark:text-gray-400 font-semibold ml-auto">
-                                                                Bs {(venta.subtotal).toFixed(0)}
+                                                            <span className="text-gray-600 dark:text-gray-400">{venta.cliente.nombre}</span>
+                                                            {/* {isNueva && (
+                                                                <Badge variant="default" className="ml-auto bg-green-600 text-xs">
+                                                                    ✨ Nueva
+                                                                </Badge>
+                                                            )} */}
+                                                            {isAsignada && isSelected && (
+                                                                <Badge variant="secondary" className="ml-auto text-xs">
+                                                                    ✓ Asignada
+                                                                </Badge>
+                                                            )}
+                                                            <span className="ml-auto font-semibold text-gray-600 dark:text-gray-400">
+                                                                Bs {venta.subtotal.toFixed(0)}
                                                             </span>
                                                         </div>
                                                     </Card>
@@ -726,46 +654,50 @@ export default function BatchVentaSelector({
                                                 <Card
                                                     key={venta.id}
                                                     onClick={() => onToggleVenta(venta.id)}
-                                                    className={`cursor-pointer transition-all p-3 ${isSelected
-                                                        ? isNueva
-                                                            ? 'ring-2 ring-green-500 dark:ring-green-400 bg-green-50 dark:bg-green-900/20'
-                                                            : 'ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                                        : 'hover:shadow-md dark:hover:bg-slate-800'
-                                                        } dark:bg-slate-900 dark:border-slate-700`}
+                                                    className={`cursor-pointer p-3 transition-all ${
+                                                        isSelected
+                                                            ? isNueva
+                                                                ? 'bg-green-50 ring-2 ring-green-500 dark:bg-green-900/20 dark:ring-green-400'
+                                                                : 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-900/20 dark:ring-blue-400'
+                                                            : 'hover:shadow-md dark:hover:bg-slate-800'
+                                                    } dark:border-slate-700 dark:bg-slate-900`}
                                                 >
                                                     <div className="flex items-start gap-3">
                                                         {/* Checkbox visual */}
                                                         <div className="mt-0.5">
                                                             {isSelected ? (
-                                                                <CheckCircle2 className={`h-5 w-5 ${isNueva ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
+                                                                <CheckCircle2
+                                                                    className={`h-5 w-5 ${isNueva ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}
+                                                                />
                                                             ) : (
                                                                 <div className="h-5 w-5 rounded border-2 border-gray-300 dark:border-gray-600" />
                                                             )}
                                                         </div>
 
                                                         {/* Información */}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="grid grid-cols-1 gap-1.5 mb-2">
-                                                                <div className="flex items-start justify-between gap-2">
-                                                                    <h4 className="font-semibold text-gray-900 dark:text-white break-words flex-1">
-                                                                        Folio: {venta.id} | {venta.numero_venta}
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="mb-1 grid grid-cols-1 gap-1.5">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <h4 className="flex-1 font-semibold break-words text-gray-900 dark:text-white">
+                                                                        Folio: #{venta.id} | {venta.cliente.nombre}
                                                                     </h4>
-                                                                    <div className="flex gap-1 flex-shrink-0">
-                                                                        {isNueva && <Badge className="text-xs bg-green-600 whitespace-nowrap">✨ Nueva</Badge>}
-                                                                        {isAsignada && isSelected && <Badge variant="secondary" className="text-xs whitespace-nowrap">✓ Asignada</Badge>}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex gap-2 items-center flex-wrap">
-                                                                    <Badge variant="secondary" className="text-xs break-words">
+                                                                    {/* <Badge variant="secondary" className="text-xs break-words">
                                                                         {venta.cliente.nombre}
-                                                                    </Badge>
+                                                                    </Badge> */}
+                                                                    <div className="flex flex-shrink-0 gap-1">
+                                                                        {isAsignada && isSelected && (
+                                                                            <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                                                                                ✓ Asignada
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    
                                                                     {/* ✅ NUEVO: Mostrar estado logístico */}
                                                                     {venta.estado_logistico && (
                                                                         <Badge
                                                                             className="text-xs whitespace-nowrap"
                                                                             style={{
-                                                                                backgroundColor: venta.estado_logistico.color || '#6B7280',
-                                                                                color: '#FFFFFF'
+                                                                                backgroundColor: venta.estado_logistico.color,
                                                                             }}
                                                                         >
                                                                             {venta.estado_logistico.icono && `${venta.estado_logistico.icono} `}
@@ -775,64 +707,64 @@ export default function BatchVentaSelector({
                                                                 </div>
                                                             </div>
 
-                                                            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Package className="h-4 w-4" />
-                                                                    <span>
-                                                                        {venta.cantidad_items} artículos • {venta.peso_estimado} kg
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center justify-between gap-3">
-                                                                    <div className="flex flex-col gap-1 text-xs">
-                                                                        {/* ✅ MEJORADO: Mostrar fecha de creación formateada */}
-                                                                        {venta.created_at && (
-                                                                            <span className="text-gray-600 dark:text-gray-400">
-                                                                                📝 Creada: {
-                                                                                    (() => {
-                                                                                        // Parsear fecha y hora de created_at (formato: YYYY-MM-DD HH:ii)
-                                                                                        const [fechaParte, horaParte] = venta.created_at.split(' ');
-                                                                                        const fecha = parsearFecha(fechaParte);
-                                                                                        return fecha ? `${fecha.toLocaleDateString('es-BO', {
-                                                                                            day: 'numeric',
-                                                                                            month: 'short',
-                                                                                            year: '2-digit'
-                                                                                        })} • ${horaParte}` : venta.created_at;
-                                                                                    })()
-                                                                                }
-                                                                            </span>
-                                                                        )}
-                                                                        {/* {venta.fecha_venta && (
-                                                                            <span className="text-gray-600 dark:text-gray-400">
-                                                                                📅 Venta: {new Date(venta.fecha_venta).toLocaleDateString('es-BO', {
-                                                                                    day: 'numeric',
-                                                                                    month: 'short',
-                                                                                    year: '2-digit'
-                                                                                })}
-                                                                            </span>
-                                                                        )} */}
+                                                            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Package className="h-4 w-4" />
+                                                                        <span>
+                                                                            {venta.cantidad_items} artículos • {venta.peso_estimado} kg
+                                                                        </span>
                                                                     </div>
-                                                                    <span className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                                                                        Bs {venta.subtotal.toLocaleString('es-BO', {
+
+                                                                    <span className="font-semibold whitespace-nowrap text-gray-900 dark:text-white">
+                                                                        Bs{' '}
+                                                                        {venta.subtotal.toLocaleString('es-BO', {
                                                                             minimumFractionDigits: 2,
                                                                             maximumFractionDigits: 2,
                                                                         })}
                                                                     </span>
                                                                 </div>
-                                                                {venta.fecha_entrega_comprometida && (
-                                                                    <div className="text-xs text-blue-600 dark:text-blue-400 font-medium pt-1">
-                                                                        ⏰ Entrega comprometida: {parsearFecha(venta.fecha_entrega_comprometida)?.toLocaleDateString('es-BO', {
-                                                                            weekday: 'short',
-                                                                            day: 'numeric',
-                                                                            month: 'short',
-                                                                            year: 'numeric'
-                                                                        })}
-                                                                        {venta.hora_entrega_comprometida && (
-                                                                            <span className="text-blue-600 dark:text-blue-400">
-                                                                                @ {venta.hora_entrega_comprometida}
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="flex flex-col gap-1 text-xs">
+                                                                        {/* ✅ MEJORADO: Mostrar fecha de creación formateada */}
+                                                                        {venta.created_at && (
+                                                                            <span className="text-gray-600 dark:text-gray-400">
+                                                                                📝 Creada:{' '}
+                                                                                {(() => {
+                                                                                    // Parsear fecha y hora de created_at (formato: YYYY-MM-DD HH:ii)
+                                                                                    const [fechaParte, horaParte] = venta.created_at.split(' ');
+                                                                                    const fecha = parsearFecha(fechaParte);
+                                                                                    return fecha
+                                                                                        ? `${fecha.toLocaleDateString('es-BO', {
+                                                                                              day: 'numeric',
+                                                                                              month: 'short',
+                                                                                              year: '2-digit',
+                                                                                          })} • ${horaParte}`
+                                                                                        : venta.created_at;
+                                                                                })()}
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                )}
+                                                                    {venta.fecha_entrega_comprometida && (
+                                                                        <div className="pt-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                                            ⏰ Entrega comprometida:{' '}
+                                                                            {parsearFecha(venta.fecha_entrega_comprometida)?.toLocaleDateString(
+                                                                                'es-BO',
+                                                                                {
+                                                                                    weekday: 'short',
+                                                                                    day: 'numeric',
+                                                                                    month: 'short',
+                                                                                    year: 'numeric',
+                                                                                },
+                                                                            )}
+                                                                            {venta.hora_entrega_comprometida && (
+                                                                                <span className="text-blue-600 dark:text-blue-400">
+                                                                                    @ {venta.hora_entrega_comprometida}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -845,6 +777,22 @@ export default function BatchVentaSelector({
                         );
                     })
                 )}
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex gap-2">
+                <button
+                    onClick={() => onSelectAll(ventas.map((v) => v.id))}
+                    className="rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200"
+                >
+                    Seleccionar Todas las Ventas
+                </button>
+                <button
+                    onClick={onClearSelection}
+                    className="rounded bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                >
+                    Limpiar Formulario de Entrega
+                </button>
             </div>
         </div>
     );

@@ -182,12 +182,18 @@ class VehiculoController extends Controller
                 ], 422);
             }
 
-            // Obtener localidad de destino de las ventas seleccionadas
+            // ✅ NUEVO: Obtener monto total de las ventas seleccionadas
+            $montoTotal = 0;
             $localidadesDestino = [];
             if (! empty($ventaIds)) {
-                $localidadesDestino = \App\Models\Venta::whereIn('id', $ventaIds)
+                $ventasData = \App\Models\Venta::whereIn('id', $ventaIds)
                     ->with('cliente')
-                    ->get()
+                    ->get();
+
+                // Sumar monto de todas las ventas
+                $montoTotal = $ventasData->sum('subtotal') ?? 0;
+
+                $localidadesDestino = $ventasData
                     ->pluck('cliente.localidad_id')
                     ->filter()
                     ->unique()
@@ -263,6 +269,7 @@ class VehiculoController extends Controller
                     'data'    => [
                         'recomendado'       => null,
                         'peso_total'        => $pesoTotal,
+                        'monto_total'       => $montoTotal, // ✅ NUEVO
                         'disponibles_count' => $vehiculosDisponibles->count(),
                         'disponibles'       => $vehiculosDisponibles->toArray(),
                         'alerta'            => 'CARGA EXCEDE CAPACIDAD',
@@ -276,6 +283,7 @@ class VehiculoController extends Controller
                 'data'    => [
                     'recomendado'       => $recomendado,
                     'peso_total'        => $pesoTotal,
+                    'monto_total'       => $montoTotal, // ✅ NUEVO
                     'disponibles_count' => $vehiculosDisponibles->count(),
                     'disponibles'       => $vehiculosDisponibles->toArray(),
                 ],
