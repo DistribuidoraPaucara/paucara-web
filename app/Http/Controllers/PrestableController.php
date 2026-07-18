@@ -1217,8 +1217,9 @@ class PrestableController extends Controller
                 });
             }
 
-            // Incluir anulados o solo activos
-            if (!$request->boolean('incluir_anulados', false)) {
+            // ✅ Mostrar TODOS los movimientos por defecto (incluyendo anulados)
+            // Opcionalmente: excluir anulados si se pasa ?solo_activos=true
+            if ($request->boolean('solo_activos', false)) {
                 $query->where('anulado', false);
             }
 

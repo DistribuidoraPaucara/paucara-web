@@ -128,7 +128,7 @@ export default function MovimientosPrestables() {
     const [tipoFiltro, setTipoFiltro] = useState('');
     const [page, setPage] = useState(1);
     const [columnasAMostrar, setColumnasAMostrar] = useState<string[]>(['disponible']);
-    const [incluirAnulados, setIncluirAnulados] = useState(false);
+    const [soloActivos, setSoloActivos] = useState(false);
 
     const cargarMovimientos = useCallback(async () => {
         setLoading(true);
@@ -137,7 +137,7 @@ export default function MovimientosPrestables() {
             if (buscar) params.append('buscar', buscar);
             if (tipoFiltro) params.append('tipo', tipoFiltro);
             params.append('page', page.toString());
-            if (incluirAnulados) params.append('incluir_anulados', 'true');
+            if (soloActivos) params.append('solo_activos', 'true');
 
             const response = await fetch(`/api/prestables/movimientos?${params}`, {
                 headers: {
@@ -190,7 +190,7 @@ export default function MovimientosPrestables() {
         } finally {
             setLoading(false);
         }
-    }, [buscar, tipoFiltro, page, incluirAnulados]);
+    }, [buscar, tipoFiltro, page, soloActivos]);
 
     useEffect(() => {
         cargarMovimientos();
@@ -262,20 +262,20 @@ export default function MovimientosPrestables() {
                         </div>
                     </div>
 
-                    {/* Checkbox Incluir Anulados */}
+                    {/* Checkbox Solo Activos */}
                     <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
                         <label className="flex items-center gap-2">
                             <input
                                 type="checkbox"
-                                checked={incluirAnulados}
+                                checked={soloActivos}
                                 onChange={(e) => {
-                                    setIncluirAnulados(e.target.checked);
+                                    setSoloActivos(e.target.checked);
                                     setPage(1);
                                 }}
                                 className="h-4 w-4 rounded border-slate-300"
                             />
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                ✏️ Incluir movimientos anulados
+                                🔒 Solo movimientos activos (excluir anulados)
                             </span>
                         </label>
                     </div>
