@@ -270,11 +270,30 @@ class CompraController extends Controller
                 })
                 ->first();
 
+            // ✅ MEJORADO 2026-07-17: Cargar prestables relacionados del producto
+            $prestables = [];
+            if ($detalle->producto && $detalle->producto->prestables) {
+                $prestables = $detalle->producto->prestables->map(function ($prestable) {
+                    return [
+                        'id' => $prestable->id,
+                        'prestable_id' => $prestable->id,
+                        'nombre' => $prestable->nombre,
+                        'codigo' => $prestable->codigo,
+                        'tipo' => $prestable->tipo,
+                        'capacidad' => $prestable->capacidad,
+                        'precio_compra_referencial' => $prestable->precio_compra_referencial,
+                        'descripcion' => $prestable->pivot?->descripcion,
+                        'es_principal' => $prestable->pivot?->es_principal ?? false,
+                    ];
+                })->toArray();
+            }
+
             return [
                 'id' => $detalle->id,
                 'compra_id' => $detalle->compra_id,
                 'producto_id' => $detalle->producto_id,
                 'producto' => $detalle->producto,
+                'prestables' => $prestables,
                 'cantidad' => $detalle->cantidad,
                 'precio_unitario' => $detalle->precio_unitario,
                 'subtotal' => $detalle->subtotal,
@@ -2185,10 +2204,12 @@ class CompraController extends Controller
 
     /**
      * GET /api/compras/con-prestables/search
-     * Buscar compras que tengan al menos un producto con prestables (para préstamos a proveedores)
+     * Buscar compras que tengan al menos un producto con prestables
+     *
+     * Devuelve los modelos tal cual del ORM sin transformaciones
      *
      * Parámetros:
-     * - q: término de búsqueda (número, ID)
+     * - q: término de búsqueda (número, ID, proveedor, NIT)
      */
     public function searchWithPrestables(Request $request): JsonResponse
     {
@@ -2197,69 +2218,75 @@ class CompraController extends Controller
 
             // Si no hay búsqueda, devolver compras recientes con prestables
             if (!$query) {
-                $resultado = Compra::whereHas('detalles', function ($q) {
+                $compras = Compra::whereHas('detalles', function ($q) {
                     $q->whereHas('producto.prestables');
                 })
-                ->select('id', 'numero', 'proveedor_id', 'total')
-                ->with(['proveedor:id,nombre,razon_social'])
+                ->with([
+                    'proveedor',
+                    'usuario',
+                    'estadoDocumento',
+                    'moneda',
+                    'tipoPago',
+                    'detalles.producto.prestables.precios' // ✅ Cargar precios del prestable
+                ])
                 ->orderByDesc('id')
                 ->limit(20)
-                ->get()
-                ->map(fn($compra) => [
-                    'id' => $compra->id,
-                    'numero' => $compra->numero,
-                    'proveedor_id' => $compra->proveedor_id,
-                    'nombre' => "Folio #{$compra->id} - Compra #{$compra->numero}",
-                    'descripcion' => $compra->proveedor?->nombre ?? 'Sin proveedor',
-                ]);
+                ->get();
 
-                return response()->json(['data' => $resultado]);
+                return response()->json(['data' => $compras]);
             }
 
             // Verificar si la búsqueda es un número (ID)
             if (is_numeric($query)) {
-                // 🎯 PRIORIDAD 1: Búsqueda exacta por ID (más rápido)
-                $porId = Compra::whereHas('detalles', function ($q) {
+                // 🎯 Búsqueda exacta por ID - Devolver compra completa con todas las relaciones
+                $compra = Compra::with([
+                    'proveedor',
+                    'usuario',
+                    'estadoDocumento',
+                    'moneda',
+                    'tipoPago',
+                    'almacen',
+                    'detalles.producto.prestables.precios', // ✅ Cargar precios del prestable
+                    'detalles.producto.codigosBarra'
+                ])
+                ->whereHas('detalles', function ($q) {
                     $q->whereHas('producto.prestables');
                 })
-                ->select('id', 'numero', 'proveedor_id', 'total')
-                ->with(['proveedor:id,nombre,razon_social'])
                 ->where('id', $query)
-                ->limit(1)
-                ->get();
+                ->first();
 
-                if ($porId->count() > 0) {
-                    $resultado = $porId->map(fn($compra) => [
-                        'id' => $compra->id,
-                        'numero' => $compra->numero,
-                        'proveedor_id' => $compra->proveedor_id,
-                        'nombre' => "Folio #{$compra->id} - Compra #{$compra->numero}",
-                        'descripcion' => $compra->proveedor?->nombre ?? 'Sin proveedor',
-                    ]);
-
-                    return response()->json(['data' => $resultado]);
+                if ($compra) {
+                    // ✅ Devolver objeto directo (no array) cuando es búsqueda por ID
+                    return response()->json(['data' => $compra]);
                 }
+
+                // Si no existe, devolver array vacío para consistencia
+                return response()->json(['data' => []]);
             }
 
-            // 🎯 PRIORIDAD 2: Búsqueda por número con LIKE
+            // Búsqueda por número, nombre de proveedor o NIT
             $compras = Compra::whereHas('detalles', function ($q) {
                 $q->whereHas('producto.prestables');
             })
-            ->select('id', 'numero', 'proveedor_id', 'total')
-            ->with(['proveedor:id,nombre,razon_social'])
+            ->with([
+                'proveedor',
+                'usuario',
+                'estadoDocumento',
+                'moneda',
+                'tipoPago',
+                'detalles.producto.prestables.precios' // ✅ Cargar precios del prestable
+            ])
             ->where(function ($q) use ($query) {
-                $q->where('numero', 'ilike', "%{$query}%");
+                $q->where('numero', 'ilike', "%{$query}%")
+                  ->orWhereHas('proveedor', function ($qq) use ($query) {
+                      $qq->where('nombre', 'ilike', "%{$query}%")
+                         ->orWhere('razon_social', 'ilike', "%{$query}%")
+                         ->orWhere('nit', 'ilike', "%{$query}%");
+                  });
             })
             ->orderByDesc('id')
             ->limit(20)
-            ->get()
-            ->map(fn($compra) => [
-                'id' => $compra->id,
-                'numero' => $compra->numero,
-                'proveedor_id' => $compra->proveedor_id,
-                'nombre' => "Folio #{$compra->id} - Compra #{$compra->numero}",
-                'descripcion' => $compra->proveedor?->nombre ?? 'Sin proveedor',
-            ]);
+            ->get();
 
             return response()->json(['data' => $compras]);
         } catch (\Exception $e) {

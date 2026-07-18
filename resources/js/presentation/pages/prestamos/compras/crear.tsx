@@ -115,6 +115,16 @@ export default function CrearCompraPrestable() {
         cargarAlmacenes();
     }, [cargarAlmacenes]);
 
+    // Auto-seleccionar almacén con es_proveedor=true
+    useEffect(() => {
+        if (almacenes.length > 0 && !almacenSeleccionado) {
+            const almacenProveedor = almacenes.find((a) => a.es_proveedor);
+            if (almacenProveedor) {
+                setAlmacenSeleccionado(almacenProveedor);
+            }
+        }
+    }, [almacenes]);
+
     // Cerrar sugerencias al hacer click fuera
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -218,18 +228,182 @@ export default function CrearCompraPrestable() {
 
         try {
             setBuscandoCompras(true);
-            // API endpoint que retorna compras en JSON con búsqueda y paginación
-            const response = await fetch(`/api/compras/index-json?q=${encodeURIComponent(query)}&per_page=20`);
+            console.log('🔍 Buscando compras con query:', query);
+            // ✅ MEJORADO: Usar endpoint específico para compras con prestables
+            const response = await fetch(`/api/compras/con-prestables/search?q=${encodeURIComponent(query)}`);
             const data = await response.json();
-            const comprasData = data.success ? (Array.isArray(data.data) ? data.data : data.data || []) : [];
+            console.log('📦 Respuesta de búsqueda:', data);
+            // El endpoint devuelve { data: [...] } sin atributo success
+            const comprasData = Array.isArray(data.data) ? data.data : (data.data || []);
+            console.log('✅ Compras encontradas:', comprasData.length);
             setCompras(comprasData);
         } catch (error) {
-            console.error('Error buscando compras:', error);
+            console.error('❌ Error buscando compras:', error);
             setCompras([]);
         } finally {
             setBuscandoCompras(false);
         }
     }, []);
+
+    // ✅ Cargar detalles de compra existente (adaptado de handleSelectVenta)
+    const handleSelectCompra = async (compra: any) => {
+        console.log('🔗 SELECCIONANDO COMPRA:', { id: compra.id, numero: compra.numero });
+        setCompraSeleccionada(compra);
+        setBusquedaCompra('');
+        setCompras([]);
+
+        try {
+            // ✅ MEJORADO: Usar el mismo endpoint de búsqueda con ID para obtener datos completos con prestables
+            console.log(`📡 Fetching: /api/compras/con-prestables/search?q=${compra.id}`);
+            const response = await fetch(`/api/compras/con-prestables/search?q=${compra.id}`, {
+                headers: { Accept: 'application/json' },
+            });
+
+            if (!response.ok) {
+                console.error('❌ Error HTTP:', response.status, response.statusText);
+            }
+
+            const data = await response.json();
+            console.log('📋 Respuesta completa:', data);
+
+            // ✅ Manejar ambos casos: array (búsqueda general) y objeto (búsqueda por ID)
+            let compraData;
+            if (Array.isArray(data.data)) {
+                // Si es array (búsqueda general), tomar el primer elemento
+                compraData = data.data[0];
+                console.log('📋 Modo: Búsqueda general (array) - tomando primer elemento');
+            } else {
+                // Si es objeto (búsqueda por ID)
+                compraData = data.data;
+                console.log('📋 Modo: Búsqueda por ID (objeto)');
+            }
+
+            console.log('📋 Datos de compra extraídos:', compraData);
+
+            console.log('📋 DETALLE DE COMPRA SELECCIONADA:', {
+                respuesta_completa: data,
+                compra_data: compraData,
+                detalles: compraData?.detalles,
+                detalles_count: compraData?.detalles?.length,
+            });
+
+            // ✅ Cargar prestables desde detalles de la compra
+            const nuevosPrestables: DetalleLocal[] = [];
+            if (compraData.detalles && Array.isArray(compraData.detalles)) {
+                console.log('📦 PROCESANDO DETALLES DE COMPRA', {
+                    total_detalles: compraData.detalles.length,
+                });
+
+                compraData.detalles.forEach((detalle: any, index: number) => {
+                    const cantidad = detalle.cantidad || 0;
+                    const almacenId = detalle.almacenes_prestables_id || almacenSeleccionado?.id;
+                    // ✅ CORREGIDO: Los prestables están en detalle.producto.prestables, no en detalle.prestables
+                    const prestables = detalle.producto?.prestables || [];
+
+                    console.log(`📋 DETALLE ${index + 1}/${compraData.detalles.length}`, {
+                        cantidad,
+                        almacen_id: almacenId,
+                        prestables_count: prestables.length,
+                        prestables: prestables.map((p: any) => ({
+                            id: p.id,
+                            nombre: p.nombre,
+                            tipo: p.tipo,
+                        })),
+                    });
+
+                    // ✅ Validar que haya prestables y cantidad > 0
+                    if (prestables.length > 0 && cantidad > 0 && almacenId) {
+                        // ✅ SOLO procesar CANASTILLAS - los EMBASES se agregarán como relacionados
+                        const canastillas = prestables.filter((p: any) => p.tipo === 'CANASTILLA');
+                        const embases = prestables.filter((p: any) => p.tipo === 'EMBASES');
+
+                        canastillas.forEach((prestable: any) => {
+                            // ✅ Usar precio_compra de la relación prestables_precios
+                            const precioCompra = prestable.precios?.[0]?.precio_compra || prestable.precio_compra_referencial || 0;
+
+                            console.log(`📦 Procesando prestable: ${prestable.nombre} (tipo: ${prestable.tipo})`);
+                            console.log(`💰 Precio desde precios (relación):`, prestable.precios?.[0]?.precio_compra, `| Precio referencial:`, prestable.precio_compra_referencial, `| Precio final: ${precioCompra}`);
+
+                            // Agregar CANASTILLA
+                            nuevosPrestables.push({
+                                id: `${Date.now()}-${Math.random()}`,
+                                prestable_id: prestable.id,
+                                almacen_id: almacenId,
+                                cantidad: cantidad,
+                                precio_unitario: precioCompra,
+                                subtotal: cantidad * precioCompra,
+                                tipo: prestable.tipo,
+                                capacidad: prestable.capacidad,
+                                prestable: {
+                                    id: prestable.id,
+                                    nombre: prestable.nombre,
+                                    codigo: prestable.codigo,
+                                    tipo: prestable.tipo,
+                                    capacidad: prestable.capacidad,
+                                },
+                                almacen: {
+                                    id: almacenId,
+                                    nombre: `Almacén ${almacenId}`,
+                                },
+                            });
+
+                            console.log(`✅ Prestable agregado: ${prestable.nombre} (${cantidad})`);
+
+                            // ✅ Agregar EMBASES como relacionados a la CANASTILLA
+                            if (embases.length > 0) {
+                                embases.forEach((embase: any) => {
+                                    const cantidadEmbase = cantidad * (prestable.capacidad || 1);
+                                    // ✅ Usar precio_compra del embase desde su propia relación prestables_precios
+                                    const precioEmbase = embase.precios?.[0]?.precio_compra || embase.precio_compra_referencial || 0;
+
+                                    nuevosPrestables.push({
+                                        id: `${Date.now()}-${Math.random()}`,
+                                        prestable_id: embase.id,
+                                        almacen_id: almacenId,
+                                        cantidad: cantidadEmbase,
+                                        precio_unitario: precioEmbase,
+                                        subtotal: cantidadEmbase * precioEmbase,
+                                        tipo: embase.tipo,
+                                        capacidad: embase.capacidad,
+                                        precio_unitario_original: precioCompra,
+                                        prestable_padre_id: prestable.id,
+                                        prestable: {
+                                            id: embase.id,
+                                            nombre: embase.nombre,
+                                            codigo: embase.codigo,
+                                            tipo: embase.tipo,
+                                            capacidad: embase.capacidad,
+                                        },
+                                        almacen: {
+                                            id: almacenId,
+                                            nombre: `Almacén ${almacenId}`,
+                                        },
+                                    });
+
+                                    console.log(`✅ Embase agregado: ${embase.nombre} (${cantidadEmbase})`);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // ✅ Agregar prestables cargados a la tabla
+            if (nuevosPrestables.length > 0) {
+                setDetalles((prev) => [...prev, ...nuevosPrestables]);
+                console.log(`✅ Cargados ${nuevosPrestables.length} prestables desde la compra`);
+            }
+
+            // ✅ Auto-cargar proveedor si existe
+            if (compraData.proveedor_id && compraData.proveedor) {
+                setProveedorSeleccionado(compraData.proveedor);
+                console.log('✅ Proveedor cargado automáticamente:', compraData.proveedor.nombre);
+            }
+        } catch (error) {
+            console.error('Error obteniendo compra:', error);
+            alert('Error al cargar datos de la compra');
+        }
+    };
 
     const getAlmacenesDePrestable = useCallback((prestable?: Prestable): Almacen[] => {
         const almacenesMap = new Map<number, Almacen>();
@@ -553,104 +727,21 @@ export default function CrearCompraPrestable() {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Nueva Compra de Prestables' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos/prestables' }, { title: 'Nueva Compra de Prestables' }]}>
             <Head title="Crear Compra de Prestables" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-6">
+            <div className="flex h-full flex-1 flex-col gap-4 p-2">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                             Nueva Compra de Prestables
                         </h1>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Contenedor con 3 columnas responsivas */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {/* Buscador de Compra Existente - Componente Genérico */}
-                    <DynamicSearchSelect
-                        label="📋 Asignar a Compra Existente (Opcional)"
-                        placeholder="Buscar por ID o número de compra..."
-                        selectedItem={compraSeleccionada}
-                        items={compras}
-                        isLoading={buscandoCompras}
-                        searchValue={busquedaCompra}
-                        onSearch={(query) => {
-                            setBusquedaCompra(query);
-                            buscarCompras(query);
-                        }}
-                        onSelect={(compra) => {
-                            setCompraSeleccionada(compra);
-                            setBusquedaCompra('');
-                            setCompras([]);
-                            // Auto-cargar proveedor si la compra tiene proveedor_id
-                            if (compra.proveedor_id && compra.proveedor) {
-                                setProveedorSeleccionado(compra.proveedor);
-                            }
-                        }}
-                        onClear={() => {
-                            setCompraSeleccionada(null);
-                            setBusquedaCompra('');
-                            setCompras([]);
-                        }}
-                        getItemId={(compra) => compra.id}
-                        getDisplayValue={(compra) => `Compra #${compra.id}`}
-                        renderItem={(compra) => (
-                            <div>
-                                <div className="font-medium text-slate-900 dark:text-slate-100">
-                                    Compra #{compra.id}
-                                </div>
-                                <div className="text-xs text-slate-600 dark:text-slate-400">
-                                    {compra.numero_compra} - {compra.proveedor?.nombre || 'Sin proveedor'}
-                                </div>
-                            </div>
-                        )}
-                    />
-
-                    {/* Selector de Proveedor - Componente Genérico */}
-                    <DynamicSearchSelect
-                        label="🏭 Proveedor (Opcional)"
-                        placeholder="Buscar por nombre o NIT..."
-                        selectedItem={proveedorSeleccionado}
-                        items={proveedores}
-                        isLoading={buscandoProveedores}
-                        searchValue={busquedaProveedor}
-                        onSearch={(query) => {
-                            setBusquedaProveedor(query);
-                            buscarProveedores(query);
-                        }}
-                        onSelect={(proveedor) => {
-                            setProveedorSeleccionado(proveedor);
-                            setBusquedaProveedor('');
-                            setProveedores([]);
-                        }}
-                        onClear={() => {
-                            setProveedorSeleccionado(null);
-                            setBusquedaProveedor('');
-                            setProveedores([]);
-                        }}
-                        getItemId={(proveedor) => proveedor.id}
-                        getDisplayValue={(proveedor) => proveedor.nombre}
-                        renderItem={(proveedor) => (
-                            <div>
-                                <div className="font-medium text-slate-900 dark:text-slate-100">
-                                    {proveedor.nombre}
-                                </div>
-                                {proveedor.razon_social && (
-                                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                                        {proveedor.razon_social}
-                                    </div>
-                                )}
-                                {proveedor.nit && (
-                                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                                        NIT: {proveedor.nit}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    />
-
                     {/* Selector de Almacén de Prestables - Componente Genérico */}
                     <DynamicSearchSelect
                         label="📦 Almacén de Prestables (Requerido)"
@@ -692,6 +783,81 @@ export default function CrearCompraPrestable() {
                             </div>
                         )}
                     />
+                    {/* Buscador de Compra Existente - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="📋 Asignar a Compra Existente (Opcional)"
+                        placeholder="Buscar por ID o número de compra..."
+                        selectedItem={compraSeleccionada}
+                        items={compras}
+                        isLoading={buscandoCompras}
+                        searchValue={busquedaCompra}
+                        onSearch={(query) => {
+                            setBusquedaCompra(query);
+                            buscarCompras(query);
+                        }}
+                        onSelect={(compra) => {
+                            handleSelectCompra(compra);
+                        }}
+                        onClear={() => {
+                            setCompraSeleccionada(null);
+                            setBusquedaCompra('');
+                            setCompras([]);
+                        }}
+                        getItemId={(compra) => compra.id}
+                        getDisplayValue={(compra) => `Compra #${compra.id}`}
+                        renderItem={(compra) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    Compra #{compra.id}
+                                </div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400">
+                                    {compra.numero_compra} - {compra.proveedor?.nombre || 'Sin proveedor'}
+                                </div>
+                            </div>
+                        )}
+                    />
+                    {/* Selector de Proveedor - Componente Genérico */}
+                    <DynamicSearchSelect
+                        label="🏭 Proveedor (Opcional)"
+                        placeholder="Buscar por nombre o NIT..."
+                        selectedItem={proveedorSeleccionado}
+                        items={proveedores}
+                        isLoading={buscandoProveedores}
+                        searchValue={busquedaProveedor}
+                        onSearch={(query) => {
+                            setBusquedaProveedor(query);
+                            buscarProveedores(query);
+                        }}
+                        onSelect={(proveedor) => {
+                            setProveedorSeleccionado(proveedor);
+                            setBusquedaProveedor('');
+                            setProveedores([]);
+                        }}
+                        onClear={() => {
+                            setProveedorSeleccionado(null);
+                            setBusquedaProveedor('');
+                            setProveedores([]);
+                        }}
+                        getItemId={(proveedor) => proveedor.id}
+                        getDisplayValue={(proveedor) => proveedor.nombre}
+                        renderItem={(proveedor) => (
+                            <div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                    {proveedor.nombre}
+                                </div>
+                                {proveedor.razon_social && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        {proveedor.razon_social}
+                                    </div>
+                                )}
+                                {proveedor.nit && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                        NIT: {proveedor.nit}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />                    
                 </div>
 
                 {/* Búsqueda y Tabla de Prestables - Componente Genérico */}
@@ -725,6 +891,27 @@ export default function CrearCompraPrestable() {
                                 return <span className="text-xs text-slate-500">—</span>;
                             }
                         },
+                        // codigo del prestable
+                        {
+                            key: 'codigo',
+                            label: 'Código',
+                            render: (item) => (
+                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    {item.prestable?.codigo}
+                                </span>
+                            ),
+                        },
+                        // capacidad del prestable (solo si es canastilla)
+                        {
+                            key: 'capacidad',
+                            label: 'Capacidad',
+                            align: 'center',
+                            render: (item) => (
+                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    {item.capacidad ?? '1'}
+                                </span>
+                            ),
+                        },
                         {
                             key: 'prestable',
                             label: 'Prestable',
@@ -733,14 +920,14 @@ export default function CrearCompraPrestable() {
                                     <p className="font-semibold text-slate-900 dark:text-slate-100">
                                         {item.prestable?.nombre}
                                     </p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {/* <p className="text-xs text-slate-500 dark:text-slate-400">
                                         ID: {item.prestable?.id} | Código: {item.prestable?.codigo}
                                         {item.tipo === 'CANASTILLA' && item.capacidad && (
                                             <span className="ml-2 inline-block rounded bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                                                 Cap: {item.capacidad}
                                             </span>
                                         )}
-                                    </p>
+                                    </p> */}
                                 </div>
                             ),
                         },
