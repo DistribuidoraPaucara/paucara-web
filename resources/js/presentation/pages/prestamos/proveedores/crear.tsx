@@ -67,9 +67,34 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
     const [mostrarModalImpresion, setMostrarModalImpresion] = useState(false);
     const [ultimoPrestamoId, setUltimoPrestamoId] = useState<number | null>(null);
 
+    // 📡 Log de datos que llegan del backend (props)
+    useEffect(() => {
+        console.log('%c📡 DATOS DEL BACKEND - Props', 'color: #0066cc; font-weight: bold; font-size: 14px');
+        console.log('%c👥 Proveedores:', 'color: #ff6b6b; font-weight: bold');
+        console.table(proveedores);
+        console.log('%c🏢 Almacenes Proveedor:', 'color: #4ecdc4; font-weight: bold');
+        console.table(almacenes_proveedor);
+        console.log('%c🚗 Choferes:', 'color: #ffa502; font-weight: bold');
+        console.table(choferes);
+        console.log('%c🚙 Vehículos:', 'color: #a29bfe; font-weight: bold');
+        console.table(vehiculos);
+    }, []);
+
     useEffect(() => {
         fetchPrestables();
     }, []);
+
+    // 📦 Log de prestables cargados desde la store
+    useEffect(() => {
+        if (prestables && prestables.length > 0) {
+            console.log('%c📦 PRESTABLES CARGADOS', 'color: #27ae60; font-weight: bold; font-size: 14px');
+            console.log(`Total: ${prestables.length} prestables`);
+            console.table(prestables.slice(0, 5)); // Mostrar los primeros 5
+            if (prestables.length > 5) {
+                console.log(`... y ${prestables.length - 5} más`);
+            }
+        }
+    }, [prestables]);
 
     // ✅ NUEVO: Seleccionar automáticamente el primer almacén con es_proveedor=true
     useEffect(() => {
@@ -123,7 +148,12 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 headers: { 'Accept': 'application/json' }
             });
             const data = await response.json();
-            setComprasResults(data.data || []);
+            const compras = data.data || [];
+            setComprasResults(compras);
+
+            console.log('%c🔍 BÚSQUEDA DE COMPRAS', 'color: #e74c3c; font-weight: bold; font-size: 12px');
+            console.log(`Query: ${query} | Resultados: ${compras.length}`);
+            console.table(compras);
         } catch (error) {
             console.error('Error buscando compras:', error);
             setComprasResults([]);
@@ -133,6 +163,9 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
     };
 
     const handleSelectCompra = async (compra: any) => {
+        console.log('%c📋 COMPRA SELECCIONADA', 'color: #9b59b6; font-weight: bold; font-size: 12px');
+        console.table(compra);
+
         setCompraSeleccionada(compra);
         setComprasSearch('');
         setComprasResults([]);
@@ -144,6 +177,9 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
             const data = await response.json();
             const compraData = data.data || data;
             const proveedorId = compraData.proveedor_id;
+
+            console.log('%c📦 DETALLES DE COMPRA RECIBIDOS', 'color: #16a085; font-weight: bold; font-size: 12px');
+            console.table(compraData);
 
             setFormData({
                 ...formData,
