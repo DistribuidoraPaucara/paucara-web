@@ -93,6 +93,16 @@ export function UbicacionMapModal({
         }
     }, [isOpen, ubicacionInicial]);
 
+    // ✅ Nuevo: Sincronizar direccionManual cuando cambia ubicacionInicial
+    useEffect(() => {
+        if (isOpen && ubicacionInicial?.observaciones) {
+            console.log('%c📝 SINCRONIZANDO DIRECCION MANUAL', 'color: #fdcb6e; font-weight: bold; font-size: 12px', {
+                observaciones: ubicacionInicial.observaciones,
+            });
+            setDireccionManual(ubicacionInicial.observaciones);
+        }
+    }, [isOpen, ubicacionInicial?.observaciones]);
+
     // ✅ Nuevo: Obtener ubicación actual del usuario cuando se abre el modal
     useEffect(() => {
         if (!isOpen) return;
