@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ChoferGastoController::store
  * @see app/Http/Controllers/Api/ChoferGastoController.php:21
@@ -33,6 +33,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::store
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:21
+ * @route '/api/cajas/gastos'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::store
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:21
+ * @route '/api/cajas/gastos'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ChoferGastoController::index
  * @see app/Http/Controllers/Api/ChoferGastoController.php:113
@@ -76,6 +97,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::index
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:113
+ * @route '/api/cajas/gastos'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::index
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:113
+ * @route '/api/cajas/gastos'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::index
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:113
+ * @route '/api/cajas/gastos'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ChoferGastoController::estadisticas
  * @see app/Http/Controllers/Api/ChoferGastoController.php:201
@@ -119,6 +175,41 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::estadisticas
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:201
+ * @route '/api/cajas/gastos/estadisticas'
+ */
+    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::estadisticas
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:201
+ * @route '/api/cajas/gastos/estadisticas'
+ */
+        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::estadisticas
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:201
+ * @route '/api/cajas/gastos/estadisticas'
+ */
+        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\ChoferGastoController::destroy
  * @see app/Http/Controllers/Api/ChoferGastoController.php:159
@@ -171,6 +262,38 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::destroy
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:159
+ * @route '/api/cajas/gastos/{id}'
+ */
+    const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ChoferGastoController::destroy
+ * @see app/Http/Controllers/Api/ChoferGastoController.php:159
+ * @route '/api/cajas/gastos/{id}'
+ */
+        destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const ChoferGastoController = { store, index, estadisticas, destroy }
 
 export default ChoferGastoController

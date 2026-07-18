@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ApiPoliticaPagoController::index
  * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:45
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::index
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:45
+ * @route '/api/politicas-pago'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::index
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:45
+ * @route '/api/politicas-pago'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::index
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:45
+ * @route '/api/politicas-pago'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ApiPoliticaPagoController::disponibles
  * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:121
@@ -103,6 +138,42 @@ disponibles.head = (args: { clienteId: string | number } | [clienteId: string | 
     url: disponibles.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::disponibles
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:121
+ * @route '/api/politicas-pago/disponibles/{clienteId}'
+ */
+    const disponiblesForm = (args: { clienteId: string | number } | [clienteId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: disponibles.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::disponibles
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:121
+ * @route '/api/politicas-pago/disponibles/{clienteId}'
+ */
+        disponiblesForm.get = (args: { clienteId: string | number } | [clienteId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: disponibles.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ApiPoliticaPagoController::disponibles
+ * @see app/Http/Controllers/Api/ApiPoliticaPagoController.php:121
+ * @route '/api/politicas-pago/disponibles/{clienteId}'
+ */
+        disponiblesForm.head = (args: { clienteId: string | number } | [clienteId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: disponibles.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    disponibles.form = disponiblesForm
 const ApiPoliticaPagoController = { index, disponibles }
 
 export default ApiPoliticaPagoController

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
  * @see app/Http/Controllers/CajaController.php:2040
@@ -66,6 +66,41 @@ imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: nu
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:2040
+ * @route '/cajas/movimiento/{movimiento}/imprimir'
+ */
+    const imprimirForm = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:2040
+ * @route '/cajas/movimiento/{movimiento}/imprimir'
+ */
+        imprimirForm.get = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:2040
+ * @route '/cajas/movimiento/{movimiento}/imprimir'
+ */
+        imprimirForm.head = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CajaController::eliminar
  * @see app/Http/Controllers/CajaController.php:2085
@@ -123,6 +158,38 @@ eliminar.delete = (args: { movimiento: number | { id: number } } | [movimiento: 
     url: eliminar.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\CajaController::eliminar
+ * @see app/Http/Controllers/CajaController.php:2085
+ * @route '/cajas/movimiento/{movimiento}/eliminar'
+ */
+    const eliminarForm = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: eliminar.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::eliminar
+ * @see app/Http/Controllers/CajaController.php:2085
+ * @route '/cajas/movimiento/{movimiento}/eliminar'
+ */
+        eliminarForm.delete = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: eliminar.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    eliminar.form = eliminarForm
 const movimiento = {
     imprimir,
 eliminar,

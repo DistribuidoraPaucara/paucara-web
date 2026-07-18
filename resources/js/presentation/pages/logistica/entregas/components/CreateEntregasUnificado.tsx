@@ -111,6 +111,9 @@ export default function CreateEntregasUnificado({
     const [showOutputSelection, setShowOutputSelection] = useState(false);
     const [entregaParaImprimir, setEntregaParaImprimir] = useState<any>(null);
 
+    // ✅ NUEVO: Estado para almacenar resultados de búsqueda desde BatchVentaSelector
+    const [searchResults, setSearchResults] = useState<VentaConDetalles[]>([]);
+
     // Hooks para batch (2+ ventas)
     const {
         formData,
@@ -140,7 +143,13 @@ export default function CreateEntregasUnificado({
 
     // Hook para recomendación de vehículo (batch mode)
     // ⚠️ En edit mode, NO usar el hook porque el backend ya envía peso_kg + ventas asignadas
-    // ✅ Backend ahora devuelve la venta pre-seleccionada directamente en el array inicial
+    // ✅ MEJORADO: Combinar ventas iniciales + resultados de búsqueda
+    const allVentasForHook = useMemo(() => {
+        const combined = [...ventas, ...searchResults];
+        // Remover duplicados
+        return Array.from(new Map(combined.map(v => [v.id, v])).values());
+    }, [ventas, searchResults]);
+
     const hookResult = isEditMode
         ? {
             recomendado: null,
@@ -152,7 +161,7 @@ export default function CreateEntregasUnificado({
         }
         : useVehiculoRecomendado(
             selectedVentaIds,
-            ventas, // ✅ Usar ventas directamente (backend ya trae la pre-seleccionada)
+            allVentasForHook, // ✅ MEJORADO: Usar ventas + resultados de búsqueda
             true, // Auto-select recomendado
             handleSelectVehiculo
         );
@@ -182,7 +191,7 @@ export default function CreateEntregasUnificado({
             });
             handleSelectVehiculo(recomendado.id);
         }
-    }, [recomendado?.id, formData.vehiculo_id, handleSelectVehiculo, pesoRecomendacion]);
+    }, [recomendado?.id, formData.vehiculo_id, handleSelectVehiculo, pesoRecomendacion, searchResults]);
 
     // Auto-seleccionar chofer cuando se carga la recomendación y hay un choferAsignado
     useEffect(() => {
@@ -274,22 +283,30 @@ export default function CreateEntregasUnificado({
 
     // Totales seleccionados - En edit mode, calcular dinámicamente cuando cambian las ventas
     const totals = useMemo(() => {
-        // ✅ En edit mode: combinar ventasAsignadas (ya en la entrega) + ventasDisponibles (nuevas)
-        // En modo crear: solo usar ventasDisponibles
+        // ✅ MEJORADO: Combinar ventas iniciales + resultados de búsqueda
+        // En edit mode: combinar ventasAsignadas (ya en la entrega) + ventasDisponibles (nuevas) + resultados de búsqueda
+        // En modo crear: solo usar ventasDisponibles + resultados de búsqueda
         const allVentas = isEditMode
-            ? [...ventasAsignadas, ...ventas]
-            : ventas;
+            ? [...ventasAsignadas, ...ventas, ...searchResults]
+            : [...ventas, ...searchResults];
 
-        const selectedVentas = allVentas.filter((v) => selectedVentaIds.includes(v.id));
+        // Remover duplicados por ID
+        const ventasUnicas = Array.from(
+            new Map(allVentas.map(v => [v.id, v])).values()
+        );
+
+        const selectedVentas = ventasUnicas.filter((v) => selectedVentaIds.includes(v.id));
         const pesoCalculado = selectedVentas.reduce((sum, v) => {
             const peso = parseFloat(v.peso_total_estimado as any) || parseFloat(v.peso_estimado as any) || 0;
             return sum + peso;
         }, 0);
 
-        if (isEditMode) {
-            console.log('📊 [Edit Mode] Peso calculado desde ventas seleccionadas:', {
+        if (isEditMode || searchResults.length > 0) {
+            console.log('📊 Totales calculados:', {
                 ventasAsignadas: ventasAsignadas.length,
                 ventasDisponibles: ventas.length,
+                ventasSearchResults: searchResults.length,
+                ventasUnicas: ventasUnicas.length,
                 ventasSeleccionadas: selectedVentaIds.length,
                 pesoCalculado,
                 pesoBackend: entrega?.peso_kg,
@@ -301,7 +318,7 @@ export default function CreateEntregasUnificado({
             pesoTotal: pesoCalculado,
             montoTotal: selectedVentas.reduce((sum, v) => sum + (parseFloat(v.subtotal as any) ?? 0), 0),
         };
-    }, [ventas, ventasAsignadas, selectedVentaIds, isEditMode]);
+    }, [ventas, ventasAsignadas, selectedVentaIds, isEditMode, searchResults]);
 
     // Validaciones para batch - DEBE IR ANTES del useEffect que lo usa
     const selectedVehiculo = vehiculos.find((v) => v.id === formData.vehiculo_id);
@@ -756,6 +773,7 @@ export default function CreateEntregasUnificado({
                             onToggleVenta={handleToggleVenta}
                             onSelectAll={handleSelectAll}
                             onClearSelection={handleClearSelection}
+                            onSearchResultsChange={setSearchResults}
                         />
                     </Card>
 

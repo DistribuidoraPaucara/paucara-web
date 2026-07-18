@@ -22,6 +22,7 @@ interface BatchVentaSelectorProps {
     onToggleVenta: (ventaId: Id) => void;
     onSelectAll: (ventaIds: Id[]) => void;
     onClearSelection: () => void;
+    onSearchResultsChange?: (resultados: VentaConDetalles[]) => void; // 🔧 NUEVO: Notificar al padre de cambios en búsqueda
 }
 
 export default function BatchVentaSelector({
@@ -31,6 +32,7 @@ export default function BatchVentaSelector({
     onToggleVenta,
     onSelectAll,
     onClearSelection,
+    onSearchResultsChange,
 }: BatchVentaSelectorProps) {
     console.log('Renderizando BatchVentaSelector');
     console.log('Ventas disponibles:', ventas);
@@ -177,18 +179,16 @@ export default function BatchVentaSelector({
         return ventas;
     }, [ventas, searchResults, hasSearched]);
 
-    // ✅ NUEVO: Si hay resultados de búsqueda, agregrarlos a las ventas disponibles globales
-    // para que el hook useVehiculoRecomendado pueda encontrar la venta cuando se selecciona
+    // ✅ NUEVO: Notificar al padre cuando hay resultados de búsqueda
     useEffect(() => {
-        if (hasSearched && searchResults.length > 0 && ventas) {
-            // Las ventas de búsqueda ya están disponibles via filteredVentas para mostrar en el selector
-            // Pero también necesitan estar en el array que recibe el hook
-            console.log('🔄 [BatchVentaSelector] Resultados de búsqueda disponibles para seleccionar:', {
-                ids_busqueda: searchResults.map(v => v.id),
-                ids_iniciales: ventas.map(v => v.id),
+        if (hasSearched && onSearchResultsChange) {
+            console.log('📢 [BatchVentaSelector] Notificando resultados de búsqueda al padre:', {
+                cantidad: searchResults.length,
+                ids: searchResults.map(v => v.id),
             });
+            onSearchResultsChange(searchResults);
         }
-    }, [hasSearched, searchResults, ventas]);
+    }, [hasSearched, searchResults, onSearchResultsChange]);
 
     // Agrupar ventas por localidad
     const ventasPorLocalidad = useMemo(() => {

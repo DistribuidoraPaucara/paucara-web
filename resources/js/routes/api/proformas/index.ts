@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 import imprimir from './imprimir'
 import descargarImagen from './descargar-imagen'
 /**
@@ -59,6 +59,27 @@ confirmar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ApiProformaController::confirmar
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2883
+ * @route '/api/proformas/{proforma}/confirmar'
+ */
+    const confirmarForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: confirmar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ApiProformaController::confirmar
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2883
+ * @route '/api/proformas/{proforma}/confirmar'
+ */
+        confirmarForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: confirmar.url(args, options),
+            method: 'post',
+        })
+    
+    confirmar.form = confirmarForm
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::coordinar
  * @see app/Http/Controllers/Api/ApiProformaController.php:2093
@@ -117,6 +138,27 @@ coordinar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ApiProformaController::coordinar
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2093
+ * @route '/api/proformas/{proforma}/coordinar'
+ */
+    const coordinarForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: coordinar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ApiProformaController::coordinar
+ * @see app/Http/Controllers/Api/ApiProformaController.php:2093
+ * @route '/api/proformas/{proforma}/coordinar'
+ */
+        coordinarForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: coordinar.url(args, options),
+            method: 'post',
+        })
+    
+    coordinar.form = coordinarForm
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
  * @see app/Http/Controllers/Api/ApiProformaController.php:4574
@@ -175,6 +217,27 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @route '/api/proformas/{proforma}/actualizar-detalles'
+ */
+    const actualizarDetallesForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizarDetalles.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @route '/api/proformas/{proforma}/actualizar-detalles'
+ */
+        actualizarDetallesForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizarDetalles.url(args, options),
+            method: 'post',
+        })
+    
+    actualizarDetalles.form = actualizarDetallesForm
 /**
 * @see \App\Http\Controllers\ProformaController::preview
  * @see app/Http/Controllers/ProformaController.php:1088
@@ -241,6 +304,42 @@ preview.head = (args: { proforma: number | { id: number } } | [proforma: number 
     url: preview.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ProformaController::preview
+ * @see app/Http/Controllers/ProformaController.php:1088
+ * @route '/api/proformas/{proforma}/preview'
+ */
+    const previewForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: preview.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProformaController::preview
+ * @see app/Http/Controllers/ProformaController.php:1088
+ * @route '/api/proformas/{proforma}/preview'
+ */
+        previewForm.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: preview.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProformaController::preview
+ * @see app/Http/Controllers/ProformaController.php:1088
+ * @route '/api/proformas/{proforma}/preview'
+ */
+        previewForm.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: preview.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    preview.form = previewForm
 const proformas = {
     imprimir,
 descargarImagen,

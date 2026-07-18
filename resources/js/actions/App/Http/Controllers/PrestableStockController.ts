@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestableStockController::show
  * @see app/Http/Controllers/PrestableStockController.php:17
@@ -66,6 +66,41 @@ show.head = (args: { prestable: number | { id: number } } | [prestable: number |
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestableStockController::show
+ * @see app/Http/Controllers/PrestableStockController.php:17
+ * @route '/api/prestables/{prestable}/stock/detalle'
+ */
+    const showForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableStockController::show
+ * @see app/Http/Controllers/PrestableStockController.php:17
+ * @route '/api/prestables/{prestable}/stock/detalle'
+ */
+        showForm.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestableStockController::show
+ * @see app/Http/Controllers/PrestableStockController.php:17
+ * @route '/api/prestables/{prestable}/stock/detalle'
+ */
+        showForm.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\PrestableStockController::agregarAlmacen
  * @see app/Http/Controllers/PrestableStockController.php:94
@@ -124,6 +159,27 @@ agregarAlmacen.post = (args: { prestable: number | { id: number } } | [prestable
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestableStockController::agregarAlmacen
+ * @see app/Http/Controllers/PrestableStockController.php:94
+ * @route '/api/prestables/{prestable}/stock/agregar-almacen'
+ */
+    const agregarAlmacenForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: agregarAlmacen.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableStockController::agregarAlmacen
+ * @see app/Http/Controllers/PrestableStockController.php:94
+ * @route '/api/prestables/{prestable}/stock/agregar-almacen'
+ */
+        agregarAlmacenForm.post = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: agregarAlmacen.url(args, options),
+            method: 'post',
+        })
+    
+    agregarAlmacen.form = agregarAlmacenForm
 /**
 * @see \App\Http\Controllers\PrestableStockController::update
  * @see app/Http/Controllers/PrestableStockController.php:63
@@ -182,6 +238,37 @@ update.put = (args: { prestableStock: number | { id: number } } | [prestableStoc
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestableStockController::update
+ * @see app/Http/Controllers/PrestableStockController.php:63
+ * @route '/api/prestables-stock/{prestableStock}'
+ */
+    const updateForm = (args: { prestableStock: number | { id: number } } | [prestableStock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableStockController::update
+ * @see app/Http/Controllers/PrestableStockController.php:63
+ * @route '/api/prestables-stock/{prestableStock}'
+ */
+        updateForm.put = (args: { prestableStock: number | { id: number } } | [prestableStock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\PrestableStockController::destroy
  * @see app/Http/Controllers/PrestableStockController.php:130
@@ -239,6 +326,38 @@ destroy.delete = (args: { prestableStock: number | { id: number } } | [prestable
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\PrestableStockController::destroy
+ * @see app/Http/Controllers/PrestableStockController.php:130
+ * @route '/api/prestables-stock/{prestableStock}'
+ */
+    const destroyForm = (args: { prestableStock: number | { id: number } } | [prestableStock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableStockController::destroy
+ * @see app/Http/Controllers/PrestableStockController.php:130
+ * @route '/api/prestables-stock/{prestableStock}'
+ */
+        destroyForm.delete = (args: { prestableStock: number | { id: number } } | [prestableStock: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const PrestableStockController = { show, agregarAlmacen, update, destroy }
 
 export default PrestableStockController

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\CuentaPorCobrarController::indexApi
  * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
@@ -42,6 +42,41 @@ indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::indexApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
+ * @route '/api/cuentas-por-cobrar'
+ */
+    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::indexApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
+ * @route '/api/cuentas-por-cobrar'
+ */
+        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::indexApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:103
+ * @route '/api/cuentas-por-cobrar'
+ */
+        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi.form = indexApiForm
 /**
 * @see \App\Http\Controllers\Api\CuentaPorCobrarController::showApi
  * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
@@ -108,6 +143,42 @@ showApi.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorC
     url: showApi.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::showApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
+ * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
+ */
+    const showApiForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: showApi.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::showApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
+ * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
+ */
+        showApiForm.get = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\CuentaPorCobrarController::showApi
+ * @see app/Http/Controllers/Api/CuentaPorCobrarController.php:20
+ * @route '/api/cuentas-por-cobrar/{cuentaPorCobrar}'
+ */
+        showApiForm.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    showApi.form = showApiForm
 const CuentaPorCobrarController = { indexApi, showApi }
 
 export default CuentaPorCobrarController

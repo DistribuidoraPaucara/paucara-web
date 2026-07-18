@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::index
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:19
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::index
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:19
+ * @route '/api/reportes-productos-danados'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::index
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:19
+ * @route '/api/reportes-productos-danados'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::index
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:19
+ * @route '/api/reportes-productos-danados'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::store
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:70
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::store
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:70
+ * @route '/api/reportes-productos-danados'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::store
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:70
+ * @route '/api/reportes-productos-danados'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::show
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:115
@@ -138,6 +194,41 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::show
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:115
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::show
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:115
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::show
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:115
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::update
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:138
@@ -191,6 +282,37 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::update
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:138
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+    const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::update
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:138
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+        updateForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::destroy
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:262
@@ -244,6 +366,37 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::destroy
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:262
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+    const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::destroy
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:262
+ * @route '/api/reportes-productos-danados/{id}'
+ */
+        destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::subirImagen
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:173
@@ -297,6 +450,27 @@ subirImagen.post = (args: { id: string | number } | [id: string | number ] | str
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::subirImagen
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:173
+ * @route '/api/reportes-productos-danados/{id}/imagenes'
+ */
+    const subirImagenForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: subirImagen.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::subirImagen
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:173
+ * @route '/api/reportes-productos-danados/{id}/imagenes'
+ */
+        subirImagenForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: subirImagen.url(args, options),
+            method: 'post',
+        })
+    
+    subirImagen.form = subirImagenForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::eliminarImagen
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:233
@@ -350,6 +524,37 @@ eliminarImagen.delete = (args: { imagenId: string | number } | [imagenId: string
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::eliminarImagen
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:233
+ * @route '/api/reportes-productos-danados/imagenes/{imagenId}'
+ */
+    const eliminarImagenForm = (args: { imagenId: string | number } | [imagenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: eliminarImagen.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::eliminarImagen
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:233
+ * @route '/api/reportes-productos-danados/imagenes/{imagenId}'
+ */
+        eliminarImagenForm.delete = (args: { imagenId: string | number } | [imagenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: eliminarImagen.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    eliminarImagen.form = eliminarImagenForm
 /**
 * @see \App\Http\Controllers\Api\ReporteProductoDañadoController::porVenta
  * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:293
@@ -411,6 +616,42 @@ porVenta.head = (args: { ventaId: string | number } | [ventaId: string | number 
     url: porVenta.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::porVenta
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:293
+ * @route '/api/reportes-productos-danados/venta/{ventaId}'
+ */
+    const porVentaForm = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: porVenta.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::porVenta
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:293
+ * @route '/api/reportes-productos-danados/venta/{ventaId}'
+ */
+        porVentaForm.get = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: porVenta.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ReporteProductoDañadoController::porVenta
+ * @see app/Http/Controllers/Api/ReporteProductoDañadoController.php:293
+ * @route '/api/reportes-productos-danados/venta/{ventaId}'
+ */
+        porVentaForm.head = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: porVenta.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    porVenta.form = porVentaForm
 const reportesProductosDanados = {
     index,
 store,

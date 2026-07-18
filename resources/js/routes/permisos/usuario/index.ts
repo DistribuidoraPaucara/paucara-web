@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PermissionController::editar
  * @see app/Http/Controllers/PermissionController.php:70
@@ -66,6 +66,41 @@ editar.head = (args: { user: number | { id: number } } | [user: number | { id: n
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PermissionController::editar
+ * @see app/Http/Controllers/PermissionController.php:70
+ * @route '/permisos/usuario/{user}/editar'
+ */
+    const editarForm = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: editar.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PermissionController::editar
+ * @see app/Http/Controllers/PermissionController.php:70
+ * @route '/permisos/usuario/{user}/editar'
+ */
+        editarForm.get = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: editar.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PermissionController::editar
+ * @see app/Http/Controllers/PermissionController.php:70
+ * @route '/permisos/usuario/{user}/editar'
+ */
+        editarForm.head = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: editar.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    editar.form = editarForm
 /**
 * @see \App\Http\Controllers\PermissionController::actualizar
  * @see app/Http/Controllers/PermissionController.php:121
@@ -123,6 +158,38 @@ actualizar.patch = (args: { user: number | { id: number } } | [user: number | { 
     url: actualizar.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\PermissionController::actualizar
+ * @see app/Http/Controllers/PermissionController.php:121
+ * @route '/permisos/usuario/{user}'
+ */
+    const actualizarForm = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizar.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PermissionController::actualizar
+ * @see app/Http/Controllers/PermissionController.php:121
+ * @route '/permisos/usuario/{user}'
+ */
+        actualizarForm.patch = (args: { user: number | { id: number } } | [user: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizar.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    actualizar.form = actualizarForm
 const usuario = {
     editar,
 actualizar,

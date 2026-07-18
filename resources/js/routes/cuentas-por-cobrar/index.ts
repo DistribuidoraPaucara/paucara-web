@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::checkCajaAbierta
  * @see app/Http/Controllers/CuentaPorCobrarController.php:183
@@ -42,6 +42,41 @@ checkCajaAbierta.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::checkCajaAbierta
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:183
+ * @route '/ventas/cuentas-por-cobrar/check-caja-abierta'
+ */
+    const checkCajaAbiertaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: checkCajaAbierta.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::checkCajaAbierta
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:183
+ * @route '/ventas/cuentas-por-cobrar/check-caja-abierta'
+ */
+        checkCajaAbiertaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: checkCajaAbierta.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::checkCajaAbierta
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:183
+ * @route '/ventas/cuentas-por-cobrar/check-caja-abierta'
+ */
+        checkCajaAbiertaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: checkCajaAbierta.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    checkCajaAbierta.form = checkCajaAbiertaForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::registrarPago
  * @see app/Http/Controllers/CuentaPorCobrarController.php:233
@@ -100,6 +135,27 @@ registrarPago.post = (args: { cuentaPorCobrar: number | { id: number } } | [cuen
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::registrarPago
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:233
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/registrar-pago'
+ */
+    const registrarPagoForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: registrarPago.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::registrarPago
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:233
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/registrar-pago'
+ */
+        registrarPagoForm.post = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: registrarPago.url(args, options),
+            method: 'post',
+        })
+    
+    registrarPago.form = registrarPagoForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::anularPago
  * @see app/Http/Controllers/CuentaPorCobrarController.php:369
@@ -154,6 +210,28 @@ anularPago.post = (args: { cuentaPorCobrar: number | { id: number }, pago: numbe
     url: anularPago.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::anularPago
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:369
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/anular-pago/{pago}'
+ */
+    const anularPagoForm = (args: { cuentaPorCobrar: number | { id: number }, pago: number | { id: number } } | [cuentaPorCobrar: number | { id: number }, pago: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: anularPago.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::anularPago
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:369
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/anular-pago/{pago}'
+ */
+        anularPagoForm.post = (args: { cuentaPorCobrar: number | { id: number }, pago: number | { id: number } } | [cuentaPorCobrar: number | { id: number }, pago: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: anularPago.url(args, options),
+            method: 'post',
+        })
+    
+    anularPago.form = anularPagoForm
 const cuentasPorCobrar = {
     checkCajaAbierta,
 registrarPago,

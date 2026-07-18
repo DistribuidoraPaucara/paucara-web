@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::detalle
  * @see app/Http/Controllers/CajaController.php:1000
@@ -61,6 +61,41 @@ detalle.head = (args: { userId: string | number } | [userId: string | number ] |
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::detalle
+ * @see app/Http/Controllers/CajaController.php:1000
+ * @route '/cajas/admin/cajas/{userId}'
+ */
+    const detalleForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: detalle.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::detalle
+ * @see app/Http/Controllers/CajaController.php:1000
+ * @route '/cajas/admin/cajas/{userId}'
+ */
+        detalleForm.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: detalle.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CajaController::detalle
+ * @see app/Http/Controllers/CajaController.php:1000
+ * @route '/cajas/admin/cajas/{userId}'
+ */
+        detalleForm.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: detalle.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    detalle.form = detalleForm
 /**
 * @see \App\Http\Controllers\CajaController::movimientos
  * @see app/Http/Controllers/CajaController.php:789
@@ -123,6 +158,41 @@ movimientos.head = (args: { userId: string | number } | [userId: string | number
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::movimientos
+ * @see app/Http/Controllers/CajaController.php:789
+ * @route '/cajas/admin/cajas/{userId}/movimientos'
+ */
+    const movimientosForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: movimientos.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::movimientos
+ * @see app/Http/Controllers/CajaController.php:789
+ * @route '/cajas/admin/cajas/{userId}/movimientos'
+ */
+        movimientosForm.get = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientos.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CajaController::movimientos
+ * @see app/Http/Controllers/CajaController.php:789
+ * @route '/cajas/admin/cajas/{userId}/movimientos'
+ */
+        movimientosForm.head = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientos.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    movimientos.form = movimientosForm
 /**
 * @see \App\Http\Controllers\CajaController::abrir
  * @see app/Http/Controllers/CajaController.php:419
@@ -176,6 +246,27 @@ abrir.post = (args: { userId: string | number } | [userId: string | number ] | s
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::abrir
+ * @see app/Http/Controllers/CajaController.php:419
+ * @route '/cajas/admin/cajas/{userId}/abrir'
+ */
+    const abrirForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: abrir.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::abrir
+ * @see app/Http/Controllers/CajaController.php:419
+ * @route '/cajas/admin/cajas/{userId}/abrir'
+ */
+        abrirForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: abrir.url(args, options),
+            method: 'post',
+        })
+    
+    abrir.form = abrirForm
 /**
 * @see \App\Http\Controllers\CajaController::cerrar
  * @see app/Http/Controllers/CajaController.php:515
@@ -229,6 +320,27 @@ cerrar.post = (args: { userId: string | number } | [userId: string | number ] | 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::cerrar
+ * @see app/Http/Controllers/CajaController.php:515
+ * @route '/cajas/admin/cajas/{userId}/cerrar'
+ */
+    const cerrarForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: cerrar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::cerrar
+ * @see app/Http/Controllers/CajaController.php:515
+ * @route '/cajas/admin/cajas/{userId}/cerrar'
+ */
+        cerrarForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cerrar.url(args, options),
+            method: 'post',
+        })
+    
+    cerrar.form = cerrarForm
 /**
 * @see \App\Http\Controllers\CajaController::consolidar
  * @see app/Http/Controllers/CajaController.php:1161
@@ -281,6 +393,28 @@ consolidar.post = (args: { userId: string | number } | [userId: string | number 
     url: consolidar.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\CajaController::consolidar
+ * @see app/Http/Controllers/CajaController.php:1161
+ * @route '/cajas/admin/cajas/{userId}/consolidar'
+ */
+    const consolidarForm = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: consolidar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::consolidar
+ * @see app/Http/Controllers/CajaController.php:1161
+ * @route '/cajas/admin/cajas/{userId}/consolidar'
+ */
+        consolidarForm.post = (args: { userId: string | number } | [userId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: consolidar.url(args, options),
+            method: 'post',
+        })
+    
+    consolidar.form = consolidarForm
 const cajas = {
     detalle,
 movimientos,

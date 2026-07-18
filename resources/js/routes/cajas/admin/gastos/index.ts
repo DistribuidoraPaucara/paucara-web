@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\GastoController::index
  * @see app/Http/Controllers/GastoController.php:139
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\GastoController::index
+ * @see app/Http/Controllers/GastoController.php:139
+ * @route '/cajas/admin/gastos'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\GastoController::index
+ * @see app/Http/Controllers/GastoController.php:139
+ * @route '/cajas/admin/gastos'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\GastoController::index
+ * @see app/Http/Controllers/GastoController.php:139
+ * @route '/cajas/admin/gastos'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\GastoController::aprobar
  * @see app/Http/Controllers/GastoController.php:221
@@ -95,6 +130,27 @@ aprobar.post = (args: { id: string | number } | [id: string | number ] | string 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\GastoController::aprobar
+ * @see app/Http/Controllers/GastoController.php:221
+ * @route '/cajas/admin/gastos/{id}/aprobar'
+ */
+    const aprobarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: aprobar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\GastoController::aprobar
+ * @see app/Http/Controllers/GastoController.php:221
+ * @route '/cajas/admin/gastos/{id}/aprobar'
+ */
+        aprobarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: aprobar.url(args, options),
+            method: 'post',
+        })
+    
+    aprobar.form = aprobarForm
 /**
 * @see \App\Http\Controllers\GastoController::rechazar
  * @see app/Http/Controllers/GastoController.php:247
@@ -148,6 +204,27 @@ rechazar.post = (args: { id: string | number } | [id: string | number ] | string
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\GastoController::rechazar
+ * @see app/Http/Controllers/GastoController.php:247
+ * @route '/cajas/admin/gastos/{id}/rechazar'
+ */
+    const rechazarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: rechazar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\GastoController::rechazar
+ * @see app/Http/Controllers/GastoController.php:247
+ * @route '/cajas/admin/gastos/{id}/rechazar'
+ */
+        rechazarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: rechazar.url(args, options),
+            method: 'post',
+        })
+    
+    rechazar.form = rechazarForm
 /**
 * @see \App\Http\Controllers\GastoController::destroy
  * @see app/Http/Controllers/GastoController.php:286
@@ -200,6 +277,38 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\GastoController::destroy
+ * @see app/Http/Controllers/GastoController.php:286
+ * @route '/cajas/admin/gastos/{id}'
+ */
+    const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\GastoController::destroy
+ * @see app/Http/Controllers/GastoController.php:286
+ * @route '/cajas/admin/gastos/{id}'
+ */
+        destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const gastos = {
     index,
 aprobar,

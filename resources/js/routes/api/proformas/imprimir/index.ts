@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProformaController::publicMethod
  * @see app/Http/Controllers/ProformaController.php:1031
@@ -65,6 +65,42 @@ publicMethod.head = (args: { proforma: number | { id: number } } | [proforma: nu
     url: publicMethod.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ProformaController::publicMethod
+ * @see app/Http/Controllers/ProformaController.php:1031
+ * @route '/api/proformas/{proforma}/imprimir'
+ */
+    const publicMethodForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: publicMethod.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProformaController::publicMethod
+ * @see app/Http/Controllers/ProformaController.php:1031
+ * @route '/api/proformas/{proforma}/imprimir'
+ */
+        publicMethodForm.get = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: publicMethod.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProformaController::publicMethod
+ * @see app/Http/Controllers/ProformaController.php:1031
+ * @route '/api/proformas/{proforma}/imprimir'
+ */
+        publicMethodForm.head = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: publicMethod.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    publicMethod.form = publicMethodForm
 const imprimir = {
     public: publicMethod,
 }

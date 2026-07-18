@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::pendientes
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
@@ -42,6 +42,41 @@ pendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::pendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+    const pendientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: pendientes.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::pendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+        pendientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: pendientes.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::pendientes
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:326
+ * @route '/api/admin/cierres/pendientes'
+ */
+        pendientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: pendientes.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    pendientes.form = pendientesForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
@@ -85,6 +120,41 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::estadisticas
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:439
+ * @route '/api/admin/cierres/estadisticas'
+ */
+        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::consolidar
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
@@ -138,6 +208,27 @@ consolidar.post = (args: { id: string | number } | [id: string | number ] | stri
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::consolidar
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
+ * @route '/api/admin/cierres/{id}/consolidar'
+ */
+    const consolidarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: consolidar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::consolidar
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:361
+ * @route '/api/admin/cierres/{id}/consolidar'
+ */
+        consolidarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: consolidar.url(args, options),
+            method: 'post',
+        })
+    
+    consolidar.form = consolidarForm
 /**
 * @see \App\Http\Controllers\Api\AdminCajaApiController::rechazar
  * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
@@ -190,6 +281,28 @@ rechazar.post = (args: { id: string | number } | [id: string | number ] | string
     url: rechazar.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::rechazar
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
+ * @route '/api/admin/cierres/{id}/rechazar'
+ */
+    const rechazarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: rechazar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminCajaApiController::rechazar
+ * @see app/Http/Controllers/Api/AdminCajaApiController.php:399
+ * @route '/api/admin/cierres/{id}/rechazar'
+ */
+        rechazarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: rechazar.url(args, options),
+            method: 'post',
+        })
+    
+    rechazar.form = rechazarForm
 const cierres = {
     pendientes,
 estadisticas,
