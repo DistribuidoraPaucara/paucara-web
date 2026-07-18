@@ -217,7 +217,11 @@ class PrestamosInertiaController extends Controller
         return Inertia::render('prestamos/proveedores/crear', [
             'proveedores' => $proveedores,
             'compras' => $compras,
-            'almacenes_proveedor' => $almacenesProveedor->map(fn($a) => ['id' => $a->id, 'nombre' => $a->nombre])->values(),
+            'almacenes_proveedor' => $almacenesProveedor->map(fn($a) => [
+                'id' => $a->id,
+                'nombre' => $a->nombre,
+                'es_proveedor' => $a->es_proveedor,
+            ])->values(),
             'choferes' => $choferes,
             'vehiculos' => $vehiculos,
             'prestables_proveedor' => $prestables,
