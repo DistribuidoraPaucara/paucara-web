@@ -15,7 +15,7 @@ import PrestablesSelectionTable from '@/presentation/components/form-sections/Pr
 interface Props {
     proveedores: Array<{ id: number; nombre: string; razon_social?: string }>;
     compras: Array<{ id: number; numero: string; proveedor_id: number; proveedor?: { id: number; nombre: string; razon_social?: string } }>;
-    almacenes_proveedor: Array<{ id: number; nombre: string }>;
+    almacenes_proveedor: Array<{ id: number; nombre: string; es_proveedor?: boolean }>;
     choferes?: Array<{ id: number; nombre: string }>;
     vehiculos?: Array<{ id: number; placa: string; marca?: string; modelo?: string }>;
 }
@@ -521,7 +521,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
 
                             {/* Columna 3: Almacén Destino */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     🏭 Almacén Destino *
                                 </label>
                                 <select
@@ -549,7 +549,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {/* Chofer (Opcional) */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     🚗 Chofer (Opcional)
                                 </label>
                                 <select
