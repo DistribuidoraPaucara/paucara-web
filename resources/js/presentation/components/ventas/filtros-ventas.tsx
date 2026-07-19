@@ -274,8 +274,8 @@ export default function FiltrosVentasComponent({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {/* Controles de Ordenamiento - Columna 1 */}
                     <div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
                                 <ArrowUpDown className="h-3 w-3" />
                                 Ordenar por
                             </label>

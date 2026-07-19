@@ -28,7 +28,7 @@ class LogisticaController extends Controller
         // Mostrar TODAS las proformas, no solo APP_EXTERNA
         // ✅ ACTUALIZADO: Cargar roles del usuarioCreador
         // ✅ NUEVO: Cargar venta asociada cuando proforma está convertida
-        $query = Proforma::with(['cliente.localidad', 'usuarioCreador.roles', 'usuarioAprobador', 'estadoLogistica', 'direccionSolicitada', 'venta']);
+        $query = Proforma::with(['cliente.localidad', 'usuarioCreador.roles', 'usuarioAprobador', 'estadoLogistica', 'direccionSolicitada.localidad', 'venta']);
 
         // Aplicar filtros desde query params - default a PENDIENTE y APROBADA
         if (request()->has('estado')) {
@@ -131,6 +131,15 @@ class LogisticaController extends Controller
 
         if (request()->has('fecha_vencimiento_hasta') && request('fecha_vencimiento_hasta') !== '') {
             $query->where('fecha_vencimiento', '<=', request('fecha_vencimiento_hasta') . ' 23:59:59');
+        }
+
+        // ✅ Filtro por fecha de creación (desde/hasta)
+        if (request()->has('fecha_creacion_desde') && request('fecha_creacion_desde') !== '') {
+            $query->where('created_at', '>=', request('fecha_creacion_desde'));
+        }
+
+        if (request()->has('fecha_creacion_hasta') && request('fecha_creacion_hasta') !== '') {
+            $query->where('created_at', '<=', request('fecha_creacion_hasta') . ' 23:59:59');
         }
 
         // ✅ Filtro por fecha de entrega solicitada (desde/hasta)
@@ -270,6 +279,10 @@ class LogisticaController extends Controller
                         'latitud'    => $proforma->direccionSolicitada->latitud,
                         'longitud'   => $proforma->direccionSolicitada->longitud,
                         'referencia' => $proforma->direccionSolicitada->referencia,
+                        'localidad'  => $proforma->direccionSolicitada->localidad ? [
+                            'id'     => $proforma->direccionSolicitada->localidad->id,
+                            'nombre' => $proforma->direccionSolicitada->localidad->nombre,
+                        ] : null,
                     ] : null,
                     // ✅ NUEVO: Timestamps para mostrar fechas de creación y actualización
                     'created_at'                      => $proforma->created_at,

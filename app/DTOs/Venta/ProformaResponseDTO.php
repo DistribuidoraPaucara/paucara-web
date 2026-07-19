@@ -45,6 +45,8 @@ class ProformaResponseDTO extends BaseDTO
         public string $updated_at = '',
         public ?int $usuario_creador_id = null,
         public ?array $usuario_creador = null,
+        public ?int $preventista_id = null, // ✅ NUEVO (2026-07-18): ID del preventista asignado
+        public ?array $preventista = null, // ✅ NUEVO (2026-07-18): Datos del preventista asignado
         // ✅ CRÍTICO: Incluir datos completos del estado logístico para Show.tsx
         public ?array $estado_logistica = null,
         // ✅ NUEVO: Incluir datos de venta cuando la proforma es CONVERTIDA
@@ -70,6 +72,7 @@ class ProformaResponseDTO extends BaseDTO
                 'direccion' => $model->cliente->direccion ?? null,
                 'limite_credito' => (float) ($model->cliente->limite_credito ?? 0),
                 'puede_tener_credito' => $model->cliente->puede_tener_credito ?? false,
+                'foto_perfil' => $model->cliente->foto_perfil ?? null, // ✅ NUEVO: Incluir foto de perfil del cliente
             ],
             estado: $model->estado,
             fecha: $model->fecha->toDateString(),
@@ -213,6 +216,13 @@ class ProformaResponseDTO extends BaseDTO
                 'id' => $model->usuarioCreador->id,
                 'name' => $model->usuarioCreador->name,
                 'email' => $model->usuarioCreador->email,
+            ] : null,
+            // ✅ NUEVO (2026-07-18): Incluir preventista asignado
+            preventista_id: $model->preventista_id,
+            preventista: $model->relationLoaded('preventista') && $model->preventista ? [
+                'id' => $model->preventista->id,
+                'nombre' => $model->preventista->name,
+                'email' => $model->preventista->email,
             ] : null,
             // ✅ CRÍTICO: Incluir datos del estado logístico para que Show.tsx muestre icon/nombre/color
             estado_logistica: $model->relationLoaded('estadoLogistica') && $model->estadoLogistica ? [

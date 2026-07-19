@@ -412,20 +412,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 : formatCurrencyWith2Decimals(venta.total, venta.moneda?.codigo)
                                             }
                                         </div>
-                                        {/* {venta.moneda && (
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                {venta.moneda.codigo}
-                                            </div>
-                                        )} */}
-                                        {/* <div className="space-y-2">
-                                            {venta.estado_pago ? (
-                                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getEstadoPagoBadgeStyles(venta.estado_pago).bg} ${getEstadoPagoBadgeStyles(venta.estado_pago).text}`}>
-                                                    {getEstadoPagoBadgeStyles(venta.estado_pago).label}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">Sin datos</span>
-                                            )}
-                                        </div> */}
                                         <div className="text-sm">
                                             {venta.tipoPago ? (
                                                 <div className="flex items-center space-x-2">
@@ -436,14 +422,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                         <p className="font-medium text-gray-900 dark:text-white">
                                                             {venta.tipoPago.nombre}
                                                         </p>
-                                                        {/* {venta.politica_pago && (
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                {venta.politica_pago === 'CONTRA_ENTREGA' && 'Contra Entrega'}
-                                                                {venta.politica_pago === 'ANTICIPADO_100' && 'Anticipado 100%'}
-                                                                {venta.politica_pago === 'MEDIO_MEDIO' && 'Medio Medio'}
-                                                                {venta.politica_pago === 'CREDITO' && 'Crédito'}
-                                                            </p>
-                                                        )} */}
                                                     </div>
                                                 </div>
                                             ) : (
@@ -503,15 +481,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 </>
                                             )}
                                         </div>
-                                        {/* <p>
-                                            {venta.politica_pago ? (
-                                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getPoliticaPagoBadgeStyles(venta.politica_pago).bg} ${getPoliticaPagoBadgeStyles(venta.politica_pago).text}`}>
-                                                    {getPoliticaPagoBadgeStyles(venta.politica_pago).label}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">Sin datos</span>
-                                            )}
-                                        </p> */}
                                     </td>
 
                                     {/* ✅ NUEVO: Fecha de Creación */}
@@ -553,15 +522,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 <Eye className="w-4 h-4" />
                                             </Link>
 
-                                            {/* Editar - Deshabilitado por ahora */}
-                                            {/* <button
-                                                disabled
-                                                className="text-gray-300 dark:text-gray-600 p-1 rounded cursor-not-allowed"
-                                                title="Editar venta (próximamente)"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button> */}
-
                                             {/* Anular - Solo si está APROBADO */}
                                             {venta.estado_documento?.codigo === 'APROBADO' && (
                                                 <button
@@ -573,28 +533,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 </button>
                                             )}
 
-                                            {/* Devolución - Solo si está APROBADO */}
-                                            {/* {venta.estado_documento?.codigo === 'APROBADO' && (
-                                                <Link
-                                                    href={`/ventas/${venta.id}/devoluciones/create`}
-                                                    className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 p-1 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                                                    title="Crear devolución"
-                                                >
-                                                    <RotateCcw className="w-4 h-4" />
-                                                </Link>
-                                            )} */}
-
-                                            {/* ✅ NUEVO (2026-02-10): Indicador de reversión de stock para ventas anuladas */}
-                                            {/* <ReversionStockIndicador
-                                                ventaId={venta.id}
-                                                ventaNumero={venta.numero}
-                                                estadoVenta={venta.estado_documento?.codigo || 'ANULADO'}
-                                                onVerDetalles={(data) => {
-                                                    setDetalleReversionData(data);
-                                                    setIsDetalleReversionOpen(true);
-                                                }}
-                                            /> */}
-
                                             {/* ✅ Descargar en formato - Usar OutputSelectionModal */}
                                             <button
                                                 onClick={() => setOutputModal({ isOpen: true, venta })}
@@ -603,25 +541,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                             >
                                                 <Printer className="w-4 h-4" />
                                             </button>
-
-                                            {/* ✅ Registrar en caja */}
-                                            {/* {venta.estado_documento?.codigo === 'APROBADO' && (
-                                                <button
-                                                    onClick={() => handleRegistrarEnCaja(venta)}
-                                                    disabled={registrandoEnCaja === venta.id}
-                                                    className={`p-1 rounded transition-colors ${registrandoEnCaja === venta.id
-                                                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                                        : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                                        }`}
-                                                    title="Registrar en movimientos de caja"
-                                                >
-                                                    {registrandoEnCaja === venta.id ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <DollarSign className="w-4 h-4" />
-                                                    )}
-                                                </button>
-                                            )} */}
                                         </div>
                                     </td>
                                 </tr>

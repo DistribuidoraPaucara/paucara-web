@@ -9,21 +9,21 @@ export default function ReservasIndex() {
         <AppLayout>
             <Head title="Gestión de Reservas de Proformas" />
 
-            <div className="space-y-6 p-4">
+            <div className="space-y-2 p-2">
                 {/* Encabezado */}
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                         📦 Gestión de Reservas
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-gray-500 dark:text-gray-400">
                         Administra las reservas de stock para proformas pendientes
                     </p>
                 </div>
 
                 {/* Información útil */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
-                        <CardContent className="p-4">
+                        <CardContent className="p-2">
                             <div className="flex items-start gap-3">
                                 <div className="text-2xl">📋</div>
                                 <div>
@@ -42,7 +42,7 @@ export default function ReservasIndex() {
                     </Card>
 
                     <Card>
-                        <CardContent className="p-4">
+                        <CardContent className="p-2">
                             <div className="flex items-start gap-3">
                                 <div className="text-2xl">🔄</div>
                                 <div>
@@ -61,7 +61,7 @@ export default function ReservasIndex() {
                     </Card>
 
                     <Card>
-                        <CardContent className="p-4">
+                        <CardContent className="p-2">
                             <div className="flex items-start gap-3">
                                 <div className="text-2xl">✅</div>
                                 <div>
@@ -78,7 +78,7 @@ export default function ReservasIndex() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </div> */}
 
                 {/* Tabla de Reservas */}
                 <ReservasProformaTable />

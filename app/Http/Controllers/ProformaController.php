@@ -248,16 +248,35 @@ class ProformaController extends Controller
             ->where('activo', true)
             ->first();
 
+        // ✅ NUEVO (2026-07-18): Estados de proforma desde tabla estados_logistica
+        $estadosProforma = DB::table('estados_logistica')
+            ->where('categoria', 'proforma')
+            ->where('activo', true)
+            ->orderBy('orden', 'asc')
+            ->select('id', 'codigo', 'nombre', 'icono', 'color')
+            ->get();
+
         return Inertia::render('proformas/Create', [
             'clientes'              => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'productos'             => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'almacenes'             => Almacen::activos()->select('id', 'nombre')->get(),
+            // ✅ CORREGIDO (2026-07-18): Usar ID del empleado (no del usuario) para que coincida con preventista_id en proformas
             'preventistas'          => User::whereHas('roles', function ($query) {
                 $query->where('name', 'preventista');
-            })->select('id', 'name', 'email')->get(),
+            })->with('empleado')
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->empleado?->id ?? $user->id,  // Usar ID del empleado si existe
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ];
+                })
+                ->values(),
             'almacen_id_empresa'    => $almacen_id_empresa, // ✅ NUEVO: Almacén principal de la empresa
             'default_tipo_precio_id' => $default_tipo_precio_id, // ✅ NUEVO: Tipo precio por defecto para ProductosTable
             'logistica_envios'      => (bool) $empresaPrincipal?->logistica_envios,  // ✅ CORREGIDO (2026-04-05): Mostrar panel envío si está habilitado
+            'estadosProforma'       => $estadosProforma, // ✅ NUEVO (2026-07-18): Estados para select inicial
         ]);
     }
 
@@ -277,6 +296,7 @@ class ProformaController extends Controller
             'cliente',
             'cliente.direcciones',
             'cliente.localidad',
+            'direccionSolicitada', // ✅ NUEVO (2026-07-18): Cargar dirección solicitada completa
             'detalles.producto.unidad',
             'detalles.producto.categoria',
             'detalles.producto.conversiones',
@@ -475,6 +495,16 @@ class ProformaController extends Controller
                 // ✅ Entrega
                 'tipo_entrega'      => $proforma->tipo_entrega,
                 'direccion_entrega_solicitada_id' => $proforma->direccion_entrega_solicitada_id,
+                // ✅ NUEVO (2026-07-18): Devolver dirección completa con coordenadas para mapa
+                'direccion_entrega_solicitada' => $proforma->direccionSolicitada ? [
+                    'id'    => $proforma->direccionSolicitada->id,
+                    'direccion' => $proforma->direccionSolicitada->direccion,
+                    'observaciones' => $proforma->direccionSolicitada->observaciones,
+                    'es_principal' => $proforma->direccionSolicitada->es_principal,
+                    'activa' => $proforma->direccionSolicitada->activa,
+                    'latitud' => $proforma->direccionSolicitada->latitud,
+                    'longitud' => $proforma->direccionSolicitada->longitud,
+                ] : null,
                 'direccion_entrega_confirmada_id' => $proforma->direccion_entrega_confirmada_id,
 
                 // ✅ Configuración
@@ -503,16 +533,44 @@ class ProformaController extends Controller
                 ] : null,
             ],
             'detallesProforma'      => $detallesProforma,
-            'direccionesCliente'    => $proforma->cliente->direcciones()->select('id', 'direccion', 'localidad_id')->get(),
-            'clientes'              => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
+            // ✅ CORREGIDO (2026-07-18): Incluir observaciones, es_principal y activa en direcciones del cliente
+            'direccionesCliente'    => $proforma->cliente->direcciones()->select('id', 'direccion', 'localidad_id', 'observaciones', 'es_principal', 'activa')->get(),
+            // ✅ NUEVO (2026-07-18): Cliente en array para que se cargue automáticamente en modo edición
+            'clientes'              => [
+                [
+                    'id'    => $proforma->cliente->id,
+                    'nombre' => $proforma->cliente->nombre,
+                    'email' => $proforma->cliente->email,
+                    'telefono' => $proforma->cliente->telefono,
+                    'nit'   => $proforma->cliente->nit,
+                    'limite_credito' => $proforma->cliente->limite_credito,
+                    'puede_tener_credito' => (bool) $proforma->cliente->puede_tener_credito,
+                ]
+            ],
             'productos'             => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'almacenes'             => Almacen::activos()->select('id', 'nombre')->get(),
+            // ✅ CORREGIDO (2026-07-18): Usar ID del empleado (no del usuario) para que coincida con preventista_id en proformas
             'preventistas'          => User::whereHas('roles', function ($query) {
                 $query->where('name', 'preventista');
-            })->select('id', 'name', 'email')->get(),
+            })->with('empleado')
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->empleado?->id ?? $user->id,  // Usar ID del empleado si existe
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ];
+                })
+                ->values(),
             'almacen_id_empresa'    => $almacen_id_empresa,
             'default_tipo_precio_id' => $default_tipo_precio_id, // ✅ NUEVO: Tipo precio por defecto para ProductosTable
             'logistica_envios'      => (bool) auth()->user()?->empresa?->logistica_envios,  // ✅ CORREGIDO (2026-04-05): Mostrar panel envío si está habilitado
+            'estadosProforma'       => DB::table('estados_logistica') // ✅ NUEVO (2026-07-18): Estados para select inicial
+                ->where('categoria', 'proforma')
+                ->where('activo', true)
+                ->orderBy('orden', 'asc')
+                ->select('id', 'codigo', 'nombre', 'icono', 'color')
+                ->get(),
         ]);
     }
 
@@ -1352,6 +1410,79 @@ class ProformaController extends Controller
             ]);
 
             return $this->respondError('Error al generar imagen: ' . $e->getMessage(), statusCode: 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO (2026-07-18): Obtener cliente con información de deuda
+     * GET /api/proformas/cliente/{clienteId}/deuda
+     *
+     * Devuelve:
+     * - Cliente con detalles
+     * - Suma de cuentas_por_cobrar (ACTIVA, PENDIENTE, PARCIAL)
+     * - Suma de proformas pendientes de aprobación
+     * - Total deuda
+     * - Disponible para crédito
+     */
+    public function obtenerClienteConDeuda($clienteId): JsonResponse
+    {
+        try {
+            // Obtener cliente desde el ID
+            $cliente = Cliente::findOrFail($clienteId);
+
+            // Obtener deuda de cuentas por cobrar (estados: ACTIVA, PENDIENTE, PARCIAL)
+            // Usar saldo_pendiente que es el monto aún pendiente de pagar
+            $deudaCuentasPorCobrar = $cliente->cuentasPorCobrar()
+                ->whereIn('estado', ['ACTIVA', 'PENDIENTE', 'PARCIAL'])
+                ->sum('saldo_pendiente');
+
+            // ✅ CORREGIDO (2026-07-18): Obtener monto de proformas pendientes de aprobación con politica_pago='CREDITO'
+            $deudaProformasPendientes = $cliente->proformas()
+                ->where('politica_pago', 'CREDITO')
+                ->whereHas('estadoLogistica', function ($q) {
+                    $q->where('codigo', 'PENDIENTE')
+                      ->where('categoria', 'proforma');
+                })
+                ->sum('total');
+
+            // Total deuda
+            $totalDeuda = $deudaCuentasPorCobrar + $deudaProformasPendientes;
+
+            // Disponible para crédito
+            $disponibleCredito = max(0, ($cliente->limite_credito ?? 0) - $totalDeuda);
+
+            return response()->json([
+                'cliente' => [
+                    'id' => $cliente->id,
+                    'nombre' => $cliente->nombre,
+                    'email' => $cliente->email,
+                    'telefono' => $cliente->telefono,
+                    'limite_credito' => $cliente->limite_credito ?? 0,
+                    'puede_tener_credito' => (bool) $cliente->puede_tener_credito,
+                    'foto_perfil' => $cliente->foto_perfil,
+                    'direcciones' => $cliente->direcciones()
+                        ->where('activa', true)
+                        ->select('id', 'direccion', 'localidad_id')
+                        ->get(),
+                ],
+                'deuda' => [
+                    'cuentas_por_cobrar' => (float) $deudaCuentasPorCobrar,
+                    'proformas_pendientes' => (float) $deudaProformasPendientes,
+                    'total_deuda' => (float) $totalDeuda,
+                    'disponible_credito' => (float) $disponibleCredito,
+                    'puede_hacer_credito' => $totalDeuda < ($cliente->limite_credito ?? 0),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al obtener cliente con deuda', [
+                'cliente_id' => $cliente->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Error al obtener información del cliente',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }

@@ -73,14 +73,21 @@ export interface ReservaProformaFilters {
     producto_id?: number;
     almacen_id?: number;
     cliente_id?: number;
+    // ✅ NUEVO (2026-07-18): Búsqueda por nombre de cliente
+    cliente_nombre?: string;
     vencimiento?: 'expirada' | 'pronto' | 'vigente';
     fecha_creacion_desde?: string;
     fecha_creacion_hasta?: string;
+    // ✅ NUEVO (2026-07-18): Filtro por fecha de reserva
+    fecha_reserva_desde?: string;
+    fecha_reserva_hasta?: string;
     fecha_vencimiento_desde?: string;
     fecha_vencimiento_hasta?: string;
     ordenamiento?: string;
     per_page?: number;
     page?: number;
+    // ✅ NUEVO (2026-02-12): Búsqueda flexible de producto
+    producto_busqueda?: string;
 }
 
 export interface ReservaProformaResponse {

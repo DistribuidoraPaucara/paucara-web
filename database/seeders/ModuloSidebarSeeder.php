@@ -229,6 +229,22 @@ class ModuloSidebarSeeder extends Seeder
                 ],
             ],
 
+            // ===== MÓDULO: RESERVAS =====
+            'reservas'        => [
+                'modulo'  => [
+                    'titulo'      => 'Reservas',
+                    'ruta'        => '/reservas',
+                    'icono'       => 'Package',
+                    'descripcion' => 'Gestión de reservas de stock para proformas',
+                    'orden'       => 10,
+                    'categoria'   => 'Logística',
+                    'permisos'    => ['reservas.index'],
+                ],
+                'submenu' => [
+                    ['titulo' => 'Reservas', 'ruta' => '/reservas', 'icono' => 'Package', 'orden' => 1, 'permisos' => ['reservas.index']],
+                ],
+            ],
+
             // ===== MÓDULO: REPORTES =====
             'reportes'        => [
                 'modulo'  => [
@@ -236,7 +252,7 @@ class ModuloSidebarSeeder extends Seeder
                     'ruta'        => '/reportes/precios',
                     'icono'       => 'BarChart4',
                     'descripcion' => 'Reportes y análisis',
-                    'orden'       => 10,
+                    'orden'       => 11,
                     'categoria'   => 'Reportes',
                     'permisos'    => ['reportes.precios.index'],
                 ],
@@ -270,7 +286,7 @@ class ModuloSidebarSeeder extends Seeder
                     'ruta'        => '/cajas',
                     'icono'       => 'Wallet',
                     'descripcion' => 'Control de cajas y tesorería',
-                    'orden'       => 11,
+                    'orden'       => 12,
                     'categoria'   => 'Finanzas',
                     'permisos'    => ['cajas.index'],
                 ],
@@ -293,7 +309,7 @@ class ModuloSidebarSeeder extends Seeder
                     'ruta'        => '/almacenes',
                     'icono'       => 'Building2',
                     'descripcion' => 'Gestión de almacenes y sectores',
-                    'orden'       => 12,
+                    'orden'       => 13,
                     'categoria'   => 'Logística',
                     'permisos'    => ['almacenes.manage', 'sectores.manage'],
                 ],

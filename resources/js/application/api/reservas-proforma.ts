@@ -21,9 +21,14 @@ export const reservasProformaApi = {
                 if (filters.producto_id) params.append('producto_id', filters.producto_id.toString());
                 if (filters.almacen_id) params.append('almacen_id', filters.almacen_id.toString());
                 if (filters.cliente_id) params.append('cliente_id', filters.cliente_id.toString());
+                // ✅ NUEVO (2026-07-18): Filtro por nombre de cliente
+                if (filters.cliente_nombre) params.append('cliente_nombre', filters.cliente_nombre);
                 if (filters.vencimiento) params.append('vencimiento', filters.vencimiento);
                 if (filters.fecha_creacion_desde) params.append('fecha_creacion_desde', filters.fecha_creacion_desde);
                 if (filters.fecha_creacion_hasta) params.append('fecha_creacion_hasta', filters.fecha_creacion_hasta);
+                // ✅ NUEVO (2026-07-18): Filtro por fecha de reserva
+                if (filters.fecha_reserva_desde) params.append('fecha_reserva_desde', filters.fecha_reserva_desde);
+                if (filters.fecha_reserva_hasta) params.append('fecha_reserva_hasta', filters.fecha_reserva_hasta);
                 if (filters.fecha_vencimiento_desde) params.append('fecha_vencimiento_desde', filters.fecha_vencimiento_desde);
                 if (filters.fecha_vencimiento_hasta) params.append('fecha_vencimiento_hasta', filters.fecha_vencimiento_hasta);
                 if (filters.ordenamiento) params.append('ordenamiento', filters.ordenamiento);

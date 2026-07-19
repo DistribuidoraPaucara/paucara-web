@@ -65,11 +65,12 @@ export default function ProductoTableRow({
     proformaConvertida = false
 }: ProductoTableRowProps) {
     const productoInfo = detalle.producto as any;
+    console.log('ProductoTableRow - productoInfo:', productoInfo);
     const esCombo = productoInfo && productoInfo.es_combo;
     const precioCosto = detalle.precio_costo || productoInfo?.precio_costo || 0;
 
     const content = (
-        <tr key={detalle.producto_id} className={`hover:bg-gray-50 dark:hover:bg-zinc-800 ${tipo === 'compra' && tieneDiferencia && esAumento
+        <tr key={detalle.producto_id} className={`hover:bg-gray-50 dark:hover:bg-zinc-800 text-xs font-small ${tipo === 'compra' && tieneDiferencia && esAumento
             ? 'bg-amber-50 dark:bg-amber-950/10 px-2 py-2'
             : tipo === 'compra' && tieneDiferencia && !esAumento
                 ? 'bg-green-50 dark:bg-green-950/10 px-2 py-2'
@@ -77,7 +78,7 @@ export default function ProductoTableRow({
             }`}>
             {/* Producto Info */}
             <td className="px-2 py-4">
-                <div className="text-sm font-bold text-gray-900 dark:text-white">
+                <div className="text-xs font-bold text-gray-900 dark:text-white">
                     {productoInfo?.nombre || 'Producto no encontrado'}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 text-left mt-1">
@@ -114,8 +115,8 @@ export default function ProductoTableRow({
             </td>
 
             {/* Cantidad */}
-            <td className="px-2 py-4">
-                <div className="flex items-center gap-2">
+            <td className="px-2 py-2">
+                <div className="flex flex-col items-center gap-2">
                     <input
                         type="text"
                         inputMode="decimal"
@@ -146,18 +147,19 @@ export default function ProductoTableRow({
                         onBlur={() => {
                             setEditingField(null);
                         }}
-                        className="w-24 px-1 py-1 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+                        className="w-24 px-1 py-1 text-sm flex-col border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     {!proformaConvertida && (() => {
                         const stockDisponible = (productoInfo as any)?.stock_disponible_calc ?? (productoInfo as any)?.stock_disponible ?? (productoInfo as any)?.stock ?? 0;
+                        const stockReservado = (productoInfo as any)?.stock_reservado_calc ?? (productoInfo as any)?.stock_reservado ?? 0;
                         const stockTotal = (productoInfo as any)?.stock_total_calc ?? (productoInfo as any)?.stock_total ?? 0;
                         return (
-                            <span className={`items-center p-1 rounded font-semibold ${stockDisponible === 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200' :
+                            <p className={`flex-col items-center p-1 rounded text-xs ${stockDisponible === 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200' :
                                 stockDisponible < 5 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200' :
                                     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200'
                                 }`}>
-                                / {stockDisponible}
-                            </span>
+                                Disp. {stockDisponible} | Res. {stockReservado} | Total {stockTotal}
+                            </p>
                         );
                     })()}
                 </div>
@@ -279,7 +281,7 @@ export default function ProductoTableRow({
 
             {/* Precio Venta + Tipo Precio */}
             {tipo === 'venta' && (
-                <td className="px-2 py-4">
+                <td className="px-2 py-2 text-xs font-small">
                     <input
                         type="text"
                         inputMode="decimal"
@@ -329,7 +331,7 @@ export default function ProductoTableRow({
                             }
                             setEditingField(null);
                         }}
-                        className="w-32 px-1 py-1 text-xs border border-gray-300 dark:border-zinc-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-32 px-1 py-1 text-xs font-small border border-gray-300 dark:border-zinc-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <br />
 
@@ -412,16 +414,16 @@ export default function ProductoTableRow({
                                         onUpdateDetail(index, 'precio_unitario', precioSeleccionado.precio || 0);
                                     }
                                 }}
-                                className="mt-1 px-1 py-1 text-xs border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-1 px-1 py-1 text-xs font-small border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {!valorInicial && <option value="">Seleccionar tipo de precio</option>}
                                 {preciosVenta.map((precio) => (
-                                    <option key={precio.id || precio.tipo_precio_id} value={String(precio.tipo_precio_id)}>
+                                    <option className="text-xs font-small" key={precio.id || precio.tipo_precio_id} value={String(precio.tipo_precio_id)}>
                                         {precio.nombre || `Tipo ${precio.tipo_precio_id}`} - {formatCurrencyWith2Decimals(precio.precio || 0)}
                                     </option>
                                 ))}
                                 {/* ✅ NUEVO: Opción OTROS para precios personalizados */}
-                                <option value="otros">
+                                <option value="otros" className="text-xs font-small">
                                     ➕ OTROS (Precio Personalizado)
                                 </option>
                             </select>
@@ -438,22 +440,22 @@ export default function ProductoTableRow({
             </td>
 
             {/* Categoría */}
-            <td className="px-2 py-4">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+            <td className="px-2 py-2">
+                <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.categoria === 'string' ? productoInfo.categoria : productoInfo?.categoria?.nombre || '-'}
                 </span>
             </td>
 
             {/* Unidad */}
-            <td className="px-2 py-4">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+            <td className="px-2 py-2">
+                <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {detalle.unidad_medida_nombre || productoInfo?.unidad_medida?.nombre || '-'}
                 </span>
             </td>
 
             {/* Marca */}
-            <td className="px-2 py-4">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+            <td className="px-2 py-2">
+                <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.marca === 'string' ? productoInfo.marca : productoInfo?.marca?.nombre || '-'}
                 </span>
             </td>

@@ -156,23 +156,10 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
 
 
     return (
-        <AppLayout>
-            <Head title="Dashboard de Logística" />
+        <AppLayout breadcrumbs={[{ title: 'Pedidos', href: '/logistica/dashboard' }]}>
+            <Head title="Pedidos" />
 
             <div className="space-y-6 p-4 bg-white dark:bg-slate-950 min-h-screen">
-                {/* ✅ NUEVO (2026-06-11): Estadísticas Dinámicas */}
-                {/* {dashboardStats && (
-                    <DashboardStats
-                        logisticaStats={null}
-                        proformaStats={null}
-                        stats={stats}
-                        loadingLogisticaStats={false}
-                        logisticaLastUpdate={new Date()}
-                        refreshLogisticaStats={() => {}}
-                        dashboardStats={dashboardStats}
-                    />
-                )} */}
-
                 {/* Sección de Proformas */}
                 <ProformasSection
                     proformas={proformas}

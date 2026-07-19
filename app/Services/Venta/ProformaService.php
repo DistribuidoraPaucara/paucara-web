@@ -848,6 +848,7 @@ class ProformaService
             'direccionConfirmada',
             'moneda',
             'usuarioCreador',
+            'preventista', // ✅ NUEVO (2026-07-18): Cargar preventista asignado
             // ✅ CRÍTICO: Cargar estado_logistica para mostrar en Show.tsx
             'estadoLogistica',
             // ✅ NUEVO: Cargar venta si la proforma fue convertida (para mostrar ID y número de venta)

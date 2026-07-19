@@ -51,7 +51,7 @@ export default function FloatingInput({
             )}
             <label
                 htmlFor={id}
-                className="absolute left-10 -top-3 px-1 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-900 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-500 peer-focus:-top-3 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 peer-[:not(:placeholder-shown)]:-top-3 transition-all pointer-events-none"
+                className="absolute left-10 -top-3 px-1 text-x text-gray-700 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-500 peer-focus:-top-3 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 peer-[:not(:placeholder-shown)]:-top-3 transition-all pointer-events-none"
             >
                 {label}
             </label>

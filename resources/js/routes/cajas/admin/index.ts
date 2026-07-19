@@ -270,7 +270,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     reportes.form = reportesForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
 export const conciliacion = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -284,7 +284,7 @@ conciliacion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.url = (options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ conciliacion.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -300,7 +300,7 @@ conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -309,7 +309,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
     const conciliacionForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -318,7 +318,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
         conciliacionForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -326,7 +326,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:720
  * @route '/cajas/admin/conciliacion'
  */
         conciliacionForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -441,6 +441,7 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     // Búsquedas desde frontend (debe ir antes de {proforma})
     Route::get('/proformas/search/clientes', [ApiProformaController::class, 'searchClientes']);  // ✅ NUEVO: Buscar clientes
     Route::get('/proformas/search/usuarios', [ApiProformaController::class, 'searchUsuarios']);  // ✅ NUEVO: Buscar usuarios
+    Route::get('/proformas/cliente/{clienteId}/deuda', [\App\Http\Controllers\ProformaController::class, 'obtenerClienteConDeuda']);  // ✅ NUEVO (2026-07-18): Cliente con deuda
 
     // Impresión de proformas filtradas (debe ir antes de {proforma})
     Route::post('/proformas/preparar-impresion', [ApiProformaController::class, 'prepararImpresion']);  // ✅ NUEVO: Preparar impresión

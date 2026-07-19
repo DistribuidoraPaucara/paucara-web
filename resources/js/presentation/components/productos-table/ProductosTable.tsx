@@ -476,7 +476,7 @@ export default function ProductosTable({
                                 <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     SKU
                                 </th>
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Cantidad
                                 </th>
                                 {tipo === 'compra' && (
@@ -493,28 +493,28 @@ export default function ProductosTable({
                                     </>
                                 )}
                                 {tipo === 'venta' && (
-                                    <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                         Precio Unitario
                                     </th>
                                 )}
                                 <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Subtotal
                                 </th>
-                                 <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                 <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Categoría
                                 </th>
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Unidad
                                 </th>
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Marca
                                 </th>
-                                <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     -
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
+                        <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700 font-small text-xs">
                             {detalles.map((detalle, index) => {
                                 const productoInfo = detalle.producto || productos.find(p => p.id === detalle.producto_id);
                                 const precioCosto = detalle.precio_costo || productoInfo?.precio_costo || 0;

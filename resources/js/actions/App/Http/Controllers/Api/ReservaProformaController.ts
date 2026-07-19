@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +122,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -131,7 +131,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -141,7 +141,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
     const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -151,7 +151,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
         showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -160,7 +160,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::show
- * @see app/Http/Controllers/Api/ReservaProformaController.php:205
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:223
  * @route '/api/reservas-proforma/{id}'
  */
         showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -176,7 +176,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::liberar
- * @see app/Http/Controllers/Api/ReservaProformaController.php:290
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:308
  * @route '/api/reservas-proforma/{id}/liberar'
  */
 export const liberar = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -191,7 +191,7 @@ liberar.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::liberar
- * @see app/Http/Controllers/Api/ReservaProformaController.php:290
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:308
  * @route '/api/reservas-proforma/{id}/liberar'
  */
 liberar.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -219,7 +219,7 @@ liberar.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::liberar
- * @see app/Http/Controllers/Api/ReservaProformaController.php:290
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:308
  * @route '/api/reservas-proforma/{id}/liberar'
  */
 liberar.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -229,7 +229,7 @@ liberar.post = (args: { id: string | number } | [id: string | number ] | string 
 
     /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::liberar
- * @see app/Http/Controllers/Api/ReservaProformaController.php:290
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:308
  * @route '/api/reservas-proforma/{id}/liberar'
  */
     const liberarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -239,7 +239,7 @@ liberar.post = (args: { id: string | number } | [id: string | number ] | string 
 
             /**
 * @see \App\Http\Controllers\Api\ReservaProformaController::liberar
- * @see app/Http/Controllers/Api/ReservaProformaController.php:290
+ * @see app/Http/Controllers/Api/ReservaProformaController.php:308
  * @route '/api/reservas-proforma/{id}/liberar'
  */
         liberarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -13,6 +13,8 @@ interface ProformaFilterState {
     filtroUsuarioAprobador: string;
     filtroFechaVencimientoDesde: string;
     filtroFechaVencimientoHasta: string;
+    filtroFechaCreacionDesde: string;
+    filtroFechaCreacionHasta: string;
     filtroFechaEntregaSolicitadaDesde: string;
     filtroFechaEntregaSolicitadaHasta: string;
     filtroHoraEntregaSolicitadaDesde: string;
@@ -44,6 +46,8 @@ export function useProformaFilters(initialPaginationInfo: any) {
     const [filtroUsuarioAprobador, setFiltroUsuarioAprobador] = useState(urlParams.get('usuario_aprobador_id') || '');
     const [filtroFechaVencimientoDesde, setFiltroFechaVencimientoDesde] = useState(urlParams.get('fecha_vencimiento_desde') || '');
     const [filtroFechaVencimientoHasta, setFiltroFechaVencimientoHasta] = useState(urlParams.get('fecha_vencimiento_hasta') || '');
+    const [filtroFechaCreacionDesde, setFiltroFechaCreacionDesde] = useState(urlParams.get('fecha_creacion_desde') || '');
+    const [filtroFechaCreacionHasta, setFiltroFechaCreacionHasta] = useState(urlParams.get('fecha_creacion_hasta') || '');
     const [filtroFechaEntregaSolicitadaDesde, setFiltroFechaEntregaSolicitadaDesde] = useState(urlParams.get('fecha_entrega_solicitada_desde') || '');
     const [filtroFechaEntregaSolicitadaHasta, setFiltroFechaEntregaSolicitadaHasta] = useState(urlParams.get('fecha_entrega_solicitada_hasta') || '');
     const [filtroHoraEntregaSolicitadaDesde, setFiltroHoraEntregaSolicitadaDesde] = useState(urlParams.get('hora_entrega_solicitada_desde') || '');
@@ -106,6 +110,15 @@ export function useProformaFilters(initialPaginationInfo: any) {
             params.fecha_vencimiento_hasta = filtroFechaVencimientoHasta;
         }
 
+        // ✅ Agregar filtros de fecha de creación
+        if (filtroFechaCreacionDesde && filtroFechaCreacionDesde !== '') {
+            params.fecha_creacion_desde = filtroFechaCreacionDesde;
+        }
+
+        if (filtroFechaCreacionHasta && filtroFechaCreacionHasta !== '') {
+            params.fecha_creacion_hasta = filtroFechaCreacionHasta;
+        }
+
         // ✅ Agregar filtros de fecha de entrega solicitada
         if (filtroFechaEntregaSolicitadaDesde && filtroFechaEntregaSolicitadaDesde !== '') {
             params.fecha_entrega_solicitada_desde = filtroFechaEntregaSolicitadaDesde;
@@ -134,7 +147,7 @@ export function useProformaFilters(initialPaginationInfo: any) {
 
         // Use FilterService for navigation (proper service layer abstraction)
         FilterService.navigateProformaFilters(params);
-    }, [filtroEstadoProforma, searchProforma, soloVencidas, filtroLocalidad, filtroTipoEntrega, filtroPoliticaPago, filtroEstadoLogistica, filtroCoordinacionCompletada, filtroUsuarioAprobador, filtroFechaVencimientoDesde, filtroFechaVencimientoHasta, filtroFechaEntregaSolicitadaDesde, filtroFechaEntregaSolicitadaHasta, filtroHoraEntregaSolicitadaDesde, filtroHoraEntregaSolicitadaHasta]);
+    }, [filtroEstadoProforma, searchProforma, soloVencidas, filtroLocalidad, filtroTipoEntrega, filtroPoliticaPago, filtroEstadoLogistica, filtroCoordinacionCompletada, filtroUsuarioAprobador, filtroFechaVencimientoDesde, filtroFechaVencimientoHasta, filtroFechaCreacionDesde, filtroFechaCreacionHasta, filtroFechaEntregaSolicitadaDesde, filtroFechaEntregaSolicitadaHasta, filtroHoraEntregaSolicitadaDesde, filtroHoraEntregaSolicitadaHasta]);
 
     // Aplicar filtros con debounce
     useEffect(() => {
@@ -151,7 +164,7 @@ export function useProformaFilters(initialPaginationInfo: any) {
         return () => {
             if (timeout) clearTimeout(timeout);
         };
-    }, [filtroEstadoProforma, soloVencidas, searchProforma, filtroLocalidad, filtroTipoEntrega, filtroPoliticaPago, filtroEstadoLogistica, filtroCoordinacionCompletada, filtroUsuarioAprobador, filtroFechaVencimientoDesde, filtroFechaVencimientoHasta, filtroFechaEntregaSolicitadaDesde, filtroFechaEntregaSolicitadaHasta, filtroHoraEntregaSolicitadaDesde, filtroHoraEntregaSolicitadaHasta, aplicarFiltros]);
+    }, [filtroEstadoProforma, soloVencidas, searchProforma, filtroLocalidad, filtroTipoEntrega, filtroPoliticaPago, filtroEstadoLogistica, filtroCoordinacionCompletada, filtroUsuarioAprobador, filtroFechaVencimientoDesde, filtroFechaVencimientoHasta, filtroFechaCreacionDesde, filtroFechaCreacionHasta, filtroFechaEntregaSolicitadaDesde, filtroFechaEntregaSolicitadaHasta, filtroHoraEntregaSolicitadaDesde, filtroHoraEntregaSolicitadaHasta, aplicarFiltros]);
 
     // Cambiar página
     const cambiarPagina = (page: number) => {
@@ -181,6 +194,10 @@ export function useProformaFilters(initialPaginationInfo: any) {
         setFiltroFechaVencimientoDesde,
         filtroFechaVencimientoHasta,
         setFiltroFechaVencimientoHasta,
+        filtroFechaCreacionDesde,
+        setFiltroFechaCreacionDesde,
+        filtroFechaCreacionHasta,
+        setFiltroFechaCreacionHasta,
         filtroFechaEntregaSolicitadaDesde,
         setFiltroFechaEntregaSolicitadaDesde,
         filtroFechaEntregaSolicitadaHasta,

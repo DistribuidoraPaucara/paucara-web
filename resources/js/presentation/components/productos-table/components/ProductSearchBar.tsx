@@ -144,7 +144,7 @@ export default function ProductSearchBar({
     return (
         <>
             {/* Buscador de productos */}
-            <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 pb-1 mb-2">
+            <div className="sticky top-0 z-10 pb-1 mb-2">
                 <div className="flex gap-2">
                     <div className="flex-1 relative">
                         <input

@@ -1,6 +1,6 @@
 import { Label } from '@/presentation/components/ui/label';
 
-type PoliticaPago = 'CONTRA_ENTREGA' | 'ANTICIPADO_100';
+type PoliticaPago = 'CONTRA_ENTREGA' | 'ANTICIPADO_100' | 'CREDITO';
 
 interface PoliticaPagoSelectorProps {
   value: PoliticaPago;
@@ -8,6 +8,15 @@ interface PoliticaPagoSelectorProps {
   label?: string;
   disabled?: boolean;
   showDescriptions?: boolean;
+  // ✅ NUEVO (2026-07-18): Habilitar/deshabilitar opción CREDITO según cliente.puede_tener_credito
+  puedeTenerCredito?: boolean;
+}
+
+interface OpcionPolitica {
+  value: PoliticaPago;
+  label: string;
+  description: string;
+  icon: string;
 }
 
 export default function PoliticaPagoSelector({
@@ -16,50 +25,59 @@ export default function PoliticaPagoSelector({
   label = '💳 Política de Pago',
   disabled = false,
   showDescriptions = true,
+  puedeTenerCredito = false,
 }: PoliticaPagoSelectorProps) {
-  const getButtonClass = (isActive: boolean) => {
-    const baseClass = 'flex-1 min-w-[150px] px-3 py-2 rounded-lg border-2 transition-all font-medium text-sm';
-    const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : '';
+  const opciones: OpcionPolitica[] = [
+    {
+      value: 'CONTRA_ENTREGA',
+      label: 'Contra Entrega',
+      description: 'Al recibir',
+      icon: '📦',
+    },
+    {
+      value: 'ANTICIPADO_100',
+      label: 'Anticipado 100%',
+      description: 'Antes de enviar',
+      icon: '💰',
+    },
+    ...(puedeTenerCredito
+      ? [
+          {
+            value: 'CREDITO' as PoliticaPago,
+            label: 'Crédito',
+            description: 'A cuenta corriente',
+            icon: '💳',
+          },
+        ]
+      : []),
+  ];
 
-    if (isActive) {
-      return `${baseClass} border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-md ${disabledClass}`;
-    } else {
-      return `${baseClass} border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-blue-500 ${disabledClass}`;
-    }
-  };
+  const opcionSeleccionada = opciones.find((op) => op.value === value);
 
   return (
     <div>
-      <Label className="text-sm font-medium mb-3 block">
+      <Label htmlFor="politica-pago" className="text-sm font-medium mb-2 block">
         {label}
       </Label>
-      <div className="flex gap-2 flex-wrap">
-        {/* Contra Entrega */}
-        <button
-          type="button"
-          onClick={() => !disabled && onChange('CONTRA_ENTREGA')}
-          disabled={disabled}
-          className={getButtonClass(value === 'CONTRA_ENTREGA')}
-        >
-          <div className="text-left">
-            <p className="font-semibold text-sm">Contra Entrega</p>
-            {showDescriptions && <p className="text-xs opacity-75">Al recibir</p>}
-          </div>
-        </button>
-
-        {/* Anticipado 100% */}
-        <button
-          type="button"
-          onClick={() => !disabled && onChange('ANTICIPADO_100')}
-          disabled={disabled}
-          className={getButtonClass(value === 'ANTICIPADO_100')}
-        >
-          <div className="text-left">
-            <p className="font-semibold text-sm">Anticipado 100%</p>
-            {showDescriptions && <p className="text-xs opacity-75">Antes de enviar</p>}
-          </div>
-        </button>
-      </div>
+      <select
+        id="politica-pago"
+        value={value}
+        onChange={(e) => onChange(e.target.value as PoliticaPago)}
+        disabled={disabled}
+        className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white text-sm font-medium"
+      >
+        <option value="">-- Selecciona una política de pago --</option>
+        {opciones.map((opcion) => (
+          <option key={opcion.value} value={opcion.value}>
+            {opcion.icon} {opcion.label} ({opcion.description})
+          </option>
+        ))}
+      </select>
+      {showDescriptions && opcionSeleccionada && (
+        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+          {opcionSeleccionada.icon} {opcionSeleccionada.description}
+        </p>
+      )}
     </div>
   );
 }

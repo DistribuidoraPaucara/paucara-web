@@ -76,10 +76,19 @@ class ReservaProformaController extends Controller
                 });
             }
 
-            // Filtro por cliente
+            // Filtro por cliente (ID exacto)
             if ($request->filled('cliente_id')) {
                 $query->whereHas('proforma', function ($q) {
                     $q->where('cliente_id', request()->cliente_id);
+                });
+            }
+
+            // ✅ NUEVO (2026-07-18): Filtro por nombre de cliente (búsqueda flexible)
+            if ($request->filled('cliente_nombre')) {
+                $query->whereHas('proforma', function ($q) {
+                    $q->whereHas('cliente', function ($c) {
+                        $c->where('nombre', 'ILIKE', '%' . request()->cliente_nombre . '%');
+                    });
                 });
             }
 
@@ -106,6 +115,15 @@ class ReservaProformaController extends Controller
 
             if ($request->filled('fecha_creacion_hasta')) {
                 $query->where('created_at', '<=', $request->fecha_creacion_hasta . ' 23:59:59');
+            }
+
+            // ✅ NUEVO (2026-07-18): Filtro por rango de fechas de reserva
+            if ($request->filled('fecha_reserva_desde')) {
+                $query->where('fecha_reserva', '>=', $request->fecha_reserva_desde . ' 00:00:00');
+            }
+
+            if ($request->filled('fecha_reserva_hasta')) {
+                $query->where('fecha_reserva', '<=', $request->fecha_reserva_hasta . ' 23:59:59');
             }
 
             // Filtro por rango de fechas de vencimiento

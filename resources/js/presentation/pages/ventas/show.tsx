@@ -409,6 +409,42 @@ export default function VentaShow() {
                                                 </div>
                                             </div>
                                         )}
+                                        {/* ✅ NUEVO: Fecha Entrega Comprometida */}
+                                        {venta.fecha_entrega_comprometida && (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                                        <span className="text-lg">📆</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+                                                        Fecha Entrega Comprometida
+                                                    </p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {new Date(venta.fecha_entrega_comprometida).toLocaleDateString('es-ES')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* ✅ NUEVO: Hora Entrega Comprometida */}
+                                        {venta.hora_entrega_comprometida && (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                                        <span className="text-lg">🕐</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+                                                        Hora Entrega Comprometida
+                                                    </p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {venta.hora_entrega_comprometida.substring(0, 5)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                         {/* ✅ NUEVO: Integración de EstadoLogisticoConfirmacion en el grid */}
                                         {venta.confirmaciones && venta.confirmaciones.length > 0 && (
                                             <>
@@ -454,6 +490,9 @@ export default function VentaShow() {
                                 <thead className="bg-gray-50 dark:bg-zinc-800">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            Imagen
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             ID
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -494,9 +533,28 @@ export default function VentaShow() {
                                                       .join(', ')
                                                 : '-';
 
+                                        const imagenPrincipal = ((detalle.producto as any)?.imagenes || []).find((img: any) => img.es_principal) ||
+                                                              ((detalle.producto as any)?.imagenes || [])[0];
+
                                         return (
                                             <>
                                                 <tr key={detalle.id}>
+                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                        {imagenPrincipal ? (
+                                                            <div className="h-16 w-16 overflow-hidden rounded-lg bg-gray-100 dark:bg-zinc-800">
+                                                                <img
+                                                                    src={imagenPrincipal.url}
+                                                                    alt={detalle.producto.nombre}
+                                                                    className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                                    onClick={() => window.open(imagenPrincipal.url, '_blank')}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="h-16 w-16 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-400">
+                                                                <span>📦</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                         #{detalle.producto_id}
                                                     </td>
@@ -530,7 +588,7 @@ export default function VentaShow() {
                                                 {esCombo && comboItems.length > 0 && (
                                                     <>
                                                         <tr className="bg-gray-50 dark:bg-zinc-800">
-                                                            <td colSpan={8} className="px-6 py-3">
+                                                            <td colSpan={9} className="px-6 py-3">
                                                                 <div className="text-xs font-semibold tracking-wide text-gray-600 uppercase dark:text-gray-300">
                                                                     Componentes del combo ({comboItems.length})
                                                                 </div>
@@ -544,8 +602,26 @@ export default function VentaShow() {
                                                                     ? item.precio_unitario
                                                                     : item.producto?.precio_venta || 0;
                                                             const subtotal = cantidadTotal * precioUnitario;
+                                                            const imagenCombo = (item.producto?.imagenes || []).find((img: any) => img.es_principal) ||
+                                                                               (item.producto?.imagenes || [])[0];
                                                             return (
                                                                 <tr key={`${detalle.id}-item-${idx}`} className="bg-gray-50 dark:bg-zinc-800">
+                                                                    <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                        {imagenCombo ? (
+                                                                            <div className="h-12 w-12 overflow-hidden rounded-lg bg-gray-200 dark:bg-zinc-700">
+                                                                                <img
+                                                                                    src={imagenCombo.url}
+                                                                                    alt={item.producto?.nombre}
+                                                                                    className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                                                    onClick={() => window.open(imagenCombo.url, '_blank')}
+                                                                                />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-400 text-xs">
+                                                                                📦
+                                                                            </div>
+                                                                        )}
+                                                                    </td>
                                                                     <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">
                                                                         {item.producto?.id}
                                                                     </td>
