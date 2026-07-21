@@ -1004,8 +1004,8 @@ class EntregaService
                 'Carga completada - Entrega en tránsito'
             );
 
-            // ✅ ACTUALIZADO: Cambiar estado logístico de ventas a EN_TRANSITO
-            // Las ventas relacionadas a la entrega deben pasar a EN_TRANSITO cuando la entrega está en tránsito
+            // ✅ Cambiar estado logístico de ventas a EN_TRANSITO
+            // Las ventas relacionadas a la entrega (via FK entrega_id) deben pasar a EN_TRANSITO
 
             // 1. Obtener ID del estado EN_TRANSITO (categoría: venta_logistica)
             $estadoVentaEnTransitoId = \App\Models\EstadoLogistica::where('codigo', 'EN_TRANSITO')
@@ -1016,8 +1016,7 @@ class EntregaService
                 throw new \Exception('Estado EN_TRANSITO no encontrado en tabla estados_logistica (categoría: venta_logistica)');
             }
 
-            // 2. Actualizar todas las ventas de la entrega a EN_TRANSITO
-            // ✅ IMPORTANTE: Solo actualizar estado_logistico_id (FK a estados_logistica)
+            // 2. Actualizar todas las ventas de la entrega (relación 1:N via FK)
             $ventasActualizadas = $entrega->ventas()
                 ->update([
                     'estado_logistico_id' => $estadoVentaEnTransitoId,
