@@ -733,24 +733,52 @@ class EntregaPdfController extends Controller
             }])->ventas;
 
             // Filtrar SOLO ventas NO a crédito (CRÍTICO: excluir CREDITO del resumen)
+            // ✅ IMPORTANTE: tipo_pago_id = 3 es CREDITO
             $ventasParaResumen = $ventasCargas->filter(function ($v) {
-                return ($v->tipoPago?->codigo ?? '') !== 'CREDITO';
+                // Excluir si tipo_pago_id es 3 (CREDITO) o si no está definido el tipo_pago_id
+                return (int) $v->tipo_pago_id !== 3;
             });
 
             // Obtener todas las confirmaciones de las ventas NO crédito de esta entrega
             $ventasIds = $ventasParaResumen->pluck('id')->toArray();
 
+            // 🔍 DEBUG: Log de filtrado
+            \Log::info('📊 [obtenerResumenPagos] Filtrado de ventas CREDITO', [
+                'total_ventas' => $ventasCargas->count(),
+                'ventas_filtradas' => $ventasParaResumen->count(),
+                'ventas_ids' => $ventasIds,
+                'ventas_excluidas' => $ventasCargas->filter(function($v) {
+                    return ($v->tipo_pago_id === 3) || (($v->tipoPago?->codigo ?? '') === 'CREDITO');
+                })->pluck('id')->toArray(),
+            ]);
+
             if (empty($ventasIds)) {
                 return null;
             }
 
-            $confirmaciones = \App\Models\EntregaVentaConfirmacion::with('tipoPago')
-                ->whereIn('venta_id', $ventasIds)
+            // ✅ IMPORTANTE: Obtener TODAS las confirmaciones (incluyendo CREDITO)
+            // Pero usar solo las de ventas SIN CREDITO para calcular montos
+            $todasLasConfirmaciones = \App\Models\EntregaVentaConfirmacion::with('tipoPago')
+                ->whereIn('venta_id', $ventasCargas->pluck('id')->toArray())  // ← TODAS las ventas
                 ->get();
+
+            // Solo usar confirmaciones de ventas SIN CREDITO para calcular montos
+            $confirmaciones = $todasLasConfirmaciones->filter(function($conf) use ($ventasIds) {
+                return in_array($conf->venta_id, $ventasIds);
+            });
 
             if ($confirmaciones->isEmpty()) {
                 return null;
             }
+
+            // ✅ CRÍTICO: Filtrar solo la ÚLTIMA confirmación por venta ANTES de agrupar por tipo_pago
+            // Esto previene doble-conteo cuando una venta tiene múltiples confirmaciones
+            $confirmacionesUltimas = [];
+            foreach ($confirmaciones->groupBy('venta_id') as $ventaId => $confirmacionesDeVenta) {
+                $ultimaConfirmacion = $confirmacionesDeVenta->sortByDesc('id')->first();
+                $confirmacionesUltimas[] = $ultimaConfirmacion;
+            }
+            $confirmacionesFiltradas = collect($confirmacionesUltimas);
 
             // Construir resumen con soporte para múltiples pagos (IGUAL QUE ENDPOINT API)
             $resumen = [
@@ -763,8 +791,8 @@ class EntregaPdfController extends Controller
                 'confirmaciones' => [],  // ✅ NUEVO 2026-02-21: Información de confirmaciones para el ticket
             ];
 
-            // Procesar confirmaciones agrupadas por tipo de pago
-            $porTipoPago = $confirmaciones->groupBy(function ($item) {
+            // Procesar confirmaciones agrupadas por tipo de pago (SOLO las últimas por venta)
+            $porTipoPago = $confirmacionesFiltradas->groupBy(function ($item) {
                 // Si tiene desglose_pagos (múltiples pagos), agrupar por cada tipo en el desglose
                 if (!empty($item->desglose_pagos)) {
                     return 'multiple';
@@ -833,21 +861,38 @@ class EntregaPdfController extends Controller
                 }
             }
 
-            // ✅ NUEVO 2026-02-21: Agregar información de confirmaciones (tipo_entrega, tipo_novedad, etc.)
-            foreach ($confirmaciones as $confirmacion) {
+            // ✅ NUEVO 2026-02-21: Agregar información de TODAS las confirmaciones (incluyendo CREDITO)
+            // PERO solo mostrar la ÚLTIMA confirmación por venta (ordenado por ID DESC)
+            $confirmacionesPorVenta = $todasLasConfirmaciones->groupBy('venta_id');
+
+            foreach ($confirmacionesPorVenta as $ventaId => $confirmacionesDeVenta) {
+                // Obtener la última confirmación (con ID más alto)
+                $ultimaConfirmacion = $confirmacionesDeVenta->sortByDesc('id')->first();
+
+                // Obtener cliente de la venta
+                $venta = $ventasCargas->firstWhere('id', $ventaId);
+                $clienteNombre = $venta?->cliente?->nombre ?? 'S/N';
+                $tipoPago = $venta?->tipoPago?->codigo ?? $venta?->estado_pago ?? 'S/N';
+                $montoTotal = (float) ($venta?->total ?? 0);
+
                 $resumen['confirmaciones'][] = [
-                    'venta_id' => $confirmacion->venta_id,
-                    'tipo_entrega' => $confirmacion->tipo_entrega ?? 'COMPLETA',
-                    'tipo_novedad' => $confirmacion->tipo_novedad,
-                    'tuvo_problema' => $confirmacion->tuvo_problema,
-                    'productos_devueltos' => $confirmacion->productos_devueltos,  // JSON array
-                    'monto_devuelto' => (float) ($confirmacion->monto_devuelto ?? 0),
-                    'monto_aceptado' => (float) ($confirmacion->monto_aceptado ?? 0),
+                    'venta_id' => $ultimaConfirmacion->venta_id,
+                    'cliente_nombre' => $clienteNombre,
+                    'tipo_confirmacion' => $ultimaConfirmacion->tipo_confirmacion ?? 'N/A',
+                    'tipo_pago' => $tipoPago,
+                    'monto_total' => $montoTotal,
+                    'tipo_entrega' => $ultimaConfirmacion->tipo_entrega ?? 'COMPLETA',
+                    'tipo_novedad' => $ultimaConfirmacion->tipo_novedad,
+                    'tuvo_problema' => $ultimaConfirmacion->tuvo_problema,
+                    'productos_devueltos' => $ultimaConfirmacion->productos_devueltos,  // JSON array
+                    'monto_devuelto' => (float) ($ultimaConfirmacion->monto_devuelto ?? 0),
+                    'monto_aceptado' => (float) ($ultimaConfirmacion->monto_aceptado ?? 0),
                 ];
             }
 
             // Ventas sin confirmación de pago (SOLO NO crédito)
-            $ventasConfirmadas = $confirmaciones->pluck('venta_id')->unique()->toArray();
+            // ✅ CRÍTICO: Usar confirmaciones filtradas (solo las últimas por venta)
+            $ventasConfirmadas = $confirmacionesFiltradas->pluck('venta_id')->unique()->toArray();
             $ventasSinPago = $ventasParaResumen->whereNotIn('id', $ventasConfirmadas);
 
             if ($ventasSinPago->isNotEmpty()) {
