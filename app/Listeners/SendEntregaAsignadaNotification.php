@@ -58,7 +58,7 @@ class SendEntregaAsignadaNotification implements ShouldQueue
             }
 
             // Obtener todas las ventas asociadas a esta entrega
-            $ventas = $entrega->ventas()->with(['cliente', 'preventista', 'estadoLogistico'])->get();
+            $ventas = $entrega->ventas()->with(['cliente', 'preventista', 'estadoLogistica'])->get();
 
             Log::info('📦 [SendEntregaAsignadaNotification] Ventas encontradas', [
                 'entrega_id' => $entrega->id,
@@ -70,19 +70,19 @@ class SendEntregaAsignadaNotification implements ShouldQueue
             foreach ($ventas as $venta) {
                 try {
                     // ✅ NUEVO: Obtener nombre del estado logístico
-                    $estadoLogisticoNombre = $venta->estadoLogistico?->nombre ?? 'Pendiente';
+                    $estadoLogisticaNombre = $venta->estadoLogistica?->nombre ?? 'Pendiente';
 
                     // ✅ NUEVO: Construir mensaje centralizado
                     $mensajeCliente = NotificationMessageService::ventasAsignadasAEntrega(
                         entregaId: $entrega->id,
-                        estadoLogistico: $estadoLogisticoNombre,
+                        estadoLogistica: $estadoLogisticaNombre,
                         clienteNombre: $venta->cliente?->nombre
                     );
 
                     Log::info('📝 [SendEntregaAsignadaNotification] Mensaje construido', [
                         'venta_id' => $venta->id,
                         'entrega_id' => $entrega->id,
-                        'estado_logistico' => $estadoLogisticoNombre,
+                        'estado_logistico' => $estadoLogisticaNombre,
                         'mensaje' => $mensajeCliente,
                     ]);
 
@@ -96,7 +96,7 @@ class SendEntregaAsignadaNotification implements ShouldQueue
                         'cliente_id' => $venta->cliente_id,
                         'cliente_nombre' => $venta->cliente?->nombre,
                         'preventista_id' => $venta->preventista_id,
-                        'estado_logistico' => $estadoLogisticoNombre,
+                        'estado_logistico' => $estadoLogisticaNombre,
                         'mensaje_enviado' => $mensajeCliente,
                     ]);
                 } catch (\Exception $e) {
