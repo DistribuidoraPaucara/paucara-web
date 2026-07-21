@@ -285,7 +285,7 @@ class EntregaController extends Controller
                 ])
                 ->with([
                     'estadoEntrega:id,codigo,nombre,color,icono', // Solo campos necesarios
-                    'ventas:id,numero,subtotal,impuesto,total,estado_logistico_id,fecha_entrega_comprometida,cliente_id,direccion_cliente_id,entrega_id',
+                    'ventas:id,numero,subtotal,impuesto,total,estado_entrega_id,fecha_entrega_comprometida,cliente_id,direccion_cliente_id,entrega_id',
                     'ventas.cliente:id,nombre,nit,telefono,razon_social,localidad_id', // ✅ AGREGADO: razon_social
                     'ventas.cliente.localidad:id,nombre,codigo',
                     'ventas.direccionCliente:id,direccion,latitud,longitud',
@@ -324,7 +324,7 @@ class EntregaController extends Controller
                         'subtotal'                   => $venta->subtotal,
                         'impuesto'                   => $venta->impuesto,
                         'total'                      => $venta->total,
-                        'estado_logistico_id'        => $venta->estado_logistico_id,
+                        'estado_entrega_id'        => $venta->estado_entrega_id,
                         'fecha_entrega_comprometida' => $venta->fecha_entrega_comprometida,
                         'cliente'                    => $venta->cliente ? [
                             'id'           => $venta->cliente->id,
@@ -797,7 +797,7 @@ class EntregaController extends Controller
 
             // ✅ CRÍTICO: Actualizar TODAS las ventas a EN_TRANSITO antes de cambiar estado de entrega
             // Esto asegura que cuando el Observer envía notificaciones,
-            // las ventas ya tengan el estado_logistico_id correcto
+            // las ventas ya tengan el estado_entrega_id correcto
             // NOTA: 1 entrega tiene N ventas, 1 venta está en 1 entrega
             if ($nuevoEstado === Entrega::ESTADO_EN_TRANSITO) {
                 // Obtener ID del estado EN_TRANSITO (categoría: venta_logistica)
@@ -810,7 +810,7 @@ class EntregaController extends Controller
                     // Independientemente de su estado anterior
                     $ventasCount = $entrega->ventas()
                         ->update([
-                            'estado_logistico_id' => $estadoEnTransitoId,
+                            'estado_entrega_id' => $estadoEnTransitoId,
                             'updated_at'          => now(),
                         ]);
 
@@ -819,7 +819,7 @@ class EntregaController extends Controller
                         'estado_entrega'       => $nuevoEstado,
                         'categoria_estado'     => 'venta_logistica',
                         'codigo_estado'        => 'EN_TRANSITO',
-                        'estado_logistico_id'  => $estadoEnTransitoId,
+                        'estado_entrega_id'  => $estadoEnTransitoId,
                         'ventas_totales'       => $entrega->ventas()->count(),
                         'ventas_actualizadas'  => $ventasCount,
                     ]);
@@ -1192,7 +1192,7 @@ class EntregaController extends Controller
                     'venta_id'                => $venta_id,
                     'tipo_confirmacion'       => $tipoConfirmacion,
                     'codigo_estado'           => $codigoEstado,
-                    'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id'     => $nuevoEstadoLogisticoId,
                 ]);
             } else {
                 Log::warning('⚠️ Estado logístico NO ENCONTRADO para código: ' . $codigoEstado, [
@@ -1208,7 +1208,7 @@ class EntregaController extends Controller
             }
 
             $datosActualizacion = [
-                'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                'estado_entrega_id'     => $nuevoEstadoLogisticoId,
                 'observaciones_logistica' => $observacionesFinales,
             ];
 
@@ -1559,7 +1559,7 @@ class EntregaController extends Controller
 
                 // Actualizar la venta con el nuevo estado logístico
                 $venta->update([
-                    'estado_logistico_id' => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id' => $nuevoEstadoLogisticoId,
                     'observaciones_logistica' => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
                 ]);
 
@@ -1567,7 +1567,7 @@ class EntregaController extends Controller
                     'venta_id'              => $venta_id,
                     'tipo_confirmacion'     => $tipoConfirmacionActualizado,
                     'codigo_estado'         => $codigoEstado,
-                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id'   => $nuevoEstadoLogisticoId,
                 ]);
             }
 
@@ -1679,8 +1679,8 @@ class EntregaController extends Controller
 
             if ($estadoEnTransito && $estadoSinReporte) {
                 $ventasActualizadas = $entrega->ventas()
-                    ->where('estado_logistico_id', $estadoEnTransito->id)
-                    ->update(['estado_logistico_id' => $estadoSinReporte->id]);
+                    ->where('estado_entrega_id', $estadoEnTransito->id)
+                    ->update(['estado_entrega_id' => $estadoSinReporte->id]);
 
                 if ($ventasActualizadas > 0) {
                     Log::info('✅ Ventas sin reporte actualizado al finalizar entrega', [
@@ -2899,7 +2899,7 @@ class EntregaController extends Controller
     {
         try {
             $entrega = Entrega::with(['ventas' => function ($q) {
-                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_logistico_id', 'estado_pago', 'tipo_pago_id', 'cliente_id')
+                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_entrega_id', 'estado_pago', 'tipo_pago_id', 'cliente_id')
                     ->with('tipoPago:id,codigo,nombre')
                 // ✅ NUEVO 2026-03-04: Cargar información del cliente
                     ->with('cliente:id,nombre,email,telefono')
@@ -3264,7 +3264,7 @@ class EntregaController extends Controller
 
             Log::info('🔧 [Actualizar Entrega Consolidada] Request recibida', [
                 'entrega_id'  => $entrega->id,
-                'estado_logistico_id' => $entrega->estado_logistico_id,
+                'estado_entrega_id' => $entrega->estado_entrega_id,
                 'estado_logistico_codigo' => $entrega->estadoLogistica?->codigo,
                 'estado_logistico_categoria' => $entrega->estadoLogistica?->categoria,
                 'venta_ids'   => $request->input('venta_ids'),
@@ -3323,12 +3323,12 @@ class EntregaController extends Controller
                     // Buscar el estado con el MISMO CÓDIGO pero en categoría "venta_logistica"
                     Log::info('🔍 Procesando actualización de estado logístico para nuevas ventas', [
                         'ventasAAgregar' => $ventasAAgregar,
-                        'estado_logistico_id' => $entrega->estado_logistico_id,
+                        'estado_entrega_id' => $entrega->estado_entrega_id,
                     ]);
 
-                    if ($entrega->estado_logistico_id) {
+                    if ($entrega->estado_entrega_id) {
                         // Obtener el código del estado de la entrega
-                        $estadoEntrega = \App\Models\EstadoLogistica::find($entrega->estado_logistico_id);
+                        $estadoEntrega = \App\Models\EstadoLogistica::find($entrega->estado_entrega_id);
 
                         Log::info('🔍 Estado de entrega encontrado', [
                             'estado_entrega_id' => $estadoEntrega?->id,
@@ -3372,11 +3372,11 @@ class EntregaController extends Controller
                         } else {
                             Log::warning('⚠️ No se encontró estado de entrega', [
                                 'entrega_id' => $entrega->id,
-                                'estado_logistico_id' => $entrega->estado_logistico_id,
+                                'estado_entrega_id' => $entrega->estado_entrega_id,
                             ]);
                         }
                     } else {
-                        Log::warning('⚠️ Entrega sin estado_logistico_id', [
+                        Log::warning('⚠️ Entrega sin estado_entrega_id', [
                             'entrega_id' => $entrega->id,
                         ]);
                     }
@@ -4029,14 +4029,14 @@ class EntregaController extends Controller
                 // Desasignar la venta (entrega_id = null) y restaurar estado logístico
                 $venta->update([
                     'entrega_id' => null,
-                    'estado_logistico_id' => $estadoPendienteEnvio->id,
+                    'estado_entrega_id' => $estadoPendienteEnvio->id,
                 ]);
 
                 Log::info('✅ Venta removida de la entrega y estado restaurado a SIN_ENTREGA', [
                     'venta_id'     => $venta_id,
                     'venta_numero' => $venta->numero,
                     'entrega_id'   => $id,
-                    'estado_anterior' => $venta->getOriginal('estado_logistico_id'),
+                    'estado_anterior' => $venta->getOriginal('estado_entrega_id'),
                     'estado_nuevo' => $estadoPendienteEnvio->id,
                     'usuario_id'   => Auth::id(),
                     'timestamp'    => now(),
@@ -4050,7 +4050,7 @@ class EntregaController extends Controller
                     'venta_id'            => $venta_id,
                     'entrega_id'          => $id,
                     'nuevo_estado'        => 'SIN_ENTREGA',
-                    'estado_logistico_id' => $estadoPendienteEnvio->id,
+                    'estado_entrega_id' => $estadoPendienteEnvio->id,
                 ],
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -4092,7 +4092,7 @@ class EntregaController extends Controller
         try {
             // ✅ Obtener venta
             $venta = Venta::where('id', $venta_id)
-                ->select(['id', 'numero', 'cliente_id', 'total', 'tipo_pago_id', 'entrega_id', 'estado_logistico_id'])
+                ->select(['id', 'numero', 'cliente_id', 'total', 'tipo_pago_id', 'entrega_id', 'estado_entrega_id'])
                 ->with([
                     'cliente:id,nombre,telefono,foto_perfil',
                     'tipoPago:id,nombre,codigo',
@@ -4282,7 +4282,7 @@ class EntregaController extends Controller
                     // Ventas con información esencial (ordenadas ascendentemente por ID)
                     'ventas'                            => function ($q) {
                         $q->select([
-                            'id', 'numero', 'cliente_id', 'total', 'estado_logistico_id',
+                            'id', 'numero', 'cliente_id', 'total', 'estado_entrega_id',
                             'direccion_cliente_id', 'entrega_id', 'subtotal', 'impuesto', 'descuento',
                             'tipo_pago_id', 'usuario_id', 'estado_documento_id', 'estado_pago',
                             'fecha', 'created_at', // ✅ NUEVO: Incluir fecha y timestamp
@@ -4916,7 +4916,7 @@ class EntregaController extends Controller
                     'venta_id'                => $venta_id,
                     'tipo_confirmacion'       => $tipoConfirmacion,
                     'codigo_estado'           => $codigoEstado,
-                    'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id'     => $nuevoEstadoLogisticoId,
                 ]);
             } else {
                 Log::warning('⚠️ Estado logístico NO ENCONTRADO para código: ' . $codigoEstado, [
@@ -4934,13 +4934,13 @@ class EntregaController extends Controller
             // Actualizar la venta con el nuevo estado logístico y observaciones
             if ($nuevoEstadoLogisticoId) {
                 $venta->update([
-                    'estado_logistico_id'        => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id'        => $nuevoEstadoLogisticoId,
                     'observaciones_logistica'    => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
                 ]);
 
                 Log::info('✅ Estado logístico de venta actualizado', [
                     'venta_id'              => $venta_id,
-                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
+                    'estado_entrega_id'   => $nuevoEstadoLogisticoId,
                     'tipo_confirmacion'     => $tipoConfirmacion,
                 ]);
             }
@@ -5134,7 +5134,7 @@ class EntregaController extends Controller
             }
 
             $venta->update([
-                'estado_logistico_id'     => $nuevoEstadoLogisticoId,
+                'estado_entrega_id'     => $nuevoEstadoLogisticoId,
                 'observaciones_logistica' => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
             ]);
 
