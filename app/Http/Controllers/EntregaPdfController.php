@@ -730,8 +730,8 @@ class EntregaPdfController extends Controller
             // ✅ REFACTORIZADO 2026-02-16: Usar MISMA lógica que endpoint API para evitar discrepancias
             // Cargar ventas con relaciones necesarias
             $ventasCargas = $entrega->load(['ventas' => function ($q) {
-                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id', 'estado_logistico_id')  // ✅ NUEVO 2026-07-20: Incluir FK del estado logístico
-                  ->with('tipoPago:id,codigo,nombre', 'cliente:id,nombre', 'estadoLogistica:id,nombre');  // ✅ NUEVO 2026-07-20: Cargar relación estadoLogistica
+                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id', 'estado_logistico_id')  // ✅ Incluir FK del estado logístico
+                  ->with('tipoPago:id,codigo,nombre', 'cliente:id,nombre');  // Cargar relaciones de pago y cliente
             }])->ventas;
 
             // Filtrar SOLO ventas NO a crédito (CRÍTICO: excluir CREDITO del resumen)
@@ -879,7 +879,9 @@ class EntregaPdfController extends Controller
 
                 // ✅ NUEVO 2026-07-20: Obtener estado logístico de la venta
                 $ventaData = $ventasCargas->firstWhere('id', $ventaId);
-                $estadoLogisticaNombre = $ventaData?->estadoLogistica?->nombre ?? 'N/A';
+                $estadoLogisticoCodigo = $ventaData?->estado_logistico ?? 'SIN_ENTREGA';
+                // Mapear código a nombre legible
+                $estadoLogisticaNombre = $this->obtenerNombreEstadoLogistico($estadoLogisticoCodigo);
 
                 $resumen['confirmaciones'][] = [
                     'venta_id' => $ultimaConfirmacion->venta_id,
@@ -966,5 +968,26 @@ class EntregaPdfController extends Controller
             ->first();
 
         return $codigo?->codigo ?? 'N/A';
+    }
+
+    /**
+     * ✅ NUEVO 2026-07-20: Mapear código de estado logístico a nombre legible
+     * Usa los labels definidos en el modelo Venta
+     */
+    private function obtenerNombreEstadoLogistico(?string $codigo): string
+    {
+        $labels = [
+            'ENTREGADA' => 'Entregada',
+            'NO_ENTREGADO' => 'No Entregado',
+            'PENDIENTE_RETIRO' => 'Pendiente Retiro',
+            'DEVOLUCION_PARCIAL' => 'Devolución Parcial',
+            'PROBLEMAS' => 'Problemas',
+            'CANCELADA' => 'Cancelada',
+            'SIN_ENTREGA' => 'Sin Entrega',
+            'SIN_REPORTE' => 'Sin Reporte',
+            'SIN_ENTREGA_ASIGNADA' => 'Sin Entrega Asignada',
+        ];
+
+        return $labels[$codigo] ?? ($codigo ?? 'Sin Estado');
     }
 }
