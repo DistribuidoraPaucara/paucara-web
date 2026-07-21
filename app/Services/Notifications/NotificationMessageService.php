@@ -182,11 +182,11 @@ class NotificationMessageService
      */
     public static function ventasAsignadasAEntrega(
         int $entregaId,
-        string $estadoLogistico,
+        string $estadoLogistica,
         ?string $clienteNombre = null
     ): string {
         // Formato: "Estado Entrega Folio:456 | Preparacion en carga - Cliente"
-        return "Entrega Folio:$entregaId | $estadoLogistico"
+        return "Entrega Folio:$entregaId | $estadoLogistica"
             . ($clienteNombre ? " - $clienteNombre" : "");
     }
 
