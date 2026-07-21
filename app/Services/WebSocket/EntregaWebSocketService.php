@@ -75,15 +75,15 @@ class EntregaWebSocketService extends BaseWebSocketService
     public function notifyVentaAsignada($venta, $entrega): bool
     {
         // ✅ Cargar relación del estado logístico si no está cargada
-        if (!$venta->relationLoaded('estadoLogistico')) {
-            $venta->load('estadoLogistico');
+        if (!$venta->relationLoaded('estadoLogistica')) {
+            $venta->load('estadoLogistica');
         }
 
         // ✅ NUEVO: Usar servicio centralizado de mensajes
-        $estadoLogisticoNombre = $venta->estadoLogistico?->nombre ?? 'Pendiente';
+        $estadoLogisticaNombre = $venta->estadoLogistica?->nombre ?? 'Pendiente';
         $mensaje = \App\Services\Notifications\NotificationMessageService::ventasAsignadasAEntrega(
             entregaId: $entrega->id,
-            estadoLogistico: $estadoLogisticoNombre,
+            estadoLogistica: $estadoLogisticaNombre,
             clienteNombre: $venta->cliente?->nombre
         );
 
@@ -99,7 +99,7 @@ class EntregaWebSocketService extends BaseWebSocketService
             'total' => (float) $venta->total,
             'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer asignado',
             'vehiculo_placa' => $entrega->vehiculo?->placa ?? 'Vehículo',
-            'estado_logistico_nombre' => $estadoLogisticoNombre,  // ✅ Estado logístico
+            'estado_logistico_nombre' => $estadoLogisticaNombre,  // ✅ Estado logístico
             'mensaje' => $mensaje,  // ✅ NUEVO: Mensaje centralizado
             'fecha_asignacion' => $entrega->fecha_asignacion?->toIso8601String(),
         ]);
@@ -160,12 +160,12 @@ class EntregaWebSocketService extends BaseWebSocketService
             foreach ($ventas as $venta) {
                 try {
                     // Obtener nombre del estado logístico
-                    $estadoLogisticoNombre = $venta->estadoLogistica?->nombre ?? $estadoNuevo;
+                    $estadoLogisticaNombre = $venta->estadoLogistica?->nombre ?? $estadoNuevo;
 
                     // Construir mensaje centralizado
                     $mensaje = \App\Services\Notifications\NotificationMessageService::ventaEstadoCambio(
                         ventaId: $venta->id,
-                        nuevoEstado: $estadoLogisticoNombre,
+                        nuevoEstado: $estadoLogisticaNombre,
                         entregaId: $entrega->id,
                         clienteNombre: $venta->cliente?->nombre
                     );
@@ -181,7 +181,7 @@ class EntregaWebSocketService extends BaseWebSocketService
                         ],
                         'estado_nuevo' => [
                             'codigo' => $estadoNuevo,
-                            'nombre' => $estadoLogisticoNombre,
+                            'nombre' => $estadoLogisticaNombre,
                         ],
                         'entrega' => [
                             'id' => $entrega->id,
