@@ -3259,8 +3259,14 @@ class EntregaController extends Controller
     public function actualizarEntregaConsolidada(Request $request, Entrega $entrega)
     {
         try {
+            // ✅ NUEVO: Cargar relación de estado logístico de la entrega
+            $entrega->load('estadoLogistica');
+
             Log::info('🔧 [Actualizar Entrega Consolidada] Request recibida', [
                 'entrega_id'  => $entrega->id,
+                'estado_logistico_id' => $entrega->estado_logistico_id,
+                'estado_logistico_codigo' => $entrega->estadoLogistica?->codigo,
+                'estado_logistico_categoria' => $entrega->estadoLogistica?->categoria,
                 'venta_ids'   => $request->input('venta_ids'),
                 'vehiculo_id' => $request->input('vehiculo_id'),
                 'chofer_id'   => $request->input('chofer_id'),
@@ -3315,9 +3321,20 @@ class EntregaController extends Controller
 
                     // ✅ NUEVO 2026-07-20: Actualizar estado logístico de las nuevas ventas
                     // Buscar el estado con el MISMO CÓDIGO pero en categoría "venta_logistica"
+                    Log::info('🔍 Procesando actualización de estado logístico para nuevas ventas', [
+                        'ventasAAgregar' => $ventasAAgregar,
+                        'estado_logistico_id' => $entrega->estado_logistico_id,
+                    ]);
+
                     if ($entrega->estado_logistico_id) {
                         // Obtener el código del estado de la entrega
                         $estadoEntrega = \App\Models\EstadoLogistica::find($entrega->estado_logistico_id);
+
+                        Log::info('🔍 Estado de entrega encontrado', [
+                            'estado_entrega_id' => $estadoEntrega?->id,
+                            'estado_entrega_codigo' => $estadoEntrega?->codigo,
+                            'estado_entrega_categoria' => $estadoEntrega?->categoria,
+                        ]);
 
                         if ($estadoEntrega) {
                             // Buscar el estado equivalente para ventas con el mismo código
@@ -3325,15 +3342,22 @@ class EntregaController extends Controller
                                 ->where('categoria', 'venta_logistica')
                                 ->first();
 
+                            Log::info('🔍 Búsqueda de estado venta_logistica', [
+                                'codigo_buscado' => $estadoEntrega->codigo,
+                                'estado_venta_encontrado' => $estadoVenta?->id,
+                                'estado_venta_nombre' => $estadoVenta?->nombre,
+                            ]);
+
                             if ($estadoVenta) {
                                 // Asignar el estado de venta equivalente a las nuevas ventas
-                                Venta::whereIn('id', $ventasAAgregar)->update([
+                                $updated = Venta::whereIn('id', $ventasAAgregar)->update([
                                     'estado_logistico_id' => $estadoVenta->id,
                                 ]);
 
                                 Log::info('✅ Estado logístico de venta asignado a nuevas ventas', [
                                     'entrega_id' => $entrega->id,
                                     'venta_ids' => $ventasAAgregar,
+                                    'rows_updated' => $updated,
                                     'codigo' => $estadoEntrega->codigo,
                                     'estado_venta_id' => $estadoVenta->id,
                                     'estado_venta_nombre' => $estadoVenta->nombre,
@@ -3342,9 +3366,19 @@ class EntregaController extends Controller
                                 Log::warning('⚠️ No se encontró estado venta_logistica con código', [
                                     'entrega_id' => $entrega->id,
                                     'codigo_buscado' => $estadoEntrega->codigo,
+                                    'ventasAAgregar' => $ventasAAgregar,
                                 ]);
                             }
+                        } else {
+                            Log::warning('⚠️ No se encontró estado de entrega', [
+                                'entrega_id' => $entrega->id,
+                                'estado_logistico_id' => $entrega->estado_logistico_id,
+                            ]);
                         }
+                    } else {
+                        Log::warning('⚠️ Entrega sin estado_logistico_id', [
+                            'entrega_id' => $entrega->id,
+                        ]);
                     }
                 }
 
