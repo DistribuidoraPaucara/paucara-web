@@ -325,15 +325,6 @@ export function VehicleRecommendationCard({
                             </p>
                         </div>
                     </div>
-
-                    {/* ✅ NUEVO: Mostrar desglose de ventas seleccionadas para debugging */}
-                    {/* <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
-                        <p className="text-xs font-semibold text-gray-600 uppercase dark:text-gray-400 mb-3">📦 Ventas Seleccionadas (Debug)</p>
-                        <div className="text-xs space-y-1 max-h-40 overflow-y-auto bg-gray-50 dark:bg-slate-900/30 p-2 rounded">
-                            <p className="text-gray-500 dark:text-gray-400">Peso Total: <span className="font-semibold text-gray-900 dark:text-white">{pesoTotal.toFixed(1)} kg</span></p>
-                            <p className="text-gray-500 dark:text-gray-400">Monto Total: <span className="font-semibold text-gray-900 dark:text-white">Bs {montoTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}</span></p>
-                        </div>
-                    </div> */}
                     {/* Barra de capacidad */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">

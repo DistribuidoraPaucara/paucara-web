@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
-import SearchSelect from '@/presentation/components/ui/search-select';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
+import { ChevronDown, Filter, Search, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 /**
  * Estado de filtros avanzados
@@ -14,6 +14,7 @@ export interface FiltrosEntregas {
     busqueda_ventas?: string;
     chofer_id?: string;
     vehiculo_id?: string;
+    entregador_id?: string; // ✅ NUEVO: Filtrar por entregador
     localidad_id?: string;
     estado_logistica_id?: string;
     fecha_desde?: string;
@@ -30,6 +31,7 @@ interface Props {
     estadosAPI: Array<{ codigo: string; nombre: string }>;
     vehiculos: Array<{ id: number; placa: string; marca: string; modelo: string }>;
     choferes: Array<{ id: number; nombre: string }>;
+    entregadores?: Array<{ id: number; nombre: string }>; // ✅ NUEVO: Array de entregadores
     localidades: Array<{ id: number; nombre: string; codigo: string }>;
     estadosLogisticos: Array<{ id: number; codigo: string; nombre: string; color?: string; icono?: string }>;
     isLoading?: boolean;
@@ -53,16 +55,33 @@ export function EntregasFilters({
     estadosAPI,
     vehiculos,
     choferes,
+    entregadores = [], // ✅ NUEVO: Entregadores
     localidades,
     estadosLogisticos,
     isLoading = false,
 }: Props) {
+    // 🔍 DEBUG: Revisar si localidades está llegando
+    console.log('🔍 EntregasFilters DEBUG:', {
+        localidadesCount: localidades?.length || 0,
+        localidades: localidades,
+        entregadoresCount: entregadores?.length || 0,
+        entregadores: entregadores,
+    });
+
     // ✅ Estado para controlar visibilidad de filtros
     const [filtrosVisibles, setFiltrosVisibles] = useState(false);
 
-    const floatingInputClassName = 'peer w-full rounded-lg border bg-background px-3 pb-2 pt-5 text-sm outline-none transition-colors placeholder:text-transparent focus:border-primary';
-    const floatingLabelClassName = 'absolute left-3 top-0 z-10 -translate-y-1/2 bg-background px-1 origin-left text-xs font-medium text-muted-foreground transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:bg-transparent peer-placeholder-shown:px-0 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:bg-background peer-focus:px-1 peer-focus:text-xs peer-focus:text-primary';
+    // ✅ NUEVO: Estados para búsquedas dinámicas (DynamicSearchSelect)
+    const [choferSearch, setChoferSearch] = useState('');
+    const [vehiculoSearch, setVehiculoSearch] = useState('');
+    const [entregadorSearch, setEntregadorSearch] = useState(''); // ✅ NUEVO: Búsqueda de entregador
+    const [localidadSearch, setLocalidadSearch] = useState('');
+    const [estadoLogisticoSearch, setEstadoLogisticoSearch] = useState('');
 
+    const floatingInputClassName =
+        'peer w-full rounded-lg border bg-background px-3 pb-2 pt-5 text-sm outline-none transition-colors placeholder:text-transparent focus:border-primary';
+    const floatingLabelClassName =
+        'absolute left-3 top-0 z-10 -translate-y-1/2 bg-background px-1 origin-left text-xs font-medium text-muted-foreground transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:bg-transparent peer-placeholder-shown:px-0 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:bg-background peer-focus:px-1 peer-focus:text-xs peer-focus:text-primary';
 
     // Calcular cuántos filtros están activos
     const filtrosActivos = useMemo(() => {
@@ -72,23 +91,27 @@ export function EntregasFilters({
             filtros.busqueda_ventas && { label: 'Búsqueda Ventas', value: filtros.busqueda_ventas },
             filtros.chofer_id && {
                 label: 'Chofer',
-                value: choferes.find(c => c.id.toString() === filtros.chofer_id)?.nombre || filtros.chofer_id
+                value: choferes.find((c) => c.id.toString() === filtros.chofer_id)?.nombre || filtros.chofer_id,
             },
             filtros.vehiculo_id && {
                 label: 'Vehículo',
-                value: vehiculos.find(v => v.id.toString() === filtros.vehiculo_id)?.placa || filtros.vehiculo_id
+                value: vehiculos.find((v) => v.id.toString() === filtros.vehiculo_id)?.placa || filtros.vehiculo_id,
             },
             filtros.localidad_id && {
                 label: 'Localidad',
-                value: localidades.find(l => l.id.toString() === filtros.localidad_id)?.nombre || filtros.localidad_id
+                value: localidades.find((l) => l.id.toString() === filtros.localidad_id)?.nombre || filtros.localidad_id,
             },
             filtros.estado_logistica_id && {
                 label: 'Estado Logístico',
-                value: estadosLogisticos.find(e => e.id.toString() === filtros.estado_logistica_id)?.nombre || filtros.estado_logistica_id
+                value: estadosLogisticos.find((e) => e.id.toString() === filtros.estado_logistica_id)?.nombre || filtros.estado_logistica_id,
             },
             filtros.fecha_desde && { label: 'Desde', value: filtros.fecha_desde },
             filtros.fecha_hasta && { label: 'Hasta', value: filtros.fecha_hasta },
-            filtros.tipo_fecha && filtros.tipo_fecha !== 'fecha_programada' && { label: 'Tipo Fecha', value: filtros.tipo_fecha === 'created_at' ? 'Creación' : 'Programada' }, // ✅ NUEVO
+            filtros.tipo_fecha &&
+                filtros.tipo_fecha !== 'fecha_programada' && {
+                    label: 'Tipo Fecha',
+                    value: filtros.tipo_fecha === 'created_at' ? 'Creación' : 'Programada',
+                }, // ✅ NUEVO
             filtros.turno && { label: 'Turno', value: filtros.turno === 'manana' ? 'Mañana' : 'Tarde' }, // ✅ NUEVO
         ].filter(Boolean);
     }, [filtros, choferes, vehiculos, localidades, estadosLogisticos]);
@@ -97,12 +120,46 @@ export function EntregasFilters({
         onFilterChange(key, key === 'estado' ? 'TODOS' : '');
     };
 
+    // ✅ NUEVO: Filtrar items según búsqueda (para DynamicSearchSelect)
+    const choferesFiltered = useMemo(() => {
+        if (!choferSearch) return choferes;
+        const query = choferSearch.toLowerCase();
+        return choferes.filter((c) => c.nombre.toLowerCase().includes(query));
+    }, [choferes, choferSearch]);
+
+    const vehiculosFiltered = useMemo(() => {
+        if (!vehiculoSearch) return vehiculos;
+        const query = vehiculoSearch.toLowerCase();
+        return vehiculos.filter(
+            (v) => v.placa.toLowerCase().includes(query) || v.marca.toLowerCase().includes(query) || v.modelo.toLowerCase().includes(query),
+        );
+    }, [vehiculos, vehiculoSearch]);
+
+    const localidadesFiltered = useMemo(() => {
+        if (!localidadSearch) return localidades;
+        const query = localidadSearch.toLowerCase();
+        return localidades.filter((l) => l.nombre.toLowerCase().includes(query) || l.codigo.toLowerCase().includes(query));
+    }, [localidades, localidadSearch]);
+
+    const estadosLogisticosFiltered = useMemo(() => {
+        if (!estadoLogisticoSearch) return estadosLogisticos;
+        const query = estadoLogisticoSearch.toLowerCase();
+        return estadosLogisticos.filter((e) => e.nombre.toLowerCase().includes(query) || e.codigo.toLowerCase().includes(query));
+    }, [estadosLogisticos, estadoLogisticoSearch]);
+
+    // ✅ NUEVO: Filtrar entregadores según búsqueda
+    const entregadoresFiltered = useMemo(() => {
+        if (!entregadorSearch) return entregadores;
+        const query = entregadorSearch.toLowerCase();
+        return entregadores.filter((e) => e.nombre.toLowerCase().includes(query));
+    }, [entregadores, entregadorSearch]);
+
     return (
         <div className="space-y-4">
             {/* Búsqueda Separada: Entrega vs Ventas */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 {/* Búsqueda en ENTREGA (ID, placa, chofer) */}
-                <div className="flex gap-2 items-end">
+                <div className="flex flex-wrap items-center gap-2">
                     <div className="relative flex-1">
                         <Input
                             type="text"
@@ -112,29 +169,11 @@ export function EntregasFilters({
                             className={`${floatingInputClassName} pl-3`}
                             disabled={isLoading}
                         />
-                        <label className={floatingLabelClassName}>
-                            Entrega: ID, placa, chofer
-                        </label>
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <label className={floatingLabelClassName}>Entrega: ID, placa, chofer</label>
+                        <Search className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     </div>
-                    {filtros.busqueda_entrega && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                                onFilterChange('busqueda_entrega', '');
-                            }}
-                            disabled={isLoading}
-                            className="whitespace-nowrap"
-                            title="Limpiar búsqueda de entrega"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
 
-                {/* Búsqueda en VENTAS (ID venta, cliente, número venta) */}
-                <div className="flex gap-2 items-end">
+                    {/* Búsqueda en VENTAS (ID venta, cliente, número venta) */}
                     <div className="relative flex-1">
                         <Input
                             type="text"
@@ -144,166 +183,193 @@ export function EntregasFilters({
                             className={`${floatingInputClassName} pl-3`}
                             disabled={isLoading}
                         />
-                        <label className={floatingLabelClassName}>
-                            Ventas: ID, cliente, número
-                        </label>
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground py-2" />
+                        <label className={floatingLabelClassName}>Ventas: ID, cliente, número</label>
+                        <Search className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 py-2 text-muted-foreground" />
                     </div>
-                    {filtros.busqueda_ventas && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                                onFilterChange('busqueda_ventas', '');
-                            }}
-                            disabled={isLoading}
-                            className="whitespace-nowrap"
-                            title="Limpiar búsqueda de ventas"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                        onClick={() => setFiltrosVisibles(!filtrosVisibles)}
-                        className="w-full flex items-center justify-between px-2 bg-background border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                        <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Filtros</span>
-                            {filtrosActivos.length > 0 && (
-                                <Badge variant="secondary" className="ml-2">
-                                    {filtrosActivos.length} activo{filtrosActivos.length !== 1 ? 's' : ''}
-                                </Badge>
-                            )}
-                        </div>
-                        <ChevronDown
-                            className={`h-4 w-4 transition-transform duration-200 ${filtrosVisibles ? 'rotate-180' : ''
-                                }`}
-                        />
-                    </button>
 
                     {/* ✅ ÚNICO BOTÓN: Aplicar todos los filtros */}
                     {onApply && (
-                        <Button
-                            onClick={onApply}
-                            disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                            size="lg"
-                        >
-                            <Filter className="h-4 w-4 mr-2" />
-                            Aplicar Filtros
+                        <Button onClick={onApply} disabled={isLoading} className="bg-blue-600 p-2 text-white hover:bg-blue-700" size="sm">
+                            <Search className="mr-2 h-4 w-4" />
+                            Buscar
                         </Button>
                     )}
                 </div>
 
+                <button
+                    onClick={() => setFiltrosVisibles(!filtrosVisibles)}
+                    className="flex cursor-pointer items-center justify-between rounded-lg border bg-background px-2 transition-colors hover:bg-muted/50"
+                >
+                    <div className="flex flex-wrap items-center gap-1 p-2">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Filtros</span>
+                        {filtrosActivos.length > 0 && (
+                            <Badge variant="secondary" className="ml-2">
+                                {filtrosActivos.length} activo{filtrosActivos.length !== 1 ? 's' : ''}
+                            </Badge>
+                        )}
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${filtrosVisibles ? 'rotate-180' : ''}`} />
+                </button>
             </div>
 
             {/* Grid de filtros - COLAPSABLE */}
             {filtrosVisibles && (
-                <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="space-y-2 duration-200 animate-in fade-in">
                     {/* Grid de filtros principales */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-muted/50 rounded-lg border">
-                        {/* Filtro por Estado */}
-                        <SearchSelect
+                    <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/50 p-2 sm:grid-cols-2 lg:grid-cols-4">
+                        {/* Filtro por Estado Logístico - DynamicSearchSelect */}
+                        <DynamicSearchSelect
+                            label="Estado Logístico"
                             placeholder="Buscar estado..."
-                            searchPlaceholder="Buscar estado..."
-                            value={filtros.estado || 'TODOS'}
-                            options={[
-                                { value: 'TODOS', label: 'Todos' },
-                                ...estadosAPI.map(estado => ({
-                                    value: estado.codigo,
-                                    label: estado.nombre
-                                }))
-                            ]}
-                            onChange={(value) => onFilterChange('estado', value.toString())}
-                            disabled={isLoading}
-                            allowClear={false}
+                            selectedItem={
+                                filtros.estado_logistica_id ? estadosLogisticos.find((e) => e.id.toString() === filtros.estado_logistica_id) : null
+                            }
+                            items={estadosLogisticosFiltered}
+                            isLoading={isLoading}
+                            searchValue={estadoLogisticoSearch}
+                            onSearch={setEstadoLogisticoSearch}
+                            onSelect={(estado) => {
+                                onFilterChange('estado_logistica_id', estado.id.toString());
+                                setEstadoLogisticoSearch('');
+                            }}
+                            onClear={() => {
+                                onFilterChange('estado_logistica_id', '');
+                                setEstadoLogisticoSearch('');
+                            }}
+                            renderItem={(estado) => (
+                                <div className="text-sm">
+                                    <div className="font-medium">
+                                        {estado.icono && `${estado.icono} `}
+                                        {estado.nombre}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">{estado.codigo}</div>
+                                </div>
+                            )}
+                            getItemId={(estado) => estado.id.toString()}
+                            getDisplayValue={(estado) => `${estado.icono ? `${estado.icono} ` : ''}${estado.nombre}`}
                         />
 
-                        {/* Filtro por Chofer */}
-                        <SearchSelect
+                        {/* Filtro por Chofer - DynamicSearchSelect */}
+                        <DynamicSearchSelect
+                            label="Chofer"
                             placeholder="Buscar chofer..."
-                            searchPlaceholder="Buscar chofer..."
-                            value={filtros.chofer_id || ''}
-                            options={[
-                                { value: '', label: 'Todos los choferes' },
-                                ...choferes.map(chofer => ({
-                                    value: chofer.id.toString(),
-                                    label: chofer.nombre
-                                }))
-                            ]}
-                            onChange={(value) => onFilterChange('chofer_id', value.toString())}
-                            disabled={isLoading}
-                            allowClear
+                            selectedItem={filtros.chofer_id ? choferes.find((c) => c.id.toString() === filtros.chofer_id) : null}
+                            items={choferesFiltered}
+                            isLoading={isLoading}
+                            searchValue={choferSearch}
+                            onSearch={setChoferSearch}
+                            onSelect={(chofer) => {
+                                onFilterChange('chofer_id', chofer.id.toString());
+                                setChoferSearch('');
+                            }}
+                            onClear={() => {
+                                onFilterChange('chofer_id', '');
+                                setChoferSearch('');
+                            }}
+                            renderItem={(chofer) => (
+                                <div className="text-sm">
+                                    <div className="font-medium">{chofer.nombre}</div>
+                                </div>
+                            )}
+                            getItemId={(chofer) => chofer.id.toString()}
+                            getDisplayValue={(chofer) => chofer.nombre}
                         />
 
-                        {/* Filtro por Vehículo */}
-                        <SearchSelect
+                        {/* Filtro por Vehículo - DynamicSearchSelect */}
+                        <DynamicSearchSelect
+                            label="Vehículo"
                             placeholder="Buscar vehículo..."
-                            searchPlaceholder="Buscar vehículo..."
-                            value={filtros.vehiculo_id || ''}
-                            options={[
-                                { value: '', label: 'Todos los vehículos' },
-                                ...vehiculos.map(vehiculo => ({
-                                    value: vehiculo.id.toString(),
-                                    label: `${vehiculo.placa}`,
-                                    description: `${vehiculo.marca} ${vehiculo.modelo}`
-                                }))
-                            ]}
-                            onChange={(value) => onFilterChange('vehiculo_id', value.toString())}
-                            disabled={isLoading}
-                            allowClear
+                            selectedItem={filtros.vehiculo_id ? vehiculos.find((v) => v.id.toString() === filtros.vehiculo_id) : null}
+                            items={vehiculosFiltered}
+                            isLoading={isLoading}
+                            searchValue={vehiculoSearch}
+                            onSearch={setVehiculoSearch}
+                            onSelect={(vehiculo) => {
+                                onFilterChange('vehiculo_id', vehiculo.id.toString());
+                                setVehiculoSearch('');
+                            }}
+                            onClear={() => {
+                                onFilterChange('vehiculo_id', '');
+                                setVehiculoSearch('');
+                            }}
+                            renderItem={(vehiculo) => (
+                                <div className="text-sm">
+                                    <div className="font-medium">{vehiculo.placa}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {vehiculo.marca} {vehiculo.modelo}
+                                    </div>
+                                </div>
+                            )}
+                            getItemId={(vehiculo) => vehiculo.id.toString()}
+                            getDisplayValue={(vehiculo) => vehiculo.placa}
                         />
 
-                        {/* Filtro por Localidad */}
-                        <SearchSelect
+                        {/* ✅ NUEVO: Filtro por Entregador - DynamicSearchSelect */}
+                        <DynamicSearchSelect
+                            label="Entregador"
+                            placeholder="Buscar entregador..."
+                            selectedItem={filtros.entregador_id ? entregadores.find((e) => e.id.toString() === filtros.entregador_id) : null}
+                            items={entregadoresFiltered}
+                            isLoading={isLoading}
+                            searchValue={entregadorSearch}
+                            onSearch={setEntregadorSearch}
+                            onSelect={(entregador) => {
+                                onFilterChange('entregador_id', entregador.id.toString());
+                                setEntregadorSearch('');
+                            }}
+                            onClear={() => {
+                                onFilterChange('entregador_id', '');
+                                setEntregadorSearch('');
+                            }}
+                            renderItem={(entregador) => (
+                                <div className="text-sm">
+                                    <div className="font-medium">{entregador.nombre}</div>
+                                </div>
+                            )}
+                            getItemId={(entregador) => entregador.id.toString()}
+                            getDisplayValue={(entregador) => entregador.nombre}
+                        />
+
+                        {/* Filtro por Localidad - DynamicSearchSelect */}
+                        {/* <DynamicSearchSelect
+                            label="Localidad"
                             placeholder="Buscar localidad..."
-                            searchPlaceholder="Buscar localidad..."
-                            value={filtros.localidad_id || ''}
-                            options={[
-                                { value: '', label: 'Todas las localidades' },
-                                ...localidades.map(localidad => ({
-                                    value: localidad.id.toString(),
-                                    label: localidad.nombre,
-                                    description: localidad.codigo
-                                }))
-                            ]}
-                            onChange={(value) => onFilterChange('localidad_id', value.toString())}
-                            disabled={isLoading}
-                            allowClear
-                        />
-
-                        {/* Filtro por Estado Logístico */}
-                        <SearchSelect
-                            placeholder="Buscar estado..."
-                            searchPlaceholder="Buscar estado..."
-                            value={filtros.estado_logistica_id || ''}
-                            options={[
-                                { value: '', label: 'Todos los estados' },
-                                ...estadosLogisticos.map(estado => ({
-                                    value: estado.id.toString(),
-                                    label: `${estado.icono ? `${estado.icono} ` : ''}${estado.nombre}`,
-                                    description: estado.codigo
-                                }))
-                            ]}
-                            onChange={(value) => onFilterChange('estado_logistica_id', value.toString())}
-                            disabled={isLoading}
-                            allowClear
-                        />
+                            selectedItem={
+                                filtros.localidad_id
+                                    ? localidades.find((l) => l.id.toString() === filtros.localidad_id)
+                                    : null
+                            }
+                            items={localidadesFiltered}
+                            isLoading={isLoading}
+                            searchValue={localidadSearch}
+                            onSearch={setLocalidadSearch}
+                            onSelect={(localidad) => {
+                                onFilterChange('localidad_id', localidad.id.toString());
+                                setLocalidadSearch('');
+                            }}
+                            onClear={() => {
+                                onFilterChange('localidad_id', '');
+                                setLocalidadSearch('');
+                            }}
+                            renderItem={(localidad) => (
+                                <div className="text-sm">
+                                    <div className="font-medium">{localidad.nombre}</div>
+                                    <div className="text-xs text-muted-foreground">{localidad.codigo}</div>
+                                </div>
+                            )}
+                            getItemId={(localidad) => localidad.id.toString()}
+                            getDisplayValue={(localidad) => localidad.nombre}
+                        /> */}
                     </div>
 
-
-
                     {/* Filtros de fechas */}
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-muted/50 rounded-lg border animate-in fade-in duration-200">
+                    <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border bg-muted/50 p-2 duration-200 animate-in fade-in">
                         {/* ✅ NUEVO: Selector de tipo de fecha */}
                         <div>
-                            <label className="text-sm font-medium mb-3 block">Tipo de Fecha</label>
+                            <label className="block text-xs mb-2">Tipo de Fecha</label>
                             <div className="flex gap-4">
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex cursor-pointer items-center gap-2">
                                     <input
                                         type="radio"
                                         name="tipo_fecha"
@@ -311,11 +377,11 @@ export function EntregasFilters({
                                         checked={filtros.tipo_fecha !== 'created_at'}
                                         onChange={() => onFilterChange('tipo_fecha', 'fecha_programada')}
                                         disabled={isLoading}
-                                        className="w-4 h-4"
+                                        className="h-4 w-4"
                                     />
-                                    <span className="text-sm">📅 Fecha Programada</span>
+                                    <span className="text-xs">📅 Fecha Programada</span>
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
+                                <label className="flex cursor-pointer items-center gap-2">
                                     <input
                                         type="radio"
                                         name="tipo_fecha"
@@ -323,96 +389,102 @@ export function EntregasFilters({
                                         checked={filtros.tipo_fecha === 'created_at'}
                                         onChange={() => onFilterChange('tipo_fecha', 'created_at')}
                                         disabled={isLoading}
-                                        className="w-4 h-4"
+                                        className="h-4 w-4"
                                     />
-                                    <span className="text-sm">📝 Creación</span>
+                                    <span className="text-xs">📝 Creación</span>
                                 </label>
                             </div>
                         </div>
-                        {/* ✅ NUEVO: Botones rápidos de fecha (Ayer, Hoy, Mañana) */}
                         <div>
-                            <label className="text-sm font-medium mb-3 block">Fechas Rápidas</label>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
-                                    onClick={() => {
-                                        const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
-                                        onFilterChange('fecha_desde', ayer);
-                                        onFilterChange('fecha_hasta', ayer);
-                                        onApply?.({ ...filtros, fecha_desde: ayer, fecha_hasta: ayer });
-                                    }}
-                                    disabled={isLoading}
-                                >
-                                    ← Ayer
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant={filtros.fecha_desde === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
-                                    onClick={() => {
-                                        const hoy = new Date().toISOString().split('T')[0];
-                                        onFilterChange('fecha_desde', hoy);
-                                        onFilterChange('fecha_hasta', hoy);
-                                        onApply?.({ ...filtros, fecha_desde: hoy, fecha_hasta: hoy });
-                                    }}
-                                    disabled={isLoading}
-                                >
-                                    Hoy
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant={filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0] ? 'default' : 'outline'}
-                                    onClick={() => {
-                                        const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
-                                        onFilterChange('fecha_desde', manana);
-                                        onFilterChange('fecha_hasta', manana);
-                                        onApply?.({ ...filtros, fecha_desde: manana, fecha_hasta: manana });
-                                    }}
-                                    disabled={isLoading}
-                                >
-                                    Mañana →
-                                </Button>
+                            {/* ✅ NUEVO: Botones rápidos de fecha (Ayer, Hoy, Mañana) */}
+                            <div className="mb-2 block w-full">
+                                <label className="block text-xs mb-2">Fechas Rápidas</label>
+                                <div className="flex gap-2 items-start">
+                                    <Button
+                                        size="sm"
+                                        variant={
+                                            filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0]
+                                                ? 'default'
+                                                : 'outline'
+                                        }
+                                        onClick={() => {
+                                            const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+                                            onFilterChange('fecha_desde', ayer);
+                                            onFilterChange('fecha_hasta', ayer);
+                                            onApply?.({ ...filtros, fecha_desde: ayer, fecha_hasta: ayer });
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                        ← Ayer
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant={filtros.fecha_desde === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
+                                        onClick={() => {
+                                            const hoy = new Date().toISOString().split('T')[0];
+                                            onFilterChange('fecha_desde', hoy);
+                                            onFilterChange('fecha_hasta', hoy);
+                                            onApply?.({ ...filtros, fecha_desde: hoy, fecha_hasta: hoy });
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                        Hoy
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant={
+                                            filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]
+                                                ? 'default'
+                                                : 'outline'
+                                        }
+                                        onClick={() => {
+                                            const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
+                                            onFilterChange('fecha_desde', manana);
+                                            onFilterChange('fecha_hasta', manana);
+                                            onApply?.({ ...filtros, fecha_desde: manana, fecha_hasta: manana });
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                        Mañana →
+                                    </Button>
+
+                                    {/* Filtro por Fecha Desde */}
+                                    <div className="relative">
+                                        <Input
+                                            type="date"
+                                            value={filtros.fecha_desde || ''}
+                                            onChange={(e) => onFilterChange('fecha_desde', e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    onApply?.();
+                                                }
+                                            }}
+                                            className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
+                                            disabled={isLoading}
+                                        />
+                                        <label className={floatingLabelClassName}>Desde</label>
+                                    </div>
+
+                                    {/* Filtro por Fecha Hasta */}
+                                    <div className="relative">
+                                        <Input
+                                            type="date"
+                                            value={filtros.fecha_hasta || ''}
+                                            onChange={(e) => onFilterChange('fecha_hasta', e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    onApply?.();
+                                                }
+                                            }}
+                                            className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
+                                            disabled={isLoading}
+                                        />
+                                        <label className={floatingLabelClassName}>Hasta</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        {/* Filtro por Fecha Desde */}
-                        <div className="relative">
-                            <Input
-                                type="date"
-                                value={filtros.fecha_desde || ''}
-                                onChange={(e) => onFilterChange('fecha_desde', e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        onApply?.();
-                                    }
-                                }}
-                                className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
-                                disabled={isLoading}
-                            />
-                            <label className={floatingLabelClassName}>
-                                Desde
-                            </label>
-                        </div>
-
-                        {/* Filtro por Fecha Hasta */}
-                        <div className="relative">
-                            <Input
-                                type="date"
-                                value={filtros.fecha_hasta || ''}
-                                onChange={(e) => onFilterChange('fecha_hasta', e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        onApply?.();
-                                    }
-                                }}
-                                className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
-                                disabled={isLoading}
-                            />
-                            <label className={floatingLabelClassName}>
-                                Hasta
-                            </label>
-                        </div>
                     </div>
-
                 </div>
             )}
 
@@ -423,51 +495,47 @@ export function EntregasFilters({
                         <Badge
                             key={filtro.label}
                             variant="secondary"
-                            className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                            className="cursor-pointer transition-colors hover:bg-secondary/80"
                             onClick={() => {
                                 // Determinar la clave del filtro basado en el label
                                 const keyMap: Record<string, keyof FiltrosEntregas> = {
-                                    'Estado': 'estado',
+                                    Estado: 'estado',
                                     'Búsqueda Entrega': 'busqueda_entrega',
                                     'Búsqueda Ventas': 'busqueda_ventas',
-                                    'Chofer': 'chofer_id',
-                                    'Vehículo': 'vehiculo_id',
-                                    'Localidad': 'localidad_id',
+                                    Chofer: 'chofer_id',
+                                    Vehículo: 'vehiculo_id',
+                                    Localidad: 'localidad_id',
                                     'Estado Logístico': 'estado_logistica_id',
-                                    'Desde': 'fecha_desde',
-                                    'Hasta': 'fecha_hasta',
+                                    Desde: 'fecha_desde',
+                                    Hasta: 'fecha_hasta',
                                     'Tipo Fecha': 'tipo_fecha', // ✅ NUEVO
-                                    'Turno': 'turno', // ✅ NUEVO
+                                    Turno: 'turno', // ✅ NUEVO
                                 };
                                 handleRemoveFiltro(keyMap[filtro.label]);
                             }}
                         >
-                            {filtro.label}: <span className="font-semibold ml-1">{filtro.value}</span>
-                            <X className="h-3 w-3 ml-2" />
+                            {filtro.label}: <span className="ml-1 font-semibold">{filtro.value}</span>
+                            <X className="ml-2 h-3 w-3" />
                         </Badge>
                     ))}
+
+                    {/* Botón Limpiar (se muestra cuando hay filtros activos) */}
+                    {filtrosActivos.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onReset}
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive/90"
+                        >
+                            <X className="mr-2 h-4 w-4" />
+                            Limpiar filtros ({filtrosActivos.length})
+                        </Button>
+                    )}
                 </div>
             )}
 
-            {/* Botón Limpiar (se muestra cuando hay filtros activos) */}
-            {filtrosActivos.length > 0 && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onReset}
-                    className="w-full text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                >
-                    <X className="h-4 w-4 mr-2" />
-                    Limpiar todos los filtros ({filtrosActivos.length})
-                </Button>
-            )}
-
             {/* Separador visual */}
-            {filtrosActivos.length > 0 && (
-                <div className="h-px bg-border" />
-            )}
-
-
+            {filtrosActivos.length > 0 && <div className="h-px bg-border" />}
         </div>
     );
 }

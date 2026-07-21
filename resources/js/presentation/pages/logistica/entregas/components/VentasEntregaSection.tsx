@@ -1,8 +1,17 @@
 import type { Entrega, VentaEntrega } from '@/domain/entities/entregas';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import ActualizarEstadoLogisticoModal from '@/presentation/components/ventas/ActualizarEstadoLogisticoModal';
 import { ConfirmacionesModal } from '@/presentation/components/ventas/ConfirmacionesModal';
 import RegistrarConfirmacionModal from '@/presentation/components/ventas/RegistrarConfirmacionModal';
+import QuitarVentaDeEntregaModal from '@/presentation/components/ventas/QuitarVentaDeEntregaModal';
 import { Link } from '@inertiajs/react';
 import { CheckCircle, ChevronDown, Eye, Navigation, Plus, ShoppingCart } from 'lucide-react';
 import React, { useState } from 'react';
@@ -99,6 +108,12 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
     const [showConfirmacionesModal, setShowConfirmacionesModal] = useState(false);
     const [ventaSeleccionadaModal, setVentaSeleccionadaModal] = useState<VentaEntrega | null>(null);
     const [showRegistrarConfirmacionModal, setShowRegistrarConfirmacionModal] = useState(false);
+    // ✅ NUEVO: Estado para modal de actualizar estado logístico
+    const [showActualizarEstadoModal, setShowActualizarEstadoModal] = useState(false);
+    const [ventaActualizarEstado, setVentaActualizarEstado] = useState<VentaEntrega | null>(null);
+    // ✅ NUEVO: Estado para modal de quitar venta de entrega
+    const [showQuitarVentaModal, setShowQuitarVentaModal] = useState(false);
+    const [ventaAQuitar, setVentaAQuitar] = useState<VentaEntrega | null>(null);
 
     // ✅ Helper para obtener la ÚLTIMA confirmación de una venta
     const obtenerConfirmacionVenta = (ventaId: number) => {
@@ -135,7 +150,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
     pesoTotal = Number(pesoTotal) || 0;
 
     return (
-        <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
+        <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950">
             {/* Header */}
             <div>
                 <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -145,17 +160,17 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
 
                 {/* Resumen de métricas */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
-                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
-                        <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{ventas.length}</p>
+                    <div className="items-center justify-center rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
+                        <p className="text-sm text-center font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
+                        <p className="text-2xl text-center font-bold text-blue-900 dark:text-blue-100">{ventas.length}</p>
                     </div>
-                    <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-green-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
-                        <p className="text-sm font-medium text-green-700 dark:text-green-300">Monto Total</p>
-                        <p className="text-2xl font-bold text-green-900 dark:text-green-100">Bs. {montoTotal.toFixed(2)}</p>
+                    <div className="items-center justify-center rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-green-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
+                        <p className="text-sm text-center font-medium text-green-700 dark:text-green-300">Monto Total</p>
+                        <p className="text-2xl text-center font-bold text-green-900 dark:text-green-100">Bs. {montoTotal.toFixed(2)}</p>
                     </div>
-                    <div className="rounded-lg border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
-                        <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Peso Total</p>
-                        <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{pesoTotal.toFixed(2)} kg</p>
+                    <div className="items-center justify-center rounded-lg border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
+                        <p className="text-sm text-center font-medium text-purple-700 dark:text-purple-300">Peso Total</p>
+                        <p className="text-2xl text-center font-bold text-purple-900 dark:text-purple-100">{pesoTotal.toFixed(2)} kg</p>
                     </div>
                 </div>
             </div>
@@ -167,12 +182,11 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                         {/* Header de tabla */}
                         <thead>
                             <tr className="border-b border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-900/80">
-                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
+                                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">Folio</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Cliente</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Monto</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado Venta</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Logistica</th>
-                                {/* <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Entrega</th> */}
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmacion</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Peso</th>
                                 <th className="w-12 px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">-</th>
@@ -190,7 +204,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                     <React.Fragment key={`venta-${venta.id}`}>
                                         {/* Fila principal de la venta */}
                                         <tr className="transition hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                            <td className="px-2 py-4">
+                                            <td className="px-2 py-2 text-center">
                                                 <Link
                                                     href={`/ventas/${venta.id}`}
                                                     className="rounded bg-gray-200 px-2 py-1 font-mono text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200"
@@ -198,11 +212,11 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     {venta.id ? `#${venta.id}` : 'Venta Desconocida'}
                                                 </Link>
                                             </td>
-                                            <td className="px-2 py-4">
+                                            <td className="px-2 py-2">
                                                 <p className="text-xs text-gray-900 dark:text-white">{venta.cliente?.nombre || 'N/A'}</p>
                                             </td>
 
-                                            <td className="px-2 py-4 text-left">
+                                            <td className="px-2 py-2">
                                                 <p>
                                                     <span className="font-semibold text-green-600 dark:text-green-400">
                                                         Bs. {ventaTotal.toFixed(2)}
@@ -212,7 +226,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     💳 {venta.tipo_pago?.nombre || 'N/A'}
                                                 </Badge>
                                             </td>
-                                            <td className="px-2 py-4 text-left">
+                                            <td className="px-2 py-2">
                                                 {(() => {
                                                     const estado = getEstadoDocumentoColor(venta.estado_documento?.codigo);
                                                     return (
@@ -222,7 +236,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="px-2 py-4 text-left">
+                                            <td className="px-2 py-2">
                                                 {(() => {
                                                     const estado = venta.estado_logistica;
                                                     if (!estado) {
@@ -231,9 +245,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
 
                                                     // ✅ NUEVO: Usar color e icono del backend
                                                     const bgColor = estado.color || '#e5e7eb';
-                                                    const textColor = estado.color
-                                                        ? `hsl(0, 0%, 100%)`
-                                                        : '#1f2937';
+                                                    const textColor = estado.color ? `hsl(0, 0%, 100%)` : '#1f2937';
 
                                                     return (
                                                         <div
@@ -251,30 +263,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     );
                                                 })()}
                                             </td>
-                                            {/* <td className="px-2 py-4 text-left">
-                                                {(() => {
-                                                    const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
-                                                    if (!confirmacion) {
-                                                        return <span className="text-sm text-gray-500 dark:text-gray-400">Sin confirmar</span>;
-                                                    }
-                                                    const isTipoEntregaCompleta = confirmacion.tipo_entrega === 'COMPLETA';
-                                                    return (
-                                                        <div>
-                                                            <Badge
-                                                                className={
-                                                                    isTipoEntregaCompleta
-                                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                                                                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                                                                }
-                                                            >
-                                                                {confirmacion.tipo_entrega === 'COMPLETA' ? '✅ ' : '⚠️ '}
-                                                                {confirmacion.tipo_entrega || 'N/A'}
-                                                            </Badge>
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </td> */}
-                                            <td className="px-2 py-4 text-left">
+                                            <td className="px-2 py-2">
                                                 {(() => {
                                                     const confirmacion = obtenerConfirmacionVenta(Number(venta.id));
                                                     if (!confirmacion) {
@@ -297,10 +286,78 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="px-2 py-4 text-left text-xs text-gray-900 dark:text-white">{pesoVenta} kg</td>
+                                            <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">{pesoVenta} kg</td>
 
-                                            <td className="px-1 py-2 text-center">
-                                                {venta.detalles && venta.detalles.length > 0 && (
+                                            <td className="px-1 py-2">
+                                                {/* ✅ NUEVO: Botones para modales */}
+                                                <div className="flex gap-1">
+                                                    {/* ✅ NUEVO: Menú dropdown de acciones */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button size="sm" variant="outline" className="gap-2">
+                                                                ⚙️ Acciones
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48">
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setVentaSeleccionadaModal(venta);
+                                                                    setShowConfirmacionesModal(true);
+                                                                }}
+                                                                className="cursor-pointer gap-2"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                                Ver Historial
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setVentaSeleccionadaModal(venta);
+                                                                    setShowRegistrarConfirmacionModal(true);
+                                                                }}
+                                                                className="cursor-pointer gap-2"
+                                                            >
+                                                                <Plus className="h-4 w-4" />
+                                                                Nueva Confirmación
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuSeparator />
+
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setVentaActualizarEstado(venta);
+                                                                    setShowActualizarEstadoModal(true);
+                                                                }}
+                                                                className="cursor-pointer gap-2"
+                                                            >
+                                                                📦 Cambiar Estado
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setVentaAReasignar(venta);
+                                                                    setReasignarModalOpen(true);
+                                                                }}
+                                                                className="cursor-pointer gap-2 text-orange-600 dark:text-orange-400"
+                                                            >
+                                                                <Navigation className="h-4 w-4" />
+                                                                🚚 Reasignar Entrega
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuSeparator />
+
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setVentaAQuitar(venta);
+                                                                    setShowQuitarVentaModal(true);
+                                                                }}
+                                                                className="cursor-pointer gap-2 text-red-600 dark:text-red-400"
+                                                            >
+                                                                ❌ Quitar de Entrega
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+
                                                     <button
                                                         onClick={() => setExpandedVentaId(isExpanded ? null : Number(venta.id))}
                                                         className="rounded p-1 transition hover:bg-gray-200 dark:hover:bg-slate-800"
@@ -312,7 +369,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                             }`}
                                                         />
                                                     </button>
-                                                )}
+                                                </div>
                                             </td>
                                         </tr>
 
@@ -401,46 +458,6 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                                 </span>
                                                                             )}
                                                                         </div>
-                                                                        {/* ✅ NUEVO: Botones para modales */}
-                                                                        <div className="flex gap-2">
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                className="gap-1 text-xs"
-                                                                                onClick={() => {
-                                                                                    setVentaSeleccionadaModal(venta);
-                                                                                    setShowConfirmacionesModal(true);
-                                                                                }}
-                                                                            >
-                                                                                <Eye className="h-3 w-3" />
-                                                                                Ver Historial
-                                                                            </Button>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                className="gap-1 text-xs"
-                                                                                onClick={() => {
-                                                                                    setVentaSeleccionadaModal(venta);
-                                                                                    setShowRegistrarConfirmacionModal(true);
-                                                                                }}
-                                                                            >
-                                                                                <Plus className="h-3 w-3" />
-                                                                                Nueva Confirmación
-                                                                            </Button>
-                                                                            {/* ✅ NUEVO: Botón para reasignar a otra entrega */}
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                onClick={() => {
-                                                                                    setVentaAReasignar(venta);
-                                                                                    setReasignarModalOpen(true);
-                                                                                }}
-                                                                                className="gap-2 border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:hover:bg-orange-900/20"
-                                                                            >
-                                                                                <Navigation className="h-4 w-4" />
-                                                                                🚚 Reasignar Entrega
-                                                                            </Button>
-                                                                        </div>
                                                                     </div>
 
                                                                     {/* Grid: Tipo Confirmación y Monto Recibido */}
@@ -469,17 +486,18 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                         </div>
                                                                         {/* ✅ Mostrar dinero recibido solo si es COMPLETA o DEVOLUCION_PARCIAL y NO es CREDITO */}
                                                                         {(confirmacion.tipo_confirmacion === 'COMPLETA' ||
-                                                                            confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL' ) &&
+                                                                            confirmacion.tipo_confirmacion === 'DEVOLUCION_PARCIAL') &&
                                                                             confirmacion.venta?.tipo_pago?.codigo !== 'CREDITO' && (
-                                                                            <div>
-                                                                                <p className="text-xs font-semibold text-green-700 uppercase dark:text-green-300">
-                                                                                    Dinero Recibido
-                                                                                </p>
-                                                                                <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                                                                                    Bs. {Number(confirmacion.total_dinero_recibido || 0).toFixed(2)}
-                                                                                </p>
-                                                                            </div>
-                                                                        )}
+                                                                                <div>
+                                                                                    <p className="text-xs font-semibold text-green-700 uppercase dark:text-green-300">
+                                                                                        Dinero Recibido
+                                                                                    </p>
+                                                                                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                                                                                        Bs.{' '}
+                                                                                        {Number(confirmacion.total_dinero_recibido || 0).toFixed(2)}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
                                                                     </div>
 
                                                                     {/* Resumen de Pagos por Tipo */}
@@ -516,15 +534,15 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                     {/* Monto Pendiente - No mostrar si es CREDITO (promesa de pago) */}
                                                                     {Number(confirmacion.monto_pendiente || 0) > 0 &&
                                                                         confirmacion.venta?.tipo_pago?.codigo !== 'CREDITO' && (
-                                                                        <div className="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
-                                                                            <p className="text-xs font-semibold text-orange-700 uppercase dark:text-orange-300">
-                                                                                ⚠️ Monto Pendiente
-                                                                            </p>
-                                                                            <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                                                                Bs. {Number(confirmacion.monto_pendiente).toFixed(2)}
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
+                                                                            <div className="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                                                                                <p className="text-xs font-semibold text-orange-700 uppercase dark:text-orange-300">
+                                                                                    ⚠️ Monto Pendiente
+                                                                                </p>
+                                                                                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                                                                    Bs. {Number(confirmacion.monto_pendiente).toFixed(2)}
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
 
                                                                     {/* Observaciones Logística */}
                                                                     {confirmacion.observaciones_logistica && (
@@ -622,130 +640,6 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                                 </div>
                                                             );
                                                         })()}
-
-                                                        {/* Tabla de productos */}
-                                                        {/* {venta.detalles && venta.detalles.length > 0 && (
-                                                            <div className="space-y-2">
-                                                                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                                                                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                                                    Productos Vendidos ({venta.detalles.length})
-                                                                </h4>
-                                                                <div className="overflow-x-auto rounded border border-gray-200 dark:border-slate-800">
-                                                                    <table className="w-full text-sm">
-                                                                        <thead>
-                                                                            <tr className="bg-gray-100 dark:bg-slate-900">
-                                                                                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Producto
-                                                                                </th>
-                                                                                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Cantidad
-                                                                                </th>
-                                                                                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Precio
-                                                                                </th>
-                                                                                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Subtotal
-                                                                                </th>
-                                                                                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Peso
-                                                                                </th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
-                                                                            {venta.detalles.map((detalle) => {
-                                                                                const precio =
-                                                                                    typeof detalle.precio_unitario === 'string'
-                                                                                        ? parseFloat(detalle.precio_unitario)
-                                                                                        : detalle.precio_unitario;
-                                                                                const subtotal =
-                                                                                    typeof detalle.subtotal === 'string'
-                                                                                        ? parseFloat(detalle.subtotal)
-                                                                                        : detalle.subtotal;
-                                                                                const pesoItem = (detalle.producto?.peso || 0) * detalle.cantidad;
-
-                                                                                return (
-                                                                                    <tr
-                                                                                        key={detalle.id}
-                                                                                        className="hover:bg-gray-100 dark:hover:bg-slate-800/80"
-                                                                                    >
-                                                                                        <td className="px-4 py-2">
-                                                                                            <div>
-                                                                                                <p className="font-medium text-gray-900 dark:text-white">
-                                                                                                    {detalle.producto?.nombre ||
-                                                                                                        'Producto sin nombre'}
-                                                                                                </p>
-                                                                                                {detalle.producto?.codigo && (
-                                                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                                                        {detalle.producto.codigo}
-                                                                                                    </p>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        </td>
-                                                                                        <td className="px-4 py-2 text-left font-medium text-gray-900 dark:text-white">
-                                                                                            {Number(detalle.cantidad).toFixed(2)}
-                                                                                        </td>
-                                                                                        <td className="px-4 py-2 text-left text-gray-900 dark:text-white">
-                                                                                            Bs. {precio.toFixed(2)}
-                                                                                        </td>
-                                                                                        <td className="px-4 py-2 text-left font-semibold text-blue-600 dark:text-blue-400">
-                                                                                            Bs. {subtotal.toFixed(2)}
-                                                                                        </td>
-                                                                                        <td className="px-4 py-2 text-left font-medium text-purple-600 dark:text-purple-400">
-                                                                                            {pesoItem.toFixed(2)} kg
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                );
-                                                                            })}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-                                                            </div>
-                                                        )} */}
-
-                                                        {/* ✅ Botones de acción */}
-                                                        <div className="mt-4 flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-slate-800">
-                                                            {/* Botón para confirmar/editar entrega (siempre disponible) */}
-                                                            {/* {onConfirmarEntrega && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="default"
-                                                                    onClick={() => onConfirmarEntrega(venta)}
-                                                                    className={`gap-2 ${
-                                                                        venta.estado_logistica?.codigo === 'ENTREGADO'
-                                                                            ? 'bg-blue-600 hover:bg-blue-700'
-                                                                            : 'bg-green-600 hover:bg-green-700'
-                                                                    }`}
-                                                                >
-                                                                    <Truck className="h-4 w-4" />
-                                                                    {venta.estado_logistica?.codigo === 'ENTREGADO'
-                                                                        ? '✏️ Editar Entrega'
-                                                                        : '✅ Confirmar Entrega'}
-                                                                </Button>
-                                                            )} */}
-
-                                                            {/* Botón para corregir pagos (solo si está entregada) */}
-                                                            {/* {venta.estado_logistica?.codigo === 'ENTREGADO' && onCorregirPago && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => {
-                                                                        const ventaTotal =
-                                                                            typeof venta.total === 'string'
-                                                                                ? parseFloat(venta.total)
-                                                                                : venta.total || 0;
-                                                                        const desglose: DesglosePago[] =
-                                                                            venta.desglose_pagos && Array.isArray(venta.desglose_pagos)
-                                                                                ? venta.desglose_pagos
-                                                                                : [];
-                                                                        onCorregirPago(Number(venta.id), venta.numero || '', ventaTotal, desglose);
-                                                                    }}
-                                                                    className="gap-2"
-                                                                >
-                                                                    <Edit2 className="h-4 w-4" />
-                                                                    ✏️ Corregir Pagos
-                                                                </Button>
-                                                            )} */}
-                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -800,6 +694,43 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                     onSuccess={() => {
                         setShowRegistrarConfirmacionModal(false);
                         // Recargar la página para mostrar la nueva confirmación
+                        setTimeout(() => window.location.reload(), 500);
+                    }}
+                />
+            )}
+
+            {/* ✅ NUEVO: Modal para actualizar estado logístico */}
+            {ventaActualizarEstado && (
+                <ActualizarEstadoLogisticoModal
+                    isOpen={showActualizarEstadoModal}
+                    venta={ventaActualizarEstado}
+                    onClose={() => {
+                        setShowActualizarEstadoModal(false);
+                        setVentaActualizarEstado(null);
+                    }}
+                    onSuccess={() => {
+                        setShowActualizarEstadoModal(false);
+                        // Recargar la página para mostrar el estado actualizado
+                        setTimeout(() => window.location.reload(), 500);
+                    }}
+                />
+            )}
+
+            {/* ✅ NUEVO: Modal para quitar venta de entrega */}
+            {ventaAQuitar && (
+                <QuitarVentaDeEntregaModal
+                    isOpen={showQuitarVentaModal}
+                    ventaId={Number(ventaAQuitar.id)}
+                    ventaNumero={ventaAQuitar.numero || ''}
+                    entregaId={entrega?.id || 0}
+                    entregaNumero={entrega?.numero_entrega || ''}
+                    onClose={() => {
+                        setShowQuitarVentaModal(false);
+                        setVentaAQuitar(null);
+                    }}
+                    onSuccess={() => {
+                        setShowQuitarVentaModal(false);
+                        // Recargar la página para mostrar los cambios
                         setTimeout(() => window.location.reload(), 500);
                     }}
                 />

@@ -14,6 +14,7 @@ interface UseEntregasReturn {
     handleVerEntrega: (entregaId: Id) => void;
     handlePaginaAnterior: (currentPage: number) => void;
     handlePaginaSiguiente: (currentPage: number) => void;
+    handleIrAPagina: (pageNumber: number) => void;
     handleCrearEntrega: () => void;
 }
 
@@ -22,6 +23,26 @@ interface UseEntregasReturn {
  * Encapsula la lógica de navegación y acciones
  */
 export const useEntregas = (): UseEntregasReturn => {
+    /**
+     * Obtener parámetros actuales de la URL
+     */
+    const obtenerParametrosActuales = (): string => {
+        if (typeof window === 'undefined') return '';
+        const searchParams = new URLSearchParams(window.location.search);
+        // Remover el parámetro 'page' para que sea reemplazado
+        searchParams.delete('page');
+        return searchParams.toString();
+    };
+
+    /**
+     * Construir URL con parámetros preservados
+     */
+    const construirUrlConParametros = (pageNumber: number): string => {
+        const params = obtenerParametrosActuales();
+        const pageParam = `page=${pageNumber}`;
+        return params ? `/logistica/entregas?${params}&${pageParam}` : `/logistica/entregas?${pageParam}`;
+    };
+
     /**
      * Navegar a detalle de entrega
      */
@@ -33,7 +54,8 @@ export const useEntregas = (): UseEntregasReturn => {
      * Navegar a página anterior
      */
     const handlePaginaAnterior = (currentPage: number) => {
-        router.get(`/logistica/entregas?page=${currentPage - 1}`, {}, {
+        if (currentPage <= 1) return;
+        router.get(construirUrlConParametros(currentPage - 1), {}, {
             preserveState: true,
             replace: true,
         });
@@ -43,7 +65,18 @@ export const useEntregas = (): UseEntregasReturn => {
      * Navegar a página siguiente
      */
     const handlePaginaSiguiente = (currentPage: number) => {
-        router.get(`/logistica/entregas?page=${currentPage + 1}`, {}, {
+        router.get(construirUrlConParametros(currentPage + 1), {}, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    /**
+     * ✅ NUEVO: Navegar a página específica
+     */
+    const handleIrAPagina = (pageNumber: number) => {
+        if (pageNumber < 1) return;
+        router.get(construirUrlConParametros(pageNumber), {}, {
             preserveState: true,
             replace: true,
         });
@@ -60,6 +93,7 @@ export const useEntregas = (): UseEntregasReturn => {
         handleVerEntrega,
         handlePaginaAnterior,
         handlePaginaSiguiente,
+        handleIrAPagina,
         handleCrearEntrega,
     };
 };

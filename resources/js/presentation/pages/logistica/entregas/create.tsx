@@ -75,7 +75,7 @@ export default function Create({
     };
 
     const isEditMode = modo === 'editar';
-    const pageTitle = isEditMode ? `Editar Entrega: ${entrega?.numero_entrega}` : 'Crear Entrega';
+    const pageTitle = isEditMode ? `Editar Entrega: #${entrega?.id}` : 'Crear Entrega';
     const breadcrumbTitle = isEditMode ? 'Editar' : 'Crear';
 
     return (

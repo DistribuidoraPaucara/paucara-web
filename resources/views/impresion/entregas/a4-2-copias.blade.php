@@ -262,7 +262,7 @@
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
-                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 20) }}</td>
+                            <td style="font-size: 11px;">{{ $venta->cliente?->nombre }}</td>
                             <td class="text-center" style="font-size: 9px;">
                                 {{ $estadoLogistico }}
                             </td>
@@ -453,7 +453,7 @@
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
-                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 20) }}</td>
+                            <td style="font-size: 11px;">{{ $venta->cliente?->nombre }}</td>
                             <td class="text-center" style="font-size: 9px;">
                                 {{ $estadoLogistico }}
                             </td>

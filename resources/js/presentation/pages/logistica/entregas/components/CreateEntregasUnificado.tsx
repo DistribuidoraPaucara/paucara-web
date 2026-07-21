@@ -6,7 +6,17 @@ import { VehicleRecommendationCard } from '@/presentation/components/entrega/Veh
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Package, Plus, Trash2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/presentation/components/ui/alert-dialog';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Loader2, Package, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import BatchVentaSelector from './BatchVentaSelector';
 import ConsolidacionAutomaticaModal from './ConsolidacionAutomaticaModal';
@@ -89,15 +99,6 @@ export default function CreateEntregasUnificado({
     onCancel,
 }: CreateEntregasUnificadoProps) {
     const isEditMode = modo === 'editar';
-
-    // 🔍 LOG: Ventas recibidas del backend
-    console.log('📥 [CreateEntregasUnificado] Ventas recibidas del backend:', {
-        total: ventas.length,
-        ids: ventas.map((v) => v.id),
-        ventaPreseleccionada,
-        contiene_preseleccionada: ventaPreseleccionada ? ventas.some((v) => v.id === ventaPreseleccionada) : 'N/A',
-        primera_venta: ventas[0],
-    });
     // Estado de selección de ventas
     // Usar Id en lugar de number para ser compatible con VentaConDetalles.id
     const [selectedVentaIds, setSelectedVentaIds] = useState<Id[]>(ventaPreseleccionada ? [ventaPreseleccionada] : []);
@@ -113,7 +114,10 @@ export default function CreateEntregasUnificado({
     const [searchResults, setSearchResults] = useState<VentaConDetalles[]>([]);
 
     // ✅ NUEVO: Estado para acumular ventas seleccionadas (PERSISTE entre búsquedas)
-    const [ventasAcumuladas, setVentasAcumuladas] = useState<VentaConDetalles[]>([]);
+    // ✅ MEJORADO: En modo editar, inicializar con ventasAsignadas
+    const [ventasAcumuladas, setVentasAcumuladas] = useState<VentaConDetalles[]>(
+        isEditMode ? ventasAsignadas : []
+    );
 
     // ✅ NUEVO: Estado para controlar si el carrito está expandido
     const [isCarritoExpanded, setIsCarritoExpanded] = useState(false);
@@ -350,11 +354,30 @@ export default function CreateEntregasUnificado({
     const [ventasEliminando, setVentasEliminando] = useState<Set<Id>>(new Set());
     const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
 
-    const handleEliminarVenta = async (ventaId: Id) => {
+    // ✅ NUEVO: Estado para modal de confirmación al eliminar venta
+    const [eliminarConfirmModal, setEliminarConfirmModal] = useState<{
+        isOpen: boolean;
+        ventaId: Id | null;
+        ventaNumero: string | null;
+    }>({ isOpen: false, ventaId: null, ventaNumero: null });
+
+    const handleEliminarVenta = (ventaId: Id) => {
         if (!isEditMode || !entrega) return;
 
-        const confirmed = window.confirm('¿Estás seguro de que deseas eliminar esta venta de la entrega?');
-        if (!confirmed) return;
+        // Buscar la venta en ventasAcumuladas para obtener el número
+        const venta = ventasAcumuladas.find((v) => v.id === ventaId);
+        const ventaNumero = venta?.numero_venta || `#${ventaId}`;
+
+        // Abrir modal de confirmación en lugar de window.confirm()
+        setEliminarConfirmModal({
+            isOpen: true,
+            ventaId,
+            ventaNumero,
+        });
+    };
+
+    const handleConfirmarEliminar = async (ventaId: Id) => {
+        if (!isEditMode || !entrega) return;
 
         setVentasEliminando((prev) => new Set([...prev, ventaId]));
         setErrorEliminar(null);
@@ -378,6 +401,9 @@ export default function CreateEntregasUnificado({
             // Remover de selectedVentaIds
             setSelectedVentaIds((prev) => prev.filter((id) => id !== ventaId));
             console.log('✅ Venta eliminada:', ventaId);
+
+            // Cerrar modal
+            setEliminarConfirmModal({ isOpen: false, ventaId: null, ventaNumero: null });
 
             // Recargar la página después de 500ms para asegurar que el backend procesó todo
             setTimeout(() => {
@@ -532,62 +558,168 @@ export default function CreateEntregasUnificado({
                         {/* Header clickeable */}
                         <button
                             onClick={() => setIsCarritoExpanded(!isCarritoExpanded)}
-                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-900/30 rounded-t transition-colors"
+                            className="flex w-full items-center justify-between rounded-t px-2 py-2 transition-colors hover:bg-green-100/50 dark:hover:bg-green-900/30"
                         >
                             <h3 className="text-base font-semibold text-green-900 dark:text-green-100">
                                 🛒 Ventas Agregadas ({ventasAcumuladas.length})
+                                {isEditMode && ventasAsignadas.length > 0 && (
+                                    <span className="ml-2 text-sm font-normal text-green-700 dark:text-green-200">
+                                        ({ventasAsignadas.length} existentes + {ventasAcumuladas.length - ventasAsignadas.length} nuevas)
+                                    </span>
+                                )}
                             </h3>
                             {isCarritoExpanded ? (
-                                <ChevronUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <ChevronUp className="h-5 w-5 text-green-600 dark:text-green-400" />
                             ) : (
-                                <ChevronDown className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <ChevronDown className="h-5 w-5 text-green-600 dark:text-green-400" />
                             )}
                         </button>
 
                         {/* Contenido colapsable */}
                         {isCarritoExpanded && (
-                            <div className="px-4 pb-4 border-t border-green-200 dark:border-green-800">
-                                <div className="flex flex-wrap gap-2 pt-4">
-                                    {ventasAcumuladas.map((venta) => (
-                                        <div
-                                            key={venta.id}
-                                            className="flex flex-wrap items-center justify-between rounded border border-green-200 bg-white p-2 dark:border-green-800 dark:bg-slate-800"
-                                        >
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.id}</p>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400">{venta.cliente?.nombre}</p>
-                                            </div>
-                                            <div className="ml-3 text-right">
-                                                <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                                                    {(parseFloat(venta.peso_total_estimado as any) || parseFloat(venta.peso_estimado as any) || 0).toFixed(1)}{' '}
-                                                    kg
-                                                </p>
-                                                <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                                                    Bs {(parseFloat(venta.subtotal as any) ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                {/* Totales */}
-                                {/* <div className="border-t border-green-200 dark:border-green-800 pt-3 mt-3">
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Ventas</p>
-                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">{ventasAcumuladas.length}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Peso Total</p>
-                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">{totals.pesoTotal.toFixed(1)} kg</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-green-600 uppercase dark:text-green-400">Monto Total</p>
-                                            <p className="text-lg font-bold text-green-900 dark:text-green-100">
-                                                Bs {totals.montoTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
-                                            </p>
+                            <div className="border-t border-green-200 px-2 py-2 dark:border-green-800">
+                                {/* ✅ NUEVO: Ventas Existentes (Asignadas) */}
+                                {isEditMode && ventasAsignadas.length > 0 && (
+                                    <div className="mb-4">
+                                        <p className="mb-2 text-xs font-semibold uppercase text-green-700 dark:text-green-300">
+                                            ✅ Ventas Existentes ({ventasAsignadas.length})
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ventasAsignadas.map((venta) => (
+                                                <div
+                                                    key={venta.id}
+                                                    className="flex flex-wrap items-center justify-between rounded border-2 border-green-300 bg-green-50 p-2 dark:border-green-700 dark:bg-green-900/30"
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.id}</p>
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400">{venta.cliente?.nombre}</p>
+                                                    </div>
+                                                    <div className="ml-3 text-right">
+                                                        <p className="text-xs font-medium text-green-700 dark:text-green-300">
+                                                            {(
+                                                                parseFloat(venta.peso_total_estimado as any) ||
+                                                                parseFloat(venta.peso_estimado as any) ||
+                                                                0
+                                                            ).toFixed(1)}{' '}
+                                                            kg
+                                                        </p>
+                                                        <p className="text-xs font-medium text-green-700 dark:text-green-300">
+                                                            Bs{' '}
+                                                            {(parseFloat(venta.subtotal as any) ?? 0).toLocaleString('es-BO', {
+                                                                minimumFractionDigits: 2,
+                                                            })}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Botón para eliminar existente */}
+                                                    <button
+                                                        onClick={() => handleEliminarVenta(venta.id)}
+                                                        disabled={ventasEliminando.has(venta.id)}
+                                                        className="ml-2 flex-shrink-0 rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20 dark:text-red-400"
+                                                        title="Eliminar venta de la entrega"
+                                                    >
+                                                        {ventasEliminando.has(venta.id) ? (
+                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-500" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                </div> */}
+                                )}
+
+                                {/* ✅ NUEVO: Ventas Nuevas */}
+                                {isEditMode && ventasAcumuladas.length > ventasAsignadas.length && (
+                                    <div>
+                                        <p className="mb-2 text-xs font-semibold uppercase text-blue-700 dark:text-blue-300">
+                                            ➕ Ventas Nuevas ({ventasAcumuladas.length - ventasAsignadas.length})
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ventasAcumuladas
+                                                .filter((v) => !ventasAsignadas.some((va) => va.id === v.id))
+                                                .map((venta) => (
+                                                    <div
+                                                        key={venta.id}
+                                                        className="flex flex-wrap items-center justify-between rounded border-2 border-blue-300 bg-blue-50 p-2 dark:border-blue-700 dark:bg-blue-900/30"
+                                                    >
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.id}</p>
+                                                            <p className="text-xs text-gray-600 dark:text-gray-400">{venta.cliente?.nombre}</p>
+                                                        </div>
+                                                        <div className="ml-3 text-right">
+                                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                                                                {(
+                                                                    parseFloat(venta.peso_total_estimado as any) ||
+                                                                    parseFloat(venta.peso_estimado as any) ||
+                                                                    0
+                                                                ).toFixed(1)}{' '}
+                                                                kg
+                                                            </p>
+                                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                                                                Bs{' '}
+                                                                {(parseFloat(venta.subtotal as any) ?? 0).toLocaleString('es-BO', {
+                                                                    minimumFractionDigits: 2,
+                                                                })}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Botón para remover nueva */}
+                                                        <button
+                                                            onClick={() => handleToggleVenta(venta.id)}
+                                                            className="ml-2 flex-shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                            title="Remover venta"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Fallback para modo crear: todas las ventas */}
+                                {!isEditMode && (
+                                    <div className="flex flex-wrap gap-2 pt-4">
+                                        {ventasAcumuladas.map((venta) => (
+                                            <div
+                                                key={venta.id}
+                                                className="flex flex-wrap items-center justify-between rounded border border-green-200 bg-white p-2 dark:border-green-800 dark:bg-slate-800"
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.id}</p>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-400">{venta.cliente?.nombre}</p>
+                                                </div>
+                                                <div className="ml-3 text-right">
+                                                    <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                                        {(
+                                                            parseFloat(venta.peso_total_estimado as any) ||
+                                                            parseFloat(venta.peso_estimado as any) ||
+                                                            0
+                                                        ).toFixed(1)}{' '}
+                                                        kg
+                                                    </p>
+                                                    <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                                        Bs{' '}
+                                                        {(parseFloat(venta.subtotal as any) ?? 0).toLocaleString('es-BO', {
+                                                            minimumFractionDigits: 2,
+                                                        })}
+                                                    </p>
+                                                </div>
+
+                                                {/* Botón para remover en crear */}
+                                                <button
+                                                    onClick={() => handleToggleVenta(venta.id)}
+                                                    className="ml-2 flex-shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                                    title="Remover venta"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -633,18 +765,7 @@ export default function CreateEntregasUnificado({
                 )}
 
                 {/* BLOQUE 2: Asignación de Recursos */}
-                <div className="mb-2 space-y-4 border-b border-gray-200 pb-2 dark:border-slate-700">
-                    {/* <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        Asignación de Recursos
-                    </h2> */}
-
-                    {/* ✅ DEBUG: Mostrar estado de renderización */}
-                    {isEditMode && (
-                        <div className="rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                            DEBUG - Edit Mode: vehiculo_id={formData.vehiculo_id}, chofer_id={formData.chofer_id}
-                        </div>
-                    )}
+                <div className="mb-1 space-y-2">
 
                     {/* Recomendación Inteligente de Vehículo O Datos de Edición */}
                     {(() => {
@@ -653,18 +774,6 @@ export default function CreateEntregasUnificado({
                         const shouldRender = isEditMode
                             ? selectedCount > 0
                             : recomendado || alertaRecomendacion || errorRecomendacion || loadingRecomendacion;
-
-                        console.log('🎯 [VehicleRecommendationCard] shouldRender:', shouldRender, {
-                            isEditMode,
-                            selectedCount,
-                            vehiculo_id: formData.vehiculo_id,
-                            recomendado: !!recomendado,
-                            hook_values: {
-                                alerta: !!alertaRecomendacion,
-                                error: !!errorRecomendacion,
-                                loading: loadingRecomendacion,
-                            },
-                        });
                         return shouldRender;
                     })() && (
                         <VehicleRecommendationCard
@@ -686,84 +795,6 @@ export default function CreateEntregasUnificado({
                             onSelectEntregador={handleSelectEntregador}
                         />
                     )}
-
-                    {/* ✅ NUEVO: Mostrar ventas asignadas en modo edición */}
-                    {isEditMode && selectedCount > 0 && (
-                        <Card className="border-l-4 border-blue-200 border-l-blue-500 bg-blue-50 p-4 dark:border-blue-800 dark:border-slate-700 dark:bg-blue-900/10 dark:bg-slate-900">
-                            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-                                <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                Ventas Asignadas a esta Entrega
-                            </h3>
-
-                            {/* Mostrar error si existe */}
-                            {errorEliminar && (
-                                <div className="mb-3 rounded border border-red-300 bg-red-100 p-2 text-xs text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
-                                    ❌ {errorEliminar}
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                {ventasAsignadas && ventasAsignadas.length > 0 ? (
-                                    ventasAsignadas.map((venta) => (
-                                        <div
-                                            key={venta.id}
-                                            className="flex items-center justify-between rounded border border-gray-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800"
-                                        >
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">#{venta.numero_venta}</p>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                    {venta.cliente?.nombre} • Bs{' '}
-                                                    {(venta.subtotal ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-right">
-                                                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                                        {venta.peso_estimado ? `${(parseFloat(venta.peso_estimado as any) ?? 0).toFixed(1)} kg` : '-'}
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleEliminarVenta(venta.id)}
-                                                    disabled={ventasEliminando.has(venta.id)}
-                                                    className="flex-shrink-0 rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                                    title="Eliminar venta de esta entrega"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Sin ventas asignadas</p>
-                                )}
-                            </div>
-                            <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
-                                {ventasAsignadas?.length === 1
-                                    ? '1 venta asignada a esta entrega'
-                                    : `${ventasAsignadas?.length ?? 0} ventas asignadas a esta entrega`}
-                            </p>
-                        </Card>
-                    )}
-
-                    {/* Fecha de Entrega Programada */}
-                    {/* <Card className="dark:bg-slate-900 dark:border-slate-700 p-4 border-l-4 border-l-amber-500">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            Fecha de Entrega
-                        </h3>
-                        <input
-                            type="datetime-local"
-                            value={formData.fecha_programada || getTodayDateTimeLocal()}
-                            onChange={(e) => updateFormData({ fecha_programada: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white transition-colors focus:ring-2 focus:ring-amber-500 text-sm"
-                        />
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            {selectedCount === 1
-                                ? '📦 Se aplicará a esta entrega'
-                                : `📦 Se aplicará a las ${selectedCount} entregas consolidadas`
-                            }
-                        </p>
-                    </Card> */}
                 </div>
 
                 {/* BLOQUE 3: Opciones & Validación */}
@@ -999,6 +1030,58 @@ export default function CreateEntregasUnificado({
                         }}
                     />
                 )}
+
+                {/* ✅ NUEVO: Modal de confirmación para eliminar venta */}
+                <AlertDialog
+                    open={eliminarConfirmModal.isOpen}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setEliminarConfirmModal({ isOpen: false, ventaId: null, ventaNumero: null });
+                        }
+                    }}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-500" />
+                                Eliminar Venta de Entrega
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                ¿Estás seguro de que deseas eliminar la venta{' '}
+                                <strong>#{eliminarConfirmModal.ventaNumero}</strong> de esta entrega?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <div className="space-y-4 px-6">
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                                <p className="text-sm text-red-900 dark:text-red-200">
+                                    ⚠️ Esta acción <strong>eliminará permanentemente</strong> la venta de la entrega. La venta se
+                                    removerá completamente y no podrá ser recuperada.
+                                </p>
+                            </div>
+                        </div>
+
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={ventasEliminando.has(eliminarConfirmModal.ventaId || 0)}>
+                                Cancelar
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => {
+                                    if (eliminarConfirmModal.ventaId) {
+                                        handleConfirmarEliminar(eliminarConfirmModal.ventaId);
+                                    }
+                                }}
+                                disabled={ventasEliminando.has(eliminarConfirmModal.ventaId || 0)}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                                {ventasEliminando.has(eliminarConfirmModal.ventaId || 0) && (
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                )}
+                                {ventasEliminando.has(eliminarConfirmModal.ventaId || 0) ? 'Eliminando...' : 'Eliminar Venta'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     );

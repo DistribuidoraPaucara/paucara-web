@@ -132,7 +132,7 @@ export const EstadoEntregaBadge: React.FC<EstadoEntregaBadgeProps> = ({
 
     return (
         <div
-            className={`inline-flex items-center space-x-1.5 ${sizeClasses[tamaño]} font-semibold rounded-full border ${config.bgColor} ${config.textColor} ${config.borderColor} transition-all duration-200 hover:shadow-md cursor-default`}
+            className={`text-xs inline-flex items-center space-x-1 ${sizeClasses[tamaño]} rounded-full border ${config.bgColor} ${config.textColor} ${config.borderColor} transition-all duration-200 hover:shadow-md cursor-default`}
             title={config.descripcion}
         >
             {conIcono && config.icon}

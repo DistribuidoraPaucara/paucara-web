@@ -569,7 +569,7 @@ export default function BatchVentaSelector({
                                 {/* Encabezado de localidad */}
                                 <button
                                     onClick={() => toggleLocalidad(grupo.nombre)}
-                                    className={`flex w-full items-center justify-between rounded-lg p-3 transition-all ${
+                                    className={`flex w-full items-center justify-between rounded-lg p-1 transition-all ${
                                         isExpanded
                                             ? 'border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 dark:border-blue-700 dark:from-blue-900/40 dark:to-blue-900/20'
                                             : 'border border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700'

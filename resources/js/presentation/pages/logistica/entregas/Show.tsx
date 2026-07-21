@@ -2,7 +2,14 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/presentation/components/ui/tabs';
-import { Package, CheckCircle2, Navigation, Flag, Printer } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import { CheckCircle2, Navigation, Flag, Printer, MoreVertical, MapPin, XCircle } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import type { Entrega, VehiculoCompleto } from '@/domain/entities/entregas';
 import VentasEntregaSection from './components/VentasEntregaSection';
@@ -10,6 +17,7 @@ import ProductosAgrupados from './components/ProductosAgrupados';
 import ResumenPagosEntrega from './components/ResumenPagosEntrega';
 import ConfirmacionesEntregaSection from './components/ConfirmacionesEntregaSection';
 import { CorregirPagoModal } from './components/CorregirPagoModal';
+import { CancelarEntregaModal } from './components/CancelarEntregaModal';
 import { EntregaActionsModal } from '@/presentation/components/logistica/entrega-actions-modal';
 import EstadoBadge from '@/presentation/components/logistica/EstadoBadge';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
@@ -52,6 +60,8 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
     const [confirmacionExistente, setConfirmacionExistente] = useState<any>(null);
     // ✅ NUEVO: Estado para modal de ubicaciones
     const [mostrarUbicaciones, setMostrarUbicaciones] = useState(false);
+    // ✅ NUEVO: Estado para modal de cancelar entrega
+    const [mostrarCancelarModal, setMostrarCancelarModal] = useState(false);
 
     // ✅ DEBUG: Ver qué datos llegan del backend
     useEffect(() => {
@@ -83,6 +93,15 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
             setConfirmacionExistente(null);
         }
     }, [confirmandoEntrega, entrega.confirmacionesVentas]);
+
+    // ✅ NUEVO: Calcular monto total de ventas sin CREDITO
+    const montoTotalVentas = entrega.ventas
+        ?.filter((venta: any) => {
+            // Excluir si tipo_pago.id === 3 (CREDITO)
+            const tipoPageoId = venta.tipo_pago_id || venta.tipo_pago?.id;
+            return tipoPageoId !== 3;
+        })
+        .reduce((sum: number, venta: any) => sum + (parseFloat(venta.total) || 0), 0) || 0;
 
     // Hooks para sincronización en tiempo real
     const { isConnected, on, off } = useWebSocket();
@@ -148,7 +167,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] ✨ Éxito - Mostrando notificación');
                 showNotification({
                     title: '✅ Éxito',
-                    message: data.message || 'Operación completada',
+                    description: data.message || 'Operación completada',
                     type: 'success',
                 });
                 // Recargar la página para ver el cambio de estado
@@ -161,7 +180,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] 📊 Status:', response.status, response.statusText);
                 showNotification({
                     title: '❌ Error',
-                    message: data.message || data.error || 'Operación no completada',
+                    description: data.message || data.error || 'Operación no completada',
                     type: 'error',
                 });
             }
@@ -169,7 +188,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
             console.error('[SHOW] ❌ Excepción al marcar listo para entrega:', error);
             showNotification({
                 title: '❌ Error',
-                message: error instanceof Error ? error.message : 'Error desconocido',
+                description: error instanceof Error ? error.message : 'Error desconocido',
                 type: 'error',
             });
         } finally {
@@ -205,7 +224,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] ✨ Éxito - Mostrando notificación');
                 showNotification({
                     title: '✅ Éxito',
-                    message: data.message || 'Operación completada',
+                    description: data.message || 'Operación completada',
                     type: 'success',
                 });
                 // Recargar la página para ver el cambio de estado
@@ -218,7 +237,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] 📊 Status:', response.status, response.statusText);
                 showNotification({
                     title: '❌ Error',
-                    message: data.message || data.error || 'Operación no completada',
+                    description: data.message || data.error || 'Operación no completada',
                     type: 'error',
                 });
             }
@@ -226,7 +245,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
             console.error('[SHOW] ❌ Excepción al iniciar ruta:', error);
             showNotification({
                 title: '❌ Error',
-                message: error instanceof Error ? error.message : 'Error desconocido',
+                description: error instanceof Error ? error.message : 'Error desconocido',
                 type: 'error',
             });
         } finally {
@@ -262,7 +281,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] ✨ Éxito - Mostrando notificación');
                 showNotification({
                     title: '✅ Éxito',
-                    message: data.message || 'Operación completada',
+                    description: data.message || 'Operación completada',
                     type: 'success',
                 });
                 // Recargar la página para ver el cambio de estado
@@ -275,7 +294,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                 console.log('[SHOW] 📊 Status:', response.status, response.statusText);
                 showNotification({
                     title: '❌ Error',
-                    message: data.message || data.error || 'Operación no completada',
+                    description: data.message || data.error || 'Operación no completada',
                     type: 'error',
                 });
             }
@@ -283,7 +302,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
             console.error('[SHOW] ❌ Excepción al finalizar entrega:', error);
             showNotification({
                 title: '❌ Error',
-                message: error instanceof Error ? error.message : 'Error desconocido',
+                description: error instanceof Error ? error.message : 'Error desconocido',
                 type: 'error',
             });
         } finally {
@@ -365,25 +384,48 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             </Button>
                         )}
 
-                        {/* ✅ NUEVO: Botón para ver ubicaciones en mapa */}
-                        <Button
-                            onClick={() => setMostrarUbicaciones(true)}
-                            variant="outline"
-                            className="w-full text-sm sm:text-base"
-                        >
-                            <Package className="w-4 h-4 mr-2 flex-shrink-0" />
-                            <span className="truncate">Ver en Mapa</span>
-                        </Button>
+                        {/* ✅ NUEVO: Menú desplegable con acciones adicionales */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="outline" title="Más acciones">
+                                    <MoreVertical className="h-4 w-4" />
+                                    <span className="sr-only">Abrir menú</span>
+                                </Button>
+                            </DropdownMenuTrigger>
 
-                        {/* Botón para abrir modal de impresión/descarga */}
-                        <Button
-                            onClick={() => setIsOutputModalOpen(true)}
-                            variant="outline"
-                            className="w-full text-sm sm:text-base"
-                        >
-                            <Printer className="w-4 h-4 mr-2 flex-shrink-0" />
-                            {/* <span className="truncate">Imprimir</span> */}
-                        </Button>
+                            <DropdownMenuContent align="end" className="w-56">
+                                {/* Ver en Mapa */}
+                                {entrega.ventas && entrega.ventas.length > 0 && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => setMostrarUbicaciones(true)}>
+                                            <MapPin className="mr-2 h-4 w-4" />
+                                            Ver en Mapa ({entrega.ventas.length})
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
+
+                                {/* Imprimir */}
+                                <DropdownMenuItem onClick={() => setIsOutputModalOpen(true)}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Imprimir
+                                </DropdownMenuItem>
+
+                                {/* Cancelar - solo si estado permite */}
+                                {['PROGRAMADO', 'PENDIENTE', 'EN_TRANSITO', 'PREPARACION_CARGA'].includes(estadoActualParaValidar) && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => setMostrarCancelarModal(true)}
+                                            className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/30 dark:focus:text-red-400"
+                                        >
+                                            <XCircle className="mr-2 h-4 w-4" />
+                                            Cancelar Entrega
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* Modal de selección de formato de impresión/descarga */}
@@ -461,16 +503,23 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             titulo={`Ubicaciones de Entrega ${entrega.numero_entrega || ''}`}
                         />
                     )}
+
+                    {/* ✅ NUEVO: Modal para cancelar entrega */}
+                    <CancelarEntregaModal
+                        isOpen={mostrarCancelarModal}
+                        onClose={() => setMostrarCancelarModal(false)}
+                        entrega={{
+                            id: entrega.id,
+                            numero_entrega: entrega.numero_entrega,
+                            estado: entrega.estado,
+                        }}
+                    />
                 </div>
 
                 {/* Información del Lote - Entregas con mismo chofer y vehículo */}
                 {entrega.chofer && entrega.vehiculo && (
                     <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800 p-2">
-                        {/* <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-purple-900 dark:text-purple-200">
-                            <Package className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                            <span>Contexto del Lote</span>
-                        </h2> */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
                             <div>
                                 <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Chofer Asignado</p>
                                 <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100 truncate">{entrega.chofer.name}</p>
@@ -503,6 +552,12 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                                 <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Peso Entrega</p>
                                 <p className="font-medium text-sm sm:text-base text-purple-900 dark:text-purple-100">
                                     {entrega.peso_kg ? `${entrega.peso_kg} kg` : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Monto Total (Sin Crédito)</p>
+                                <p className="font-medium text-sm sm:text-base text-green-700 dark:text-green-400">
+                                    Bs {montoTotalVentas.toFixed(2)}
                                 </p>
                             </div>
                         </div>

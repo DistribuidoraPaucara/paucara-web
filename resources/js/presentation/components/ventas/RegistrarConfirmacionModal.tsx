@@ -278,10 +278,10 @@ export default function RegistrarConfirmacionModal({
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
                 <div className="bg-white dark:bg-slate-950 rounded-lg shadow-xl w-full max-h-[95vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900/70 dark:to-blue-800/60 px-6 py-4 flex items-center justify-between">
+                    <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900/70 dark:to-blue-800/60 px-3 py-2 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <span className="text-2xl">📦</span>
                             <div>
@@ -289,7 +289,7 @@ export default function RegistrarConfirmacionModal({
                                     Registrar Confirmación de Entrega
                                 </h2>
                                 <p className="text-green-300 text-sm">
-                                    Venta #{ventaNumero} | Total: Bs {detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0).toFixed(2)}
+                                    Venta Folio #{ventaId} | | Total: Bs {detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0).toFixed(2)}
                                 </p>
                             </div>
                         </div>
@@ -305,11 +305,11 @@ export default function RegistrarConfirmacionModal({
                     {/* Content */}
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
                         {/* Tipo de Entrega */}
-                        <div className="border-b border-gray-200 dark:border-slate-800 pb-4">
-                            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-3">
+                        <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50">
                                 Tipo de Entrega
                             </label>
-                            <div className="flex gap-4">
+                            <div className="flex gap-2">
                                 <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border-2 transition"
                                     style={{borderColor: tipoEntrega === 'COMPLETA' ? '#3b82f6' : '#e5e7eb'}}>
                                     <input
@@ -343,8 +343,8 @@ export default function RegistrarConfirmacionModal({
 
                         {/* Tipo de Confirmación (para CON_NOVEDAD) */}
                         {tipoEntrega === 'CON_NOVEDAD' && (
-                            <div className="border-b border-gray-200 dark:border-slate-800 pb-4">
-                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-3">
+                            <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50">
                                     Tipo de Novedad
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -371,8 +371,8 @@ export default function RegistrarConfirmacionModal({
 
                         {/* Tabla de Productos Devueltos */}
                         {mostrarTablaProductos && (
-                            <div className="border-b border-gray-200 dark:border-slate-800 pb-4">
-                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-4">
+                            <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50">
                                     📦 Productos Devueltos
                                 </label>
 
@@ -539,7 +539,7 @@ export default function RegistrarConfirmacionModal({
 
                         {/* Mensaje si es CREDITO (no se registra pago) */}
                         {esCredito && (
-                            <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                            <div className="mb-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                                 <div className="flex gap-3">
                                     <span className="text-xl">💳</span>
                                     <div>
@@ -556,8 +556,8 @@ export default function RegistrarConfirmacionModal({
 
                         {/* Campos de Pago (si aplica) */}
                         {mostrarCamposPago && (
-                            <div className="border-b border-gray-200 dark:border-slate-800 pb-4">
-                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-4">
+                            <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                                <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-1">
                                     💰 Información de Pago
                                 </label>
                                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
@@ -644,8 +644,8 @@ export default function RegistrarConfirmacionModal({
                         {/* Observaciones (mostrar siempre o solo para RECHAZADO/CLIENTE_CERRADO) */}
                         {(mostrarSoloFotosYObservaciones || tipoEntrega === 'COMPLETA') && (
                             <>
-                                <div className="border-b border-gray-200 dark:border-slate-800 pb-4">
-                                    <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-3">
+                                <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                                    <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50">
                                         Observaciones Logística
                                     </label>
                                     <textarea
@@ -681,7 +681,7 @@ export default function RegistrarConfirmacionModal({
                         )}
 
                         {/* Buttons */}
-                        <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-slate-800">
+                        <div className="flex gap-3 justify-end">
                             <button
                                 type="button"
                                 onClick={onClose}

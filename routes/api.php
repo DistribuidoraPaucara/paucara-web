@@ -908,6 +908,11 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         // ✅ NUEVO: Reasignar una venta a otra entrega
         Route::put('/entregas/{id}/reasignar-venta', [EntregaController::class, 'reasignarVenta']);
 
+        // ✅ NUEVO: Quitar una venta de la entrega (desasignar)
+        Route::delete('/entregas/{id}/ventas/{venta_id}', [EntregaController::class, 'quitarVentaDeEntrega'])
+            ->middleware('permission:entregas.edit')
+            ->name('entregas.quitar-venta');
+
         // ✅ NUEVO: Rutas para gestión de cajas del chofer
         Route::prefix('cajas')->middleware('can.open.caja')->group(function () {
             Route::get('/estado', [ChoferCajaController::class, 'obtenerEstado']);
@@ -1021,6 +1026,11 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         Route::get('/{venta}/entregas', [\App\Http\Controllers\Api\VentaLogisticaController::class, 'entregas'])
             ->middleware('permission:ventas.show')
             ->name('ventas.entregas');
+
+        // ✅ NUEVO: Actualizar estado logístico de una venta
+        Route::patch('/{venta}/actualizar-estado-logistico', [\App\Http\Controllers\Api\VentaLogisticaController::class, 'actualizarEstadoLogistico'])
+            ->middleware('permission:ventas.edit')
+            ->name('ventas.actualizar-estado-logistico');
     });
 
     // ✅ LOGÍSTICA: Estadísticas y Admin
@@ -1035,6 +1045,11 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
             ->middleware('permission:admin.panel')
             ->name('logistica.resincronizar');
     });
+
+    // ✅ NUEVO: Estados Logísticos API
+    Route::get('/estados-logistica', [\App\Http\Controllers\Api\VentaLogisticaController::class, 'obtenerEstadosLogisticos'])
+        ->middleware('permission:entregas.index')
+        ->name('api.estados-logistica.index');
 
     // ✅ PHASE 3: ENTREGAS - Flujo de carga y tránsito
     Route::prefix('entregas')->group(function () {

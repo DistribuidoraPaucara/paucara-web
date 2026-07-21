@@ -33,4 +33,9 @@ class DireccionCliente extends Model
     {
         return $this->belongsTo(Localidad::class, 'localidad_id');
     }
+
+    public function ventas()
+    {
+        return $this->hasMany(Venta::class, 'direccion_cliente_id');
+    }
 }

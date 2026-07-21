@@ -241,4 +241,108 @@ class VentaLogisticaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * GET /api/estados-logistica
+     *
+     * Obtener estados logísticos con filtros
+     * Filtros soportados: categoria, activo
+     */
+    public function obtenerEstadosLogisticos(): JsonResponse
+    {
+        try {
+            $categoria = request()->query('categoria');
+            $activo = request()->query('activo', 'true');
+
+            $query = \App\Models\EstadoLogistica::query();
+
+            if ($categoria) {
+                $query->where('categoria', $categoria);
+            }
+
+            if ($activo !== null) {
+                $activoBool = filter_var($activo, FILTER_VALIDATE_BOOLEAN);
+                $query->where('activo', $activoBool);
+            }
+
+            $estados = $query->orderBy('categoria')->orderBy('orden')->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'data' => $estados,
+                    'total' => $estados->count(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error obteniendo estados logísticos', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error obteniendo estados logísticos',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PATCH /api/ventas/{venta}/actualizar-estado-logistico
+     *
+     * Actualizar el estado logístico de una venta
+     * Requiere: estado_logistico_id
+     */
+    public function actualizarEstadoLogistico(Venta $venta): JsonResponse
+    {
+        try {
+            $validado = request()->validate([
+                'estado_logistico_id' => ['required', 'exists:estados_logistica,id'],
+                'observaciones' => ['nullable', 'string', 'max:500'],
+            ]);
+
+            $estadoAnterior = $venta->estado_logistica;
+
+            $venta->update([
+                'estado_logistico_id' => $validado['estado_logistico_id'],
+            ]);
+
+            if ($validado['observaciones'] ?? false) {
+                $venta->update([
+                    'observaciones_logistica' => $validado['observaciones'],
+                ]);
+            }
+
+            Log::info('Estado logístico actualizado', [
+                'venta_id' => $venta->id,
+                'venta_numero' => $venta->numero,
+                'estado_anterior' => $estadoAnterior?->codigo,
+                'estado_nuevo' => $venta->estado_logistica?->codigo,
+                'usuario_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Estado logístico actualizado exitosamente',
+                'data' => [
+                    'venta_id' => $venta->id,
+                    'numero_venta' => $venta->numero,
+                    'estado_anterior' => $estadoAnterior,
+                    'estado_nuevo' => $venta->estado_logistica,
+                    'actualizado_en' => $venta->updated_at,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error actualizando estado logístico', [
+                'venta_id' => $venta->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar estado logístico',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
 }

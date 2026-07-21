@@ -8,7 +8,7 @@ import EstadoEntregaBadge from '@/presentation/components/logistica/EstadoEntreg
 import { ModalOptimizacionRutas } from '@/presentation/components/logistica/modal-optimizacion-rutas';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
+import { CardContent } from '@/presentation/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,6 +30,7 @@ interface Props {
     entregas: Pagination<Entrega>;
     vehiculos?: Array<{ id: number; placa: string; marca: string; modelo: string; capacidad_kg: number }>;
     choferes?: Array<{ id: number; nombre: string }>;
+    entregadores?: Array<{ id: number; nombre: string }>; // ✅ NUEVO: Entregadores
     localidades?: Array<{ id: number; nombre: string; codigo: string }>;
     estadosLogisticos?: Array<{ id: number; codigo: string; nombre: string; color?: string; icono?: string }>;
 }
@@ -45,9 +46,9 @@ interface Props {
  * ✅ Indicador visual de filtros activos
  * ✅ Botón reset rápido
  */
-export function EntregasTableView({ entregas, vehiculos = [], choferes = [], localidades = [], estadosLogisticos = [] }: Props) {
+export function EntregasTableView({ entregas, vehiculos = [], choferes = [], entregadores = [], localidades = [], estadosLogisticos = [] }: Props) {
     console.log('Renderizando EntregasTableView con entregas:', entregas);
-    const { handleVerEntrega, handlePaginaAnterior, handlePaginaSiguiente } = useEntregas();
+    const { handleVerEntrega, handlePaginaAnterior, handlePaginaSiguiente, handleIrAPagina } = useEntregas();
 
     // Usar hook de estados centralizados para obtener datos dinámicamente
     const { estados: estadosAPI, isLoading: estadosLoading } = useEstadosEntregas();
@@ -316,446 +317,510 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                 estadosAPI={estadosAPI}
                 vehiculos={vehiculos}
                 choferes={choferes}
+                entregadores={entregadores} // ✅ NUEVO: Pasar entregadores
                 localidades={localidades}
                 estadosLogisticos={estadosLogisticos}
                 isLoading={estadosLoading}
             />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Truck className="h-5 w-5" />
-                        Lista de Entregas
-                        <Badge variant="outline" className="ml-2">
-                            {entregasFiltradas.length} / {entregas.data.length}
-                        </Badge>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {entregas.data.length === 0 ? (
-                        <div className="py-8 text-center">
-                            <p className="text-muted-foreground">No se encontraron entregas.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <Table className="w-full">
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead></TableHead>
-                                        <TableHead>#ID</TableHead>
-                                        <TableHead>Logistica</TableHead>
-                                        <TableHead>Vehículo / Chofer</TableHead>
-                                        <TableHead>Ventas Asignadas</TableHead>
-                                        <TableHead>Peso</TableHead>
-                                        <TableHead>🕐 Creada</TableHead>
-                                        <TableHead>Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {entregasFiltradas.map((entrega) => {
-                                        const estaExpandida = entregasExpandidas.has(Number(entrega.id));
-                                        return (
-                                            <React.Fragment key={entrega.id}>
-                                                <TableRow
-                                                    className={
-                                                        entregasSeleccionadas.includes(Number(entrega.id)) ? 'bg-blue-50 dark:bg-blue-950' : ''
-                                                    }
+            <div>
+                <div className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Lista de Entregas
+                    <Badge variant="outline" className="ml-2">
+                        {entregasFiltradas.length} / {entregas.data.length}
+                    </Badge>
+                </div>
+                {entregas.data.length === 0 ? (
+                    <div className="py-2 text-center">
+                        <p className="text-muted-foreground">No se encontraron entregas.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        <Table className="w-full">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead></TableHead>
+                                    <TableHead className="text-center">Folio</TableHead>
+                                    <TableHead className="text-center">Estado</TableHead>
+                                    <TableHead className="text-center">Vehículo / Chofer</TableHead>
+                                    <TableHead className="text-center">Entregador</TableHead>
+                                    <TableHead className="text-center">Peso</TableHead>
+                                    <TableHead className="text-center">Folios Ventas</TableHead>
+                                    <TableHead className="text-center">Cant. Total</TableHead>
+                                    <TableHead className="text-center">Monto Total</TableHead>
+                                    <TableHead className="text-center">Creada</TableHead>
+                                    <TableHead className="text-center">-</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {entregasFiltradas.map((entrega) => {
+                                    const estaExpandida = entregasExpandidas.has(Number(entrega.id));
+                                    return (
+                                        <React.Fragment key={entrega.id}>
+                                            <TableRow
+                                                className={entregasSeleccionadas.includes(Number(entrega.id)) ? 'bg-blue-50 dark:bg-blue-950' : ''}
+                                            >
+                                                {/* ✅ NUEVO: Botón para expandir */}
+                                                <TableCell
+                                                    className="cursor-pointer text-left"
+                                                    onClick={() => toggleExpandirEntrega(Number(entrega.id))}
                                                 >
-                                                    {/* ✅ NUEVO: Botón para expandir */}
-                                                    <TableCell
-                                                        className="cursor-pointer text-left"
-                                                        onClick={() => toggleExpandirEntrega(Number(entrega.id))}
-                                                    >
-                                                        {entrega.ventas && entrega.ventas.length > 0 ? (
-                                                            estaExpandida ? (
-                                                                <ChevronUp className="h-4 w-4" />
-                                                            ) : (
-                                                                <ChevronDown className="h-4 w-4" />
-                                                            )
-                                                        ) : null}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        Folio: {entrega.id} <br /> {entrega.numero_entrega || entrega.numero_envio}
-                                                    </TableCell>
-                                                    <TableCell className="font-medium">
-                                                        <EstadoEntregaBadge estado={entrega.estado} tamaño="sm" conIcono={true} mostrarLabel={true} />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {entrega.vehiculo ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <Truck className="h-4 w-4 text-muted-foreground" />
-                                                                <div>
-                                                                    <div className="font-medium">{entrega.vehiculo.placa}</div>
-                                                                    <div className="text-sm text-muted-foreground">
-                                                                        {entrega.vehiculo.marca} {entrega.vehiculo.modelo}
-                                                                    </div>
+                                                    {entrega.ventas && entrega.ventas.length > 0 ? (
+                                                        estaExpandida ? (
+                                                            <ChevronUp className="h-4 w-4" />
+                                                        ) : (
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        )
+                                                    ) : null}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-center">
+                                                    #{entrega.id} {/* <br /> {entrega.numero_entrega || entrega.numero_envio} */}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-center">
+                                                    <EstadoEntregaBadge estado={entrega.estado} tamaño="sm" conIcono={true} mostrarLabel={true} />
+                                                </TableCell>
+                                                <TableCell className="text-xs">
+                                                    {entrega.vehiculo ? (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            <Truck className="h-4 w-4 text-muted-foreground" />
+                                                            <div>
+                                                                <div className="font-medium">{entrega.vehiculo.placa}</div>
+                                                                <div className="text-sm text-xs text-muted-foreground">
+                                                                    {entrega.vehiculo.marca} {entrega.vehiculo.modelo}
                                                                 </div>
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">-</span>
-                                                        )}
-                                                        {entrega.chofer ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                                {entrega.chofer.name || entrega.chofer.nombre}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">-</span>
-                                                        )}
-                                                    </TableCell>
-                                                    {/* ✅ NUEVO: Columna de Ventas Asignadas con Rango Compacto */}
-                                                    <TableCell>
-                                                        {entrega.ventas && entrega.ventas.length > 0 ? (
-                                                            <div className="space-y-1">
-                                                                <div>
-                                                                    {/* 📊 Mostrar rango de IDs de ventas como vista rápida */}
-                                                                    <Badge variant="secondary" className="text-xs">
-                                                                        Folio: {Math.min(...entrega.ventas.map((v) => v.id))}
-                                                                        {entrega.ventas.length > 1
-                                                                            ? ` a ${Math.max(...entrega.ventas.map((v) => v.id))} \n`
-                                                                            : ''} / {entrega.ventas.length} venta{entrega.ventas.length !== 1 ? 's' : ''}
-                                                                    </Badge>
-                                                                </div>
-                                                                <span className="text-sm text-muted-foreground">
-                                                                    Bs. {calcularTotalEntrega(entrega).toFixed(2)}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-sm text-muted-foreground">Sin ventas</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="text-md font-bold">
-                                                            {entrega.peso_kg ? (
-                                                                <span className="font-medium">{entrega.peso_kg} kg</span>
-                                                            ) : (
-                                                                <span className="text-muted-foreground">-</span>
-                                                            )}
-                                                        </span>
-                                                    </TableCell>
-                                                    {/* ✅ NUEVO: Columna Fecha de Creación */}
-                                                    <TableCell>
-                                                        <div className="text-xs">
-                                                            {entrega.created_at ? (
-                                                                <>
-                                                                    <div className="font-medium">
-                                                                        {new Date(entrega.created_at).toLocaleDateString('es-BO', {
-                                                                            day: 'numeric',
-                                                                            month: 'short',
-                                                                            year: 'numeric',
-                                                                        })}
-                                                                    </div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {new Date(entrega.created_at).toLocaleTimeString('es-BO', {
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit',
-                                                                        })}
-                                                                    </div>
-                                                                </>
-                                                            ) : (
-                                                                <span className="text-muted-foreground">-</span>
-                                                            )}
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button size="sm" variant="outline" onClick={() => handleVerEntrega(entrega.id)}>
-                                                            <Eye className="mr-1 h-4 w-4" />
-                                                            Ver
-                                                        </Button>
-                                                        {/* ✅ NUEVO: Menú desplegable con acciones */}
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acciones">
-                                                                    <MoreVertical className="h-4 w-4" />
-                                                                    <span className="sr-only">Abrir menú</span>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                    {entrega.chofer ? (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            <User className="h-4 w-4 text-muted-foreground" />
+                                                            {entrega.chofer.name || entrega.chofer.nombre}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-center">
+                                                    {entrega.entregador ? (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            {/* <User className="h-4 w-4 text-muted-foreground" /> */}
+                                                            {entrega.entregador.name || entrega.entregador.nombre}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-center">
+                                                    <span className="text-xs">
+                                                        {entrega.peso_kg ? (
+                                                            <span className="text-xs">{entrega.peso_kg} kg</span>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </span>
+                                                </TableCell>
+                                                {/* ✅ NUEVO: Columna de Ventas Asignadas con Rango Compacto */}
+                                                <TableCell className="text-center text-xs">
+                                                    {entrega.ventas && entrega.ventas.length > 0 ? (
+                                                        <div>
+                                                            {/* 📊 Mostrar rango de IDs de ventas como vista rápida */}
+                                                            <Badge variant="secondary" className="text-xs">
+                                                                {Math.min(...entrega.ventas.map((v) => v.id))}
+                                                                {entrega.ventas.length > 1
+                                                                    ? ` a ${Math.max(...entrega.ventas.map((v) => v.id))} \n`
+                                                                    : '\n'}{' '}
+                                                            </Badge>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">Sin ventas</span>
+                                                    )}
+                                                </TableCell>
 
-                                                            <DropdownMenuContent align="end">
-                                                                {/* Ver entrega */}
-                                                                <DropdownMenuItem onClick={() => handleVerEntrega(entrega.id)}>
-                                                                    <Eye className="mr-2 h-4 w-4" />
-                                                                    Ver Entrega
-                                                                </DropdownMenuItem>
+                                                <TableCell className="text-center text-xs">
+                                                    {entrega.ventas.length} venta{entrega.ventas.length !== 1 ? 's' : ''}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Bs. {calcularTotalEntrega(entrega).toFixed(2)}
+                                                    </span>
+                                                </TableCell>
+                                                {/* ✅ NUEVO: Columna Fecha de Creación */}
+                                                <TableCell className="text-center">
+                                                    <div className="text-xs">
+                                                        {entrega.created_at ? (
+                                                            <>
+                                                                <div className="text-xs">
+                                                                    {new Date(entrega.created_at).toLocaleDateString('es-BO', {
+                                                                        day: 'numeric',
+                                                                        month: 'short',
+                                                                        year: 'numeric',
+                                                                    })}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {new Date(entrega.created_at).toLocaleTimeString('es-BO', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                    })}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-xs"
+                                                        onClick={() => handleVerEntrega(entrega.id)}
+                                                    >
+                                                        <Eye className="mr-1 h-4 w-4" />
+                                                        Ver
+                                                    </Button>
+                                                    {/* ✅ NUEVO: Menú desplegable con acciones */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acciones">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                                <span className="sr-only">Abrir menú</span>
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
 
-                                                                {/* Ver ubicaciones */}
-                                                                {entrega.ventas && entrega.ventas.length > 0 && (
-                                                                    <>
-                                                                        <DropdownMenuItem onClick={() => handleAbrirUbicaciones(entrega)}>
-                                                                            <MapPin className="mr-2 h-4 w-4" />
-                                                                            Ver Ubicaciones ({entrega.ventas.length})
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuSeparator />
-                                                                    </>
-                                                                )}
+                                                        <DropdownMenuContent align="end">
+                                                            {/* Ver entrega */}
+                                                            <DropdownMenuItem onClick={() => handleVerEntrega(entrega.id)}>
+                                                                <Eye className="mr-2 h-4 w-4" />
+                                                                Ver Entrega
+                                                            </DropdownMenuItem>
 
-                                                                {/* Editar */}
-                                                                <Link href={`/logistica/entregas/${entrega.id}/edit`}>
-                                                                    <DropdownMenuItem>
-                                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                                        Editar
+                                                            {/* Ver ubicaciones */}
+                                                            {entrega.ventas && entrega.ventas.length > 0 && (
+                                                                <>
+                                                                    <DropdownMenuItem onClick={() => handleAbrirUbicaciones(entrega)}>
+                                                                        <MapPin className="mr-2 h-4 w-4" />
+                                                                        Ver Ubicaciones ({entrega.ventas.length})
                                                                     </DropdownMenuItem>
-                                                                </Link>
+                                                                    <DropdownMenuSeparator />
+                                                                </>
+                                                            )}
 
-                                                                {/* Imprimir */}
-                                                                <DropdownMenuItem onClick={() => handleAbrirOutputSelection(entrega.id)}>
-                                                                    <FileText className="mr-2 h-4 w-4" />
-                                                                    Imprimir
+                                                            {/* Editar */}
+                                                            <Link href={`/logistica/entregas/${entrega.id}/edit`}>
+                                                                <DropdownMenuItem>
+                                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                                    Editar
                                                                 </DropdownMenuItem>
+                                                            </Link>
 
-                                                                {/* Cancelar - solo si estado permite */}
-                                                                {['PROGRAMADO', 'PENDIENTE', 'EN_TRANSITO', 'PREPARACION_CARGA'].includes(
-                                                                    entrega.estado,
-                                                                ) && (
-                                                                    <>
-                                                                        <DropdownMenuSeparator />
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => handleAbrirCancelarModal(entrega)}
-                                                                            className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/30 dark:focus:text-red-400"
-                                                                        >
-                                                                            <XCircle className="mr-2 h-4 w-4" />
-                                                                            Cancelar
-                                                                        </DropdownMenuItem>
-                                                                    </>
-                                                                )}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                </TableRow>
-                                                {/* ✅ NUEVO: Fila expandible con detalles de ventas */}
-                                                {estaExpandida && entrega.ventas && entrega.ventas.length > 0 && (
-                                                    <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                                        <TableCell colSpan={8} className="p-4">
-                                                            <div className="space-y-3">
-                                                                <h4 className="mb-3 text-sm font-semibold">
-                                                                    📦 Ventas en esta entrega ({entrega.ventas.length}):
-                                                                </h4>
+                                                            {/* Imprimir */}
+                                                            <DropdownMenuItem onClick={() => handleAbrirOutputSelection(entrega.id)}>
+                                                                <FileText className="mr-2 h-4 w-4" />
+                                                                Imprimir
+                                                            </DropdownMenuItem>
 
-                                                                {/* ✅ TABLA NESTED DE VENTAS */}
-                                                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
-                                                                    <table className="w-full text-sm">
-                                                                        {/* Encabezados */}
-                                                                        <thead>
-                                                                            <tr className="border-b border-gray-200 bg-gray-100 dark:border-slate-700 dark:bg-slate-800">
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Folio
-                                                                                </th>
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Cliente
-                                                                                </th>
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Tipo de Pago
-                                                                                </th>
-                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Monto
-                                                                                </th>
-                                                                                {/* <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                            {/* Cancelar - solo si estado permite */}
+                                                            {['PROGRAMADO', 'PENDIENTE', 'EN_TRANSITO', 'PREPARACION_CARGA'].includes(
+                                                                entrega.estado,
+                                                            ) && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleAbrirCancelarModal(entrega)}
+                                                                        className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/30 dark:focus:text-red-400"
+                                                                    >
+                                                                        <XCircle className="mr-2 h-4 w-4" />
+                                                                        Cancelar
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                            {/* ✅ NUEVO: Fila expandible con detalles de ventas */}
+                                            {estaExpandida && entrega.ventas && entrega.ventas.length > 0 && (
+                                                <TableRow className="bg-slate-50 dark:bg-slate-900">
+                                                    <TableCell colSpan={11} className="p-4">
+                                                        <div className="space-y-3">
+                                                            <h4 className="mb-3 text-sm font-semibold">
+                                                                📦 Ventas en esta entrega ({entrega.ventas.length}):
+                                                            </h4>
+
+                                                            {/* ✅ TABLA NESTED DE VENTAS */}
+                                                            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
+                                                                <table className="w-full text-sm">
+                                                                    {/* Encabezados */}
+                                                                    <thead>
+                                                                        <tr className="border-b border-gray-200 bg-gray-100 dark:border-slate-700 dark:bg-slate-800">
+                                                                            <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Folio
+                                                                            </th>
+                                                                            <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Cliente
+                                                                            </th>
+                                                                            <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Tipo de Pago
+                                                                            </th>
+                                                                            <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Monto
+                                                                            </th>
+                                                                            {/* <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                                                                     Tipo Entrega
                                                                                 </th> */}
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Confirmación
-                                                                                </th>
-                                                                                <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Estado Logístico
-                                                                                </th>
-                                                                                
-                                                                                <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
-                                                                                    Peso
-                                                                                </th>
-                                                                                
-                                                                            </tr>
-                                                                        </thead>
+                                                                            <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Confirmación
+                                                                            </th>
+                                                                            <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Estado Logístico
+                                                                            </th>
 
-                                                                        {/* Cuerpo de la tabla */}
-                                                                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                                                                            {entrega.ventas.map((venta) => {
-                                                                                // ✅ DEBUG: Mostrar datos que llegan del backend
-                                                                                console.log('🔍 Venta completa:', {
-                                                                                    venta_id: venta.id,
-                                                                                    venta_numero: venta.numero,
-                                                                                    confirmacion_entrega: venta.confirmacion_entrega,
-                                                                                    tipo_entrega: venta.confirmacion_entrega?.tipo_entrega,
-                                                                                    tipo_confirmacion: venta.confirmacion_entrega?.tipo_confirmacion,
-                                                                                });
+                                                                            <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">
+                                                                                Peso
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
 
-                                                                                const montoTotal =
-                                                                                    typeof venta.total === 'string'
-                                                                                        ? parseFloat(venta.total)
-                                                                                        : venta.total || 0;
+                                                                    {/* Cuerpo de la tabla */}
+                                                                    <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                                                                        {entrega.ventas.map((venta) => {
+                                                                            // ✅ DEBUG: Mostrar datos que llegan del backend
+                                                                            console.log('🔍 Venta completa:', {
+                                                                                venta_id: venta.id,
+                                                                                venta_numero: venta.numero,
+                                                                                confirmacion_entrega: venta.confirmacion_entrega,
+                                                                                tipo_entrega: venta.confirmacion_entrega?.tipo_entrega,
+                                                                                tipo_confirmacion: venta.confirmacion_entrega?.tipo_confirmacion,
+                                                                            });
 
-                                                                                return (
-                                                                                    <tr
-                                                                                        key={venta.id}
-                                                                                        className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                                                    >
-                                                                                        {/* Folio */}
-                                                                                        <td className="px-3 py-3">
-                                                                                            <div className="font-medium text-gray-900 dark:text-gray-100">
-                                                                                                #{venta.id}
+                                                                            const montoTotal =
+                                                                                typeof venta.total === 'string'
+                                                                                    ? parseFloat(venta.total)
+                                                                                    : venta.total || 0;
+
+                                                                            return (
+                                                                                <tr
+                                                                                    key={venta.id}
+                                                                                    className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                                                >
+                                                                                    {/* Folio */}
+                                                                                    <td className="px-3 py-3">
+                                                                                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                                                                                            #{venta.id}
+                                                                                        </div>
+                                                                                        {venta.numero && (
+                                                                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                                {venta.numero}
                                                                                             </div>
-                                                                                            {venta.numero && (
-                                                                                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                                                                    {venta.numero}
-                                                                                                </div>
-                                                                                            )}
-                                                                                        </td>
+                                                                                        )}
+                                                                                    </td>
 
-                                                                                        {/* Cliente */}
-                                                                                        <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
-                                                                                            {venta.cliente?.nombre || '-'}
-                                                                                        </td>
+                                                                                    {/* Cliente */}
+                                                                                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                                                                                        {venta.cliente?.nombre || '-'}
+                                                                                    </td>
 
-                                                                                        {/* Tipo de Pago */}
-                                                                                        <td className="px-3 py-3">
-                                                                                            {venta.tipo_pago ? (
-                                                                                                <Badge
-                                                                                                    className={
-                                                                                                        venta.tipo_pago?.codigo?.includes('CREDITO')
-                                                                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
-                                                                                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                                                                                                    }
-                                                                                                >
-                                                                                                    💳 {venta.tipo_pago.nombre}
-                                                                                                </Badge>
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 dark:text-gray-600">
-                                                                                                    -
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </td>
-                                                                                        {/* Monto */}
-                                                                                        <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                                                                                            Bs. {montoTotal.toFixed(2)}
-                                                                                        </td>
+                                                                                    {/* Tipo de Pago */}
+                                                                                    <td className="px-3 py-3">
+                                                                                        {venta.tipo_pago ? (
+                                                                                            <Badge
+                                                                                                className={
+                                                                                                    venta.tipo_pago?.codigo?.includes('CREDITO')
+                                                                                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
+                                                                                                        : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                                                                }
+                                                                                            >
+                                                                                                💳 {venta.tipo_pago.nombre}
+                                                                                            </Badge>
+                                                                                        ) : (
+                                                                                            <span className="text-gray-400 dark:text-gray-600">
+                                                                                                -
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </td>
+                                                                                    {/* Monto */}
+                                                                                    <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                                                                        Bs. {montoTotal.toFixed(2)}
+                                                                                    </td>
 
-                                                                                        {/* Tipo Entrega */}
-                                                                                        {/* <td className="px-3 py-3">
-                                                                                            {venta.confirmacion_entrega?.tipo_entrega ? (
-                                                                                                <Badge
-                                                                                                    className={
-                                                                                                        venta.confirmacion_entrega.tipo_entrega ===
-                                                                                                        'COMPLETA'
-                                                                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                                                                                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
-                                                                                                    }
-                                                                                                >
-                                                                                                    {venta.confirmacion_entrega.tipo_entrega ===
+                                                                                    {/* Confirmación */}
+                                                                                    <td className="px-3 py-3">
+                                                                                        {venta.confirmacion_entrega?.tipo_confirmacion ? (
+                                                                                            <Badge
+                                                                                                className={
+                                                                                                    venta.confirmacion_entrega.tipo_confirmacion ===
                                                                                                     'COMPLETA'
-                                                                                                        ? '✅'
-                                                                                                        : '⚠️'}{' '}
-                                                                                                    {venta.confirmacion_entrega.tipo_entrega}
-                                                                                                </Badge>
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 dark:text-gray-600">
-                                                                                                    -
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </td> */}
+                                                                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                                                                                                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                                                                                                }
+                                                                                            >
+                                                                                                {venta.confirmacion_entrega.tipo_confirmacion ===
+                                                                                                'COMPLETA'
+                                                                                                    ? '✓'
+                                                                                                    : '✗'}{' '}
+                                                                                                {venta.confirmacion_entrega.tipo_confirmacion}
+                                                                                            </Badge>
+                                                                                        ) : (
+                                                                                            <span className="text-gray-400 dark:text-gray-600">
+                                                                                                -
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </td>
 
-                                                                                        {/* Confirmación */}
-                                                                                        <td className="px-3 py-3">
-                                                                                            {venta.confirmacion_entrega?.tipo_confirmacion ? (
-                                                                                                <Badge
-                                                                                                    className={
-                                                                                                        venta.confirmacion_entrega
-                                                                                                            .tipo_confirmacion === 'COMPLETA'
-                                                                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
-                                                                                                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                                                                                                    }
-                                                                                                >
-                                                                                                    {venta.confirmacion_entrega.tipo_confirmacion ===
-                                                                                                    'COMPLETA'
-                                                                                                        ? '✓'
-                                                                                                        : '✗'}{' '}
-                                                                                                    {venta.confirmacion_entrega.tipo_confirmacion}
-                                                                                                </Badge>
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 dark:text-gray-600">
-                                                                                                    -
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </td>
+                                                                                    {/* Estado Logístico */}
+                                                                                    <td className="px-3 py-3">
+                                                                                        {venta.estado_logistica ? (
+                                                                                            <Badge
+                                                                                                style={{
+                                                                                                    backgroundColor: venta.estado_logistica.color
+                                                                                                        ? `${venta.estado_logistica.color}20`
+                                                                                                        : '#f3f4f6',
+                                                                                                    color: venta.estado_logistica.color
+                                                                                                        ? venta.estado_logistica.color
+                                                                                                        : '#6b7280',
+                                                                                                    borderColor: venta.estado_logistica.color,
+                                                                                                    borderWidth: '1px',
+                                                                                                }}
+                                                                                                className="font-medium"
+                                                                                            >
+                                                                                                {venta.estado_logistica.icono && (
+                                                                                                    <span className="mr-1">
+                                                                                                        {venta.estado_logistica.icono}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                                {venta.estado_logistica.nombre}
+                                                                                            </Badge>
+                                                                                        ) : (
+                                                                                            <span className="text-gray-400 dark:text-gray-600">
+                                                                                                -
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </td>
 
-                                                                                        {/* Estado Logístico */}
-                                                                                        <td className="px-3 py-3">
-                                                                                            {venta.estado_logistica ? (
-                                                                                                <Badge
-                                                                                                    style={{
-                                                                                                        backgroundColor: venta.estado_logistica.color
-                                                                                                            ? `${venta.estado_logistica.color}20`
-                                                                                                            : '#f3f4f6',
-                                                                                                        color: venta.estado_logistica.color
-                                                                                                            ? venta.estado_logistica.color
-                                                                                                            : '#6b7280',
-                                                                                                        borderColor: venta.estado_logistica.color,
-                                                                                                        borderWidth: '1px',
-                                                                                                    }}
-                                                                                                    className="font-medium"
-                                                                                                >
-                                                                                                    {venta.estado_logistica.icono && (
-                                                                                                        <span className="mr-1">
-                                                                                                            {venta.estado_logistica.icono}
-                                                                                                        </span>
-                                                                                                    )}
-                                                                                                    {venta.estado_logistica.nombre}
-                                                                                                </Badge>
-                                                                                            ) : (
-                                                                                                <span className="text-gray-400 dark:text-gray-600">
-                                                                                                    -
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </td>
-
-                                                                                        
-
-                                                                                        {/* Peso */}
-                                                                                        <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
-                                                                                            {venta.peso_total_estimado
-                                                                                                ? `${venta.peso_total_estimado} kg`
-                                                                                                : '-'}
-                                                                                        </td>
-
-                                                                                        
-                                                                                    </tr>
-                                                                                );
-                                                                            })}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
+                                                                                    {/* Peso */}
+                                                                                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
+                                                                                        {venta.peso_total_estimado
+                                                                                            ? `${venta.peso_total_estimado} kg`
+                                                                                            : '-'}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            );
+                                                                        })}
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
 
-                            {/* Paginación simple */}
-                            {entregas.last_page > 1 && (
-                                <div className="flex items-center justify-between">
-                                    <div className="text-sm text-muted-foreground">
-                                        Página {entregas.current_page} de {entregas.last_page}({entregas.total} total)
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {entregas.current_page > 1 && (
-                                            <Button variant="outline" size="sm" onClick={() => handlePaginaAnterior(entregas.current_page)}>
-                                                Anterior
-                                            </Button>
-                                        )}
-                                        {entregas.current_page < entregas.last_page && (
-                                            <Button variant="outline" size="sm" onClick={() => handlePaginaSiguiente(entregas.current_page)}>
-                                                Siguiente
-                                            </Button>
-                                        )}
-                                    </div>
+                        {/* ✅ MEJORADO: Paginación completa con selector de página */}
+                        {entregas.last_page > 1 && (
+                            <div className="flex flex-col gap-4 items-center justify-between pt-4 border-t">
+                                <div className="text-sm text-muted-foreground">
+                                    <span className="font-semibold">📊 {entregas.from}-{entregas.to}</span> de{' '}
+                                    <span className="font-semibold">{entregas.total}</span> entregas totales
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+
+                                {/* Botones de navegación + Selector de página */}
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                    {/* Botón Primera Página */}
+                                    <Button
+                                        variant={entregas.current_page === 1 ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => handleIrAPagina(1)}
+                                        disabled={entregas.current_page === 1}
+                                        className="text-xs"
+                                    >
+                                        ⏮️ Primera
+                                    </Button>
+
+                                    {/* Botón Anterior */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePaginaAnterior(entregas.current_page)}
+                                        disabled={entregas.current_page <= 1}
+                                    >
+                                        ◀ Anterior
+                                    </Button>
+
+                                    {/* Botones de páginas individuales */}
+                                    <div className="flex gap-1">
+                                        {Array.from({ length: entregas.last_page }, (_, i) => {
+                                            const pageNum = i + 1;
+                                            // Mostrar hasta 5 páginas alrededor de la actual
+                                            const startPage = Math.max(1, entregas.current_page - 2);
+                                            const endPage = Math.min(entregas.last_page, entregas.current_page + 2);
+
+                                            if (pageNum < startPage && pageNum !== 1) return null;
+                                            if (pageNum > endPage && pageNum !== entregas.last_page) return null;
+
+                                            return (
+                                                <React.Fragment key={pageNum}>
+                                                    {pageNum === startPage && startPage > 1 && (
+                                                        <span className="text-muted-foreground text-xs px-1">...</span>
+                                                    )}
+                                                    <Button
+                                                        variant={entregas.current_page === pageNum ? 'default' : 'outline'}
+                                                        size="sm"
+                                                        onClick={() => handleIrAPagina(pageNum)}
+                                                        className={`w-8 h-8 p-0 text-xs ${
+                                                            entregas.current_page === pageNum
+                                                                ? 'bg-blue-600 text-white'
+                                                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                        }`}
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                    {pageNum === endPage && endPage < entregas.last_page && (
+                                                        <span className="text-muted-foreground text-xs px-1">...</span>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Botón Siguiente */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePaginaSiguiente(entregas.current_page)}
+                                        disabled={entregas.current_page >= entregas.last_page}
+                                    >
+                                        Siguiente ▶
+                                    </Button>
+
+                                    {/* Botón Última Página */}
+                                    <Button
+                                        variant={entregas.current_page === entregas.last_page ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => handleIrAPagina(entregas.last_page)}
+                                        disabled={entregas.current_page === entregas.last_page}
+                                        className="text-xs"
+                                    >
+                                        Última ⏭️
+                                    </Button>
+                                </div>
+
+                                {/* Información de página actual */}
+                                <div className="text-xs text-muted-foreground">
+                                    Página <span className="font-bold">{entregas.current_page}</span> de{' '}
+                                    <span className="font-bold">{entregas.last_page}</span> ({entregas.per_page} por página)
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Modal de cancelación de entrega */}
             <CancelarEntregaModal
@@ -811,12 +876,14 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], loc
                             longitud: venta.direccion_cliente?.longitud,
                             estado: entregaSeleccionadaParaUbicaciones.estado_entrega?.nombre,
                             tipo_entrega: venta.confirmacion_entrega?.tipo_entrega || 'COMPLETA',
-                            confirmacion_entrega: venta.confirmacion_entrega ? {
-                                tipo_confirmacion: venta.confirmacion_entrega.tipo_confirmacion,
-                                total_dinero_recibido: venta.confirmacion_entrega.total_dinero_recibido,
-                                monto_pendiente: venta.confirmacion_entrega.monto_pendiente,
-                                confirmado_en: venta.confirmacion_entrega.confirmado_en,
-                            } : undefined,
+                            confirmacion_entrega: venta.confirmacion_entrega
+                                ? {
+                                      tipo_confirmacion: venta.confirmacion_entrega.tipo_confirmacion,
+                                      total_dinero_recibido: venta.confirmacion_entrega.total_dinero_recibido,
+                                      monto_pendiente: venta.confirmacion_entrega.monto_pendiente,
+                                      confirmado_en: venta.confirmacion_entrega.confirmado_en,
+                                  }
+                                : undefined,
                         })) || []
                     }
                     titulo={`Ubicaciones de Entrega ${entregaSeleccionadaParaUbicaciones.numero_entrega || ''}`}
