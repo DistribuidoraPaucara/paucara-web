@@ -6,9 +6,9 @@
 <div class="ticket" style="font-size: 12px; font-family: Arial, sans-serif;">
 
     <div class="documento-titulo" style="margin-bottom: 3px;">ENTREGA N° {{ $entrega->id }}</div>
-    <div class="documento-numero" style="font-weight: bold;">{{ $entrega->numero_entrega }}</div>
+    <!-- <div class="documento-numero" style="font-weight: bold;">{{ $entrega->numero_entrega }}</div> -->
     <div class="center">
-        <strong>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} |{{ $entrega->estado }}</strong>
+        <strong>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} | {{ $entrega->estado }}</strong>
     </div>
 
     <div class="separador"></div>
@@ -50,9 +50,9 @@
 
     {{-- ✅ NUEVO: LOCALIDADES --}}
     @if($localidades && $localidades->count() > 0)
-    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; background-color: #f0f8ff;">
+    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; background-color: #f0f8ff; font-size: 10px;">
         <p style="margin: 2px 0; font-weight: bold;">Localidades:</p>
-        <div style="margin: 2px 0;">
+        <div style="margin: 0 px;">
             @foreach($localidades as $localidad)
             <p style="margin: 1px 0; padding-left: 5px;">• {{ $localidad?->nombre }} @if($localidad?->codigo)({{ $localidad?->codigo }})@endif</p>
             @endforeach
@@ -94,7 +94,7 @@
 
     <p style="font-weight: bold; text-align: center; margin: 3px 0; text-decoration: underline;">LISTA GENÉRICA</p>
 
-    <table style="width: 100%; margin-bottom: 3px; border-collapse: collapse;">
+    <table style="width: 100%; margin-bottom: 3px; border-collapse: collapse; font-size: 13px;">
         <thead>
             <tr style="border-bottom: 1px solid #000;">
                 <th style="text-align: left; padding: 1px 0;">Producto</th>
@@ -105,7 +105,7 @@
         <tbody>
             @forelse($productosGenerico as $producto)
             <tr style="border-bottom: 1px dotted #999;">
-                <td style="padding: 1px 0;">@if($producto['es_combo']) @endif{{ substr($producto['producto_nombre'], 0, 22) }}</td>
+                <td style="padding: 1px 0;">{{ substr($producto['producto_nombre'], 0, 22) }}</td>
                 <td style="padding: 1px 0; text-align: center; width: 15%;"> {{ number_format($producto['cantidad_total'], 1) }}</td>
                 <td style="padding: 1px 0; text-align: right; width: 20%; font-size: 12px; font-weight: bold;">{{ number_format($producto['subtotal_total'], 2) }}</td>
             </tr>
@@ -128,7 +128,7 @@
     </table>
 
     <div style="border-top: 1px dashed #000; padding: 2px 0; margin-bottom: 5px;">
-        <div style="text-align: right;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
+        <div style="text-align: right;"><strong>Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</strong> </div>
         <div>{{ $estadisticas['total_items_unicos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
     </div>
 
@@ -142,8 +142,8 @@
             <tr style="border-bottom: 2px solid #000;">
                 <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 8%;">Folio</th>
                 <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 18%;">Cliente</th>
-                <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 14%;">Confirmación</th>
-                <th style="text-align: center; padding: 2px; font-size: 10px; font-weight: bold; width: 12%;">Tipo Pago</th>
+                <th style="text-align: center; padding: 2px; font-size: 10px; font-weight: bold; width: 12%;">T. Pago</th>
+                <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 14%;">Estado</th>
                 <th style="text-align: right; padding: 2px; font-size: 10px; font-weight: bold; width: 12%;">Monto</th>
             </tr>
         </thead>
@@ -161,9 +161,9 @@
             @endphp
             <tr style="border-bottom: 1px dotted #999; @if($confirmacionVenta && $confirmacionVenta['tuvo_problema']) background-color: #fff3e0; @endif">
                 <td style="padding: 2px; font-size: 10px; width: 8%;">#{{ $venta->id }}</td>
-                <td style="padding: 2px; font-size: 10px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 15) }}</td>
-                <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($confirmacionVenta ? ($confirmacionVenta['tipo_confirmacion'] ?? 'N/A') : 'N/A', 0, 12) }}</td>
-                <td style="padding: 2px; font-size: 10px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 8) }}</td>
+                <td style="padding: 2px; font-size: 10px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 12) }}</td>
+                <td style="padding: 2px; font-size: 10px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 3) }}</td>
+                <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($confirmacionVenta ? ($confirmacionVenta['estado_logistico'] ?? 'N/A') : 'N/A', 0, 12) }}</td>
                 <td style="padding: 2px; font-size: 10px; text-align: right; width: 12%; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
             </tr>
             @endforeach
@@ -227,14 +227,14 @@
     @endif
 
     {{-- Ventas sin pago --}}
-    @if(count($resumen_pagos['sin_registrar']) > 0)
+    <!-- @if(count($resumen_pagos['sin_registrar']) > 0)
     <div style="margin: 3px 0; padding: 2px; border: 2px solid #111110; background-color: #fff3e0;">
         <p style="font-weight: bold; margin: 2px 0; color: #0C0C0C;">SIN PAGO ({{ count($resumen_pagos['sin_registrar']) }})</p>
         @foreach($resumen_pagos['sin_registrar'] as $venta)
         <p style="margin: 1px 0; color: #171616;">{{ $venta['venta_numero'] }}: {{ number_format($venta['monto'], 2) }}</p>
         @endforeach
     </div>
-    @endif
+    @endif -->
     @endif
 
 
@@ -242,7 +242,7 @@
     <div class="separador"></div>
 
     {{-- ✅ FIRMAS DEL CLIENTE --}}
-    <div style="margin-top: 130px !important;">
+    <div style="margin-top: 80px !important;">
         <div style="margin-bottom: 35px !important; padding-bottom: 35px !important;">
             <div style="height: 0; border-bottom: 1px solid #000; margin-bottom: 5px !important;"></div>
             <p style="text-align: center; margin: 2px 0 !important;">Firma / Sello</p>

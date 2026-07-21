@@ -67,6 +67,7 @@ class EntregaPdfController extends Controller
             $entrega->load([
                 'ventas.cliente.localidad',  // ✅ NUEVO: Cargar localidades de clientes
                 'ventas.detalles.producto.unidad',
+                'ventas.estadoLogistico',  // ✅ NUEVO 2026-07-20: Cargar estado logístico de ventas
                 'chofer',
                 'vehiculo',
                 'localidad',
@@ -260,6 +261,7 @@ class EntregaPdfController extends Controller
             $entrega = Entrega::with([
                 'ventas.cliente.localidad',  // ✅ NUEVO: Cargar localidades de clientes
                 'ventas.detalles.producto.unidad',
+                'ventas.estadoLogistico',  // ✅ NUEVO 2026-07-20: Cargar estado logístico de ventas
                 'chofer',
                 'vehiculo',
                 'localidad',
@@ -728,8 +730,8 @@ class EntregaPdfController extends Controller
             // ✅ REFACTORIZADO 2026-02-16: Usar MISMA lógica que endpoint API para evitar discrepancias
             // Cargar ventas con relaciones necesarias
             $ventasCargas = $entrega->load(['ventas' => function ($q) {
-                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id')
-                  ->with('tipoPago:id,codigo,nombre', 'cliente:id,nombre');
+                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id', 'estado_logistico_id')  // ✅ NUEVO 2026-07-20: Incluir FK del estado logístico
+                  ->with('tipoPago:id,codigo,nombre', 'cliente:id,nombre', 'estadoLogistico:id,nombre');  // ✅ NUEVO 2026-07-20: Cargar relación estadoLogistico
             }])->ventas;
 
             // Filtrar SOLO ventas NO a crédito (CRÍTICO: excluir CREDITO del resumen)
@@ -875,10 +877,15 @@ class EntregaPdfController extends Controller
                 $tipoPago = $venta?->tipoPago?->codigo ?? $venta?->estado_pago ?? 'S/N';
                 $montoTotal = (float) ($venta?->total ?? 0);
 
+                // ✅ NUEVO 2026-07-20: Obtener estado logístico de la venta
+                $ventaData = $ventasCargas->firstWhere('id', $ventaId);
+                $estadoLogisticoNombre = $ventaData?->estadoLogistico?->nombre ?? 'N/A';
+
                 $resumen['confirmaciones'][] = [
                     'venta_id' => $ultimaConfirmacion->venta_id,
                     'cliente_nombre' => $clienteNombre,
                     'tipo_confirmacion' => $ultimaConfirmacion->tipo_confirmacion ?? 'N/A',
+                    'estado_logistico' => $estadoLogisticoNombre,  // ✅ NUEVO: Estado logístico en lugar de tipo_confirmacion
                     'tipo_pago' => $tipoPago,
                     'monto_total' => $montoTotal,
                     'tipo_entrega' => $ultimaConfirmacion->tipo_entrega ?? 'COMPLETA',
