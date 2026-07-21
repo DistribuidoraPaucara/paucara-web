@@ -1,17 +1,17 @@
 @extends('impresion.layouts.base-ticket-simple')
 
-@section('titulo', 'Entrega #' . $entrega->numero_entrega)
+@section('titulo', 'Entrega #' . $entrega->id)
 
 @section('contenido')
-<div style="width: 100%;">
+<div class="ticket" style="font-size: 12px; font-family: Arial, sans-serif;">
 
     <div class="documento-titulo" style="margin-bottom: 3px;">ENTREGA N° {{ $entrega->id }}</div>
     <div class="documento-numero" style="font-weight: bold;">{{ $entrega->numero_entrega }}</div>
-    <div class="center" style="margin-bottom: 5px;">
-        {{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} | {{ $entrega->estado }}
+    <div class="center">
+        <strong>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} |{{ $entrega->estado }}</strong>
     </div>
 
-    <div class="separador mt-2 mb-2"></div>
+    <div class="separador"></div>
 
     {{-- LISTA GENÉRICA AGRUPADA --}}
     @php
@@ -21,42 +21,32 @@
     @endphp
 
     {{-- INFORMACIÓN DEL CHOFER Y VEHÍCULO --}}
-    <p style="font-weight: bold; text-align: center; margin: 3px 0;">CHOFER Y VEHÍCULO</p>
-
-    @if($entrega->chofer)
-    <div style="margin: 2px 0;">
-        <p style="margin: 2px 0;"><strong>Chofer:</strong> {{ $entrega->chofer?->name ?? $entrega->chofer?->nombre ?? 'S/N' }}</p>
-        @if($entrega->chofer?->phone ?? false)
-        <p style="margin: 2px 0;"><strong>Teléfono:</strong> {{ $entrega->chofer?->phone }}</p>
-        @endif
-    </div>
-    @else
-    <p style="margin: 2px 0; color: #999;">Sin chofer asignado</p>
-    @endif
-
-    @if($entrega->vehiculo)
-    <div style="margin: 2px 0;">
-        <p style="margin: 2px 0;"><strong>Placa:</strong> {{ $entrega->vehiculo?->placa }}</p>
-        @if($entrega->vehiculo?->marca)
-        <p style="margin: 2px 0;"><strong>Marca:</strong> {{ $entrega->vehiculo?->marca }}</p>
-        @endif
-        @if($entrega->vehiculo?->modelo)
-        <p style="margin: 2px 0;"><strong>Modelo:</strong> {{ $entrega->vehiculo?->modelo }}</p>
-        @endif
-    </div>
-    @else
-    <p style="margin: 2px 0; color: #999;">Sin vehículo asignado</p>
-    @endif
-
-    {{-- ✅ NUEVO: ENTREGADOR --}}
-    @if($entrega->entregador)
-    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; background-color: #f9f9f9;">
-        <p style="margin: 2px 0;"><strong>Entregador:</strong> {{ $entrega->entregador?->name ?? $entrega->entregador?->nombre ?? 'S/N' }}</p>
-        @if($entrega->entregador?->phone ?? false)
-        <p style="margin: 2px 0;"><strong>Teléfono:</strong> {{ $entrega->entregador?->phone }}</p>
-        @endif
-    </div>
-    @endif
+    <!-- <p style="font-weight: bold; text-align: center; margin: 3px 0;">CHOFER Y VEHÍCULO</p> -->
+    <table style="width: 100%; font-size: 11px;">
+        <tr>
+            <td style="width: 50%; padding: 0.5px; vertical-align: top;">
+                @if($entrega->chofer)
+                <div style="margin: 0.5px 0;"><strong>Chofer:</strong> {{ substr($entrega->chofer?->name ?? $entrega->chofer?->nombre ?? 'S/N', 0, 12) }}</div>
+                @if($entrega->chofer?->phone)
+                <div style="margin: 0.5px 0; font-size: 10px;">{{ $entrega->chofer?->phone }}</div>
+                @endif
+                @else
+                <div style="margin: 0.5px 0; color: #999;">Sin chofer</div>
+                @endif
+                @if($entrega->vehiculo)
+                <div style="margin: 0.5px 0;"><strong>Placa:</strong> {{ $entrega->vehiculo?->placa }} | {{ substr($entrega->vehiculo?->marca, 0, 12) }}</div>
+                @endif
+            </td>
+            <td style="width: 50%; padding: 0.5px; vertical-align: top;">
+                @if($entrega->entregador)
+                <div style="margin: 0.5px 0;"><strong>Entregador:</strong> {{ substr($entrega->entregador?->name ?? $entrega->entregador?->nombre ?? 'S/N', 0, 12) }}</div>
+                @endif
+                @if($entrega->peso_kg)
+                <div style="margin: 0.5px 0;"><strong>Peso:</strong> {{ number_format($entrega->peso_kg, 2) }} kg</div>
+                @endif
+            </td>
+        </tr>
+    </table>
 
     {{-- ✅ NUEVO: LOCALIDADES --}}
     @if($localidades && $localidades->count() > 0)
@@ -71,27 +61,30 @@
     @endif
 
     {{-- INFORMACIÓN DE PESO --}}
-    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px;">
+    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; font-size: 10px;">
         <p style="margin: 2px 0; text-align: center; font-weight: bold;">PESO DE LA ENTREGA</p>
         <p style="margin: 2px 0;"><strong>Peso Total:</strong> {{ number_format($entrega->peso_kg ?? 0, 2) }} kg</p>
         @if($entrega->vehiculo && $entrega->vehiculo?->capacidad_kg)
-        <p style="margin: 2px 0;"><strong>Capacidad Vehículo:</strong> {{ number_format($entrega->vehiculo?->capacidad_kg, 1) }} kg</p>
         @php
         $pesoTotal = $entrega->peso_kg ?? 0;
         $capacidad = $entrega->vehiculo?->capacidad_kg ?? 0;
         $porcentajeUso = $capacidad > 0 ? ($pesoTotal / $capacidad) * 100 : 0;
         $colorEstado = $porcentajeUso > 100 ? '#0E0D0D' : ($porcentajeUso > 80 ? '#070707' : '#0B0C0B');
         @endphp
-        <p style="margin: 2px 0; color: {{ $colorEstado }}; font-weight: bold;">
-            Uso: {{ number_format($porcentajeUso, 1) }}%
-            @if($porcentajeUso > 100)
-            ⚠ EXCESO
-            @elseif($porcentajeUso > 80)
-            ⚡ ALTO
-            @else
-            ✓ OK
-            @endif
-        </p>
+        <div style="margin: 2px 0;"><strong>Capacidad Vehículo:</strong> {{ number_format($entrega->vehiculo?->capacidad_kg, 1) }} kg /
+            <small style="margin: 2px 0; color: {{ $colorEstado }}; font-weight: bold;">
+                Uso: {{ number_format($porcentajeUso, 1) }}%
+                @if($porcentajeUso > 100)
+                EXCESO
+                @elseif($porcentajeUso > 80)
+                ALTO
+                @else
+                OK
+                @endif
+            </small>
+        </div>
+
+
         @endif
     </div>
 
@@ -102,6 +95,13 @@
     <p style="font-weight: bold; text-align: center; margin: 3px 0; text-decoration: underline;">LISTA GENÉRICA</p>
 
     <table style="width: 100%; margin-bottom: 3px; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="text-align: left; padding: 1px 0;">Producto</th>
+                <th style="text-align: center; width: 15%; padding: 1px 0;">Cant.</th>
+                <th style="text-align: right; width: 20%; padding: 1px 0;">Subtotal</th>
+            </tr>
+        </thead>
         <tbody>
             @forelse($productosGenerico as $producto)
             <tr style="border-bottom: 1px dotted #999;">
@@ -111,13 +111,13 @@
             </tr>
             {{-- ✅ NUEVO (2026-04-23): Mostrar componentes del combo --}}
             @if($producto['es_combo'] && !empty($producto['componentes']))
-                @foreach($producto['componentes'] as $componente)
-                <tr style="border-bottom: 1px dotted #ccc;">
-                    <td style="padding: 1px 0; padding-left: 8px; font-size: 11px;">{{ substr($componente['producto_nombre'], 0, 20) }}</td>
-                    <td style="padding: 1px 0; text-align: center; width: 15%; font-size: 11px;">{{ number_format($componente['cantidad'], 1) }}</td>
-                    <td style="padding: 1px 0; text-align: right; width: 20%;"></td>
-                </tr>
-                @endforeach
+            @foreach($producto['componentes'] as $componente)
+            <tr style="border-bottom: 1px dotted #ccc;">
+                <td style="padding: 1px 0; padding-left: 8px; font-size: 11px;">{{ substr($componente['producto_nombre'], 0, 20) }}</td>
+                <td style="padding: 1px 0; text-align: center; width: 15%; font-size: 11px;">{{ number_format($componente['cantidad'], 1) }}</td>
+                <td style="padding: 1px 0; text-align: right; width: 20%;"></td>
+            </tr>
+            @endforeach
             @endif
             @empty
             <tr>
@@ -134,18 +134,37 @@
 
     <div class="separador"></div>
 
-    {{-- RESUMEN PARA CHOFER --}}
+    {{-- RESUMEN PARA CHOFER (UNIFICADO) --}}
     <p style="font-weight: bold; text-align: center; margin: 3px 0;">RESUMEN CHOFER</p>
 
-    <table style="width: 100%; border-collapse: collapse;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 3px;">
+        <thead>
+            <tr style="border-bottom: 2px solid #000;">
+                <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 8%;">Folio</th>
+                <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 18%;">Cliente</th>
+                <th style="text-align: left; padding: 2px; font-size: 10px; font-weight: bold; width: 14%;">Confirmación</th>
+                <th style="text-align: center; padding: 2px; font-size: 10px; font-weight: bold; width: 12%;">Tipo Pago</th>
+                <th style="text-align: right; padding: 2px; font-size: 10px; font-weight: bold; width: 12%;">Monto</th>
+            </tr>
+        </thead>
         <tbody>
             @php $totalGeneral = 0; @endphp
             @foreach($entrega->ventas as $venta)
-            @php $subtotalVenta = $venta->detalles->sum('subtotal'); $totalGeneral += $subtotalVenta; @endphp
-            <tr style="border-bottom: 1px dotted #000;">
-                <td style="padding: 2px 2px;">F.:{{ $venta->id }} | {{ substr($venta->cliente?->nombre ?? 'S/N', 0, 18) }}</td>
-                <td style="padding: 2px 2px; text-align: center; font-size: 11px;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago, 0, 5) }}</td>
-                <td style="padding: 2px 2px; text-align: right; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
+            @php
+                $subtotalVenta = $venta->detalles->sum('subtotal');
+                $totalGeneral += $subtotalVenta;
+                // Buscar confirmación de esta venta en resumen_pagos
+                $confirmacionVenta = null;
+                if($resumen_pagos && isset($resumen_pagos['confirmaciones'])) {
+                    $confirmacionVenta = collect($resumen_pagos['confirmaciones'])->firstWhere('venta_id', $venta->id);
+                }
+            @endphp
+            <tr style="border-bottom: 1px dotted #999; @if($confirmacionVenta && $confirmacionVenta['tuvo_problema']) background-color: #fff3e0; @endif">
+                <td style="padding: 2px; font-size: 10px; width: 8%;">#{{ $venta->id }}</td>
+                <td style="padding: 2px; font-size: 10px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 15) }}</td>
+                <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($confirmacionVenta ? ($confirmacionVenta['tipo_confirmacion'] ?? 'N/A') : 'N/A', 0, 12) }}</td>
+                <td style="padding: 2px; font-size: 10px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 8) }}</td>
+                <td style="padding: 2px; font-size: 10px; text-align: right; width: 12%; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -157,43 +176,9 @@
 
     <div class="separador"></div>
 
-    {{-- ✅ NUEVA 2026-02-21: TIPO DE ENTREGA Y NOVEDADES --}}
-    @if($resumen_pagos && isset($resumen_pagos['confirmaciones']) && count($resumen_pagos['confirmaciones']) > 0)
-    <p style="font-weight: bold; text-align: center; margin: 3px 0;">📦 TIPO DE ENTREGA</p>
-
-    @foreach($resumen_pagos['confirmaciones'] as $conf)
-    <div style="margin: 3px 0; padding: 2px 3px; border: 1px solid #999; @if($conf['tuvo_problema']) background-color: #fff3e0; @endif">
-        {{-- Venta ID y Tipo Entrega --}}
-        <p style="margin: 1px 0; font-weight: bold;">F.:{{ $conf['venta_id'] }} | {{ $conf['tipo_entrega'] === 'COMPLETA' ? '✅ Completa' : '⚠️ Con Novedad' }}</p>
-
-        {{-- Tipo Novedad si aplica --}}
-        @if($conf['tipo_novedad'])
-        <p style="margin: 1px 0; padding-left: 5px;">{{ $conf['tipo_novedad'] }}</p>
-        @endif
-
-        {{-- Productos devueltos si aplica --}}
-        @if($conf['tipo_novedad'] === 'DEVOLUCION_PARCIAL' && $conf['productos_devueltos'] && count($conf['productos_devueltos']) > 0)
-        <div style="margin: 2px 0; padding: 2px; background-color: #f5f5f5; border-left: 2px solid #ff9800;">
-            <p style="margin: 1px 0; font-weight: bold; font-size: 10px;">Productos Devueltos:</p>
-            @foreach($conf['productos_devueltos'] as $prod)
-            <p style="margin: 0px 0; padding-left: 5px; font-size: 10px;">
-                • {{ substr($prod['producto_nombre'] ?? 'N/A', 0, 20) }} x{{ $prod['cantidad'] ?? 0 }} = {{ number_format($prod['subtotal'] ?? 0, 2) }}
-            </p>
-            @endforeach
-            <p style="margin: 1px 0; padding-left: 5px; font-weight: bold; font-size: 10px;">
-                Total Dev: {{ number_format($conf['monto_devuelto'], 2) }}
-            </p>
-        </div>
-        @endif
-    </div>
-    @endforeach
-
-    <div class="separador"></div>
-    @endif
-
     {{-- ✅ NUEVA 2026-02-12: RESUMEN DE PAGOS --}}
     @if($resumen_pagos)
-    <p style="font-weight: bold; text-align: center; margin: 3px 0;">💳 RESUMEN DE PAGOS</p>
+    <p style="font-weight: bold; text-align: center; margin: 0 px;">RESUMEN DE PAGOS</p>
 
     {{-- Totales principales --}}
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 3px;">
@@ -252,11 +237,11 @@
     @endif
     @endif
 
-    
+
 
     <div class="separador"></div>
 
-     {{-- ✅ FIRMAS DEL CLIENTE --}}
+    {{-- ✅ FIRMAS DEL CLIENTE --}}
     <div style="margin-top: 130px !important;">
         <div style="margin-bottom: 35px !important; padding-bottom: 35px !important;">
             <div style="height: 0; border-bottom: 1px solid #000; margin-bottom: 5px !important;"></div>
