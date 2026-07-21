@@ -64,12 +64,12 @@ class SincronizacionVentaEntregaService
      * Actualizar estado logístico de la venta cuando se crea una entrega
      *
      * FASE 3 - REFACTORIZACIÓN:
-     * Ahora sincroniza TODAS las ventas asociadas a una entrega
-     * (No solo una venta via venta_id)
+     * Sincroniza TODAS las ventas asociadas a una entrega
+     * Relación 1:N directa via FK entrega_id
      */
     public function alCrearEntrega(Entrega $entrega): void
     {
-        // Sincronizar con todas las ventas asociadas (via pivot entrega_venta)
+        // Sincronizar con todas las ventas asociadas (via FK entrega_id)
         $ventas = $entrega->ventas()->get();
 
         foreach ($ventas as $venta) {
@@ -77,7 +77,7 @@ class SincronizacionVentaEntregaService
                 // Determinar nuevo estado logístico
                 $nuevoEstado = $this->determinarEstadoLogistico($venta);
 
-                Log::info('Sincronización: Entrega creada (vía pivot)', [
+                Log::info('Sincronización: Entrega creada (1:N vía FK)', [
                     'venta_id' => $venta->id,
                     'numero_venta' => $venta->numero,
                     'entrega_id' => $entrega->id,
@@ -206,7 +206,7 @@ class SincronizacionVentaEntregaService
             return;
         }
 
-        // Sincronizar TODAS las ventas asociadas (nuevo flujo N:M)
+        // Sincronizar TODAS las ventas asociadas (relación 1:N vía FK)
         $ventas = $entrega->ventas()->get();
 
         foreach ($ventas as $venta) {
@@ -214,7 +214,7 @@ class SincronizacionVentaEntregaService
                 // Determinar nuevo estado logístico de venta
                 $nuevoEstadoVenta = $this->determinarEstadoLogistico($venta);
 
-                Log::info('Sincronización: Estado de entrega cambió (vía pivot)', [
+                Log::info('Sincronización: Estado de entrega cambió (1:N vía FK)', [
                     'venta_id' => $venta->id,
                     'numero_venta' => $venta->numero,
                     'entrega_id' => $entrega->id,
@@ -277,40 +277,36 @@ class SincronizacionVentaEntregaService
     }
 
     /**
-     * Determinar el estado logístico de una venta basado en sus entregas
+     * Determinar el estado logístico de una venta basado en su entrega
      *
      * FASE 3 - REFACTORIZACIÓN:
-     * Ahora busca entregas en AMBAS relaciones:
-     * 1. Relación N:M via pivot entrega_venta (FASE 1 Legacy)
-     * 2. Relación 1:N directa vía FK entrega_id (FASE 3 Actual)
-     *
-     * Una venta puede estar en múltiples entregas consolidadas
+     * Usa relación 1:N directa vía FK entrega_id
+     * Una venta tiene 1 entrega asignada
      *
      * Lógica:
-     * 1. Si no tiene entregas → SIN_ENTREGA
-     * 2. Si alguna está en PROBLEMAS → PROBLEMAS
-     * 3. Si todas están CANCELADAS → CANCELADA
-     * 4. Si todas están ENTREGADAS → ENTREGADA
-     * 5. Si alguna está EN_TRANSITO → EN_TRANSITO
-     * 6. Si alguna está EN_PREPARACION → EN_PREPARACION
-     * 7. Si alguna está PROGRAMADO → PROGRAMADO
+     * 1. Si no tiene entrega → SIN_ENTREGA
+     * 2. Si está en PROBLEMAS → PROBLEMAS
+     * 3. Si está CANCELADA → CANCELADA
+     * 4. Si está ENTREGADA → ENTREGADA
+     * 5. Si está EN_TRANSITO → EN_TRANSITO
+     * 6. Si está EN_PREPARACION → EN_PREPARACION
+     * 7. Si está PROGRAMADO → PROGRAMADO
      * 8. Por defecto → PROGRAMADO
      */
     public function determinarEstadoLogistico(Venta $venta): string
     {
-        // Obtener entregas de AMBAS relaciones:
-        // 1. Relación N:M via pivot (FASE 1 - Legacy)
-        $entregasLegacy = $venta->entregas()
-            ->select('entregas.id', 'entregas.estado')
-            ->get();
+        // Obtener entrega via FK entrega_id (relación 1:N)
+        if (!$venta->entrega_id) {
+            return 'SIN_ENTREGA';
+        }
 
-        // 2. Relación 1:N directa vía FK (FASE 3 - Actual)
-        $entregasDirecta = \App\Models\Entrega::where('id', $venta->entrega_id)
-            ->select('id', 'estado')
-            ->get();
+        $entrega = \App\Models\Entrega::find($venta->entrega_id);
+        if (!$entrega) {
+            return 'SIN_ENTREGA';
+        }
 
-        // Combinar ambas relaciones (evitando duplicados por id)
-        $entregas = $entregasLegacy->merge($entregasDirecta)->unique('id');
+        // Array con la entrega para mantener compatibilidad con lógica existente
+        $entregas = collect([$entrega]);
 
         // Si no hay entregas en ninguna relación
         if ($entregas->isEmpty()) {
