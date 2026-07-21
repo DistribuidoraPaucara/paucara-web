@@ -47,7 +47,7 @@ class Vehiculo extends Model
     // Relaciones
     public function choferAsignado(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'chofer_asignado_id');
+        return $this->belongsTo(Empleado::class, 'chofer_asignado_id');
     }
 
     public function localidad(): BelongsTo

@@ -88,6 +88,7 @@ class EntregaController extends Controller
             'chofer_id'           => $request->input('chofer_id'),
             'vehiculo_id'         => $request->input('vehiculo_id'),
             'localidad_id'        => $request->input('localidad_id'),
+            'entregador_id'       => $request->input('entregador_id'), // ✅ NUEVO: Filtrar por entregador
             'estado_logistica_id' => $request->input('estado_logistica_id'),
             'search_entrega'      => $request->input('search_entrega'),
             'search_ventas'       => $request->input('search_ventas'),
@@ -174,7 +175,15 @@ class EntregaController extends Controller
             })
             ->when($filtros['chofer_id'], fn($q, $choferId) => $q->where('chofer_id', $choferId))
             ->when($filtros['vehiculo_id'], fn($q, $vehiculoId) => $q->where('vehiculo_id', $vehiculoId))
-            ->when($filtros['localidad_id'], fn($q, $localidadId) => $q->where('zona_id', $localidadId))
+            ->when($filtros['entregador_id'], fn($q, $entregadorId) => $q->where('entregador_id', $entregadorId)) // ✅ NUEVO: Filtrar por entregador
+            // ✅ MEJORADO: Filtrar localidad por ventas (relación: Entrega -> Ventas -> DireccionCliente -> Localidad)
+            ->when($filtros['localidad_id'], function ($q, $localidadId) {
+                return $q->whereHas('ventas', fn($ventaQuery) =>
+                    $ventaQuery->whereHas('direccionCliente', fn($dirQuery) =>
+                        $dirQuery->where('localidad_id', $localidadId)
+                    )
+                );
+            })
             ->when($filtros['estado_logistica_id'], function ($q, $estadoId) {
                 \Log::info('🔍 [EntregaController::index] Filtrando por estado_entrega_id', [
                     'estado_logistica_id_recibido' => $estadoId,
@@ -263,8 +272,19 @@ class EntregaController extends Controller
             ->values()
             ->toArray();
 
-        // ✅ NUEVO: Obtener localidades para filtro (todas, sin filtro de activo)
-        $localidades = \App\Models\Localidad::orderBy('nombre')
+        // ✅ NUEVO: Entregadores = mismos choferes (usuarios con rol de chofer)
+        $entregadores = $choferes;
+
+        // ✅ SIMPLIFICADO: Obtener todas las localidades
+        // La relación es: Entrega -> Venta -> DireccionCliente -> Localidad
+        // Por seguridad, solo traemos localidades que tienen direcciones_cliente vinculadas
+        $localidades = \App\Models\Localidad::query()
+            ->whereHas('direccionesCliente', fn($q) =>
+                $q->whereHas('ventas', fn($vq) =>
+                    $vq->whereHas('entregas')
+                )
+            )
+            ->orderBy('nombre')
             ->get(['id', 'nombre', 'codigo'])
             ->toArray();
 
@@ -338,6 +358,12 @@ class EntregaController extends Controller
                     'placa' => $entrega->vehiculo->placa,
                     'marca' => $entrega->vehiculo->marca,
                     'modelo' => $entrega->vehiculo->modelo,
+                ] : null,
+                // ✅ NUEVO: Incluir entregador (relación con users)
+                'entregador' => $entrega->entregador ? [
+                    'id' => $entrega->entregador->id,
+                    'name' => $entrega->entregador->name,
+                    'nombre' => $entrega->entregador->nombre,
                 ] : null,
                 // ✅ NUEVO: Incluir ventas con tipoPago completo (sin tipo_pago_id)
                 'ventas' => $entrega->ventas ? $entrega->ventas->map(function ($venta) {
@@ -429,6 +455,7 @@ class EntregaController extends Controller
             'filtros'           => $filtros,
             'vehiculos'         => $vehiculos,
             'choferes'          => $choferes,
+            'entregadores'      => $entregadores, // ✅ NUEVO: Entregadores para filtro
             'localidades'       => $localidades,
             'estadosLogisticos' => $estadosLogisticos,
             'dashboardStats'    => $dashboardStats, // ✅ NUEVO: Datos para view=dashboard
@@ -669,7 +696,7 @@ class EntregaController extends Controller
 
         // 3. Obtener todos los vehículos SIN restricción de estado (usuario puede seleccionar cualquiera)
         $vehiculos = Vehiculo::query()
-            ->with('choferAsignado') // 🔧 Cargar relación de chofer asignado (User)
+            ->with('choferAsignado.user') // 🔧 Cargar relación de chofer asignado (Empleado -> User)
             ->orderBy('placa')
             ->get()
             ->map(fn($v) => [
@@ -682,13 +709,13 @@ class EntregaController extends Controller
                 'capacidad_kg'       => $v->capacidad_kg,
                 'estado'             => $v->estado,
                 'activo'             => $v->activo,
-                'chofer_asignado_id' => $v->chofer_asignado_id, // 🔧 Incluir ID del chofer
-                                                                // 🔧 Incluir datos del chofer si existe (User)
-                'chofer'             => $v->choferAsignado ? [
-                    'id'     => $v->choferAsignado->id,
-                    'name'   => $v->choferAsignado->name,
-                    'nombre' => $v->choferAsignado->name,
-                    'email'  => $v->choferAsignado->email,
+                'chofer_asignado_id' => $v->chofer_asignado_id, // 🔧 ID del empleado
+                                                                // 🔧 Incluir datos del chofer si existe (Empleado -> User)
+                'chofer'             => $v->choferAsignado && $v->choferAsignado->user ? [
+                    'id'     => $v->choferAsignado->user_id,  // ✅ user_id
+                    'name'   => $v->choferAsignado->user->name,
+                    'nombre' => $v->choferAsignado->user->name,
+                    'email'  => $v->choferAsignado->user->email,
                 ] : null,
             ]);
 

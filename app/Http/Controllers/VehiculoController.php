@@ -212,7 +212,7 @@ class VehiculoController extends Controller
             // Obtener vehículos activos ordenados por capacidad (menor primero)
             // 🔧 MODIFICADO: Listar TODOS los vehículos activos (sin filtro de estado)
             $vehiculosDisponibles = Vehiculo::where('activo', true)
-                ->with(['choferAsignado.roles', 'entregas'])
+                ->with(['choferAsignado.user.roles', 'entregas'])
                 ->orderBy('capacidad_kg', 'asc')
                 ->get()
                 ->map(function ($vehiculo) use ($pesoTotal) {
@@ -235,14 +235,14 @@ class VehiculoController extends Controller
                         'tiene_capacidad'                  => $tieneCapacidad,
                     ]);
 
-                    // ✅ FILTRO: Solo devolver chofer si tiene rol 'Chofer'
+                    // ✅ FILTRO: Solo devolver chofer si el empleado tiene user con rol 'Chofer'
                     $choferValido = null;
-                    if ($vehiculo->choferAsignado && $vehiculo->choferAsignado->hasRole('Chofer')) {
+                    if ($vehiculo->choferAsignado && $vehiculo->choferAsignado->user && $vehiculo->choferAsignado->user->hasRole('Chofer')) {
                         $choferValido = [
-                            'id'       => $vehiculo->choferAsignado->id,
-                            'name'     => $vehiculo->choferAsignado->name,
-                            'nombre'   => $vehiculo->choferAsignado->name,
-                            'telefono' => $vehiculo->choferAsignado->phone ?? null,
+                            'id'       => $vehiculo->choferAsignado->user_id,  // ✅ user_id del empleado
+                            'name'     => $vehiculo->choferAsignado->user->name,
+                            'nombre'   => $vehiculo->choferAsignado->user->name,
+                            'telefono' => $vehiculo->choferAsignado->telefono ?? null,
                         ];
                     }
 
