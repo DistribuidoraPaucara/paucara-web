@@ -971,23 +971,33 @@ class EntregaPdfController extends Controller
     }
 
     /**
-     * ✅ NUEVO 2026-07-20: Mapear código de estado logístico a nombre legible
-     * Usa los labels definidos en el modelo Venta
+     * ✅ NUEVO 2026-07-20: Obtener nombre de estado logístico desde la BD
+     * Carga dinámicamente desde tabla estados_logistica con categoría ventas_logistica
+     * Esto evita valores hardcodeados y permite agregar/quitar estados sin cambiar código
      */
     private function obtenerNombreEstadoLogistico(?string $codigo): string
     {
-        $labels = [
-            'ENTREGADA' => 'Entregada',
-            'NO_ENTREGADO' => 'No Entregado',
-            'PENDIENTE_RETIRO' => 'Pendiente Retiro',
-            'DEVOLUCION_PARCIAL' => 'Devolución Parcial',
-            'PROBLEMAS' => 'Problemas',
-            'CANCELADA' => 'Cancelada',
-            'SIN_ENTREGA' => 'Sin Entrega',
-            'SIN_REPORTE' => 'Sin Reporte',
-            'SIN_ENTREGA_ASIGNADA' => 'Sin Entrega Asignada',
-        ];
+        if (!$codigo) {
+            return 'Sin Estado';
+        }
 
-        return $labels[$codigo] ?? ($codigo ?? 'Sin Estado');
+        // Buscar en cache estática para evitar queries repetidas en la misma petición
+        static $estadosCache = null;
+
+        if ($estadosCache === null) {
+            // Cargar todos los estados logísticos de la categoría ventas_logistica
+            $estadosCache = \App\Models\EstadoLogistica::where('categoria', 'ventas_logistica')
+                ->select('codigo', 'nombre')
+                ->get()
+                ->keyBy('codigo')
+                ->toArray();
+        }
+
+        // Retornar nombre del estado si existe, sino retornar el código
+        if (isset($estadosCache[$codigo])) {
+            return $estadosCache[$codigo]['nombre'] ?? $codigo;
+        }
+
+        return $codigo;
     }
 }
