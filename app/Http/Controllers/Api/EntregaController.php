@@ -1679,8 +1679,8 @@ class EntregaController extends Controller
 
             if ($estadoEnTransito && $estadoSinReporte) {
                 $ventasActualizadas = $entrega->ventas()
-                    ->where('estado_entrega_id', $estadoEnTransito->id)
-                    ->update(['estado_entrega_id' => $estadoSinReporte->id]);
+                    ->where('estado_logistico_id', $estadoEnTransito->id)
+                    ->update(['estado_logistico_id' => $estadoSinReporte->id]);
 
                 if ($ventasActualizadas > 0) {
                     Log::info('✅ Ventas sin reporte actualizado al finalizar entrega', [
