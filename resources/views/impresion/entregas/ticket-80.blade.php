@@ -158,12 +158,14 @@
                 if($resumen_pagos && isset($resumen_pagos['confirmaciones'])) {
                     $confirmacionVenta = collect($resumen_pagos['confirmaciones'])->firstWhere('venta_id', $venta->id);
                 }
+                // Obtener estado logístico: primero desde confirmación, si no desde la venta directamente
+                $estadoLogistico = $confirmacionVenta['estado_logistico'] ?? $venta->estado_logistico ?? 'N/A';
             @endphp
             <tr style="border-bottom: 1px dotted #999; @if($confirmacionVenta && $confirmacionVenta['tuvo_problema']) background-color: #fff3e0; @endif">
                 <td style="padding: 2px; font-size: 10px; width: 8%;">#{{ $venta->id }}</td>
                 <td style="padding: 2px; font-size: 10px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 12) }}</td>
                 <td style="padding: 2px; font-size: 10px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 3) }}</td>
-                <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($confirmacionVenta ? ($confirmacionVenta['estado_logistico'] ?? 'N/A') : 'N/A', 0, 12) }}</td>
+                <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($estadoLogistico, 0, 12) }}</td>
                 <td style="padding: 2px; font-size: 10px; text-align: right; width: 12%; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
             </tr>
             @endforeach

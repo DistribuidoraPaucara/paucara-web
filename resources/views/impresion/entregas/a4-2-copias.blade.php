@@ -257,7 +257,8 @@
                         @php
                         $conf = $confirmacionesPorVenta[$venta->id] ?? null;
                         $estado = $conf['tipo_entrega'] ?? 'COMPLETA';
-                        $estadoLogistico = $conf['estado_logistico'] ?? 'N/A';
+                        // Obtener estado logístico: primero desde confirmación, si no desde la venta directamente
+                        $estadoLogistico = $conf['estado_logistico'] ?? $venta->estado_logistico ?? 'N/A';
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
@@ -447,7 +448,8 @@
                         @php
                         $conf = $confirmacionesPorVenta[$venta->id] ?? null;
                         $estado = $conf['tipo_entrega'] ?? 'COMPLETA';
-                        $estadoLogistico = $conf['estado_logistico'] ?? 'N/A';
+                        // Obtener estado logístico: primero desde confirmación, si no desde la venta directamente
+                        $estadoLogistico = $conf['estado_logistico'] ?? $venta->estado_logistico ?? 'N/A';
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
