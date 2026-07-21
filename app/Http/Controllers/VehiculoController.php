@@ -212,7 +212,7 @@ class VehiculoController extends Controller
             // Obtener vehículos activos ordenados por capacidad (menor primero)
             // 🔧 MODIFICADO: Listar TODOS los vehículos activos (sin filtro de estado)
             $vehiculosDisponibles = Vehiculo::where('activo', true)
-                ->with('choferAsignado', 'entregas')
+                ->with(['choferAsignado.roles', 'entregas'])
                 ->orderBy('capacidad_kg', 'asc')
                 ->get()
                 ->map(function ($vehiculo) use ($pesoTotal) {
@@ -235,6 +235,17 @@ class VehiculoController extends Controller
                         'tiene_capacidad'                  => $tieneCapacidad,
                     ]);
 
+                    // ✅ FILTRO: Solo devolver chofer si tiene rol 'Chofer'
+                    $choferValido = null;
+                    if ($vehiculo->choferAsignado && $vehiculo->choferAsignado->hasRole('Chofer')) {
+                        $choferValido = [
+                            'id'       => $vehiculo->choferAsignado->id,
+                            'name'     => $vehiculo->choferAsignado->name,
+                            'nombre'   => $vehiculo->choferAsignado->name,
+                            'telefono' => $vehiculo->choferAsignado->phone ?? null,
+                        ];
+                    }
+
                     return [
                         'id'                               => $vehiculo->id,
                         'placa'                            => $vehiculo->placa,
@@ -249,12 +260,7 @@ class VehiculoController extends Controller
                         'estado'                           => $vehiculo->estado,
                         'activo'                           => $vehiculo->activo,
                         'tiene_capacidad'                  => $tieneCapacidad,
-                        'choferAsignado'                   => $vehiculo->choferAsignado ? [
-                            'id'       => $vehiculo->choferAsignado->id,
-                            'name'     => $vehiculo->choferAsignado->name,
-                            'nombre'   => $vehiculo->choferAsignado->name,
-                            'telefono' => $vehiculo->choferAsignado->phone ?? null,
-                        ] : null,
+                        'choferAsignado'                   => $choferValido,
                     ];
                 });
 
