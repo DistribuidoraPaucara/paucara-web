@@ -357,7 +357,7 @@ class SincronizacionVentaEntregaService
             in_array('EN_CARGA', $estadosUnicos) ||
             in_array('LISTO_PARA_ENTREGA', $estadosUnicos)
         ) {
-            return 'EN_PREPARACION';
+            return 'PREPARACION_CARGA';
         }
 
         // 6. Por defecto PROGRAMADO
