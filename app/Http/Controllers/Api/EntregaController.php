@@ -3312,6 +3312,20 @@ class EntregaController extends Controller
                 $ventasAAgregar = array_diff($ventasNuevas, $ventasActuales);
                 if (! empty($ventasAAgregar)) {
                     Venta::whereIn('id', $ventasAAgregar)->update(['entrega_id' => $entrega->id]);
+
+                    // ✅ NUEVO 2026-07-20: Actualizar estado logístico de las nuevas ventas
+                    // Las nuevas ventas toman el mismo estado logístico de la entrega
+                    if ($entrega->estado_logistico_id) {
+                        Venta::whereIn('id', $ventasAAgregar)->update([
+                            'estado_logistico_id' => $entrega->estado_logistico_id,
+                        ]);
+
+                        Log::info('✅ Estado logístico actualizado en nuevas ventas', [
+                            'entrega_id' => $entrega->id,
+                            'venta_ids' => $ventasAAgregar,
+                            'estado_logistico_id' => $entrega->estado_logistico_id,
+                        ]);
+                    }
                 }
 
                 DB::commit();
@@ -3731,10 +3745,31 @@ class EntregaController extends Controller
     public function entregasDisponiblesParaReasignar($id)
     {
         try {
-            $entregasDisponibles = Entrega::with(['chofer', 'vehiculo', 'estadoEntrega'])
-                ->where('id', '!=', $id)
+            $query = Entrega::with(['chofer', 'vehiculo', 'estadoEntrega'])
+                ->where('id', '!=', $id);
             // ✅ Sin filtro de estado - permite reasignar a CUALQUIER entrega
+
+            // ✅ NUEVO: Soporte para búsqueda lazy por parámetro 'q'
+            $searchQuery = request()->query('q');
+            if ($searchQuery && strlen(trim($searchQuery)) > 0) {
+                $searchTerm = '%' . strtolower(trim($searchQuery)) . '%';
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->whereRaw('LOWER(numero_entrega) LIKE ?', [$searchTerm])
+                        ->orWhereRaw('LOWER(CAST(id AS VARCHAR)) LIKE ?', [$searchTerm])
+                        ->orWhereRaw('LOWER(estado) LIKE ?', [$searchTerm])
+                        ->orWhereHas('chofer', function ($choferQuery) use ($searchTerm) {
+                            $choferQuery->whereRaw('LOWER(name) LIKE ?', [$searchTerm]);
+                        })
+                        ->orWhereHas('vehiculo', function ($vehiculoQuery) use ($searchTerm) {
+                            $vehiculoQuery->whereRaw('LOWER(placa) LIKE ?', [$searchTerm])
+                                ->orWhereRaw('LOWER(marca) LIKE ?', [$searchTerm]);
+                        });
+                });
+            }
+
+            $entregasDisponibles = $query
                 ->orderByDesc('numero_entrega')
+                ->limit(20) // ✅ NUEVO: Limitar resultados para mejor rendimiento
                 ->get();
 
             return response()->json([
@@ -3891,6 +3926,95 @@ class EntregaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al reasignar la venta: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/entregas/{id}/ventas/{venta_id}
+     *
+     * Quitar una venta de una entrega (desasignar)
+     * Permite que el usuario retire una venta de la entrega actual
+     * La venta no se elimina, solo se desasigna (entrega_id = null)
+     *
+     * ✅ NUEVO: También cambia el estado logístico a PENDIENTE_ENVIO
+     */
+    public function quitarVentaDeEntrega($id, $venta_id)
+    {
+        try {
+            // Validar que la entrega y venta existan
+            $entrega = Entrega::findOrFail($id);
+            $venta = Venta::findOrFail($venta_id);
+
+            // Validar que la venta pertenece a esta entrega
+            if ($venta->entrega_id != $id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La venta no pertenece a esta entrega',
+                ], 422);
+            }
+
+            // ✅ NUEVO: Obtener el estado logístico "SIN_ENTREGA" para restaurar a estado inicial
+            $estadoPendienteEnvio = EstadoLogistica::where('codigo', 'SIN_ENTREGA')
+                ->where('categoria', 'venta_logistica')
+                ->first();
+
+            if (!$estadoPendienteEnvio) {
+                Log::warning('⚠️ Estado SIN_ENTREGA no encontrado', [
+                    'venta_id' => $venta_id,
+                    'entrega_id' => $id,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Estado logístico SIN_ENTREGA no configurado',
+                ], 500);
+            }
+
+            // ✅ NUEVO: Usar transacción para garantizar consistencia
+            DB::transaction(function () use ($venta, $id, $estadoPendienteEnvio, $venta_id) {
+                // Desasignar la venta (entrega_id = null) y restaurar estado logístico
+                $venta->update([
+                    'entrega_id' => null,
+                    'estado_logistico_id' => $estadoPendienteEnvio->id,
+                ]);
+
+                Log::info('✅ Venta removida de la entrega y estado restaurado a SIN_ENTREGA', [
+                    'venta_id'     => $venta_id,
+                    'venta_numero' => $venta->numero,
+                    'entrega_id'   => $id,
+                    'estado_anterior' => $venta->getOriginal('estado_logistico_id'),
+                    'estado_nuevo' => $estadoPendienteEnvio->id,
+                    'usuario_id'   => Auth::id(),
+                    'timestamp'    => now(),
+                ]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "✅ Venta #{$venta->numero} removida de la entrega. Estado cambió a SIN_ENTREGA",
+                'data'    => [
+                    'venta_id'            => $venta_id,
+                    'entrega_id'          => $id,
+                    'nuevo_estado'        => 'SIN_ENTREGA',
+                    'estado_logistico_id' => $estadoPendienteEnvio->id,
+                ],
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La venta o entrega no existe',
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('❌ Error removiendo venta de entrega', [
+                'venta_id'    => $venta_id,
+                'entrega_id'  => $id,
+                'error'       => $e->getMessage(),
+                'trace'       => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al remover la venta: ' . $e->getMessage(),
             ], 500);
         }
     }
