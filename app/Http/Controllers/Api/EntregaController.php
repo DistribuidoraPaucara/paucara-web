@@ -3260,13 +3260,13 @@ class EntregaController extends Controller
     {
         try {
             // ✅ NUEVO: Cargar relación de estado logístico de la entrega
-            $entrega->load('estadoLogistica');
+            $entrega->load('estadoEntrega');
 
             Log::info('🔧 [Actualizar Entrega Consolidada] Request recibida', [
                 'entrega_id'  => $entrega->id,
                 'estado_entrega_id' => $entrega->estado_entrega_id,
-                'estado_logistico_codigo' => $entrega->estadoLogistica?->codigo,
-                'estado_logistico_categoria' => $entrega->estadoLogistica?->categoria,
+                'estado_logistico_codigo' => $entrega->estadoEntrega?->codigo,
+                'estado_logistico_categoria' => $entrega->estadoEntrega?->categoria,
                 'venta_ids'   => $request->input('venta_ids'),
                 'vehiculo_id' => $request->input('vehiculo_id'),
                 'chofer_id'   => $request->input('chofer_id'),
