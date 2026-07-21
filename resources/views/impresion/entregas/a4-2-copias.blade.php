@@ -127,17 +127,14 @@
         $estadisticas = $impresionService->obtenerEstadisticas($entrega);
     @endphp
 
-    <div class="page">
+    <div class="page ticket" style="font-size: 12px; font-family: Arial, sans-serif;">
         <!-- COPIA 1 -->
         <div class="copia">
             <!-- Header -->
             <div class="header">
-                <h3>ENTREGA N° {{ $entrega->id }}</h3>
-                <p>{{ $entrega->numero_entrega }} | {{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
+                <h3>ENTREGA #{{ $entrega->id }}</h3>
+                <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
             </div>
-
-            <!-- Chofer y Vehículo -->
-            <div class="section-title">CHOFER Y VEHÍCULO</div>
             <table style="width: 100%; font-size: 11px;">
                 <tr>
                     <td style="width: 50%; padding: 0.5px; vertical-align: top;">
@@ -177,8 +174,8 @@
             
 
             <!-- Lista Genérica -->
-            <div class="section-title">LISTA GENÉRICA</div>
-            <table>
+            <!-- <div class="section-title">LISTA GENÉRICA</div> -->
+            <table style="font-size: 13px;">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 20px;">#</th>
@@ -191,7 +188,7 @@
                     @forelse($productosGenerico as $producto)
                         <tr>
                             <td class="text-center" style="font-size: 10px;">{{ $loop->iteration }}</td>
-                            <td>@if($producto['es_combo']) 📦 @endif{{ substr($producto['producto_nombre'], 0, 18) }}</td>
+                            <td>@if($producto['es_combo']) @endif{{ substr($producto['producto_nombre'], 0, 18) }}</td>
                             <td class="text-right">{{ number_format($producto['cantidad_total'], 1) }}</td>
                             <td class="text-right">{{ number_format($producto['subtotal_total'], 2) }}</td>
                         </tr>
@@ -215,7 +212,7 @@
             </table>
 
             <!-- Resumen Lista -->
-            <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 10px;">
+            <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 13px;">
                 <div style="text-align: right; font-weight: bold;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
                 <div>{{ $estadisticas['total_items_unicos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
             </div>
@@ -224,13 +221,13 @@
             @php
                 $confirmacionesPorVenta = collect($resumen_pagos['confirmaciones'] ?? [])->keyBy('venta_id')->toArray();
             @endphp
-            <div class="section-title">LISTA VENTAS / RESUMEN CHOFER</div>
+            <div class="section-title">RESUMEN CHOFER</div>
             <table>
                 <thead>
                     <tr>
                         <th class="text-center">Folio</th>
                         <th>Cliente</th>
-                        <th class="text-center" style="font-size: 9px;">Est./Nov</th>
+                        <th class="text-center" style="font-size: 9px;">Confirmacion</th>
                         <th class="text-center" style="font-size: 9px;">Pago</th>
                         <th class="text-right">Total</th>
                     </tr>
@@ -240,16 +237,13 @@
                         @php
                             $conf = $confirmacionesPorVenta[$venta->id] ?? null;
                             $estado = $conf['tipo_entrega'] ?? 'COMPLETA';
-                            $tipoNovedad = $conf['tipo_novedad'] ?? null;
+                            $tipoNovedad = $conf['tipo_confirmacion'] ?? null;
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
-                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 11) }}</td>
+                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 20) }}</td>
                             <td class="text-center" style="font-size: 9px;">
-                                {{ $estado === 'COMPLETA' ? 'OK' : 'NOV' }}
-                                @if($tipoNovedad)
-                                    <br><span style="font-size: 8px;">{{ substr($tipoNovedad, 0, 8) }}</span>
-                                @endif
+                                {{ $tipoNovedad }}
                             </td>
                             <td class="text-center" style="font-size: 9px;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago, 0, 4) }}</td>
                             <td class="text-right">{{ number_format($venta->total, 2) }}</td>
@@ -350,7 +344,7 @@
             @endif
 
             <!-- Firmas -->
-            <div class="firmas">
+            <div class="firmas" style="margin-top: 30px !important;">
                 <div class="firma-linea"></div>
                 <div class="text-center"><strong>Firma Chofer</strong></div>
             </div>
@@ -360,12 +354,9 @@
         <div class="copia">
             <!-- Header -->
             <div class="header">
-                <h3>ENTREGA N° {{ $entrega->id }}</h3>
-                <p>{{ $entrega->numero_entrega }} | {{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
+                <h3>ENTREGA #{{ $entrega->id }}</h3>
+                <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
             </div>
-
-            <!-- Chofer y Vehículo -->
-            <div class="section-title">CHOFER Y VEHÍCULO</div>
             <table style="width: 100%; font-size: 11px;">
                 <tr>
                     <td style="width: 50%; padding: 0.5px; vertical-align: top;">
@@ -378,7 +369,7 @@
                             <div style="margin: 0.5px 0; color: #999;">Sin chofer</div>
                         @endif
                         @if($entrega->vehiculo)
-                            <div style="margin: 0.5px 0;"><strong>Placa:</strong> {{ $entrega->vehiculo?->placa }} | {{ substr($entrega->vehiculo?->marca, 0, 12) }}</div>
+                            <div style="margin: 0.5px 0;"><strong>Placa:</strong> {{ $entrega->vehiculo?->placa }} | {{ substr($entrega->vehiculo?->marca, 0, 12) }} </div>
                         @endif
                     </td>
                     <td style="width: 50%; padding: 0.5px; vertical-align: top;">
@@ -402,9 +393,11 @@
                 </div>
             @endif
 
+
+
             <!-- Lista Genérica -->
-            <div class="section-title">LISTA GENÉRICA</div>
-            <table>
+            <!-- <div class="section-title">LISTA GENÉRICA</div> -->
+            <table style="font-size: 13px;">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 20px;">#</th>
@@ -417,7 +410,7 @@
                     @forelse($productosGenerico as $producto)
                         <tr>
                             <td class="text-center" style="font-size: 10px;">{{ $loop->iteration }}</td>
-                            <td>@if($producto['es_combo']) 📦 @endif{{ substr($producto['producto_nombre'], 0, 18) }}</td>
+                            <td>@if($producto['es_combo']) @endif{{ substr($producto['producto_nombre'], 0, 18) }}</td>
                             <td class="text-right">{{ number_format($producto['cantidad_total'], 1) }}</td>
                             <td class="text-right">{{ number_format($producto['subtotal_total'], 2) }}</td>
                         </tr>
@@ -441,7 +434,7 @@
             </table>
 
             <!-- Resumen Lista -->
-            <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 10px;">
+            <div style="border-top: 1px dashed #000; padding: 1px 0; margin: 1px 0; font-size: 13px;">
                 <div style="text-align: right; font-weight: bold;">Total: {{ number_format($estadisticas['total_subtotal'], 2) }}</div>
                 <div>{{ $estadisticas['total_items_unicos'] }} items | {{ (int)$estadisticas['total_cantidad'] }} cantidades | {{ $estadisticas['total_clientes'] }} clientes</div>
             </div>
@@ -450,13 +443,13 @@
             @php
                 $confirmacionesPorVenta = collect($resumen_pagos['confirmaciones'] ?? [])->keyBy('venta_id')->toArray();
             @endphp
-            <div class="section-title">LISTA VENTAS / RESUMEN CHOFER</div>
+            <div class="section-title">RESUMEN CHOFER</div>
             <table>
                 <thead>
                     <tr>
                         <th class="text-center">Folio</th>
                         <th>Cliente</th>
-                        <th class="text-center" style="font-size: 9px;">Est./Nov</th>
+                        <th class="text-center" style="font-size: 9px;">Confirmacion</th>
                         <th class="text-center" style="font-size: 9px;">Pago</th>
                         <th class="text-right">Total</th>
                     </tr>
@@ -466,16 +459,13 @@
                         @php
                             $conf = $confirmacionesPorVenta[$venta->id] ?? null;
                             $estado = $conf['tipo_entrega'] ?? 'COMPLETA';
-                            $tipoNovedad = $conf['tipo_novedad'] ?? null;
+                            $tipoNovedad = $conf['tipo_confirmacion'] ?? null;
                         @endphp
                         <tr>
                             <td class="text-center">{{ $venta->id }}</td>
-                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 11) }}</td>
+                            <td style="font-size: 11px;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 20) }}</td>
                             <td class="text-center" style="font-size: 9px;">
-                                {{ $estado === 'COMPLETA' ? 'OK' : 'NOV' }}
-                                @if($tipoNovedad)
-                                    <br><span style="font-size: 8px;">{{ substr($tipoNovedad, 0, 8) }}</span>
-                                @endif
+                                {{ $tipoNovedad }}
                             </td>
                             <td class="text-center" style="font-size: 9px;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago, 0, 4) }}</td>
                             <td class="text-right">{{ number_format($venta->total, 2) }}</td>
@@ -576,7 +566,7 @@
             @endif
 
             <!-- Firmas -->
-            <div class="firmas">
+            <div class="firmas" style="margin-top: 30px !important;">
                 <div class="firma-linea"></div>
                 <div class="text-center"><strong>Firma Chofer</strong></div>
             </div>
