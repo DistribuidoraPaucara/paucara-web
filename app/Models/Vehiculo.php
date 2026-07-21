@@ -131,12 +131,16 @@ class Vehiculo extends Model
      * @return bool
      */
     /**
-     * Obtener peso total cargado actualmente (entregas en estado NO completadas)
+     * Obtener peso total cargado actualmente (entregas en estado NO completadas de ayer y hoy)
+     * ✅ NUEVO 2026-07-20: Filtrar por fecha para no considerar entregas antiguas
      */
     public function obtenerPesoCargado(): float
     {
+        $ayer = now()->subDay()->startOfDay();
+
         return $this->entregas()
             ->whereNotIn('estado', ['ENTREGADO', 'CANCELADA'])  // Entregas pendientes o en progreso
+            ->whereBetween('fecha_asignacion', [$ayer, now()])  // ✅ NUEVO: Solo ayer y hoy
             ->sum('peso_kg') ?? 0.0;
     }
 
