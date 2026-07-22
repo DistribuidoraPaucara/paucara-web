@@ -19,11 +19,9 @@ interface PreciosTableProps {
 
 export function PreciosTable({ precios }: PreciosTableProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Lista de Precios</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
+    <div>
+      <div className="p-2">
+        <h3>Lista de Precios</h3>
         <Table>
           <TableHeader>
             <TableRow>
@@ -88,7 +86,7 @@ export function PreciosTable({ precios }: PreciosTableProps) {
             )}
           </TableBody>
         </Table>
-      </CardContent>
+      </div>
 
       {/* Paginación */}
       {precios.links && precios.links.length > 3 && (
@@ -105,6 +103,6 @@ export function PreciosTable({ precios }: PreciosTableProps) {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

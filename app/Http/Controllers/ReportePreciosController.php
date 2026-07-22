@@ -72,7 +72,7 @@ class ReportePreciosController extends Controller
             'categoria_id' => ['nullable', 'exists:categorias,id'],
         ]);
 
-        // Obtener precio de costo base
+        // Obtener tipo de precio base (costo)
         $tipoCosto = TipoPrecio::precioBase()->first();
 
         if (! $tipoCosto) {
@@ -84,71 +84,119 @@ class ReportePreciosController extends Controller
             ]);
         }
 
-        // Query para obtener ganancias por producto
-        $gananciasQuery = PrecioProducto::query()
-            ->with(['producto.categoria', 'tipoPrecio'])
-            ->where('activo', true)
-            ->where('tipo_precio_id', '!=', $tipoCosto->id)
-            ->whereHas('tipoPrecio', function ($q) {
-                $q->where('es_ganancia', true);
-            });
+        // Obtener detalles de ventas reales (ventas confirmadas)
+        $query = \App\Models\DetalleVenta::query()
+            ->join('ventas', 'detalle_ventas.venta_id', '=', 'ventas.id')
+            ->join('productos', 'detalle_ventas.producto_id', '=', 'productos.id')
+            ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
+            ->where('productos.activo', true)
+            ->where('ventas.estado_documento_id', '!=', 2); // Excluir ventas canceladas
 
         // Aplicar filtros
         if (! empty($filtros['fecha_desde'])) {
-            $gananciasQuery->whereDate('fecha_ultima_actualizacion', '>=', $filtros['fecha_desde']);
+            $query->whereDate('ventas.fecha', '>=', $filtros['fecha_desde']);
         }
 
         if (! empty($filtros['fecha_hasta'])) {
-            $gananciasQuery->whereDate('fecha_ultima_actualizacion', '<=', $filtros['fecha_hasta']);
+            $query->whereDate('ventas.fecha', '<=', $filtros['fecha_hasta']);
         }
 
         if (! empty($filtros['tipo_precio_id'])) {
-            $gananciasQuery->where('tipo_precio_id', $filtros['tipo_precio_id']);
+            $query->where('detalle_ventas.tipo_precio_id', $filtros['tipo_precio_id']);
         }
 
         if (! empty($filtros['categoria_id'])) {
-            $gananciasQuery->whereHas('producto', function ($q) use ($filtros) {
-                $q->where('categoria_id', $filtros['categoria_id']);
-            });
+            $query->where('productos.categoria_id', $filtros['categoria_id']);
         }
 
-        $ganancias = $gananciasQuery->get()->map(function ($precio) use ($tipoCosto) {
-            $precioCosto = PrecioProducto::where('producto_id', $precio->producto_id)
+        $detalles = $query->select(
+            'detalle_ventas.id',
+            'detalle_ventas.producto_id',
+            'detalle_ventas.cantidad',
+            'detalle_ventas.precio_unitario',
+            'detalle_ventas.tipo_precio_id',
+            'detalle_ventas.created_at',
+            'productos.nombre as producto_nombre',
+            'productos.sku',
+            'productos.categoria_id',
+            'categorias.nombre as categoria_nombre',
+            'ventas.fecha as fecha_venta'
+        )->get();
+
+        // Calcular ganancias agrupadas por producto
+        $gananciasMap = [];
+
+        foreach ($detalles as $detalle) {
+            // Obtener precio de costo del producto
+            $precioCosto = PrecioProducto::where('producto_id', $detalle->producto_id)
                 ->where('tipo_precio_id', $tipoCosto->id)
                 ->where('activo', true)
                 ->first();
 
-            $ganancia = 0;
-            $porcentajeGanancia = 0;
+            $precioUnitarioCosto = $precioCosto?->precio ?? 0;
+            $gananciaUnitaria = $detalle->precio_unitario - $precioUnitarioCosto;
+            $gananciaTotal = $gananciaUnitaria * $detalle->cantidad;
+            $porcentajeGanancia = $precioUnitarioCosto > 0 ? ($gananciaUnitaria / $precioUnitarioCosto) * 100 : 0;
 
-            if ($precioCosto && $precioCosto->precio > 0) {
-                $ganancia = $precio->precio - $precioCosto->precio;
-                $porcentajeGanancia = ($ganancia / $precioCosto->precio) * 100;
+            $key = "{$detalle->producto_id}_{$detalle->tipo_precio_id}";
+
+            if (! isset($gananciasMap[$key])) {
+                $gananciasMap[$key] = [
+                    'producto_id' => $detalle->producto_id,
+                    'producto_nombre' => $detalle->producto_nombre,
+                    'producto_sku' => $detalle->sku,
+                    'categoria' => [
+                        'id' => $detalle->categoria_id,
+                        'nombre' => $detalle->categoria_nombre,
+                    ],
+                    'tipo_precio_id' => $detalle->tipo_precio_id,
+                    'cantidad_vendida' => 0,
+                    'precio_venta_unitario' => $detalle->precio_unitario,
+                    'precio_costo_unitario' => $precioUnitarioCosto,
+                    'ganancia_unitaria' => $gananciaUnitaria,
+                    'ganancia_total' => 0,
+                    'porcentaje_ganancia' => $porcentajeGanancia,
+                    'ingresos_totales' => 0,
+                    'costos_totales' => 0,
+                    'primera_venta' => $detalle->fecha_venta,
+                    'ultima_venta' => $detalle->fecha_venta,
+                ];
             }
 
-            return [
-                'producto' => $precio->producto,
-                'tipo_precio' => $precio->tipoPrecio,
-                'precio_venta' => $precio->precio,
-                'precio_costo' => $precioCosto?->precio ?? 0,
-                'ganancia' => $ganancia,
-                'porcentaje_ganancia' => $porcentajeGanancia,
-                'fecha_actualizacion' => $precio->fecha_ultima_actualizacion,
-            ];
-        })->sortByDesc('ganancia')->values();
+            $gananciasMap[$key]['cantidad_vendida'] += $detalle->cantidad;
+            $gananciasMap[$key]['ganancia_total'] += $gananciaTotal;
+            $gananciasMap[$key]['ingresos_totales'] += $detalle->precio_unitario * $detalle->cantidad;
+            $gananciasMap[$key]['costos_totales'] += $precioUnitarioCosto * $detalle->cantidad;
+            $gananciasMap[$key]['ultima_venta'] = $detalle->fecha_venta;
+        }
+
+        // Convertir a colección y ordenar por ganancia
+        $ganancias = collect($gananciasMap)
+            ->sortByDesc('ganancia_total')
+            ->values();
+
+        // Cargar relaciones de tipo_precio para mejor presentación
+        $ganancias = $ganancias->map(function ($ganancia) {
+            $tipoPrecio = TipoPrecio::find($ganancia['tipo_precio_id']);
+            $ganancia['tipo_precio'] = $tipoPrecio ? ['id' => $tipoPrecio->id, 'nombre' => $tipoPrecio->nombre, 'color' => $tipoPrecio->color] : null;
+            return $ganancia;
+        });
 
         // Estadísticas de ganancias
         $estadisticasGanancias = [
-            'total_productos' => $ganancias->count(),
-            'ganancia_total' => $ganancias->sum('ganancia'),
-            'ganancia_promedio' => $ganancias->avg('ganancia') ?? 0,
+            'total_productos_vendidos' => $ganancias->count(),
+            'cantidad_total_vendida' => $ganancias->sum('cantidad_vendida'),
+            'ingresos_totales' => $ganancias->sum('ingresos_totales'),
+            'costos_totales' => $ganancias->sum('costos_totales'),
+            'ganancia_total' => $ganancias->sum('ganancia_total'),
+            'ganancia_promedio' => $ganancias->avg('ganancia_total') ?? 0,
             'porcentaje_promedio' => $ganancias->avg('porcentaje_ganancia') ?? 0,
-            'mejor_ganancia' => $ganancias->max('ganancia') ?? 0,
-            'peor_ganancia' => $ganancias->min('ganancia') ?? 0,
+            'mejor_ganancia' => $ganancias->max('ganancia_total') ?? 0,
+            'peor_ganancia' => $ganancias->min('ganancia_total') ?? 0,
         ];
 
         return Inertia::render('reportes/ganancias/index', [
-            'ganancias' => $ganancias->take(50), // Limitar para la vista
+            'ganancias' => $ganancias->take(50),
             'estadisticas' => $estadisticasGanancias,
             'filtros' => $filtros,
             'tipos_precio' => TipoPrecio::ganancias()->activos()->ordenados()->get(['id', 'nombre', 'color']),
