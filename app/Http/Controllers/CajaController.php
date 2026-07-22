@@ -952,17 +952,13 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Transformar aperturas con ingresos/egresos por caja
+        // ✅ NUEVO: Transformar aperturas usando CierreCajaService (IGUAL que endpoint cajas/user/{userId})
         $aperturas_hoy = $aperturasColleccion->map(function ($apertura) {
-            // Calcular ingresos y egresos específicos de esta apertura
-            $ingresosApertura = (float) MovimientoCaja::where('apertura_caja_id', $apertura->id)
-                ->where('monto', '>', 0)
-                ->sum('monto');
+            // Usar el mismo servicio para calcular ingresos/egresos
+            $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
 
-            $egresosApertura = (float) abs(MovimientoCaja::where('apertura_caja_id', $apertura->id)
-                ->where('monto', '<', 0)
-                ->sum('monto'));
-
+            $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
+            $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
             $efectivoEsperadoApertura = $apertura->monto_apertura + $ingresosApertura - $egresosApertura;
 
             return [
@@ -986,22 +982,19 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Calcular totales de ingresos y egresos SOLO DE CAJAS ABIERTAS
+        // ✅ NUEVO: Usar CierreCajaService para calcular ingresos/egresos (IGUAL que endpoint cajas/user/{userId})
         $aperturasAbiertas = $aperturasColleccion->filter(fn($a) => !$a->cierre);
-        $idsAperturasAbiertas = $aperturasAbiertas->pluck('id')->toArray();
 
         $totalIngresos = (float) 0;
         $totalEgresos = (float) 0;
         $montosApertura = (float) 0;
 
         foreach ($aperturasAbiertas as $apertura) {
-            $ingresosApertura = (float) MovimientoCaja::where('apertura_caja_id', $apertura->id)
-                ->where('monto', '>', 0)
-                ->sum('monto');
+            // Usar el mismo servicio que en index() para consistencia
+            $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
 
-            $egresosApertura = (float) abs(MovimientoCaja::where('apertura_caja_id', $apertura->id)
-                ->where('monto', '<', 0)
-                ->sum('monto'));
+            $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
+            $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
 
             $totalIngresos += $ingresosApertura;
             $totalEgresos += $egresosApertura;

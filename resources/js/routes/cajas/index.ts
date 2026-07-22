@@ -472,7 +472,7 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     movimientos.form = movimientosForm
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimiento
- * @see app/Http/Controllers/CajaController.php:1641
+ * @see app/Http/Controllers/CajaController.php:1634
  * @route '/cajas/movimientos'
  */
 export const registrarMovimiento = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -487,7 +487,7 @@ registrarMovimiento.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimiento
- * @see app/Http/Controllers/CajaController.php:1641
+ * @see app/Http/Controllers/CajaController.php:1634
  * @route '/cajas/movimientos'
  */
 registrarMovimiento.url = (options?: RouteQueryOptions) => {
@@ -496,7 +496,7 @@ registrarMovimiento.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimiento
- * @see app/Http/Controllers/CajaController.php:1641
+ * @see app/Http/Controllers/CajaController.php:1634
  * @route '/cajas/movimientos'
  */
 registrarMovimiento.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -506,7 +506,7 @@ registrarMovimiento.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
     /**
 * @see \App\Http\Controllers\CajaController::registrarMovimiento
- * @see app/Http/Controllers/CajaController.php:1641
+ * @see app/Http/Controllers/CajaController.php:1634
  * @route '/cajas/movimientos'
  */
     const registrarMovimientoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -516,7 +516,7 @@ registrarMovimiento.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
             /**
 * @see \App\Http\Controllers\CajaController::registrarMovimiento
- * @see app/Http/Controllers/CajaController.php:1641
+ * @see app/Http/Controllers/CajaController.php:1634
  * @route '/cajas/movimientos'
  */
         registrarMovimientoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -527,7 +527,7 @@ registrarMovimiento.post = (options?: RouteQueryOptions): RouteDefinition<'post'
     registrarMovimiento.form = registrarMovimientoForm
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimientoJson
- * @see app/Http/Controllers/CajaController.php:1759
+ * @see app/Http/Controllers/CajaController.php:1752
  * @route '/cajas/movimientos-json'
  */
 export const registrarMovimientoJson = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -542,7 +542,7 @@ registrarMovimientoJson.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimientoJson
- * @see app/Http/Controllers/CajaController.php:1759
+ * @see app/Http/Controllers/CajaController.php:1752
  * @route '/cajas/movimientos-json'
  */
 registrarMovimientoJson.url = (options?: RouteQueryOptions) => {
@@ -551,7 +551,7 @@ registrarMovimientoJson.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::registrarMovimientoJson
- * @see app/Http/Controllers/CajaController.php:1759
+ * @see app/Http/Controllers/CajaController.php:1752
  * @route '/cajas/movimientos-json'
  */
 registrarMovimientoJson.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -561,7 +561,7 @@ registrarMovimientoJson.post = (options?: RouteQueryOptions): RouteDefinition<'p
 
     /**
 * @see \App\Http\Controllers\CajaController::registrarMovimientoJson
- * @see app/Http/Controllers/CajaController.php:1759
+ * @see app/Http/Controllers/CajaController.php:1752
  * @route '/cajas/movimientos-json'
  */
     const registrarMovimientoJsonForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -571,7 +571,7 @@ registrarMovimientoJson.post = (options?: RouteQueryOptions): RouteDefinition<'p
 
             /**
 * @see \App\Http\Controllers\CajaController::registrarMovimientoJson
- * @see app/Http/Controllers/CajaController.php:1759
+ * @see app/Http/Controllers/CajaController.php:1752
  * @route '/cajas/movimientos-json'
  */
         registrarMovimientoJsonForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
