@@ -8,6 +8,7 @@ import { useGananciasFilters } from '@/application/hooks/useGananciasFilters';
 import { EstadisticasCard } from './components/EstadisticasCard';
 import { FiltrosCard } from './components/FiltrosCard';
 import { GananciasTable } from './components/GananciasTable';
+import { PaginationLinks } from './components/PaginationLinks';
 
 export default function ReporteGananciasIndex({
   ganancias,
@@ -146,24 +147,7 @@ export default function ReporteGananciasIndex({
         <GananciasTable ganancias={ganancias} />
 
         {/* Paginación */}
-        {ganancias.links && ganancias.links.length > 0 && (
-          <div className="flex items-center justify-center gap-2 py-4">
-            {ganancias.links.map((link, index) => (
-              <Link
-                key={index}
-                href={link.url || '#'}
-                className={`px-3 py-1 rounded border text-sm font-medium ${
-                  link.active
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
-                } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={!link.url}
-              >
-                {link.label.replace(/^&laquo;\s/, '').replace(/\s&raquo;$/, '')}
-              </Link>
-            ))}
-          </div>
-        )}
+        <PaginationLinks links={ganancias.links} />
       </div>
     </AppLayout>
   );
