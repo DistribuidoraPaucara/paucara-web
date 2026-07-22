@@ -198,11 +198,16 @@ class ReservaDistribucionService
                     $cantidadReservadaDespues = (float) $stock_producto->cantidad_reservada;
 
                     // Crear reserva para este lote
+                    // ✅ NUEVO (2026-07-22): fecha_reserva = fecha_entrega_solicitada de la proforma
+                    $fechaReserva = $proforma->fecha_entrega_solicitada
+                        ? \Carbon\Carbon::parse($proforma->fecha_entrega_solicitada)->startOfDay()
+                        : now();
+
                     $reserva = ReservaProforma::create([
                         'proforma_id' => $proforma->id,
                         'stock_producto_id' => $stock_producto->id,
                         'cantidad_reservada' => $cantidad_a_reservar,
-                        'fecha_reserva' => now(),
+                        'fecha_reserva' => $fechaReserva,
                         'fecha_expiracion' => $fecha_vencimiento,  // ✅ CORREGIDO (2026-04-05): Usar fecha de vencimiento de proforma
                         'estado' => ReservaProforma::ACTIVA,
                     ]);
