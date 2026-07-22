@@ -25,6 +25,7 @@ class PrecioProducto extends Model
         'porcentaje_ganancia',
         'es_precio_base',
         'motivo_cambio',
+        'fecha_ultima_actualizacion',
     ];
 
     protected function casts(): array
@@ -37,6 +38,7 @@ class PrecioProducto extends Model
             'margen_ganancia'     => 'decimal:2',
             'porcentaje_ganancia' => 'decimal:2',
             'es_precio_base'      => 'boolean',
+            'fecha_ultima_actualizacion' => 'datetime',
         ];
     }
 
