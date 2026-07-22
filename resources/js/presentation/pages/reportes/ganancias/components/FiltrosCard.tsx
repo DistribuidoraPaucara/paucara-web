@@ -131,28 +131,26 @@ export function FiltrosCard({
         </div>
 
         {/* Resumen de fechas seleccionadas */}
-        {(formData.fecha_desde || formData.fecha_hasta) && (
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Período de búsqueda:</strong>{' '}
-              {formData.fecha_desde
-                ? new Date(formData.fecha_desde).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })
-                : 'Inicio'}
-              {' hasta '}
-              {formData.fecha_hasta
-                ? new Date(formData.fecha_hasta).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })
-                : 'Hoy'}
-            </p>
-          </div>
-        )}
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            <strong>📅 Período de búsqueda:</strong>{' '}
+            {formData.fecha_desde
+              ? new Date(formData.fecha_desde).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+              : 'Sin fecha inicial'}
+            {' hasta '}
+            {formData.fecha_hasta
+              ? new Date(formData.fecha_hasta).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+              : 'Sin fecha final'}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
