@@ -183,11 +183,16 @@ class ReportePreciosController extends Controller
             $ganancia['tipo_precio'] = $tipoPrecio ? [
                 'id' => $tipoPrecio->id,
                 'nombre' => $tipoPrecio->nombre,
-                'color' => $tipoPrecio->color,
+                'color' => $tipoPrecio->color ?? 'secondary',
                 'configuracion' => [
                     'icono' => '💰',
                 ]
-            ] : null;
+            ] : [
+                'id' => $ganancia['tipo_precio_id'],
+                'nombre' => 'Tipo desconocido',
+                'color' => 'secondary',
+                'configuracion' => ['icono' => '❓']
+            ];
 
             $ganancia['producto'] = $producto ? [
                 'id' => $producto->id,
@@ -197,10 +202,18 @@ class ReportePreciosController extends Controller
                     'id' => $ganancia['categoria']['id'],
                     'nombre' => $ganancia['categoria']['nombre'],
                 ]
-            ] : null;
+            ] : [
+                'id' => $ganancia['producto_id'],
+                'nombre' => 'Producto desconocido',
+                'sku' => '',
+                'categoria' => $ganancia['categoria']
+            ];
 
             return $ganancia;
-        });
+        })->filter(function ($ganancia) {
+            // Filtrar solo ganancias con datos válidos
+            return $ganancia['producto'] && $ganancia['tipo_precio'] && $ganancia['ganancia_total'] != 0;
+        })->values();
 
         // Estadísticas de ganancias
         $estadisticasGanancias = [
