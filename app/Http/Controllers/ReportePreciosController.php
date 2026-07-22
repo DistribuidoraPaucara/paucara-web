@@ -224,10 +224,7 @@ class ReportePreciosController extends Controller
 
         // Estadísticas de ganancias
         $estadisticasGanancias = [
-            'total_productos_vendidos' => $ganancias->count(),
-            'cantidad_total_vendida' => $ganancias->sum('cantidad_vendida'),
-            'ingresos_totales' => $ganancias->sum('ingresos_totales'),
-            'costos_totales' => $ganancias->sum('costos_totales'),
+            'total_productos' => $ganancias->count(),
             'ganancia_total' => $ganancias->sum('ganancia'),
             'ganancia_promedio' => $ganancias->avg('ganancia') ?? 0,
             'porcentaje_promedio' => $ganancias->avg('porcentaje_ganancia') ?? 0,
