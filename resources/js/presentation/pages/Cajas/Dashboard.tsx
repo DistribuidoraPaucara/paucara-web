@@ -180,6 +180,13 @@ export default function Dashboard({
     );
   };
 
+  // ✅ NUEVO (2026-07-22): Cuando cambia filtroEstado, recargar datos desde backend
+  useEffect(() => {
+    if (filtroEstado !== 'todos') {
+      router.get('/cajas/admin/dashboard', { estado: filtroEstado });
+    }
+  }, [filtroEstado]);
+
   // ✅ NUEVO: Detectar cambios de tema en tiempo real
   useEffect(() => {
     const checkDarkMode = () => {
@@ -434,207 +441,79 @@ export default function Dashboard({
               {/* Filtros Avanzados */}
               {filtrosVisibles && (
                 <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-lg space-y-4 border border-gray-200 dark:border-slate-700">
-                  {/* Fila 1: Estado de Caja */}
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                      Estado de Caja
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant={filtroEstado === 'todos' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstado('todos')}
-                        className={filtroEstado === 'todos' ? 'dark:bg-blue-700 dark:hover:bg-blue-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        Todos
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={filtroEstado === 'abierta' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstado('abierta')}
-                        className={filtroEstado === 'abierta' ? 'dark:bg-green-700 dark:hover:bg-green-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        🟢 Abierta
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={filtroEstado === 'cerrada' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstado('cerrada')}
-                        className={filtroEstado === 'cerrada' ? 'dark:bg-red-700 dark:hover:bg-red-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        🔴 Cerrada
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Fila 2: Estado del Cierre */}
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                      Estado del Cierre
-                    </p>
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant={filtroEstadoCierre === 'todos' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstadoCierre('todos')}
-                        className={filtroEstadoCierre === 'todos' ? 'dark:bg-blue-700 dark:hover:bg-blue-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        Todos
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={filtroEstadoCierre === 'pendiente' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstadoCierre('pendiente')}
-                        className={filtroEstadoCierre === 'pendiente' ? 'dark:bg-yellow-700 dark:hover:bg-yellow-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        ⏳ Pendiente
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={filtroEstadoCierre === 'consolidada' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstadoCierre('consolidada')}
-                        className={filtroEstadoCierre === 'consolidada' ? 'dark:bg-green-700 dark:hover:bg-green-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        ✅ Consolidada
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={filtroEstadoCierre === 'rechazada' ? 'default' : 'outline'}
-                        onClick={() => setFiltroEstadoCierre('rechazada')}
-                        className={filtroEstadoCierre === 'rechazada' ? 'dark:bg-red-700 dark:hover:bg-red-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                      >
-                        ❌ Rechazada
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Fila 3: Rango de Montos */}
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                      Rango de Montos
-                    </p>
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-gray-600 dark:text-gray-400">Min:</label>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          value={montoMin}
-                          onChange={(e) => setMontoMin(e.target.value)}
-                          className="w-24 px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-gray-600 dark:text-gray-400">Max:</label>
-                        <input
-                          type="number"
-                          placeholder="∞"
-                          value={montoMax}
-                          onChange={(e) => setMontoMax(e.target.value)}
-                          className="w-24 px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        />
-                      </div>
-                      {(montoMin || montoMax) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setMontoMin('');
-                            setMontoMax('');
-                          }}
-                          className="text-xs dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                        >
-                          Limpiar
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Fila 4: Rango de Fechas */}
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                      Rango de Fechas
-                    </p>
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-gray-600 dark:text-gray-400">Desde:</label>
-                        <input
-                          type="date"
-                          value={fechaDesde}
-                          onChange={(e) => setFechaDesde(e.target.value)}
-                          className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-gray-600 dark:text-gray-400">Hasta:</label>
-                        <input
-                          type="date"
-                          value={fechaHasta}
-                          onChange={(e) => setFechaHasta(e.target.value)}
-                          className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        />
-                      </div>
-                      {(fechaDesde || fechaHasta) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setFechaDesde('');
-                            setFechaHasta('');
-                          }}
-                          className="text-xs dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                        >
-                          Limpiar
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Fila 5: Ordenamiento y Discrepancias */}
-                  <div className="flex gap-4 flex-wrap items-end">
-                    <div className="flex-1 min-w-[200px]">
+                  <div className="flex flex-wrap gap-4">
+                    {/* Fila 1: Estado de Caja */}
+                    <div>
                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                        Ordenar por
+                        Estado de Caja
                       </p>
-                      <select
-                        value={ordenarPor}
-                        onChange={(e) => setOrdenarPor(e.target.value as 'monto' | 'fecha' | 'usuario' | 'estado')}
-                        className="w-full px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      >
-                        <option value="fecha">📅 Por Fecha (más reciente)</option>
-                        <option value="monto">💰 Por Monto (mayor primero)</option>
-                        <option value="usuario">👤 Por Usuario</option>
-                        <option value="estado">📊 Por Estado</option>
-                      </select>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant={filtroEstado === 'todos' ? 'default' : 'outline'}
+                          onClick={() => setFiltroEstado('todos')}
+                          className={filtroEstado === 'todos' ? 'dark:bg-blue-700 dark:hover:bg-blue-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
+                        >
+                          Todos
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={filtroEstado === 'abierta' ? 'default' : 'outline'}
+                          onClick={() => setFiltroEstado('abierta')}
+                          className={filtroEstado === 'abierta' ? 'dark:bg-green-700 dark:hover:bg-green-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
+                        >
+                          🟢 Abierta
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={filtroEstado === 'cerrada' ? 'default' : 'outline'}
+                          onClick={() => setFiltroEstado('cerrada')}
+                          className={filtroEstado === 'cerrada' ? 'dark:bg-red-700 dark:hover:bg-red-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
+                        >
+                          🔴 Cerrada
+                        </Button>
+                      </div>
                     </div>
 
-                    <Button
-                      size="sm"
-                      variant={soloConDiscrepancias ? 'default' : 'outline'}
-                      onClick={() => setSoloConDiscrepancias(!soloConDiscrepancias)}
-                      className={soloConDiscrepancias ? 'dark:bg-orange-700 dark:hover:bg-orange-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                    >
-                      ⚠️ Con Discrepancias
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setFiltroEstado('todos');
-                        setFiltroEstadoCierre('todos');
-                        setMontoMin('');
-                        setMontoMax('');
-                        setFechaDesde('');
-                        setFechaHasta('');
-                        setOrdenarPor('fecha');
-                        setSoloConDiscrepancias(false);
-                        setSearch('');
-                      }}
-                      className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800"
-                    >
-                      ↺ Limpiar Filtros
-                    </Button>
+                    {/* Fila 4: Rango de Fechas */}
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                        Rango de Fechas
+                      </p>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-600 dark:text-gray-400">Desde:</label>
+                          <input
+                            type="date"
+                            value={fechaDesde}
+                            onChange={(e) => setFechaDesde(e.target.value)}
+                            className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-600 dark:text-gray-400">Hasta:</label>
+                          <input
+                            type="date"
+                            value={fechaHasta}
+                            onChange={(e) => setFechaHasta(e.target.value)}
+                            className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                          />
+                        </div>
+                        {(fechaDesde || fechaHasta) && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setFechaDesde('');
+                              setFechaHasta('');
+                            }}
+                            className="text-xs dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                          >
+                            Limpiar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Resumen de Filtros */}

@@ -908,34 +908,45 @@ class CajaController extends Controller
     /**
      * ADMIN: Dashboard de todas las cajas
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        // ✅ NUEVO (2026-07-22): Obtener SOLO cajas abiertas
-        // Aperturas sin cierre (cajas activamente en uso)
-        $aperturasAbiertas = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
-            ->whereDoesntHave('cierre') // Solo aperturas SIN cierre (abiertas)
-            ->orderBy('fecha', 'desc')
-            ->get()
-            ->groupBy('caja_id')
-            ->map(fn($grupo) => $grupo->first()); // Tomar la más reciente por caja
+        // ✅ NUEVO (2026-07-22): Filtro por estado de caja
+        $filtroEstado = $request->query('estado', 'abierta'); // Por defecto: abierta
 
-        // Obtener IDs de cajas abiertas
-        $cajaAbiertasIds = $aperturasAbiertas->pluck('caja_id')->toArray();
+        // Obtener aperturas según filtro
+        if ($filtroEstado === 'cerrada') {
+            // Aperturas CON cierre (cajas cerradas)
+            $aperturasColleccion = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
+                ->whereHas('cierre') // Solo aperturas CON cierre (cerradas)
+                ->orderBy('fecha', 'desc')
+                ->get()
+                ->groupBy('caja_id')
+                ->map(fn($grupo) => $grupo->first()); // Tomar la más reciente por caja
+        } else {
+            // Aperturas SIN cierre (cajas abiertas) - DEFAULT
+            $aperturasColleccion = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
+                ->whereDoesntHave('cierre') // Solo aperturas SIN cierre (abiertas)
+                ->orderBy('fecha', 'desc')
+                ->get()
+                ->groupBy('caja_id')
+                ->map(fn($grupo) => $grupo->first()); // Tomar la más reciente por caja
+        }
 
-        // ✅ Obtener solo cajas que están abiertas
+        // Obtener IDs de cajas según filtro
+        $cajaIds = $aperturasColleccion->pluck('caja_id')->toArray();
+
+        // ✅ Obtener cajas según estado
         $cajas = Caja::with(['usuario'])
-            ->whereIn('id', $cajaAbiertasIds)
+            ->whereIn('id', $cajaIds)
             ->get();
 
-        // ✅ NUEVO: Obtener aperturas de HOY para la tabla (pueden estar cerradas o abiertas)
-        // Pero aquí filtramos solo las abiertas también
-        $aperturasDiarias = AperturaCaja::whereDate('fecha', today())
-            ->with(['cierre.estadoCierre'])
-            ->whereDoesntHave('cierre') // Solo abiertas
+        // ✅ NUEVO: Obtener aperturas para la tabla
+        $aperturasDiarias = AperturaCaja::with(['cierre.estadoCierre'])
+            ->whereDate('fecha', today())
             ->get();
 
-        // ✅ Fusionar aperturas abiertas
-        $aperturasColleccion = $aperturasAbiertas->union($aperturasDiarias)->unique('id');
+        // ✅ Fusionar aperturas
+        $aperturasColleccion = $aperturasColleccion->union($aperturasDiarias)->unique('id');
 
         // ✅ NUEVO (2026-07-22): Métricas solo de cajas abiertas
         $cajas_abiertas = $cajas->count(); // Ya solo tiene cajas abiertas
