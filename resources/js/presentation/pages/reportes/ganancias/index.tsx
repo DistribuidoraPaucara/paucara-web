@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Card, CardContent } from '@/presentation/components/ui/card';
@@ -16,6 +17,25 @@ export default function ReporteGananciasIndex({
   categorias,
   error
 }: GananciasPageProps) {
+  // ✅ Logging para ver datos del backend
+  useEffect(() => {
+    console.group('💰 [Reporte Ganancias] Datos del Backend');
+    console.log('📊 Estadísticas:', estadisticas);
+    console.log('📋 Total ganancias:', ganancias.length);
+    console.table(ganancias.slice(0, 5).map((g: any) => ({
+      producto: g.producto?.nombre || 'N/A',
+      tipo_precio: g.tipo_precio?.nombre || 'N/A',
+      cantidad_vendida: g.cantidad_vendida,
+      precio_costo: g.precio_costo,
+      precio_venta: g.precio_venta,
+      ganancia: g.ganancia,
+      porcentaje: g.porcentaje_ganancia?.toFixed(2) + '%',
+    })));
+    console.log('🎯 Filtros:', filtros);
+    console.log('⚠️ Error:', error);
+    console.groupEnd();
+  }, [ganancias, estadisticas, filtros, error]);
+
   const { formData, handleFilter, clearFilters, updateField, ALL_VALUE } = useGananciasFilters(filtros);
 
   const handleExport = () => {
