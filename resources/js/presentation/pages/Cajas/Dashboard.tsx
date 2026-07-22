@@ -220,6 +220,78 @@ export default function Dashboard({
 
   const colors = isDark ? chartColors.dark : chartColors.light;
 
+  // ✅ NUEVO: Definir funciones auxiliares ANTES de usarlas
+  const obtenerEstadoCaja = (cajaId: number) => {
+    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
+
+    // Si no hay apertura registrada -> cerrada
+    if (!apertura) {
+      return 'cerrada';
+    }
+
+    // Si hay apertura Y tiene cierre registrado -> cerrada
+    if (apertura.cierre) {
+      return 'cerrada';
+    }
+
+    // Si hay apertura SIN cierre -> abierta (sin importar si es de hoy o días anteriores)
+    return 'abierta';
+  };
+
+  const obtenerMontoCaja = (cajaId: number) => {
+    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
+    if (!apertura) return 0;
+    if (apertura.cierre) return Number(apertura.cierre.monto_real) || 0;
+    return Number(apertura.monto_apertura) || 0;
+  };
+
+  const obtenerUltimaActividad = (cajaId: number, cierresPendientes: number) => {
+    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
+
+    if (!apertura) {
+      return {
+        texto: 'Sin actividad',
+        tipo: 'vacia'
+      };
+    }
+
+    // Si hay caja abierta sin cerrar
+    if (!apertura.cierre) {
+      const horaApertura = new Date(apertura.fecha).toLocaleTimeString('es-BO', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      return {
+        texto: `⏱️ Abierta a las ${horaApertura}`,
+        tipo: 'abierta'
+      };
+    }
+
+    // Si hay cierre pero también cierres pendientes
+    if (cierresPendientes > 0) {
+      const horaCierre = new Date(apertura.cierre.created_at || apertura.fecha).toLocaleTimeString('es-BO', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const estado = apertura.cierre.estado ? `[${apertura.cierre.estado}]` : '';
+      return {
+        texto: `🕐 Cerrada ${horaCierre} ${estado}`,
+        tipo: 'cerrada-pendiente'
+      };
+    }
+
+    // Si hay cierre sin pendientes
+    const horaCierre = new Date(apertura.cierre.created_at || apertura.fecha).toLocaleTimeString('es-BO', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const estado = apertura.cierre.estado ? `[${apertura.cierre.estado}]` : '';
+    return {
+      texto: `✅ Cerrada ${horaCierre} ${estado}`,
+      tipo: 'cerrada'
+    };
+  };
+
   // ✅ Filtrado completo con múltiples criterios
   let cajasFiltradas = cajas.filter((caja) => {
     // 1️⃣ Búsqueda por texto
@@ -296,79 +368,6 @@ export default function Dashboard({
     }
   });
 
-  // ✅ MEJORADO: Determinar estado de la caja (abierta/cerrada)
-  // Nota: aperturas_hoy ahora incluye aperturas sin cierre de días anteriores
-  const obtenerEstadoCaja = (cajaId: number) => {
-    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
-
-    // Si no hay apertura registrada -> cerrada
-    if (!apertura) {
-      return 'cerrada';
-    }
-
-    // Si hay apertura Y tiene cierre registrado -> cerrada
-    if (apertura.cierre) {
-      return 'cerrada';
-    }
-
-    // Si hay apertura SIN cierre -> abierta (sin importar si es de hoy o días anteriores)
-    return 'abierta';
-  };
-
-  const obtenerMontoCaja = (cajaId: number) => {
-    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
-    if (!apertura) return 0;
-    if (apertura.cierre) return Number(apertura.cierre.monto_real) || 0;
-    return Number(apertura.monto_apertura) || 0;
-  };
-
-  // ✅ NUEVO: Obtener información de última actividad
-  const obtenerUltimaActividad = (cajaId: number, cierresPendientes: number) => {
-    const apertura = aperturas_hoy.find((a) => a.caja_id === cajaId);
-
-    if (!apertura) {
-      return {
-        texto: 'Sin actividad',
-        tipo: 'vacia'
-      };
-    }
-
-    // Si hay caja abierta sin cerrar
-    if (!apertura.cierre) {
-      const horaApertura = new Date(apertura.fecha).toLocaleTimeString('es-BO', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      return {
-        texto: `⏱️ Abierta a las ${horaApertura}`,
-        tipo: 'abierta'
-      };
-    }
-
-    // Si hay cierre pero también cierres pendientes
-    if (cierresPendientes > 0) {
-      const horaCierre = new Date(apertura.cierre.created_at || apertura.fecha).toLocaleTimeString('es-BO', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      const estado = apertura.cierre.estado ? `[${apertura.cierre.estado}]` : '';
-      return {
-        texto: `🕐 Cerrada ${horaCierre} ${estado}`,
-        tipo: 'cerrada-pendiente'
-      };
-    }
-
-    // Si hay cierre sin pendientes
-    const horaCierre = new Date(apertura.cierre.created_at || apertura.fecha).toLocaleTimeString('es-BO', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    const estado = apertura.cierre.estado ? `[${apertura.cierre.estado}]` : '';
-    return {
-      texto: `✅ Cerrada ${horaCierre} ${estado}`,
-      tipo: 'cerrada'
-    };
-  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
