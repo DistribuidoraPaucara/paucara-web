@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Card, CardContent } from '@/presentation/components/ui/card';
@@ -18,9 +18,15 @@ export default function ReporteGananciasIndex({
   error
 }: GananciasPageProps) {
   const { formData, handleFilter, clearFilters, updateField, ALL_VALUE } = useGananciasFilters(filtros);
+  const isFirstRenderRef = useRef(true);
 
-  // ✅ Filtrado automático cuando cambian las fechas
+  // ✅ Filtrado automático cuando cambian las fechas (pero no en el primer render)
   useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+
     const hasDateFilters = formData.fecha_desde || formData.fecha_hasta;
     if (hasDateFilters) {
       handleFilter();
