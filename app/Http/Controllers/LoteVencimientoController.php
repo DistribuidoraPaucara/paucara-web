@@ -46,7 +46,26 @@ class LoteVencimientoController extends Controller
         $sortOrder = $request->get('order', 'asc');
         $query->orderBy($sortField, $sortOrder);
 
-        $lotes = $query->paginate(15)->withQueryString();
+        $lotesPaginados = $query->paginate(15)->withQueryString();
+
+        // Transformar cada lote para agregar campos calculados
+        $lotes = $lotesPaginados->through(function ($stock) {
+            return [
+                'id' => $stock->id,
+                'producto' => $stock->producto,
+                'almacen' => $stock->almacen,
+                'lote' => $stock->lote,
+                'fecha_vencimiento' => $stock->fecha_vencimiento?->toDateString(),
+                'cantidad' => $stock->cantidad,
+                'cantidad_disponible' => $stock->cantidad_disponible,
+                'cantidad_reservada' => $stock->cantidad_reservada,
+                'precio_costo' => $stock->precio_costo,
+                'valor_total' => $stock->cantidad * ($stock->precio_costo ?? 0),
+                'dias_para_vencer' => $stock->diasParaVencer(),
+                'estado_vencimiento' => $this->determinarEstadoVencimiento($stock),
+                'esta_vencido' => $stock->estaVencido(),
+            ];
+        });
 
         // Estadísticas
         $todosLotes = StockProducto::whereNotNull('lote');

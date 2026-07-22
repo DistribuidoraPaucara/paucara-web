@@ -533,7 +533,7 @@ class InventarioController extends Controller
         $almacenId = $request->integer('almacen_id');
         $estado = (string) $request->string('estado', ''); // vencido, critico, urgente, atencion, vigente, todos
         $busqueda = (string) $request->string('busqueda', '');
-        $soloConStock = $request->boolean('solo_con_stock', false);
+        $soloConStock = $request->boolean('solo_con_stock', true); // Por defecto: mostrar solo con stock
 
         $query = StockProducto::with(['producto.categoria', 'almacen'])
             ->withoutTrashed()

@@ -43,6 +43,7 @@ interface PageProps extends InertiaPageProps {
         almacen_id: number | null;
         estado: string;
         busqueda: string;
+        solo_con_stock: boolean;
     };
 }
 
@@ -66,7 +67,7 @@ export default function ControlVencimientos() {
     const [busqueda, setBusqueda] = useState(filters.busqueda || '');
     const [almacenId, setAlmacenId] = useState<number | null>(filters.almacen_id || null);
     const [estado, setEstado] = useState(filters.estado || 'todos');
-    const [soloConStock, setSoloConStock] = useState(filters.solo_con_stock === 'true' || filters.solo_con_stock === true);
+    const [soloConStock, setSoloConStock] = useState(filters.solo_con_stock !== false && filters.solo_con_stock !== 'false');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     if (!can('inventario.proximos-vencer')) {
@@ -166,7 +167,7 @@ export default function ControlVencimientos() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Control de Vencimientos" />
 
-            <div className="flex flex-col gap-6 p-4">
+            <div className="flex flex-col gap-2 p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-2">
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
@@ -318,34 +319,34 @@ export default function ControlVencimientos() {
                                 <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Producto
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Codigo
                                         </th>
-                                        {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoría
                                         </th> */}
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Almacén
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Lote
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Stock Total
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Disponible
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Fecha Vencimiento
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Días
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Estado
                                         </th>
                                     </tr>
@@ -369,47 +370,47 @@ export default function ControlVencimientos() {
                                         };
                                         return (
                                         <tr key={producto.id} className={getRowBgColor()}>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                     {producto.producto.nombre}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm font-mono text-gray-600 dark:text-gray-400">
                                                     {producto.producto.sku}
                                                 </div>
                                             </td>
-                                            {/* <td className="px-6 py-4 whitespace-nowrap">
+                                            {/* <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                                     {producto.producto.categoria.nombre}
                                                 </div>
                                             </td> */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                                     {producto.almacen.nombre}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm font-mono text-gray-900 dark:text-gray-100">
                                                     {producto.lote || '—'}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                                                     {producto.stock_actual}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-600 dark:text-gray-400">
                                                     {producto.cantidad_disponible}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900 dark:text-gray-100">
                                                     {formatearFecha(producto.fecha_vencimiento)}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <div className={`text-sm font-medium ${producto.dias_para_vencer <= 7
                                                     ? 'text-red-600 dark:text-red-400'
                                                     : producto.dias_para_vencer <= 15
@@ -421,7 +422,7 @@ export default function ControlVencimientos() {
                                                     {Math.round(producto.dias_para_vencer)} d
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-2 py-2 whitespace-nowrap">
                                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${obtenerClasesEstado(producto.estado_vencimiento)}`}>
                                                     {obtenerLabelEstado(producto.estado_vencimiento)}
                                                 </span>
