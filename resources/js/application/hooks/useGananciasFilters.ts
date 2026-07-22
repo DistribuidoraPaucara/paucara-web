@@ -21,9 +21,23 @@ export function useGananciasFilters(
   initialFilters: GananciasFilterOptions = {},
   onNavigate?: (params: Record<string, string>) => void
 ) {
+  // Establecer fechas por defecto: del 1° del mes actual hasta hoy
+  const hoy = new Date();
+  const primerDiaDelMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fechaDesdeDefault = formatDate(primerDiaDelMes);
+  const fechaHastaDefault = formatDate(hoy);
+
   const [formData, setFormData] = useState<FilterState>({
-    fecha_desde: initialFilters.fecha_desde || '',
-    fecha_hasta: initialFilters.fecha_hasta || '',
+    fecha_desde: initialFilters.fecha_desde || fechaDesdeDefault,
+    fecha_hasta: initialFilters.fecha_hasta || fechaHastaDefault,
     tipo_precio_id: initialFilters.tipo_precio_id?.toString() || ALL_VALUE,
     categoria_id: initialFilters.categoria_id?.toString() || ALL_VALUE,
   });
