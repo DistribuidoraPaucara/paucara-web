@@ -691,16 +691,16 @@ export default function Dashboard({
                           </Badge>
                         </TableCell>
                         <TableCell className="font-semibold text-right dark:text-white">
-                          ${apertura?.monto_apertura?.toFixed(2) || '0.00'}
+                          Bs {apertura?.monto_apertura?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell className="text-right dark:text-green-400 font-semibold">
-                          ${apertura?.ingresos?.toFixed(2) || '0.00'}
+                          Bs {apertura?.ingresos?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell className="text-right dark:text-red-400 font-semibold">
-                          ${apertura?.egresos?.toFixed(2) || '0.00'}
+                          Bs {apertura?.egresos?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell className="text-right dark:text-purple-400 font-bold text-lg">
-                          ${apertura?.efectivo_esperado?.toFixed(2) || '0.00'}
+                          Bs {apertura?.efectivo_esperado?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell>
                           {(() => {
@@ -903,19 +903,19 @@ export default function Dashboard({
                               <div>
                                 <p className="text-gray-600 dark:text-gray-400">Esperado</p>
                                 <p className="font-semibold text-gray-900 dark:text-white">
-                                  ${caja.monto_esperado.toFixed(2)}
+                                  Bs {caja.monto_esperado.toFixed(2)}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-600 dark:text-gray-400">Real</p>
                                 <p className="font-semibold text-gray-900 dark:text-white">
-                                  ${caja.monto_real.toFixed(2)}
+                                  Bs {caja.monto_real.toFixed(2)}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-600 dark:text-gray-400">Diferencia</p>
                                 <p className={`font-semibold ${caja.diferencia === 0 ? 'text-green-700 dark:text-green-300' : 'text-orange-700 dark:text-orange-300'}`}>
-                                  ${caja.diferencia.toFixed(2)}
+                                  Bs {caja.diferencia.toFixed(2)}
                                 </p>
                               </div>
                             </div>

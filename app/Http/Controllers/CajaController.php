@@ -910,27 +910,35 @@ class CajaController extends Controller
      */
     public function dashboard()
     {
-        $cajas = Caja::with(['usuario'])->get();
-
-        // ✅ MEJORADO: Obtener apertura más reciente de CADA CAJA (sin importar si es de hoy)
-        // Esto detecta cajas abiertas desde días anteriores que aún no han sido cerradas
-        $aperturasMasRecientes = AperturaCaja::with(['cierre.estadoCierre'])
+        // ✅ NUEVO (2026-07-22): Obtener SOLO cajas abiertas
+        // Aperturas sin cierre (cajas activamente en uso)
+        $aperturasAbiertas = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
             ->whereDoesntHave('cierre') // Solo aperturas SIN cierre (abiertas)
             ->orderBy('fecha', 'desc')
             ->get()
             ->groupBy('caja_id')
             ->map(fn($grupo) => $grupo->first()); // Tomar la más reciente por caja
 
-        // ✅ NUEVO: Obtener aperturas de HOY para la tabla (pueden estar cerradas o abiertas)
-        $aperturasDiarias = AperturaCaja::whereDate('fecha', today())
-            ->with(['cierre.estadoCierre'])
+        // Obtener IDs de cajas abiertas
+        $cajaAbiertasIds = $aperturasAbiertas->pluck('caja_id')->toArray();
+
+        // ✅ Obtener solo cajas que están abiertas
+        $cajas = Caja::with(['usuario'])
+            ->whereIn('id', $cajaAbiertasIds)
             ->get();
 
-        // ✅ NUEVO: Fusionar aperturas - priorizar aperturas sin cerrar
-        $aperturasColleccion = $aperturasMasRecientes->union($aperturasDiarias)->unique('id');
+        // ✅ NUEVO: Obtener aperturas de HOY para la tabla (pueden estar cerradas o abiertas)
+        // Pero aquí filtramos solo las abiertas también
+        $aperturasDiarias = AperturaCaja::whereDate('fecha', today())
+            ->with(['cierre.estadoCierre'])
+            ->whereDoesntHave('cierre') // Solo abiertas
+            ->get();
 
-        // ✅ NUEVO: Calcular métricas ANTES de transformar a arrays
-        $cajas_abiertas = $aperturasColleccion->filter(fn($a) => ! $a->cierre)->count();
+        // ✅ Fusionar aperturas abiertas
+        $aperturasColleccion = $aperturasAbiertas->union($aperturasDiarias)->unique('id');
+
+        // ✅ NUEVO (2026-07-22): Métricas solo de cajas abiertas
+        $cajas_abiertas = $cajas->count(); // Ya solo tiene cajas abiertas
 
         // ✅ NUEVO: Obtener información de cierres pendientes por usuario
         $cierresPendientesPorUsuario = CierreCaja::where('estado_cierre_id', \App\Models\EstadoCierre::obtenerIdPendiente())
@@ -946,7 +954,7 @@ class CajaController extends Controller
                 'id'                 => $caja->id,
                 'user_id'            => $caja->user_id,
                 'nombre'             => $caja->nombre,
-                'ubicacion'          => $caja->ubicacion,
+                'ubicacion'          => $caja->ubicacion ?? '',
                 'usuario'            => $caja->usuario,
                 'cierres_pendientes' => $cierresPendientes ? $cierresPendientes->cantidad : 0,
             ];
