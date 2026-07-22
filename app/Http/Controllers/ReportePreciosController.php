@@ -151,28 +151,35 @@ class ReportePreciosController extends Controller
                     ],
                     'tipo_precio_id' => $detalle->tipo_precio_id,
                     'cantidad_vendida' => 0,
-                    'precio_venta_unitario' => $detalle->precio_unitario,
-                    'precio_costo_unitario' => $precioUnitarioCosto,
+                    'precio_venta' => $detalle->precio_unitario,
+                    'precio_costo' => $precioUnitarioCosto,
                     'ganancia_unitaria' => $gananciaUnitaria,
-                    'ganancia_total' => 0,
-                    'porcentaje_ganancia' => $porcentajeGanancia,
+                    'ganancia' => 0,
+                    'porcentaje_ganancia' => 0,
                     'ingresos_totales' => 0,
                     'costos_totales' => 0,
-                    'primera_venta' => $detalle->fecha_venta,
-                    'ultima_venta' => $detalle->fecha_venta,
+                    'fecha_actualizacion' => $detalle->fecha_venta,
                 ];
             }
 
             $gananciasMap[$key]['cantidad_vendida'] += $detalle->cantidad;
-            $gananciasMap[$key]['ganancia_total'] += $gananciaTotal;
+            $gananciasMap[$key]['ganancia'] += $gananciaTotal;
             $gananciasMap[$key]['ingresos_totales'] += $detalle->precio_unitario * $detalle->cantidad;
             $gananciasMap[$key]['costos_totales'] += $precioUnitarioCosto * $detalle->cantidad;
-            $gananciasMap[$key]['ultima_venta'] = $detalle->fecha_venta;
+            $gananciasMap[$key]['fecha_actualizacion'] = $detalle->fecha_venta;
         }
+
+        // Recalcular porcentaje_ganancia y convertir a colección
+        $gananciasMap = array_map(function ($ganancia) {
+            $ganancia['porcentaje_ganancia'] = $ganancia['costos_totales'] > 0
+                ? ($ganancia['ganancia'] / $ganancia['costos_totales']) * 100
+                : 0;
+            return $ganancia;
+        }, $gananciasMap);
 
         // Convertir a colección y ordenar por ganancia
         $ganancias = collect($gananciasMap)
-            ->sortByDesc('ganancia_total')
+            ->sortByDesc('ganancia')
             ->values();
 
         // Cargar relaciones de tipo_precio y producto para mejor presentación
