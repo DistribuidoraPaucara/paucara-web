@@ -39,7 +39,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         producto_id: '', // ✅ NUEVO: Filtro por producto (ID exacto)
         producto_busqueda: '', // ✅ NUEVO (2026-02-12): Búsqueda flexible por ID, SKU o nombre
         vencimiento: '',
-        fecha_creacion_desde: today,
+        fecha_creacion_desde: '',
         fecha_creacion_hasta: '',
         // ✅ NUEVO (2026-07-18): Filtro por fecha de reserva
         fecha_reserva_desde: today,
@@ -292,7 +292,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
             {/* Filtros Avanzados */}
             <div className="p-2">
                 <button onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} className="flex w-full items-center justify-between text-left">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900 dark:text-white">🎛️ Filtros Avanzados</h3>
                         {contarFiltrosActivos() > 0 && (
                             <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
@@ -308,10 +308,12 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                         {/* 🎯 BÚSQUEDA RÁPIDA: Proforma y Cliente */}
                         <div className="rounded-md border-b border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
                             <h4 className="mb-3 text-sm font-semibold text-blue-900 dark:text-blue-200">🔍 Búsqueda Rápida</h4>
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                                 {/* ✅ NUEVO (2026-07-22): Búsqueda unificada de Proforma */}
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">📋 Proforma (ID o Número)</label>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        📋 Proforma (ID o Número)
+                                    </label>
                                     <input
                                         type="text"
                                         placeholder="Ej: 2469 o PF-20260717-2469"
@@ -351,56 +353,20 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         Busca por ID (prioridad), SKU o nombre (case insensitive)
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Primera fila de filtros */}
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            {/* ✅ NUEVO (2026-02-12): Filtro por Producto - Búsqueda flexible */}
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    📦 Producto (ID, SKU o Nombre)
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Ej: 123 o LAC-001 o Lactose"
-                                    value={filterInputs.producto_busqueda}
-                                    onChange={(e) => handleFilterChange('producto_busqueda', e.target.value)}
-                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Busca por ID (prioridad), SKU o nombre (case insensitive)
-                                </p>
-                            </div>
-
-                            {/* Estado */}
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">✅ Estado de Reserva</label>
-                                <select
-                                    value={filterInputs.estado}
-                                    onChange={(e) => handleFilterChange('estado', e.target.value)}
-                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                >
-                                    <option value="">Todos los estados</option>
-                                    <option value="ACTIVA">🟢 Activa</option>
-                                    <option value="LIBERADA">⚫ Liberada</option>
-                                    <option value="CONSUMIDA">✅ Consumida</option>
-                                </select>
-                            </div>
-
-                            {/* Vencimiento */}
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">⏰ Filtro de Vencimiento</label>
-                                <select
-                                    value={filterInputs.vencimiento}
-                                    onChange={(e) => handleFilterChange('vencimiento', e.target.value)}
-                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                >
-                                    <option value="">Sin filtro</option>
-                                    <option value="vigente">✅ Vigentes</option>
-                                    <option value="pronto">⚠️ Próximas a expirar</option>
-                                    <option value="expirada">🔴 Expiradas</option>
-                                </select>
+                                {/* Estado */}
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">✅ Estado de Reserva</label>
+                                    <select
+                                        value={filterInputs.estado}
+                                        onChange={(e) => handleFilterChange('estado', e.target.value)}
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                    >
+                                        <option value="">Todos los estados</option>
+                                        <option value="ACTIVA">🟢 Activa</option>
+                                        <option value="LIBERADA">⚫ Liberada</option>
+                                        <option value="CONSUMIDA">✅ Consumida</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -573,11 +539,13 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Cliente</th>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Producto</th>
-                                    {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Almacén</th> */}
+                                    {/* ✅ NUEVO (2026-07-22): Columna de lote */}
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">🏷️ Lote</th>
                                     <th className="px-2 py-2 text-right font-medium text-gray-700 dark:text-gray-300">Cantidad</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Creada</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Reserva</th>
-                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Vencimiento</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Venci. Reserva</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Venci. Lote</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Estado</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">-</th>
                                 </tr>
@@ -606,11 +574,17 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                             <div className="text-xs text-gray-900 dark:text-white">{reserva.producto_nombre}</div>
                                             <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
                                         </td>
-                                        {/* <td className="px-2 py-2">
-                                                <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 text-xs">
-                                                    {reserva.almacen_nombre}
-                                                </Badge>
-                                            </td> */}
+                                        {/* ✅ NUEVO (2026-07-22): Columna de lote */}
+                                        <td className="px-2 py-2">
+                                            <div className="text-xs font-mono text-gray-900 dark:text-white">
+                                                {reserva.lote ? `Lote: ${reserva.lote}` : '-'}
+                                            </div>
+                                            {reserva.fecha_vencimiento_lote && (
+                                                <div className="text-xs text-gray-500">
+                                                    Vence: {formatDate(reserva.fecha_vencimiento_lote)}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-2 py-2 text-right">
                                             <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
                                                 {reserva.cantidad_reservada.toFixed(2)}
@@ -624,18 +598,19 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.created_at)}</td>
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_reserva)}</td>
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_expiracion)}</td>
-                                        {/* <td className="px-4 py-3 text-center">
+                                        {/* ✅ NUEVO (2026-07-22): Columna de vencimiento del lote */}
+                                        <td className="px-2 py-2 text-center text-xs">
+                                            {reserva.fecha_vencimiento_lote ? (
                                                 <div className="flex flex-col items-center gap-1">
-                                                    {getVencimientoBadge(reserva)}
-                                                    {reserva.estado === 'ACTIVA' && (
-                                                        <div className="text-xs text-gray-600 dark:text-gray-400">
-                                                            {reserva.dias_para_expirar !== null
-                                                                ? `${Math.round(reserva.dias_para_expirar)} días`
-                                                                : 'N/A'}
-                                                        </div>
+                                                    <span>{formatDate(reserva.fecha_vencimiento_lote)}</span>
+                                                    {new Date(reserva.fecha_vencimiento_lote) < new Date() && (
+                                                        <Badge className="bg-red-100 text-red-800 text-xs">Vencido</Badge>
                                                     )}
                                                 </div>
-                                            </td> */}
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </td>
                                         <td className="px-2 py-2 text-center text-xs">
                                             <Badge className={getEstadoBadge(reserva.estado)}>{reserva.estado}</Badge>
                                         </td>
@@ -778,6 +753,15 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                     <p className="text-xs text-gray-500 uppercase">Almacén</p>
                                     <p className="font-medium">{selectedReserva.almacen_nombre}</p>
                                 </div>
+                                {/* ✅ NUEVO (2026-07-22): Información del lote */}
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">🏷️ Lote</p>
+                                    <p className="font-mono font-medium">{selectedReserva.lote || '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Vencimiento Lote</p>
+                                    <p className="font-medium">{selectedReserva.fecha_vencimiento_lote ? formatDate(selectedReserva.fecha_vencimiento_lote) : '-'}</p>
+                                </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase">Cantidad Reservada</p>
                                     <p className="font-medium">{selectedReserva.cantidad_reservada}</p>
@@ -791,7 +775,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                     <p className="font-medium">{formatDate(selectedReserva.fecha_reserva)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500 uppercase">Vencimiento</p>
+                                    <p className="text-xs text-gray-500 uppercase">Vencimiento Reserva</p>
                                     <p className="font-medium">{formatDate(selectedReserva.fecha_expiracion)}</p>
                                 </div>
                                 <div>

@@ -23,7 +23,8 @@ class ReservaProformaController extends Controller
                     'proforma:id,numero,cliente_id,usuario_creador_id,total,estado_proforma_id',
                     'proforma.cliente:id,nombre,nit',
                     'proforma.usuarioCreador:id,name',
-                    'stockProducto:id,producto_id,almacen_id,cantidad,cantidad_disponible,cantidad_reservada',
+                    // ✅ NUEVO (2026-07-22): Incluir lote y fecha_vencimiento del stock
+                    'stockProducto:id,producto_id,almacen_id,cantidad,cantidad_disponible,cantidad_reservada,lote,fecha_vencimiento',
                     'stockProducto.producto',
                     'stockProducto.producto.codigosBarra',
                     'stockProducto.almacen:id,nombre',
@@ -176,6 +177,9 @@ class ReservaProformaController extends Controller
                     'producto_sku' => $reserva->stockProducto?->producto?->sku,
                     'almacen_id' => $reserva->stockProducto?->almacen_id,
                     'almacen_nombre' => $reserva->stockProducto?->almacen?->nombre,
+                    // ✅ NUEVO (2026-07-22): Información del lote desde stock_producto
+                    'lote' => $reserva->stockProducto?->lote,
+                    'fecha_vencimiento_lote' => $reserva->stockProducto?->fecha_vencimiento?->toIso8601String(),
                     'cantidad_reservada' => (float) $reserva->cantidad_reservada,
                     'stock_total' => (float) $reserva->stockProducto?->cantidad,
                     'stock_disponible' => (float) $reserva->stockProducto?->cantidad_disponible,

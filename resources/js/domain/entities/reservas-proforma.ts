@@ -20,6 +20,9 @@ export interface ReservaProforma {
     producto_sku: string;
     almacen_id: number;
     almacen_nombre: string;
+    // ✅ NUEVO (2026-07-22): Información del lote desde stock_producto
+    lote: string | null;
+    fecha_vencimiento_lote: string | null; // ISO 8601
     cantidad_reservada: number;
     stock_total: number;
     stock_disponible: number;
