@@ -1,9 +1,9 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\LoteVencimiento;
+use App\Models\StockProducto;
 use App\Models\Producto;
-use App\Models\Proveedor;
+use App\Models\Almacen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -12,24 +12,33 @@ class LoteVencimientoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = LoteVencimiento::with(['detalleCompra.compra.proveedor', 'detalleCompra.producto'])
-            ->when($request->estado, function ($q) use ($request) {
-                $q->where('estado_vencimiento', $request->estado);
+        // Base query usando StockProducto (que tiene lotes y vencimientos actuales)
+        $query = StockProducto::with(['producto', 'almacen'])
+            ->whereNotNull('lote')  // Solo mostrar registros con lote
+            ->when($request->producto_id, function ($q) use ($request) {
+                $q->where('producto_id', $request->producto_id);
             })
-            ->when($request->dias_vencimiento, function ($q) use ($request) {
-                $diasVencimiento = (int) $request->dias_vencimiento;
-                $fechaLimite     = now()->addDays($diasVencimiento);
-                $q->where('fecha_vencimiento', '<=', $fechaLimite);
+            ->when($request->q, function ($q) use ($request) {
+                $q->whereHas('producto', function ($pq) use ($request) {
+                    $pq->where('nombre', 'LIKE', "%{$request->q}%")
+                       ->orWhere('codigo', 'LIKE', "%{$request->q}%")
+                       ->orWhere('sku', 'LIKE', "%{$request->q}%");
+                })
+                ->orWhere('lote', 'LIKE', "%{$request->q}%");
             })
-            ->when($request->proveedor, function ($q) use ($request) {
-                $q->whereHas('detalleCompra.compra.proveedor', function ($provQ) use ($request) {
-                    $provQ->where('nombre', 'LIKE', "%{$request->proveedor}%");
-                });
+            ->when($request->estado_vencimiento, function ($q) use ($request) {
+                $estado = $request->estado_vencimiento;
+                match ($estado) {
+                    'VENCIDO' => $q->vencido(),
+                    'PROXIMO_VENCER' => $q->proximoVencer(),
+                    'VIGENTE' => $q->whereNotNull('fecha_vencimiento')
+                        ->where('fecha_vencimiento', '>', now()->addDays(30)),
+                    'SIN_VENCIMIENTO' => $q->whereNull('fecha_vencimiento'),
+                    default => $q,
+                };
             })
-            ->when($request->producto, function ($q) use ($request) {
-                $q->whereHas('detalleCompra.producto', function ($prodQ) use ($request) {
-                    $prodQ->where('nombre', 'LIKE', "%{$request->producto}%");
-                });
+            ->when($request->almacen_id, function ($q) use ($request) {
+                $q->where('almacen_id', $request->almacen_id);
             });
 
         // Sorting
@@ -39,75 +48,123 @@ class LoteVencimientoController extends Controller
 
         $lotes = $query->paginate(15)->withQueryString();
 
+        // Transformar datos para que coincidan con lo esperado por el frontend
+        $lotesTransformados = $lotes->map(function ($stock) {
+            return [
+                'id' => $stock->id,
+                'producto' => $stock->producto,
+                'almacen' => $stock->almacen,
+                'lote' => $stock->lote,
+                'fecha_vencimiento' => $stock->fecha_vencimiento?->toDateString(),
+                'cantidad' => $stock->cantidad,
+                'cantidad_disponible' => $stock->cantidad_disponible,
+                'cantidad_reservada' => $stock->cantidad_reservada,
+                'precio_costo' => $stock->precio_costo,
+                'valor_total' => $stock->cantidad * $stock->precio_costo,
+                'dias_para_vencer' => $stock->diasParaVencer(),
+                'estado_vencimiento' => $this->determinarEstadoVencimiento($stock),
+                'esta_vencido' => $stock->estaVencido(),
+            ];
+        });
+
+        $paginated = $lotes->toBase();
+        $paginated->data = $lotesTransformados;
+
         // Estadísticas
+        $todosLotes = StockProducto::whereNotNull('lote');
+
         $estadisticas = [
-            'total_lotes_activos'    => LoteVencimiento::where('estado_vencimiento', 'ACTIVO')->count(),
-            'lotes_vencidos'         => LoteVencimiento::where('fecha_vencimiento', '<', now())
-                ->where('estado_vencimiento', 'ACTIVO')->count(),
-            'lotes_por_vencer'       => LoteVencimiento::where('fecha_vencimiento', '<=', now()->addDays(30))
-                ->where('fecha_vencimiento', '>=', now())
-                ->where('estado_vencimiento', 'ACTIVO')->count(),
-            'valor_total_inventario' => LoteVencimiento::join('detalle_compras', 'lotes_vencimientos.detalle_compra_id', '=', 'detalle_compras.id')
-                ->where('estado_vencimiento', 'ACTIVO')
-                ->sum(DB::raw('cantidad_actual * detalle_compras.precio_unitario')),
+            'total_lotes' => (clone $todosLotes)->count(),
+            'lotes_vigentes' => (clone $todosLotes)
+                ->whereNotNull('fecha_vencimiento')
+                ->where('fecha_vencimiento', '>', now()->addDays(30))
+                ->count(),
+            'lotes_proximos_vencer' => (clone $todosLotes)->proximoVencer()->count(),
+            'lotes_vencidos' => (clone $todosLotes)->vencido()->count(),
+            'lotes_criticos' => (clone $todosLotes)
+                ->whereNotNull('fecha_vencimiento')
+                ->where('fecha_vencimiento', '<=', now()->addDays(7))
+                ->where('fecha_vencimiento', '>', now())
+                ->count(),
+            'valor_total_inventario' => (clone $todosLotes)
+                ->sum(DB::raw('cantidad * precio_costo')),
+            'valor_proximos_vencer' => (clone $todosLotes)
+                ->proximoVencer()
+                ->sum(DB::raw('cantidad * precio_costo')),
+            'valor_vencidos' => (clone $todosLotes)
+                ->vencido()
+                ->sum(DB::raw('cantidad * precio_costo')),
         ];
 
         return Inertia::render('compras/lotes-vencimientos/index', [
-            'lotes'        => $lotes,
-            'filtros'      => $request->only(['estado', 'dias_vencimiento', 'proveedor', 'producto']),
+            'lotes'        => $paginated,
+            'filtros'      => $request->only(['producto_id', 'estado_vencimiento', 'almacen_id', 'q']),
             'estadisticas' => $estadisticas,
-            'productos'    => \App\Models\Producto::select('id', 'nombre')->orderBy('nombre')->get(),
-            'proveedores'  => \App\Models\Proveedor::select('id', 'nombre')->orderBy('nombre')->get(),
+            'productos'    => Producto::select('id', 'nombre')->orderBy('nombre')->get(),
+            'almacenes'    => Almacen::select('id', 'nombre')->orderBy('nombre')->get(),
         ]);
     }
 
-    public function actualizarEstado(Request $request, LoteVencimiento $lote)
+    /**
+     * Determinar el estado de vencimiento de un lote
+     */
+    private function determinarEstadoVencimiento(StockProducto $stock): string
     {
-        $request->validate([
-            'estado' => 'required|in:ACTIVO,VENCIDO,DESCARTADO,VENDIDO',
-        ]);
-
-        $lote->update([
-            'estado' => $request->estado,
-        ]);
-
-        return back()->with('success', 'Estado del lote actualizado correctamente.');
-    }
-
-    public function actualizarCantidad(Request $request, LoteVencimiento $lote)
-    {
-        $request->validate([
-            'cantidad_disponible' => 'required|numeric|min:0|max:' . $lote->cantidad_inicial,
-        ]);
-
-        $lote->update([
-            'cantidad_disponible' => $request->cantidad_disponible,
-        ]);
-
-        // Si la cantidad llega a 0, marcar como vendido
-        if ($request->cantidad_disponible == 0) {
-            $lote->update(['estado' => 'VENDIDO']);
+        if ($stock->estaVencido()) {
+            return 'VENCIDO';
         }
+
+        if ($stock->proximoVencer(7)) {
+            return 'CRITICO';
+        }
+
+        if ($stock->proximoVencer(30)) {
+            return 'PROXIMO_VENCER';
+        }
+
+        if ($stock->fecha_vencimiento) {
+            return 'VIGENTE';
+        }
+
+        return 'SIN_VENCIMIENTO';
+    }
+
+    /**
+     * Actualizar cantidad disponible de un lote
+     */
+    public function actualizarCantidad(Request $request, StockProducto $stock)
+    {
+        $request->validate([
+            'cantidad_disponible' => 'required|numeric|min:0|max:' . $stock->cantidad,
+        ]);
+
+        $stock->update([
+            'cantidad_disponible' => $request->cantidad_disponible,
+            'cantidad_reservada' => $stock->cantidad - $request->cantidad_disponible,
+            'fecha_actualizacion' => now(),
+        ]);
 
         return back()->with('success', 'Cantidad del lote actualizada correctamente.');
     }
 
+    /**
+     * Exportar lotes a JSON (para testing)
+     */
     public function export(Request $request)
     {
-        $query = LoteVencimiento::with(['detalleCompra.compra.proveedor', 'detalleCompra.producto'])
-            ->when($request->estado, function ($q) use ($request) {
-                $q->where('estado_vencimiento', $request->estado);
-            })
-            ->when($request->dias_vencimiento, function ($q) use ($request) {
-                $diasVencimiento = (int) $request->dias_vencimiento;
-                $fechaLimite     = now()->addDays($diasVencimiento);
-                $q->where('fecha_vencimiento', '<=', $fechaLimite);
+        $query = StockProducto::with(['producto', 'almacen'])
+            ->whereNotNull('lote')
+            ->when($request->estado_vencimiento, function ($q) use ($request) {
+                $estado = $request->estado_vencimiento;
+                match ($estado) {
+                    'VENCIDO' => $q->vencido(),
+                    'PROXIMO_VENCER' => $q->proximoVencer(),
+                    default => $q,
+                };
             });
 
         $lotes = $query->get();
 
-        // Aquí implementarías la exportación a Excel
-        // Por ahora retornamos los datos como JSON para testing
         return response()->json($lotes);
     }
 }
