@@ -67,7 +67,7 @@ export default function ControlVencimientos() {
     const [busqueda, setBusqueda] = useState(filters.busqueda || '');
     const [almacenId, setAlmacenId] = useState<number | null>(filters.almacen_id || null);
     const [estado, setEstado] = useState(filters.estado || 'todos');
-    const [soloConStock, setSoloConStock] = useState(filters.solo_con_stock !== false && filters.solo_con_stock !== 'false');
+    const [soloConStock, setSoloConStock] = useState(filters.solo_con_stock ?? true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     if (!can('inventario.proximos-vencer')) {
