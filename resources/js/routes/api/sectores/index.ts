@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\SectorController::index
  * @see app/Http/Controllers/Api/SectorController.php:24
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::index
- * @see app/Http/Controllers/Api/SectorController.php:24
- * @route '/api/sectores'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::index
- * @see app/Http/Controllers/Api/SectorController.php:24
- * @route '/api/sectores'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\SectorController::index
- * @see app/Http/Controllers/Api/SectorController.php:24
- * @route '/api/sectores'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::store
  * @see app/Http/Controllers/Api/SectorController.php:112
@@ -111,27 +76,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::store
- * @see app/Http/Controllers/Api/SectorController.php:112
- * @route '/api/sectores'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::store
- * @see app/Http/Controllers/Api/SectorController.php:112
- * @route '/api/sectores'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::show
  * @see app/Http/Controllers/Api/SectorController.php:76
@@ -194,41 +138,6 @@ show.head = (args: { sectore: string | number } | [sectore: string | number ] | 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::show
- * @see app/Http/Controllers/Api/SectorController.php:76
- * @route '/api/sectores/{sectore}'
- */
-    const showForm = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::show
- * @see app/Http/Controllers/Api/SectorController.php:76
- * @route '/api/sectores/{sectore}'
- */
-        showForm.get = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\SectorController::show
- * @see app/Http/Controllers/Api/SectorController.php:76
- * @route '/api/sectores/{sectore}'
- */
-        showForm.head = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::update
  * @see app/Http/Controllers/Api/SectorController.php:193
@@ -291,51 +200,6 @@ update.patch = (args: { sectore: string | number } | [sectore: string | number ]
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::update
- * @see app/Http/Controllers/Api/SectorController.php:193
- * @route '/api/sectores/{sectore}'
- */
-    const updateForm = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::update
- * @see app/Http/Controllers/Api/SectorController.php:193
- * @route '/api/sectores/{sectore}'
- */
-        updateForm.put = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\Api\SectorController::update
- * @see app/Http/Controllers/Api/SectorController.php:193
- * @route '/api/sectores/{sectore}'
- */
-        updateForm.patch = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::destroy
  * @see app/Http/Controllers/Api/SectorController.php:278
@@ -389,37 +253,6 @@ destroy.delete = (args: { sectore: string | number } | [sectore: string | number
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::destroy
- * @see app/Http/Controllers/Api/SectorController.php:278
- * @route '/api/sectores/{sectore}'
- */
-    const destroyForm = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::destroy
- * @see app/Http/Controllers/Api/SectorController.php:278
- * @route '/api/sectores/{sectore}'
- */
-        destroyForm.delete = (args: { sectore: string | number } | [sectore: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::obtenerGenerico
  * @see app/Http/Controllers/Api/SectorController.php:339
@@ -482,41 +315,6 @@ obtenerGenerico.head = (args: { almacenId: string | number } | [almacenId: strin
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerGenerico
- * @see app/Http/Controllers/Api/SectorController.php:339
- * @route '/api/almacenes/{almacenId}/sector-generico'
- */
-    const obtenerGenericoForm = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: obtenerGenerico.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerGenerico
- * @see app/Http/Controllers/Api/SectorController.php:339
- * @route '/api/almacenes/{almacenId}/sector-generico'
- */
-        obtenerGenericoForm.get = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerGenerico.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerGenerico
- * @see app/Http/Controllers/Api/SectorController.php:339
- * @route '/api/almacenes/{almacenId}/sector-generico'
- */
-        obtenerGenericoForm.head = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerGenerico.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    obtenerGenerico.form = obtenerGenericoForm
 /**
 * @see \App\Http\Controllers\Api\SectorController::obtenerPorAlmacen
  * @see app/Http/Controllers/Api/SectorController.php:384
@@ -578,42 +376,6 @@ obtenerPorAlmacen.head = (args: { almacenId: string | number } | [almacenId: str
     url: obtenerPorAlmacen.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerPorAlmacen
- * @see app/Http/Controllers/Api/SectorController.php:384
- * @route '/api/almacenes/{almacenId}/sectores'
- */
-    const obtenerPorAlmacenForm = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: obtenerPorAlmacen.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerPorAlmacen
- * @see app/Http/Controllers/Api/SectorController.php:384
- * @route '/api/almacenes/{almacenId}/sectores'
- */
-        obtenerPorAlmacenForm.get = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerPorAlmacen.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\SectorController::obtenerPorAlmacen
- * @see app/Http/Controllers/Api/SectorController.php:384
- * @route '/api/almacenes/{almacenId}/sectores'
- */
-        obtenerPorAlmacenForm.head = (args: { almacenId: string | number } | [almacenId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerPorAlmacen.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    obtenerPorAlmacen.form = obtenerPorAlmacenForm
 const sectores = {
     index,
 store,

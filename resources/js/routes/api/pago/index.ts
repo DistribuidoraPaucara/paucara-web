@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ClienteController::anular
  * @see app/Http/Controllers/ClienteController.php:1459
@@ -51,28 +51,6 @@ anular.post = (args: { pago: string | number } | [pago: string | number ] | stri
     url: anular.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1459
- * @route '/api/clientes/pagos/{pago}/anular'
- */
-    const anularForm = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: anular.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ClienteController::anular
- * @see app/Http/Controllers/ClienteController.php:1459
- * @route '/api/clientes/pagos/{pago}/anular'
- */
-        anularForm.post = (args: { pago: string | number } | [pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: anular.url(args, options),
-            method: 'post',
-        })
-    
-    anular.form = anularForm
 const pago = {
     anular,
 }

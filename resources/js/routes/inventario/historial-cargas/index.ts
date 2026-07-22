@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::form
  * @see app/Http/Controllers/InventarioController.php:2776
@@ -41,42 +41,6 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2776
- * @route '/inventario/historial-cargas'
- */
-    const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: form.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2776
- * @route '/inventario/historial-cargas'
- */
-        formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: form.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\InventarioController::form
- * @see app/Http/Controllers/InventarioController.php:2776
- * @route '/inventario/historial-cargas'
- */
-        formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: form.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    form.form = formForm
 const historialCargas = {
     form,
 }

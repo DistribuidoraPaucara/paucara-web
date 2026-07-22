@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::index
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:13
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::index
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:13
- * @route '/configuracion-global'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::index
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:13
- * @route '/configuracion-global'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::index
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:13
- * @route '/configuracion-global'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::configuracionesGanancias
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:86
@@ -120,41 +85,6 @@ configuracionesGanancias.head = (options?: RouteQueryOptions): RouteDefinition<'
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::configuracionesGanancias
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:86
- * @route '/configuracion-global/ganancias'
- */
-    const configuracionesGananciasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: configuracionesGanancias.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::configuracionesGanancias
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:86
- * @route '/configuracion-global/ganancias'
- */
-        configuracionesGananciasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: configuracionesGanancias.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::configuracionesGanancias
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:86
- * @route '/configuracion-global/ganancias'
- */
-        configuracionesGananciasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: configuracionesGanancias.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    configuracionesGanancias.form = configuracionesGananciasForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::actualizarConfiguracionesGanancias
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:100
@@ -189,37 +119,6 @@ actualizarConfiguracionesGanancias.put = (options?: RouteQueryOptions): RouteDef
     method: 'put',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::actualizarConfiguracionesGanancias
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:100
- * @route '/configuracion-global/ganancias'
- */
-    const actualizarConfiguracionesGananciasForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: actualizarConfiguracionesGanancias.url({
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::actualizarConfiguracionesGanancias
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:100
- * @route '/configuracion-global/ganancias'
- */
-        actualizarConfiguracionesGananciasForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: actualizarConfiguracionesGanancias.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    actualizarConfiguracionesGanancias.form = actualizarConfiguracionesGananciasForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::store
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:127
@@ -254,27 +153,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::store
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:127
- * @route '/configuracion-global'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::store
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:127
- * @route '/configuracion-global'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::show
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:30
@@ -337,41 +215,6 @@ show.head = (args: { clave: string | number } | [clave: string | number ] | stri
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::show
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:30
- * @route '/configuracion-global/{clave}'
- */
-    const showForm = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::show
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:30
- * @route '/configuracion-global/{clave}'
- */
-        showForm.get = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::show
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:30
- * @route '/configuracion-global/{clave}'
- */
-        showForm.head = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::update
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:46
@@ -425,37 +268,6 @@ update.put = (args: { clave: string | number } | [clave: string | number ] | str
     method: 'put',
 })
 
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::update
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:46
- * @route '/configuracion-global/{clave}'
- */
-    const updateForm = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::update
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:46
- * @route '/configuracion-global/{clave}'
- */
-        updateForm.put = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\ConfiguracionGlobalController::resetear
  * @see app/Http/Controllers/ConfiguracionGlobalController.php:163
@@ -508,38 +320,6 @@ resetear.patch = (args: { clave: string | number } | [clave: string | number ] |
     url: resetear.url(args, options),
     method: 'patch',
 })
-
-    /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::resetear
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:163
- * @route '/configuracion-global/{clave}/reset'
- */
-    const resetearForm = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: resetear.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ConfiguracionGlobalController::resetear
- * @see app/Http/Controllers/ConfiguracionGlobalController.php:163
- * @route '/configuracion-global/{clave}/reset'
- */
-        resetearForm.patch = (args: { clave: string | number } | [clave: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: resetear.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    resetear.form = resetearForm
 const ConfiguracionGlobalController = { index, configuracionesGanancias, actualizarConfiguracionesGanancias, store, show, update, resetear }
 
 export default ConfiguracionGlobalController

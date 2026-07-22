@@ -24,7 +24,7 @@ export function PaginationLinks({ links }: PaginationLinksProps) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 py-6">
+    <div className="flex items-center justify-center gap-1 py-1">
       {links.map((link, index) => {
         const label = cleanLabel(link.label);
         const isArrow = label === '<' || label === '>' || label.includes('Previous') || label.includes('Next');

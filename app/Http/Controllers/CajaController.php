@@ -972,15 +972,28 @@ class CajaController extends Controller
             ];
         });
 
+        // ✅ NUEVO: Calcular totales de ingresos y egresos
+        $totalIngresos = (float) MovimientoCaja::whereDate('fecha', today())
+            ->where('monto', '>', 0)
+            ->sum('monto');
+
+        $totalEgresos = (float) abs(MovimientoCaja::whereDate('fecha', today())
+            ->where('monto', '<', 0)
+            ->sum('monto'));
+
+        // ✅ NUEVO: Calcular efectivo esperado (suma de aperturas + ingresos - egresos)
+        $montosApertura = (float) AperturaCaja::whereDate('fecha', today())
+            ->sum('monto_apertura');
+
+        $efectivoEsperado = $montosApertura + $totalIngresos - $totalEgresos;
+
         $metricas = [
             'total_cajas'            => $cajas->count(),
             'cajas_abiertas'         => $cajas_abiertas,
-            'total_ingresos'         => MovimientoCaja::whereDate('fecha', today())
-                ->where('monto', '>', 0)
-                ->sum('monto'),
-            'total_egresos'          => abs(MovimientoCaja::whereDate('fecha', today())
-                    ->where('monto', '<', 0)
-                    ->sum('monto')),
+            'total_ingresos'         => $totalIngresos,
+            'total_egresos'          => $totalEgresos,
+            'efectivo_esperado'      => $efectivoEsperado,
+            'montos_apertura'        => $montosApertura,
             'diferencias_detectadas' => CierreCaja::whereDate('fecha', today())
                 ->where('diferencia', '!=', 0)
                 ->count(),

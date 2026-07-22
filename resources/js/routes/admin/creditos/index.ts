@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
  * @see routes/web.php:159
  * @route '/admin/creditos/importar'
@@ -38,38 +38,6 @@ importar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see routes/web.php:159
- * @route '/admin/creditos/importar'
- */
-    const importarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: importar.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:159
- * @route '/admin/creditos/importar'
- */
-        importarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: importar.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:159
- * @route '/admin/creditos/importar'
- */
-        importarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: importar.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    importar.form = importarForm
 /**
 * @see \App\Http\Controllers\CreditoController::crear
  * @see app/Http/Controllers/CreditoController.php:20
@@ -112,42 +80,6 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: crear.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\CreditoController::crear
- * @see app/Http/Controllers/CreditoController.php:20
- * @route '/admin/creditos/crear'
- */
-    const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: crear.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CreditoController::crear
- * @see app/Http/Controllers/CreditoController.php:20
- * @route '/admin/creditos/crear'
- */
-        crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CreditoController::crear
- * @see app/Http/Controllers/CreditoController.php:20
- * @route '/admin/creditos/crear'
- */
-        crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: crear.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    crear.form = crearForm
 const creditos = {
     importar,
 crear,

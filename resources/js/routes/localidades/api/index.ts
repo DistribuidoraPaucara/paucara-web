@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\LocalidadController::active
  * @see app/Http/Controllers/LocalidadController.php:27
@@ -41,42 +41,6 @@ active.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: active.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\LocalidadController::active
- * @see app/Http/Controllers/LocalidadController.php:27
- * @route '/localidades/api/active'
- */
-    const activeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: active.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\LocalidadController::active
- * @see app/Http/Controllers/LocalidadController.php:27
- * @route '/localidades/api/active'
- */
-        activeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: active.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\LocalidadController::active
- * @see app/Http/Controllers/LocalidadController.php:27
- * @route '/localidades/api/active'
- */
-        activeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: active.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    active.form = activeForm
 const api = {
     active,
 }

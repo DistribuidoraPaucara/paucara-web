@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::generarReporte
  * @see app/Http/Controllers/Api/ReporteCargoController.php:28
@@ -33,27 +33,6 @@ generarReporte.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::generarReporte
- * @see app/Http/Controllers/Api/ReporteCargoController.php:28
- * @route '/api/reportes-carga'
- */
-    const generarReporteForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: generarReporte.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::generarReporte
- * @see app/Http/Controllers/Api/ReporteCargoController.php:28
- * @route '/api/reportes-carga'
- */
-        generarReporteForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: generarReporte.url(options),
-            method: 'post',
-        })
-    
-    generarReporte.form = generarReporteForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::formatosDisponibles
  * @see app/Http/Controllers/Api/ReporteCargoController.php:283
@@ -97,41 +76,6 @@ formatosDisponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::formatosDisponibles
- * @see app/Http/Controllers/Api/ReporteCargoController.php:283
- * @route '/api/reportes-carga/formatos-disponibles'
- */
-    const formatosDisponiblesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: formatosDisponibles.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::formatosDisponibles
- * @see app/Http/Controllers/Api/ReporteCargoController.php:283
- * @route '/api/reportes-carga/formatos-disponibles'
- */
-        formatosDisponiblesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: formatosDisponibles.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::formatosDisponibles
- * @see app/Http/Controllers/Api/ReporteCargoController.php:283
- * @route '/api/reportes-carga/formatos-disponibles'
- */
-        formatosDisponiblesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: formatosDisponibles.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    formatosDisponibles.form = formatosDisponiblesForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::show
  * @see app/Http/Controllers/Api/ReporteCargoController.php:63
@@ -199,41 +143,6 @@ show.head = (args: { reporte: number | { id: number } } | [reporte: number | { i
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::show
- * @see app/Http/Controllers/Api/ReporteCargoController.php:63
- * @route '/api/reportes-carga/{reporte}'
- */
-    const showForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::show
- * @see app/Http/Controllers/Api/ReporteCargoController.php:63
- * @route '/api/reportes-carga/{reporte}'
- */
-        showForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::show
- * @see app/Http/Controllers/Api/ReporteCargoController.php:63
- * @route '/api/reportes-carga/{reporte}'
- */
-        showForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::preview
  * @see app/Http/Controllers/Api/ReporteCargoController.php:311
@@ -301,41 +210,6 @@ preview.head = (args: { reporte: number | { id: number } } | [reporte: number | 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::preview
- * @see app/Http/Controllers/Api/ReporteCargoController.php:311
- * @route '/api/reportes-carga/{reporte}/preview'
- */
-    const previewForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: preview.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::preview
- * @see app/Http/Controllers/Api/ReporteCargoController.php:311
- * @route '/api/reportes-carga/{reporte}/preview'
- */
-        previewForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::preview
- * @see app/Http/Controllers/Api/ReporteCargoController.php:311
- * @route '/api/reportes-carga/{reporte}/preview'
- */
-        previewForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    preview.form = previewForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::descargar
  * @see app/Http/Controllers/Api/ReporteCargoController.php:235
@@ -403,41 +277,6 @@ descargar.head = (args: { reporte: number | { id: number } } | [reporte: number 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::descargar
- * @see app/Http/Controllers/Api/ReporteCargoController.php:235
- * @route '/api/reportes-carga/{reporte}/descargar'
- */
-    const descargarForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: descargar.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::descargar
- * @see app/Http/Controllers/Api/ReporteCargoController.php:235
- * @route '/api/reportes-carga/{reporte}/descargar'
- */
-        descargarForm.get = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargar.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::descargar
- * @see app/Http/Controllers/Api/ReporteCargoController.php:235
- * @route '/api/reportes-carga/{reporte}/descargar'
- */
-        descargarForm.head = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargar.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    descargar.form = descargarForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::actualizarDetalle
  * @see app/Http/Controllers/Api/ReporteCargoController.php:82
@@ -493,37 +332,6 @@ actualizarDetalle.patch = (args: { reporte: number | { id: number }, detalle: nu
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::actualizarDetalle
- * @see app/Http/Controllers/Api/ReporteCargoController.php:82
- * @route '/api/reportes-carga/{reporte}/detalles/{detalle}'
- */
-    const actualizarDetalleForm = (args: { reporte: number | { id: number }, detalle: number | { id: number } } | [reporte: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: actualizarDetalle.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::actualizarDetalle
- * @see app/Http/Controllers/Api/ReporteCargoController.php:82
- * @route '/api/reportes-carga/{reporte}/detalles/{detalle}'
- */
-        actualizarDetalleForm.patch = (args: { reporte: number | { id: number }, detalle: number | { id: number } } | [reporte: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: actualizarDetalle.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    actualizarDetalle.form = actualizarDetalleForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::verificarDetalle
  * @see app/Http/Controllers/Api/ReporteCargoController.php:124
@@ -579,27 +387,6 @@ verificarDetalle.post = (args: { reporte: number | { id: number }, detalle: numb
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::verificarDetalle
- * @see app/Http/Controllers/Api/ReporteCargoController.php:124
- * @route '/api/reportes-carga/{reporte}/detalles/{detalle}/verificar'
- */
-    const verificarDetalleForm = (args: { reporte: number | { id: number }, detalle: number | { id: number } } | [reporte: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: verificarDetalle.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::verificarDetalle
- * @see app/Http/Controllers/Api/ReporteCargoController.php:124
- * @route '/api/reportes-carga/{reporte}/detalles/{detalle}/verificar'
- */
-        verificarDetalleForm.post = (args: { reporte: number | { id: number }, detalle: number | { id: number } } | [reporte: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: verificarDetalle.url(args, options),
-            method: 'post',
-        })
-    
-    verificarDetalle.form = verificarDetalleForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::confirmarCarga
  * @see app/Http/Controllers/Api/ReporteCargoController.php:161
@@ -658,27 +445,6 @@ confirmarCarga.post = (args: { reporte: number | { id: number } } | [reporte: nu
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::confirmarCarga
- * @see app/Http/Controllers/Api/ReporteCargoController.php:161
- * @route '/api/reportes-carga/{reporte}/confirmar'
- */
-    const confirmarCargaForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: confirmarCarga.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::confirmarCarga
- * @see app/Http/Controllers/Api/ReporteCargoController.php:161
- * @route '/api/reportes-carga/{reporte}/confirmar'
- */
-        confirmarCargaForm.post = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: confirmarCarga.url(args, options),
-            method: 'post',
-        })
-    
-    confirmarCarga.form = confirmarCargaForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::marcarListoParaEntrega
  * @see app/Http/Controllers/Api/ReporteCargoController.php:183
@@ -737,27 +503,6 @@ marcarListoParaEntrega.post = (args: { reporte: number | { id: number } } | [rep
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::marcarListoParaEntrega
- * @see app/Http/Controllers/Api/ReporteCargoController.php:183
- * @route '/api/reportes-carga/{reporte}/listo-para-entrega'
- */
-    const marcarListoParaEntregaForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: marcarListoParaEntrega.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::marcarListoParaEntrega
- * @see app/Http/Controllers/Api/ReporteCargoController.php:183
- * @route '/api/reportes-carga/{reporte}/listo-para-entrega'
- */
-        marcarListoParaEntregaForm.post = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: marcarListoParaEntrega.url(args, options),
-            method: 'post',
-        })
-    
-    marcarListoParaEntrega.form = marcarListoParaEntregaForm
 /**
 * @see \App\Http\Controllers\Api\ReporteCargoController::cancelarReporte
  * @see app/Http/Controllers/Api/ReporteCargoController.php:205
@@ -815,28 +560,6 @@ cancelarReporte.post = (args: { reporte: number | { id: number } } | [reporte: n
     url: cancelarReporte.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::cancelarReporte
- * @see app/Http/Controllers/Api/ReporteCargoController.php:205
- * @route '/api/reportes-carga/{reporte}/cancelar'
- */
-    const cancelarReporteForm = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancelarReporte.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\ReporteCargoController::cancelarReporte
- * @see app/Http/Controllers/Api/ReporteCargoController.php:205
- * @route '/api/reportes-carga/{reporte}/cancelar'
- */
-        cancelarReporteForm.post = (args: { reporte: number | { id: number } } | [reporte: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancelarReporte.url(args, options),
-            method: 'post',
-        })
-    
-    cancelarReporte.form = cancelarReporteForm
 const ReporteCargoController = { generarReporte, formatosDisponibles, show, preview, descargar, actualizarDetalle, verificarDetalle, confirmarCarga, marcarListoParaEntrega, cancelarReporte }
 
 export default ReporteCargoController

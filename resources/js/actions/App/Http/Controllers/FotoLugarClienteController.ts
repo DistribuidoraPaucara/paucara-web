@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\FotoLugarClienteController::index
  * @see app/Http/Controllers/FotoLugarClienteController.php:19
@@ -69,41 +69,6 @@ index458ad15718caf58fbbfe67bbeb6711ed.head = (args: { cliente: number | { id: nu
     /**
 * @see \App\Http\Controllers\FotoLugarClienteController::index
  * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/api/clientes/{cliente}/fotos'
- */
-    const index458ad15718caf58fbbfe67bbeb6711edForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index458ad15718caf58fbbfe67bbeb6711ed.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/api/clientes/{cliente}/fotos'
- */
-        index458ad15718caf58fbbfe67bbeb6711edForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index458ad15718caf58fbbfe67bbeb6711ed.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/api/clientes/{cliente}/fotos'
- */
-        index458ad15718caf58fbbfe67bbeb6711edForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index458ad15718caf58fbbfe67bbeb6711ed.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index458ad15718caf58fbbfe67bbeb6711ed.form = index458ad15718caf58fbbfe67bbeb6711edForm
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
  * @route '/clientes/{cliente}/fotos'
  */
 const index56ae370be37b0bc83f754f89fc47bac1 = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -167,42 +132,6 @@ index56ae370be37b0bc83f754f89fc47bac1.head = (args: { cliente: number | { id: nu
     url: index56ae370be37b0bc83f754f89fc47bac1.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/clientes/{cliente}/fotos'
- */
-    const index56ae370be37b0bc83f754f89fc47bac1Form = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index56ae370be37b0bc83f754f89fc47bac1.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/clientes/{cliente}/fotos'
- */
-        index56ae370be37b0bc83f754f89fc47bac1Form.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index56ae370be37b0bc83f754f89fc47bac1.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::index
- * @see app/Http/Controllers/FotoLugarClienteController.php:19
- * @route '/clientes/{cliente}/fotos'
- */
-        index56ae370be37b0bc83f754f89fc47bac1Form.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index56ae370be37b0bc83f754f89fc47bac1.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index56ae370be37b0bc83f754f89fc47bac1.form = index56ae370be37b0bc83f754f89fc47bac1Form
 
 export const index = {
     '/api/clientes/{cliente}/fotos': index458ad15718caf58fbbfe67bbeb6711ed,
@@ -270,27 +199,6 @@ store458ad15718caf58fbbfe67bbeb6711ed.post = (args: { cliente: number | { id: nu
     /**
 * @see \App\Http\Controllers\FotoLugarClienteController::store
  * @see app/Http/Controllers/FotoLugarClienteController.php:69
- * @route '/api/clientes/{cliente}/fotos'
- */
-    const store458ad15718caf58fbbfe67bbeb6711edForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store458ad15718caf58fbbfe67bbeb6711ed.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::store
- * @see app/Http/Controllers/FotoLugarClienteController.php:69
- * @route '/api/clientes/{cliente}/fotos'
- */
-        store458ad15718caf58fbbfe67bbeb6711edForm.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store458ad15718caf58fbbfe67bbeb6711ed.url(args, options),
-            method: 'post',
-        })
-    
-    store458ad15718caf58fbbfe67bbeb6711ed.form = store458ad15718caf58fbbfe67bbeb6711edForm
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::store
- * @see app/Http/Controllers/FotoLugarClienteController.php:69
  * @route '/clientes/{cliente}/fotos'
  */
 const store56ae370be37b0bc83f754f89fc47bac1 = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -345,28 +253,6 @@ store56ae370be37b0bc83f754f89fc47bac1.post = (args: { cliente: number | { id: nu
     url: store56ae370be37b0bc83f754f89fc47bac1.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::store
- * @see app/Http/Controllers/FotoLugarClienteController.php:69
- * @route '/clientes/{cliente}/fotos'
- */
-    const store56ae370be37b0bc83f754f89fc47bac1Form = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store56ae370be37b0bc83f754f89fc47bac1.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::store
- * @see app/Http/Controllers/FotoLugarClienteController.php:69
- * @route '/clientes/{cliente}/fotos'
- */
-        store56ae370be37b0bc83f754f89fc47bac1Form.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store56ae370be37b0bc83f754f89fc47bac1.url(args, options),
-            method: 'post',
-        })
-    
-    store56ae370be37b0bc83f754f89fc47bac1.form = store56ae370be37b0bc83f754f89fc47bac1Form
 
 export const store = {
     '/api/clientes/{cliente}/fotos': store458ad15718caf58fbbfe67bbeb6711ed,
@@ -431,27 +317,6 @@ uploadMultiple.post = (args: { cliente: number | { id: number } } | [cliente: nu
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::uploadMultiple
- * @see app/Http/Controllers/FotoLugarClienteController.php:254
- * @route '/api/clientes/{cliente}/fotos/multiple'
- */
-    const uploadMultipleForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: uploadMultiple.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::uploadMultiple
- * @see app/Http/Controllers/FotoLugarClienteController.php:254
- * @route '/api/clientes/{cliente}/fotos/multiple'
- */
-        uploadMultipleForm.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: uploadMultiple.url(args, options),
-            method: 'post',
-        })
-    
-    uploadMultiple.form = uploadMultipleForm
 /**
 * @see \App\Http\Controllers\FotoLugarClienteController::show
  * @see app/Http/Controllers/FotoLugarClienteController.php:114
@@ -519,41 +384,6 @@ showe0f767f38b847649456a620735e5ef57.head = (args: { cliente: number | { id: num
     /**
 * @see \App\Http\Controllers\FotoLugarClienteController::show
  * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-    const showe0f767f38b847649456a620735e5ef57Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: showe0f767f38b847649456a620735e5ef57.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-        showe0f767f38b847649456a620735e5ef57Form.get = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showe0f767f38b847649456a620735e5ef57.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-        showe0f767f38b847649456a620735e5ef57Form.head = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showe0f767f38b847649456a620735e5ef57.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    showe0f767f38b847649456a620735e5ef57.form = showe0f767f38b847649456a620735e5ef57Form
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
  * @route '/clientes/{cliente}/fotos/{foto}'
  */
 const show4753cea5abcfb03c077939bf3f1fd235 = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -614,42 +444,6 @@ show4753cea5abcfb03c077939bf3f1fd235.head = (args: { cliente: number | { id: num
     url: show4753cea5abcfb03c077939bf3f1fd235.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-    const show4753cea5abcfb03c077939bf3f1fd235Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show4753cea5abcfb03c077939bf3f1fd235.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-        show4753cea5abcfb03c077939bf3f1fd235Form.get = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show4753cea5abcfb03c077939bf3f1fd235.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::show
- * @see app/Http/Controllers/FotoLugarClienteController.php:114
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-        show4753cea5abcfb03c077939bf3f1fd235Form.head = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show4753cea5abcfb03c077939bf3f1fd235.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show4753cea5abcfb03c077939bf3f1fd235.form = show4753cea5abcfb03c077939bf3f1fd235Form
 
 export const show = {
     '/api/clientes/{cliente}/fotos/{foto}': showe0f767f38b847649456a620735e5ef57,
@@ -714,37 +508,6 @@ updatee0f767f38b847649456a620735e5ef57.put = (args: { cliente: number | { id: nu
     /**
 * @see \App\Http\Controllers\FotoLugarClienteController::update
  * @see app/Http/Controllers/FotoLugarClienteController.php:167
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-    const updatee0f767f38b847649456a620735e5ef57Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: updatee0f767f38b847649456a620735e5ef57.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::update
- * @see app/Http/Controllers/FotoLugarClienteController.php:167
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-        updatee0f767f38b847649456a620735e5ef57Form.put = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: updatee0f767f38b847649456a620735e5ef57.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    updatee0f767f38b847649456a620735e5ef57.form = updatee0f767f38b847649456a620735e5ef57Form
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::update
- * @see app/Http/Controllers/FotoLugarClienteController.php:167
  * @route '/clientes/{cliente}/fotos/{foto}'
  */
 const update4753cea5abcfb03c077939bf3f1fd235 = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -796,38 +559,6 @@ update4753cea5abcfb03c077939bf3f1fd235.put = (args: { cliente: number | { id: nu
     url: update4753cea5abcfb03c077939bf3f1fd235.url(args, options),
     method: 'put',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::update
- * @see app/Http/Controllers/FotoLugarClienteController.php:167
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-    const update4753cea5abcfb03c077939bf3f1fd235Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update4753cea5abcfb03c077939bf3f1fd235.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::update
- * @see app/Http/Controllers/FotoLugarClienteController.php:167
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-        update4753cea5abcfb03c077939bf3f1fd235Form.put = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update4753cea5abcfb03c077939bf3f1fd235.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update4753cea5abcfb03c077939bf3f1fd235.form = update4753cea5abcfb03c077939bf3f1fd235Form
 
 export const update = {
     '/api/clientes/{cliente}/fotos/{foto}': updatee0f767f38b847649456a620735e5ef57,
@@ -892,37 +623,6 @@ destroye0f767f38b847649456a620735e5ef57.delete = (args: { cliente: number | { id
     /**
 * @see \App\Http\Controllers\FotoLugarClienteController::destroy
  * @see app/Http/Controllers/FotoLugarClienteController.php:220
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-    const destroye0f767f38b847649456a620735e5ef57Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroye0f767f38b847649456a620735e5ef57.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::destroy
- * @see app/Http/Controllers/FotoLugarClienteController.php:220
- * @route '/api/clientes/{cliente}/fotos/{foto}'
- */
-        destroye0f767f38b847649456a620735e5ef57Form.delete = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroye0f767f38b847649456a620735e5ef57.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroye0f767f38b847649456a620735e5ef57.form = destroye0f767f38b847649456a620735e5ef57Form
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::destroy
- * @see app/Http/Controllers/FotoLugarClienteController.php:220
  * @route '/clientes/{cliente}/fotos/{foto}'
  */
 const destroy4753cea5abcfb03c077939bf3f1fd235 = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -974,38 +674,6 @@ destroy4753cea5abcfb03c077939bf3f1fd235.delete = (args: { cliente: number | { id
     url: destroy4753cea5abcfb03c077939bf3f1fd235.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::destroy
- * @see app/Http/Controllers/FotoLugarClienteController.php:220
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-    const destroy4753cea5abcfb03c077939bf3f1fd235Form = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy4753cea5abcfb03c077939bf3f1fd235.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::destroy
- * @see app/Http/Controllers/FotoLugarClienteController.php:220
- * @route '/clientes/{cliente}/fotos/{foto}'
- */
-        destroy4753cea5abcfb03c077939bf3f1fd235Form.delete = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy4753cea5abcfb03c077939bf3f1fd235.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy4753cea5abcfb03c077939bf3f1fd235.form = destroy4753cea5abcfb03c077939bf3f1fd235Form
 
 export const destroy = {
     '/api/clientes/{cliente}/fotos/{foto}': destroye0f767f38b847649456a620735e5ef57,
@@ -1079,41 +747,6 @@ create.head = (args: { cliente: number | { id: number } } | [cliente: number | {
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::create
- * @see app/Http/Controllers/FotoLugarClienteController.php:48
- * @route '/clientes/{cliente}/fotos/create'
- */
-    const createForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::create
- * @see app/Http/Controllers/FotoLugarClienteController.php:48
- * @route '/clientes/{cliente}/fotos/create'
- */
-        createForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::create
- * @see app/Http/Controllers/FotoLugarClienteController.php:48
- * @route '/clientes/{cliente}/fotos/create'
- */
-        createForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\FotoLugarClienteController::edit
  * @see app/Http/Controllers/FotoLugarClienteController.php:141
@@ -1177,42 +810,6 @@ edit.head = (args: { cliente: number | { id: number }, foto: number | { id: numb
     url: edit.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\FotoLugarClienteController::edit
- * @see app/Http/Controllers/FotoLugarClienteController.php:141
- * @route '/clientes/{cliente}/fotos/{foto}/edit'
- */
-    const editForm = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::edit
- * @see app/Http/Controllers/FotoLugarClienteController.php:141
- * @route '/clientes/{cliente}/fotos/{foto}/edit'
- */
-        editForm.get = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\FotoLugarClienteController::edit
- * @see app/Http/Controllers/FotoLugarClienteController.php:141
- * @route '/clientes/{cliente}/fotos/{foto}/edit'
- */
-        editForm.head = (args: { cliente: number | { id: number }, foto: number | { id: number } } | [cliente: number | { id: number }, foto: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 const FotoLugarClienteController = { index, store, uploadMultiple, show, update, destroy, create, edit }
 
 export default FotoLugarClienteController

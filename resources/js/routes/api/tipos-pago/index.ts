@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::index
  * @see app/Http/Controllers/Api/TipoPagoController.php:24
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::index
- * @see app/Http/Controllers/Api/TipoPagoController.php:24
- * @route '/api/tipos-pago'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::index
- * @see app/Http/Controllers/Api/TipoPagoController.php:24
- * @route '/api/tipos-pago'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::index
- * @see app/Http/Controllers/Api/TipoPagoController.php:24
- * @route '/api/tipos-pago'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::store
  * @see app/Http/Controllers/Api/TipoPagoController.php:107
@@ -111,27 +76,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::store
- * @see app/Http/Controllers/Api/TipoPagoController.php:107
- * @route '/api/tipos-pago'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::store
- * @see app/Http/Controllers/Api/TipoPagoController.php:107
- * @route '/api/tipos-pago'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::show
  * @see app/Http/Controllers/Api/TipoPagoController.php:73
@@ -194,41 +138,6 @@ show.head = (args: { tipos_pago: string | number } | [tipos_pago: string | numbe
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::show
- * @see app/Http/Controllers/Api/TipoPagoController.php:73
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-    const showForm = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::show
- * @see app/Http/Controllers/Api/TipoPagoController.php:73
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-        showForm.get = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::show
- * @see app/Http/Controllers/Api/TipoPagoController.php:73
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-        showForm.head = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::update
  * @see app/Http/Controllers/Api/TipoPagoController.php:179
@@ -291,51 +200,6 @@ update.patch = (args: { tipos_pago: string | number } | [tipos_pago: string | nu
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::update
- * @see app/Http/Controllers/Api/TipoPagoController.php:179
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-    const updateForm = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::update
- * @see app/Http/Controllers/Api/TipoPagoController.php:179
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-        updateForm.put = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::update
- * @see app/Http/Controllers/Api/TipoPagoController.php:179
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-        updateForm.patch = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::destroy
  * @see app/Http/Controllers/Api/TipoPagoController.php:240
@@ -389,37 +253,6 @@ destroy.delete = (args: { tipos_pago: string | number } | [tipos_pago: string | 
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::destroy
- * @see app/Http/Controllers/Api/TipoPagoController.php:240
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-    const destroyForm = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::destroy
- * @see app/Http/Controllers/Api/TipoPagoController.php:240
- * @route '/api/tipos-pago/{tipos_pago}'
- */
-        destroyForm.delete = (args: { tipos_pago: string | number } | [tipos_pago: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Api\TipoPagoController::activos
  * @see app/Http/Controllers/Api/TipoPagoController.php:295
@@ -462,42 +295,6 @@ activos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: activos.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\TipoPagoController::activos
- * @see app/Http/Controllers/Api/TipoPagoController.php:295
- * @route '/api/tipos-pago/activos/listar'
- */
-    const activosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: activos.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::activos
- * @see app/Http/Controllers/Api/TipoPagoController.php:295
- * @route '/api/tipos-pago/activos/listar'
- */
-        activosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: activos.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\TipoPagoController::activos
- * @see app/Http/Controllers/Api/TipoPagoController.php:295
- * @route '/api/tipos-pago/activos/listar'
- */
-        activosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: activos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    activos.form = activosForm
 const tiposPago = {
     index,
 store,

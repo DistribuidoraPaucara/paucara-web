@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
  * @see routes/api.php:1495
  * @route '/api/debug/logs/clear'
@@ -29,26 +29,6 @@ clear.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: clear.url(options),
     method: 'post',
 })
-
-    /**
- * @see routes/api.php:1495
- * @route '/api/debug/logs/clear'
- */
-    const clearForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: clear.url(options),
-        method: 'post',
-    })
-
-            /**
- * @see routes/api.php:1495
- * @route '/api/debug/logs/clear'
- */
-        clearForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: clear.url(options),
-            method: 'post',
-        })
-    
-    clear.form = clearForm
 const logs = {
     clear,
 }

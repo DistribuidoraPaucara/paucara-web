@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\CodigoBarraController::index
  * @see app/Http/Controllers/CodigoBarraController.php:30
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::index
- * @see app/Http/Controllers/CodigoBarraController.php:30
- * @route '/codigos-barra'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::index
- * @see app/Http/Controllers/CodigoBarraController.php:30
- * @route '/codigos-barra'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::index
- * @see app/Http/Controllers/CodigoBarraController.php:30
- * @route '/codigos-barra'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::create
  * @see app/Http/Controllers/CodigoBarraController.php:54
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::create
- * @see app/Http/Controllers/CodigoBarraController.php:54
- * @route '/codigos-barra/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::create
- * @see app/Http/Controllers/CodigoBarraController.php:54
- * @route '/codigos-barra/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::create
- * @see app/Http/Controllers/CodigoBarraController.php:54
- * @route '/codigos-barra/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::store
  * @see app/Http/Controllers/CodigoBarraController.php:76
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::store
- * @see app/Http/Controllers/CodigoBarraController.php:76
- * @route '/codigos-barra'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::store
- * @see app/Http/Controllers/CodigoBarraController.php:76
- * @route '/codigos-barra'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::show
  * @see app/Http/Controllers/CodigoBarraController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { codigos_barra: string | number } | [codigos_barra: string |
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::show
- * @see app/Http/Controllers/CodigoBarraController.php:0
- * @route '/codigos-barra/{codigos_barra}'
- */
-    const showForm = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::show
- * @see app/Http/Controllers/CodigoBarraController.php:0
- * @route '/codigos-barra/{codigos_barra}'
- */
-        showForm.get = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::show
- * @see app/Http/Controllers/CodigoBarraController.php:0
- * @route '/codigos-barra/{codigos_barra}'
- */
-        showForm.head = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::edit
  * @see app/Http/Controllers/CodigoBarraController.php:117
@@ -369,41 +243,6 @@ edit.head = (args: { codigos_barra: string | number } | [codigos_barra: string |
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::edit
- * @see app/Http/Controllers/CodigoBarraController.php:117
- * @route '/codigos-barra/{codigos_barra}/edit'
- */
-    const editForm = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::edit
- * @see app/Http/Controllers/CodigoBarraController.php:117
- * @route '/codigos-barra/{codigos_barra}/edit'
- */
-        editForm.get = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::edit
- * @see app/Http/Controllers/CodigoBarraController.php:117
- * @route '/codigos-barra/{codigos_barra}/edit'
- */
-        editForm.head = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::update
  * @see app/Http/Controllers/CodigoBarraController.php:129
@@ -466,51 +305,6 @@ update.patch = (args: { codigos_barra: string | number } | [codigos_barra: strin
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::update
- * @see app/Http/Controllers/CodigoBarraController.php:129
- * @route '/codigos-barra/{codigos_barra}'
- */
-    const updateForm = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::update
- * @see app/Http/Controllers/CodigoBarraController.php:129
- * @route '/codigos-barra/{codigos_barra}'
- */
-        updateForm.put = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::update
- * @see app/Http/Controllers/CodigoBarraController.php:129
- * @route '/codigos-barra/{codigos_barra}'
- */
-        updateForm.patch = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::destroy
  * @see app/Http/Controllers/CodigoBarraController.php:167
@@ -564,37 +358,6 @@ destroy.delete = (args: { codigos_barra: string | number } | [codigos_barra: str
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::destroy
- * @see app/Http/Controllers/CodigoBarraController.php:167
- * @route '/codigos-barra/{codigos_barra}'
- */
-    const destroyForm = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::destroy
- * @see app/Http/Controllers/CodigoBarraController.php:167
- * @route '/codigos-barra/{codigos_barra}'
- */
-        destroyForm.delete = (args: { codigos_barra: string | number } | [codigos_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\CodigoBarraController::principal
  * @see app/Http/Controllers/CodigoBarraController.php:273
@@ -647,38 +410,6 @@ principal.put = (args: { codigo_barra: string | number } | [codigo_barra: string
     url: principal.url(args, options),
     method: 'put',
 })
-
-    /**
-* @see \App\Http\Controllers\CodigoBarraController::principal
- * @see app/Http/Controllers/CodigoBarraController.php:273
- * @route '/codigos-barra/{codigo_barra}/principal'
- */
-    const principalForm = (args: { codigo_barra: string | number } | [codigo_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: principal.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\CodigoBarraController::principal
- * @see app/Http/Controllers/CodigoBarraController.php:273
- * @route '/codigos-barra/{codigo_barra}/principal'
- */
-        principalForm.put = (args: { codigo_barra: string | number } | [codigo_barra: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: principal.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    principal.form = principalForm
 const codigosBarra = {
     index,
 create,

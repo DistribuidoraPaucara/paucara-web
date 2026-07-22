@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\EncargadoController::dashboard
  * @see app/Http/Controllers/Api/EncargadoController.php:18
@@ -45,41 +45,6 @@ dashboardf1e2d93ec6437123741988cc59b4615f.head = (options?: RouteQueryOptions): 
     /**
 * @see \App\Http\Controllers\Api\EncargadoController::dashboard
  * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard'
- */
-    const dashboardf1e2d93ec6437123741988cc59b4615fForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: dashboardf1e2d93ec6437123741988cc59b4615f.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard'
- */
-        dashboardf1e2d93ec6437123741988cc59b4615fForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboardf1e2d93ec6437123741988cc59b4615f.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard'
- */
-        dashboardf1e2d93ec6437123741988cc59b4615fForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboardf1e2d93ec6437123741988cc59b4615f.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    dashboardf1e2d93ec6437123741988cc59b4615f.form = dashboardf1e2d93ec6437123741988cc59b4615fForm
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
  * @route '/api/encargado/dashboard/stats'
  */
 const dashboard41c3b76b10db8984949bf0fd16d8e3e3 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,42 +84,6 @@ dashboard41c3b76b10db8984949bf0fd16d8e3e3.head = (options?: RouteQueryOptions): 
     url: dashboard41c3b76b10db8984949bf0fd16d8e3e3.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard/stats'
- */
-    const dashboard41c3b76b10db8984949bf0fd16d8e3e3Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: dashboard41c3b76b10db8984949bf0fd16d8e3e3.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard/stats'
- */
-        dashboard41c3b76b10db8984949bf0fd16d8e3e3Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard41c3b76b10db8984949bf0fd16d8e3e3.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::dashboard
- * @see app/Http/Controllers/Api/EncargadoController.php:18
- * @route '/api/encargado/dashboard/stats'
- */
-        dashboard41c3b76b10db8984949bf0fd16d8e3e3Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: dashboard41c3b76b10db8984949bf0fd16d8e3e3.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    dashboard41c3b76b10db8984949bf0fd16d8e3e3.form = dashboard41c3b76b10db8984949bf0fd16d8e3e3Form
 
 export const dashboard = {
     '/api/encargado/dashboard': dashboardf1e2d93ec6437123741988cc59b4615f,
@@ -204,41 +133,6 @@ entregasAsignadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasAsignadas
- * @see app/Http/Controllers/Api/EncargadoController.php:176
- * @route '/api/encargado/entregas/asignadas'
- */
-    const entregasAsignadasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: entregasAsignadas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasAsignadas
- * @see app/Http/Controllers/Api/EncargadoController.php:176
- * @route '/api/encargado/entregas/asignadas'
- */
-        entregasAsignadasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregasAsignadas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasAsignadas
- * @see app/Http/Controllers/Api/EncargadoController.php:176
- * @route '/api/encargado/entregas/asignadas'
- */
-        entregasAsignadasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregasAsignadas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    entregasAsignadas.form = entregasAsignadasForm
 /**
 * @see \App\Http\Controllers\Api\EncargadoController::procesarCargaVehiculo
  * @see app/Http/Controllers/Api/EncargadoController.php:217
@@ -292,27 +186,6 @@ procesarCargaVehiculo.post = (args: { id: string | number } | [id: string | numb
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::procesarCargaVehiculo
- * @see app/Http/Controllers/Api/EncargadoController.php:217
- * @route '/api/encargado/entregas/{id}/procesar-carga'
- */
-    const procesarCargaVehiculoForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: procesarCargaVehiculo.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::procesarCargaVehiculo
- * @see app/Http/Controllers/Api/EncargadoController.php:217
- * @route '/api/encargado/entregas/{id}/procesar-carga'
- */
-        procesarCargaVehiculoForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: procesarCargaVehiculo.url(args, options),
-            method: 'post',
-        })
-    
-    procesarCargaVehiculo.form = procesarCargaVehiculoForm
 /**
 * @see \App\Http\Controllers\Api\EncargadoController::indexAdmin
  * @see app/Http/Controllers/Api/EncargadoController.php:270
@@ -356,41 +229,6 @@ indexAdmin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::indexAdmin
- * @see app/Http/Controllers/Api/EncargadoController.php:270
- * @route '/api/encargado/entregas'
- */
-    const indexAdminForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexAdmin.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::indexAdmin
- * @see app/Http/Controllers/Api/EncargadoController.php:270
- * @route '/api/encargado/entregas'
- */
-        indexAdminForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexAdmin.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::indexAdmin
- * @see app/Http/Controllers/Api/EncargadoController.php:270
- * @route '/api/encargado/entregas'
- */
-        indexAdminForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexAdmin.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexAdmin.form = indexAdminForm
 /**
 * @see \App\Http\Controllers\Api\EncargadoController::asignarEntrega
  * @see app/Http/Controllers/Api/EncargadoController.php:318
@@ -444,27 +282,6 @@ asignarEntrega.post = (args: { id: string | number } | [id: string | number ] | 
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::asignarEntrega
- * @see app/Http/Controllers/Api/EncargadoController.php:318
- * @route '/api/encargado/entregas/{id}/asignar'
- */
-    const asignarEntregaForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: asignarEntrega.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::asignarEntrega
- * @see app/Http/Controllers/Api/EncargadoController.php:318
- * @route '/api/encargado/entregas/{id}/asignar'
- */
-        asignarEntregaForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: asignarEntrega.url(args, options),
-            method: 'post',
-        })
-    
-    asignarEntrega.form = asignarEntregaForm
 /**
 * @see \App\Http\Controllers\Api\EncargadoController::entregasActivas
  * @see app/Http/Controllers/Api/EncargadoController.php:367
@@ -507,42 +324,6 @@ entregasActivas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     url: entregasActivas.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasActivas
- * @see app/Http/Controllers/Api/EncargadoController.php:367
- * @route '/api/encargado/entregas/activas'
- */
-    const entregasActivasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: entregasActivas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasActivas
- * @see app/Http/Controllers/Api/EncargadoController.php:367
- * @route '/api/encargado/entregas/activas'
- */
-        entregasActivasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregasActivas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\EncargadoController::entregasActivas
- * @see app/Http/Controllers/Api/EncargadoController.php:367
- * @route '/api/encargado/entregas/activas'
- */
-        entregasActivasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregasActivas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    entregasActivas.form = entregasActivasForm
 const EncargadoController = { dashboard, entregasAsignadas, procesarCargaVehiculo, indexAdmin, asignarEntrega, entregasActivas }
 
 export default EncargadoController

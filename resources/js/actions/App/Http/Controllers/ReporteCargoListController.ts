@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteCargoListController::estadisticas
  * @see app/Http/Controllers/ReporteCargoListController.php:185
@@ -42,41 +42,6 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCargoListController::estadisticas
- * @see app/Http/Controllers/ReporteCargoListController.php:185
- * @route '/api/reportes/estadisticas'
- */
-    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estadisticas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::estadisticas
- * @see app/Http/Controllers/ReporteCargoListController.php:185
- * @route '/api/reportes/estadisticas'
- */
-        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::estadisticas
- * @see app/Http/Controllers/ReporteCargoListController.php:185
- * @route '/api/reportes/estadisticas'
- */
-        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\ReporteCargoListController::exportarZip
  * @see app/Http/Controllers/ReporteCargoListController.php:202
@@ -111,27 +76,6 @@ exportarZip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCargoListController::exportarZip
- * @see app/Http/Controllers/ReporteCargoListController.php:202
- * @route '/api/reportes/exportar-zip'
- */
-    const exportarZipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: exportarZip.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::exportarZip
- * @see app/Http/Controllers/ReporteCargoListController.php:202
- * @route '/api/reportes/exportar-zip'
- */
-        exportarZipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: exportarZip.url(options),
-            method: 'post',
-        })
-    
-    exportarZip.form = exportarZipForm
 /**
 * @see \App\Http\Controllers\ReporteCargoListController::index
  * @see app/Http/Controllers/ReporteCargoListController.php:31
@@ -174,42 +118,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 const ReporteCargoListController = { estadisticas, exportarZip, index }
 
 export default ReporteCargoListController

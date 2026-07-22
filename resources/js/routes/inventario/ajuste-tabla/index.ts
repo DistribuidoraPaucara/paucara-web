@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
  * @see routes/web.php:767
  * @route '/inventario/ajuste-tabla'
@@ -37,39 +37,6 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form.url(options),
     method: 'head',
 })
-
-    /**
- * @see routes/web.php:767
- * @route '/inventario/ajuste-tabla'
- */
-    const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: form.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:767
- * @route '/inventario/ajuste-tabla'
- */
-        formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: form.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:767
- * @route '/inventario/ajuste-tabla'
- */
-        formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: form.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    form.form = formForm
 const ajusteTabla = {
     form,
 }

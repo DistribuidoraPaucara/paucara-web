@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::show
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
@@ -66,41 +66,6 @@ show.head = (args: { venta: number | { id: number } } | [venta: number | { id: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-    const showForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-        showForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-        showForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::entregas
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:71
@@ -168,41 +133,6 @@ entregas.head = (args: { venta: number | { id: number } } | [venta: number | { i
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::entregas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:71
- * @route '/api/ventas/{venta}/entregas'
- */
-    const entregasForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: entregas.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::entregas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:71
- * @route '/api/ventas/{venta}/entregas'
- */
-        entregasForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregas.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::entregas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:71
- * @route '/api/ventas/{venta}/entregas'
- */
-        entregasForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: entregas.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    entregas.form = entregasForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::actualizarEstadoLogistico
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:296
@@ -261,37 +191,6 @@ actualizarEstadoLogistico.patch = (args: { venta: number | { id: number } } | [v
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::actualizarEstadoLogistico
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:296
- * @route '/api/ventas/{venta}/actualizar-estado-logistico'
- */
-    const actualizarEstadoLogisticoForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: actualizarEstadoLogistico.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::actualizarEstadoLogistico
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:296
- * @route '/api/ventas/{venta}/actualizar-estado-logistico'
- */
-        actualizarEstadoLogisticoForm.patch = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: actualizarEstadoLogistico.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    actualizarEstadoLogistico.form = actualizarEstadoLogisticoForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
@@ -335,41 +234,6 @@ estadisticas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-    const estadisticasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estadisticas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-        estadisticasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::estadisticas
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:178
- * @route '/api/logistica/estadisticas'
- */
-        estadisticasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estadisticas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estadisticas.form = estadisticasForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
@@ -404,27 +268,6 @@ resincronizar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
- * @route '/api/logistica/resincronizar'
- */
-    const resincronizarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: resincronizar.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::resincronizar
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:210
- * @route '/api/logistica/resincronizar'
- */
-        resincronizarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: resincronizar.url(options),
-            method: 'post',
-        })
-    
-    resincronizar.form = resincronizarForm
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::obtenerEstadosLogisticos
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:251
@@ -467,42 +310,6 @@ obtenerEstadosLogisticos.head = (options?: RouteQueryOptions): RouteDefinition<'
     url: obtenerEstadosLogisticos.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::obtenerEstadosLogisticos
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:251
- * @route '/api/estados-logistica'
- */
-    const obtenerEstadosLogisticosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: obtenerEstadosLogisticos.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::obtenerEstadosLogisticos
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:251
- * @route '/api/estados-logistica'
- */
-        obtenerEstadosLogisticosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerEstadosLogisticos.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::obtenerEstadosLogisticos
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:251
- * @route '/api/estados-logistica'
- */
-        obtenerEstadosLogisticosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerEstadosLogisticos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    obtenerEstadosLogisticos.form = obtenerEstadosLogisticosForm
 const VentaLogisticaController = { show, entregas, actualizarEstadoLogistico, estadisticas, resincronizar, obtenerEstadosLogisticos }
 
 export default VentaLogisticaController

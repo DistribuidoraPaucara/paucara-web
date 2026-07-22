@@ -53,6 +53,7 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
+import { MetricasCard } from './components/MetricasCard';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement);
 
@@ -96,6 +97,8 @@ interface Props {
     total_ingresos: number;
     total_egresos: number;
     diferencias_detectadas: number;
+    efectivo_esperado: number;
+    montos_apertura: number;
   };
 }
 
@@ -368,8 +371,8 @@ export default function Dashboard({
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Dashboard de Cajas" />
 
-      <div className="py-12">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+      <div className="py-2">
+        <div className="sm:px-2 lg:px-2 space-y-2">
           {/* Header */}
           <div className="flex justify-between items-start">
             <div>
@@ -400,207 +403,11 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Métricas principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card className="p-4 dark:bg-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Total de Cajas
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {metricas.total_cajas}
-                  </p>
-                </div>
-                <Users className="h-8 w-8 text-blue-500 dark:text-blue-400" />
-              </div>
-            </Card>
-
-            <Card className="p-4 dark:bg-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Abiertas Hoy
-                  </p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {metricas.cajas_abiertas}
-                  </p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-green-500 dark:text-green-400" />
-              </div>
-            </Card>
-
-            <Card className="p-4 dark:bg-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Total Ingresos
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${Number(metricas.total_ingresos).toFixed(2)}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-green-500 dark:text-green-400" />
-              </div>
-            </Card>
-
-            <Card className="p-4 dark:bg-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Total Egresos
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${Math.abs(Number(metricas.total_egresos)).toFixed(2)}
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-red-500 dark:text-red-400" />
-              </div>
-            </Card>
-
-            <Card className="p-4 dark:bg-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Discrepancias
-                  </p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {metricas.diferencias_detectadas}
-                  </p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
-              </div>
-            </Card>
-          </div>
-
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Gráfico: Estado de Cajas */}
-            <Card className="p-6 dark:bg-slate-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Estado de Cajas
-              </h3>
-              <div className="flex justify-center">
-                <Pie
-                  data={{
-                    labels: ['Abiertas', 'Cerradas'],
-                    datasets: [
-                      {
-                        label: 'Cajas',
-                        data: [Number(metricas.cajas_abiertas), Number(metricas.total_cajas) - Number(metricas.cajas_abiertas)],
-                        backgroundColor: [colors.green, colors.red],
-                        borderColor: [colors.greenDark, colors.redDark],
-                        borderWidth: 2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          color: colors.text,
-                          font: { size: 12 },
-                        },
-                      },
-                    },
-                  }}
-                  width={200}
-                  height={200}
-                />
-              </div>
-            </Card>
-
-            {/* Gráfico: Ingresos vs Egresos */}
-            <Card className="p-6 dark:bg-slate-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Ingresos vs Egresos
-              </h3>
-              <Bar
-                data={{
-                  labels: ['Hoy'],
-                  datasets: [
-                    {
-                      label: 'Ingresos',
-                      data: [Number(metricas.total_ingresos)],
-                      backgroundColor: colors.green,
-                    },
-                    {
-                      label: 'Egresos',
-                      data: [Math.abs(Number(metricas.total_egresos))],
-                      backgroundColor: colors.red,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  indexAxis: 'y',
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        color: colors.text,
-                        font: { size: 12 },
-                      },
-                    },
-                  },
-                  scales: {
-                    x: {
-                      beginAtZero: true,
-                      ticks: {
-                        color: colors.textSecondary,
-                      },
-                      grid: {
-                        color: colors.gridBorder,
-                      },
-                    },
-                    y: {
-                      ticks: {
-                        color: colors.textSecondary,
-                      },
-                      grid: {
-                        color: colors.gridBorder,
-                      },
-                    },
-                  },
-                }}
-                height={200}
-              />
-            </Card>
-
-            {/* Gráfico: Métrica de Discrepancias */}
-            <Card className="p-6 dark:bg-slate-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Resumen del Día
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Cajas Operativas</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {metricas.cajas_abiertas}/{metricas.total_cajas}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Neto del Día</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    ${(Number(metricas.total_ingresos) - Math.abs(Number(metricas.total_egresos))).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Discrepancias</p>
-                  <p className={`text-2xl font-bold ${metricas.diferencias_detectadas > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                    {metricas.diferencias_detectadas}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
+          {/* Métricas de Ingresos, Egresos y Efectivo Esperado */}
+          <MetricasCard metricas={metricas} />
 
           {/* Búsqueda y filtros */}
-          <Card className="p-4 dark:bg-slate-800 border dark:border-slate-700">
+          <Card className="p-2">
             <div className="space-y-4">
               {/* Búsqueda */}
               <div className="flex gap-4">
@@ -862,7 +669,7 @@ export default function Dashboard({
                     return (
                       <TableRow key={caja.id} className="dark:border-slate-700 hover:dark:bg-slate-700">
                         <TableCell className="font-medium dark:text-white">
-                          #{caja.id} | {caja.nombre}
+                          #{caja.id}
                         </TableCell>
                         <TableCell className="dark:text-gray-300">{caja.usuario.name}</TableCell>
                         <TableCell>

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
  * @see routes/web.php:866
  * @route '/prestamos/ajustes/movimientos/clientes'
@@ -38,38 +38,6 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see routes/web.php:866
- * @route '/prestamos/ajustes/movimientos/clientes'
- */
-    const clientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: clientes.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:866
- * @route '/prestamos/ajustes/movimientos/clientes'
- */
-        clientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: clientes.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:866
- * @route '/prestamos/ajustes/movimientos/clientes'
- */
-        clientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: clientes.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    clientes.form = clientesForm
 /**
  * @see routes/web.php:867
  * @route '/prestamos/ajustes/movimientos/proveedores'
@@ -109,38 +77,6 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
- * @see routes/web.php:867
- * @route '/prestamos/ajustes/movimientos/proveedores'
- */
-    const proveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: proveedores.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:867
- * @route '/prestamos/ajustes/movimientos/proveedores'
- */
-        proveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: proveedores.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:867
- * @route '/prestamos/ajustes/movimientos/proveedores'
- */
-        proveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: proveedores.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    proveedores.form = proveedoresForm
 /**
  * @see routes/web.php:868
  * @route '/prestamos/ajustes/movimientos/eventos'
@@ -179,39 +115,6 @@ eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: eventos.url(options),
     method: 'head',
 })
-
-    /**
- * @see routes/web.php:868
- * @route '/prestamos/ajustes/movimientos/eventos'
- */
-    const eventosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: eventos.url(options),
-        method: 'get',
-    })
-
-            /**
- * @see routes/web.php:868
- * @route '/prestamos/ajustes/movimientos/eventos'
- */
-        eventosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: eventos.url(options),
-            method: 'get',
-        })
-            /**
- * @see routes/web.php:868
- * @route '/prestamos/ajustes/movimientos/eventos'
- */
-        eventosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: eventos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    eventos.form = eventosForm
 const movimientos = {
     clientes,
 proveedores,
