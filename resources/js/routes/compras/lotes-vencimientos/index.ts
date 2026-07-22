@@ -79,10 +79,10 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarEstado
- * @see app/Http/Controllers/LoteVencimientoController.php:64
+ * @see app/Http/Controllers/LoteVencimientoController.php:0
  * @route '/compras/lotes-vencimientos/{lote}/actualizar-estado'
  */
-export const actualizarEstado = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+export const actualizarEstado = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: actualizarEstado.url(args, options),
     method: 'patch',
 })
@@ -94,17 +94,14 @@ actualizarEstado.definition = {
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarEstado
- * @see app/Http/Controllers/LoteVencimientoController.php:64
+ * @see app/Http/Controllers/LoteVencimientoController.php:0
  * @route '/compras/lotes-vencimientos/{lote}/actualizar-estado'
  */
-actualizarEstado.url = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+actualizarEstado.url = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { lote: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { lote: args.id }
-        }
     
     if (Array.isArray(args)) {
         args = {
@@ -115,9 +112,7 @@ actualizarEstado.url = (args: { lote: number | { id: number } } | [lote: number 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        lote: typeof args.lote === 'object'
-                ? args.lote.id
-                : args.lote,
+                        lote: args.lote,
                 }
 
     return actualizarEstado.definition.url
@@ -127,20 +122,20 @@ actualizarEstado.url = (args: { lote: number | { id: number } } | [lote: number 
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarEstado
- * @see app/Http/Controllers/LoteVencimientoController.php:64
+ * @see app/Http/Controllers/LoteVencimientoController.php:0
  * @route '/compras/lotes-vencimientos/{lote}/actualizar-estado'
  */
-actualizarEstado.patch = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+actualizarEstado.patch = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: actualizarEstado.url(args, options),
     method: 'patch',
 })
 
     /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarEstado
- * @see app/Http/Controllers/LoteVencimientoController.php:64
+ * @see app/Http/Controllers/LoteVencimientoController.php:0
  * @route '/compras/lotes-vencimientos/{lote}/actualizar-estado'
  */
-    const actualizarEstadoForm = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const actualizarEstadoForm = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: actualizarEstado.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PATCH',
@@ -152,10 +147,10 @@ actualizarEstado.patch = (args: { lote: number | { id: number } } | [lote: numbe
 
             /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarEstado
- * @see app/Http/Controllers/LoteVencimientoController.php:64
+ * @see app/Http/Controllers/LoteVencimientoController.php:0
  * @route '/compras/lotes-vencimientos/{lote}/actualizar-estado'
  */
-        actualizarEstadoForm.patch = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        actualizarEstadoForm.patch = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: actualizarEstado.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PATCH',
@@ -168,10 +163,10 @@ actualizarEstado.patch = (args: { lote: number | { id: number } } | [lote: numbe
     actualizarEstado.form = actualizarEstadoForm
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarCantidad
- * @see app/Http/Controllers/LoteVencimientoController.php:77
+ * @see app/Http/Controllers/LoteVencimientoController.php:113
  * @route '/compras/lotes-vencimientos/{lote}/cantidad'
  */
-export const actualizarCantidad = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+export const actualizarCantidad = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: actualizarCantidad.url(args, options),
     method: 'patch',
 })
@@ -183,17 +178,14 @@ actualizarCantidad.definition = {
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarCantidad
- * @see app/Http/Controllers/LoteVencimientoController.php:77
+ * @see app/Http/Controllers/LoteVencimientoController.php:113
  * @route '/compras/lotes-vencimientos/{lote}/cantidad'
  */
-actualizarCantidad.url = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+actualizarCantidad.url = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { lote: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { lote: args.id }
-        }
     
     if (Array.isArray(args)) {
         args = {
@@ -204,9 +196,7 @@ actualizarCantidad.url = (args: { lote: number | { id: number } } | [lote: numbe
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        lote: typeof args.lote === 'object'
-                ? args.lote.id
-                : args.lote,
+                        lote: args.lote,
                 }
 
     return actualizarCantidad.definition.url
@@ -216,20 +206,20 @@ actualizarCantidad.url = (args: { lote: number | { id: number } } | [lote: numbe
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarCantidad
- * @see app/Http/Controllers/LoteVencimientoController.php:77
+ * @see app/Http/Controllers/LoteVencimientoController.php:113
  * @route '/compras/lotes-vencimientos/{lote}/cantidad'
  */
-actualizarCantidad.patch = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+actualizarCantidad.patch = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: actualizarCantidad.url(args, options),
     method: 'patch',
 })
 
     /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarCantidad
- * @see app/Http/Controllers/LoteVencimientoController.php:77
+ * @see app/Http/Controllers/LoteVencimientoController.php:113
  * @route '/compras/lotes-vencimientos/{lote}/cantidad'
  */
-    const actualizarCantidadForm = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const actualizarCantidadForm = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: actualizarCantidad.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PATCH',
@@ -241,10 +231,10 @@ actualizarCantidad.patch = (args: { lote: number | { id: number } } | [lote: num
 
             /**
 * @see \App\Http\Controllers\LoteVencimientoController::actualizarCantidad
- * @see app/Http/Controllers/LoteVencimientoController.php:77
+ * @see app/Http/Controllers/LoteVencimientoController.php:113
  * @route '/compras/lotes-vencimientos/{lote}/cantidad'
  */
-        actualizarCantidadForm.patch = (args: { lote: number | { id: number } } | [lote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        actualizarCantidadForm.patch = (args: { lote: string | number } | [lote: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: actualizarCantidad.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PATCH',
@@ -257,7 +247,7 @@ actualizarCantidad.patch = (args: { lote: number | { id: number } } | [lote: num
     actualizarCantidad.form = actualizarCantidadForm
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -272,7 +262,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -281,7 +271,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -290,7 +280,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -300,7 +290,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -310,7 +300,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -319,7 +309,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\LoteVencimientoController::exportMethod
- * @see app/Http/Controllers/LoteVencimientoController.php:95
+ * @see app/Http/Controllers/LoteVencimientoController.php:131
  * @route '/compras/lotes-vencimientos/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -19,20 +19,24 @@ import {
     Eye,
     Package2
 } from 'lucide-react';
-import type { DetalleCompra } from '@/domain/entities/compras';
 import type { Producto } from '@/domain/entities/productos';
-import type { Proveedor } from '@/domain/entities/proveedores';
+import type { Almacen } from '@/domain/entities/almacenes';
 
 // Interfaces específicas para lotes
-interface LoteDetalle extends DetalleCompra {
-    compra: {
-        id: number;
-        numero: string;
-        fecha: string;
-        proveedor: Proveedor;
-    };
-    dias_para_vencer: number;
-    estado_vencimiento: 'VIGENTE' | 'PROXIMO_VENCER' | 'VENCIDO' | 'CRITICO';
+interface LoteDetalle {
+    id: number;
+    producto: Producto;
+    almacen: Almacen;
+    lote: string;
+    fecha_vencimiento: string | null;
+    cantidad: number;
+    cantidad_disponible: number;
+    cantidad_reservada: number;
+    precio_costo: number | null;
+    valor_total: number;
+    dias_para_vencer: number | null;
+    estado_vencimiento: 'VIGENTE' | 'PROXIMO_VENCER' | 'VENCIDO' | 'CRITICO' | 'SIN_VENCIMIENTO';
+    esta_vencido: boolean;
 }
 
 interface EstadisticasLotes {
@@ -50,12 +54,11 @@ interface Props {
     lotes: Pagination<LoteDetalle>;
     estadisticas: EstadisticasLotes;
     productos: Producto[];
-    proveedores: Proveedor[];
+    almacenes: Almacen[];
     filtros: {
         producto_id?: string;
-        proveedor_id?: string;
+        almacen_id?: string;
         estado_vencimiento?: string;
-        dias_alerta?: string;
         q?: string;
     };
 }
@@ -64,7 +67,7 @@ const GestionLotesVencimientos: React.FC<Props> = ({
     lotes,
     estadisticas,
     productos,
-    proveedores,
+    almacenes,
     filtros
 }) => {
     // ✅ NUEVO (2026-07-22): Logging en consola para ver datos del backend
@@ -75,19 +78,20 @@ const GestionLotesVencimientos: React.FC<Props> = ({
         console.table(lotes.data.map(l => ({
             id: l.id,
             producto: l.producto.nombre,
+            almacen: l.almacen.nombre,
             lote: l.lote,
             fecha_vencimiento: l.fecha_vencimiento,
             dias_para_vencer: l.dias_para_vencer,
             estado: l.estado_vencimiento,
             cantidad: l.cantidad,
-            valor: l.subtotal,
-            proveedor: l.compra.proveedor.nombre,
+            disponible: l.cantidad_disponible,
+            valor: l.valor_total,
         })));
         console.log('🔧 Productos disponibles:', productos.length);
-        console.log('🏭 Proveedores disponibles:', proveedores.length);
+        console.log('🎯 Almacenes disponibles:', almacenes.length);
         console.log('🎯 Filtros actuales:', filtros);
         console.groupEnd();
-    }, [lotes, estadisticas, productos, proveedores, filtros]);
+    }, [lotes, estadisticas, productos, almacenes, filtros]);
 
     const [filtroLocal, setFiltroLocal] = useState(filtros);
     const [loteSeleccionado, setLoteSeleccionado] = useState<LoteDetalle | null>(null);
@@ -289,20 +293,20 @@ const GestionLotesVencimientos: React.FC<Props> = ({
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Proveedor
+                                    Almacén
                                 </label>
                                 <Select
-                                    value={filtroLocal.proveedor_id || 'all'}
-                                    onValueChange={(value) => setFiltroLocal(prev => ({ ...prev, proveedor_id: value === 'all' ? '' : value }))}
+                                    value={filtroLocal.almacen_id || 'all'}
+                                    onValueChange={(value) => setFiltroLocal(prev => ({ ...prev, almacen_id: value === 'all' ? '' : value }))}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Todos los proveedores" />
+                                        <SelectValue placeholder="Todos los almacenes" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Todos los proveedores</SelectItem>
-                                        {proveedores.map((proveedor) => (
-                                            <SelectItem key={proveedor.id} value={proveedor.id.toString()}>
-                                                {proveedor.nombre}
+                                        <SelectItem value="all">Todos los almacenes</SelectItem>
+                                        {almacenes.map((almacen) => (
+                                            <SelectItem key={almacen.id} value={almacen.id.toString()}>
+                                                {almacen.nombre}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -374,7 +378,7 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                                 Lote
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                Compra
+                                                Almacén
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                 Cantidad
@@ -416,13 +420,8 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                                 </td>
 
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div>
-                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {lote.compra.numero}
-                                                        </div>
-                                                        <div className="text-sm text-gray-500">
-                                                            {lote.compra.proveedor.nombre}
-                                                        </div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {lote.almacen.nombre}
                                                     </div>
                                                 </td>
 
@@ -436,9 +435,11 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                                             {lote.fecha_vencimiento ? formatDate(lote.fecha_vencimiento) : 'Sin fecha'}
                                                         </div>
                                                         <div className="text-sm text-gray-500">
-                                                            {lote.dias_para_vencer >= 0
-                                                                ? `${lote.dias_para_vencer} días`
-                                                                : `Vencido hace ${Math.abs(lote.dias_para_vencer)} días`
+                                                            {lote.dias_para_vencer === null
+                                                                ? 'Sin vencimiento'
+                                                                : lote.dias_para_vencer >= 0
+                                                                    ? `${lote.dias_para_vencer} días`
+                                                                    : `Vencido hace ${Math.abs(lote.dias_para_vencer)} días`
                                                             }
                                                         </div>
                                                     </div>
@@ -455,7 +456,7 @@ const GestionLotesVencimientos: React.FC<Props> = ({
 
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
                                                     <div className="font-mono">
-                                                        {formatCurrency(lote.subtotal)}
+                                                        {formatCurrency(lote.valor_total)}
                                                     </div>
                                                 </td>
 
@@ -516,19 +517,15 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                     </div>
 
                                     <div className="space-y-3">
-                                        <h4 className="font-medium text-gray-900 dark:text-white">Compra</h4>
+                                        <h4 className="font-medium text-gray-900 dark:text-white">Almacén</h4>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Número:</span>
-                                                <span className="font-medium">{loteSeleccionado.compra.numero}</span>
+                                                <span className="text-gray-600">Nombre:</span>
+                                                <span className="font-medium">{loteSeleccionado.almacen.nombre}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Fecha:</span>
-                                                <span className="font-medium">{formatDate(loteSeleccionado.compra.fecha)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Proveedor:</span>
-                                                <span className="font-medium">{loteSeleccionado.compra.proveedor.nombre}</span>
+                                                <span className="text-gray-600">Ubicación:</span>
+                                                <span className="font-medium">{loteSeleccionado.almacen.ubicacion || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -560,14 +557,17 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                         </div>
                                         <div>
                                             <span className="block text-sm text-gray-600 mb-1">Días para vencer:</span>
-                                            <span className={`font-medium ${loteSeleccionado.dias_para_vencer < 0 ? 'text-red-600' :
+                                            <span className={`font-medium ${loteSeleccionado.dias_para_vencer === null ? 'text-gray-600' :
+                                                loteSeleccionado.dias_para_vencer < 0 ? 'text-red-600' :
                                                 loteSeleccionado.dias_para_vencer <= 7 ? 'text-orange-600' :
                                                     loteSeleccionado.dias_para_vencer <= 30 ? 'text-yellow-600' :
                                                         'text-green-600'
                                                 }`}>
-                                                {loteSeleccionado.dias_para_vencer >= 0
-                                                    ? `${loteSeleccionado.dias_para_vencer} días`
-                                                    : `Vencido hace ${Math.abs(loteSeleccionado.dias_para_vencer)} días`
+                                                {loteSeleccionado.dias_para_vencer === null
+                                                    ? 'Sin vencimiento'
+                                                    : loteSeleccionado.dias_para_vencer >= 0
+                                                        ? `${loteSeleccionado.dias_para_vencer} días`
+                                                        : `Vencido hace ${Math.abs(loteSeleccionado.dias_para_vencer)} días`
                                                 }
                                             </span>
                                         </div>
@@ -581,15 +581,15 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                                         <span className="font-medium text-lg">{loteSeleccionado.cantidad}</span>
                                     </div>
                                     <div>
-                                        <span className="block text-sm text-gray-600 mb-1">Precio Unitario:</span>
+                                        <span className="block text-sm text-gray-600 mb-1">Precio Costo:</span>
                                         <span className="font-medium text-lg">
-                                            {formatCurrency(loteSeleccionado.precio_unitario)}
+                                            {loteSeleccionado.precio_costo ? formatCurrency(loteSeleccionado.precio_costo) : 'N/A'}
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="block text-sm text-gray-600 mb-1">Subtotal:</span>
+                                        <span className="block text-sm text-gray-600 mb-1">Valor Total:</span>
                                         <span className="font-medium text-lg">
-                                            {formatCurrency(loteSeleccionado.subtotal)}
+                                            {formatCurrency(loteSeleccionado.valor_total)}
                                         </span>
                                     </div>
                                 </div>

@@ -48,28 +48,6 @@ class LoteVencimientoController extends Controller
 
         $lotes = $query->paginate(15)->withQueryString();
 
-        // Transformar datos para que coincidan con lo esperado por el frontend
-        $lotesTransformados = $lotes->map(function ($stock) {
-            return [
-                'id' => $stock->id,
-                'producto' => $stock->producto,
-                'almacen' => $stock->almacen,
-                'lote' => $stock->lote,
-                'fecha_vencimiento' => $stock->fecha_vencimiento?->toDateString(),
-                'cantidad' => $stock->cantidad,
-                'cantidad_disponible' => $stock->cantidad_disponible,
-                'cantidad_reservada' => $stock->cantidad_reservada,
-                'precio_costo' => $stock->precio_costo,
-                'valor_total' => $stock->cantidad * $stock->precio_costo,
-                'dias_para_vencer' => $stock->diasParaVencer(),
-                'estado_vencimiento' => $this->determinarEstadoVencimiento($stock),
-                'esta_vencido' => $stock->estaVencido(),
-            ];
-        });
-
-        $paginated = $lotes->toBase();
-        $paginated->data = $lotesTransformados;
-
         // Estadísticas
         $todosLotes = StockProducto::whereNotNull('lote');
 
@@ -97,7 +75,7 @@ class LoteVencimientoController extends Controller
         ];
 
         return Inertia::render('compras/lotes-vencimientos/index', [
-            'lotes'        => $paginated,
+            'lotes'        => $lotes,
             'filtros'      => $request->only(['producto_id', 'estado_vencimiento', 'almacen_id', 'q']),
             'estadisticas' => $estadisticas,
             'productos'    => Producto::select('id', 'nombre')->orderBy('nombre')->get(),

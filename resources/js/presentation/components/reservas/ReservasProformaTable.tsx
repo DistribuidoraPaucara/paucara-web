@@ -527,9 +527,9 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                             <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
                                             {/* ✅ NUEVO (2026-07-22): Link a editar proforma */}
                                             <Link
-                                                href={`/proformas/${reserva.proforma_id}/edit`}
+                                                href={`/productos/${reserva.producto_id}/edit`}
                                                 className="text-xs font-medium text-green-600 hover:text-green-800 hover:underline dark:text-green-400 dark:hover:text-green-300"
-                                                title="Editar proforma"
+                                                title="Editar producto"
                                             >
                                                 ✏️ Editar
                                             </Link>

@@ -316,7 +316,7 @@ class ApiProformaController extends Controller
                             }
 
                             // ✅ Validación 3: Validar stock de cada componente seleccionado
-                            $productoDeLista = \App\Models\Producto::findOrFail($productoIdSeleccionado);
+                            $productoDeLista = Producto::findOrFail($productoIdSeleccionado);
                             $stockComponente = $productoDeLista->stock()->sum('cantidad_disponible') ?? 0;
 
                             // Stock requerido = cantidad_combos × cantidad_del_item
