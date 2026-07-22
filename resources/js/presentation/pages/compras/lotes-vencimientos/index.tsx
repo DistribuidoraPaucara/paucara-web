@@ -67,6 +67,28 @@ const GestionLotesVencimientos: React.FC<Props> = ({
     proveedores,
     filtros
 }) => {
+    // ✅ NUEVO (2026-07-22): Logging en consola para ver datos del backend
+    React.useEffect(() => {
+        console.group('📦 [Gestión Lotes] Datos del Backend');
+        console.log('📊 Estadísticas:', estadisticas);
+        console.log('📋 Total de lotes:', lotes.total);
+        console.table(lotes.data.map(l => ({
+            id: l.id,
+            producto: l.producto.nombre,
+            lote: l.lote,
+            fecha_vencimiento: l.fecha_vencimiento,
+            dias_para_vencer: l.dias_para_vencer,
+            estado: l.estado_vencimiento,
+            cantidad: l.cantidad,
+            valor: l.subtotal,
+            proveedor: l.compra.proveedor.nombre,
+        })));
+        console.log('🔧 Productos disponibles:', productos.length);
+        console.log('🏭 Proveedores disponibles:', proveedores.length);
+        console.log('🎯 Filtros actuales:', filtros);
+        console.groupEnd();
+    }, [lotes, estadisticas, productos, proveedores, filtros]);
+
     const [filtroLocal, setFiltroLocal] = useState(filtros);
     const [loteSeleccionado, setLoteSeleccionado] = useState<LoteDetalle | null>(null);
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
@@ -143,7 +165,7 @@ const GestionLotesVencimientos: React.FC<Props> = ({
         <AppLayout>
             <Head title="Gestión de Lotes y Vencimientos" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-2 p-2">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
@@ -159,12 +181,14 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total de Lotes</CardTitle>
-                            <Package className="h-4 w-4 text-blue-600" />
-                        </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{estadisticas.total_lotes}</div>
+                            <div className="flex items-center justify-center">
+                                <Package className="h-4 w-4 text-blue-600" />
+                                <CardTitle className="text-sm font-medium">Total de Lotes</CardTitle>
+                            </div>
+                            <div className="text-2xl font-bold">
+                                {estadisticas.total_lotes}
+                            </div>                            
                             <p className="text-xs text-muted-foreground">
                                 Valor: {formatCurrency(estadisticas.valor_total_inventario)}
                             </p>
@@ -172,11 +196,11 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Próximos a Vencer</CardTitle>
-                            <Clock className="h-4 w-4 text-yellow-600" />
-                        </CardHeader>
                         <CardContent>
+                            <div className="flex items-center justify-center">
+                                <Clock className="h-4 w-4 text-yellow-600" />
+                                <CardTitle className="text-sm font-medium">Próximos a Vencer</CardTitle>
+                            </div>
                             <div className="text-2xl font-bold text-yellow-600">
                                 {estadisticas.lotes_proximos_vencer}
                             </div>
@@ -187,26 +211,28 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
-                            <XCircle className="h-4 w-4 text-red-600" />
-                        </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-600">
-                                {estadisticas.lotes_vencidos}
+                            <div className="flex items-center justify-center">
+                                <XCircle className="h-4 w-4 text-red-600" />
+                                <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Valor: {formatCurrency(estadisticas.valor_vencidos)}
-                            </p>
+                            <div className="flex flex-wrap gap-2 items-center justify-center">
+                                <div className="text-2xl font-bold text-red-600">
+                                    {estadisticas.lotes_vencidos}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Valor: {formatCurrency(estadisticas.valor_vencidos)}
+                                </p>
+                            </div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Estado Crítico</CardTitle>
-                            <AlertTriangle className="h-4 w-4 text-orange-600" />
-                        </CardHeader>
                         <CardContent>
+                            <div className="flex items-center justify-center">
+                                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                                <CardTitle className="text-sm font-medium">Estado Crítico</CardTitle>
+                            </div>
                             <div className="text-2xl font-bold text-orange-600">
                                 {estadisticas.lotes_criticos}
                             </div>
@@ -219,7 +245,7 @@ const GestionLotesVencimientos: React.FC<Props> = ({
 
                 {/* Filtros */}
                 <Card>
-                    <CardHeader>
+                    <CardContent>
                         <CardTitle className="flex items-center text-lg">
                             <Filter className="w-5 h-5 mr-2" />
                             Filtros de Búsqueda
@@ -227,8 +253,6 @@ const GestionLotesVencimientos: React.FC<Props> = ({
                         <CardDescription>
                             Utiliza los filtros para encontrar lotes específicos
                         </CardDescription>
-                    </CardHeader>
-                    <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
