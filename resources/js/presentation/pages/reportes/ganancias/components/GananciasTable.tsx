@@ -55,12 +55,13 @@ export function GananciasTable({ ganancias, isLoading = false }: GananciasTableP
                 <TableHead className="text-right">Ganancia</TableHead>
                 <TableHead className="text-right">% Ganancia</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
+                <TableHead className="text-center">Fecha de Venta</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {ganancias.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500 dark:text-gray-400">
                     No se encontraron datos de ganancia con los filtros seleccionados
                   </TableCell>
                 </TableRow>
@@ -130,6 +131,18 @@ export function GananciasTable({ ganancias, isLoading = false }: GananciasTableP
                         <Badge className={estadoGanancia.badge}>
                           {estadoGanancia.icon} {estadoGanancia.label}
                         </Badge>
+                      </TableCell>
+
+                      {/* Fecha de Venta */}
+                      <TableCell className="text-center text-sm text-gray-600 dark:text-gray-400">
+                        {item.fecha_actualizacion
+                          ? new Date(item.fecha_actualizacion).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })
+                          : '-'
+                        }
                       </TableCell>
                     </TableRow>
                   );
