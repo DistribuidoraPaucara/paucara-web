@@ -219,7 +219,7 @@ class ReportePreciosController extends Controller
             return $ganancia;
         })->filter(function ($ganancia) {
             // Filtrar solo ganancias con datos válidos
-            return $ganancia['producto'] && $ganancia['tipo_precio'] && $ganancia['ganancia_total'] != 0;
+            return $ganancia['producto'] && $ganancia['tipo_precio'] && $ganancia['ganancia'] != 0;
         })->values();
 
         // Estadísticas de ganancias
@@ -228,11 +228,11 @@ class ReportePreciosController extends Controller
             'cantidad_total_vendida' => $ganancias->sum('cantidad_vendida'),
             'ingresos_totales' => $ganancias->sum('ingresos_totales'),
             'costos_totales' => $ganancias->sum('costos_totales'),
-            'ganancia_total' => $ganancias->sum('ganancia_total'),
-            'ganancia_promedio' => $ganancias->avg('ganancia_total') ?? 0,
+            'ganancia_total' => $ganancias->sum('ganancia'),
+            'ganancia_promedio' => $ganancias->avg('ganancia') ?? 0,
             'porcentaje_promedio' => $ganancias->avg('porcentaje_ganancia') ?? 0,
-            'mejor_ganancia' => $ganancias->max('ganancia_total') ?? 0,
-            'peor_ganancia' => $ganancias->min('ganancia_total') ?? 0,
+            'mejor_ganancia' => $ganancias->max('ganancia') ?? 0,
+            'peor_ganancia' => $ganancias->min('ganancia') ?? 0,
         ];
 
         return Inertia::render('reportes/ganancias/index', [
