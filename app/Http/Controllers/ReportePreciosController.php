@@ -175,10 +175,30 @@ class ReportePreciosController extends Controller
             ->sortByDesc('ganancia_total')
             ->values();
 
-        // Cargar relaciones de tipo_precio para mejor presentación
+        // Cargar relaciones de tipo_precio y producto para mejor presentación
         $ganancias = $ganancias->map(function ($ganancia) {
             $tipoPrecio = TipoPrecio::find($ganancia['tipo_precio_id']);
-            $ganancia['tipo_precio'] = $tipoPrecio ? ['id' => $tipoPrecio->id, 'nombre' => $tipoPrecio->nombre, 'color' => $tipoPrecio->color] : null;
+            $producto = Producto::find($ganancia['producto_id']);
+
+            $ganancia['tipo_precio'] = $tipoPrecio ? [
+                'id' => $tipoPrecio->id,
+                'nombre' => $tipoPrecio->nombre,
+                'color' => $tipoPrecio->color,
+                'configuracion' => [
+                    'icono' => '💰',
+                ]
+            ] : null;
+
+            $ganancia['producto'] = $producto ? [
+                'id' => $producto->id,
+                'nombre' => $producto->nombre,
+                'sku' => $producto->sku,
+                'categoria' => [
+                    'id' => $ganancia['categoria']['id'],
+                    'nombre' => $ganancia['categoria']['nombre'],
+                ]
+            ] : null;
+
             return $ganancia;
         });
 
