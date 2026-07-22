@@ -469,53 +469,6 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                 )}
             </div>
 
-            {/* Resumen */}
-            {/* {summary && (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs text-gray-500">Total</div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">{summary.total_registros}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs font-medium text-blue-600">Activas</div>
-                            <div className="text-lg font-bold text-blue-600">{summary.activas}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs font-medium text-red-600">Expiradas</div>
-                            <div className="text-lg font-bold text-red-600">{summary.expiradas}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs font-medium text-yellow-600">Pronto</div>
-                            <div className="text-lg font-bold text-yellow-600">{summary.proximo_a_expirar}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs font-medium text-green-600">Consumidas</div>
-                            <div className="text-lg font-bold text-green-600">{summary.consumidas}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-3">
-                            <div className="text-xs font-medium text-purple-600">Valor Total</div>
-                            <div className="text-sm font-bold text-purple-600">{formatCurrency(summary.valor_total_reservado)}</div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )} */}
-
             {/* Tabla */}
             <div>
                 {loading ? (
@@ -536,7 +489,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                 <tr>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">ID</th>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Pro ID</th>
-                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th>
+                                    {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th> */}
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Cliente</th>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Producto</th>
                                     {/* ✅ NUEVO (2026-07-22): Columna de lote */}
@@ -545,7 +498,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Creada</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Reserva</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Venci. Reserva</th>
-                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Venci. Lote</th>
+                                    {/* <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Venci. Lote</th> */}
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Estado</th>
                                     <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">-</th>
                                 </tr>
@@ -562,10 +515,9 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                                 #{reserva.proforma_id}
                                             </Link>
                                         </td>
-                                        <td className="px-2 py-2">
+                                        {/* <td className="px-2 py-2">
                                             <div className="text-xs text-gray-900 dark:text-white">{reserva.proforma_numero}</div>
-                                            {/* <div className="text-xs text-gray-500">Creada: </div> */}
-                                        </td>
+                                        </td> */}
                                         <td className="px-2 py-2">
                                             <div className="text-sm text-gray-900 dark:text-white">{reserva.cliente_nombre}</div>
                                             <div className="text-xs text-gray-500">{reserva.cliente_nit}</div>
@@ -573,6 +525,14 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         <td className="px-2 py-2">
                                             <div className="text-xs text-gray-900 dark:text-white">{reserva.producto_nombre}</div>
                                             <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
+                                            {/* ✅ NUEVO (2026-07-22): Link a editar proforma */}
+                                            <Link
+                                                href={`/proformas/${reserva.proforma_id}/edit`}
+                                                className="text-xs font-medium text-green-600 hover:text-green-800 hover:underline dark:text-green-400 dark:hover:text-green-300"
+                                                title="Editar proforma"
+                                            >
+                                                ✏️ Editar
+                                            </Link>
                                         </td>
                                         {/* ✅ NUEVO (2026-07-22): Columna de lote */}
                                         <td className="px-2 py-2">
@@ -599,7 +559,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_reserva)}</td>
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_expiracion)}</td>
                                         {/* ✅ NUEVO (2026-07-22): Columna de vencimiento del lote */}
-                                        <td className="px-2 py-2 text-center text-xs">
+                                        {/* <td className="px-2 py-2 text-center text-xs">
                                             {reserva.fecha_vencimiento_lote ? (
                                                 <div className="flex flex-col items-center gap-1">
                                                     <span>{formatDate(reserva.fecha_vencimiento_lote)}</span>
@@ -610,7 +570,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                             ) : (
                                                 '-'
                                             )}
-                                        </td>
+                                        </td> */}
                                         <td className="px-2 py-2 text-center text-xs">
                                             <Badge className={getEstadoBadge(reserva.estado)}>{reserva.estado}</Badge>
                                         </td>
