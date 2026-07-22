@@ -407,30 +407,42 @@ class StockProducto extends Model
 
             // Validar que no haya cantidades negativas
             if ($stockProducto->cantidad < 0) {
-                \Illuminate\Support\Facades\Log::warning('Intento de guardar cantidad negativa', [
+                \Illuminate\Support\Facades\Log::error('❌ INTEGRIDAD: cantidad negativa detectada', [
                     'stock_producto_id' => $stockProducto->id,
                     'producto_id' => $stockProducto->producto_id,
                     'cantidad' => $stockProducto->cantidad,
                 ]);
+                throw new \Exception(
+                    "INTEGRIDAD DE STOCK VIOLADA: cantidad no puede ser negativa. " .
+                    "Stock ID: {$stockProducto->id}, Cantidad: {$stockProducto->cantidad}"
+                );
             }
 
             if ($stockProducto->cantidad_disponible < 0) {
-                \Illuminate\Support\Facades\Log::warning('Intento de guardar cantidad_disponible negativa', [
+                \Illuminate\Support\Facades\Log::error('❌ INTEGRIDAD: cantidad_disponible negativa detectada', [
                     'stock_producto_id' => $stockProducto->id,
                     'producto_id' => $stockProducto->producto_id,
                     'cantidad_disponible' => $stockProducto->cantidad_disponible,
                 ]);
+                throw new \Exception(
+                    "INTEGRIDAD DE STOCK VIOLADA: cantidad_disponible no puede ser negativa. " .
+                    "Stock ID: {$stockProducto->id}, Disponible: {$stockProducto->cantidad_disponible}"
+                );
             }
 
             if ($stockProducto->cantidad_reservada < 0) {
-                \Illuminate\Support\Facades\Log::warning('Intento de guardar cantidad_reservada negativa', [
+                \Illuminate\Support\Facades\Log::error('❌ INTEGRIDAD: cantidad_reservada negativa detectada', [
                     'stock_producto_id' => $stockProducto->id,
                     'producto_id' => $stockProducto->producto_id,
                     'cantidad_reservada' => $stockProducto->cantidad_reservada,
                 ]);
+                throw new \Exception(
+                    "INTEGRIDAD DE STOCK VIOLADA: cantidad_reservada no puede ser negativa. " .
+                    "Stock ID: {$stockProducto->id}, Reservada: {$stockProducto->cantidad_reservada}"
+                );
             }
 
-            // Validar invariante
+            // ✅ VALIDAR INVARIANTE: cantidad = cantidad_disponible + cantidad_reservada
             if ($stockProducto->cantidad !== null &&
                 $stockProducto->cantidad_disponible !== null &&
                 $stockProducto->cantidad_reservada !== null) {
@@ -438,15 +450,25 @@ class StockProducto extends Model
                 $suma = $stockProducto->cantidad_disponible + $stockProducto->cantidad_reservada;
 
                 if ($suma !== $stockProducto->cantidad) {
-                    \Illuminate\Support\Facades\Log::warning('INVARIANTE ROTO al guardar', [
+                    \Illuminate\Support\Facades\Log::error('❌ INVARIANTE ROTO: cantidad != (disponible + reservada)', [
                         'stock_producto_id' => $stockProducto->id,
                         'producto_id' => $stockProducto->producto_id,
-                        'cantidad' => $stockProducto->cantidad,
+                        'cantidad_total' => $stockProducto->cantidad,
                         'cantidad_disponible' => $stockProducto->cantidad_disponible,
                         'cantidad_reservada' => $stockProducto->cantidad_reservada,
-                        'suma' => $suma,
+                        'suma_parcial' => $suma,
                         'diferencia' => $stockProducto->cantidad - $suma,
                     ]);
+
+                    $diferencia = $stockProducto->cantidad - $suma;
+                    throw new \Exception(
+                        "INVARIANTE DE STOCK ROTO: cantidad debe ser = (disponible + reservada). " .
+                        "Total: {$stockProducto->cantidad}, " .
+                        "Disponible: {$stockProducto->cantidad_disponible}, " .
+                        "Reservada: {$stockProducto->cantidad_reservada}, " .
+                        "Suma: {$suma} (Diferencia: {$diferencia}). " .
+                        "La operación será revertida completamente."
+                    );
                 }
             }
         });
