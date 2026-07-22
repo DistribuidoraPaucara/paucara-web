@@ -17,6 +17,16 @@ export default function ReporteGananciasIndex({
   categorias,
   error
 }: GananciasPageProps) {
+  const { formData, handleFilter, clearFilters, updateField, ALL_VALUE } = useGananciasFilters(filtros);
+
+  // ✅ Filtrado automático cuando cambian las fechas
+  useEffect(() => {
+    const hasDateFilters = formData.fecha_desde || formData.fecha_hasta;
+    if (hasDateFilters) {
+      handleFilter();
+    }
+  }, [formData.fecha_desde, formData.fecha_hasta]);
+
   // ✅ Logging para ver datos del backend
   useEffect(() => {
     console.group('💰 [Reporte Ganancias] Datos del Backend');
@@ -35,8 +45,6 @@ export default function ReporteGananciasIndex({
     console.log('⚠️ Error:', error);
     console.groupEnd();
   }, [ganancias, estadisticas, filtros, error]);
-
-  const { formData, handleFilter, clearFilters, updateField, ALL_VALUE } = useGananciasFilters(filtros);
 
   const handleExport = () => {
     const params = Object.fromEntries(

@@ -55,11 +55,7 @@ export function FiltrosCard({
             <Input
               type="date"
               value={formData.fecha_desde}
-              onChange={(e) => {
-                onUpdateField('fecha_desde', e.target.value);
-                // Aplicar filtro automáticamente al cambiar fecha
-                setTimeout(() => onFilter(), 0);
-              }}
+              onChange={(e) => onUpdateField('fecha_desde', e.target.value)}
             />
           </div>
 
@@ -69,11 +65,7 @@ export function FiltrosCard({
             <Input
               type="date"
               value={formData.fecha_hasta}
-              onChange={(e) => {
-                onUpdateField('fecha_hasta', e.target.value);
-                // Aplicar filtro automáticamente al cambiar fecha
-                setTimeout(() => onFilter(), 0);
-              }}
+              onChange={(e) => onUpdateField('fecha_hasta', e.target.value)}
             />
           </div>
 

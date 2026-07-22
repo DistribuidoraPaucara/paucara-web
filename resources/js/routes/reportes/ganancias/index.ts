@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\ReportePreciosController::exportMethod
- * @see app/Http/Controllers/ReportePreciosController.php:208
+ * @see app/Http/Controllers/ReportePreciosController.php:296
  * @route '/reportes/ganancias/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
