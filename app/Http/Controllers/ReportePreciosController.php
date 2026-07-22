@@ -222,7 +222,7 @@ class ReportePreciosController extends Controller
             return $ganancia['producto'] && $ganancia['tipo_precio'] && $ganancia['ganancia'] != 0;
         })->values();
 
-        // Estadísticas de ganancias
+        // Estadísticas de ganancias (antes de paginar)
         $estadisticasGanancias = [
             'total_productos' => $ganancias->count(),
             'ganancia_total' => $ganancias->sum('ganancia'),
@@ -232,8 +232,24 @@ class ReportePreciosController extends Controller
             'peor_ganancia' => $ganancias->min('ganancia') ?? 0,
         ];
 
+        // Paginar resultados: 25 por página
+        $page = request()->get('page', 1);
+        $perPage = 25;
+        $items = $ganancias->values();
+        $offset = ($page - 1) * $perPage;
+
+        $gananciasPaginadas = new \Illuminate\Pagination\Paginator(
+            $items->slice($offset, $perPage)->values(),
+            $perPage,
+            $page,
+            [
+                'path' => route('reportes.ganancias.index'),
+                'query' => request()->query(),
+            ]
+        );
+
         return Inertia::render('reportes/ganancias/index', [
-            'ganancias' => $ganancias->take(50),
+            'ganancias' => $gananciasPaginadas,
             'estadisticas' => $estadisticasGanancias,
             'filtros' => $filtros,
             'tipos_precio' => TipoPrecio::ganancias()->activos()->ordenados()->get(['id', 'nombre', 'color']),

@@ -37,8 +37,8 @@ export default function ReporteGananciasIndex({
   useEffect(() => {
     console.group('💰 [Reporte Ganancias] Datos del Backend');
     console.log('📊 Estadísticas:', estadisticas);
-    console.log('📋 Total ganancias:', ganancias.length);
-    console.table(ganancias.slice(0, 5).map((g: any) => ({
+    console.log('📋 Total ganancias:', ganancias.total, '| Página:', ganancias.current_page, 'de', ganancias.last_page);
+    console.table(ganancias.data?.slice(0, 5).map((g: any) => ({
       producto: g.producto?.nombre || 'N/A',
       tipo_precio: g.tipo_precio?.nombre || 'N/A',
       cantidad_vendida: g.cantidad_vendida,
@@ -46,7 +46,7 @@ export default function ReporteGananciasIndex({
       precio_venta: g.precio_venta,
       ganancia: g.ganancia,
       porcentaje: g.porcentaje_ganancia?.toFixed(2) + '%',
-    })));
+    })) || []);
     console.log('🎯 Filtros:', filtros);
     console.log('⚠️ Error:', error);
     console.groupEnd();
@@ -144,6 +144,26 @@ export default function ReporteGananciasIndex({
 
         {/* Tabla de Ganancias */}
         <GananciasTable ganancias={ganancias} />
+
+        {/* Paginación */}
+        {ganancias.links && ganancias.links.length > 0 && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            {ganancias.links.map((link, index) => (
+              <Link
+                key={index}
+                href={link.url || '#'}
+                className={`px-3 py-1 rounded border text-sm font-medium ${
+                  link.active
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!link.url}
+              >
+                {link.label.replace(/^&laquo;\s/, '').replace(/\s&raquo;$/, '')}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

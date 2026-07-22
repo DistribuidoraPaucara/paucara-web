@@ -46,8 +46,21 @@ export interface GananciasFilterOptions {
   categoria_id?: number;
 }
 
+export interface GananciasPaginatedData {
+  data: Ganancia[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  links: Array<{
+    url: string | null;
+    label: string;
+    active: boolean;
+  }>;
+}
+
 export interface GananciasPageProps {
-  ganancias: Ganancia[];
+  ganancias: GananciasPaginatedData;
   estadisticas: GananciasEstadisticas;
   filtros: GananciasFilterOptions;
   tipos_precio: Array<{

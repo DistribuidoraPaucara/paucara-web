@@ -19,8 +19,9 @@ import {
 import type { Ganancia } from '@/domain/entities/reportes';
 
 interface GananciasTableProps {
-  ganancias: Ganancia[];
+  ganancias: Ganancia[] | any;
   isLoading?: boolean;
+  onPageChange?: (page: number) => void;
 }
 
 /**
@@ -47,6 +48,7 @@ export function GananciasTable({ ganancias, isLoading = false }: GananciasTableP
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-left">Index</TableHead>
                 <TableHead>Producto</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead>Tipo de Precio</TableHead>
@@ -59,18 +61,19 @@ export function GananciasTable({ ganancias, isLoading = false }: GananciasTableP
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ganancias.length === 0 ? (
+              {!ganancias.data || ganancias.data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-gray-500 dark:text-gray-400">
                     No se encontraron datos de ganancia con los filtros seleccionados
                   </TableCell>
                 </TableRow>
               ) : (
-                ganancias.map((item, index) => {
+                ganancias.data.map((item: Ganancia, index: number) => {
                   const estadoGanancia = getEstadoGanancia(item.porcentaje_ganancia);
 
                   return (
                     <TableRow key={index}>
+                      <TableCell className="text-left">{index + 1}</TableCell>
                       {/* Producto */}
                       <TableCell>
                         <Link
