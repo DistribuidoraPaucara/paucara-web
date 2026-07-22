@@ -627,6 +627,11 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             Route::post('/', [\App\Http\Controllers\GastoController::class, 'store'])->name('store');
             Route::delete('/{id}', [\App\Http\Controllers\GastoController::class, 'destroy'])->name('destroy');
         });
+
+        // ✅ NUEVO: Análisis de Egresos (Dashboard con gráficos y reportes)
+        Route::prefix('egresos')->name('egresos.')->middleware('permission:cajas.index')->group(function () {
+            Route::get('/', [\App\Http\Controllers\EgresosAnalisisController::class, 'index'])->name('index');
+        });
     });
 
     // ✅ RUTA PARA MOVIMIENTOS DE UNA APERTURA ESPECÍFICA

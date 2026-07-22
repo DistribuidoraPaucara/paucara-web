@@ -9,12 +9,11 @@
  * ✅ Resumen de totales por tipo
  */
 
-import React, { useState } from 'react';
 import type { AperturaCaja, MovimientoCaja } from '@/domain/entities/cajas';
-import { formatCurrency, formatDateTime, getMovimientoIcon, getMovimientoColor, toNumber } from '@/lib/cajas.utils';
-import { ComprobantesMovimiento } from '@/presentation/components/ComprobantesMovimiento';
+import { formatCurrency, formatDateTime, getMovimientoColor, getMovimientoIcon, toNumber } from '@/lib/cajas.utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Printer } from 'lucide-react';
+import React, { useState } from 'react';
 
 import {
     AlertDialog,
@@ -25,41 +24,36 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog';
-import { Loader2, Trash2, Eye } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/presentation/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
+import { Eye, Loader2, Trash2 } from 'lucide-react';
 
 interface Props {
     cajaAbiertaHoy: AperturaCaja | null;
     movimientosHoy: MovimientoCaja[];
     efectivoEsperado?: {
-        apertura: number
-        ventas_efectivo: number
-        pagos_credito: number
-        gastos: number
-        pagos_sueldo?: number  // ✅ NUEVO
-        anticipos?: number  // ✅ NUEVO
-        anulaciones?: number  // ✅ NUEVO
-        total_egresos?: number  // ✅ NUEVO: Total de todos los egresos
-        total: number
+        apertura: number;
+        ventas_efectivo: number;
+        pagos_credito: number;
+        gastos: number;
+        pagos_sueldo?: number; // ✅ NUEVO
+        anticipos?: number; // ✅ NUEVO
+        anulaciones?: number; // ✅ NUEVO
+        total_egresos?: number; // ✅ NUEVO: Total de todos los egresos
+        total: number;
     };
-    ventasPorTipoPago?: Array<{ tipo: string; total: number; count: number }>;   // ✅ Viene del backend
-    ventasPorEstado?: Array<{ estado: string; total: number; count: number }>;    // ✅ Viene del backend
-    pagosPorTipoPago?: Array<{ tipo: string; total: number; count: number }>;     // ✅ Viene del backend
-    gastosPorTipoPago?: Array<{ tipo: string; total: number; count: number }>;    // ✅ Viene del backend
-    ventasTotales?: number;  // ✅ NUEVO: Total de ventas de CierreCajaService
-    ventasAnuladas?: number;  // ✅ NUEVO: Ventas anuladas de CierreCajaService
-    ventasCredito?: number;  // ✅ NUEVO: Ventas a crédito de CierreCajaService
-    sumatorialCompras?: number;  // ✅ NUEVO: Sumatoria de compras de CierreCajaService
-    sumatorialDevoluciones?: number;  // ✅ NUEVO (2026-03-09): Sumatoria de devoluciones
-    sumatorialServicio?: number;  // ✅ NUEVO (2026-03-09): Sumatoria de servicios
-    detallesPagoDesglosado?: Array<{ tipo_pago_id: number; tipo: string; total: number; cantidad: number }>;  // ✅ NUEVO: Desglose de pagos desde detalles_pago_venta
-    totalDetallesPago?: number;  // ✅ NUEVO: Dinero real pagado por ventas (desde detalles_pago_venta)
-    cargandoDatos?: boolean;  // ✅ NUEVO: Indicador si se están cargando datos del servidor
+    ventasPorTipoPago?: Array<{ tipo: string; total: number; count: number }>; // ✅ Viene del backend
+    ventasPorEstado?: Array<{ estado: string; total: number; count: number }>; // ✅ Viene del backend
+    pagosPorTipoPago?: Array<{ tipo: string; total: number; count: number }>; // ✅ Viene del backend
+    gastosPorTipoPago?: Array<{ tipo: string; total: number; count: number }>; // ✅ Viene del backend
+    ventasTotales?: number; // ✅ NUEVO: Total de ventas de CierreCajaService
+    ventasAnuladas?: number; // ✅ NUEVO: Ventas anuladas de CierreCajaService
+    ventasCredito?: number; // ✅ NUEVO: Ventas a crédito de CierreCajaService
+    sumatorialCompras?: number; // ✅ NUEVO: Sumatoria de compras de CierreCajaService
+    sumatorialDevoluciones?: number; // ✅ NUEVO (2026-03-09): Sumatoria de devoluciones
+    sumatorialServicio?: number; // ✅ NUEVO (2026-03-09): Sumatoria de servicios
+    detallesPagoDesglosado?: Array<{ tipo_pago_id: number; tipo: string; total: number; cantidad: number }>; // ✅ NUEVO: Desglose de pagos desde detalles_pago_venta
+    totalDetallesPago?: number; // ✅ NUEVO: Dinero real pagado por ventas (desde detalles_pago_venta)
+    cargandoDatos?: boolean; // ✅ NUEVO: Indicador si se están cargando datos del servidor
 }
 
 // ✅ NUEVO: Función para detectar discrepancias en ventas
@@ -113,8 +107,37 @@ const getTipoOperacionColor = (codigo: string): string => {
     }
 };
 
-export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectivoEsperado, ventasPorTipoPago = [], ventasPorEstado = [], pagosPorTipoPago = [], gastosPorTipoPago = [], ventasTotales = 0, ventasAnuladas = 0, ventasCredito = 0, sumatorialCompras = 0, sumatorialDevoluciones = 0, sumatorialServicio = 0, detallesPagoDesglosado = [], totalDetallesPago = 0, cargandoDatos = false }: Props) {
-    console.log('MovimientosDelDiaTable - Props recibidos:', { cajaAbiertaHoy, movimientosHoy, efectivoEsperado, ventasPorTipoPago, ventasPorEstado, pagosPorTipoPago, gastosPorTipoPago, ventasTotales, ventasAnuladas, ventasCredito, cargandoDatos });
+export function MovimientosDelDiaTable({
+    cajaAbiertaHoy,
+    movimientosHoy,
+    efectivoEsperado,
+    ventasPorTipoPago = [],
+    ventasPorEstado = [],
+    pagosPorTipoPago = [],
+    gastosPorTipoPago = [],
+    ventasTotales = 0,
+    ventasAnuladas = 0,
+    ventasCredito = 0,
+    sumatorialCompras = 0,
+    sumatorialDevoluciones = 0,
+    sumatorialServicio = 0,
+    detallesPagoDesglosado = [],
+    totalDetallesPago = 0,
+    cargandoDatos = false,
+}: Props) {
+    console.log('MovimientosDelDiaTable - Props recibidos:', {
+        cajaAbiertaHoy,
+        movimientosHoy,
+        efectivoEsperado,
+        ventasPorTipoPago,
+        ventasPorEstado,
+        pagosPorTipoPago,
+        gastosPorTipoPago,
+        ventasTotales,
+        ventasAnuladas,
+        ventasCredito,
+        cargandoDatos,
+    });
     const [filtroTipo, setFiltroTipo] = useState<string | null>(null);
     const [filtroFechaDesde, setFiltroFechaDesde] = useState<string>('');
     const [filtroFechaHasta, setFiltroFechaHasta] = useState<string>('');
@@ -137,7 +160,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
     const [movimientoVentaSeleccionado, setMovimientoVentaSeleccionado] = useState<MovimientoCaja | null>(null);
     const [movimientosExpandidos, setMovimientosExpandidos] = useState<Set<number>>(() => {
         const expandidos = new Set<number>();
-        movimientosHoy.forEach(mov => {
+        movimientosHoy.forEach((mov) => {
             if (mov.venta) {
                 expandidos.add(mov.id);
             }
@@ -145,20 +168,15 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
         return expandidos;
     });
 
-
     if (!cajaAbiertaHoy || movimientosHoy.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                 <div className="p-6">
                     <div className="flex flex-col items-center justify-center py-12">
-                        <div className="text-5xl mb-4 opacity-50">📋</div>
-                        <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Aún no hay movimientos
-                        </p>
+                        <div className="mb-4 text-5xl opacity-50">📋</div>
+                        <p className="mb-2 text-lg font-medium text-gray-900 dark:text-gray-100">Aún no hay movimientos</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {!cajaAbiertaHoy
-                                ? 'Abra una caja para registrar movimientos'
-                                : 'Los movimientos aparecerán aquí cuando se registren'}
+                            {!cajaAbiertaHoy ? 'Abra una caja para registrar movimientos' : 'Los movimientos aparecerán aquí cuando se registren'}
                         </p>
                     </div>
                 </div>
@@ -204,7 +222,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
         }
 
         // ✅ CORREGIDO (2026-04-30): Filtrar solo movimientos APROBADOS antes de sumar
-        const movsAprobados = movs.filter(m => {
+        const movsAprobados = movs.filter((m) => {
             // Para movimientos con venta asociada, verificar que esté aprobada
             if (m.venta?.estado_documento) {
                 return m.venta.estado_documento.codigo === 'APROBADO';
@@ -222,7 +240,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
     // ✅ CORREGIDO (2026-04-30): Si hay totalDetallesPago pero NO hay movimiento VENTA en movimientosHoy,
     // agregar un card de VENTA manual (puede ocurrir si los movimientos aún no se crean en backend)
-    const tieneVentaEnTotales = totalesPorTipo.some(t => t.tipo === 'Venta' || t.tipo === 'VENTA');
+    const tieneVentaEnTotales = totalesPorTipo.some((t) => t.tipo === 'Venta' || t.tipo === 'VENTA');
     if (totalDetallesPago > 0 && !tieneVentaEnTotales) {
         totalesPorTipo.unshift({
             tipo: 'Venta',
@@ -238,7 +256,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
     // ✅ CORREGIDO (2026-04-30): Si hay ventasAnuladas pero el card de ANULACION tiene total=0,
     // reemplazarlo con el valor correcto desde props (ventasAnuladas viene del backend calculado correctamente)
-    const anulacionIndex = totalesPorTipo.findIndex(t => t.tipo === 'Anulación' || t.tipo === 'ANULACION');
+    const anulacionIndex = totalesPorTipo.findIndex((t) => t.tipo === 'Anulación' || t.tipo === 'ANULACION');
     if (ventasAnuladas > 0) {
         if (anulacionIndex >= 0) {
             // Reemplazar si existe
@@ -285,9 +303,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
         if (movimientosHoy.length === 0) return null;
 
         // Extraer IDs de venta válidos
-        const ventaIds = movimientosHoy
-            .map((mov) => mov.venta_id)
-            .filter((id): id is number => id !== null && id !== undefined && id > 0);
+        const ventaIds = movimientosHoy.map((mov) => mov.venta_id).filter((id): id is number => id !== null && id !== undefined && id > 0);
 
         if (ventaIds.length === 0) return null;
 
@@ -301,8 +317,8 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
     const rangoVentas = calcularRangoVentas();
 
     // ✅ Obtener usuarios únicos
-    const usuariosUnicos = Array.from(new Set(movimientosHoy.map(mov => mov.usuario?.name || 'Sin Usuario')))
-        .filter(u => u !== 'Sin Usuario')
+    const usuariosUnicos = Array.from(new Set(movimientosHoy.map((mov) => mov.usuario?.name || 'Sin Usuario')))
+        .filter((u) => u !== 'Sin Usuario')
         .sort();
 
     // ✅ NUEVO: Filtrar movimientos por múltiples criterios
@@ -397,7 +413,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
     // ✅ Función para exportar movimientos a CSV
     const exportarACSV = () => {
         const headers = ['Fecha/Hora', 'Tipo', 'Descripción', 'Documento', 'Monto', 'Usuario'];
-        const rows = movimientosAMostrar.map(mov => [
+        const rows = movimientosAMostrar.map((mov) => [
             new Date(mov.fecha).toLocaleString('es-BO'),
             mov.tipo_operacion.nombre,
             mov.observaciones || '',
@@ -406,10 +422,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
             mov.usuario?.name || 'Sin Usuario',
         ]);
 
-        const csv = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-        ].join('\n');
+        const csv = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -436,16 +449,13 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
         setEliminandoMovimiento(true);
         try {
-            const response = await fetch(
-                `/cajas/movimiento/${movimientoAEliminar.id}/eliminar`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                    },
-                }
-            );
+            const response = await fetch(`/cajas/movimiento/${movimientoAEliminar.id}/eliminar`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+            });
 
             if (!response.ok) {
                 const data = await response.json();
@@ -473,53 +483,47 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
             <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                            Movimientos {etiquetaPeriodo}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            📋 Mostrando <strong className="text-gray-900 dark:text-white">{movimientosAMostrar.length}</strong> de <strong className="text-gray-900 dark:text-white">{movimientosHoy.length}</strong> movimientos
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Movimientos {etiquetaPeriodo}</h3>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            📋 Mostrando <strong className="text-gray-900 dark:text-white">{movimientosAMostrar.length}</strong> de{' '}
+                            <strong className="text-gray-900 dark:text-white">{movimientosHoy.length}</strong> movimientos
                         </p>
                     </div>
                     <br />
                     {/* ✅ NUEVO: Rango de IDs de Venta */}
                     <div className="display-block text-right">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                            Rango de Ventas (ID)
-                        </p>
+                        <p className="mb-1 text-xs text-gray-600 dark:text-gray-400">Rango de Ventas (ID)</p>
                         {rangoVentas ? (
                             <>
                                 <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                                     {rangoVentas.minId} - {rangoVentas.maxId}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     {rangoVentas.totalVentas} venta{rangoVentas.totalVentas !== 1 ? 's' : ''}
                                 </p>
                             </>
                         ) : (
                             <>
-                                <p className="text-lg font-bold text-gray-400 dark:text-gray-500">
-                                    —
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Sin ventas
-                                </p>
+                                <p className="text-lg font-bold text-gray-400 dark:text-gray-500">—</p>
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Sin ventas</p>
                             </>
                         )}
                     </div>
                 </div>
 
                 {/* ✅ NUEVO: Filtros por tipo */}
-                <div className="mb-6 flex flex-wrap gap-2 mt-4">
+                <div className="mt-4 mb-6 flex flex-wrap gap-2">
                     <button
                         onClick={() => setFiltroTipo(null)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition ${!filtroTipo
-                            ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
+                        className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                            !filtroTipo
+                                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        }`}
                     >
                         Todos ({movimientosHoy.length})
                     </button>
@@ -535,7 +539,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         tipo,
                                         cantidad: movimientosAgrupados[tipo].length,
                                         movimientos: movimientosAgrupados[tipo],
-                                        detalles: movimientosAgrupados[tipo].map(m => ({
+                                        detalles: movimientosAgrupados[tipo].map((m) => ({
                                             id: m.id,
                                             numero_documento: m.numero_documento,
                                             monto: m.monto,
@@ -546,10 +550,11 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         })),
                                     });
                                 }}
-                                className={`px-3 py-1 rounded-full text-sm font-medium transition ${filtroTipo === tipo
-                                    ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                    }`}
+                                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                                    filtroTipo === tipo
+                                        ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                }`}
                             >
                                 {tipo} ({movimientosAgrupados[tipo].length})
                             </button>
@@ -557,7 +562,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                     })}
                     <button
                         onClick={() => setFiltrosVisibles(!filtrosVisibles)}
-                        className="ml-auto px-3 py-1 rounded text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                        className="ml-auto rounded bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                     >
                         {filtrosVisibles ? '🔼 Ocultar Filtros' : '🔽 Mostrar Filtros'}
                     </button>
@@ -565,21 +570,18 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                 {/* ✅ NUEVO: Filtros Avanzados */}
                 {filtrosVisibles && (
-                    <div className="mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
-
+                    <div className="mb-6 space-y-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
                         {/* Filtro por Rango de Fechas */}
                         <div>
-                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Rango de Fechas
-                            </p>
-                            <div className="flex gap-2 flex-wrap items-center">
+                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Rango de Fechas</p>
+                            <div className="flex flex-wrap items-center gap-2">
                                 <div className="flex items-center gap-2">
                                     <label className="text-xs text-gray-600 dark:text-gray-400">Desde:</label>
                                     <input
                                         type="datetime-local"
                                         value={filtroFechaDesde}
                                         onChange={(e) => setFiltroFechaDesde(e.target.value ? e.target.value.split('T')[0] : '')}
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm"
+                                        className="rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -588,7 +590,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         type="datetime-local"
                                         value={filtroFechaHasta}
                                         onChange={(e) => setFiltroFechaHasta(e.target.value ? e.target.value.split('T')[0] : '')}
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm"
+                                        className="rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 {(filtroFechaDesde || filtroFechaHasta) && (
@@ -597,7 +599,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                             setFiltroFechaDesde('');
                                             setFiltroFechaHasta('');
                                         }}
-                                        className="px-2 py-1 rounded text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400"
+                                        className="rounded bg-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-300"
                                     >
                                         Limpiar
                                     </button>
@@ -607,10 +609,8 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                         {/* Filtro por Rango de Monto */}
                         <div>
-                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Rango de Monto
-                            </p>
-                            <div className="flex gap-2 flex-wrap items-center">
+                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Rango de Monto</p>
+                            <div className="flex flex-wrap items-center gap-2">
                                 <div className="flex items-center gap-2">
                                     <label className="text-xs text-gray-600 dark:text-gray-400">Min:</label>
                                     <input
@@ -618,7 +618,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         placeholder="0"
                                         value={montoMin}
                                         onChange={(e) => setMontoMin(e.target.value)}
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm w-24"
+                                        className="w-24 rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -628,7 +628,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         placeholder="∞"
                                         value={montoMax}
                                         onChange={(e) => setMontoMax(e.target.value)}
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm w-24"
+                                        className="w-24 rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                     />
                                 </div>
                                 {(montoMin || montoMax) && (
@@ -637,7 +637,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                             setMontoMin('');
                                             setMontoMax('');
                                         }}
-                                        className="px-2 py-1 rounded text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400"
+                                        className="rounded bg-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-300"
                                     >
                                         Limpiar
                                     </button>
@@ -647,21 +647,19 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                         {/* Filtro por Documento */}
                         <div>
-                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Buscar por Folio
-                            </p>
+                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Buscar por Folio</p>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     placeholder="Número de folio..."
                                     value={filtroDocumento}
                                     onChange={(e) => setFiltroDocumento(e.target.value)}
-                                    className="flex-1 px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm"
+                                    className="flex-1 rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 />
                                 {filtroDocumento && (
                                     <button
                                         onClick={() => setFiltroDocumento('')}
-                                        className="px-2 py-1 rounded text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400"
+                                        className="rounded bg-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-300"
                                     >
                                         Limpiar
                                     </button>
@@ -671,34 +669,35 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                         {/* Filtro por Estado de Venta (APROBADO/ANULADO) - ✅ NUEVO */}
                         <div>
-                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Estado de Venta
-                            </p>
-                            <div className="flex gap-2 flex-wrap">
+                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Estado de Venta</p>
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => setFiltroEstadoVenta('todos')}
-                                    className={`px-3 py-1 rounded text-sm font-medium transition ${filtroEstadoVenta === 'todos'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100'
-                                        }`}
+                                    className={`rounded px-3 py-1 text-sm font-medium transition ${
+                                        filtroEstadoVenta === 'todos'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                 >
                                     Todos
                                 </button>
                                 <button
                                     onClick={() => setFiltroEstadoVenta('APROBADO')}
-                                    className={`px-3 py-1 rounded text-sm font-medium transition ${filtroEstadoVenta === 'APROBADO'
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100'
-                                        }`}
+                                    className={`rounded px-3 py-1 text-sm font-medium transition ${
+                                        filtroEstadoVenta === 'APROBADO'
+                                            ? 'bg-green-600 text-white'
+                                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                 >
                                     ✅ Aprobadas
                                 </button>
                                 <button
                                     onClick={() => setFiltroEstadoVenta('ANULADO')}
-                                    className={`px-3 py-1 rounded text-sm font-medium transition ${filtroEstadoVenta === 'ANULADO'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100'
-                                        }`}
+                                    className={`rounded px-3 py-1 text-sm font-medium transition ${
+                                        filtroEstadoVenta === 'ANULADO'
+                                            ? 'bg-red-600 text-white'
+                                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                 >
                                     ❌ Anuladas
                                 </button>
@@ -707,14 +706,12 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                         {/* Ordenamiento */}
                         <div>
-                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Ordenar por
-                            </p>
+                            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Ordenar por</p>
                             <div className="flex gap-2">
                                 <select
                                     value={ordenarPor}
                                     onChange={(e) => setOrdenarPor(e.target.value as 'fecha' | 'monto' | 'tipo')}
-                                    className="flex-1 px-3 py-1 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm"
+                                    className="flex-1 rounded border border-gray-300 px-3 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 >
                                     <option value="fecha">📅 Por Fecha (más reciente)</option>
                                     <option value="monto">💰 Por Monto (mayor primero)</option>
@@ -727,14 +724,14 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                         <div className="space-y-2">
                             <button
                                 onClick={exportarACSV}
-                                className="w-full px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 font-medium transition"
+                                className="w-full rounded bg-green-600 px-4 py-2 font-medium text-white transition hover:bg-green-700"
                             >
                                 📥 Exportar a CSV
                             </button>
                             {cajaAbiertaHoy && (
                                 <button
                                     onClick={() => setMostrarModalImpresion(true)}
-                                    className="w-full px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 font-medium transition"
+                                    className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
                                 >
                                     🖨️ Imprimir Movimientos
                                 </button>
@@ -742,21 +739,31 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                         </div>
 
                         {/* Resumen de Filtros Activos */}
-                        {(filtroFechaDesde || filtroFechaHasta || filtroSigno !== 'todos' || busquedaDescripcion || montoMin || montoMax || filtroUsuario || filtroDocumento || filtroEstadoVenta !== 'todos') && (
-                            <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                        {(filtroFechaDesde ||
+                            filtroFechaHasta ||
+                            filtroSigno !== 'todos' ||
+                            busquedaDescripcion ||
+                            montoMin ||
+                            montoMax ||
+                            filtroUsuario ||
+                            filtroDocumento ||
+                            filtroEstadoVenta !== 'todos') && (
+                            <div className="mt-4 border-t border-gray-300 pt-4 dark:border-gray-600">
                                 <div className="flex items-center justify-between">
                                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                                        ✅ <strong className="text-gray-900 dark:text-white">{movimientosAMostrar.length}</strong> resultado{movimientosAMostrar.length !== 1 ? 's' : ''} de <strong className="text-gray-900 dark:text-white">{movimientosHoy.length}</strong> movimientos
+                                        ✅ <strong className="text-gray-900 dark:text-white">{movimientosAMostrar.length}</strong> resultado
+                                        {movimientosAMostrar.length !== 1 ? 's' : ''} de{' '}
+                                        <strong className="text-gray-900 dark:text-white">{movimientosHoy.length}</strong> movimientos
                                     </div>
                                     {movimientosAMostrar.length === 0 && (
-                                        <div className="text-sm text-red-600 dark:text-red-400">
-                                            ⚠️ Sin resultados
-                                        </div>
+                                        <div className="text-sm text-red-600 dark:text-red-400">⚠️ Sin resultados</div>
                                     )}
                                 </div>
                                 {movimientosAMostrar.length > 0 && (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                        {movimientosAMostrar.length === movimientosHoy.length ? 'Mostrando todos los movimientos' : `Filtrado: ${((movimientosAMostrar.length / movimientosHoy.length) * 100).toFixed(0)}% de los movimientos`}
+                                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        {movimientosAMostrar.length === movimientosHoy.length
+                                            ? 'Mostrando todos los movimientos'
+                                            : `Filtrado: ${((movimientosAMostrar.length / movimientosHoy.length) * 100).toFixed(0)}% de los movimientos`}
                                     </div>
                                 )}
                             </div>
@@ -767,13 +774,11 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                 {/* ✅ NUEVO: Resumen por tipo de operación */}
                 {totalesPorTipo.length >= 1 && (
                     <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                            📊 Sumatoria por Tipo de Operación
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <h4 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">📊 Sumatoria por Tipo de Operación</h4>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {totalesPorTipo.map(({ tipo, total, count }) => {
                                 // Obtener el código del tipo operación para usar los colores
-                                const tipoOperacionMatch = movimientosHoy.find(m => m.tipo_operacion.nombre === tipo);
+                                const tipoOperacionMatch = movimientosHoy.find((m) => m.tipo_operacion.nombre === tipo);
                                 const codigo = tipoOperacionMatch?.tipo_operacion.codigo || tipo.toUpperCase();
                                 const esIngreso = total > 0;
 
@@ -786,43 +791,42 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                 return (
                                     <div
                                         key={tipo}
-                                        className={`rounded-lg p-4 cursor-pointer transition hover:shadow-md border-l-4 ${getTipoOperacionColor(codigo).includes('bg-green')
-                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
-                                            : getTipoOperacionColor(codigo).includes('bg-red')
-                                                ? 'bg-red-50 dark:bg-red-900/20 border-red-400'
-                                                : getTipoOperacionColor(codigo).includes('bg-blue')
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
+                                        className={`cursor-pointer rounded-lg border-l-4 p-4 transition hover:shadow-md ${
+                                            getTipoOperacionColor(codigo).includes('bg-green')
+                                                ? 'border-green-400 bg-green-50 dark:bg-green-900/20'
+                                                : getTipoOperacionColor(codigo).includes('bg-red')
+                                                  ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+                                                  : getTipoOperacionColor(codigo).includes('bg-blue')
+                                                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
                                                     : getTipoOperacionColor(codigo).includes('bg-yellow')
-                                                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400'
-                                                        : getTipoOperacionColor(codigo).includes('bg-orange')
-                                                            ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400'
-                                                            : getTipoOperacionColor(codigo).includes('bg-purple')
-                                                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400'
-                                                                : getTipoOperacionColor(codigo).includes('bg-indigo')
-                                                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400'
-                                                                    : 'bg-gray-50 dark:bg-gray-900/20 border-gray-400'
-                                            }`}
+                                                      ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+                                                      : getTipoOperacionColor(codigo).includes('bg-orange')
+                                                        ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20'
+                                                        : getTipoOperacionColor(codigo).includes('bg-purple')
+                                                          ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                                                          : getTipoOperacionColor(codigo).includes('bg-indigo')
+                                                            ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                                                            : 'border-gray-400 bg-gray-50 dark:bg-gray-900/20'
+                                        }`}
                                         onClick={() => setFiltroTipo(filtroTipo === tipo ? null : tipo)}
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                                                    {tipo}
-                                                </p>
-                                                <p className={`text-lg font-bold mt-2 ${getMovimientoColor(total)}`}>
+                                                <p className="text-xs font-medium tracking-wide text-gray-600 uppercase dark:text-gray-400">{tipo}</p>
+                                                <p className={`mt-2 text-lg font-bold ${getMovimientoColor(total)}`}>
                                                     {formatCurrency(Math.abs(total))}
                                                 </p>
 
                                                 {/* ✅ NUEVO (2026-04-30): Mostrar desglose de tipos de pago para VENTA */}
                                                 {mostrarDesglose && (
-                                                    <div className="mt-2 space-y-1 border-t border-gray-300 dark:border-gray-600 pt-2">
+                                                    <div className="mt-2 space-y-1 border-t border-gray-300 pt-2 dark:border-gray-600">
                                                         {/* ✅ ACTUALIZADO (2026-05-03): SOLO mostrar EFECTIVO + TRANSFERENCIA (CRÉDITO tiene su propio card) */}
                                                         {detallesPagoDesglosado
-                                                            .filter((detalle) =>
-                                                                detalle.codigo === 'EFECTIVO' || detalle.codigo === 'TRANSFERENCIA/QR'
+                                                            .filter(
+                                                                (detalle) => detalle.codigo === 'EFECTIVO' || detalle.codigo === 'TRANSFERENCIA/QR',
                                                             )
                                                             .map((detalle, idx) => (
-                                                                <div key={idx} className="flex justify-between items-center text-xs">
+                                                                <div key={idx} className="flex items-center justify-between text-xs">
                                                                     <span className="text-gray-600 dark:text-gray-400">{detalle.tipo}</span>
                                                                     <span className="font-semibold text-gray-700 dark:text-gray-300">
                                                                         {formatCurrency(detalle.total)}
@@ -845,33 +849,17 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Id
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Operación
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Descripcion
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Estado
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Pago
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Monto
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Fecha
-                                </th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    -
-                                </th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Id</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Operación</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Descripcion</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Estado</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Pago</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Monto</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Fecha</th>
+                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">-</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             {movimientosAMostrar.map((movimiento) => (
                                 <React.Fragment key={movimiento.id}>
                                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -888,45 +876,51 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                         </svg>
                                                     </button>
                                                 )} */}
-
                                             </div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                #{movimiento.id}
-                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">#{movimiento.id}</p>
                                         </td>
                                         <td className="px-1 py-4 text-sm">
-                                            <span className={`px-1 py-1 rounded-full text-xs font-medium ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}>
+                                            <span
+                                                className={`rounded-full px-1 py-1 text-xs font-medium ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}
+                                            >
                                                 {movimiento.tipo_operacion.nombre}
                                             </span>
                                             {(movimiento.venta_id || movimiento.pago_id) && (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                     {movimiento.venta_id && (
-                                                        <span className="inline-block mr-2">
-                                                            Folio: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.venta_id}</span>
+                                                        <span className="mr-2 inline-block">
+                                                            Folio:{' '}
+                                                            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                #{movimiento.venta_id}
+                                                            </span>
                                                         </span>
                                                     )}
                                                     {movimiento.pago_id && (
                                                         <span className="inline-block">
-                                                            Pago: <span className="font-semibold text-gray-700 dark:text-gray-300">#{movimiento.pago_id}</span>
+                                                            Pago:{' '}
+                                                            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                #{movimiento.pago_id}
+                                                            </span>
                                                         </span>
                                                     )}
                                                 </div>
                                             )}
                                         </td>
 
-                                        <td className="px-1 py-4 text-xs text-gray-900 dark:text-gray-100">
-                                            {movimiento.observaciones}
-                                        </td>
+                                        <td className="px-1 py-4 text-xs text-gray-900 dark:text-gray-100">{movimiento.observaciones}</td>
                                         <td className="px-1 py-4 text-sm">
                                             {movimiento.venta?.estado_documento ? (
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : movimiento.venta.estado_documento.codigo === 'ANULADO'
-                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                                        : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
-                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                    }`}>
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                        movimiento.venta.estado_documento.codigo === 'APROBADO'
+                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                            : movimiento.venta.estado_documento.codigo === 'ANULADO'
+                                                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                              : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
+                                                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}
+                                                >
                                                     {movimiento.venta.estado_documento.nombre}
                                                 </span>
                                             ) : (
@@ -935,16 +929,19 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         </td>
                                         <td className="px-1 py-4 text-sm">
                                             {movimiento.tipo_pago?.nombre ? (
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.tipo_pago.nombre === 'EFECTIVO'
-                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-                                                    : movimiento.tipo_pago.nombre === 'TRANSFERENCIA/QR'
-                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                                        : movimiento.tipo_pago.nombre === 'CHEQUE'
-                                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                                                            : movimiento.tipo_pago.nombre === 'CREDITO'
-                                                                ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
-                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                    }`}>
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                        movimiento.tipo_pago.nombre === 'EFECTIVO'
+                                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                                                            : movimiento.tipo_pago.nombre === 'TRANSFERENCIA/QR'
+                                                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                              : movimiento.tipo_pago.nombre === 'CHEQUE'
+                                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                                                : movimiento.tipo_pago.nombre === 'CREDITO'
+                                                                  ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
+                                                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}
+                                                >
                                                     {movimiento.tipo_pago.nombre}
                                                 </span>
                                             ) : (
@@ -960,7 +957,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-1 py-4 text-xs text-gray-500 dark:text-gray-400 text-left">
+                                        <td className="px-1 py-4 text-left text-xs text-gray-500 dark:text-gray-400">
                                             {formatDateTime(movimiento.fecha)}
                                         </td>
                                         <td className="px-1 py-4 text-right">
@@ -972,13 +969,18 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                             setMovimientoVentaSeleccionado(movimiento);
                                                             setMostrarModalVenta(true);
                                                         }}
-                                                        className={`inline-flex items-center justify-center p-1.5 rounded-lg transition ${tieneDiscrepancia(movimiento)
-                                                            ? 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400'
-                                                            : 'bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400'
-                                                            }`}
-                                                        title={tieneDiscrepancia(movimiento) ? '⚠️ Discrepancia detectada - Ver detalles' : 'Ver detalles de venta'}
+                                                        className={`inline-flex items-center justify-center rounded-lg p-1.5 transition ${
+                                                            tieneDiscrepancia(movimiento)
+                                                                ? 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
+                                                                : 'bg-purple-100 text-purple-600 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50'
+                                                        }`}
+                                                        title={
+                                                            tieneDiscrepancia(movimiento)
+                                                                ? '⚠️ Discrepancia detectada - Ver detalles'
+                                                                : 'Ver detalles de venta'
+                                                        }
                                                     >
-                                                        <Eye className="w-4 h-4" />
+                                                        <Eye className="h-4 w-4" />
                                                     </button>
                                                 )}
 
@@ -988,23 +990,32 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                                         setMovimientoSeleccionado(movimiento);
                                                         setMostrarModalMovimientoIndividual(true);
                                                     }}
-                                                    className="inline-flex items-center justify-center p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition"
-                                                    title="Imprimir este movimiento"
+                                                    disabled={movimiento.venta_id !== null}
+                                                    className={`inline-flex items-center justify-center rounded-lg p-1.5 transition ${
+                                                        movimiento.venta_id !== null
+                                                            ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-50 dark:bg-gray-700 dark:text-gray-500'
+                                                            : 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'
+                                                    }`}
+                                                    title={
+                                                        movimiento.venta_id !== null
+                                                            ? 'No se puede imprimir movimientos vinculados a ventas'
+                                                            : 'Imprimir este movimiento'
+                                                    }
                                                 >
-                                                    <Printer className="w-4 h-4" />
+                                                    <Printer className="h-4 w-4" />
                                                 </button>
 
                                                 {/* ✅ NUEVO: Botón Eliminar (para cualquier movimiento menos VENTA) */}
-                                                {movimiento.tipo_operacion.codigo !== 'VENTA' || movimiento.tipo_operacion.codigo === 'PAGO' && (
+                                                {movimiento.tipo_operacion.codigo !== 'VENTA' && movimiento.tipo_operacion.codigo !== 'PAGO' && (
                                                     <button
                                                         onClick={() => {
                                                             setMovimientoAEliminar(movimiento);
                                                             setMostrarDialogoEliminacion(true);
                                                         }}
-                                                        className="inline-flex items-center justify-center p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition"
+                                                        className="inline-flex items-center justify-center rounded-lg bg-red-100 p-1.5 text-red-600 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                                                         title="Eliminar este movimiento"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 )}
                                             </div>
@@ -1100,61 +1111,57 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                 <AlertDialog open={mostrarDialogoEliminacion} onOpenChange={setMostrarDialogoEliminacion}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>
-                                ¿Eliminar movimiento?
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>¿Eliminar movimiento?</AlertDialogTitle>
                             <AlertDialogDescription>
                                 Se eliminará el movimiento de <strong>{movimientoAEliminar?.tipo_operacion.nombre}</strong>
                             </AlertDialogDescription>
                         </AlertDialogHeader>
 
                         {/* ✅ Detalles del movimiento */}
-                        <div className="space-y-3 py-4 border-y border-gray-200 dark:border-gray-700">
-                            <div className="flex justify-between items-center">
+                        <div className="space-y-3 border-y border-gray-200 py-4 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Monto:</span>
                                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                                     {formatCurrency(Math.abs(toNumber(movimientoAEliminar?.monto || 0)))}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Fecha:</span>
                                 <span className="text-sm text-gray-900 dark:text-gray-100">
                                     {movimientoAEliminar && formatDateTime(movimientoAEliminar.fecha)}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-start">
+                            <div className="flex items-start justify-between">
                                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Observación:</span>
-                                <span className="text-sm text-gray-900 dark:text-gray-100 text-right max-w-xs">
+                                <span className="max-w-xs text-right text-sm text-gray-900 dark:text-gray-100">
                                     {movimientoAEliminar?.observaciones || 'Sin observaciones'}
                                 </span>
                             </div>
                         </div>
 
                         {/* ✅ Advertencia */}
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
                             </p>
                         </div>
 
                         {/* ✅ Botones */}
-                        <div className="flex gap-3 justify-end">
-                            <AlertDialogCancel disabled={eliminandoMovimiento}>
-                                Cancelar
-                            </AlertDialogCancel>
+                        <div className="flex justify-end gap-3">
+                            <AlertDialogCancel disabled={eliminandoMovimiento}>Cancelar</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={handleEliminarMovimiento}
                                 disabled={eliminandoMovimiento}
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="bg-red-600 text-white hover:bg-red-700"
                             >
                                 {eliminandoMovimiento ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Eliminando...
                                     </>
                                 ) : (
                                     <>
-                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        <Trash2 className="mr-2 h-4 w-4" />
                                         Eliminar
                                     </>
                                 )}
@@ -1165,7 +1172,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
 
                 {/* ✅ NUEVO: Modal de Detalles de Venta */}
                 <Dialog open={mostrarModalVenta} onOpenChange={setMostrarModalVenta}>
-                    <DialogContent className="max-w-2xl dark:bg-slate-800 dark:border-slate-700">
+                    <DialogContent className="max-w-2xl dark:border-slate-700 dark:bg-slate-800">
                         <DialogHeader>
                             <DialogTitle className="dark:text-white">Detalles de Venta</DialogTitle>
                         </DialogHeader>
@@ -1173,23 +1180,24 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                         {movimientoVentaSeleccionado?.venta && (
                             <div className="space-y-6 py-4">
                                 {/* IDs y Monto */}
-                                <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                                <div className="grid grid-cols-3 gap-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
                                     <div>
-                                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">ID Venta</p>
-                                        <p className="text-lg font-bold text-blue-900 dark:text-blue-100 mt-1">
+                                        <p className="text-xs font-medium text-blue-600 uppercase dark:text-blue-400">ID Venta</p>
+                                        <p className="mt-1 text-lg font-bold text-blue-900 dark:text-blue-100">
                                             #{movimientoVentaSeleccionado.venta.id}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">ID Movimiento</p>
-                                        <p className="text-lg font-bold text-blue-900 dark:text-blue-100 mt-1">
-                                            #{movimientoVentaSeleccionado.id}
-                                        </p>
+                                        <p className="text-xs font-medium text-blue-600 uppercase dark:text-blue-400">ID Movimiento</p>
+                                        <p className="mt-1 text-lg font-bold text-blue-900 dark:text-blue-100">#{movimientoVentaSeleccionado.id}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">Monto Movimiento</p>
-                                        <p className={`text-lg font-bold mt-1 ${movimientoVentaSeleccionado.monto > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                            {movimientoVentaSeleccionado.monto > 0 ? '+' : ''}Bs. {Number(movimientoVentaSeleccionado.monto).toFixed(2)}
+                                        <p className="text-xs font-medium text-blue-600 uppercase dark:text-blue-400">Monto Movimiento</p>
+                                        <p
+                                            className={`mt-1 text-lg font-bold ${movimientoVentaSeleccionado.monto > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                                        >
+                                            {movimientoVentaSeleccionado.monto > 0 ? '+' : ''}Bs.{' '}
+                                            {Number(movimientoVentaSeleccionado.monto).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
@@ -1198,7 +1206,7 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Número de Venta</p>
-                                        <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
+                                        <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
                                             {movimientoVentaSeleccionado.venta.numero_documento || movimientoVentaSeleccionado.venta.numero}
                                         </p>
                                     </div>
@@ -1206,75 +1214,84 @@ export function MovimientosDelDiaTable({ cajaAbiertaHoy, movimientosHoy, efectiv
                                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estado</p>
                                         <p className="mt-1">
                                             {movimientoVentaSeleccionado.venta.estado_documento ? (
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimientoVentaSeleccionado.venta.estado_documento.codigo === 'APROBADO'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : movimientoVentaSeleccionado.venta.estado_documento.codigo === 'ANULADO'
-                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                    }`}>
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                        movimientoVentaSeleccionado.venta.estado_documento.codigo === 'APROBADO'
+                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                            : movimientoVentaSeleccionado.venta.estado_documento.codigo === 'ANULADO'
+                                                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}
+                                                >
                                                     {movimientoVentaSeleccionado.venta.estado_documento.nombre}
                                                 </span>
-                                            ) : '-'}
+                                            ) : (
+                                                '-'
+                                            )}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Montos */}
-                                <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-slate-900/50 rounded-lg">
+                                <div className="grid grid-cols-3 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-slate-900/50">
                                     <div>
-                                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Total</p>
-                                        <p className="text-xl font-bold text-gray-900 dark:text-white mt-2">
+                                        <p className="text-xs font-medium text-gray-600 uppercase dark:text-gray-400">Total</p>
+                                        <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">
                                             Bs. {Number(movimientoVentaSeleccionado.venta.total ?? 0).toFixed(2)}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Pagado</p>
-                                        <p className="text-xl font-bold text-green-600 dark:text-green-400 mt-2">
+                                        <p className="text-xs font-medium text-gray-600 uppercase dark:text-gray-400">Pagado</p>
+                                        <p className="mt-2 text-xl font-bold text-green-600 dark:text-green-400">
                                             Bs. {Number(movimientoVentaSeleccionado.venta.monto_pagado ?? 0).toFixed(2)}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Pendiente</p>
-                                        <p className={`text-xl font-bold mt-2 ${Number(movimientoVentaSeleccionado.venta.monto_pendiente ?? 0) > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                                        <p className="text-xs font-medium text-gray-600 uppercase dark:text-gray-400">Pendiente</p>
+                                        <p
+                                            className={`mt-2 text-xl font-bold ${Number(movimientoVentaSeleccionado.venta.monto_pendiente ?? 0) > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                                        >
                                             Bs. {Number(movimientoVentaSeleccionado.venta.monto_pendiente ?? 0).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Detalles de Pago */}
-                                {movimientoVentaSeleccionado.venta.detallesPagoVenta && movimientoVentaSeleccionado.venta.detallesPagoVenta.length > 0 && (
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Desglose de Pagos</h3>
-                                        <div className="space-y-2">
-                                            {movimientoVentaSeleccionado.venta.detallesPagoVenta.map((detalle, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900/50 rounded">
-                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        {detalle.tipoPago?.nombre || 'Sin tipo'}
-                                                    </span>
-                                                    <span className="font-semibold text-gray-900 dark:text-white">
-                                                        Bs. {Number(detalle.monto).toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                {movimientoVentaSeleccionado.venta.detallesPagoVenta &&
+                                    movimientoVentaSeleccionado.venta.detallesPagoVenta.length > 0 && (
+                                        <div>
+                                            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Desglose de Pagos</h3>
+                                            <div className="space-y-2">
+                                                {movimientoVentaSeleccionado.venta.detallesPagoVenta.map((detalle, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-center justify-between rounded bg-gray-50 p-3 dark:bg-slate-900/50"
+                                                    >
+                                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            {detalle.tipoPago?.nombre || 'Sin tipo'}
+                                                        </span>
+                                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                                            Bs. {Number(detalle.monto).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
                                 {/* Cliente */}
                                 {movimientoVentaSeleccionado.venta.cliente && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Cliente</p>
-                                        <p className="text-gray-900 dark:text-white mt-1">
-                                            {movimientoVentaSeleccionado.venta.cliente.nombre}
-                                        </p>
+                                        <p className="mt-1 text-gray-900 dark:text-white">{movimientoVentaSeleccionado.venta.cliente.nombre}</p>
                                     </div>
                                 )}
 
                                 {/* Acciones */}
-                                <div className="flex justify-end gap-2 pt-4 border-t dark:border-slate-700">
+                                <div className="flex justify-end gap-2 border-t pt-4 dark:border-slate-700">
                                     <button
                                         onClick={() => setMostrarModalVenta(false)}
-                                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition"
+                                        className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
                                     >
                                         Cerrar
                                     </button>

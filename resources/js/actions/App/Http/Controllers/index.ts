@@ -81,6 +81,7 @@ import ImpresionProformasController from './ImpresionProformasController'
 import ReservaController from './ReservaController'
 import CajaController from './CajaController'
 import GastoController from './GastoController'
+import EgresosAnalisisController from './EgresosAnalisisController'
 import CierreDiarioGeneralController from './CierreDiarioGeneralController'
 import ImpresionControlVencimientosController from './ImpresionControlVencimientosController'
 import ImpresionMovimientosController from './ImpresionMovimientosController'
@@ -190,6 +191,7 @@ ImpresionProformasController,
 ReservaController,
 CajaController,
 GastoController,
+EgresosAnalisisController,
 CierreDiarioGeneralController,
 ImpresionControlVencimientosController,
 ImpresionMovimientosController,

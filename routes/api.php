@@ -59,6 +59,7 @@ use App\Http\Controllers\PrestamoProveedorController;
 use App\Http\Controllers\PrestamoEventoController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\TipoOperacionCajaController;
+use App\Http\Controllers\Api\EgresosAnalisisController;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
@@ -1884,3 +1885,8 @@ Route::post('/ventas-comidas', [\App\Http\Controllers\Api\VentasComidasControlle
 // ✅ NUEVO 2026-06-23: API endpoint para Cuentas por Cobrar (para app Flutter)
 Route::get('/cuentas-por-cobrar', [CuentaPorCobrarController::class, 'indexApi'])->name('api.cuentas-por-cobrar.index');
 Route::get('/cuentas-por-cobrar/{cuentaPorCobrar}', [CuentaPorCobrarController::class, 'showApi'])->name('api.cuentas-por-cobrar.show');
+
+// ✅ NUEVO 2026-07-22: API endpoint para Análisis de Egresos
+Route::prefix('egresos')->group(function () {
+    Route::get('/', [EgresosAnalisisController::class, 'index'])->name('api.egresos.index');
+});

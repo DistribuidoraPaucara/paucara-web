@@ -299,6 +299,8 @@ class ModuloSidebarSeeder extends Seeder
                     ['titulo' => 'Reportes Diarios', 'ruta' => '/cajas/admin/reportes-diarios', 'icono' => 'FileText', 'orden' => 2, 'permisos' => ['cajas.index']],
                     // ✅ Auditoría - Para admin (log de auditoría)
                     ['titulo' => 'Auditoría', 'ruta' => '/cajas/auditoria', 'icono' => 'Shield', 'orden' => 3, 'permisos' => ['cajas.auditoria']],
+                    // ✅ NUEVO: Análisis de Egresos - Dashboard con gráficos
+                    ['titulo' => 'Análisis de Egresos', 'ruta' => '/cajas/egresos', 'icono' => 'TrendingDown', 'orden' => 4, 'permisos' => ['cajas.index']],
                     // ✅ Gastos - Para admin (gestión de gastos menores)
                     // ['titulo' => 'Gastos', 'ruta' => '/cajas/gastos/admin', 'icono' => 'DollarSign', 'orden' => 5, 'permisos' => ['cajas.gastos']],
                 ],

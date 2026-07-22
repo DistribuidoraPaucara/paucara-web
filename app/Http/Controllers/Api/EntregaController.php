@@ -285,7 +285,7 @@ class EntregaController extends Controller
                 ])
                 ->with([
                     'estadoEntrega:id,codigo,nombre,color,icono', // Solo campos necesarios
-                    'ventas:id,numero,subtotal,impuesto,total,estado_entrega_id,fecha_entrega_comprometida,cliente_id,direccion_cliente_id,entrega_id',
+                    'ventas:id,numero,subtotal,impuesto,total,estado_logistico_id,fecha_entrega_comprometida,cliente_id,direccion_cliente_id,entrega_id',
                     'ventas.cliente:id,nombre,nit,telefono,razon_social,localidad_id', // ✅ AGREGADO: razon_social
                     'ventas.cliente.localidad:id,nombre,codigo',
                     'ventas.direccionCliente:id,direccion,latitud,longitud',
@@ -324,7 +324,7 @@ class EntregaController extends Controller
                         'subtotal'                   => $venta->subtotal,
                         'impuesto'                   => $venta->impuesto,
                         'total'                      => $venta->total,
-                        'estado_entrega_id'        => $venta->estado_entrega_id,
+                        'estado_logistico_id'        => $venta->estado_logistico_id,
                         'fecha_entrega_comprometida' => $venta->fecha_entrega_comprometida,
                         'cliente'                    => $venta->cliente ? [
                             'id'           => $venta->cliente->id,
@@ -4282,7 +4282,7 @@ class EntregaController extends Controller
                     // Ventas con información esencial (ordenadas ascendentemente por ID)
                     'ventas'                            => function ($q) {
                         $q->select([
-                            'id', 'numero', 'cliente_id', 'total', 'estado_entrega_id',
+                            'id', 'numero', 'cliente_id', 'total', 'estado_logistico_id',
                             'direccion_cliente_id', 'entrega_id', 'subtotal', 'impuesto', 'descuento',
                             'tipo_pago_id', 'usuario_id', 'estado_documento_id', 'estado_pago',
                             'fecha', 'created_at', // ✅ NUEVO: Incluir fecha y timestamp

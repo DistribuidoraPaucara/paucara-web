@@ -1,6 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 import movimientos from './movimientos'
 import gastos from './gastos'
+import egresos from './egresos'
 import cierre from './cierre'
 import movimiento from './movimiento'
 import resumen from './resumen'
@@ -789,6 +790,7 @@ movimientos,
 registrarMovimiento,
 registrarMovimientoJson,
 gastos,
+egresos,
 aperturaMovimientos,
 cierre,
 datosCierre,
