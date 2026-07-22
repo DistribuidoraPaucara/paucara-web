@@ -34,15 +34,17 @@ class ReservaProformaController extends Controller
                 $query->where('estado', $request->estado);
             }
 
-            // Filtro por proforma
-            if ($request->filled('proforma_id')) {
-                $query->where('proforma_id', $request->proforma_id);
-            }
-
-            // Filtro por número de proforma
-            if ($request->filled('proforma_numero')) {
-                $query->whereHas('proforma', function ($q) {
-                    $q->where('numero', 'ILIKE', '%' . request()->proforma_numero . '%');
+            // ✅ NUEVO (2026-07-22): Búsqueda unificada de proforma (ID exacto o número parcial)
+            if ($request->filled('proforma_busqueda')) {
+                $busqueda = $request->proforma_busqueda;
+                $query->whereHas('proforma', function ($q) use ($busqueda) {
+                    // Si es numérico, buscar por ID exacto
+                    // Si no, buscar por número parcial (ILIKE case-insensitive)
+                    if (is_numeric($busqueda)) {
+                        $q->where('id', (int) $busqueda);
+                    } else {
+                        $q->where('numero', 'ILIKE', '%' . $busqueda . '%');
+                    }
                 });
             }
 

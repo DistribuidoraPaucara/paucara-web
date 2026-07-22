@@ -68,8 +68,8 @@ export interface ReservaProformaDetalle extends ReservaProforma {
 
 export interface ReservaProformaFilters {
     estado?: 'ACTIVA' | 'LIBERADA' | 'CONSUMIDA';
-    proforma_id?: number;
-    proforma_numero?: string;
+    // ✅ NUEVO (2026-07-22): Búsqueda unificada de proforma (ID o número)
+    proforma_busqueda?: string;
     producto_id?: number;
     almacen_id?: number;
     cliente_id?: number;

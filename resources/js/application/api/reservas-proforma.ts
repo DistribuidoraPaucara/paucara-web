@@ -16,8 +16,8 @@ export const reservasProformaApi = {
 
             if (filters) {
                 if (filters.estado) params.append('estado', filters.estado);
-                if (filters.proforma_id) params.append('proforma_id', filters.proforma_id.toString());
-                if (filters.proforma_numero) params.append('proforma_numero', filters.proforma_numero);
+                // ✅ NUEVO (2026-07-22): Búsqueda unificada de proforma (ID o número)
+                if (filters.proforma_busqueda) params.append('proforma_busqueda', filters.proforma_busqueda);
                 if (filters.producto_id) params.append('producto_id', filters.producto_id.toString());
                 if (filters.almacen_id) params.append('almacen_id', filters.almacen_id.toString());
                 if (filters.cliente_id) params.append('cliente_id', filters.cliente_id.toString());

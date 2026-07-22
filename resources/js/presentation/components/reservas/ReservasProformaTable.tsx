@@ -1,15 +1,10 @@
-import { Link } from '@inertiajs/react';
 import { reservasProformaApi } from '@/application/api/reservas-proforma';
 import type { ReservaProforma, ReservaProformaFilters } from '@/domain/entities/reservas-proforma';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { Card, CardContent } from '@/presentation/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/presentation/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/presentation/components/ui/dropdown-menu';
+import { Link } from '@inertiajs/react';
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Eye, MoreVertical, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +19,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
     const [perPage] = useState(50);
     const [totalPages, setTotalPages] = useState(1);
     const [totalReservas, setTotalReservas] = useState(0);
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
 
     // Obtener fecha de hoy en formato YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0];
@@ -36,9 +31,8 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         fecha_reserva_hasta: today,
     });
     const [filterInputs, setFilterInputs] = useState({
-        // ✅ NUEVO (2026-07-18): Búsqueda por ID de proforma
-        proforma_id: '',
-        proforma_numero: '',
+        // ✅ NUEVO (2026-07-22): Búsqueda unificada por ID o número de proforma
+        proforma_busqueda: '',
         // ✅ NUEVO (2026-07-18): Búsqueda por nombre de cliente
         cliente_nombre: '',
         estado: '',
@@ -108,14 +102,11 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
             ordenamiento: filters.ordenamiento,
         };
 
-        // ✅ NUEVO (2026-07-18): Filtro por ID de proforma
-        if (filterInputs.proforma_id) {
-            nuevosFiltros.proforma_id = parseInt(filterInputs.proforma_id);
+        // ✅ NUEVO (2026-07-22): Búsqueda unificada de proforma (ID o número)
+        if (filterInputs.proforma_busqueda) {
+            nuevosFiltros.proforma_busqueda = filterInputs.proforma_busqueda;
         }
 
-        if (filterInputs.proforma_numero) {
-            nuevosFiltros.proforma_numero = filterInputs.proforma_numero;
-        }
         // ✅ NUEVO (2026-07-18): Filtro por nombre de cliente
         if (filterInputs.cliente_nombre) {
             nuevosFiltros.cliente_nombre = filterInputs.cliente_nombre;
@@ -174,9 +165,8 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
 
     const limpiarFiltros = () => {
         setFilterInputs({
-            // ✅ NUEVO (2026-07-18): Limpiar filtro de ID de proforma
-            proforma_id: '',
-            proforma_numero: '',
+            // ✅ NUEVO (2026-07-22): Limpiar búsqueda unificada de proforma
+            proforma_busqueda: '',
             // ✅ NUEVO (2026-07-18): Limpiar filtro de nombre de cliente
             cliente_nombre: '',
             estado: '',
@@ -300,72 +290,51 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
     return (
         <div className="space-y-4">
             {/* Filtros Avanzados */}
-            <Card>
-                <CardContent className="p-4">
-                    <button
-                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                        className="flex w-full items-center justify-between text-left"
-                    >
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-900 dark:text-white">🎛️ Filtros Avanzados</h3>
-                            {contarFiltrosActivos() > 0 && (
-                                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                                    {contarFiltrosActivos()} activo{contarFiltrosActivos() !== 1 ? 's' : ''}
-                                </Badge>
-                            )}
-                        </div>
-                        <ChevronDown className={`h-5 w-5 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
-                    </button>
+            <div className="p-2">
+                <button onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} className="flex w-full items-center justify-between text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">🎛️ Filtros Avanzados</h3>
+                        {contarFiltrosActivos() > 0 && (
+                            <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                                {contarFiltrosActivos()} activo{contarFiltrosActivos() !== 1 ? 's' : ''}
+                            </Badge>
+                        )}
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                </button>
 
-                    {showAdvancedFilters && (
-                        <div className="space-y-4">
-                            {/* 🎯 BÚSQUEDA RÁPIDA: Proforma y Cliente */}
-                            <div className="border-b border-blue-200 bg-blue-50 p-3 rounded-md dark:border-blue-800 dark:bg-blue-900/20">
-                                <h4 className="mb-3 text-sm font-semibold text-blue-900 dark:text-blue-200">🔍 Búsqueda Rápida</h4>
-                                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                                    {/* Búsqueda por ID de Proforma */}
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">#️⃣ ID de Proforma</label>
-                                        <input
-                                            type="number"
-                                            placeholder="Ej: 2469"
-                                            value={filterInputs.proforma_id || ''}
-                                            onChange={(e) => handleFilterChange('proforma_id', e.target.value)}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Búsqueda por Número de Proforma */}
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">📋 Número de Proforma</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: PRO-20260717-2469"
-                                            value={filterInputs.proforma_numero}
-                                            onChange={(e) => handleFilterChange('proforma_numero', e.target.value)}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* ✅ NUEVO (2026-07-18): Búsqueda por Nombre de Cliente */}
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">👤 Nombre del Cliente</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: BRIGIDA CHACA"
-                                            value={filterInputs.cliente_nombre}
-                                            onChange={(e) => handleFilterChange('cliente_nombre', e.target.value)}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                                        />
-                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Búsqueda parcial, case insensitive
-                                        </p>
-                                    </div>
+                {showAdvancedFilters && (
+                    <div className="space-y-4">
+                        {/* 🎯 BÚSQUEDA RÁPIDA: Proforma y Cliente */}
+                        <div className="rounded-md border-b border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                            <h4 className="mb-3 text-sm font-semibold text-blue-900 dark:text-blue-200">🔍 Búsqueda Rápida</h4>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                {/* ✅ NUEVO (2026-07-22): Búsqueda unificada de Proforma */}
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">📋 Proforma (ID o Número)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: 2469 o PF-20260717-2469"
+                                        value={filterInputs.proforma_busqueda}
+                                        onChange={(e) => handleFilterChange('proforma_busqueda', e.target.value)}
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">ID (exacto) o número (parcial)</p>
                                 </div>
-                            </div>
 
-                            {/* Primera fila de filtros */}
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                {/* ✅ NUEVO (2026-07-18): Búsqueda por Nombre de Cliente */}
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">👤 Nombre del Cliente</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: BRIGIDA CHACA"
+                                        value={filterInputs.cliente_nombre}
+                                        onChange={(e) => handleFilterChange('cliente_nombre', e.target.value)}
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Búsqueda parcial, case insensitive</p>
+                                </div>
+
                                 {/* ✅ NUEVO (2026-02-12): Filtro por Producto - Búsqueda flexible */}
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -382,139 +351,157 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         Busca por ID (prioridad), SKU o nombre (case insensitive)
                                     </p>
                                 </div>
-
-                                {/* Estado */}
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">✅ Estado de Reserva</label>
-                                    <select
-                                        value={filterInputs.estado}
-                                        onChange={(e) => handleFilterChange('estado', e.target.value)}
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                    >
-                                        <option value="">Todos los estados</option>
-                                        <option value="ACTIVA">🟢 Activa</option>
-                                        <option value="LIBERADA">⚫ Liberada</option>
-                                        <option value="CONSUMIDA">✅ Consumida</option>
-                                    </select>
-                                </div>
-
-                                {/* Vencimiento */}
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        ⏰ Filtro de Vencimiento
-                                    </label>
-                                    <select
-                                        value={filterInputs.vencimiento}
-                                        onChange={(e) => handleFilterChange('vencimiento', e.target.value)}
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                    >
-                                        <option value="">Sin filtro</option>
-                                        <option value="vigente">✅ Vigentes</option>
-                                        <option value="pronto">⚠️ Próximas a expirar</option>
-                                        <option value="expirada">🔴 Expiradas</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                {/* ✅ IMPORTANTE: Filtro de Fecha de Reserva (PRINCIPAL) */}
-                                <div className="border-l-4 border-green-500 bg-green-50 p-3 rounded-md dark:bg-green-900/20">
-                                    <h4 className="mb-3 text-sm font-semibold text-green-900 dark:text-green-200">📦 Fechas de Reserva (PRINCIPAL)</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Desde</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_reserva_desde}
-                                                onChange={(e) => handleFilterChange('fecha_reserva_desde', e.target.value)}
-                                                className="w-full rounded-md border-2 border-green-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-green-500 focus:outline-none dark:border-green-700 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Hasta</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_reserva_hasta}
-                                                onChange={(e) => handleFilterChange('fecha_reserva_hasta', e.target.value)}
-                                                className="w-full rounded-md border-2 border-green-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-green-500 focus:outline-none dark:border-green-700 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Filtro de Fecha de Creación */}
-                                <div>
-                                    <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">📅 Fechas de Creación</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Desde</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_creacion_desde}
-                                                onChange={(e) => handleFilterChange('fecha_creacion_desde', e.target.value)}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Hasta</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_creacion_hasta}
-                                                onChange={(e) => handleFilterChange('fecha_creacion_hasta', e.target.value)}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Filtro de Fecha de Vencimiento */}
-                                <div>
-                                    <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">⏰ Fechas de Vencimiento</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Desde</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_vencimiento_desde}
-                                                onChange={(e) => handleFilterChange('fecha_vencimiento_desde', e.target.value)}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Hasta</label>
-                                            <input
-                                                type="date"
-                                                value={filterInputs.fecha_vencimiento_hasta}
-                                                onChange={(e) => handleFilterChange('fecha_vencimiento_hasta', e.target.value)}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Botones de Acción */}
-                            <div className="flex gap-2 pt-2">
-                                <Button onClick={aplicarFiltros} className="bg-blue-600 text-white hover:bg-blue-700">
-                                    🔍 Aplicar Filtros
-                                </Button>
-                                {contarFiltrosActivos() > 0 && (
-                                    <Button
-                                        onClick={limpiarFiltros}
-                                        variant="outline"
-                                        className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                                    >
-                                        ✕ Limpiar Filtros
-                                    </Button>
-                                )}
                             </div>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+
+                        {/* Primera fila de filtros */}
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            {/* ✅ NUEVO (2026-02-12): Filtro por Producto - Búsqueda flexible */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    📦 Producto (ID, SKU o Nombre)
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: 123 o LAC-001 o Lactose"
+                                    value={filterInputs.producto_busqueda}
+                                    onChange={(e) => handleFilterChange('producto_busqueda', e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                                />
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Busca por ID (prioridad), SKU o nombre (case insensitive)
+                                </p>
+                            </div>
+
+                            {/* Estado */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">✅ Estado de Reserva</label>
+                                <select
+                                    value={filterInputs.estado}
+                                    onChange={(e) => handleFilterChange('estado', e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="">Todos los estados</option>
+                                    <option value="ACTIVA">🟢 Activa</option>
+                                    <option value="LIBERADA">⚫ Liberada</option>
+                                    <option value="CONSUMIDA">✅ Consumida</option>
+                                </select>
+                            </div>
+
+                            {/* Vencimiento */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">⏰ Filtro de Vencimiento</label>
+                                <select
+                                    value={filterInputs.vencimiento}
+                                    onChange={(e) => handleFilterChange('vencimiento', e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="">Sin filtro</option>
+                                    <option value="vigente">✅ Vigentes</option>
+                                    <option value="pronto">⚠️ Próximas a expirar</option>
+                                    <option value="expirada">🔴 Expiradas</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            {/* ✅ IMPORTANTE: Filtro de Fecha de Reserva (PRINCIPAL) */}
+                            <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20">
+                                <h4 className="mb-3 text-sm font-semibold text-green-900 dark:text-green-200">📦 Fechas de Reserva (PRINCIPAL)</h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Desde</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_reserva_desde}
+                                            onChange={(e) => handleFilterChange('fecha_reserva_desde', e.target.value)}
+                                            className="w-full rounded-md border-2 border-green-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-green-500 focus:outline-none dark:border-green-700 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Hasta</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_reserva_hasta}
+                                            onChange={(e) => handleFilterChange('fecha_reserva_hasta', e.target.value)}
+                                            className="w-full rounded-md border-2 border-green-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-green-500 focus:outline-none dark:border-green-700 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Filtro de Fecha de Creación */}
+                            <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">📅 Fechas de Creación</h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Desde</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_creacion_desde}
+                                            onChange={(e) => handleFilterChange('fecha_creacion_desde', e.target.value)}
+                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Hasta</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_creacion_hasta}
+                                            onChange={(e) => handleFilterChange('fecha_creacion_hasta', e.target.value)}
+                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Filtro de Fecha de Vencimiento */}
+                            <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">⏰ Fechas de Vencimiento</h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Desde</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_vencimiento_desde}
+                                            onChange={(e) => handleFilterChange('fecha_vencimiento_desde', e.target.value)}
+                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Hasta</label>
+                                        <input
+                                            type="date"
+                                            value={filterInputs.fecha_vencimiento_hasta}
+                                            onChange={(e) => handleFilterChange('fecha_vencimiento_hasta', e.target.value)}
+                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Botones de Acción */}
+                        <div className="flex gap-2 pt-2">
+                            <Button onClick={aplicarFiltros} className="bg-blue-600 text-white hover:bg-blue-700">
+                                🔍 Aplicar Filtros
+                            </Button>
+                            {contarFiltrosActivos() > 0 && (
+                                <Button
+                                    onClick={limpiarFiltros}
+                                    variant="outline"
+                                    className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                                >
+                                    ✕ Limpiar Filtros
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Resumen */}
             {/* {summary && (
@@ -565,84 +552,79 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
 
             {/* Tabla */}
             <div>
-                    {loading ? (
-                        <div className="p-6 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-500"></div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Cargando reservas...</p>
-                            </div>
+                {loading ? (
+                    <div className="p-6 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-500"></div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando reservas...</p>
                         </div>
-                    ) : reservas.length === 0 ? (
-                        <div className="p-6 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">No hay reservas para mostrar</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">ID</th>
-                                        <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Pro ID</th>
-                                        <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th>
-                                        <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Cliente</th>
-                                        <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Producto</th>
-                                        {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Almacén</th> */}
-                                        <th className="px-2 py-2 text-right font-medium text-gray-700 dark:text-gray-300">Cantidad</th>
-                                        <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Creada</th>
-                                        <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Reserva</th>
-                                        <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Vencimiento</th>
-                                        <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Estado</th>
-                                        <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">-</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {reservas.map((reserva) => (
-                                        <tr key={reserva.id} className="transition hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                            <td className="px-2 py-2">#{reserva.id}</td>
-                                            <td className="px-2 py-2">
-                                                <Link href={`/proformas/${reserva.proforma_id}`} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium">
-                                                    #{reserva.proforma_id}
-                                                </Link>
-                                            </td>
-                                            <td className="px-2 py-2">
-                                                <div className="text-xs text-gray-900 dark:text-white">
-                                                    {reserva.proforma_numero}
-                                                </div>
-                                                {/* <div className="text-xs text-gray-500">Creada: </div> */}
-                                            </td>
-                                            <td className="px-2 py-2">
-                                                <div className="text-sm text-gray-900 dark:text-white">{reserva.cliente_nombre}</div>
-                                                <div className="text-xs text-gray-500">{reserva.cliente_nit}</div>
-                                            </td>
-                                            <td className="px-2 py-2">
-                                                <div className="text-xs text-gray-900 dark:text-white">{reserva.producto_nombre}</div>
-                                                <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
-                                            </td>
-                                            {/* <td className="px-2 py-2">
+                    </div>
+                ) : reservas.length === 0 ? (
+                    <div className="p-6 text-center">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay reservas para mostrar</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">ID</th>
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Pro ID</th>
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th>
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Cliente</th>
+                                    <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Producto</th>
+                                    {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Almacén</th> */}
+                                    <th className="px-2 py-2 text-right font-medium text-gray-700 dark:text-gray-300">Cantidad</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Creada</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Reserva</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Vencimiento</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">Estado</th>
+                                    <th className="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300">-</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {reservas.map((reserva) => (
+                                    <tr key={reserva.id} className="transition hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <td className="px-2 py-2">#{reserva.id}</td>
+                                        <td className="px-2 py-2">
+                                            <Link
+                                                href={`/proformas/${reserva.proforma_id}`}
+                                                className="font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                                            >
+                                                #{reserva.proforma_id}
+                                            </Link>
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            <div className="text-xs text-gray-900 dark:text-white">{reserva.proforma_numero}</div>
+                                            {/* <div className="text-xs text-gray-500">Creada: </div> */}
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            <div className="text-sm text-gray-900 dark:text-white">{reserva.cliente_nombre}</div>
+                                            <div className="text-xs text-gray-500">{reserva.cliente_nit}</div>
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            <div className="text-xs text-gray-900 dark:text-white">{reserva.producto_nombre}</div>
+                                            <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
+                                        </td>
+                                        {/* <td className="px-2 py-2">
                                                 <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 text-xs">
                                                     {reserva.almacen_nombre}
                                                 </Badge>
                                             </td> */}
-                                            <td className="px-2 py-2 text-right">
-                                                <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                                                    {reserva.cantidad_reservada.toFixed(2)}
-                                                </span>
-                                            </td>
-                                            {/* <td className="px-4 py-3 text-right">
+                                        <td className="px-2 py-2 text-right">
+                                            <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                                {reserva.cantidad_reservada.toFixed(2)}
+                                            </span>
+                                        </td>
+                                        {/* <td className="px-4 py-3 text-right">
                                                 <div className="font-medium text-gray-900 dark:text-white">
                                                     {formatCurrency(reserva.valor_reservado)}
                                                 </div>
                                             </td> */}
-                                            <td className="px-2 py-2 text-center text-xs">
-                                                {formatDate(reserva.created_at)}
-                                            </td>
-                                            <td className="px-2 py-2 text-center text-xs">
-                                                {formatDate(reserva.fecha_reserva)}
-                                            </td>
-                                            <td className="px-2 py-2 text-center text-xs">
-                                                {formatDate(reserva.fecha_expiracion)}
-                                            </td>
-                                            {/* <td className="px-4 py-3 text-center">
+                                        <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.created_at)}</td>
+                                        <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_reserva)}</td>
+                                        <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_expiracion)}</td>
+                                        {/* <td className="px-4 py-3 text-center">
                                                 <div className="flex flex-col items-center gap-1">
                                                     {getVencimientoBadge(reserva)}
                                                     {reserva.estado === 'ACTIVA' && (
@@ -654,120 +636,115 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                                     )}
                                                 </div>
                                             </td> */}
-                                            <td className="px-2 py-2 text-xs text-center">
-                                                <Badge className={getEstadoBadge(reserva.estado)}>{reserva.estado}</Badge>
-                                            </td>
-                                            <td className="px-2 py-2 text-center">
-                                                {/* ✅ NUEVO (2026-07-18): Menú de 3 puntos para acciones */}
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 p-0"
-                                                            title="Acciones"
-                                                        >
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48">
-                                                        {/* Ver detalles */}
+                                        <td className="px-2 py-2 text-center text-xs">
+                                            <Badge className={getEstadoBadge(reserva.estado)}>{reserva.estado}</Badge>
+                                        </td>
+                                        <td className="px-2 py-2 text-center">
+                                            {/* ✅ NUEVO (2026-07-18): Menú de 3 puntos para acciones */}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acciones">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48">
+                                                    {/* Ver detalles */}
+                                                    <DropdownMenuItem
+                                                        onClick={() => setSelectedReserva(reserva)}
+                                                        className="flex cursor-pointer items-center gap-2"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                        <span>Ver detalles</span>
+                                                    </DropdownMenuItem>
+
+                                                    {/* Liberar (solo si está ACTIVA) */}
+                                                    {reserva.estado === 'ACTIVA' && (
                                                         <DropdownMenuItem
-                                                            onClick={() => setSelectedReserva(reserva)}
-                                                            className="flex items-center gap-2 cursor-pointer"
+                                                            onClick={() => handleLiberar(reserva.id)}
+                                                            disabled={liberando === reserva.id}
+                                                            className="flex cursor-pointer items-center gap-2 text-red-600 dark:text-red-400"
                                                         >
-                                                            <Eye className="h-4 w-4" />
-                                                            <span>Ver detalles</span>
+                                                            {liberando === reserva.id ? (
+                                                                <>
+                                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent dark:border-red-400" />
+                                                                    <span>Liberando...</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <span>Liberar reserva</span>
+                                                                </>
+                                                            )}
                                                         </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                                                        {/* Liberar (solo si está ACTIVA) */}
-                                                        {reserva.estado === 'ACTIVA' && (
-                                                            <DropdownMenuItem
-                                                                onClick={() => handleLiberar(reserva.id)}
-                                                                disabled={liberando === reserva.id}
-                                                                className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400"
-                                                            >
-                                                                {liberando === reserva.id ? (
-                                                                    <>
-                                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 dark:border-red-400 border-t-transparent" />
-                                                                        <span>Liberando...</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                        <span>Liberar reserva</span>
-                                                                    </>
-                                                                )}
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                {/* Paginación */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Mostrando{' '}
+                            <strong>
+                                {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, totalReservas)}
+                            </strong>{' '}
+                            de <strong>{totalReservas}</strong> reservas
                         </div>
-                    )}
 
-                    {/* Paginación */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                Mostrando{' '}
-                                <strong>
-                                    {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, totalReservas)}
-                                </strong>{' '}
-                                de <strong>{totalReservas}</strong> reservas
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
 
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                        .filter((page) => page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1))
-                                        .map((page, idx, arr) => {
-                                            if (idx > 0 && page !== arr[idx - 1] + 1) {
-                                                return (
-                                                    <span key={`dots-${page}`} className="px-2 text-gray-500">
-                                                        ...
-                                                    </span>
-                                                );
-                                            }
-
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter((page) => page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1))
+                                    .map((page, idx, arr) => {
+                                        if (idx > 0 && page !== arr[idx - 1] + 1) {
                                             return (
-                                                <Button
-                                                    key={page}
-                                                    variant={page === currentPage ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => setCurrentPage(page)}
-                                                >
-                                                    {page}
-                                                </Button>
+                                                <span key={`dots-${page}`} className="px-2 text-gray-500">
+                                                    ...
+                                                </span>
                                             );
-                                        })}
-                                </div>
+                                        }
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
+                                        return (
+                                            <Button
+                                                key={page}
+                                                variant={page === currentPage ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => setCurrentPage(page)}
+                                            >
+                                                {page}
+                                            </Button>
+                                        );
+                                    })}
                             </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+            </div>
 
             {/* Modal de Detalles */}
             {selectedReserva && (
