@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 import devoluciones from './devoluciones'
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::index
@@ -43,6 +43,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::index
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::index
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::index
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::crear
  * @see app/Http/Controllers/PrestamosInertiaController.php:51
@@ -86,6 +121,41 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::crear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+    const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: crear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::crear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+        crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: crear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::crear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+        crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: crear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    crear.form = crearForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
  * @see app/Http/Controllers/PrestamosInertiaController.php:111
@@ -120,6 +190,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::store
+ * @see app/Http/Controllers/PrestamosInertiaController.php:111
+ * @route '/prestamos/clientes'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::store
+ * @see app/Http/Controllers/PrestamosInertiaController.php:111
+ * @route '/prestamos/clientes'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
  * @see routes/web.php:881
  * @route '/prestamos/clientes/{prestamo}'
@@ -178,6 +269,38 @@ show.head = (args: { prestamo: string | number } | [prestamo: string | number ] 
     method: 'head',
 })
 
+    /**
+ * @see routes/web.php:881
+ * @route '/prestamos/clientes/{prestamo}'
+ */
+    const showForm = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:881
+ * @route '/prestamos/clientes/{prestamo}'
+ */
+        showForm.get = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:881
+ * @route '/prestamos/clientes/{prestamo}'
+ */
+        showForm.head = (args: { prestamo: string | number } | [prestamo: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
  * @see app/Http/Controllers/PrestamoClienteController.php:557
@@ -245,6 +368,41 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamoClienteController::imprimir
+ * @see app/Http/Controllers/PrestamoClienteController.php:557
+ * @route '/prestamos/clientes/{prestamo}/imprimir'
+ */
+    const imprimirForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamoClienteController::imprimir
+ * @see app/Http/Controllers/PrestamoClienteController.php:557
+ * @route '/prestamos/clientes/{prestamo}/imprimir'
+ */
+        imprimirForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamoClienteController::imprimir
+ * @see app/Http/Controllers/PrestamoClienteController.php:557
+ * @route '/prestamos/clientes/{prestamo}/imprimir'
+ */
+        imprimirForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 /**
  * @see routes/web.php:889
  * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
@@ -308,6 +466,38 @@ registrarDevolucion.head = (args: { prestamo: number | { id: number } } | [prest
     method: 'head',
 })
 
+    /**
+ * @see routes/web.php:889
+ * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
+ */
+    const registrarDevolucionForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: registrarDevolucion.url(args, options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:889
+ * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
+ */
+        registrarDevolucionForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: registrarDevolucion.url(args, options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:889
+ * @route '/prestamos/clientes/{prestamo}/registrar-devolucion'
+ */
+        registrarDevolucionForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: registrarDevolucion.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    registrarDevolucion.form = registrarDevolucionForm
 /**
  * @see routes/web.php:895
  * @route '/prestamos/clientes/{prestamo}/devoluciones'
@@ -370,6 +560,39 @@ devoluciones.head = (args: { prestamo: number | { id: number } } | [prestamo: nu
     url: devoluciones.url(args, options),
     method: 'head',
 })
+
+    /**
+ * @see routes/web.php:895
+ * @route '/prestamos/clientes/{prestamo}/devoluciones'
+ */
+    const devolucionesForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: devoluciones.url(args, options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:895
+ * @route '/prestamos/clientes/{prestamo}/devoluciones'
+ */
+        devolucionesForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: devoluciones.url(args, options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:895
+ * @route '/prestamos/clientes/{prestamo}/devoluciones'
+ */
+        devolucionesForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: devoluciones.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    devoluciones.form = devolucionesForm
 const clientes = {
     index,
 crear,

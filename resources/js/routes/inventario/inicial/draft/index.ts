@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 import item from './item'
 import productos from './productos'
 /**
@@ -35,6 +35,27 @@ create.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::create
+ * @see app/Http/Controllers/InventarioInicialController.php:190
+ * @route '/inventario/inventario-inicial/draft/create'
+ */
+    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: create.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::create
+ * @see app/Http/Controllers/InventarioInicialController.php:190
+ * @route '/inventario/inventario-inicial/draft/create'
+ */
+        createForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: create.url(options),
+            method: 'post',
+        })
+    
+    create.form = createForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::get
  * @see app/Http/Controllers/InventarioInicialController.php:251
@@ -97,6 +118,41 @@ get.head = (args: { borrador: string | number } | [borrador: string | number ] |
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::get
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+    const getForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: get.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::get
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+        getForm.get = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: get.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::get
+ * @see app/Http/Controllers/InventarioInicialController.php:251
+ * @route '/inventario/inventario-inicial/draft/{borrador}'
+ */
+        getForm.head = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: get.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    get.form = getForm
 /**
 * @see \App\Http\Controllers\InventarioInicialController::complete
  * @see app/Http/Controllers/InventarioInicialController.php:391
@@ -149,6 +205,28 @@ complete.post = (args: { borrador: string | number } | [borrador: string | numbe
     url: complete.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\InventarioInicialController::complete
+ * @see app/Http/Controllers/InventarioInicialController.php:391
+ * @route '/inventario/inventario-inicial/draft/{borrador}/complete'
+ */
+    const completeForm = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: complete.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioInicialController::complete
+ * @see app/Http/Controllers/InventarioInicialController.php:391
+ * @route '/inventario/inventario-inicial/draft/{borrador}/complete'
+ */
+        completeForm.post = (args: { borrador: string | number } | [borrador: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: complete.url(args, options),
+            method: 'post',
+        })
+    
+    complete.form = completeForm
 const draft = {
     create,
 get,

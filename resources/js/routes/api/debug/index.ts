@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 import logs from './logs'
 /**
  * @see routes/api.php:1444
@@ -38,6 +38,39 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: logs.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/api.php:1444
+ * @route '/api/debug/logs'
+ */
+    const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: logs.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/api.php:1444
+ * @route '/api/debug/logs'
+ */
+        logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/api.php:1444
+ * @route '/api/debug/logs'
+ */
+        logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    logs.form = logsForm
 const debug = {
     logs,
 }

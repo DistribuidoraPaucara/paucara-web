@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\GeocodingController::reverseGeocode
  * @see app/Http/Controllers/Api/GeocodingController.php:25
@@ -32,6 +32,28 @@ reverseGeocode.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
     url: reverseGeocode.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\GeocodingController::reverseGeocode
+ * @see app/Http/Controllers/Api/GeocodingController.php:25
+ * @route '/api/geocoding/reverse'
+ */
+    const reverseGeocodeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: reverseGeocode.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\GeocodingController::reverseGeocode
+ * @see app/Http/Controllers/Api/GeocodingController.php:25
+ * @route '/api/geocoding/reverse'
+ */
+        reverseGeocodeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: reverseGeocode.url(options),
+            method: 'post',
+        })
+    
+    reverseGeocode.form = reverseGeocodeForm
 const GeocodingController = { reverseGeocode }
 
 export default GeocodingController

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteVisitasController::exportarExcel
  * @see app/Http/Controllers/ReporteVisitasController.php:80
@@ -41,6 +41,42 @@ exportarExcel.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     url: exportarExcel.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReporteVisitasController::exportarExcel
+ * @see app/Http/Controllers/ReporteVisitasController.php:80
+ * @route '/reportes/visitas/exportar-excel'
+ */
+    const exportarExcelForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: exportarExcel.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteVisitasController::exportarExcel
+ * @see app/Http/Controllers/ReporteVisitasController.php:80
+ * @route '/reportes/visitas/exportar-excel'
+ */
+        exportarExcelForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportarExcel.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteVisitasController::exportarExcel
+ * @see app/Http/Controllers/ReporteVisitasController.php:80
+ * @route '/reportes/visitas/exportar-excel'
+ */
+        exportarExcelForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportarExcel.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    exportarExcel.form = exportarExcelForm
 const visitas = {
     exportarExcel,
 }

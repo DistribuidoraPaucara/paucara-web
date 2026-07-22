@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\DireccionClienteApiController::index
  * @see app/Http/Controllers/DireccionClienteApiController.php:25
@@ -66,6 +66,41 @@ index.head = (args: { cliente: number | { id: number } } | [cliente: number | { 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\DireccionClienteApiController::index
+ * @see app/Http/Controllers/DireccionClienteApiController.php:25
+ * @route '/api/clientes/{cliente}/direcciones'
+ */
+    const indexForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::index
+ * @see app/Http/Controllers/DireccionClienteApiController.php:25
+ * @route '/api/clientes/{cliente}/direcciones'
+ */
+        indexForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::index
+ * @see app/Http/Controllers/DireccionClienteApiController.php:25
+ * @route '/api/clientes/{cliente}/direcciones'
+ */
+        indexForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\DireccionClienteApiController::store
  * @see app/Http/Controllers/DireccionClienteApiController.php:39
@@ -124,6 +159,27 @@ store.post = (args: { cliente: number | { id: number } } | [cliente: number | { 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\DireccionClienteApiController::store
+ * @see app/Http/Controllers/DireccionClienteApiController.php:39
+ * @route '/api/clientes/{cliente}/direcciones'
+ */
+    const storeForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::store
+ * @see app/Http/Controllers/DireccionClienteApiController.php:39
+ * @route '/api/clientes/{cliente}/direcciones'
+ */
+        storeForm.post = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(args, options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\DireccionClienteApiController::update
  * @see app/Http/Controllers/DireccionClienteApiController.php:84
@@ -179,6 +235,37 @@ update.put = (args: { cliente: number | { id: number }, direccion: number | { id
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\DireccionClienteApiController::update
+ * @see app/Http/Controllers/DireccionClienteApiController.php:84
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}'
+ */
+    const updateForm = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::update
+ * @see app/Http/Controllers/DireccionClienteApiController.php:84
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}'
+ */
+        updateForm.put = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\DireccionClienteApiController::destroy
  * @see app/Http/Controllers/DireccionClienteApiController.php:121
@@ -234,6 +321,37 @@ destroy.delete = (args: { cliente: number | { id: number }, direccion: number | 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\DireccionClienteApiController::destroy
+ * @see app/Http/Controllers/DireccionClienteApiController.php:121
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}'
+ */
+    const destroyForm = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::destroy
+ * @see app/Http/Controllers/DireccionClienteApiController.php:121
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}'
+ */
+        destroyForm.delete = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\DireccionClienteApiController::establecerPrincipal
  * @see app/Http/Controllers/DireccionClienteApiController.php:141
@@ -288,6 +406,38 @@ establecerPrincipal.patch = (args: { cliente: number | { id: number }, direccion
     url: establecerPrincipal.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\DireccionClienteApiController::establecerPrincipal
+ * @see app/Http/Controllers/DireccionClienteApiController.php:141
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}/principal'
+ */
+    const establecerPrincipalForm = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: establecerPrincipal.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\DireccionClienteApiController::establecerPrincipal
+ * @see app/Http/Controllers/DireccionClienteApiController.php:141
+ * @route '/api/clientes/{cliente}/direcciones/{direccion}/principal'
+ */
+        establecerPrincipalForm.patch = (args: { cliente: number | { id: number }, direccion: number | { id: number } } | [cliente: number | { id: number }, direccion: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: establecerPrincipal.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    establecerPrincipal.form = establecerPrincipalForm
 const DireccionClienteApiController = { index, store, update, destroy, establecerPrincipal }
 
 export default DireccionClienteApiController

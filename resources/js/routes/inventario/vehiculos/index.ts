@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\VehiculoController::index
  * @see app/Http/Controllers/VehiculoController.php:16
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\VehiculoController::index
+ * @see app/Http/Controllers/VehiculoController.php:16
+ * @route '/inventario/vehiculos'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::index
+ * @see app/Http/Controllers/VehiculoController.php:16
+ * @route '/inventario/vehiculos'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\VehiculoController::index
+ * @see app/Http/Controllers/VehiculoController.php:16
+ * @route '/inventario/vehiculos'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\VehiculoController::create
  * @see app/Http/Controllers/VehiculoController.php:51
@@ -85,6 +120,41 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\VehiculoController::create
+ * @see app/Http/Controllers/VehiculoController.php:51
+ * @route '/inventario/vehiculos/create'
+ */
+    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: create.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::create
+ * @see app/Http/Controllers/VehiculoController.php:51
+ * @route '/inventario/vehiculos/create'
+ */
+        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\VehiculoController::create
+ * @see app/Http/Controllers/VehiculoController.php:51
+ * @route '/inventario/vehiculos/create'
+ */
+        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    create.form = createForm
 /**
 * @see \App\Http\Controllers\VehiculoController::store
  * @see app/Http/Controllers/VehiculoController.php:87
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\VehiculoController::store
+ * @see app/Http/Controllers/VehiculoController.php:87
+ * @route '/inventario/vehiculos'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::store
+ * @see app/Http/Controllers/VehiculoController.php:87
+ * @route '/inventario/vehiculos'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\VehiculoController::edit
  * @see app/Http/Controllers/VehiculoController.php:97
@@ -186,6 +277,41 @@ edit.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number | {
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\VehiculoController::edit
+ * @see app/Http/Controllers/VehiculoController.php:97
+ * @route '/inventario/vehiculos/{vehiculo}/edit'
+ */
+    const editForm = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::edit
+ * @see app/Http/Controllers/VehiculoController.php:97
+ * @route '/inventario/vehiculos/{vehiculo}/edit'
+ */
+        editForm.get = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\VehiculoController::edit
+ * @see app/Http/Controllers/VehiculoController.php:97
+ * @route '/inventario/vehiculos/{vehiculo}/edit'
+ */
+        editForm.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\VehiculoController::update
  * @see app/Http/Controllers/VehiculoController.php:133
@@ -244,6 +370,37 @@ update.put = (args: { vehiculo: number | { id: number } } | [vehiculo: number | 
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\VehiculoController::update
+ * @see app/Http/Controllers/VehiculoController.php:133
+ * @route '/inventario/vehiculos/{vehiculo}'
+ */
+    const updateForm = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::update
+ * @see app/Http/Controllers/VehiculoController.php:133
+ * @route '/inventario/vehiculos/{vehiculo}'
+ */
+        updateForm.put = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\VehiculoController::destroy
  * @see app/Http/Controllers/VehiculoController.php:140
@@ -301,6 +458,38 @@ destroy.delete = (args: { vehiculo: number | { id: number } } | [vehiculo: numbe
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\VehiculoController::destroy
+ * @see app/Http/Controllers/VehiculoController.php:140
+ * @route '/inventario/vehiculos/{vehiculo}'
+ */
+    const destroyForm = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\VehiculoController::destroy
+ * @see app/Http/Controllers/VehiculoController.php:140
+ * @route '/inventario/vehiculos/{vehiculo}'
+ */
+        destroyForm.delete = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const vehiculos = {
     index,
 create,

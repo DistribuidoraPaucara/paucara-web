@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\NotificationController::index
  * @see app/Http/Controllers/Api/NotificationController.php:29
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/notificaciones'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/notificaciones'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/notificaciones'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
@@ -85,6 +120,41 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::unread
+ * @see app/Http/Controllers/Api/NotificationController.php:64
+ * @route '/api/notificaciones/no-leidas'
+ */
+    const unreadForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: unread.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::unread
+ * @see app/Http/Controllers/Api/NotificationController.php:64
+ * @route '/api/notificaciones/no-leidas'
+ */
+        unreadForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: unread.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::unread
+ * @see app/Http/Controllers/Api/NotificationController.php:64
+ * @route '/api/notificaciones/no-leidas'
+ */
+        unreadForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: unread.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    unread.form = unreadForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
@@ -128,6 +198,41 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::stats
+ * @see app/Http/Controllers/Api/NotificationController.php:270
+ * @route '/api/notificaciones/estadisticas'
+ */
+    const statsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: stats.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::stats
+ * @see app/Http/Controllers/Api/NotificationController.php:270
+ * @route '/api/notificaciones/estadisticas'
+ */
+        statsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stats.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::stats
+ * @see app/Http/Controllers/Api/NotificationController.php:270
+ * @route '/api/notificaciones/estadisticas'
+ */
+        statsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stats.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    stats.form = statsForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
@@ -190,6 +295,41 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::byType
+ * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @route '/api/notificaciones/por-tipo/{type}'
+ */
+    const byTypeForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: byType.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::byType
+ * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @route '/api/notificaciones/por-tipo/{type}'
+ */
+        byTypeForm.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: byType.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::byType
+ * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @route '/api/notificaciones/por-tipo/{type}'
+ */
+        byTypeForm.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: byType.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    byType.form = byTypeForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
@@ -224,6 +364,27 @@ markAllAsRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
+ * @see app/Http/Controllers/Api/NotificationController.php:172
+ * @route '/api/notificaciones/marcar-todas-leidas'
+ */
+    const markAllAsReadForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: markAllAsRead.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
+ * @see app/Http/Controllers/Api/NotificationController.php:172
+ * @route '/api/notificaciones/marcar-todas-leidas'
+ */
+        markAllAsReadForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: markAllAsRead.url(options),
+            method: 'post',
+        })
+    
+    markAllAsRead.form = markAllAsReadForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
@@ -258,6 +419,37 @@ destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::destroyAll
+ * @see app/Http/Controllers/Api/NotificationController.php:238
+ * @route '/api/notificaciones/eliminar-todas'
+ */
+    const destroyAllForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroyAll.url({
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::destroyAll
+ * @see app/Http/Controllers/Api/NotificationController.php:238
+ * @route '/api/notificaciones/eliminar-todas'
+ */
+        destroyAllForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroyAll.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroyAll.form = destroyAllForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
@@ -325,6 +517,41 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::show
+ * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @route '/api/notificaciones/{notification}'
+ */
+    const showForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::show
+ * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @route '/api/notificaciones/{notification}'
+ */
+        showForm.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::show
+ * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @route '/api/notificaciones/{notification}'
+ */
+        showForm.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
@@ -383,6 +610,27 @@ markAsRead.post = (args: { notification: number | { id: number } } | [notificati
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::markAsRead
+ * @see app/Http/Controllers/Api/NotificationController.php:96
+ * @route '/api/notificaciones/{notification}/marcar-leida'
+ */
+    const markAsReadForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: markAsRead.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::markAsRead
+ * @see app/Http/Controllers/Api/NotificationController.php:96
+ * @route '/api/notificaciones/{notification}/marcar-leida'
+ */
+        markAsReadForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: markAsRead.url(args, options),
+            method: 'post',
+        })
+    
+    markAsRead.form = markAsReadForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
@@ -441,6 +689,27 @@ markAsUnread.post = (args: { notification: number | { id: number } } | [notifica
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::markAsUnread
+ * @see app/Http/Controllers/Api/NotificationController.php:134
+ * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ */
+    const markAsUnreadForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: markAsUnread.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::markAsUnread
+ * @see app/Http/Controllers/Api/NotificationController.php:134
+ * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ */
+        markAsUnreadForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: markAsUnread.url(args, options),
+            method: 'post',
+        })
+    
+    markAsUnread.form = markAsUnreadForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
@@ -498,6 +767,38 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::destroy
+ * @see app/Http/Controllers/Api/NotificationController.php:201
+ * @route '/api/notificaciones/{notification}'
+ */
+    const destroyForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::destroy
+ * @see app/Http/Controllers/Api/NotificationController.php:201
+ * @route '/api/notificaciones/{notification}'
+ */
+        destroyForm.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const NotificationController = { index, unread, stats, byType, markAllAsRead, destroyAll, show, markAsRead, markAsUnread, destroy }
 
 export default NotificationController

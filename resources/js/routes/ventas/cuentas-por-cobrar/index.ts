@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::index
  * @see app/Http/Controllers/CuentaPorCobrarController.php:25
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::index
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:25
+ * @route '/ventas/cuentas-por-cobrar'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::index
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:25
+ * @route '/ventas/cuentas-por-cobrar'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::index
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:25
+ * @route '/ventas/cuentas-por-cobrar'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::show
  * @see app/Http/Controllers/CuentaPorCobrarController.php:114
@@ -109,6 +144,41 @@ show.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobr
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::show
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:114
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/show'
+ */
+    const showForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::show
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:114
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/show'
+ */
+        showForm.get = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::show
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:114
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/show'
+ */
+        showForm.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::imprimir
  * @see app/Http/Controllers/CuentaPorCobrarController.php:127
@@ -176,6 +246,41 @@ imprimir.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPor
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimir
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:127
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir'
+ */
+    const imprimirForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimir
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:127
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir'
+ */
+        imprimirForm.get = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimir
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:127
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir'
+ */
+        imprimirForm.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::imprimirTicket80
  * @see app/Http/Controllers/CuentaPorCobrarController.php:178
@@ -243,6 +348,41 @@ imprimirTicket80.head = (args: { cuentaPorCobrar: number | { id: number } } | [c
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimirTicket80
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:178
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80'
+ */
+    const imprimirTicket80Form = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimirTicket80.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimirTicket80
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:178
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80'
+ */
+        imprimirTicket80Form.get = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirTicket80.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::imprimirTicket80
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:178
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80'
+ */
+        imprimirTicket80Form.head = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirTicket80.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimirTicket80.form = imprimirTicket80Form
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::actualizarFechaVencimiento
  * @see app/Http/Controllers/CuentaPorCobrarController.php:608
@@ -301,6 +441,37 @@ actualizarFechaVencimiento.put = (args: { cuentaPorCobrar: number | { id: number
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::actualizarFechaVencimiento
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:608
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/actualizar-fecha-vencimiento'
+ */
+    const actualizarFechaVencimientoForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizarFechaVencimiento.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::actualizarFechaVencimiento
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:608
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/actualizar-fecha-vencimiento'
+ */
+        actualizarFechaVencimientoForm.put = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizarFechaVencimiento.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    actualizarFechaVencimiento.form = actualizarFechaVencimientoForm
 /**
 * @see \App\Http\Controllers\CuentaPorCobrarController::anular
  * @see app/Http/Controllers/CuentaPorCobrarController.php:459
@@ -358,6 +529,28 @@ anular.post = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCo
     url: anular.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::anular
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:459
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/anular'
+ */
+    const anularForm = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: anular.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CuentaPorCobrarController::anular
+ * @see app/Http/Controllers/CuentaPorCobrarController.php:459
+ * @route '/ventas/cuentas-por-cobrar/{cuentaPorCobrar}/anular'
+ */
+        anularForm.post = (args: { cuentaPorCobrar: number | { id: number } } | [cuentaPorCobrar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: anular.url(args, options),
+            method: 'post',
+        })
+    
+    anular.form = anularForm
 const cuentasPorCobrar = {
     index,
 show,

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::clientes
  * @see app/Http/Controllers/Prestamos/StockController.php:84
@@ -42,6 +42,41 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\StockController::clientes
+ * @see app/Http/Controllers/Prestamos/StockController.php:84
+ * @route '/prestamos/stock/clientes'
+ */
+    const clientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: clientes.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::clientes
+ * @see app/Http/Controllers/Prestamos/StockController.php:84
+ * @route '/prestamos/stock/clientes'
+ */
+        clientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientes.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::clientes
+ * @see app/Http/Controllers/Prestamos/StockController.php:84
+ * @route '/prestamos/stock/clientes'
+ */
+        clientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientes.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    clientes.form = clientesForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::eventos
  * @see app/Http/Controllers/Prestamos/StockController.php:255
@@ -85,6 +120,41 @@ eventos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\StockController::eventos
+ * @see app/Http/Controllers/Prestamos/StockController.php:255
+ * @route '/prestamos/stock/eventos'
+ */
+    const eventosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: eventos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::eventos
+ * @see app/Http/Controllers/Prestamos/StockController.php:255
+ * @route '/prestamos/stock/eventos'
+ */
+        eventosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::eventos
+ * @see app/Http/Controllers/Prestamos/StockController.php:255
+ * @route '/prestamos/stock/eventos'
+ */
+        eventosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    eventos.form = eventosForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::proveedores
  * @see app/Http/Controllers/Prestamos/StockController.php:389
@@ -128,6 +198,41 @@ proveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\StockController::proveedores
+ * @see app/Http/Controllers/Prestamos/StockController.php:389
+ * @route '/prestamos/stock/proveedores'
+ */
+    const proveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: proveedores.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::proveedores
+ * @see app/Http/Controllers/Prestamos/StockController.php:389
+ * @route '/prestamos/stock/proveedores'
+ */
+        proveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedores.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::proveedores
+ * @see app/Http/Controllers/Prestamos/StockController.php:389
+ * @route '/prestamos/stock/proveedores'
+ */
+        proveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedores.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    proveedores.form = proveedoresForm
 /**
 * @see \App\Http\Controllers\Prestamos\StockController::ajuste
  * @see app/Http/Controllers/Prestamos/StockController.php:558
@@ -190,6 +295,42 @@ ajuste.head = (args: { tipo: string | number, prestable_id: string | number, alm
     url: ajuste.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Prestamos\StockController::ajuste
+ * @see app/Http/Controllers/Prestamos/StockController.php:558
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
+ */
+    const ajusteForm = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: ajuste.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::ajuste
+ * @see app/Http/Controllers/Prestamos/StockController.php:558
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
+ */
+        ajusteForm.get = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ajuste.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\StockController::ajuste
+ * @see app/Http/Controllers/Prestamos/StockController.php:558
+ * @route '/prestamos/stock/{tipo}/ajuste/{prestable_id}/{almacen_id}'
+ */
+        ajusteForm.head = (args: { tipo: string | number, prestable_id: string | number, almacen_id: string | number } | [tipo: string | number, prestable_id: string | number, almacen_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ajuste.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    ajuste.form = ajusteForm
 const stock = {
     clientes,
 eventos,

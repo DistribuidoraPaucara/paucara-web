@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ImpresionComprasController::imprimir
  * @see app/Http/Controllers/ImpresionComprasController.php:61
@@ -42,6 +42,41 @@ imprimir.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimir
+ * @see app/Http/Controllers/ImpresionComprasController.php:61
+ * @route '/compras/imprimir'
+ */
+    const imprimirForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimir
+ * @see app/Http/Controllers/ImpresionComprasController.php:61
+ * @route '/compras/imprimir'
+ */
+        imprimirForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimir
+ * @see app/Http/Controllers/ImpresionComprasController.php:61
+ * @route '/compras/imprimir'
+ */
+        imprimirForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\ImpresionComprasController::imprimirIndividual
  * @see app/Http/Controllers/ImpresionComprasController.php:18
@@ -108,6 +143,42 @@ imprimirIndividual.head = (args: { compra: number | { id: number } } | [compra: 
     url: imprimirIndividual.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimirIndividual
+ * @see app/Http/Controllers/ImpresionComprasController.php:18
+ * @route '/compras/{compra}/imprimir'
+ */
+    const imprimirIndividualForm = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimirIndividual.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimirIndividual
+ * @see app/Http/Controllers/ImpresionComprasController.php:18
+ * @route '/compras/{compra}/imprimir'
+ */
+        imprimirIndividualForm.get = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirIndividual.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ImpresionComprasController::imprimirIndividual
+ * @see app/Http/Controllers/ImpresionComprasController.php:18
+ * @route '/compras/{compra}/imprimir'
+ */
+        imprimirIndividualForm.head = (args: { compra: number | { id: number } } | [compra: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimirIndividual.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimirIndividual.form = imprimirIndividualForm
 const ImpresionComprasController = { imprimir, imprimirIndividual }
 
 export default ImpresionComprasController

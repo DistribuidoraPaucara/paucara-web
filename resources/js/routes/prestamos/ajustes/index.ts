@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 import movimientos from './movimientos'
 /**
  * @see routes/web.php:864
@@ -39,6 +39,38 @@ historial.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+ * @see routes/web.php:864
+ * @route '/prestamos/ajustes/historial'
+ */
+    const historialForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: historial.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:864
+ * @route '/prestamos/ajustes/historial'
+ */
+        historialForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: historial.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:864
+ * @route '/prestamos/ajustes/historial'
+ */
+        historialForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: historial.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    historial.form = historialForm
 /**
  * @see routes/web.php:865
  * @route '/prestamos/ajustes/movimientos'
@@ -77,6 +109,39 @@ movimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: movimientos.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/web.php:865
+ * @route '/prestamos/ajustes/movimientos'
+ */
+    const movimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: movimientos.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:865
+ * @route '/prestamos/ajustes/movimientos'
+ */
+        movimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientos.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:865
+ * @route '/prestamos/ajustes/movimientos'
+ */
+        movimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: movimientos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    movimientos.form = movimientosForm
 const ajustes = {
     historial,
 movimientos,

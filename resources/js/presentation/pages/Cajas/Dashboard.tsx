@@ -76,6 +76,9 @@ interface Apertura {
   caja_id: number;
   user_id: number;
   monto_apertura: number;
+  ingresos: number;
+  egresos: number;
+  efectivo_esperado: number;
   fecha: string;
   created_at: string;
   cierre?: {
@@ -645,14 +648,17 @@ export default function Dashboard({
           </Card>
 
           {/* Tabla de cajas */}
-          <Card className="dark:bg-slate-800">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow className="dark:border-slate-700">
                   <TableHead className="dark:text-gray-300">Caja</TableHead>
                   <TableHead className="dark:text-gray-300">Usuario</TableHead>
                   <TableHead className="dark:text-gray-300">Estado</TableHead>
-                  <TableHead className="dark:text-gray-300">Monto Actual</TableHead>
+                  <TableHead className="text-right dark:text-gray-300">Apertura</TableHead>
+                  <TableHead className="text-right dark:text-gray-300">Ingresos</TableHead>
+                  <TableHead className="text-right dark:text-gray-300">Egresos</TableHead>
+                  <TableHead className="text-right dark:text-gray-300">Efectivo Esperado</TableHead>
                   <TableHead className="dark:text-gray-300">Última Actividad</TableHead>
                   <TableHead className="text-right dark:text-gray-300">Acciones</TableHead>
                 </TableRow>
@@ -684,8 +690,17 @@ export default function Dashboard({
                               : '🔴 Cerrada'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-semibold dark:text-white">
-                          ${monto.toFixed(2)}
+                        <TableCell className="font-semibold text-right dark:text-white">
+                          ${apertura?.monto_apertura?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell className="text-right dark:text-green-400 font-semibold">
+                          ${apertura?.ingresos?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell className="text-right dark:text-red-400 font-semibold">
+                          ${apertura?.egresos?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell className="text-right dark:text-purple-400 font-bold text-lg">
+                          ${apertura?.efectivo_esperado?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell>
                           {(() => {
@@ -728,7 +743,7 @@ export default function Dashboard({
                 )}
               </TableBody>
             </Table>
-          </Card>
+          </div>
 
           {/* ✅ NUEVO: Modal de Confirmación - Cierre Diario General */}
           <Dialog open={mostrarModalCierre} onOpenChange={setMostrarModalCierre}>

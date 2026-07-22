@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 import confirm from './confirm'
 /**
 * @see \App\Http\Controllers\Settings\PasswordController::edit
@@ -43,6 +43,41 @@ edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Settings\PasswordController::edit
+ * @see app/Http/Controllers/Settings/PasswordController.php:20
+ * @route '/settings/password'
+ */
+    const editForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Settings\PasswordController::edit
+ * @see app/Http/Controllers/Settings/PasswordController.php:20
+ * @route '/settings/password'
+ */
+        editForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Settings\PasswordController::edit
+ * @see app/Http/Controllers/Settings/PasswordController.php:20
+ * @route '/settings/password'
+ */
+        editForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\Settings\PasswordController::update
  * @see app/Http/Controllers/Settings/PasswordController.php:29
@@ -77,6 +112,37 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\Settings\PasswordController::update
+ * @see app/Http/Controllers/Settings/PasswordController.php:29
+ * @route '/settings/password'
+ */
+    const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url({
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Settings\PasswordController::update
+ * @see app/Http/Controllers/Settings/PasswordController.php:29
+ * @route '/settings/password'
+ */
+        updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Auth\PasswordResetLinkController::request
  * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:17
@@ -120,6 +186,41 @@ request.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Auth\PasswordResetLinkController::request
+ * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:17
+ * @route '/forgot-password'
+ */
+    const requestForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: request.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\PasswordResetLinkController::request
+ * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:17
+ * @route '/forgot-password'
+ */
+        requestForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: request.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Auth\PasswordResetLinkController::request
+ * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:17
+ * @route '/forgot-password'
+ */
+        requestForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: request.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    request.form = requestForm
 /**
 * @see \App\Http\Controllers\Auth\PasswordResetLinkController::email
  * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:29
@@ -154,6 +255,27 @@ email.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Auth\PasswordResetLinkController::email
+ * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:29
+ * @route '/forgot-password'
+ */
+    const emailForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: email.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\PasswordResetLinkController::email
+ * @see app/Http/Controllers/Auth/PasswordResetLinkController.php:29
+ * @route '/forgot-password'
+ */
+        emailForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: email.url(options),
+            method: 'post',
+        })
+    
+    email.form = emailForm
 /**
 * @see \App\Http\Controllers\Auth\NewPasswordController::reset
  * @see app/Http/Controllers/Auth/NewPasswordController.php:23
@@ -216,6 +338,41 @@ reset.head = (args: { token: string | number } | [token: string | number ] | str
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Auth\NewPasswordController::reset
+ * @see app/Http/Controllers/Auth/NewPasswordController.php:23
+ * @route '/reset-password/{token}'
+ */
+    const resetForm = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reset.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\NewPasswordController::reset
+ * @see app/Http/Controllers/Auth/NewPasswordController.php:23
+ * @route '/reset-password/{token}'
+ */
+        resetForm.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reset.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Auth\NewPasswordController::reset
+ * @see app/Http/Controllers/Auth/NewPasswordController.php:23
+ * @route '/reset-password/{token}'
+ */
+        resetForm.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reset.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reset.form = resetForm
 /**
 * @see \App\Http\Controllers\Auth\NewPasswordController::store
  * @see app/Http/Controllers/Auth/NewPasswordController.php:36
@@ -250,6 +407,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Auth\NewPasswordController::store
+ * @see app/Http/Controllers/Auth/NewPasswordController.php:36
+ * @route '/reset-password'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\NewPasswordController::store
+ * @see app/Http/Controllers/Auth/NewPasswordController.php:36
+ * @route '/reset-password'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Auth\ConfirmablePasswordController::confirm
  * @see app/Http/Controllers/Auth/ConfirmablePasswordController.php:18
@@ -292,6 +470,42 @@ confirm.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: confirm.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Auth\ConfirmablePasswordController::confirm
+ * @see app/Http/Controllers/Auth/ConfirmablePasswordController.php:18
+ * @route '/confirm-password'
+ */
+    const confirmForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: confirm.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\ConfirmablePasswordController::confirm
+ * @see app/Http/Controllers/Auth/ConfirmablePasswordController.php:18
+ * @route '/confirm-password'
+ */
+        confirmForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: confirm.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Auth\ConfirmablePasswordController::confirm
+ * @see app/Http/Controllers/Auth/ConfirmablePasswordController.php:18
+ * @route '/confirm-password'
+ */
+        confirmForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: confirm.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    confirm.form = confirmForm
 const password = {
     edit,
 update,

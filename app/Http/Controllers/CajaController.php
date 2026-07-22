@@ -952,16 +952,30 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Transformar aperturas para incluir estado del cierre (DESPUÉS de calcular métricas)
+        // ✅ NUEVO: Transformar aperturas con ingresos/egresos por caja
         $aperturas_hoy = $aperturasColleccion->map(function ($apertura) {
+            // Calcular ingresos y egresos específicos de esta apertura
+            $ingresosApertura = (float) MovimientoCaja::where('apertura_caja_id', $apertura->id)
+                ->where('monto', '>', 0)
+                ->sum('monto');
+
+            $egresosApertura = (float) abs(MovimientoCaja::where('apertura_caja_id', $apertura->id)
+                ->where('monto', '<', 0)
+                ->sum('monto'));
+
+            $efectivoEsperadoApertura = $apertura->monto_apertura + $ingresosApertura - $egresosApertura;
+
             return [
-                'id'             => $apertura->id,
-                'caja_id'        => $apertura->caja_id,
-                'user_id'        => $apertura->user_id,
-                'monto_apertura' => $apertura->monto_apertura,
-                'fecha'          => $apertura->fecha,
-                'created_at'     => $apertura->created_at,
-                'cierre'         => $apertura->cierre ? [
+                'id'                    => $apertura->id,
+                'caja_id'               => $apertura->caja_id,
+                'user_id'               => $apertura->user_id,
+                'monto_apertura'        => $apertura->monto_apertura,
+                'ingresos'              => $ingresosApertura,
+                'egresos'               => $egresosApertura,
+                'efectivo_esperado'     => $efectivoEsperadoApertura,
+                'fecha'                 => $apertura->fecha,
+                'created_at'            => $apertura->created_at,
+                'cierre'                => $apertura->cierre ? [
                     'id'           => $apertura->cierre->id,
                     'monto_real'   => $apertura->cierre->monto_real,
                     'diferencia'   => $apertura->cierre->diferencia,
@@ -972,18 +986,27 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Calcular totales de ingresos y egresos
-        $totalIngresos = (float) MovimientoCaja::whereDate('fecha', today())
-            ->where('monto', '>', 0)
-            ->sum('monto');
+        // ✅ NUEVO: Calcular totales de ingresos y egresos SOLO DE CAJAS ABIERTAS
+        $aperturasAbiertas = $aperturasColleccion->filter(fn($a) => !$a->cierre);
+        $idsAperturasAbiertas = $aperturasAbiertas->pluck('id')->toArray();
 
-        $totalEgresos = (float) abs(MovimientoCaja::whereDate('fecha', today())
-            ->where('monto', '<', 0)
-            ->sum('monto'));
+        $totalIngresos = (float) 0;
+        $totalEgresos = (float) 0;
+        $montosApertura = (float) 0;
 
-        // ✅ NUEVO: Calcular efectivo esperado (suma de aperturas + ingresos - egresos)
-        $montosApertura = (float) AperturaCaja::whereDate('fecha', today())
-            ->sum('monto_apertura');
+        foreach ($aperturasAbiertas as $apertura) {
+            $ingresosApertura = (float) MovimientoCaja::where('apertura_caja_id', $apertura->id)
+                ->where('monto', '>', 0)
+                ->sum('monto');
+
+            $egresosApertura = (float) abs(MovimientoCaja::where('apertura_caja_id', $apertura->id)
+                ->where('monto', '<', 0)
+                ->sum('monto'));
+
+            $totalIngresos += $ingresosApertura;
+            $totalEgresos += $egresosApertura;
+            $montosApertura += $apertura->monto_apertura;
+        }
 
         $efectivoEsperado = $montosApertura + $totalIngresos - $totalEgresos;
 

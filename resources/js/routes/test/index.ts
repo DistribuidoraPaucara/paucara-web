@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
  * @see routes/web.php:68
  * @route '/test-csrf'
@@ -30,6 +30,25 @@ csrf.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+ * @see routes/web.php:68
+ * @route '/test-csrf'
+ */
+    const csrfForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: csrf.url(options),
+        method: 'post',
+    })
+
+            /**
+ * @see routes/web.php:68
+ * @route '/test-csrf'
+ */
+        csrfForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: csrf.url(options),
+            method: 'post',
+        })
+    
+    csrf.form = csrfForm
 /**
  * @see routes/web.php:73
  * @route '/test-logo'
@@ -68,6 +87,39 @@ logo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: logo.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/web.php:73
+ * @route '/test-logo'
+ */
+    const logoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: logo.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:73
+ * @route '/test-logo'
+ */
+        logoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logo.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:73
+ * @route '/test-logo'
+ */
+        logoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logo.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    logo.form = logoForm
 const test = {
     csrf,
 logo,

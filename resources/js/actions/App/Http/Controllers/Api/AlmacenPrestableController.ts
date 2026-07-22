@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AlmacenPrestableController::indexApi
  * @see app/Http/Controllers/Api/AlmacenPrestableController.php:18
@@ -42,6 +42,41 @@ indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::indexApi
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:18
+ * @route '/api/almacenes-prestables/index-json'
+ */
+    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::indexApi
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:18
+ * @route '/api/almacenes-prestables/index-json'
+ */
+        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::indexApi
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:18
+ * @route '/api/almacenes-prestables/index-json'
+ */
+        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi.form = indexApiForm
 /**
 * @see \App\Http\Controllers\Api\AlmacenPrestableController::prestablesPorAlmacen
  * @see app/Http/Controllers/Api/AlmacenPrestableController.php:63
@@ -108,6 +143,42 @@ prestablesPorAlmacen.head = (args: { almacen: number | { id: number } } | [almac
     url: prestablesPorAlmacen.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::prestablesPorAlmacen
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:63
+ * @route '/api/almacenes-prestables/{almacen}/prestables'
+ */
+    const prestablesPorAlmacenForm = (args: { almacen: number | { id: number } } | [almacen: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: prestablesPorAlmacen.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::prestablesPorAlmacen
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:63
+ * @route '/api/almacenes-prestables/{almacen}/prestables'
+ */
+        prestablesPorAlmacenForm.get = (args: { almacen: number | { id: number } } | [almacen: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: prestablesPorAlmacen.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AlmacenPrestableController::prestablesPorAlmacen
+ * @see app/Http/Controllers/Api/AlmacenPrestableController.php:63
+ * @route '/api/almacenes-prestables/{almacen}/prestables'
+ */
+        prestablesPorAlmacenForm.head = (args: { almacen: number | { id: number } } | [almacen: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: prestablesPorAlmacen.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    prestablesPorAlmacen.form = prestablesPorAlmacenForm
 const AlmacenPrestableController = { indexApi, prestablesPorAlmacen }
 
 export default AlmacenPrestableController

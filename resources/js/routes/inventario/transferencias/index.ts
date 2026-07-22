@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::index
  * @see app/Http/Controllers/InventarioController.php:1625
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1625
+ * @route '/inventario/transferencias'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1625
+ * @route '/inventario/transferencias'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1625
+ * @route '/inventario/transferencias'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\InventarioController::crear
  * @see app/Http/Controllers/InventarioController.php:1844
@@ -85,6 +120,41 @@ crear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::crear
+ * @see app/Http/Controllers/InventarioController.php:1844
+ * @route '/inventario/transferencias/crear'
+ */
+    const crearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: crear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::crear
+ * @see app/Http/Controllers/InventarioController.php:1844
+ * @route '/inventario/transferencias/crear'
+ */
+        crearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: crear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::crear
+ * @see app/Http/Controllers/InventarioController.php:1844
+ * @route '/inventario/transferencias/crear'
+ */
+        crearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: crear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    crear.form = crearForm
 /**
 * @see \App\Http\Controllers\InventarioController::store
  * @see app/Http/Controllers/InventarioController.php:1669
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::store
+ * @see app/Http/Controllers/InventarioController.php:1669
+ * @route '/inventario/transferencias/crear'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::store
+ * @see app/Http/Controllers/InventarioController.php:1669
+ * @route '/inventario/transferencias/crear'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\InventarioController::show
  * @see app/Http/Controllers/InventarioController.php:1884
@@ -186,6 +277,41 @@ show.head = (args: { transferencia: number | { id: number } } | [transferencia: 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:1884
+ * @route '/inventario/transferencias/{transferencia}'
+ */
+    const showForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:1884
+ * @route '/inventario/transferencias/{transferencia}'
+ */
+        showForm.get = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:1884
+ * @route '/inventario/transferencias/{transferencia}'
+ */
+        showForm.head = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\InventarioController::edit
  * @see app/Http/Controllers/InventarioController.php:2113
@@ -253,6 +379,41 @@ edit.head = (args: { transferencia: number | { id: number } } | [transferencia: 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::edit
+ * @see app/Http/Controllers/InventarioController.php:2113
+ * @route '/inventario/transferencias/{transferencia}/edit'
+ */
+    const editForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::edit
+ * @see app/Http/Controllers/InventarioController.php:2113
+ * @route '/inventario/transferencias/{transferencia}/edit'
+ */
+        editForm.get = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::edit
+ * @see app/Http/Controllers/InventarioController.php:2113
+ * @route '/inventario/transferencias/{transferencia}/edit'
+ */
+        editForm.head = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\InventarioController::update
  * @see app/Http/Controllers/InventarioController.php:2132
@@ -311,6 +472,37 @@ update.put = (args: { transferencia: number | { id: number } } | [transferencia:
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::update
+ * @see app/Http/Controllers/InventarioController.php:2132
+ * @route '/inventario/transferencias/{transferencia}'
+ */
+    const updateForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::update
+ * @see app/Http/Controllers/InventarioController.php:2132
+ * @route '/inventario/transferencias/{transferencia}'
+ */
+        updateForm.put = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\InventarioController::enviar
  * @see app/Http/Controllers/InventarioController.php:1903
@@ -369,6 +561,27 @@ enviar.post = (args: { transferencia: number | { id: number } } | [transferencia
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::enviar
+ * @see app/Http/Controllers/InventarioController.php:1903
+ * @route '/inventario/transferencias/{transferencia}/enviar'
+ */
+    const enviarForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: enviar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::enviar
+ * @see app/Http/Controllers/InventarioController.php:1903
+ * @route '/inventario/transferencias/{transferencia}/enviar'
+ */
+        enviarForm.post = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: enviar.url(args, options),
+            method: 'post',
+        })
+    
+    enviar.form = enviarForm
 /**
 * @see \App\Http\Controllers\InventarioController::recibir
  * @see app/Http/Controllers/InventarioController.php:1924
@@ -427,6 +640,27 @@ recibir.post = (args: { transferencia: number | { id: number } } | [transferenci
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::recibir
+ * @see app/Http/Controllers/InventarioController.php:1924
+ * @route '/inventario/transferencias/{transferencia}/recibir'
+ */
+    const recibirForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: recibir.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::recibir
+ * @see app/Http/Controllers/InventarioController.php:1924
+ * @route '/inventario/transferencias/{transferencia}/recibir'
+ */
+        recibirForm.post = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: recibir.url(args, options),
+            method: 'post',
+        })
+    
+    recibir.form = recibirForm
 /**
 * @see \App\Http\Controllers\InventarioController::cancelar
  * @see app/Http/Controllers/InventarioController.php:1945
@@ -484,6 +718,28 @@ cancelar.post = (args: { transferencia: number | { id: number } } | [transferenc
     url: cancelar.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\InventarioController::cancelar
+ * @see app/Http/Controllers/InventarioController.php:1945
+ * @route '/inventario/transferencias/{transferencia}/cancelar'
+ */
+    const cancelarForm = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: cancelar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::cancelar
+ * @see app/Http/Controllers/InventarioController.php:1945
+ * @route '/inventario/transferencias/{transferencia}/cancelar'
+ */
+        cancelarForm.post = (args: { transferencia: number | { id: number } } | [transferencia: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cancelar.url(args, options),
+            method: 'post',
+        })
+    
+    cancelar.form = cancelarForm
 const transferencias = {
     index,
 crear,

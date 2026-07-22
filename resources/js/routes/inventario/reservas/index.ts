@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Inventario\ReservaProformaController::liberar
  * @see app/Http/Controllers/Inventario/ReservaProformaController.php:97
@@ -52,6 +52,27 @@ liberar.post = (args: { id: string | number } | [id: string | number ] | string 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::liberar
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:97
+ * @route '/inventario/reservas/{id}/liberar'
+ */
+    const liberarForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: liberar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::liberar
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:97
+ * @route '/inventario/reservas/{id}/liberar'
+ */
+        liberarForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: liberar.url(args, options),
+            method: 'post',
+        })
+    
+    liberar.form = liberarForm
 /**
 * @see \App\Http\Controllers\Inventario\ReservaProformaController::liberarMasivo
  * @see app/Http/Controllers/Inventario/ReservaProformaController.php:131
@@ -86,6 +107,27 @@ liberarMasivo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::liberarMasivo
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:131
+ * @route '/inventario/reservas/liberar-masivo'
+ */
+    const liberarMasivoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: liberarMasivo.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::liberarMasivo
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:131
+ * @route '/inventario/reservas/liberar-masivo'
+ */
+        liberarMasivoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: liberarMasivo.url(options),
+            method: 'post',
+        })
+    
+    liberarMasivo.form = liberarMasivoForm
 /**
 * @see \App\Http\Controllers\Inventario\ReservaProformaController::extender
  * @see app/Http/Controllers/Inventario/ReservaProformaController.php:177
@@ -138,6 +180,28 @@ extender.post = (args: { id: string | number } | [id: string | number ] | string
     url: extender.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::extender
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:177
+ * @route '/inventario/reservas/{id}/extender'
+ */
+    const extenderForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: extender.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Inventario\ReservaProformaController::extender
+ * @see app/Http/Controllers/Inventario/ReservaProformaController.php:177
+ * @route '/inventario/reservas/{id}/extender'
+ */
+        extenderForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: extender.url(args, options),
+            method: 'post',
+        })
+    
+    extender.form = extenderForm
 const reservas = {
     liberar,
 liberarMasivo,

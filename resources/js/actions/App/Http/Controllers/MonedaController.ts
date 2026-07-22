@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\MonedaController::index
  * @see app/Http/Controllers/MonedaController.php:12
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::index
+ * @see app/Http/Controllers/MonedaController.php:12
+ * @route '/monedas'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::index
+ * @see app/Http/Controllers/MonedaController.php:12
+ * @route '/monedas'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::index
+ * @see app/Http/Controllers/MonedaController.php:12
+ * @route '/monedas'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\MonedaController::create
  * @see app/Http/Controllers/MonedaController.php:46
@@ -85,6 +120,41 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::create
+ * @see app/Http/Controllers/MonedaController.php:46
+ * @route '/monedas/create'
+ */
+    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: create.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::create
+ * @see app/Http/Controllers/MonedaController.php:46
+ * @route '/monedas/create'
+ */
+        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::create
+ * @see app/Http/Controllers/MonedaController.php:46
+ * @route '/monedas/create'
+ */
+        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    create.form = createForm
 /**
 * @see \App\Http\Controllers\MonedaController::store
  * @see app/Http/Controllers/MonedaController.php:53
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::store
+ * @see app/Http/Controllers/MonedaController.php:53
+ * @route '/monedas'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::store
+ * @see app/Http/Controllers/MonedaController.php:53
+ * @route '/monedas'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\MonedaController::show
  * @see app/Http/Controllers/MonedaController.php:73
@@ -186,6 +277,41 @@ show.head = (args: { moneda: number | { id: number } } | [moneda: number | { id:
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::show
+ * @see app/Http/Controllers/MonedaController.php:73
+ * @route '/monedas/{moneda}'
+ */
+    const showForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::show
+ * @see app/Http/Controllers/MonedaController.php:73
+ * @route '/monedas/{moneda}'
+ */
+        showForm.get = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::show
+ * @see app/Http/Controllers/MonedaController.php:73
+ * @route '/monedas/{moneda}'
+ */
+        showForm.head = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\MonedaController::edit
  * @see app/Http/Controllers/MonedaController.php:80
@@ -253,6 +379,41 @@ edit.head = (args: { moneda: number | { id: number } } | [moneda: number | { id:
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::edit
+ * @see app/Http/Controllers/MonedaController.php:80
+ * @route '/monedas/{moneda}/edit'
+ */
+    const editForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::edit
+ * @see app/Http/Controllers/MonedaController.php:80
+ * @route '/monedas/{moneda}/edit'
+ */
+        editForm.get = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::edit
+ * @see app/Http/Controllers/MonedaController.php:80
+ * @route '/monedas/{moneda}/edit'
+ */
+        editForm.head = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\MonedaController::update
  * @see app/Http/Controllers/MonedaController.php:87
@@ -320,6 +481,51 @@ update.patch = (args: { moneda: number | { id: number } } | [moneda: number | { 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::update
+ * @see app/Http/Controllers/MonedaController.php:87
+ * @route '/monedas/{moneda}'
+ */
+    const updateForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::update
+ * @see app/Http/Controllers/MonedaController.php:87
+ * @route '/monedas/{moneda}'
+ */
+        updateForm.put = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::update
+ * @see app/Http/Controllers/MonedaController.php:87
+ * @route '/monedas/{moneda}'
+ */
+        updateForm.patch = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\MonedaController::destroy
  * @see app/Http/Controllers/MonedaController.php:107
@@ -378,6 +584,37 @@ destroy.delete = (args: { moneda: number | { id: number } } | [moneda: number | 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::destroy
+ * @see app/Http/Controllers/MonedaController.php:107
+ * @route '/monedas/{moneda}'
+ */
+    const destroyForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::destroy
+ * @see app/Http/Controllers/MonedaController.php:107
+ * @route '/monedas/{moneda}'
+ */
+        destroyForm.delete = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\MonedaController::activas
  * @see app/Http/Controllers/MonedaController.php:126
@@ -440,6 +677,41 @@ activas.head = (args: { moneda: string | number } | [moneda: string | number ] |
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::activas
+ * @see app/Http/Controllers/MonedaController.php:126
+ * @route '/monedas/{moneda}/activas'
+ */
+    const activasForm = (args: { moneda: string | number } | [moneda: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: activas.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::activas
+ * @see app/Http/Controllers/MonedaController.php:126
+ * @route '/monedas/{moneda}/activas'
+ */
+        activasForm.get = (args: { moneda: string | number } | [moneda: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: activas.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\MonedaController::activas
+ * @see app/Http/Controllers/MonedaController.php:126
+ * @route '/monedas/{moneda}/activas'
+ */
+        activasForm.head = (args: { moneda: string | number } | [moneda: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: activas.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    activas.form = activasForm
 /**
 * @see \App\Http\Controllers\MonedaController::convertir
  * @see app/Http/Controllers/MonedaController.php:133
@@ -474,6 +746,27 @@ convertir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::convertir
+ * @see app/Http/Controllers/MonedaController.php:133
+ * @route '/monedas/convertir'
+ */
+    const convertirForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: convertir.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::convertir
+ * @see app/Http/Controllers/MonedaController.php:133
+ * @route '/monedas/convertir'
+ */
+        convertirForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: convertir.url(options),
+            method: 'post',
+        })
+    
+    convertir.form = convertirForm
 /**
 * @see \App\Http\Controllers\MonedaController::toggleActivo
  * @see app/Http/Controllers/MonedaController.php:170
@@ -532,6 +825,37 @@ toggleActivo.patch = (args: { moneda: number | { id: number } } | [moneda: numbe
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\MonedaController::toggleActivo
+ * @see app/Http/Controllers/MonedaController.php:170
+ * @route '/monedas/{moneda}/toggle-activo'
+ */
+    const toggleActivoForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: toggleActivo.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::toggleActivo
+ * @see app/Http/Controllers/MonedaController.php:170
+ * @route '/monedas/{moneda}/toggle-activo'
+ */
+        toggleActivoForm.patch = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: toggleActivo.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    toggleActivo.form = toggleActivoForm
 /**
 * @see \App\Http\Controllers\MonedaController::establecerBase
  * @see app/Http/Controllers/MonedaController.php:180
@@ -589,6 +913,38 @@ establecerBase.patch = (args: { moneda: number | { id: number } } | [moneda: num
     url: establecerBase.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\MonedaController::establecerBase
+ * @see app/Http/Controllers/MonedaController.php:180
+ * @route '/monedas/{moneda}/establecer-base'
+ */
+    const establecerBaseForm = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: establecerBase.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\MonedaController::establecerBase
+ * @see app/Http/Controllers/MonedaController.php:180
+ * @route '/monedas/{moneda}/establecer-base'
+ */
+        establecerBaseForm.patch = (args: { moneda: number | { id: number } } | [moneda: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: establecerBase.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    establecerBase.form = establecerBaseForm
 const MonedaController = { index, create, store, show, edit, update, destroy, activas, convertir, toggleActivo, establecerBase }
 
 export default MonedaController
