@@ -236,10 +236,12 @@ class ReportePreciosController extends Controller
         $page = request()->get('page', 1);
         $perPage = 25;
         $items = $ganancias->values();
+        $total = $items->count();
         $offset = ($page - 1) * $perPage;
 
-        $gananciasPaginadas = new \Illuminate\Pagination\Paginator(
+        $gananciasPaginadas = new \Illuminate\Pagination\LengthAwarePaginator(
             $items->slice($offset, $perPage)->values(),
+            $total,
             $perPage,
             $page,
             [

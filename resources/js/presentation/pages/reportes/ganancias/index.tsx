@@ -38,16 +38,22 @@ export default function ReporteGananciasIndex({
   useEffect(() => {
     console.group('💰 [Reporte Ganancias] Datos del Backend');
     console.log('📊 Estadísticas:', estadisticas);
-    console.log('📋 Total ganancias:', ganancias.total, '| Página:', ganancias.current_page, 'de', ganancias.last_page);
+    console.log('📦 Estructura Paginación:', {
+      total: ganancias.total,
+      current_page: ganancias.current_page,
+      last_page: ganancias.last_page,
+      per_page: ganancias.per_page,
+      data_count: ganancias.data?.length,
+      links_count: ganancias.links?.length,
+    });
+    console.log('📋 Total productos en BD:', ganancias.total, '| Página:', ganancias.current_page, 'de', ganancias.last_page);
     console.table(ganancias.data?.slice(0, 5).map((g: any) => ({
       producto: g.producto?.nombre || 'N/A',
       tipo_precio: g.tipo_precio?.nombre || 'N/A',
-      cantidad_vendida: g.cantidad_vendida,
-      precio_costo: g.precio_costo,
-      precio_venta: g.precio_venta,
-      ganancia: g.ganancia,
+      ganancia: g.ganancia?.toFixed(2),
       porcentaje: g.porcentaje_ganancia?.toFixed(2) + '%',
     })) || []);
+    console.log('🔗 Enlaces de Paginación:', ganancias.links);
     console.log('🎯 Filtros:', filtros);
     console.log('⚠️ Error:', error);
     console.groupEnd();
