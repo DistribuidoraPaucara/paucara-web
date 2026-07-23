@@ -482,6 +482,7 @@ class StockService
 
         $expandido = [];
         $metadataProductos = []; // ✅ NUEVO: Guardar metadata de productos NO combos
+        $comboPadreProductos = []; // ✅ NUEVO (2026-07-24): Guardar combo_padre_id para componentes
 
         foreach ($productos as $item) {
             $productoId = $item['producto_id'] ?? $item['id'];
@@ -513,6 +514,11 @@ class StockService
                             // Usar cantidad del combo_items_seleccionados (cantidad modificada por el usuario)
                             $cantidadItem = $cantidadesSeleccionadas[$id];
                             $expandido[$id] = ($expandido[$id] ?? 0) + ($cantidadItem * $cantidad);
+
+                            // ✅ NUEVO (2026-07-24): Registrar combo_padre_id para este componente
+                            if (!isset($comboPadreProductos[$id])) {
+                                $comboPadreProductos[$id] = $productoId; // Guardar ID del combo padre
+                            }
                         }
                         // Si NO está en seleccionados, NO agregar nada (ignorar completamente)
                     }
@@ -529,6 +535,11 @@ class StockService
                     foreach ($combos[$productoId]->comboItems as $comboItem) {
                         $id = $comboItem->producto_id;
                         $expandido[$id] = ($expandido[$id] ?? 0) + ((float) $comboItem->cantidad * $cantidad);
+
+                        // ✅ NUEVO (2026-07-24): Registrar combo_padre_id para este componente
+                        if (!isset($comboPadreProductos[$id])) {
+                            $comboPadreProductos[$id] = $productoId; // Guardar ID del combo padre
+                        }
                     }
                 }
             } else {
@@ -544,7 +555,7 @@ class StockService
 
         // ✅ NUEVO (2026-02-18): Retornar preservando metadata de productos no combos
         return array_map(
-            function($prodId, $cant) use ($metadataProductos, $item) {
+            function($prodId, $cant) use ($metadataProductos, $comboPadreProductos, $item) {
                 $resultado = ['producto_id' => $prodId, 'cantidad' => $cant];
 
                 // Si tenemos metadata guardada para este producto (significa que NO era combo),
@@ -556,6 +567,13 @@ class StockService
                             $resultado[$clave] = $valor;
                         }
                     }
+                }
+
+                // ✅ NUEVO (2026-07-24): Agregar combo_padre_id si este producto es componente de un combo
+                if (isset($comboPadreProductos[$prodId])) {
+                    $resultado['combo_padre_id'] = $comboPadreProductos[$prodId];
+                } else {
+                    $resultado['combo_padre_id'] = null;  // Sin combo padre (venta directa)
                 }
 
                 return $resultado;

@@ -281,6 +281,8 @@ class VentaService
 
             // 3.2 Crear detalles
             Log::debug('📦 [VentaService::crear] Creando detalles de venta');
+            $detallesCreados = [];  // ✅ NUEVO: Guardar detalles creados con sus IDs
+
             foreach ($dto->detalles as $detalle) {
                 // ✅ MODIFICADO: Respetar el precio_unitario enviado desde el frontend
                 // El descuento también se considera al calcular el subtotal
@@ -313,7 +315,7 @@ class VentaService
                     ]);
                 }
 
-                \App\Models\DetalleVenta::create([
+                $detalleVenta = \App\Models\DetalleVenta::create([
                     'venta_id'           => $venta->id,
                     'producto_id'        => $detalle['producto_id'],
                     'cantidad'           => $cantidad,
@@ -332,6 +334,9 @@ class VentaService
                         ];
                     }, $comboItemsSeleccionados) : null, // ✅ NUEVO: Items del combo seleccionados
                 ]);
+
+                // ✅ NUEVO (2026-07-24): Guardar detalle con su ID para pasar a consumirStock
+                $detallesCreados[$detalle['producto_id']] = $detalleVenta->id;
             }
             Log::info('✅ [VentaService::crear] Detalles de venta creados', [
                 'venta_id'          => $venta->id,
@@ -384,8 +389,28 @@ class VentaService
                 'permite_stock_negativo' => $esCREDITO,
             ]);
 
+            // ✅ NUEVO (2026-07-24): Enriquecer detalles con detalle_venta_id y combo_padre_id para venta_por_lotes
+            $detallesParaStockEnriquecidos = array_map(function($item) use ($detallesCreados, $dto) {
+                $productoId = $item['producto_id'] ?? $item['id'];
+
+                // Buscar el detalle_venta_id del producto original (antes de expandir combo)
+                $detalleVentaId = $detallesCreados[$productoId] ?? null;
+
+                // Si es componente de un combo, buscar el combo padre en detalles originales
+                $comboPadreId = null;
+                if (isset($item['combo_padre_id'])) {
+                    // Ya viene del expandirCombos con combo_padre_id
+                    $comboPadreId = $item['combo_padre_id'];
+                }
+
+                return array_merge($item, [
+                    'detalle_venta_id' => $detalleVentaId,
+                    'combo_padre_id'   => $comboPadreId,
+                ]);
+            }, $detallesParaStock);
+
             $movimientosStock = $this->ventaDistribucionService->consumirStock(
-                $detallesParaStock,
+                $detallesParaStockEnriquecidos,  // ✅ MODIFICADO: Usar detalles enriquecidos
                 $venta->numero,
                 ventaId: $venta->id,                 // ✅ NUEVO (2026-06-29): Pasar venta_id para referencia_id
                 permitirStockNegativo: $esCREDITO,  // ✅ Permite stock negativo para CREDITO

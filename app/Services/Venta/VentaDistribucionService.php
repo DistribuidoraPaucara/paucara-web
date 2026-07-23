@@ -346,6 +346,37 @@ class VentaDistribucionService
                         // ✅ NUEVO: Agregar a movimientos para retornar
                         $movimientos[] = $movimientoRegistrado;
 
+                        // ✅ NUEVO (2026-07-24): Registrar en venta_por_lotes para trazabilidad por lote
+                        if ($ventaId) {
+                            try {
+                                \App\Models\VentaPorLote::create([
+                                    'venta_id'           => $ventaId,
+                                    'detalle_venta_id'   => $item['detalle_venta_id'] ?? null,
+                                    'producto_id'        => $productoId,
+                                    'stock_producto_id'  => $stock->id,
+                                    'cantidad_consumida' => $cantidadTomar,
+                                    'combo_padre_id'     => $item['combo_padre_id'] ?? null,
+                                    'fecha_vencimiento'  => $stock->fecha_vencimiento,
+                                ]);
+
+                                Log::debug('✅ [VentaDistribucionService] Registrado en venta_por_lotes', [
+                                    'venta_id'          => $ventaId,
+                                    'detalle_venta_id'  => $item['detalle_venta_id'] ?? null,
+                                    'producto_id'       => $productoId,
+                                    'stock_id'          => $stock->id,
+                                    'cantidad_consumida'=> $cantidadTomar,
+                                    'combo_padre_id'    => $item['combo_padre_id'] ?? null,
+                                ]);
+                            } catch (\Exception $e) {
+                                Log::error('❌ Error registrando en venta_por_lotes', [
+                                    'venta_id' => $ventaId,
+                                    'stock_id' => $stock->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                                // No lanzar excepción - el consumo ya se registró, este es adicional
+                            }
+                        }
+
                         Log::debug('📦 [VentaDistribucionService] Stock consumido de lote', [
                             'venta' => $numeroVenta,
                             'stock_producto_id' => $stock->id,
@@ -408,100 +439,160 @@ class VentaDistribucionService
                 $venta = Venta::where('numero', $numeroVenta)->first();
                 $ventaId = $venta?->id ?? 0;
 
-                // Obtener movimientos de consumo (SALIDA_VENTA + CONSUMO_RESERVA)
-                // ✅ CORREGIDO (2026-02-11): Incluir CONSUMO_RESERVA para ventas convertidas desde proforma
-                $movimientos = MovimientoInventario::where('numero_documento', $numeroVenta)
-                    ->whereIn('tipo', [
-                        MovimientoInventario::TIPO_SALIDA_VENTA,
-                        'CONSUMO_RESERVA'  // ← Para ventas creadas desde proforma
-                    ])
+                // ✅ NUEVO (2026-07-24): Usar venta_por_lotes para devoluciones exactas por lote
+                $ventaPorLotes = \App\Models\VentaPorLote::where('venta_id', $ventaId)
+                    ->with('stockProducto')
                     ->lockForUpdate()
                     ->get();
 
-                if ($movimientos->isEmpty()) {
-                    Log::warning('⚠️ [VentaDistribucionService] No hay movimientos de consumo para devolver (SALIDA_VENTA + CONSUMO_RESERVA)', [
+                // Si no hay registros en venta_por_lotes, intentar fallback a movimientos (compatibilidad)
+                if ($ventaPorLotes->isEmpty()) {
+                    Log::info('⚠️ [VentaDistribucionService::devolverStock] No hay registros en venta_por_lotes, usando fallback a movimientos', [
+                        'venta_id' => $ventaId,
                         'numero_venta' => $numeroVenta,
-                        'nota' => 'Posible: venta nunca consumió stock, o está duplicando reversión',
                     ]);
 
-                    return [
-                        'success' => true,
-                        'cantidad_devuelta' => 0,
-                        'movimientos' => 0,
-                        'error' => null,
-                    ];
+                    // ✅ FALLBACK: Obtener movimientos de consumo (SALIDA_VENTA + CONSUMO_RESERVA)
+                    $movimientos = MovimientoInventario::where('numero_documento', $numeroVenta)
+                        ->whereIn('tipo', [
+                            MovimientoInventario::TIPO_SALIDA_VENTA,
+                            'CONSUMO_RESERVA'
+                        ])
+                        ->lockForUpdate()
+                        ->get();
+
+                    if ($movimientos->isEmpty()) {
+                        Log::warning('⚠️ [VentaDistribucionService] No hay movimientos de consumo para devolver', [
+                            'numero_venta' => $numeroVenta,
+                        ]);
+
+                        return [
+                            'success' => true,
+                            'cantidad_devuelta' => 0,
+                            'movimientos' => 0,
+                            'error' => null,
+                        ];
+                    }
+
+                    $ventaPorLotes = collect();  // Colección vacía para no ejecutar lógica nueva
                 }
 
                 $totalDevuelto = 0;
                 $movimientosCreados = 0;
+                $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
+                $movimientoStockService = new \App\Services\Stock\MovimientoStockService(
+                    app(\App\Services\Stock\StockValidationService::class)
+                );
 
-                // ✅ REFACTORIZADO (2026-03-27): Agrupar movimientos por producto
-                $movimientosPorProducto = $movimientos->groupBy(function ($mov) {
-                    return $mov->stockProducto->producto_id;
-                });
+                // ✅ NUEVO (2026-07-24): Devolver usando venta_por_lotes (más preciso)
+                if ($ventaPorLotes->isNotEmpty()) {
+                    // Agrupar por lote (stock_producto_id) para devolver exactamente a cada lote
+                    $porLote = $ventaPorLotes->groupBy('stock_producto_id');
 
-                foreach ($movimientosPorProducto as $productoId => $productosMovimientos) {
-                    $detallesLotes = [];
-                    $cantidadTotalADevolver = 0;
-                    $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
-
-
-                    // ✅ REFACTORIZADO (2026-06-08): Usar MovimientoStockService para devoluciones
-                    $movimientoStockService = new \App\Services\Stock\MovimientoStockService(
-                        app(\App\Services\Stock\StockValidationService::class)
-                    );
-
-                    foreach ($productosMovimientos as $movimiento) {
-                        $stock = $movimiento->stockProducto;
-                        $cantidadADevolver = abs($movimiento->cantidad);
+                    foreach ($porLote as $stockId => $lotesDelLote) {
+                        $cantidadTotalLote = $lotesDelLote->sum('cantidad_consumida');
 
                         try {
-                            // ✅ NUEVO: Usar MovimientoStockService que valida y actualiza atomicamente
-                            // Para devoluciones, devolvemos al disponible (suma a cantidad y cantidad_disponible)
+                            // Obtener el stock_producto actual
+                            $stock = StockProducto::lockForUpdate()->find($stockId);
+                            if (!$stock) {
+                                Log::error('❌ Stock no encontrado para devolución', [
+                                    'stock_id' => $stockId,
+                                    'venta_id' => $ventaId,
+                                ]);
+                                continue;
+                            }
+
+                            // ✅ Registrar entrada (devolución) exactamente a este lote
                             $movimientoStockService->registrarMovimientoYActualizar(
                                 stockProductoId: $stock->id,
-                                cantidad: (int)$cantidadADevolver,  // Positivo: entrada/devolución
+                                cantidad: (int)$cantidadTotalLote,
                                 tipo: MovimientoInventario::TIPO_ENTRADA_AJUSTE,
-                                referencia_tipo: 'venta_devolucion',  // ✅ Dejado como antes
-                                referencia_id: $ventaId,  // ✅ Usar ID real de la venta obtenido arriba
+                                referencia_tipo: 'venta_devolucion',
+                                referencia_id: $ventaId,
                                 metadataAdicional: [
                                     'numero_venta' => $numeroVenta . '-DEV',
                                     'lote' => $stock->lote,
                                     'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
-                                    'movimiento_original_id' => $movimiento->id,
+                                    'razon' => 'Devolución por anulación de venta (venta_por_lotes)',
                                 ],
-                                numeroDocumento: $numeroVenta . '-DEV'  // ✅ Incluir -DEV para devoluciones
+                                numeroDocumento: $numeroVenta . '-DEV'
                             );
 
-                            Log::debug('✅ [VentaDistribucionService] Devolución registrada por lote', [
-                                'venta' => $numeroVenta,
-                                'stock_producto_id' => $stock->id,
+                            Log::info('✅ [VentaDistribucionService] Stock devuelto a lote (venta_por_lotes)', [
+                                'venta_id' => $ventaId,
+                                'stock_id' => $stock->id,
                                 'lote' => $stock->lote,
-                                'cantidad_devuelta' => $cantidadADevolver,
+                                'cantidad_devuelta' => $cantidadTotalLote,
                             ]);
 
-                            $totalDevuelto += $cantidadADevolver;
-                            $cantidadTotalADevolver += $cantidadADevolver;
+                            $totalDevuelto += $cantidadTotalLote;
+                            $movimientosCreados++;
+
                         } catch (\Exception $e) {
                             Log::error('❌ Error devolviendo lote', [
-                                'stock_id' => $stock->id,
-                                'venta' => $numeroVenta,
+                                'stock_id' => $stockId,
+                                'venta_id' => $ventaId,
                                 'error' => $e->getMessage(),
                             ]);
                             throw $e;
                         }
                     }
+                } else {
+                    // ✅ FALLBACK: Usar movimientos si venta_por_lotes está vacío
+                    $movimientos = MovimientoInventario::where('numero_documento', $numeroVenta)
+                        ->whereIn('tipo', [
+                            MovimientoInventario::TIPO_SALIDA_VENTA,
+                            'CONSUMO_RESERVA'
+                        ])
+                        ->lockForUpdate()
+                        ->get();
 
-                    // ✅ REFACTORIZADO (2026-06-08): MovimientoStockService ya registra cada lote individualmente
-                    // Las auditorías ahora están en movimientos_inventario con más granularidad (por lote)
-                    $movimientosCreados++;
+                    $movimientosPorProducto = $movimientos->groupBy(function ($mov) {
+                        return $mov->stockProducto->producto_id;
+                    });
+
+                    foreach ($movimientosPorProducto as $productoId => $productosMovimientos) {
+                        foreach ($productosMovimientos as $movimiento) {
+                            $stock = $movimiento->stockProducto;
+                            $cantidadADevolver = abs($movimiento->cantidad);
+
+                            try {
+                                $movimientoStockService->registrarMovimientoYActualizar(
+                                    stockProductoId: $stock->id,
+                                    cantidad: (int)$cantidadADevolver,
+                                    tipo: MovimientoInventario::TIPO_ENTRADA_AJUSTE,
+                                    referencia_tipo: 'venta_devolucion',
+                                    referencia_id: $ventaId,
+                                    metadataAdicional: [
+                                        'numero_venta' => $numeroVenta . '-DEV',
+                                        'lote' => $stock->lote,
+                                        'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
+                                        'movimiento_original_id' => $movimiento->id,
+                                    ],
+                                    numeroDocumento: $numeroVenta . '-DEV'
+                                );
+
+                                $totalDevuelto += $cantidadADevolver;
+                            } catch (\Exception $e) {
+                                Log::error('❌ Error devolviendo lote (fallback)', [
+                                    'stock_id' => $stock->id,
+                                    'venta_id' => $ventaId,
+                                    'error' => $e->getMessage(),
+                                ]);
+                                throw $e;
+                            }
+                        }
+                        $movimientosCreados++;
+                    }
                 }
 
-                Log::info('✅ [VentaDistribucionService::devolverStock] Stock devuelto exitosamente (SALIDA_VENTA + CONSUMO_RESERVA)', [
+                Log::info('✅ [VentaDistribucionService::devolverStock] Stock devuelto exitosamente', [
+                    'venta_id' => $ventaId,
                     'numero_venta' => $numeroVenta,
                     'cantidad_total_devuelta' => $totalDevuelto,
                     'movimientos_creados' => $movimientosCreados,
-                    'tipos_revertidos' => $movimientos->pluck('tipo')->unique()->toArray(),
+                    'usa_venta_por_lotes' => $ventaPorLotes->isNotEmpty(),
                     'timestamp' => now()->toIso8601String(),
                 ]);
 
