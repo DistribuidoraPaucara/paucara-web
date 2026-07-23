@@ -62,12 +62,41 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
     const handleFiltroChange = (campo: keyof FiltrosVentas, valor: string | number | null | undefined) => {
         const nuevosFiltros = { ...filtros, [campo]: valor };
-        console.log('🎯 [filtros-ventas] handleFiltroChange:', { campo, valor, nuevosFiltros });
+        console.log('🎯 [filtros-ventas] handleFiltroChange (local):', { campo, valor });
         setFiltros(nuevosFiltros);
+        // ⚠️ NO llamamos a onFiltrosChange aquí - esperar a que el usuario presione "Buscar"
+    };
 
+    // ✅ Handler para el botón Buscar - aplica los filtros
+    const handleBuscar = () => {
+        console.log('📤 [filtros-ventas] Botón Buscar presionado. Aplicando filtros:', filtros);
         if (onFiltrosChange) {
-            console.log('📤 [filtros-ventas] Llamando onFiltrosChange con:', nuevosFiltros);
-            onFiltrosChange(nuevosFiltros);
+            onFiltrosChange(filtros);
+        }
+    };
+
+    // ✅ Handler para el botón Limpiar - limpia todos los filtros
+    const handleLimpiarFiltros = () => {
+        const filtrosLimpios = {
+            cliente_id: undefined,
+            estado_documento_id: undefined,
+            usuario_id: undefined,
+            fecha_desde: undefined,
+            fecha_hasta: undefined,
+            monto_min: undefined,
+            monto_max: undefined,
+            moneda_id: undefined,
+            numero: null,
+            id: null,
+            id_desde: undefined,
+            id_hasta: undefined,
+            tipo_pago_id: undefined,
+            preventista_id: undefined,
+        };
+        console.log('🗑️ [filtros-ventas] Limpiando filtros');
+        setFiltros(filtrosLimpios);
+        if (onFiltrosChange) {
+            onFiltrosChange(filtrosLimpios);
         }
     };
 
@@ -75,10 +104,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     const handleMultipleFiltros = (cambios: Partial<FiltrosVentas>) => {
         const nuevosFiltros = { ...filtros, ...cambios };
         setFiltros(nuevosFiltros);
-
-        if (onFiltrosChange) {
-            onFiltrosChange(nuevosFiltros);
-        }
+        // ⚠️ NO llamamos a onFiltrosChange aquí - esperar a que el usuario presione "Buscar"
     };
 
     // Detecta si el input es un número puro o contiene letras (para numero de venta)
@@ -125,6 +151,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         setBusquedaCombinada('');
         setMostrarFiltrosAvanzados(false);
         ventasService.clearFilters();
+        // Aplicar los filtros vacíos al padre
+        handleLimpiarFiltros();
     };
 
     // ✅ NUEVO: Función para obtener etiquetas de filtros activos
@@ -523,11 +551,16 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
                     <button
                         type="button"
-                        onClick={() => handleBusquedaCombinada(busquedaCombinada, true)}
+                        onClick={() => {
+                            if (busquedaCombinada) {
+                                handleBusquedaCombinada(busquedaCombinada, false);
+                            }
+                            handleBuscar();
+                        }}
                         className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                     >
                         <Search className="mr-1 h-4 w-4" />
-                        Buscar
+                        🔍 Buscar
                     </button>
                 </div>
             </div>
