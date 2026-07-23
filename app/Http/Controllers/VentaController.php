@@ -436,7 +436,7 @@ class VentaController extends Controller
                 'estadisticas'     => null, // TODO: Implementar estadísticas completas cuando sea necesario
                 'datosParaFiltros' => [
                     'clientes'          => Cliente::activos()->select('id', 'nombre', 'nit')->get(),
-                    'estados_documento' => EstadoDocumento::select('id', 'nombre', 'codigo')->get(),
+                    'estados_documento' => EstadoDocumento::select('id', 'nombre', 'codigo', 'color', 'icono')->get(),
                     'usuarios'          => User::select('id', 'name')->orderBy('name')->get(),
                     'monedas'           => Moneda::activos()->select('id', 'codigo', 'nombre')->get(),
                     'tipos_pago'        => TipoPago::activos()->select('id', 'nombre')->get(), // ✅ NUEVO: Tipos de pago
@@ -510,7 +510,7 @@ class VentaController extends Controller
             'tipos_documento'      => TipoDocumento::activos()->select('id', 'codigo', 'nombre')->get(),
             'tipos_pago'           => $tiposPago,
             'tipos_precio'         => $tiposPrecio,                                                                    // ✅ NUEVO: Tipos de precio para asignar por defecto
-            'estados_documento'    => EstadoDocumento::where('activo', true)->select('id', 'codigo', 'nombre')->get(), // ✅ NUEVO: Estados de documento
+            'estados_documento'    => EstadoDocumento::where('activo', true)->select('id', 'codigo', 'nombre', 'color', 'icono')->get(), // ✅ NUEVO: Estados de documento
             'almacen_id_empresa'   => $almacenIdEmpresa,                                                               // ✅ NUEVO: Almacén de la empresa
             'es_farmacia'          => (bool) $empresaPrincipal?->es_farmacia,                                          // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
             'logistica_envios'     => (bool) $empresaPrincipal?->logistica_envios,                                     // ✅ NUEVO: Indicador para mostrar/ocultar logística de envíos

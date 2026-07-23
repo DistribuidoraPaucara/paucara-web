@@ -110,7 +110,88 @@ class ReporteVentasController extends Controller
 
             // ✅ NUEVO: Usar totales y ventas del service
             $totales = $reporteProductos['totales'];
-            $ventas = collect($reporteProductos['ventas']);
+            $ventasData = collect($reporteProductos['ventas']);
+
+            // ✅ CARGAR RELACIONES COMPLETAS: Proformas y Estados Logística
+            $ventasIds = $ventasData->pluck('id')->toArray();
+
+            if (!empty($ventasIds)) {
+                $ventasConRelaciones = Venta::whereIn('id', $ventasIds)
+                    ->with([
+                        'proforma:id,numero,fecha,subtotal,impuesto,total,descuento,estado_proforma_id',
+                        'proforma.estadoLogistica:id,codigo,nombre,color,icono,categoria,descripcion',
+                        'estadoLogistica:id,codigo,nombre,color,icono,categoria,descripcion',
+                        'estadoDocumento:id,codigo,nombre',
+                        'cliente:id,nombre,nit,email,telefono,razon_social',
+                        'usuario:id,name,email',
+                        'tipoPago:id,codigo,nombre',
+                        'entrega:id,numero_entrega,estado,fecha_entrega,observaciones',
+                    ])
+                    ->orderByDesc('id')
+                    ->get()
+                    ->keyBy('id');
+
+                // Enriquecer datos con relaciones completas
+                $ventas = $ventasData->map(function ($venta) use ($ventasConRelaciones) {
+                    $ventaCompleta = $ventasConRelaciones->get($venta['id']);
+
+                    return [
+                        ...$venta,
+                        'proforma' => $ventaCompleta?->proforma ? [
+                            'id' => $ventaCompleta->proforma->id,
+                            'numero' => $ventaCompleta->proforma->numero,
+                            'fecha' => $ventaCompleta->proforma->fecha,
+                            'subtotal' => (float) $ventaCompleta->proforma->subtotal,
+                            'impuesto' => (float) $ventaCompleta->proforma->impuesto,
+                            'total' => (float) $ventaCompleta->proforma->total,
+                            'descuento' => (float) $ventaCompleta->proforma->descuento,
+                            'estado_logistica' => $ventaCompleta->proforma->estadoLogistica ? [
+                                'id' => $ventaCompleta->proforma->estadoLogistica->id,
+                                'codigo' => $ventaCompleta->proforma->estadoLogistica->codigo,
+                                'nombre' => $ventaCompleta->proforma->estadoLogistica->nombre,
+                                'color' => $ventaCompleta->proforma->estadoLogistica->color,
+                                'icono' => $ventaCompleta->proforma->estadoLogistica->icono,
+                            ] : null,
+                        ] : null,
+                        'estado_logistica_completo' => $ventaCompleta?->estadoLogistica ? [
+                            'id' => $ventaCompleta->estadoLogistica->id,
+                            'codigo' => $ventaCompleta->estadoLogistica->codigo,
+                            'nombre' => $ventaCompleta->estadoLogistica->nombre,
+                            'color' => $ventaCompleta->estadoLogistica->color,
+                            'icono' => $ventaCompleta->estadoLogistica->icono,
+                            'categoria' => $ventaCompleta->estadoLogistica->categoria,
+                            'descripcion' => $ventaCompleta->estadoLogistica->descripcion,
+                        ] : null,
+                        'cliente_completo' => $ventaCompleta?->cliente ? [
+                            'id' => $ventaCompleta->cliente->id,
+                            'nombre' => $ventaCompleta->cliente->nombre,
+                            'nit' => $ventaCompleta->cliente->nit,
+                            'email' => $ventaCompleta->cliente->email,
+                            'telefono' => $ventaCompleta->cliente->telefono,
+                            'razon_social' => $ventaCompleta->cliente->razon_social,
+                        ] : null,
+                        'usuario_completo' => $ventaCompleta?->usuario ? [
+                            'id' => $ventaCompleta->usuario->id,
+                            'name' => $ventaCompleta->usuario->name,
+                            'email' => $ventaCompleta->usuario->email,
+                        ] : null,
+                        'tipo_pago' => $ventaCompleta?->tipoPago ? [
+                            'id' => $ventaCompleta->tipoPago->id,
+                            'codigo' => $ventaCompleta->tipoPago->codigo,
+                            'nombre' => $ventaCompleta->tipoPago->nombre,
+                        ] : null,
+                        'entrega' => $ventaCompleta?->entrega ? [
+                            'id' => $ventaCompleta->entrega->id,
+                            'numero_entrega' => $ventaCompleta->entrega->numero_entrega,
+                            'estado' => $ventaCompleta->entrega->estado,
+                            'fecha_entrega' => $ventaCompleta->entrega->fecha_entrega,
+                            'observaciones' => $ventaCompleta->entrega->observaciones,
+                        ] : null,
+                    ];
+                });
+            } else {
+                $ventas = collect();
+            }
 
             // Obtener usuarios para el filtro
             $usuarios = User::whereHas('roles', function ($query) {

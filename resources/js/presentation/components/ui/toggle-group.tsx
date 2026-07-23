@@ -3,7 +3,8 @@ import React from 'react';
 interface ToggleOption {
     value: string;
     label: string;
-    icon?: string;
+    icon?: string | null;
+    color?: string | null; // Hex color for styling
 }
 
 interface ToggleGroupProps {
@@ -34,29 +35,42 @@ export default function ToggleGroup({
             )}
 
             <div className="flex gap-2 flex-wrap">
-                {options.map((option) => (
-                    <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => !disabled && onChange(option.value)}
-                        disabled={disabled}
-                        className={`
-                            px-2 py-1 rounded-lg font-medium text-sm
-                            transition-all duration-200 ease-in-out
-                            border-2 flex items-center gap-2 whitespace-nowrap
-                            ${
-                                value === option.value
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
-                            }
-                            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}
-                            disabled:opacity-50 disabled:cursor-not-allowed
-                        `}
-                    >
-                        {option.icon && <span className="text-lg">{option.icon}</span>}
-                        {option.label}
-                    </button>
-                ))}
+                {options.map((option) => {
+                    const isSelected = value === option.value;
+                    const bgColor = option.color || '#2563eb'; // Fallback a azul
+                    const bgColorOpacity = bgColor + '30'; // 30% opacity para fallback
+
+                    const selectedStyle = {
+                        backgroundColor: bgColor,
+                        borderColor: bgColor,
+                        boxShadow: `0 10px 15px -3px ${bgColorOpacity}`,
+                    } as React.CSSProperties;
+
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => !disabled && onChange(option.value)}
+                            disabled={disabled}
+                            style={isSelected ? selectedStyle : {}}
+                            className={`
+                                px-2 py-1 rounded-lg font-medium text-sm
+                                transition-all duration-200 ease-in-out
+                                border-2 flex items-center gap-2 whitespace-nowrap
+                                ${
+                                    isSelected
+                                        ? 'text-white shadow-lg'
+                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
+                                }
+                                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}
+                                disabled:opacity-50 disabled:cursor-not-allowed
+                            `}
+                        >
+                            {option.icon && <span className="text-lg">{option.icon}</span>}
+                            {option.label}
+                        </button>
+                    );
+                })}
             </div>
 
             {description && (

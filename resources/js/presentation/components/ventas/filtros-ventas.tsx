@@ -2,10 +2,10 @@ import type { DatosParaFiltrosVentas, FiltrosVentas } from '@/domain/entities/ve
 import ventasService from '@/infrastructure/services/ventas.service';
 import { ArrowUpDown, Calendar, DollarSign, Filter, Hash, Search, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import ToggleGroup from '../ui/toggle-group';
 import FloatingInput from './floating-input';
 import FloatingSearchSelect from './floating-search-select';
 import FloatingSelect from './floating-select';
-import ToggleGroup from '../ui/toggle-group';
 
 interface FiltrosVentasProps {
     filtros: FiltrosVentas;
@@ -194,7 +194,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     return (
         <div className="mb-2 rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             {/* Filtros básicos */}
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
                 {/* ID de venta o Número de venta (búsqueda combinada) */}
                 <div>
                     <FloatingInput
@@ -260,51 +260,18 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                         icon={<Search className="h-4 w-4" />}
                     />
                 </div>
-            </div>
-
-            {/* ✅ NUEVO: Ordenamiento + Filtros rápidos en 2 columnas responsivas */}
-            <div className="border-t border-gray-200 pt-4 dark:border-zinc-700">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    {/* Filtros rápidos - Columna 2 */}
-                    <div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros rápidos</label>
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const today = new Date().toISOString().split('T')[0];
-                                        handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
-                                    }}
-                                    className={`w-full rounded-md px-1 py-1 text-sm font-medium transition-colors ${
-                                        filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
-                                            ? 'bg-blue-600 text-white'
-                                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
-                                    }`}
-                                >
-                                    📅 Hoy
-                                </button>
-                                <ToggleGroup
-                                    options={[
-                                        { value: '3', label: '✓ Aprobadas', icon: '✓' },
-                                        { value: '5', label: '✗ Anuladas', icon: '✗' },
-                                    ]}
-                                    value={filtros.estado_documento_id?.toString() || ''}
-                                    onChange={(value) => handleFiltroChange('estado_documento_id', value ? parseInt(value) : null)}
-                                />
-                                {filtros.estado_documento_id && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleFiltroChange('estado_documento_id', null)}
-                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700"
-                                    >
-                                        ↻ Limpiar
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ToggleGroup
+                    options={datosSeguros.estados_documento
+                        .filter((est) => [3, 5].includes(Number(est.id))) // Solo Aprobadas (3) y Anuladas (5)
+                        .map((est) => ({
+                            value: est.id.toString(),
+                            label: est.nombre,
+                            icon: est.icono,
+                            color: est.color,
+                        }))}
+                    value={filtros.estado_documento_id?.toString() || ''}
+                    onChange={(value) => handleFiltroChange('estado_documento_id', value ? parseInt(value) : null)}
+                />
             </div>
 
             {/* Filtros avanzados */}
@@ -466,8 +433,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
             )}
 
             {/* Botones de acción */}
-            <div className="flex flex-wrap gap-4 p-2 items-end justify-between border-t border-gray-200 dark:border-zinc-700">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-end justify-between gap-4 mt-2 border-t border-gray-200 p-2 dark:border-zinc-700">
+                <div className="flex flex-wrap items-center gap-3">
                     <button
                         type="button"
                         onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
@@ -476,21 +443,34 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                         <Filter className="mr-1 h-4 w-4" />
                         {mostrarFiltrosAvanzados ? 'Ocultar filtros' : 'Más filtros'}
                     </button>
-
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
+                        }}
+                        className={`rounded-md p-1 text-sm font-small transition-colors ${
+                            filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
+                                ? 'bg-blue-600 text-white'
+                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                        }`}
+                    >
+                        📅 Hoy
+                    </button>
                     {hayFiltrosActivos && <span className="text-sm text-gray-500 dark:text-gray-400">Filtros aplicados</span>}
                 </div>
 
                 {/* Controles de Ordenamiento - Columna 1 */}
                 <div className="flex items-center gap-2">
                     <div>
-                        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <label className="flex items-center gap-1 text-xs font-small text-gray-700 dark:text-gray-300">
                             <ArrowUpDown className="h-3 w-3" />
                             Ordenar por
                         </label>
                         <select
                             value={filtros.sort_by || 'id'}
                             onChange={(e) => handleFiltroChange('sort_by', e.target.value || 'id')}
-                            className="w-full rounded-md border border-gray-300 px-1 py-1 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                         >
                             <option value="id">Folio</option>
                             <option value="created_at">Fecha de creación</option>
@@ -502,14 +482,14 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                         </select>
                     </div>
                     <div>
-                        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <label className="flex items-center gap-1 text-xs font-small text-gray-700 dark:text-gray-300">
                             <ArrowUpDown className="h-3 w-3" />
                             Ordenar por
                         </label>
                         <select
                             value={filtros.sort_order || 'desc'}
                             onChange={(e) => handleFiltroChange('sort_order', (e.target.value as 'asc' | 'desc') || 'desc')}
-                            className="w-full rounded-md border border-gray-300 px-1 py-1 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                         >
                             <option value="desc">↓ Descendente (más reciente)</option>
                             <option value="asc">↑ Ascendente (más antiguo)</option>

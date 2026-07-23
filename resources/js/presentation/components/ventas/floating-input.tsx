@@ -42,16 +42,16 @@ export default function FloatingInput({
                 step={step}
                 min={min}
                 max={max}
-                className="peer w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white placeholder-transparent transition-all"
+                className="peer w-full pl-12 pr-2 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white placeholder-transparent transition-all"
             />
             {icon && (
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-gray-400 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 transition-colors">
                     {icon}
                 </div>
             )}
             <label
                 htmlFor={id}
-                className="absolute left-10 -top-3 px-1 text-x text-gray-700 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-500 peer-focus:-top-3 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 peer-[:not(:placeholder-shown)]:-top-3 transition-all pointer-events-none"
+                className="absolute left-6 -top-5 px-1 text-x text-gray-700 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-500 peer-focus:-top-5 peer-focus:text-blue-600 dark:peer-focus:text-blue-400 peer-[:not(:placeholder-shown)]:-top-6 transition-all pointer-events-none"
             >
                 {label}
             </label>

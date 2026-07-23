@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
 export const rankingClientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ rankingClientes.definition = {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
 rankingClientes.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ rankingClientes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
 rankingClientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ rankingClientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
 rankingClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ rankingClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
     /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
     const rankingClientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ rankingClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
             /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
         rankingClientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ rankingClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
         })
             /**
 * @see \App\Http\Controllers\ReporteVentasController::rankingClientes
- * @see app/Http/Controllers/ReporteVentasController.php:167
+ * @see app/Http/Controllers/ReporteVentasController.php:248
  * @route '/reportes/ventas/ranking-clientes'
  */
         rankingClientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ rankingClientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     rankingClientes.form = rankingClientesForm
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
 export const entregasPorChofer = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ entregasPorChofer.definition = {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
 entregasPorChofer.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ entregasPorChofer.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
 entregasPorChofer.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ entregasPorChofer.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 })
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
 entregasPorChofer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ entregasPorChofer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
     /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
     const entregasPorChoferForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ entregasPorChofer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
             /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
         entregasPorChoferForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ entregasPorChofer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
         })
             /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorChofer
- * @see app/Http/Controllers/ReporteVentasController.php:390
+ * @see app/Http/Controllers/ReporteVentasController.php:471
  * @route '/reportes/ventas/entregas-por-chofer'
  */
         entregasPorChoferForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ entregasPorChofer.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     entregasPorChofer.form = entregasPorChoferForm
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
 export const entregasPorCliente = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ entregasPorCliente.definition = {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
 entregasPorCliente.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ entregasPorCliente.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
 entregasPorCliente.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ entregasPorCliente.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =
 })
 /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
 entregasPorCliente.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ entregasPorCliente.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
     /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
     const entregasPorClienteForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ entregasPorCliente.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
             /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
         entregasPorClienteForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ entregasPorCliente.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
         })
             /**
 * @see \App\Http\Controllers\ReporteVentasController::entregasPorCliente
- * @see app/Http/Controllers/ReporteVentasController.php:490
+ * @see app/Http/Controllers/ReporteVentasController.php:571
  * @route '/reportes/ventas/entregas-por-cliente'
  */
         entregasPorClienteForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

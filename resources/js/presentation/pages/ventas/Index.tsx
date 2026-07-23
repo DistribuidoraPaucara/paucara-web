@@ -46,7 +46,7 @@ export default function VentasIndex() {
         <AppLayout breadcrumbs={[{ title: 'Ventas', href: '/ventas' }]}>
             <Head title="Ventas" />
 
-            <div className="space-y-6 p-3">
+            <div className="space-y-2 p-2">
                 {/* Banner de advertencia - caja sin abrir */}
                 {shouldShowBanner && (
                     <div className="mb-4">
@@ -64,7 +64,7 @@ export default function VentasIndex() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Ventas</h1>
-                        <div className="mt-2 space-y-1">
+                        {/* <div className="mt-2 space-y-1">
                             <p className="text-gray-600 dark:text-gray-400">
                                 {ventas.total > 0
                                     ? `${ventas.from}-${ventas.to} de ${ventas.total} ventas`
@@ -76,7 +76,7 @@ export default function VentasIndex() {
                                     📄 Página {ventas.current_page} de {ventas.last_page} ({ventas.per_page} por página)
                                 </p>
                             )}
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="flex items-center gap-1">

@@ -26,9 +26,9 @@ interface Producto {
 interface Venta {
     id: number;
     numero: string;
-    proforma_id: number;
+    proforma_id?: number;
     proforma_numero: string;
-    proforma_fecha: string;
+    proforma_fecha?: string;
     cliente: string;
     usuario: string;
     total: number;
@@ -46,6 +46,59 @@ interface Venta {
     total_dinero_recibido?: number;
     monto_pendiente?: number;
     confirmado_en?: string;
+    preventista_id?: number;
+
+    // ✅ NUEVAS RELACIONES COMPLETAS del backend
+    proforma?: {
+        id: number;
+        numero: string;
+        fecha: string;
+        subtotal: number;
+        impuesto: number;
+        total: number;
+        descuento: number;
+        estado_logistica?: {
+            id: number;
+            codigo: string;
+            nombre: string;
+            color?: string;
+            icono?: string;
+        };
+    };
+    cliente_completo?: {
+        id: number;
+        nombre: string;
+        nit?: string;
+        email?: string;
+        telefono?: string;
+        razon_social?: string;
+    };
+    usuario_completo?: {
+        id: number;
+        name: string;
+        email: string;
+    };
+    tipo_pago?: {
+        id: number;
+        codigo: string;
+        nombre: string;
+    };
+    estado_logistica_completo?: {
+        id: number;
+        codigo: string;
+        nombre: string;
+        color?: string;
+        icono?: string;
+        categoria?: string;
+        descripcion?: string;
+    };
+    entrega?: {
+        id: number;
+        numero_entrega: string;
+        estado: string;
+        fecha_entrega?: string;
+        observaciones?: string;
+    } | null;
 }
 
 interface PageProps {
@@ -102,6 +155,28 @@ export default function ReporteProductosVendidos({
     const [impresoras, setImpresoras] = useState<string[]>([]);
     const [impresoraSeleccionada, setImpresoraSeleccionada] = useState<string>('default');
     const [imprimiendo, setImprimiendo] = useState(false);
+
+    // ✅ DEBUG: Mostrar datos que llegan del backend
+    React.useEffect(() => {
+        console.log('📊 [REPORTE-PRODUCTOS] Datos del Backend:', {
+            productos: {
+                cantidad: productos.length,
+                muestra: productos.slice(0, 2),
+            },
+            ventas: {
+                cantidad: ventas.length,
+                muestra: ventas.slice(0, 2),
+            },
+            totales,
+            filtros,
+            usuarios: usuarios.length,
+            clientes: clientes.length,
+            fecha_desde,
+            fecha_hasta,
+            es_preventista,
+            error,
+        });
+    }, [productos, ventas, totales, filtros, usuarios, clientes, fecha_desde, fecha_hasta, es_preventista, error]);
 
     // ✅ NUEVO: Cargar impresoras disponibles al montar
     React.useEffect(() => {
@@ -225,16 +300,16 @@ export default function ReporteProductosVendidos({
         <AppLayout>
             <Head title="Reporte de Productos Vendidos" />
 
-            <div className="px-4 sm:px-6 lg:px-8">
+            <div className="px-2 sm:px-2 lg:px-2">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-2">
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                📊 Reporte de Productos Vendidosss
+                                📊 Reporte de Productos Vendidos del Preventista
                             </h1>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                Análisis de productos vendidos en proformas convertidas a ventas aprobadas
+                                Análisis de productos vendidos en proformas convertidas a ventas aprobadas, para los preventistas
                             </p>
                         </div>
                         <div className="flex gap-2 items-center">
@@ -245,63 +320,8 @@ export default function ReporteProductosVendidos({
                             >
                                 💾 Imp/Exportar
                             </button>
-                            <Link
-                                href="/proformas"
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
-                            >
-                                ← Volver
-                            </Link>
                         </div>
                     </div>
-
-                    {/* Accesos rápidos por Preventista */}
-                    {usuarios.length > 0 && (
-                        <div className="mt-6">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
-                                🚀 Accesos rápidos por preventista:
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={() => {
-                                        setUsuarioId('TODOS');
-                                        handleBuscar();
-                                    }}
-                                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                                        usuarioId === 'TODOS'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600'
-                                    }`}
-                                >
-                                    📋 Todos
-                                </button>
-                                {usuarios.map((usuario) => (
-                                    <button
-                                        key={usuario.id}
-                                        onClick={() => {
-                                            setUsuarioId(String(usuario.id));
-                                            // Actualizar automáticamente después de seleccionar
-                                            setTimeout(() => {
-                                                const params = new URLSearchParams();
-                                                if (fechaDesde) params.append('fecha_desde', fechaDesde);
-                                                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
-                                                params.append('usuario_creador_id', String(usuario.id));
-                                                if (clienteId && clienteId !== 'TODOS') params.append('cliente_id', clienteId);
-                                                const url = `/ventas/reporte-productos-vendidos?${params.toString()}`;
-                                                router.visit(url);
-                                            }, 0);
-                                        }}
-                                        className={`px-4 py-2 rounded-lg font-medium transition ${
-                                            String(usuarioId) === String(usuario.id)
-                                                ? 'bg-indigo-600 text-white shadow-md'
-                                                : 'bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600'
-                                        }`}
-                                    >
-                                        👤 {usuario.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {error && (
@@ -310,37 +330,14 @@ export default function ReporteProductosVendidos({
                     </div>
                 )}
 
-                {/* Mostrar Usuario Preventista Seleccionado */}
-                {usuarioId && usuarioId !== 'TODOS' && (
-                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xl">👤</span>
-                                <div>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium uppercase">Filtro de Preventista Activo</p>
-                                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                                        {usuarios.find((u) => String(u.id) === usuarioId)?.name || 'Usuario no encontrado'}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setUsuarioId('TODOS')}
-                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
-                            >
-                                ✕ Cambiar
-                            </button>
-                        </div>
-                    </div>
-                )}
-
                 {/* Filtros */}
-                <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">🔍 Filtros</h2>
+                <div className="rounded-lg shadow-md p-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">🔍 Filtros</h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
                         {/* Preventista/Usuario Creador */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 👤 Preventista
                             </label>
                             <select
@@ -359,7 +356,7 @@ export default function ReporteProductosVendidos({
 
                         {/* Cliente */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 🏪 Cliente
                             </label>
                             <SearchSelect
@@ -381,7 +378,7 @@ export default function ReporteProductosVendidos({
                         </div>
                         {/* Fecha Desde */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 📅 Desde
                             </label>
                             <input
@@ -394,7 +391,7 @@ export default function ReporteProductosVendidos({
 
                         {/* Fecha Hasta */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 📅 Hasta
                             </label>
                             <input
@@ -405,16 +402,16 @@ export default function ReporteProductosVendidos({
                             />
                         </div>
 
-                        <div className="flex gap-2 items-end">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={handleBuscar}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                                className="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
                             >
                                 🔍 Buscar
                             </button>
                             <button
                                 onClick={handleLimpiar}
-                                className="px-6 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition"
+                                className="p-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition"
                             >
                                 🔄 Limpiar
                             </button>
@@ -425,7 +422,7 @@ export default function ReporteProductosVendidos({
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-zinc-700">
+                <div className="flex gap-2 mb-2 border-b border-gray-200 dark:border-zinc-700">
                     <button
                         onClick={() => setActiveTab('productos')}
                         className={`px-4 py-2 font-medium transition border-b-2 ${activeTab === 'productos'
@@ -448,32 +445,25 @@ export default function ReporteProductosVendidos({
 
                 {/* Resumen - Solo visible en tab de Productos */}
                 {activeTab === 'productos' && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-                            <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">Productos Únicos</p>
-                            <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mb-2">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-2 border border-blue-200 dark:border-blue-800">
+                            <p className="text-sm text-center text-blue-600 dark:text-blue-300 font-medium">Productos Únicos</p>
+                            <p className="text-3xl font-bold text-center text-blue-900 dark:text-blue-100">
                                 {totales.cantidad_productos || 0}
                             </p>
                         </div>
 
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-6 border border-green-200 dark:border-green-800">
-                            <p className="text-sm text-green-600 dark:text-green-300 font-medium">Cantidad Total Vendida</p>
-                            <p className="text-3xl font-bold text-green-900 dark:text-green-100">
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-2 border border-green-200 dark:border-green-800">
+                            <p className="text-sm text-center text-green-600 dark:text-green-300 font-medium">Cantidad Total Vendida</p>
+                            <p className="text-3xl font-bold text-center text-green-900 dark:text-green-100">
                                 {totales.cantidad_total_vendida?.toFixed(2) || '0.00'}
                             </p>
                         </div>
 
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
-                            <p className="text-sm text-purple-600 dark:text-purple-300 font-medium">Total Venta General</p>
-                            <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-2 border border-purple-200 dark:border-purple-800">
+                            <p className="text-sm text-center text-purple-600 dark:text-purple-300 font-medium">Total Venta General</p>
+                            <p className="text-3xl font-bold text-center text-purple-900 dark:text-purple-100">
                                 {formatCurrencyWith2Decimals(totales.total_venta_general || 0)}
-                            </p>
-                        </div>
-
-                        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 rounded-lg p-6 border border-amber-200 dark:border-amber-800">
-                            <p className="text-sm text-amber-600 dark:text-amber-300 font-medium">Precio Promedio</p>
-                            <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">
-                                {formatCurrencyWith2Decimals(totales.precio_promedio_general || 0)}
                             </p>
                         </div>
                     </div>
@@ -500,25 +490,6 @@ export default function ReporteProductosVendidos({
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Total Venta
                                     </th>
-                                    {/* ✅ NUEVO (2026-04-28): Stock ANTERIOR */}
-                                    <th colSpan={3} className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase bg-orange-50 dark:bg-orange-900/20">
-                                        📊 Stock ANTERIOR
-                                    </th>
-                                    {/* ✅ NUEVO (2026-04-28): Stock POSTERIOR */}
-                                    <th colSpan={3} className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase bg-green-50 dark:bg-green-900/20">
-                                        📊 Stock POSTERIOR
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th colSpan={5} className="px-0"></th>
-                                    {/* Headers sub-niveles ANTERIOR */}
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20">Total</th>
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20">Disp.</th>
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20">Res.</th>
-                                    {/* Headers sub-niveles POSTERIOR */}
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20">Total</th>
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20">Disp.</th>
-                                    <th className="px-4 py-2 text-right text-xs font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20">Res.</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
@@ -538,26 +509,6 @@ export default function ReporteProductosVendidos({
                                         </td>
                                         <td className="px-4 py-3 text-sm font-semibold text-green-600 dark:text-green-400 text-right">
                                             {formatCurrencyWith2Decimals(producto.total_venta)}
-                                        </td>
-                                        {/* Stock ANTERIOR */}
-                                        <td className="px-4 py-3 text-sm text-orange-700 dark:text-orange-300 text-right bg-orange-50/50 dark:bg-orange-900/10 font-medium">
-                                            {Number(producto.total_anterior || 0).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-orange-700 dark:text-orange-300 text-right bg-orange-50/50 dark:bg-orange-900/10">
-                                            {Number(producto.disponible_anterior || 0).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-orange-700 dark:text-orange-300 text-right bg-orange-50/50 dark:bg-orange-900/10">
-                                            {Number(producto.reservado_anterior || 0).toFixed(2)}
-                                        </td>
-                                        {/* Stock POSTERIOR */}
-                                        <td className="px-4 py-3 text-sm text-green-700 dark:text-green-300 text-right bg-green-50/50 dark:bg-green-900/10 font-medium">
-                                            {Number(producto.total_posterior || 0).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-green-700 dark:text-green-300 text-right bg-green-50/50 dark:bg-green-900/10">
-                                            {Number(producto.disponible_posterior || 0).toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-green-700 dark:text-green-300 text-right bg-green-50/50 dark:bg-green-900/10">
-                                            {Number(producto.reservado_posterior || 0).toFixed(2)}
                                         </td>
                                     </tr>
                                 ))}
@@ -580,37 +531,37 @@ export default function ReporteProductosVendidos({
                                 <tr>
                                     <th
                                         onClick={() => setVentasOrder(ventasOrder === 'desc' ? 'asc' : 'desc')}
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-600 transition"
+                                        className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-600 transition"
                                     >
                                         <div className="flex items-center gap-2">
-                                            ID
+                                            #Folio V
                                             <span className="text-lg">
                                                 {ventasOrder === 'desc' ? '↓' : '↑'}
                                             </span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                                        # Proforma
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                        #Folio P
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    {/* <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         # Venta
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    </th> */}
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Cliente
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                                        Usuario
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                        Creado por
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Fecha
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Estado Documento
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Estado Entrega
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                         Total
                                     </th>
                                 </tr>
@@ -618,33 +569,33 @@ export default function ReporteProductosVendidos({
                             <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
                                 {ventasOrdenadas.map((venta) => (
                                     <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-zinc-700/50">
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-                                            {venta.id}
+                                        <td className="px-2 py-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            #{venta.id}
                                         </td>
-                                        <td className="px-6 py-4 text-sm">
+                                        <td className="px-2 py-2 text-xs">
                                             <div className="flex flex-col gap-1">
-                                                <span className="font-medium text-purple-600 dark:text-purple-400">
-                                                    {venta.proforma_numero}
+                                                <span className="font-small text-xs text-purple-600 dark:text-purple-400">
+                                                    #{venta.proforma?.id || "-"}
                                                 </span>
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {new Date(venta.proforma_fecha).toLocaleDateString('es-ES')}
+                                                    {venta.proforma?.fecha ? new Date(venta.proforma.fecha).toLocaleDateString('es-ES') : venta.proforma_fecha ? new Date(venta.proforma_fecha).toLocaleDateString('es-ES') : '-'}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-blue-600 dark:text-blue-400">
+                                        {/* <td className="px-2 py-2 text-sm font-medium text-blue-600 dark:text-blue-400">
                                             {venta.numero}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                        </td> */}
+                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">
                                             {venta.cliente}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                        <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-400">
                                             {venta.usuario}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                        <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-400">
                                             {new Date(venta.fecha).toLocaleDateString('es-ES')}
                                         </td>
-                                        <td className="px-6 py-4 text-sm">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        <td className="px-2 py-2 text-xs">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                                                 venta.estado === 'APROBADO'
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                                     : venta.estado === 'PENDIENTE'
@@ -656,32 +607,10 @@ export default function ReporteProductosVendidos({
                                                 {venta.estado}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm">
-                                            {venta.confirmado_en ? (
-                                                <div className="flex flex-col gap-2">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold w-fit ${
-                                                        venta.estado_entrega === 'ENTREGADO'
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                            : venta.estado_entrega === 'NOVEDAD'
-                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                                                            : venta.estado_entrega === 'RECHAZADO'
-                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                                    }`}>
-                                                        {venta.estado_entrega}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => handleAbrirDetalleEntrega(venta)}
-                                                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded text-xs font-medium transition inline-block"
-                                                    >
-                                                        📋 Ver detalles
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-500 dark:text-gray-400 text-xs">Sin confirmar</span>
-                                            )}
+                                        <td className="px-2 py-2 text-xs">
+                                            {venta.estado_logistica_completo?.nombre || '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-semibold text-green-600 dark:text-green-400 text-right">
+                                        <td className="px-2 py-2 text-xs font-semibold text-green-600 dark:text-green-400 text-right">
                                             {formatCurrencyWith2Decimals(venta.total)}
                                         </td>
                                     </tr>

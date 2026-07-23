@@ -115,7 +115,7 @@ export default function VentasPorProducto() {
                 {/* Header */}
                 <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        📊 Reporte de Ventas por Producto
+                        📊 Reporte Ventas por Producto
                     </h1>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         Visualiza todas las ventas de un producto en una fecha o rango específico

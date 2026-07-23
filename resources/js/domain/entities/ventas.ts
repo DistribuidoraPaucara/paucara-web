@@ -10,6 +10,9 @@ import type { Proforma } from './proformas';
 export interface EstadoDocumento extends BaseEntity {
     id: Id;
     nombre: string;
+    codigo?: string;
+    color?: string;
+    icono?: string;
 }
 
 export interface Usuario extends BaseEntity {
