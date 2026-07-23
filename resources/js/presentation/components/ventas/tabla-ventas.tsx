@@ -364,17 +364,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                             <div className="mt-1 text-xs text-orange-600 dark:text-orange-400">Sin asignar</div>
                                                         )}
                                                     </div>
-                                                    <button
-                                                        onClick={() => toggleRowExpanded(Number(venta.id))}
-                                                        className="rounded p-1 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                                        title="Ver detalles de entrega"
-                                                    >
-                                                        {expandedRows.has(Number(venta.id)) ? (
-                                                            <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                                        ) : (
-                                                            <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                                        )}
-                                                    </button>
                                                 </>
                                             ) : (
                                                 <>
@@ -448,6 +437,21 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                             >
                                                 <Printer className="h-4 w-4" />
                                             </button>
+
+                                            {/* Expandir detalles de entrega - Solo si requiere envío */}
+                                            {venta.requiere_envio && (
+                                                <button
+                                                    onClick={() => toggleRowExpanded(Number(venta.id))}
+                                                    className="rounded p-1 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                    title="Ver detalles de entrega"
+                                                >
+                                                    {expandedRows.has(Number(venta.id)) ? (
+                                                        <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
