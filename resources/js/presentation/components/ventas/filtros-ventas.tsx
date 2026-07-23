@@ -18,6 +18,17 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
     const [busquedaCombinada, setBusquedaCombinada] = useState<string>('');
 
+    // 🔍 DEBUG: Mostrar filtros iniciales
+    React.useEffect(() => {
+        console.log('📝 [FiltrosVentas] Filtros iniciales recibidos:', {
+            filtrosIniciales,
+            tiene_valores: Object.values(filtrosIniciales).some(v => v !== undefined && v !== null && v !== ''),
+            valores_activos: Object.fromEntries(
+                Object.entries(filtrosIniciales).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+            ),
+        });
+    }, []);
+
     // Valores por defecto para datosParaFiltros
     const datosSeguros = {
         clientes: datosParaFiltros?.clientes || [],
@@ -55,8 +66,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         console.log('📋 [FiltrosVentas] Datos que llegan del backend:', {
             todos_los_estados: datosSeguros.estados_documento,
             total_estados: datosSeguros.estados_documento.length,
-            estados_con_color: datosSeguros.estados_documento.filter(est => est.color),
-            estados_aprobadas_anuladas: datosSeguros.estados_documento.filter(est => [3, 5].includes(Number(est.id))),
+            estados_con_color: datosSeguros.estados_documento.filter((est) => est.color),
+            estados_aprobadas_anuladas: datosSeguros.estados_documento.filter((est) => [3, 5].includes(Number(est.id))),
         });
     }, [datosSeguros.estados_documento]);
 
@@ -439,11 +450,97 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                     </div>
                 </div>
             )}
+            {/* Botones de acción */}
+            <div className="mt-2 flex flex-wrap items-end justify-between gap-4 border-t border-gray-200 p-2 dark:border-zinc-700">
+                <button
+                    type="button"
+                    onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
+                    }}
+                    className={`font-small rounded-md p-1 text-sm transition-colors ${
+                        filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                    }`}
+                >
+                    📅 Hoy
+                </button>
 
+                {/* Controles de Ordenamiento - Columna 1 */}
+                <div className="flex items-center gap-2">
+                    <div>
+                        <label className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
+                            <ArrowUpDown className="h-3 w-3" />
+                            Columna
+                        </label>
+                        <select
+                            value={filtros.sort_by || 'id'}
+                            onChange={(e) => handleFiltroChange('sort_by', e.target.value || 'id')}
+                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        >
+                            <option value="id">Folio</option>
+                            <option value="created_at">Fecha de creación</option>
+                            <option value="updated_at">Fecha de actualización</option>
+                            <option value="fecha">Fecha de emisión</option>
+                            <option value="numero">Número de venta</option>
+                            <option value="total">Total</option>
+                            <option value="estado">Estado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
+                            <ArrowUpDown className="h-3 w-3" />
+                            Ordenar por
+                        </label>
+                        <select
+                            value={filtros.sort_order || 'desc'}
+                            onChange={(e) => handleFiltroChange('sort_order', (e.target.value as 'asc' | 'desc') || 'desc')}
+                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        >
+                            <option value="desc">↓ Descendente (más reciente)</option>
+                            <option value="asc">↑ Ascendente (más antiguo)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
+                        className="inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                    >
+                        <Filter className="mr-1 h-4 w-4" />
+                        {mostrarFiltrosAvanzados ? 'Ocultar filtros' : 'Más filtros'}
+                    </button>
+                    {hayFiltrosActivos && (
+                        <button
+                            type="button"
+                            onClick={limpiarFiltros}
+                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                        >
+                            <X className="mr-1 h-4 w-4" />
+                            Limpiar
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            console.log('🔘 [filtros-ventas] Botón Buscar clickeado');
+                            handleBuscar();
+                        }}
+                        className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-2 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                    >
+                        <Search className="mr-1 h-4 w-4" />
+                        Buscar
+                    </button>
+                </div>
+            </div>
             {/* ✅ NUEVO: Mostrar filtros seleccionados activos */}
             {obtenerFiltrosActivos().length > 0 && (
-                <div className="mt-4 border-t border-gray-200 pt-4 dark:border-zinc-700">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="border-t border-gray-200 dark:border-zinc-700 mt-2">
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros activos:</span>
                         {obtenerFiltrosActivos().map((filtroActivo) => (
                             <div
@@ -464,97 +561,6 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                     </div>
                 </div>
             )}
-
-            {/* Botones de acción */}
-            <div className="flex flex-wrap items-end justify-between gap-4 mt-2 border-t border-gray-200 p-2 dark:border-zinc-700">
-                <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
-                    >
-                        <Filter className="mr-1 h-4 w-4" />
-                        {mostrarFiltrosAvanzados ? 'Ocultar filtros' : 'Más filtros'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            const today = new Date().toISOString().split('T')[0];
-                            handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
-                        }}
-                        className={`rounded-md p-1 text-sm font-small transition-colors ${
-                            filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
-                                ? 'bg-blue-600 text-white'
-                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
-                        }`}
-                    >
-                        📅 Hoy
-                    </button>
-                    {hayFiltrosActivos && <span className="text-sm text-gray-500 dark:text-gray-400">Filtros aplicados</span>}
-                </div>
-
-                {/* Controles de Ordenamiento - Columna 1 */}
-                <div className="flex items-center gap-2">
-                    <div>
-                        <label className="flex items-center gap-1 text-xs font-small text-gray-700 dark:text-gray-300">
-                            <ArrowUpDown className="h-3 w-3" />
-                            Ordenar por
-                        </label>
-                        <select
-                            value={filtros.sort_by || 'id'}
-                            onChange={(e) => handleFiltroChange('sort_by', e.target.value || 'id')}
-                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                        >
-                            <option value="id">Folio</option>
-                            <option value="created_at">Fecha de creación</option>
-                            <option value="updated_at">Fecha de actualización</option>
-                            <option value="fecha">Fecha de emisión</option>
-                            <option value="numero">Número de venta</option>
-                            <option value="total">Total</option>
-                            <option value="estado">Estado</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="flex items-center gap-1 text-xs font-small text-gray-700 dark:text-gray-300">
-                            <ArrowUpDown className="h-3 w-3" />
-                            Ordenar por
-                        </label>
-                        <select
-                            value={filtros.sort_order || 'desc'}
-                            onChange={(e) => handleFiltroChange('sort_order', (e.target.value as 'asc' | 'desc') || 'desc')}
-                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                        >
-                            <option value="desc">↓ Descendente (más reciente)</option>
-                            <option value="asc">↑ Ascendente (más antiguo)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {hayFiltrosActivos && (
-                        <button
-                            type="button"
-                            onClick={limpiarFiltros}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
-                        >
-                            <X className="mr-1 h-4 w-4" />
-                            Limpiar
-                        </button>
-                    )}
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            console.log('🔘 [filtros-ventas] Botón Buscar clickeado');
-                            handleBuscar();
-                        }}
-                        className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
-                    >
-                        <Search className="mr-1 h-4 w-4" />
-                        🔍 Buscar
-                    </button>
-                </div>
-            </div>
         </div>
     );
 }

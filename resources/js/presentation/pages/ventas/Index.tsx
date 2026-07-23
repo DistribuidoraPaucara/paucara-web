@@ -34,6 +34,14 @@ export default function VentasIndex() {
     const ventas = props.ventas;
     console.log('🚀 ~ file: index.tsx:26 ~ VentasIndex ~ ventas:', ventas);
     const filtros = props.filtros || {};
+    console.log('🔍 [Index.tsx] Filtros que llegan del backend:', {
+        filtros_raw: props.filtros,
+        filtros_parsed: filtros,
+        tiene_filtros_activos: Object.values(filtros).some(v => v !== undefined && v !== null && v !== ''),
+        filtros_activos: Object.fromEntries(
+            Object.entries(filtros).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        ),
+    });
     const estadisticas = props.estadisticas;
     const datosParaFiltros = props.datosParaFiltros || {
         clientes: [],
@@ -83,26 +91,10 @@ export default function VentasIndex() {
                     </div>
                 )}
 
-                {/* Alertas de stock bajo */}
-                {/* <StockBajoAlerts /> */}
-
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Ventas</h1>
-                        {/* <div className="mt-2 space-y-1">
-                            <p className="text-gray-600 dark:text-gray-400">
-                                {ventas.total > 0
-                                    ? `${ventas.from}-${ventas.to} de ${ventas.total} ventas`
-                                    : 'No se encontraron ventas'
-                                }
-                            </p>
-                            {ventas.total > 0 && (
-                                <p className="text-sm text-gray-500 dark:text-gray-500">
-                                    📄 Página {ventas.current_page} de {ventas.last_page} ({ventas.per_page} por página)
-                                </p>
-                            )}
-                        </div> */}
                     </div>
 
                     <div className="flex items-center gap-1">
