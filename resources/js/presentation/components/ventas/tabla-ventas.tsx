@@ -376,10 +376,20 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                     </TableCell>
 
                                     <TableCell className="px-2 py-2">
-                                        <div className="text-xs text-gray-900 dark:text-white">{venta.preventista?.name || 'Sin preventista'}</div>
+                                        <div
+                                            className="text-xs text-gray-900 dark:text-white truncate"
+                                            title={venta.preventista?.name || 'Sin preventista'}
+                                        >
+                                            {(venta.preventista?.name || 'Sin preventista').substring(0, 15)}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="px-2 py-2">
-                                        <div className="text-xs text-gray-900 dark:text-white">{venta.usuario?.name || 'Sin usuario'}</div>
+                                        <div
+                                            className="text-xs text-gray-900 dark:text-white truncate"
+                                            title={venta.usuario?.name || 'Sin usuario'}
+                                        >
+                                            {(venta.usuario?.name || 'Sin usuario').substring(0, 15)}
+                                        </div>
                                     </TableCell>
 
                                     {/* ✅ NUEVO: Fecha de Creación */}
