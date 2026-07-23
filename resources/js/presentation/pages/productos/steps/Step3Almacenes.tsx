@@ -400,38 +400,51 @@ export default function Step3Almacenes({
                             Selecciona UN sector para TODOS los lotes de este producto
                         </p>
 
-                        <div>
-                            <Label className="text-xs font-semibold text-foreground block mb-2">Sector *</Label>
-                            <SearchSelect
-                                id="sector-global"
-                                placeholder="Seleccione un sector"
-                                value={globalSectorId ? String(globalSectorId) : ''}
-                                options={Object.values(sectoresOptions).flat()}
-                                onChange={(value) => {
-                                    const sectorId = value ? Number(value) : undefined;
-                                    setGlobalSectorId(sectorId);
+                        <div className="space-y-3">
+                            <div>
+                                <Label className="text-xs font-semibold text-foreground block mb-2">Sector *</Label>
+                                <SearchSelect
+                                    id="sector-global"
+                                    placeholder="Seleccione un sector"
+                                    value={globalSectorId ? String(globalSectorId) : ''}
+                                    options={Object.values(sectoresOptions).flat()}
+                                    onChange={(value) => {
+                                        // ⚠️ Solo guardar en estado local, NO aplicar automáticamente
+                                        const sectorId = value ? Number(value) : undefined;
+                                        setGlobalSectorId(sectorId);
+                                    }}
+                                    allowClear={true}
+                                />
+                            </div>
 
-                                    // Aplicar a todos los almacenes
-                                    if (data.almacenes && data.almacenes.length > 0) {
+                            {/* Botón para aplicar sector */}
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                    // Aplicar sector solo cuando el usuario hace clic
+                                    if (globalSectorId && (data.almacenes || []).length > 0) {
                                         const updated = data.almacenes.map(a => ({
                                             ...a,
-                                            sector_id: sectorId
+                                            sector_id: globalSectorId
                                         }));
                                         setData('almacenes', updated);
                                     }
                                 }}
-                                allowClear={true}
-                            />
-                        </div>
+                                disabled={!globalSectorId || !data.almacenes || data.almacenes.length === 0}
+                            >
+                                ✨ Aplicar sector a todos los lotes
+                            </Button>
 
-                        {/* Resumen de aplicación */}
-                        {globalSectorId && (data.almacenes || []).length > 0 && (
-                            <div className="mt-4 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/30">
-                                <p className="text-xs text-green-700 dark:text-green-300">
-                                    ✅ Sector aplicado a <span className="font-bold">{(data.almacenes || []).length}</span> lote{(data.almacenes || []).length !== 1 ? 's' : ''}
-                                </p>
-                            </div>
-                        )}
+                            {/* Resumen de aplicación */}
+                            {globalSectorId && (data.almacenes || []).length > 0 && (
+                                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+                                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                                        ℹ️ Presiona "Aplicar sector" para asignar a <span className="font-bold">{(data.almacenes || []).length}</span> lote{(data.almacenes || []).length !== 1 ? 's' : ''}, luego guarda el formulario.
+                                    </p>
+                                </div>
+                            )}
                     </div>
                 </TabsContent>
             </Tabs>
