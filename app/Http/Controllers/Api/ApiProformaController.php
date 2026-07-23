@@ -3537,6 +3537,7 @@ class ApiProformaController extends Controller
                 }
 
                 // Crear detalles de la venta desde los detalles de la proforma
+                $detallesCreados = [];  // ✅ NUEVO: Mapear producto_id -> detalle_venta_id para registro posterior
                 foreach ($proforma->detalles as $detalleProforma) {
                     // ✅ NUEVO: Copiar combo_items_seleccionados si existen (mismo procesamiento que VentaService)
                     $comboItemsSeleccionados = null;
@@ -3551,7 +3552,7 @@ class ApiProformaController extends Controller
                         }, $detalleProforma->combo_items_seleccionados);
                     }
 
-                    $venta->detalles()->create([
+                    $detalleVenta = $venta->detalles()->create([
                         'producto_id'               => $detalleProforma->producto_id,
                         'cantidad'                  => $detalleProforma->cantidad,
                         'precio_unitario'           => $detalleProforma->precio_unitario,
@@ -3561,6 +3562,9 @@ class ApiProformaController extends Controller
                         'tipo_precio_nombre'        => $detalleProforma->tipo_precio_nombre,
                         'combo_items_seleccionados' => $comboItemsSeleccionados,
                     ]);
+
+                    // ✅ NUEVO: Guardar mapeo de producto_id -> detalle_venta_id
+                    $detallesCreados[$detalleProforma->producto_id] = $detalleVenta->id;
                 }
 
                 // Marcar la proforma como convertida
@@ -3570,7 +3574,35 @@ class ApiProformaController extends Controller
 
                 // ✅ COMPLETAMENTE ATÓMICO: Validar, crear reservas y consumir en una sola transacción
                 // Incluye: validación de expiración + validación de stock + creación de reservas + consumo + registro en movimientos_inventario
-                $this->validarYConsumirReservas($proforma, $numeroVenta, $venta->id);
+                $resultadoConsumo = $this->validarYConsumirReservas($proforma, $numeroVenta, $venta->id);
+
+                // ✅ NUEVO: Registrar en venta_por_lotes CON detalle_venta_id ahora que los detalles existen
+                if ($resultadoConsumo['success'] && !empty($resultadoConsumo['consumo_info'])) {
+                    foreach ($resultadoConsumo['consumo_info'] as $consumo) {
+                        \App\Models\VentaPorLote::create([
+                            'venta_id' => $consumo['venta_id'],
+                            'detalle_venta_id' => $detallesCreados[$consumo['producto_id']] ?? null,  // ✅ MAPEO: Usar detalle_venta_id creado
+                            'producto_id' => $consumo['producto_id'],
+                            'stock_producto_id' => $consumo['stock_producto_id'],
+                            'cantidad_consumida' => $consumo['cantidad_consumida'],
+                            'combo_padre_id' => null,  // Null: no hay combos en proforma-to-venta conversion
+                            'fecha_vencimiento' => $consumo['fecha_vencimiento'],
+                        ]);
+
+                        Log::debug('✅ [convertirAVenta] Registro en venta_por_lotes con detalle_venta_id', [
+                            'venta_id' => $consumo['venta_id'],
+                            'detalle_venta_id' => $detallesCreados[$consumo['producto_id']] ?? null,
+                            'producto_id' => $consumo['producto_id'],
+                            'stock_producto_id' => $consumo['stock_producto_id'],
+                            'cantidad_consumida' => $consumo['cantidad_consumida'],
+                        ]);
+                    }
+
+                    Log::info('✅ [convertirAVenta] venta_por_lotes registrada completa', [
+                        'venta_id' => $venta->id,
+                        'cantidad_registros' => count($resultadoConsumo['consumo_info']),
+                    ]);
+                }
 
                 // ✅ NUEVO: Registrar movimiento de caja para pagos inmediatos (anticipados) y créditos
                 // Se registra para políticas: ANTICIPADO_100, MEDIO_MEDIO, CREDITO
@@ -5795,10 +5827,10 @@ class ApiProformaController extends Controller
      * 4. Validación + Creación de reservas + Consumo todo en una transacción
      * 5. Se registran correctamente en movimientos_inventario
      */
-    private function validarYConsumirReservas(Proforma $proforma, string $numeroVenta, int $ventaId): void
+    private function validarYConsumirReservas(Proforma $proforma, string $numeroVenta, int $ventaId): array
     {
         // ✅ CRÍTICO: Usar transacción + lock para evitar race conditions
-        DB::transaction(function () use ($proforma, $numeroVenta, $ventaId) {
+        return DB::transaction(function () use ($proforma, $numeroVenta, $ventaId) {
             // 1️⃣ LOCK las reservas de esta proforma
             $reservasActivas = $proforma->reservas()
                 ->where('estado', 'ACTIVA')
@@ -5880,7 +5912,14 @@ class ApiProformaController extends Controller
                 'cantidad_consumida'             => $resultadoConsumo['cantidad_consumida'] ?? 0,
                 'reservas_consumidas'            => $resultadoConsumo['reservas_consumidas'] ?? 0,
                 'movimientos_registrados'        => 'automáticamente en movimientos_inventario',
+                'registros_venta_por_lotes_pendientes' => count($resultadoConsumo['consumo_info'] ?? []),
             ]);
+
+            // ✅ Retornar información de consumo para registrar en venta_por_lotes después
+            return [
+                'success' => true,
+                'consumo_info' => $resultadoConsumo['consumo_info'] ?? [],
+            ];
         });
     }
 

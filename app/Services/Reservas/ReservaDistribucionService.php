@@ -651,6 +651,7 @@ class ReservaDistribucionService
         try {
             $cantidad_consumida = 0;
             $reservas_consumidas = 0;
+            $consumoInfo = [];  // ✅ NUEVO: Acumular información de consumo para registrar después
 
             // Obtener TODAS las reservas activas de esta proforma
             $reservas = ReservaProforma::where('proforma_id', $proforma->id)
@@ -747,19 +748,18 @@ class ReservaDistribucionService
                                 numeroDocumento: $numeroVenta  // ✅ NUEVO (2026-06-09)
                             );
 
-                            // ✅ NUEVO: Registrar en venta_por_lotes si se proporciona ventaId
+                            // ✅ NUEVO: Acumular información de consumo para registrar DESPUÉS de crear detalles_venta
+                            // Esto permite mapear detalle_venta_id correctamente en proforma-to-venta conversion
                             if ($ventaId) {
-                                \App\Models\VentaPorLote::create([
+                                $consumoInfo[] = [
                                     'venta_id' => $ventaId,
-                                    'detalle_venta_id' => null,  // Null para proforma conversion (sin mapeo directo)
                                     'producto_id' => $producto_id,
                                     'stock_producto_id' => $stock->id,
                                     'cantidad_consumida' => $cantidad,
-                                    'combo_padre_id' => null,  // Null: la proforma puede tener combos pero aquí consumimos componentes
                                     'fecha_vencimiento' => $stock->fecha_vencimiento,
-                                ]);
+                                ];
 
-                                Log::debug('📦 [ReservaDistribucionService] Registro en venta_por_lotes', [
+                                Log::debug('📦 [ReservaDistribucionService] Consumo acumulado para registro posterior', [
                                     'venta_id' => $ventaId,
                                     'producto_id' => $producto_id,
                                     'stock_producto_id' => $stock->id,
@@ -802,6 +802,7 @@ class ReservaDistribucionService
                 'numero_venta' => $numeroVenta,
                 'cantidad_total_consumida' => $cantidad_consumida,
                 'reservas_consumidas' => $reservas_consumidas,
+                'registros_venta_por_lotes_pendientes' => count($consumoInfo),
             ]);
 
             return [
@@ -809,6 +810,7 @@ class ReservaDistribucionService
                 'cantidad_consumida' => $cantidad_consumida,
                 'reservas_consumidas' => $reservas_consumidas,
                 'error' => null,
+                'consumo_info' => $consumoInfo,  // ✅ NUEVO: Retornar información para registrar después
             ];
 
         } catch (\Exception $e) {
