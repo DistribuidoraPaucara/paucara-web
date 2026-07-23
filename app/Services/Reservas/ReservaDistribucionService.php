@@ -646,7 +646,7 @@ class ReservaDistribucionService
      * @return array Resultado de consumo: ['success' => bool, 'cantidad_consumida' => float, 'reservas_consumidas' => int, 'error' => string|null]
      * @throws \Exception Si hay error en proceso
      */
-    public function consumirReservasAgrupadas(Proforma $proforma, string $numeroVenta): array
+    public function consumirReservasAgrupadas(Proforma $proforma, string $numeroVenta, ?int $ventaId = null): array
     {
         try {
             $cantidad_consumida = 0;
@@ -746,6 +746,27 @@ class ReservaDistribucionService
                                 ],
                                 numeroDocumento: $numeroVenta  // ✅ NUEVO (2026-06-09)
                             );
+
+                            // ✅ NUEVO: Registrar en venta_por_lotes si se proporciona ventaId
+                            if ($ventaId) {
+                                \App\Models\VentaPorLote::create([
+                                    'venta_id' => $ventaId,
+                                    'detalle_venta_id' => null,  // Null para proforma conversion (sin mapeo directo)
+                                    'producto_id' => $producto_id,
+                                    'stock_producto_id' => $stock->id,
+                                    'cantidad_consumida' => $cantidad,
+                                    'combo_padre_id' => null,  // Null: la proforma puede tener combos pero aquí consumimos componentes
+                                    'fecha_vencimiento' => $stock->fecha_vencimiento,
+                                ]);
+
+                                Log::debug('📦 [ReservaDistribucionService] Registro en venta_por_lotes', [
+                                    'venta_id' => $ventaId,
+                                    'producto_id' => $producto_id,
+                                    'stock_producto_id' => $stock->id,
+                                    'cantidad_consumida' => $cantidad,
+                                    'proforma_id' => $proforma->id,
+                                ]);
+                            }
 
                             Log::info('✅ [ReservaDistribucionService] Movimiento registrado con validaciones', [
                                 'reserva_id' => $reserva->id,

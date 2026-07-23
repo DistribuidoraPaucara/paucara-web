@@ -3570,7 +3570,7 @@ class ApiProformaController extends Controller
 
                 // ✅ COMPLETAMENTE ATÓMICO: Validar, crear reservas y consumir en una sola transacción
                 // Incluye: validación de expiración + validación de stock + creación de reservas + consumo + registro en movimientos_inventario
-                $this->validarYConsumirReservas($proforma, $numeroVenta);
+                $this->validarYConsumirReservas($proforma, $numeroVenta, $venta->id);
 
                 // ✅ NUEVO: Registrar movimiento de caja para pagos inmediatos (anticipados) y créditos
                 // Se registra para políticas: ANTICIPADO_100, MEDIO_MEDIO, CREDITO
@@ -5795,10 +5795,10 @@ class ApiProformaController extends Controller
      * 4. Validación + Creación de reservas + Consumo todo en una transacción
      * 5. Se registran correctamente en movimientos_inventario
      */
-    private function validarYConsumirReservas(Proforma $proforma, string $numeroVenta): void
+    private function validarYConsumirReservas(Proforma $proforma, string $numeroVenta, int $ventaId): void
     {
         // ✅ CRÍTICO: Usar transacción + lock para evitar race conditions
-        DB::transaction(function () use ($proforma, $numeroVenta) {
+        DB::transaction(function () use ($proforma, $numeroVenta, $ventaId) {
             // 1️⃣ LOCK las reservas de esta proforma
             $reservasActivas = $proforma->reservas()
                 ->where('estado', 'ACTIVA')
@@ -5862,7 +5862,7 @@ class ApiProformaController extends Controller
             // 5️⃣ CONSUMIR RESERVAS INMEDIATAMENTE (dentro de la misma transacción)
             // Esto garantiza atomicidad: validación + consumo = operación única
             $reservaService = new ReservaDistribucionService();
-            $resultadoConsumo = $reservaService->consumirReservasAgrupadas($proforma, $numeroVenta);
+            $resultadoConsumo = $reservaService->consumirReservasAgrupadas($proforma, $numeroVenta, $ventaId);
 
             if (!$resultadoConsumo['success']) {
                 Log::error('❌ [validarYConsumirReservas] Error al consumir reservas', [
