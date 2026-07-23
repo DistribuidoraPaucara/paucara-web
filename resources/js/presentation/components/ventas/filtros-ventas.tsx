@@ -108,7 +108,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     };
 
     // Detecta si el input es un número puro o contiene letras (para numero de venta)
-    const handleBusquedaCombinada = (valor: string, aplicarAhora: boolean = false) => {
+    const handleBusquedaCombinada = (valor: string) => {
         setBusquedaCombinada(valor);
 
         const nuevosFiltros = { ...filtros };
@@ -127,15 +127,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         }
 
         setFiltros(nuevosFiltros);
-
-        if (onFiltrosChange) {
-            onFiltrosChange(nuevosFiltros);
-        }
-
-        // Si se llama con aplicarAhora=true, envía al backend inmediatamente
-        if (aplicarAhora) {
-            aplicarFiltros(nuevosFiltros);
-        }
+        // ⚠️ NO llamamos a onFiltrosChange aquí - solo actualizamos estado local
     };
 
     const aplicarFiltros = (filtrosAplicar?: FiltrosVentas) => {
@@ -245,11 +237,12 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                         onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
-                                handleBusquedaCombinada(busquedaCombinada, true);
+                                console.log('⌨️ [filtros-ventas] Enter presionado en búsqueda, aplicando filtros');
+                                handleBuscar();
                             }
                         }}
                         placeholder="ID o Número"
-                        title="Buscar por ID (58, 100) o Número (VEN20260128-0010)"
+                        title="Buscar por ID (58, 100) o Número (VEN20260128-0010) - Presiona Enter o Click Buscar"
                         // icon={<Hash className="h-4 w-4" />}
                     />
                 </div>
@@ -552,9 +545,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                     <button
                         type="button"
                         onClick={() => {
-                            if (busquedaCombinada) {
-                                handleBusquedaCombinada(busquedaCombinada, false);
-                            }
+                            console.log('🔘 [filtros-ventas] Botón Buscar clickeado');
                             handleBuscar();
                         }}
                         className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
