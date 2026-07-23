@@ -25,7 +25,7 @@ use Exception;
  * CARACTERÍSTICAS:
  * ✅ FIFO: Ordena por fecha_vencimiento (vence primero) + id (creado primero)
  * ✅ Almacén: Siempre usa empresa.almacen_id (del usuario autenticado)
- * ✅ Stock Negativo: Permitido para CREDITO (promesas de pago)
+ * ✅ Stock Negativo: Permitido SOLO para FARMACIA (venta sin stock)
  * ✅ Transacciones: DB::transaction para atomicidad
  * ✅ Auditoría: Logs completos de cada operación
  * ✅ Movimientos: Registra ANTES/DESPUÉS correctamente
@@ -139,14 +139,14 @@ class VentaDistribucionService
      * 1. Validar datos
      * 2. Para cada producto:
      *    a. Obtener stocks con FIFO (vencimiento cercano primero)
-     *    b. Validar si hay disponible (excepto CREDITO o farmacia con producto sin stock)
+     *    b. Validar si hay disponible (excepto farmacia con producto sin stock)
      *    c. Consumir según FIFO, recolectando detalles de cada lote
      *    d. Registrar UN SOLO movimiento AGRUPADO por producto con detalles de lotes en JSON
      * 3. Retornar movimientos creados
      *
      * @param array $detalles Array de productos: [['producto_id' => X, 'cantidad' => Y], ...]
      * @param string $numeroVenta Referencia para movimiento (ej: VEN20260211-0001)
-     * @param bool $permitirStockNegativo Para CREDITO (permite stock negativo)
+     * @param bool $permitirStockNegativo DESUSADO (ahora solo se usa $esFarmacia)
      * @param bool $esFarmacia Permite venta sin stock para productos configurados (2026-05-08)
      * @return array Movimientos creados en movimientos_inventario (AGRUPADOS por producto)
      * @throws Exception Si stock insuficiente o error en proceso
@@ -251,18 +251,6 @@ class VentaDistribucionService
                         "Stock insuficiente para producto ID {$productoId}: " .
                         "Disponible: {$stockTotal}, Necesario: {$cantidadAConsumir}"
                     );
-                }
-
-                // ✅ Log si es CREDITO (stock negativo permitido)
-                if ($permitirStockNegativo && $stockTotal < $cantidadAConsumir) {
-                    Log::info('ℹ️ [VentaDistribucionService] Stock negativo permitido (CREDITO)', [
-                        'producto_id' => $productoId,
-                        'cantidad_solicitada' => $cantidad,
-                        'cantidad_a_consumir' => $cantidadAConsumir,
-                        'stock_disponible' => $stockTotal,
-                        'numero_venta' => $numeroVenta,
-                        'conversion_aplicada' => $conversionAplicada,
-                    ]);
                 }
 
                 // ✅ NUEVO (2026-05-08): Log si es FARMACIA con producto sin stock

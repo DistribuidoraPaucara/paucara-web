@@ -72,49 +72,45 @@ class VentaService
         $dto->validarDetalles();
 
         // 2. Validar stock ANTES de la transacción
-        // ✅ MODIFICADO: NO validar stock para CREDITO (son promesas de pago, no ventas inmediatas)
-        $esCREDITO = strtoupper($dto->politica_pago ?? '') === 'CREDITO';
-
-        // ✅ NUEVO (2026-05-08): Obtener si la empresa es farmacia
+        // ✅ CORREGIDO (2026-07-24): CRÉDITO debe validar stock como cualquier venta
+        // Solo FARMACIAS pueden vender sin stock disponible
         $esFarmacia = (bool) auth()->user()?->empresa?->es_farmacia;
 
         // COMBO: expandir antes de validar y decrementar stock.
         // $dto->detalles se preserva sin cambios para DetalleVenta.
         $detallesParaStock = $this->stockService->expandirCombos($dto->detalles);
 
-        if (!$esCREDITO) {
-            Log::info('🔄 [VentaService::crear] Validando stock disponible con VentaDistribucionService', [
-                'detalles_count' => count($dto->detalles),
-                'politica_pago'  => $dto->politica_pago,
-                'almacen_id'     => auth()->user()?->empresa?->almacen_id ?? 1,
-                'es_farmacia'    => $esFarmacia,
-            ]);
+        Log::info('🔄 [VentaService::crear] Validando stock disponible con VentaDistribucionService', [
+            'detalles_count' => count($dto->detalles),
+            'politica_pago'  => $dto->politica_pago,
+            'almacen_id'     => auth()->user()?->empresa?->almacen_id ?? 1,
+            'es_farmacia'    => $esFarmacia,
+        ]);
 
-            // ✅ NUEVO (2026-02-11): Usar VentaDistribucionService para validar
-            // ✅ MODIFICADO (2026-05-08): Pasar parámetro es_farmacia para permitir venta sin stock
-            $validacionStock = $this->ventaDistribucionService->validarDisponible(
-                $detallesParaStock,
-                $esFarmacia
-            );
+        // ✅ NUEVO (2026-02-11): Usar VentaDistribucionService para validar
+        // ✅ CORREGIDO (2026-07-24): SIEMPRE validar stock (CRÉDITO no es excepción)
+        // Solo permitir venta sin stock si es FARMACIA
+        $validacionStock = $this->ventaDistribucionService->validarDisponible(
+            $detallesParaStock,
+            $esFarmacia
+        );
 
-            if (! $validacionStock['valido']) {
-                Log::warning('❌ [VentaService::crear] Stock insuficiente', [
-                    'detalles' => $validacionStock['detalles'],
-                ]);
-                throw StockInsuficientException::create($validacionStock['detalles']);
-            }
-
-            Log::info('✅ [VentaService::crear] Stock validado exitosamente con VentaDistribucionService');
-        } else {
-            Log::info('⏭️ [VentaService::crear] Saltando validación de stock (CREDITO permite stock negativo)', [
+        if (! $validacionStock['valido']) {
+            Log::warning('❌ [VentaService::crear] Stock insuficiente', [
+                'detalles' => $validacionStock['detalles'],
                 'politica_pago' => $dto->politica_pago,
             ]);
+            throw StockInsuficientException::create($validacionStock['detalles']);
         }
 
+        Log::info('✅ [VentaService::crear] Stock validado exitosamente', [
+            'politica_pago' => $dto->politica_pago,
+            'es_farmacia' => $esFarmacia,
+        ]);
+
         // 3. Crear dentro de transacción
-        // ✅ NUEVO: Pasar $esCREDITO al closure para permitir stock negativo
-        // ✅ NUEVO (2026-05-08): Pasar $esFarmacia para permitir venta sin stock en farmacia
-        $venta = $this->transaction(function () use ($dto, $cajaId, $esCREDITO, $detallesParaStock, $esFarmacia) {
+        // ✅ CORREGIDO (2026-07-24): CRÉDITO ahora valida stock como cualquier venta
+        $venta = $this->transaction(function () use ($dto, $cajaId, $detallesParaStock, $esFarmacia) {
             Log::debug('🔄 [VentaService::crear] Iniciando transacción', [
                 'proforma_id' => $dto->proforma_id,
             ]);
@@ -386,7 +382,7 @@ class VentaService
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
                 'politica_pago' => $dto->politica_pago,
-                'permite_stock_negativo' => $esCREDITO,
+                'es_farmacia' => $esFarmacia,
             ]);
 
             // ✅ NUEVO (2026-07-24): Enriquecer detalles con detalle_venta_id y combo_padre_id para venta_por_lotes
@@ -409,11 +405,13 @@ class VentaService
                 ]);
             }, $detallesParaStock);
 
+            // ✅ CORREGIDO (2026-07-24): CRÉDITO NO permite stock negativo (valida como cualquier venta)
+            // Solo FARMACIA permite venta sin stock
             $movimientosStock = $this->ventaDistribucionService->consumirStock(
                 $detallesParaStockEnriquecidos,  // ✅ MODIFICADO: Usar detalles enriquecidos
                 $venta->numero,
                 ventaId: $venta->id,                 // ✅ NUEVO (2026-06-29): Pasar venta_id para referencia_id
-                permitirStockNegativo: $esCREDITO,  // ✅ Permite stock negativo para CREDITO
+                permitirStockNegativo: false,        // ✅ CORREGIDO: CRÉDITO NO permite stock negativo
                 esFarmacia: $esFarmacia              // ✅ NUEVO (2026-05-08): Permite venta sin stock en farmacia
             );
 
