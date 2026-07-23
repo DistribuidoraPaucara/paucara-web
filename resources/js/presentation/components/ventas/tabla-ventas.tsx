@@ -748,7 +748,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                 <ConfirmacionesModal
                     open={showConfirmacionesModal}
                     onOpenChange={setShowConfirmacionesModal}
-                    confirmaciones={selectedVentaForConfirmaciones.entregaConfirmacion ? [selectedVentaForConfirmaciones.entregaConfirmacion] : []}
+                    confirmaciones={selectedVentaForConfirmaciones.confirmaciones || []}
                     venta={selectedVentaForConfirmaciones}
                 />
             )}

@@ -382,6 +382,42 @@ class VentaController extends Controller
                             'created_at'              => $firstConfirmacion->created_at ?? null,
                         ];
                     })(),
+                    // ✅ NUEVO: Array completo de confirmaciones con relaciones (para modal en tabla)
+                    'confirmaciones'             => $venta->confirmaciones ? $venta->confirmaciones->map(function ($conf) {
+                        return [
+                            'id'                      => $conf->id,
+                            'venta_id'                => $conf->venta_id,
+                            'entrega_id'              => $conf->entrega_id,
+                            'tipo_entrega'            => $conf->tipo_entrega ?? null,
+                            'tipo_novedad'            => $conf->tipo_novedad ?? null,
+                            'tuvo_problema'           => $conf->tuvo_problema ?? false,
+                            'tienda_abierta'          => $conf->tienda_abierta,
+                            'cliente_presente'        => $conf->cliente_presente,
+                            'motivo_rechazo'          => $conf->motivo_rechazo ?? null,
+                            'observaciones_logistica' => $conf->observaciones_logistica ?? null,
+                            'fotos'                   => $conf->fotos ? json_decode($conf->fotos, true) : [],
+                            'firma_digital_url'       => $conf->firma_digital_url ?? null,
+                            'foto_comprobante'        => $conf->foto_comprobante ?? null,
+                            'estado_pago'             => $conf->estado_pago ?? null,
+                            'total_dinero_recibido'   => (float) ($conf->total_dinero_recibido ?? 0),
+                            'monto_recibido'          => (float) ($conf->monto_recibido ?? 0),
+                            'monto_pendiente'         => (float) ($conf->monto_pendiente ?? 0),
+                            'desglose_pagos'          => $conf->desglose_pagos ? json_decode($conf->desglose_pagos, true) : [],
+                            'confirmado_en'           => $conf->confirmado_en ?? null,
+                            'created_at'              => $conf->created_at ?? null,
+                            'updated_at'              => $conf->updated_at ?? null,
+                            'confirmadoPor'           => $conf->confirmadoPor ? [
+                                'id'   => $conf->confirmadoPor->id,
+                                'name' => $conf->confirmadoPor->name,
+                                'email' => $conf->confirmadoPor->email,
+                            ] : null,
+                            'tipoPago'                => $conf->tipoPago ? [
+                                'id'     => $conf->tipoPago->id,
+                                'nombre' => $conf->tipoPago->nombre,
+                                'codigo' => $conf->tipoPago->codigo,
+                            ] : null,
+                        ];
+                    })->toArray() : [],
                     // ✅ NUEVO (2026-03-01): Relación con preventista (vendedor responsable)
                     'preventista_id'             => $venta->preventista_id,
                     'preventista'                => $venta->preventista ? [
