@@ -748,8 +748,8 @@ function Step2PreciosCodigos(props: Step2Props) {
     }, [props.precioCosto, tipos_precio, setPrecios]);
 
     return (
-        <div className="p-4 w-full">
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div>
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 mt-2">
                 <div className={`rounded border border-border bg-secondary p-3 ${compactCodigos ? 'hidden' : ''}`}>
                     <div className="mb-3 flex items-center justify-between">
                         <div className="text-sm font-medium text-foreground">Elegir tipos de precio a usar</div>
@@ -770,11 +770,10 @@ function Step2PreciosCodigos(props: Step2Props) {
                         <table className="w-full border-collapse text-sm">
                             <thead>
                                 <tr className="border-b border-border bg-muted">
-                                    <th className="px-2 py-2 text-left font-medium text-foreground w-8"></th>
-                                    <th className="px-2 py-2 text-left font-medium text-foreground w-8">Icono</th>
-                                    <th className="px-2 py-2 text-left font-medium text-foreground">Tipo de Precio</th>
-                                    <th className="px-2 py-2 text-center font-medium text-foreground w-16">%</th>
-                                    <th className="px-2 py-2 text-left font-medium text-foreground">Monto (BOB)</th>
+                                    <th className="px-2 py-2 text-center font-medium text-foreground"></th>
+                                    <th className="px-2 py-2 text-left font-medium text-foreground">Categoria</th>
+                                    <th className="px-2 py-2 text-left font-medium text-foreground">%Ganancia</th>
+                                    <th className="px-2 py-2 text-center font-medium text-foreground">Monto (BOB)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -812,7 +811,7 @@ function Step2PreciosCodigos(props: Step2Props) {
                                                     toggleTipoPrecio(currId, isChecked);
                                                 }}
                                             >
-                                                <td className="px-3 py-3 w-12">
+                                                <td className="px-2 py-2 text-left">
                                                     <div className="flex items-center justify-center">
                                                         <Checkbox
                                                             id={`tp-${currId}`}
@@ -830,9 +829,8 @@ function Step2PreciosCodigos(props: Step2Props) {
                                                         />
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3 text-xl group-hover:scale-110 transition-transform">{tpIcono(tp)}</td>
-                                                <td className="px-3 py-3 font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{tpNombre(tp)}</td>
-                                                <td className="px-3 py-3 text-center">
+                                                <td className="px-2 py-2 text-xs text-left text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{tpIcono(tp)} {tpNombre(tp)}</td>
+                                                <td className="px-2 py-2 text-center">
                                                     {checked ? (
                                                         <div className="flex items-center justify-center gap-1">
                                                             <Input
@@ -882,12 +880,12 @@ function Step2PreciosCodigos(props: Step2Props) {
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold transition-all bg-secondary text-foreground group-hover:bg-gray-300 dark:group-hover:bg-gray-600`}>
+                                                        <span className={`inline-block rounded-full px-2 py-2 text-xs font-bold transition-all bg-secondary text-foreground group-hover:bg-gray-300 dark:group-hover:bg-gray-600`}>
                                                             {pct}%
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-2 py-2">
                                                     {checked ? (
                                                         <Input
                                                             type="number"

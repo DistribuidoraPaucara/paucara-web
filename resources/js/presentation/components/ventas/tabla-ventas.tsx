@@ -298,7 +298,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                 className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
                                 onClick={() => handleSort('requiere_envio')}
                             >
-                                🚚 Tipo Entrega {getSortIcon('requiere_envio')}
+                                🚚 Est. Logisitico {getSortIcon('requiere_envio')}
                             </TableHead>
                             <TableHead className="px-2 py-2 text-center">-</TableHead>
                         </TableRow>

@@ -203,7 +203,7 @@ function Step1DatosProducto({
       </div> */}
       {/* 📱 1 fila con 3 columnas responsivas: Nombre, SKU, Proveedor */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="space-y-1">
+        <div>
           <InputSearch
             id="nombre"
             label="Nombre del Producto *"
@@ -230,7 +230,7 @@ function Step1DatosProducto({
             </div>
           )}
         </div>
-        <div className="space-y-1">
+        <div>
           <div className="relative">
             <label htmlFor="sku" className={`absolute left-3 transition-all duration-200 pointer-events-none ${data.sku
               ? 'top-[-6px] text-xs font-medium text-blue-600 dark:text-blue-400'
@@ -251,7 +251,7 @@ function Step1DatosProducto({
             💡 Si no lo ingresas, se generará automáticamente (ej.: PRO0001)
           </div>
         </div>
-        <div className="space-y-1">
+        <div>
           <InputSearch
             id="proveedor"
             label="Proveedor (opcional)"
@@ -441,14 +441,13 @@ function Step1DatosProducto({
           {errors.descripcion && <div className="text-red-500 text-sm mt-1">⚠️ {errors.descripcion}</div>}
         </div>
       </div>
-      <div className="space-y-3 mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
         <div className="flex items-start gap-2">
           <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Alertas de Stock Globales:</strong> Estos valores son para TODAS las ubicaciones (almacenes) sumadas.
-            El stock real de cada almacén se gestiona desde <strong>Movimientos de Inventario</strong>.
+            <strong>Alertas de Stock Globales:</strong> Para evitar agotamientos, configura estos valores.
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -687,7 +686,7 @@ function Step1DatosProducto({
       )}
 
       {/* ✨ NUEVA SECCIÓN: Visibilidad en App */}
-      <div className="space-y-3 mt-6 p-5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-200 dark:border-green-800 rounded-lg shadow-sm">
+      <div className="space-y-3 mt-2 p-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-200 dark:border-green-800 rounded-lg shadow-sm">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 pt-0.5">
             <Checkbox

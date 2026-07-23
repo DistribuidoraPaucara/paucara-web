@@ -5,7 +5,7 @@
 @section('contenido')
 <div class="ticket" style="font-size: 12px; font-family: Arial, sans-serif;">
 
-    <div class="documento-titulo" style="margin-bottom: 3px;">ENTREGA N° {{ $entrega->id }}</div>
+    <div class="documento-titulo" style="margin-bottom: 3px; font-size: 15px;">ENTREGA #{{ $entrega->id }}</div>
     <!-- <div class="documento-numero" style="font-weight: bold;">{{ $entrega->numero_entrega }}</div> -->
     <div class="center">
         <strong>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} | {{ $entrega->estado }}</strong>
@@ -22,7 +22,7 @@
 
     {{-- INFORMACIÓN DEL CHOFER Y VEHÍCULO --}}
     <!-- <p style="font-weight: bold; text-align: center; margin: 3px 0;">CHOFER Y VEHÍCULO</p> -->
-    <table style="width: 100%; font-size: 11px;">
+    <table style="width: 100%; font-size: 13px;">
         <tr>
             <td style="width: 50%; padding: 0.5px; vertical-align: top;">
                 @if($entrega->chofer)
@@ -50,7 +50,7 @@
 
     {{-- ✅ NUEVO: LOCALIDADES --}}
     @if($localidades && $localidades->count() > 0)
-    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; background-color: #f0f8ff; font-size: 10px;">
+    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; background-color: #f0f8ff; font-size: 12px;">
         <p style="margin: 2px 0; font-weight: bold;">Localidades:</p>
         <div style="margin: 0 px;">
             @foreach($localidades as $localidad)
@@ -61,7 +61,7 @@
     @endif
 
     {{-- INFORMACIÓN DE PESO --}}
-    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; font-size: 10px;">
+    <div style="margin: 3px 0; padding: 3px; border: 1px solid #999; border-radius: 3px; font-size: 12px;">
         <p style="margin: 2px 0; text-align: center; font-weight: bold;">PESO DE LA ENTREGA</p>
         <!-- <p style="margin: 2px 0;"><strong>Peso Total:</strong> {{ number_format($entrega->peso_kg ?? 0, 2) }} kg</p> -->
         @if($entrega->vehiculo && $entrega->vehiculo?->capacidad_kg)
@@ -71,7 +71,7 @@
         $porcentajeUso = $capacidad > 0 ? ($pesoTotal / $capacidad) * 100 : 0;
         $colorEstado = $porcentajeUso > 100 ? '#0E0D0D' : ($porcentajeUso > 80 ? '#070707' : '#0B0C0B');
         @endphp
-        <div style="margin: 2px 0;"><strong>Cap. Vehículo:</strong> {{ number_format($entrega->vehiculo?->capacidad_kg, 1) }} kg / {{ number_format($entrega->peso_kg ?? 0, 2) }} kg
+        <div style="margin: 2px 0;"><strong>Cap. Vehículo:</strong> {{ number_format($entrega->vehiculo?->capacidad_kg, 1) }} kg / <strong>P. Entrega: </strong> {{ number_format($entrega->peso_kg ?? 0, 2) }} kg
             <small style="margin: 2px 0; color: {{ $colorEstado }}; font-weight: bold;">
                 Uso: {{ number_format($porcentajeUso, 1) }}%
                 @if($porcentajeUso > 100)
@@ -86,7 +86,7 @@
         @endif
     </div>
 
-    <div class="separador"></div>
+    <!-- <div class="separador"></div> -->
 
     {{-- LISTA GENÉRICA --}}
 
@@ -160,11 +160,11 @@
                     $estadoLogistico = $confirmacionVenta['estado_logistico'] ?? $venta->estado_logistico ?? 'N/A';
                 @endphp
                 <tr style="border-bottom: 1px dotted #999; @if($confirmacionVenta && $confirmacionVenta['tuvo_problema']) background-color: #fff3e0; @endif">
-                    <td style="padding: 2px; font-size: 10px; width: 8%;">#{{ $venta->id }}</td>
-                    <td style="padding: 2px; font-size: 10px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 12) }}</td>
-                    <td style="padding: 2px; font-size: 10px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 3) }}</td>
-                    <td style="padding: 2px; font-size: 10px; width: 14%;">{{ substr($estadoLogistico, 0, 10) }}</td>
-                    <td style="padding: 2px; font-size: 10px; text-align: right; width: 12%; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
+                    <td style="padding: 2px; font-size: 12px; width: 8%;">#{{ $venta->id }}</td>
+                    <td style="padding: 2px; font-size: 12px; width: 18%;">{{ substr($venta->cliente?->nombre ?? 'S/N', 0, 10) }}</td>
+                    <td style="padding: 2px; font-size: 12px; text-align: center; width: 12%;">{{ substr($venta->tipoPago?->codigo ?? $venta->estado_pago ?? 'S/N', 0, 3) }}</td>
+                    <td style="padding: 2px; font-size: 12px; width: 14%;">{{ substr($estadoLogistico, 0, 10) }}</td>
+                    <td style="padding: 2px; font-size: 12px; text-align: right; width: 12%; font-weight: bold;">{{ number_format($subtotalVenta, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
