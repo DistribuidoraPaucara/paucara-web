@@ -9,7 +9,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/presentation/components/ui/dropdown-menu';
-import { CheckCircle2, Navigation, Flag, Printer, MoreVertical, MapPin, XCircle } from 'lucide-react';
+import { CheckCircle2, Navigation, Flag, Printer, MoreVertical, MapPin, XCircle, Pencil } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import type { Entrega, VehiculoCompleto } from '@/domain/entities/entregas';
 import VentasEntregaSection from './components/VentasEntregaSection';
@@ -409,6 +409,12 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                                 <DropdownMenuItem onClick={() => setIsOutputModalOpen(true)}>
                                     <Printer className="mr-2 h-4 w-4" />
                                     Imprimir
+                                </DropdownMenuItem>
+
+                                {/* Editar Entrega */}
+                                <DropdownMenuItem onClick={() => router.visit(`/logistica/entregas/${entrega.id}/edit`)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar Entrega
                                 </DropdownMenuItem>
 
                                 {/* Cancelar - solo si estado permite */}
