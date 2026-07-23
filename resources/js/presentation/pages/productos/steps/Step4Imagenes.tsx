@@ -1,5 +1,6 @@
 import { Label } from '@/presentation/components/ui/label';
 import { Button } from '@/presentation/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
 import type { Imagen } from '@/domain/entities/productos';
 import Webcam from 'react-webcam';
 import { ensureUnder1MB, dataURLToFile } from '@/infrastructure/services/image.service';
@@ -189,40 +190,40 @@ export default function Step4Imagenes({ data, setPerfil, addGaleria, removeGaler
           )}
         </div>
 
-        {cameraOpen && (
-          <div className="border rounded-lg p-3 bg-card">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-medium">Cámara {cameraMode === 'perfil' ? '— Perfil' : '— Galería'}</div>
-              <div className="flex gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={toggleFacing}>Cambiar cámara</Button>
-                <Button type="button" size="sm" variant="outline" onClick={closeCamera}>Cerrar</Button>
+        {/* Modal de Cámara */}
+        <Dialog open={cameraOpen} onOpenChange={closeCamera}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Cámara {cameraMode === 'perfil' ? '— Foto de Perfil' : '— Galería'}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {cameraError && (
+                <div className="text-xs text-red-600 bg-red-50 p-2 rounded">{cameraError}</div>
+              )}
+
+              <div className="w-full flex justify-center">
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={videoConstraints}
+                  onUserMediaError={() => setCameraError('No se pudo acceder a la cámara. Verifique permisos del navegador.')}
+                  className="rounded-md border max-h-[60vh] w-full"
+                />
+              </div>
+
+              <div className="flex justify-center gap-3">
+                <Button type="button" variant="outline" onClick={toggleFacing}>Cambiar cámara</Button>
+                <Button type="button" onClick={handleCapture}>Capturar</Button>
+              </div>
+
+              <div className="text-[11px] text-muted-foreground text-center">
+                Nota: En móviles, para usar la cámara trasera seleccione "Cambiar cámara". Es posible que se requiera HTTPS y conceder permisos.
               </div>
             </div>
-
-            {cameraError && (
-              <div className="text-xs text-red-600 mb-2">{cameraError}</div>
-            )}
-
-            <div className="w-full flex justify-center">
-              <Webcam
-                ref={webcamRef}
-                audio={false}
-                screenshotFormat="image/jpeg"
-                videoConstraints={videoConstraints}
-                onUserMediaError={() => setCameraError('No se pudo acceder a la cámara. Verifique permisos del navegador.')}
-                className="rounded-md border max-h-[60vh]"
-              />
-            </div>
-
-            <div className="mt-3 flex justify-center gap-3">
-              <Button type="button" onClick={handleCapture}>Capturar</Button>
-            </div>
-
-            <div className="mt-2 text-[11px] text-muted-foreground text-center">
-              Nota: En móviles, para usar la cámara trasera seleccione "Cambiar cámara". Es posible que se requiera HTTPS y conceder permisos.
-            </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
