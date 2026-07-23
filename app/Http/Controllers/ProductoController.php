@@ -991,7 +991,7 @@ class ProductoController extends Controller
                                     'margen_ganancia'            => $margen,
                                     'porcentaje_ganancia'        => $porcentaje,
                                     'activo'                     => true,
-                                    'fecha_ultima_actualizacion' => now(),
+                                    // ✅ NOTA: updated_at se actualiza automáticamente por Laravel
                                 ]);
                                 continue;
                             }
