@@ -161,7 +161,7 @@ coordinar.post = (args: { proforma: number | { id: number } } | [proforma: numbe
     coordinar.form = coordinarForm
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4606
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 export const actualizarDetalles = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -176,7 +176,7 @@ actualizarDetalles.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4606
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 actualizarDetalles.url = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -209,7 +209,7 @@ actualizarDetalles.url = (args: { proforma: number | { id: number } } | [proform
 
 /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4606
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
 actualizarDetalles.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -219,7 +219,7 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
 
     /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4606
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
     const actualizarDetallesForm = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -229,7 +229,7 @@ actualizarDetalles.post = (args: { proforma: number | { id: number } } | [profor
 
             /**
 * @see \App\Http\Controllers\Api\ApiProformaController::actualizarDetalles
- * @see app/Http/Controllers/Api/ApiProformaController.php:4574
+ * @see app/Http/Controllers/Api/ApiProformaController.php:4606
  * @route '/api/proformas/{proforma}/actualizar-detalles'
  */
         actualizarDetallesForm.post = (args: { proforma: number | { id: number } } | [proforma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

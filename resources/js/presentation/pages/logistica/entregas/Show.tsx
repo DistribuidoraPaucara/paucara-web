@@ -561,7 +561,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Monto Total (Sin Crédito)</p>
+                                <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Mnt. Total (Sin Crédito)</p>
                                 <p className="font-medium text-sm sm:text-base text-green-700 dark:text-green-400">
                                     Bs {montoTotalVentas.toFixed(2)}
                                 </p>

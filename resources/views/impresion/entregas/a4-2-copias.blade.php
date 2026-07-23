@@ -156,7 +156,7 @@
                 <!-- Header -->
                 <div class="header">
                     <h3>ENTREGA #{{ $entrega->id }}</h3>
-                    <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
+                    <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} | {{ $entrega->estado }}</p>
                 </div>
                 <table style="width: 100%; font-size: 11px;">
                     <tr>
@@ -348,7 +348,7 @@
                 <!-- Header -->
                 <div class="header">
                     <h3>ENTREGA #{{ $entrega->id }}</h3>
-                    <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }}</p>
+                    <p>{{ $entrega->fecha_asignacion->format('d/m/Y H:i') }} | {{ $entrega->estado }}</p>
                 </div>
                 <table style="width: 100%; font-size: 11px;">
                     <tr>
