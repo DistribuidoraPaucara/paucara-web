@@ -55,6 +55,10 @@ export default function VentasIndex() {
         console.log('🔄 [Index] Filtros cambiados:', nuevosFiltros);
         const params = new URLSearchParams();
 
+        // ✅ Búsqueda por ID o Número
+        if (nuevosFiltros.id) params.append('id', nuevosFiltros.id.toString());
+        if (nuevosFiltros.numero) params.append('numero', nuevosFiltros.numero);
+
         // Agregar solo filtros que tienen valor
         if (nuevosFiltros.cliente_id) params.append('cliente_id', nuevosFiltros.cliente_id.toString());
         if (nuevosFiltros.estado_documento_id) params.append('estado_documento_id', nuevosFiltros.estado_documento_id.toString());
