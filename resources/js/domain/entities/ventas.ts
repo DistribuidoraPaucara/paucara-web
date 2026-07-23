@@ -411,6 +411,7 @@ export interface DireccionCliente extends BaseEntity {
     id: Id;
     direccion: string;
     referencias?: string;
+    observaciones?: string;     // ✅ NUEVO: Observaciones de la dirección (ej: "TERMINAL")
     localidad?: string;
     localidad_id?: Id;
     latitud?: number;           // ✅ NUEVO: Coordenada para mapas
