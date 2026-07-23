@@ -62,9 +62,11 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
     const handleFiltroChange = (campo: keyof FiltrosVentas, valor: string | number | null | undefined) => {
         const nuevosFiltros = { ...filtros, [campo]: valor };
+        console.log('🎯 [filtros-ventas] handleFiltroChange:', { campo, valor, nuevosFiltros });
         setFiltros(nuevosFiltros);
 
         if (onFiltrosChange) {
+            console.log('📤 [filtros-ventas] Llamando onFiltrosChange con:', nuevosFiltros);
             onFiltrosChange(nuevosFiltros);
         }
     };
