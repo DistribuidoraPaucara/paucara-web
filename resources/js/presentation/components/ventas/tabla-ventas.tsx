@@ -12,6 +12,7 @@ import AnularVentaModal from './AnularVentaModal';
 import DetalleReversionModal from './DetalleReversionModal';
 import EstadoVentaBadge from './EstadoVentaBadge';
 import ConfirmacionEntregaModal from './confirmacion-entrega-modal';
+import { ConfirmacionesModal } from './ConfirmacionesModal';
 import { Tab } from '@headlessui/react';
 
 interface TablaVentasProps {
@@ -32,6 +33,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
     const [isDetalleReversionOpen, setIsDetalleReversionOpen] = useState(false);
     // ✅ NUEVO: Estado para modal de confirmación de entrega
     const [confirmacionEntregaModal, setConfirmacionEntregaModal] = useState<{ isOpen: boolean; venta?: Venta }>({ isOpen: false });
+    // ✅ NUEVO: Estado para modal de confirmaciones (ver todas)
+    const [showConfirmacionesModal, setShowConfirmacionesModal] = useState(false);
+    const [selectedVentaForConfirmaciones, setSelectedVentaForConfirmaciones] = useState<Venta | null>(null);
 
     // ✅ DEBUG: Verificar datos de dirección en consola
     React.useEffect(() => {
@@ -387,9 +391,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                             {venta.requiere_envio ? (
                                                 <>
                                                     <div>
-                                                        <span className="inline-flex rounded-full bg-blue-100 px-1 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                            🚚 Delivery
-                                                        </span>
                                                         {venta.estadoLogistica ? (
                                                             <div
                                                                 className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-white"
@@ -469,7 +470,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                 {/* Fila expandible para detalles de delivery */}
                                 {venta.requiere_envio && expandedRows.has(Number(venta.id)) && (
                                     <tr className="border-t-2 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10">
-                                        <td colSpan={12} className="px-6 py-4">
+                                        <td colSpan={12} className="px-2 py-2">
                                             <div className="space-y-4">
                                                 {/* ✅ NUEVO: Información de Entrega Asignada */}
                                                 {venta.entrega && (
@@ -514,7 +515,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                     </div>
                                                 )}
 
-                                                <div className="flex flex-wrap items-center gap-4">
+                                                <div className="flex flex-wrap items-start gap-4">
                                                     {/* Dirección de entrega */}
                                                     <div className="flex items-start space-x-3">
                                                         <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
@@ -609,15 +610,18 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                         </div>
                                                     )}
 
-                                                    {/* ✅ NUEVO: Botón para ver detalles de confirmación de entrega */}
+                                                    {/* ✅ Botón para ver todas las confirmaciones de entrega */}
                                                     {venta.entregaConfirmacion && (
                                                         <div className="flex items-start space-x-3 border-t border-blue-200 pt-4 dark:border-blue-800">
                                                             <div className="flex-1">
                                                                 <button
-                                                                    onClick={() => setConfirmacionEntregaModal({ isOpen: true, venta })}
+                                                                    onClick={() => {
+                                                                        setSelectedVentaForConfirmaciones(venta);
+                                                                        setShowConfirmacionesModal(true);
+                                                                    }}
                                                                     className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
                                                                 >
-                                                                    ✓ Ver Confirmación de Entrega
+                                                                    ✓ Ver Confirmaciones
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -738,6 +742,15 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                 ventaNumero={confirmacionEntregaModal.venta?.numero}
                 onClose={() => setConfirmacionEntregaModal({ isOpen: false })}
             />
+
+            {/* ✅ Modal de Confirmaciones (Ver todas) */}
+            {selectedVentaForConfirmaciones && (
+                <ConfirmacionesModal
+                    open={showConfirmacionesModal}
+                    onOpenChange={setShowConfirmacionesModal}
+                    confirmaciones={selectedVentaForConfirmaciones.entregaConfirmacion ? [selectedVentaForConfirmaciones.entregaConfirmacion] : []}
+                />
+            )}
         </div>
     );
 }
