@@ -402,7 +402,7 @@ class VentaController extends Controller
                             'total_dinero_recibido'   => (float) ($conf->total_dinero_recibido ?? 0),
                             'monto_recibido'          => (float) ($conf->monto_recibido ?? 0),
                             'monto_pendiente'         => (float) ($conf->monto_pendiente ?? 0),
-                            'desglose_pagos'          => $conf->desglose_pagos ? json_decode($conf->desglose_pagos, true) : [],
+                            'desglose_pagos'          => is_string($conf->desglose_pagos) ? json_decode($conf->desglose_pagos, true) : ($conf->desglose_pagos ?? []),
                             'confirmado_en'           => $conf->confirmado_en ?? null,
                             'created_at'              => $conf->created_at ?? null,
                             'updated_at'              => $conf->updated_at ?? null,
