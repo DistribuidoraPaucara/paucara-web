@@ -4,6 +4,7 @@ import { Checkbox } from '@/presentation/components/ui/checkbox';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
 import SearchSelect from '@/presentation/components/ui/search-select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
 import { useState } from 'react';
 
 interface Option {
@@ -87,6 +88,8 @@ export default function Step3Almacenes({
 
     // ✨ Inicializar con sectores pre-cargados del backend si están disponibles
     const [sectoresOptions, setSectoresOptions] = useState<Record<number | string, Option[]>>(sectores || {});
+    const [setLoadingSectores] = useState<Record<number | string, boolean>>({});
+    const [globalSectorId, setGlobalSectorId] = useState<number | undefined>(undefined);
 
     // Cargar sectores cuando se selecciona un almacén
     const handleAlmacenChange = async (i: number, almacenId: number | string) => {
@@ -155,10 +158,18 @@ export default function Step3Almacenes({
     };
 
     return (
-        <div className="mt-2 space-x-3">
-            <div>
-                <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Almacenes y Sectores</Label>
+        <div className="mt-2">
+            <Tabs defaultValue="almacenes" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="almacenes">📦 Almacenes</TabsTrigger>
+                    <TabsTrigger value="sector">🏢 Sector Global</TabsTrigger>
+                </TabsList>
+
+                {/* TAB 1: ALMACENES Y STOCK */}
+                <TabsContent value="almacenes" className="space-y-4">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Gestión de Almacenes</Label>
                     <Button type="button" size="sm" onClick={() => addAlmacen()} variant="outline" aria-label="Agregar almacén">
                         📦Añadir almacén
                     </Button>
@@ -221,14 +232,11 @@ export default function Step3Almacenes({
                     <div className="text-sm text-muted-foreground">No hay entradas. Añada al menos un almacén si desea controlar stock.</div>
                 )}
                 {(data.almacenes || []).map((a: StockAlmacen, i: number) => (
-                    <div key={i} className="flex flex-nowrap items-end gap-3 overflow-x-auto p-3">
+                    <div key={i} className="flex flex-wrap gap-2 mt-2">
                         {/* Fila 1: Almacén y Sector */}
-                        <div className="flex min-w-max flex-nowrap items-end gap-3">
-                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-                                #{a.id}
-                            </div>
-                            <div className="w-56 shrink-0">
-                                <Label className="text-xs font-semibold text-foreground">Almacén *</Label>
+                        <div className="flex flex-wrap gap-2">
+                            <div>
+                                <Label className="text-xs font-semibold text-foreground">Almacén * #{a.id}</Label>
                                 <SearchSelect
                                     id={`almacen-select-${i}`}
                                     placeholder="Seleccione un almacén"
@@ -238,7 +246,7 @@ export default function Step3Almacenes({
                                     allowClear={true}
                                 />
                             </div>
-                            <div className="w-48 shrink-0">
+                            <div>
                                 <Label className="text-xs font-semibold text-foreground">Lote (Opcional)</Label>
                                 <Input
                                     value={a.lote || ''}
@@ -247,10 +255,10 @@ export default function Step3Almacenes({
                                     aria-label={`Lote almacén ${i + 1}`}
                                 />
                             </div>
-                            <div className="w-64 shrink-0">
-                                <div className="mb-2 flex flex-wrap items-center justify-between">
+                            <div>
+                                <div className="flex flex-wrap mt-1 mb-1items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold text-foreground">Vencimiento</Label>
-                                    <div className="flex items-center gap-2">
+                                    <div className="gap-2 items-center flex">
                                         <Checkbox
                                             id={`has-exp-${i}`}
                                             checked={!!a.fecha_vencimiento}
@@ -266,7 +274,7 @@ export default function Step3Almacenes({
                                             aria-label={`Tiene vencimiento almacén ${i + 1}`}
                                         />
                                         <Label htmlFor={`has-exp-${i}`} className="cursor-pointer text-xs">
-                                            Tiene vencimiento
+                                            con vencimiento
                                         </Label>
                                     </div>
                                 </div>
@@ -292,13 +300,13 @@ export default function Step3Almacenes({
                             return (
                                 <>
                                     <div
-                                        className={`flex items-center gap-3 rounded border transition-colors ${
+                                        className={`flex flex-wrap gap-2 rounded border transition-colors ${
                                             hasError
                                                 ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30'
                                                 : 'border-border bg-muted/50 dark:border-border dark:bg-muted/30'
-                                        } min-w-max p-2`}
+                                        } p-2`}
                                     >
-                                        <div className="w-36 shrink-0">
+                                        <div>
                                             <Label className="text-xs font-semibold text-foreground">
                                                 Cantidad Total
                                                 {canEditStockQuantities && <span className="ml-1 text-red-600 dark:text-red-400">*</span>}
@@ -323,7 +331,7 @@ export default function Step3Almacenes({
                                                 aria-label={`Cantidad total almacén ${i + 1}`}
                                             />
                                         </div>
-                                        <div className="w-36 shrink-0">
+                                        <div>
                                             <Label className="text-xs font-semibold text-foreground">
                                                 Disponible
                                                 {canEditStockQuantities && <span className="ml-1 text-red-600 dark:text-red-400">*</span>}
@@ -345,7 +353,7 @@ export default function Step3Almacenes({
                                                 aria-label={`Cantidad disponible almacén ${i + 1}`}
                                             />
                                         </div>
-                                        <div className="w-36 shrink-0">
+                                        <div>
                                             <Label className="text-xs font-semibold text-foreground">
                                                 Reservada
                                                 {canEditStockQuantities && <span className="ml-1 text-red-600 dark:text-red-400">*</span>}
@@ -380,8 +388,53 @@ export default function Step3Almacenes({
                             );
                         })()}
                     </div>
-                ))}
-            </div>
+                        ))}
+                    </div>
+                </TabsContent>
+
+                {/* TAB 2: SECTOR GLOBAL */}
+                <TabsContent value="sector" className="space-y-4">
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+                        <Label className="text-sm font-medium block mb-2">🏢 Asignar Sector</Label>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                            Selecciona UN sector para TODOS los lotes de este producto
+                        </p>
+
+                        <div>
+                            <Label className="text-xs font-semibold text-foreground block mb-2">Sector *</Label>
+                            <SearchSelect
+                                id="sector-global"
+                                placeholder="Seleccione un sector"
+                                value={globalSectorId ? String(globalSectorId) : ''}
+                                options={Object.values(sectoresOptions).flat()}
+                                onChange={(value) => {
+                                    const sectorId = value ? Number(value) : undefined;
+                                    setGlobalSectorId(sectorId);
+
+                                    // Aplicar a todos los almacenes
+                                    if (data.almacenes && data.almacenes.length > 0) {
+                                        const updated = data.almacenes.map(a => ({
+                                            ...a,
+                                            sector_id: sectorId
+                                        }));
+                                        setData('almacenes', updated);
+                                    }
+                                }}
+                                allowClear={true}
+                            />
+                        </div>
+
+                        {/* Resumen de aplicación */}
+                        {globalSectorId && (data.almacenes || []).length > 0 && (
+                            <div className="mt-4 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/30">
+                                <p className="text-xs text-green-700 dark:text-green-300">
+                                    ✅ Sector aplicado a <span className="font-bold">{(data.almacenes || []).length}</span> lote{(data.almacenes || []).length !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
