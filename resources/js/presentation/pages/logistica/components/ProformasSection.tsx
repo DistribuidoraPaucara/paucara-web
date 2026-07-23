@@ -1092,12 +1092,12 @@ export function ProformasSection({
                                             (sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />)}
                                     </div>
                                 </th>
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">Estado</th>
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">Cliente</th>
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">Creador</th>
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">Localidad </th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Estado</th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Cliente</th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Creador</th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Localidad </th>
                                 <th
-                                    className="cursor-pointer px-4 py-2 text-left font-medium select-none hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
+                                    className="cursor-pointer px-4 py-2 text-center font-medium select-none hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
                                     onClick={() => handleSort('monto')}
                                 >
                                     <div className="flex items-center gap-2">
@@ -1108,8 +1108,8 @@ export function ProformasSection({
                                 </th>
 
                                 {/* ✅ NUEVO: Columna Fecha Entrega Solicitada */}
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">📅 Creada</th>
-                                <th className="px-2 py-2 text-left font-medium dark:text-gray-300">🚚 Solicitado Para</th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Creada</th>
+                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Solicitado Para</th>
                                 <th className="px-2 py-2 text-center font-medium dark:text-gray-300">-</th>
                             </tr>
                         </thead>
@@ -1119,7 +1119,7 @@ export function ProformasSection({
                                     key={proforma.id}
                                     className={`border-t transition-colors duration-200 dark:border-slate-700 ${getRowBackgroundByEstado(proforma.estado)}`}
                                 >
-                                    <td className="px-2 py-2">
+                                    <td className="px-2 py-2 text-center">
                                         <Link
                                             href={`/proformas/${proforma.id}`}
                                             className="font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
@@ -1128,7 +1128,7 @@ export function ProformasSection({
                                         </Link>
                                     </td>
                                     {/* ✅ PRIMERA COLUMNA: ESTADO DESTACADO CON COLOR DEL BACKEND */}
-                                    <td className="px-2 py-2 text-xs">
+                                    <td className="px-2 py-2 text-xs text-center">
                                         {(() => {
                                             const estadoStyle = getEstadoBadgeStyle(proforma.estado);
                                             return (
@@ -1142,7 +1142,7 @@ export function ProformasSection({
                                         })()}
                                     </td>
                                     <td className="px-2 py-2 text-xs">{String(proforma.cliente_nombre)}</td>
-                                    <td className="p-1 text-xs">
+                                    <td className="p-1 text-xs text-center">
                                         <Badge
                                             variant="outline"
                                             className={`text-xs ${
@@ -1154,11 +1154,11 @@ export function ProformasSection({
                                             {String(proforma.usuario_creador_nombre)}
                                         </Badge>
                                     </td>
-                                    <td className="p-1 text-xs">📍{String(proforma.localidad_nombre)}</td>
+                                    <td className="p-1 text-xs text-center">📍{String(proforma.localidad_nombre)}</td>
                                     <td className="px-2 py-2 text-left text-xs">
                                         Bs {proforma.total.toLocaleString('es-BO', { maximumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-2 py-2 text-xs text-muted-foreground dark:text-gray-400">
+                                    <td className="px-2 py-2 text-xs text-center text-muted-foreground dark:text-gray-400">
                                         <div className="whitespace-nowrap">
                                             {proforma.created_at ? (
                                                 <>
@@ -1182,7 +1182,7 @@ export function ProformasSection({
                                         </div>
                                     </td>
                                     {/* ✅ NUEVO: Columna Fecha & Hora Entrega Solicitada */}
-                                    <td className="px-2 py-2 text-xs text-muted-foreground dark:text-gray-400">
+                                    <td className="px-2 py-2 text-xs text-center text-muted-foreground dark:text-gray-400">
                                         <div className="whitespace-nowrap">
                                             {proforma.fecha_entrega_solicitada ? (
                                                 <>
@@ -1196,9 +1196,9 @@ export function ProformasSection({
                                                     {proforma.hora_entrega_solicitada && (
                                                         <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
                                                             🕐 {String(proforma.hora_entrega_solicitada).substring(0, 5)}
-                                                            {proforma.hora_entrega_solicitada_fin && (
+                                                            {/* {proforma.hora_entrega_solicitada_fin && (
                                                                 <span> - {String(proforma.hora_entrega_solicitada_fin).substring(0, 5)}</span>
-                                                            )}
+                                                            )} */}
                                                         </div>
                                                     )}
                                                 </>

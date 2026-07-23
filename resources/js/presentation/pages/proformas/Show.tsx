@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import ProductosTable, { DetalleProducto } from '@/presentation/components/ProductosTable'; // ✅ NUEVO: Componente centralizado
 import { Button } from '@/presentation/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
-import { Separator } from '@/presentation/components/ui/separator';
 import { Head } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -1633,296 +1632,246 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 )}
 
                 {/* Header - Similar a ventas: 1/3 título + 2/3 datos */}
-                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                     {/* Columnas 2-3: Datos secundarios (2/3) */}
-                    <div className="mb-2 p-1">
-                        <div className="grid grid-cols-6 gap-2">
-                            {/* ✅ NUEVO: Foto del Cliente */}
-                            {proforma.cliente.foto_perfil && (
-                                <Dialog open={showImagenModal} onOpenChange={setShowImagenModal}>
-                                    <DialogContent className="h-screen w-screen max-w-full rounded-none p-0">
-                                        <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
-                                            {proforma.cliente.foto_perfil && (
-                                                <img
-                                                    src={`/storage/${proforma.cliente.foto_perfil}`}
-                                                    alt={proforma.cliente.nombre}
-                                                    className="max-h-full max-w-full object-contain"
-                                                />
-                                            )}
-                                            <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
-                                                <div className="rounded-lg bg-black/70 px-3 py-2 text-white">
-                                                    <p className="font-semibold">{proforma.cliente.nombre}</p>
-                                                    {proforma.cliente.telefono && <p className="text-xs opacity-90">{proforma.cliente.telefono}</p>}
-                                                </div>
-                                                <button
-                                                    onClick={() => setShowImagenModal(false)}
-                                                    className="rounded-full bg-black/70 p-2 text-white transition-colors hover:bg-black"
-                                                    title="Cerrar"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-
-                            {/* Foto y Datos Principales */}
-                            <div className="rounded-lg border border-slate-200 bg-white p-2 md:col-span-1 lg:col-span-1 dark:border-slate-700/50 dark:bg-slate-950/40">
-                                <div className="flex items-start gap-3">
-                                    {/* Foto de perfil */}
-                                    <div className="flex-shrink-0">
-                                        <div
-                                            className="flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700"
-                                            onClick={() => proforma.cliente.foto_perfil && setShowImagenModal(true)}
-                                        >
-                                            {proforma.cliente.foto_perfil && typeof proforma.cliente.foto_perfil === 'string' && imagenCargada ? (
-                                                <img
-                                                    src={`/storage/${proforma.cliente.foto_perfil}`}
-                                                    alt={proforma.cliente.nombre}
-                                                    className="h-full w-full object-cover"
-                                                    onError={() => setImagenCargada(false)}
-                                                />
-                                            ) : (
-                                                <User className="h-7 w-7 text-gray-400 dark:text-gray-500" />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Datos básicos del cliente */}
-                                    <div className="flex-1 space-y-2">
-                                        <div>
-                                            {/* <p className="mb-1 text-xs font-semibold tracking-wide text-blue-600 uppercase dark:text-blue-400">
-                                                📝 Nombre
-                                            </p> */}
-                                            <p className="text-sm font-bold text-foreground">{proforma.cliente.nombre}</p>
-                                        </div>
-                                        {/* {proforma.cliente.email && (
-                                            <div>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400">Email: {proforma.cliente.email}</p>
-                                            </div>
-                                        )} */}
-
-                                        {proforma.cliente.telefono && (
-                                            <div className="flex items-center gap-2">
-                                                {/* <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {proforma.cliente.telefono}</p> */}
-                                                <a
-                                                    href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    title="Abrir en WhatsApp"
-                                                    className="text-xs text-gray-600 dark:text-gray-400"
-                                                >
-                                                    {/* <MessageCircle className="h-4 w-4" /> */}
-                                                    {proforma.cliente.telefono}
-                                                </a>
-                                            </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-6">
+                        {/* ✅ NUEVO: Foto del Cliente */}
+                        {proforma.cliente.foto_perfil && (
+                            <Dialog open={showImagenModal} onOpenChange={setShowImagenModal}>
+                                <DialogContent className="h-screen w-screen max-w-full rounded-none p-0">
+                                    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+                                        {proforma.cliente.foto_perfil && (
+                                            <img
+                                                src={`/storage/${proforma.cliente.foto_perfil}`}
+                                                alt={proforma.cliente.nombre}
+                                                className="max-h-full max-w-full object-contain"
+                                            />
                                         )}
+                                        <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
+                                            <div className="rounded-lg bg-black/70 px-3 py-2 text-white">
+                                                <p className="font-semibold">{proforma.cliente.nombre}</p>
+                                                {proforma.cliente.telefono && <p className="text-xs opacity-90">{proforma.cliente.telefono}</p>}
+                                            </div>
+                                            <button
+                                                onClick={() => setShowImagenModal(false)}
+                                                className="rounded-full bg-black/70 p-2 text-white transition-colors hover:bg-black"
+                                                title="Cerrar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                </DialogContent>
+                            </Dialog>
+                        )}
 
-                            <div className="flex items-center space-x-2">
-                                <div className="flex-shrink-0">
-                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                                        <span className="text-sm">📄</span>
-                                    </div>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Folio</p>
-                                    <p className="truncate text-xs font-bold text-slate-900 dark:text-white">#{proforma.id}</p>
-                                    <div className="min-w-0 flex-1">
-                                        <p
-                                            className={`truncate text-xs font-bold ${
-                                                proforma.politica_pago === 'CREDITO'
-                                                    ? 'text-purple-800 dark:text-purple-200'
-                                                    : 'text-slate-900 dark:text-white'
-                                            }`}
-                                        >
-                                            {proforma.politica_pago === 'CREDITO'
-                                                ? '🔴 CRÉDITO'
-                                                : proforma.politica_pago === 'ANTICIPADO_100'
-                                                  ? 'ANTICIPADO 100%'
-                                                  : proforma.politica_pago === 'CONTRA_ENTREGA'
-                                                    ? 'CONTRA ENTREGA'
-                                                    : proforma.politica_pago}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <div className="flex-shrink-0">
-                                    <div
-                                        className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                                            proforma.estado === 'APROBADA' || proforma.estado === 'CONVERTIDA'
-                                                ? 'bg-green-100 dark:bg-green-900/30'
-                                                : proforma.estado === 'RECHAZADA'
-                                                  ? 'bg-red-100 dark:bg-red-900/30'
-                                                  : 'bg-yellow-100 dark:bg-yellow-900/30'
-                                        }`}
-                                    >
-                                        <span className="text-sm">
-                                            {proforma.estado === 'APROBADA' || proforma.estado === 'CONVERTIDA'
-                                                ? '✅'
-                                                : proforma.estado === 'RECHAZADA'
-                                                  ? '❌'
-                                                  : '⏳'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    {/* <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Estado</p> */}
-                                    <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{proforma.estado}</p>
-                                    {proforma.venta ? (
-                                        <a
-                                            href={`/ventas/${proforma.venta.id}`}
-                                            className="block truncate text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
-                                        >
-                                            F. Venta: {proforma.venta.id} →
-                                        </a>
+                        {/* Foto y Datos Principales */}
+                        <div className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700/50 dark:bg-slate-950/40">
+                            <div className="flex flex-wrap items-center justify-center gap-3 text-center">
+                                {/* Foto de perfil */}
+                                <div
+                                    className="flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700"
+                                    onClick={() => proforma.cliente.foto_perfil && setShowImagenModal(true)}
+                                >
+                                    {proforma.cliente.foto_perfil && typeof proforma.cliente.foto_perfil === 'string' && imagenCargada ? (
+                                        <img
+                                            src={`/storage/${proforma.cliente.foto_perfil}`}
+                                            alt={proforma.cliente.nombre}
+                                            className="h-full w-full object-cover"
+                                            onError={() => setImagenCargada(false)}
+                                        />
                                     ) : (
-                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">F. Venta: Pendiente</p>
+                                        <User className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+                                    )}
+                                </div>
+
+                                {/* Datos básicos del cliente */}
+                                <div className="flex flex-col items-center gap-1">
+                                    <p className="text-sm font-bold text-foreground">{proforma.cliente.nombre}</p>
+
+                                    {proforma.cliente.telefono && (
+                                        <div className="flex items-center gap-2">
+                                            {/* <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {proforma.cliente.telefono}</p> */}
+                                            <a
+                                                href={`https://wa.me/${proforma.cliente.telefono.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Abrir en WhatsApp"
+                                                className="text-xs text-gray-600 dark:text-gray-400"
+                                            >
+                                                {/* <MessageCircle className="h-4 w-4" /> */}
+                                                {proforma.cliente.telefono}
+                                            </a>
+                                        </div>
                                     )}
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="flex items-center space-x-2">
-                                <div className="flex-shrink-0">
-                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                                        <span className="text-sm">📅</span>
+                        <div className="col-span-4 lg:col-span-5">
+                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-5">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0">
+                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                                            <span className="text-sm">📄</span>
+                                        </div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Folio</p>
+                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">#{proforma.id}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <p
+                                                className={`truncate text-xs font-bold ${
+                                                    proforma.politica_pago === 'CREDITO'
+                                                        ? 'text-purple-800 dark:text-purple-200'
+                                                        : 'text-slate-900 dark:text-white'
+                                                }`}
+                                            >
+                                                {proforma.politica_pago === 'CREDITO'
+                                                    ? '🔴 CRÉDITO'
+                                                    : proforma.politica_pago === 'ANTICIPADO_100'
+                                                      ? 'ANTICIPADO 100%'
+                                                      : proforma.politica_pago === 'CONTRA_ENTREGA'
+                                                        ? 'CONTRA ENTREGA'
+                                                        : proforma.politica_pago}
+                                            </p>
+                                        </div>
+                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{proforma.estado}</p>
                                     </div>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Creada por</p>
-                                    {/* Usuario Creador */}
-                                    {proforma.usuario_creador && (
-                                        <p className="truncate text-xs font-bold text-blue-900 dark:text-blue-100">{proforma.usuario_creador.name}</p>
-                                    )}
-                                    <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                        {new Date(proforma.created_at).toLocaleDateString('es-ES')}
-                                    </p>
+
+                                {/* SI TIENE VENTA_ID */}
+                                {proforma.venta && (
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                                                <span className="text-sm">✅</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Venta</p>
+                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">#{proforma.venta.id}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0">
+                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                            <span className="text-sm">📅</span>
+                                        </div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Creada por</p>
+                                        {/* Usuario Creador */}
+                                        {proforma.usuario_creador && (
+                                            <p className="truncate text-xs font-bold text-blue-900 dark:text-blue-100">
+                                                {proforma.usuario_creador.name}
+                                            </p>
+                                        )}
+                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                            {new Date(proforma.created_at).toLocaleDateString('es-ES')}
+                                        </p>
+                                    </div>
                                 </div>
+
+                                {/* Fecha Entrega Solicitada */}
+                                {proforma.fecha_entrega_solicitada && (
+                                    <div className="flex items-center space-x-2 p-1">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+                                                <span className="text-sm">📦</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+                                                Entrega Sol.
+                                            </p>
+                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                {proforma.fecha_entrega_solicitada.split('T')[0].split('-').reverse().join('-')}
+                                            </p>
+                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                {proforma.hora_entrega_solicitada}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Dirección Solicitada */}
+                                {proforma.direccion_solicitada && (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                                <span className="text-sm">📍</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
+                                                Dirección Sol.
+                                            </p>
+                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                {proforma.direccion_solicitada.observaciones}
+                                            </p>
+                                            {proforma.direccion_solicitada.localidad && (
+                                                <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                    🏙️ {proforma.direccion_solicitada.localidad.nombre}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Fecha Vencimiento */}
+                                {proforma.fecha_vencimiento && (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                                                <span className="text-sm">⏰</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Vencimiento</p>
+                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                                                {proforma.fecha_vencimiento.split('T')[0].split('-').reverse().join('-')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Preventista Asignado */}
+                                {proforma.preventista ? (
+                                    <div className="flex items-center space-x-2 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-700/50 dark:bg-amber-900/20">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-200 dark:bg-amber-800">
+                                                <span className="text-sm">💼</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-amber-600 uppercase dark:text-amber-400">Preventista</p>
+                                            <p className="truncate text-xs font-bold text-amber-900 dark:text-amber-100">
+                                                {proforma.preventista.nombre}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-2 rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-gray-700/50 dark:bg-gray-800/20">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
+                                                <span className="text-sm">-</span>
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-gray-600 uppercase dark:text-gray-400">Preventista</p>
+                                            <p className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">No asignado</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-
-                            {/* Fecha Entrega Solicitada */}
-                            {proforma.fecha_entrega_solicitada && (
-                                <div className="flex items-center space-x-2 p-1">
-                                    <div className="flex-shrink-0">
-                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-                                            <span className="text-sm">📦</span>
-                                        </div>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Entrega Sol.</p>
-                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                            {proforma.fecha_entrega_solicitada.split('T')[0].split('-').reverse().join('-')}
-                                        </p>
-                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                            {proforma.hora_entrega_solicitada}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Fecha Vencimiento */}
-                            {proforma.fecha_vencimiento && (
-                                <div className="flex items-center space-x-2">
-                                    <div className="flex-shrink-0">
-                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                                            <span className="text-sm">⏰</span>
-                                        </div>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Vencimiento</p>
-                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                            {proforma.fecha_vencimiento.split('T')[0].split('-').reverse().join('-')}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Preventista Asignado */}
-                            {proforma.preventista ? (
-                                <div className="flex items-center space-x-2 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-700/50 dark:bg-amber-900/20">
-                                    <div className="flex-shrink-0">
-                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-200 dark:bg-amber-800">
-                                            <span className="text-sm">💼</span>
-                                        </div>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-semibold text-amber-600 uppercase dark:text-amber-400">Preventista</p>
-                                        <p className="truncate text-xs font-bold text-amber-900 dark:text-amber-100">{proforma.preventista.nombre}</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center space-x-2 rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-gray-700/50 dark:bg-gray-800/20">
-                                    <div className="flex-shrink-0">
-                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-                                            <span className="text-sm">-</span>
-                                        </div>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-semibold text-gray-600 uppercase dark:text-gray-400">Preventista</p>
-                                        <p className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">No asignado</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* ✅ NUEVO: Tipo de Pago - Destacado cuando es CREDITO */}
-                            {/* <div
-                                className={`flex items-center space-x-2 rounded-lg border p-2 ${
-                                    proforma.politica_pago === 'CREDITO'
-                                        ? 'border-purple-200 bg-purple-100 dark:border-purple-700 dark:bg-purple-900/30'
-                                        : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50'
-                                }`}
-                            >
-                                <div className="flex-shrink-0">
-                                    <div
-                                        className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                                            proforma.politica_pago === 'CREDITO'
-                                                ? 'bg-purple-200 dark:bg-purple-800'
-                                                : 'bg-slate-200 dark:bg-slate-700'
-                                        }`}
-                                    >
-                                        <span className="text-sm">
-                                            {proforma.politica_pago === 'CREDITO'
-                                                ? '💳'
-                                                : proforma.politica_pago === 'ANTICIPADO_100'
-                                                  ? '💵'
-                                                  : proforma.politica_pago === 'CONTRA_ENTREGA'
-                                                    ? '📦'
-                                                    : '💰'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Forma de Pago</p>
-                                    <p
-                                        className={`truncate text-xs font-bold ${
-                                            proforma.politica_pago === 'CREDITO'
-                                                ? 'text-purple-800 dark:text-purple-200'
-                                                : 'text-slate-900 dark:text-white'
-                                        }`}
-                                    >
-                                        {proforma.politica_pago === 'CREDITO'
-                                            ? '🔴 CRÉDITO'
-                                            : proforma.politica_pago === 'ANTICIPADO_100'
-                                              ? 'ANTICIPADO 100%'
-                                              : proforma.politica_pago === 'CONTRA_ENTREGA'
-                                                ? 'CONTRA ENTREGA'
-                                                : proforma.politica_pago}
-                                    </p>
-                                </div>
-                            </div> */}
                         </div>
                     </div>
 
-                    {/* ✅ NUEVO: Usuario Creador y Preventista */}
-                    <div className="mb-2 grid grid-cols-2 gap-2 p-1 md:grid-cols-2"></div>
-
                     {/* Botones de acción */}
-                    <div className="flex flex-col flex-wrap items-center gap-2 md:flex-row">
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                         {puedeAprobar && (
                             <Button
                                 variant="default"
@@ -1945,7 +1894,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
 
                         {/* ✅ NUEVO: Botón para editar la proforma (solo disponible en estado PENDIENTE) */}
                         {proforma.estado === 'PENDIENTE' && (
-                            <Button onClick={() => (window.location.href = `/proformas/${proforma.id}/edit`)} variant="outline">
+                            <Button onClick={() => (window.location.href = `/proformas/${proforma.id}/edit`)} variant="outline" className="border-green-300 text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20">
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Editar
                             </Button>
@@ -1959,11 +1908,10 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                         )}
 
                         {/* ✅ NUEVO: Botón para abrir modal de selección de salida (impresión/descarga) */}
-                        <Button onClick={() => setShowProformaOutputSelection(true)} variant="outline">
+                        <Button onClick={() => setShowProformaOutputSelection(true)} variant="outline" className="border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20">
                             <FileText className="mr-2 h-4 w-4" />
                             Imprimir
                         </Button>
-
                         {/* Dirección Solicitada */}
                         {proforma.direccion_solicitada && (
                             <button
@@ -1973,47 +1921,22 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                         setShowMapaResumen(true);
                                     }
                                 }}
-                                className={`cursor-pointer rounded-lg border p-2 text-left text-xs transition-all ${
+                                className={`cursor-pointer rounded-lg border p-2.5 text-center text-xs transition-all ${
                                     proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
                                         ? 'border-amber-200 bg-amber-50 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/20 dark:hover:bg-amber-900/30'
                                         : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-950/40 dark:hover:bg-slate-900/50'
                                 }`}
                                 disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
                             >
-                                {/* <div className="mb-2 flex items-center gap-2">
-                                        <span
-                                            className={`text-xs font-semibold tracking-wide uppercase ${
-                                                proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                    ? 'text-amber-700 dark:text-amber-300'
-                                                    : 'text-blue-600 dark:text-blue-400'
-                                            }`}
-                                        >
-                                            📍 Dirección Solicitada
-                                        </span>
-                                        {proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion && (
-                                            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                                                ✅ Igual
-                                            </span>
-                                        )}
-                                    </div> */}
-                                <span
-                                    className={`font-small block text-xs ${
-                                        proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                            ? 'text-amber-800 dark:text-amber-300'
-                                            : 'text-foreground'
-                                    }`}
-                                >
-                                    {proforma.direccion_solicitada.observaciones}
-                                </span>
                                 {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
                                     <span
-                                        className={`mt-2 inline-block text-xs font-semibold ${
+                                        className={`inline-block text-xs text-center font-semibold ${
                                             proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
                                                 ? 'text-amber-700 dark:text-amber-400'
                                                 : 'text-blue-600 dark:text-blue-400'
                                         }`}
                                     >
-                                        🗺️ Ver en mapa
+                                        📍 Ver en mapa
                                     </span>
                                 )}
                             </button>
@@ -2057,8 +1980,6 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                             )}
                         </div>
 
-                        <Separator />
-
                         {/* ✅ FIX (2026-06-09): Envolver tabla en contenedor sin scroll (ProductosTable maneja el suyo) */}
                         <div className="w-full">
                             {/* ✅ FIX (2026-02-18): Pasar productos extraídos de editableDetalles + callback memoizado */}
@@ -2082,7 +2003,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                         </div>
 
                         {/* Resumen de Totales en Tiempo Real */}
-                        <div className="mt-6 space-y-3 border-t border-border/50 pt-6">
+                        <div className="space-y-3 border-t border-border/50 pt-6">
                             {/* Indicador de cálculo en progreso */}
                             {isCalculandoRangos && (
                                 <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
@@ -2108,11 +2029,6 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                     </p>
                                 </div>
                             </div>
-                            {/* {totales.total !== proforma.subtotal && (
-                                        <p className="text-xs text-amber-600 dark:text-amber-400 text-right italic">
-                                            ℹ️ Total modificado desde: Bs. {proforma.subtotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                                        </p>
-                                    )} */}
                         </div>
                     </div>
 

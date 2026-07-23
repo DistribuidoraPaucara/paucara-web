@@ -5,13 +5,20 @@ import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import productosService from '@/infrastructure/services/productos.service';
 import NotificationService from '@/infrastructure/services/notification.service';
-import { Trash2, Pencil, DollarSign, Image, Eye, Package } from 'lucide-react';
+import { Trash2, Pencil, DollarSign, Image, Eye, Package, MoreVertical } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/presentation/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
 
 interface ProductoLike extends BaseEntity {
   nombre?: string;
@@ -177,7 +184,7 @@ export default function GenericTable<T extends BaseEntity>({
     switch (column.type) {
       case 'boolean':
         return (
-          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all ${value
+          <span className={`inline-flex items-center px-2 py-2 rounded-full text-xs font-bold shadow-sm transition-all ${value
               ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 border-2 border-emerald-300 dark:from-emerald-900/40 dark:to-emerald-800/40 dark:text-emerald-200 dark:border-emerald-600'
               : 'bg-gradient-to-r from-red-50 to-red-100 text-red-700 border-2 border-red-300 dark:from-red-900/40 dark:to-red-800/40 dark:text-red-200 dark:border-red-600'
             }`}>
@@ -191,7 +198,7 @@ export default function GenericTable<T extends BaseEntity>({
             <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-xs font-small text-foreground">
               {new Date(String(value)).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
@@ -201,7 +208,7 @@ export default function GenericTable<T extends BaseEntity>({
       case 'number':
         const numValue = typeof value === 'number' ? value : (typeof value === 'string' && value !== '' ? parseFloat(value) : null);
         return numValue !== null && !isNaN(numValue) ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 font-mono text-sm font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+          <span className="inline-flex items-center px-2 py-2 rounded-md bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
             {numValue.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
           </span>
         ) : (
@@ -209,16 +216,18 @@ export default function GenericTable<T extends BaseEntity>({
         );
       default:
         if (value && typeof value === 'object' && 'nombre' in (value as Record<string, unknown>)) {
-          return <span className="font-medium text-foreground">{(value as { nombre: string }).nombre || '-'}</span>;
+          return <span className="font-small text-xs text-center text-foreground">{(value as { nombre: string }).nombre || '-'}</span>;
         }
         if (value && typeof value === 'object' && 'codigo' in (value as Record<string, unknown>) && 'nombre' in (value as Record<string, unknown>)) {
           const v = value as { codigo: string; nombre: string };
           return (
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 px-2 py-1 rounded border border-blue-200 dark:border-blue-700 font-semibold">
+              <span className="font-mono text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 px-2 py-2 text-center rounded border border-blue-200 dark:border-blue-700 font-semibold">
                 {v.codigo}
               </span>
-              <span className="font-medium text-foreground">{v.nombre}</span>
+              <span className="font-medium text-foreground text-xs text-center">
+                {v.nombre}
+              </span>
             </div>
           );
         }
@@ -234,7 +243,7 @@ export default function GenericTable<T extends BaseEntity>({
   const SkeletonRow = () => (
     <tr className="animate-pulse">
       {columns.map((column, idx) => (
-        <td key={String(column.key)} className="px-4 py-3.5">
+        <td key={String(column.key)} className="p-2 text-xs text-center">
           {idx === 0 ? (
             <div className="h-6 w-12 bg-muted rounded-full"></div>
           ) : (
@@ -263,7 +272,7 @@ export default function GenericTable<T extends BaseEntity>({
                   <th
                     key={String(column.key)}
                     onClick={() => toggleSort(column)}
-                    className={`px-4 py-3.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider ${
+                    className={`p-2 text-xs text-center font-semibold text-foreground uppercase tracking-wider ${
                       column.sortable ? 'cursor-pointer hover:bg-muted select-none transition-colors' : ''
                     }`}
                   >
@@ -277,7 +286,7 @@ export default function GenericTable<T extends BaseEntity>({
                     </span>
                   </th>
                 ))}
-                <th className="px-4 py-3.5 text-right text-xs font-semibold text-foreground uppercase tracking-wider sticky right-0 bg-muted/95 backdrop-blur">
+                <th className="p-2 text-xs text-center font-semibold text-foreground uppercase tracking-wider sticky right-0 bg-muted/95 backdrop-blur">
                   Acciones
                 </th>
               </tr>
@@ -301,9 +310,9 @@ export default function GenericTable<T extends BaseEntity>({
                     }`}
                   >
                     {columns.map(column => (
-                      <td key={String(column.key)} className="px-4 py-3.5">
+                      <td key={String(column.key)} className="p-2 text-xs text-center">
                         {column.key === 'id' ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700">
                             #{entity.id}
                           </span>
                         ) : (
@@ -313,24 +322,9 @@ export default function GenericTable<T extends BaseEntity>({
                         )}
                       </td>
                     ))}
-                    <td className="px-4 py-3.5 sticky right-0 bg-inherit">
-                      <div className="flex justify-end items-center gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => openQuickViewModal(entity)}
-                              className="h-8 w-8 p-0 hover:bg-indigo-100 hover:text-indigo-700 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-300 transition-all"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">Vista rápida</p>
-                          </TooltipContent>
-                        </Tooltip>
-
+                    <td className="p-2 text-xs text-center sticky right-0 bg-muted/80 backdrop-blur-sm dark:bg-slate-900/60">
+                      <div className="flex justify-end items-center gap-2">
+                        {/* Botón Editar - Visible */}
                         {puedeEditar && (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -350,60 +344,56 @@ export default function GenericTable<T extends BaseEntity>({
                           </Tooltip>
                         )}
 
-                        {'precios' in (entity as unknown as Record<string, unknown>) && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => openQuickPrecioModal(entity)}
-                                className="h-8 w-8 p-0 hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/40 dark:hover:text-amber-300 transition-all"
-                              >
-                                <DollarSign className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Editar precios y códigos</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                        {/* Dropdown Menu - Resto de acciones */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-900/40 transition-all"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            {/* Vista Rápida */}
+                            <DropdownMenuItem onClick={() => openQuickViewModal(entity)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Vista rápida
+                            </DropdownMenuItem>
 
-                        {'perfil' in (entity as unknown as Record<string, unknown>) && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => openQuickImagenModal(entity)}
-                                className="h-8 w-8 p-0 hover:bg-purple-100 hover:text-purple-700 dark:hover:bg-purple-900/40 dark:hover:text-purple-300 transition-all"
-                              >
-                                <Image className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Editar imágenes</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                            {/* Precios y Códigos */}
+                            {'precios' in (entity as unknown as Record<string, unknown>) && (
+                              <DropdownMenuItem onClick={() => openQuickPrecioModal(entity)}>
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Editar precios y códigos
+                              </DropdownMenuItem>
+                            )}
 
-                        {puedeEliminar && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
+                            {/* Imágenes */}
+                            {'perfil' in (entity as unknown as Record<string, unknown>) && (
+                              <DropdownMenuItem onClick={() => openQuickImagenModal(entity)}>
+                                <Image className="mr-2 h-4 w-4" />
+                                Editar imágenes
+                              </DropdownMenuItem>
+                            )}
+
+                            {/* Separador antes de eliminar */}
+                            {puedeEliminar && <DropdownMenuSeparator />}
+
+                            {/* Eliminar */}
+                            {puedeEliminar && (
+                              <DropdownMenuItem
                                 onClick={() => onDelete(entity)}
                                 disabled={isLoading}
-                                className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/40 dark:hover:text-red-300 transition-all"
+                                className="text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20 focus:text-red-600 dark:focus:text-red-400"
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Eliminar {entityName}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>

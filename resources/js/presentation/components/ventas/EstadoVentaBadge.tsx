@@ -3,7 +3,7 @@ import { CheckCircle, AlertCircle, Clock, Ban, FileText, Eye, X, Zap } from 'luc
 
 interface EstadoVentaBadgeProps {
     estado: string;
-    tamaño?: 'sm' | 'md' | 'lg';
+    tamaño?: 'sm' | 'md' | 'lg' | 'xs';
     conIcono?: boolean;
     mostrarLabel?: boolean;
 }
@@ -111,12 +111,13 @@ export const EstadoVentaBadge: React.FC<EstadoVentaBadgeProps> = ({
     const sizeClasses = {
         sm: 'px-2 py-1 text-xs',
         md: 'px-3 py-1.5 text-sm',
-        lg: 'px-4 py-2 text-base'
+        lg: 'px-4 py-2 text-base',
+        xs: 'px-1 py-1 text-xs'
     };
 
     return (
         <div
-            className={`inline-flex items-center space-x-1.5 ${sizeClasses[tamaño]} font-semibold rounded-full border ${config.bgColor} ${config.textColor} ${config.borderColor} transition-all duration-200 hover:shadow-md cursor-default`}
+            className={`text-xs inline-flex items-center space-x-1.5 ${sizeClasses[tamaño]} rounded-full border ${config.bgColor} ${config.textColor} ${config.borderColor} transition-all duration-200 hover:shadow-md cursor-default`}
             title={config.descripcion}
         >
             {conIcono && config.icon}

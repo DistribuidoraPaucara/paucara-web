@@ -525,13 +525,13 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                             </h4>
                                                             <div className="space-y-2">
                                                                 {/* Dirección */}
-                                                                {venta.direccionCliente?.direccion && (
+                                                                {/* {venta.direccionCliente?.direccion && (
                                                                     <div>
                                                                         <p className="text-sm text-gray-700 dark:text-gray-300">
                                                                             📍 {venta.direccionCliente.direccion}
                                                                         </p>
                                                                     </div>
-                                                                )}
+                                                                )} */}
 
                                                                 {/* Localidad */}
                                                                 {venta.direccionCliente?.localidad && (
@@ -612,7 +612,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
 
                                                     {/* ✅ Botón para ver todas las confirmaciones de entrega */}
                                                     {venta.entregaConfirmacion && (
-                                                        <div className="flex items-start space-x-3 border-t border-blue-200 pt-4 dark:border-blue-800">
+                                                        <div className="flex items-start">
                                                             <div className="flex-1">
                                                                 <button
                                                                     onClick={() => {

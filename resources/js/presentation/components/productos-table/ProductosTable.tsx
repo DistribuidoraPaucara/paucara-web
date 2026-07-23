@@ -470,43 +470,43 @@ export default function ProductosTable({
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
                         <thead className="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-zinc-700 dark:to-zinc-800 border-b-2 border-gray-300 dark:border-zinc-600">
                             <tr>
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Producto
                                 </th>
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     SKU
                                 </th>
-                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Cantidad
                                 </th>
                                 {tipo === 'compra' && (
                                     <>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Precio Compra
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Lote
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                             Vencimiento
                                         </th>
                                     </>
                                 )}
                                 {tipo === 'venta' && (
-                                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                         Precio Unitario
                                     </th>
                                 )}
-                                <th className="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Subtotal
                                 </th>
-                                 <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Categoría
                                 </th>
-                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Unidad
                                 </th>
-                                <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Marca
                                 </th>
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">

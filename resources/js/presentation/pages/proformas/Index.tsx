@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import { ImprimirProformasButton } from '@/presentation/components/impresion/ImprimirProformasButton';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -514,7 +513,7 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
         <AppLayout>
             <Head title="Proformas" />
 
-            <div className="space-y-6 p-4">
+            <div className="space-y-2 p-4">
                 {/* Header con integración de filtros y botones */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -566,10 +565,10 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                 </div>
 
                 {/* ✅ NUEVO 2026-02-21: Filtros colapsibles mejorados */}
-                <Card>
-                    <CardHeader className="cursor-pointer" onClick={() => setShowFilters(!showFilters)}>
+                <div>
+                    <div className="cursor-pointer mb-2" onClick={() => setShowFilters(!showFilters)}>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <Filter className="h-5 w-5" />
                                 Filtros
                                 {hasActiveFilters && (
@@ -589,13 +588,61 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                         activos
                                     </span>
                                 )}
-                            </CardTitle>
+                            </div>
                             <ChevronDown className={`h-5 w-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                         </div>
-                    </CardHeader>
+                    </div>
 
                     {/* ✅ NUEVO: Botones rápidos de fecha */}
-                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Búsqueda */}
+                            <div className="relative">
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder="Buscar por ID, número o cliente..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                            {/* Tercera fila: Botones de acción */}
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() =>
+                                        handleSearch(
+                                            searchTerm,
+                                            filtroEstado,
+                                            filtroCliente,
+                                            filtroUsuario,
+                                            fechaDesde,
+                                            fechaHasta,
+                                            totalMin,
+                                            totalMax,
+                                            filtroVencidas,
+                                            soloConvertidas,
+                                            fechaVentaDesde,
+                                            fechaVentaHasta,
+                                            fechaEntregaSolicitada,
+                                            fechaEntregaDesde,
+                                            fechaEntregaHasta,
+                                            fechaVencimientoDesde,
+                                            fechaVencimientoHasta,
+                                        )
+                                    }
+                                    className="flex-1"
+                                >
+                                    <Search className="mr-2 h-4 w-4" />
+                                    Buscar
+                                </Button>
+                                {hasActiveFilters && (
+                                    <Button variant="outline" onClick={limpiarFiltros}>
+                                        <X className="mr-2 h-4 w-4" />
+                                        Limpiar
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                             <span className="self-center text-xs font-medium text-muted-foreground">Fechas rápidas:</span>
                             <Button
@@ -626,20 +673,9 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                     </div>
 
                     {showFilters && (
-                        <CardContent className="space-y-4">
+                        <div className="mt-2 space-y-4">
                             {/* Primera fila de filtros */}
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                {/* Búsqueda */}
-                                <div className="relative">
-                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Buscar por ID, número o cliente..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10"
-                                    />
-                                </div>
-
+                            <div className="grid grid-cols-1 mt-2 gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {/* Estado */}
                                 <Select value={filtroEstado} onValueChange={setFiltroEstado} disabled={estadosLoading}>
                                     <SelectTrigger className="bg-background">
@@ -840,62 +876,25 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Tercera fila: Botones de acción */}
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() =>
-                                        handleSearch(
-                                            searchTerm,
-                                            filtroEstado,
-                                            filtroCliente,
-                                            filtroUsuario,
-                                            fechaDesde,
-                                            fechaHasta,
-                                            totalMin,
-                                            totalMax,
-                                            filtroVencidas,
-                                            soloConvertidas,
-                                            fechaVentaDesde,
-                                            fechaVentaHasta,
-                                            fechaEntregaSolicitada,
-                                            fechaEntregaDesde,
-                                            fechaEntregaHasta,
-                                            fechaVencimientoDesde,
-                                            fechaVencimientoHasta,
-                                        )
-                                    }
-                                    className="flex-1"
-                                >
-                                    <Search className="mr-2 h-4 w-4" />
-                                    Buscar
-                                </Button>
-                                {hasActiveFilters && (
-                                    <Button variant="outline" onClick={limpiarFiltros}>
-                                        <X className="mr-2 h-4 w-4" />
-                                        Limpiar
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
+                        </div>
                     )}
-                </Card>
+                </div>
 
                 {/* ✅ NUEVO 2026-02-21: Tabla mejorada con ordenamiento */}
-                <div>
+                <div className="mt-4 overflow-x-auto rounded-lg border">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Número</TableHead>
-                                <TableHead>Cliente</TableHead>
+                                <TableHead className="text-center">Folio</TableHead>
+                                <TableHead className="text-center">Cliente</TableHead>
                                 <TableHead className="text-center">Total</TableHead>
                                 <TableHead className="text-center">Estado</TableHead>
-                                <TableHead>Usuario</TableHead>
-                                <TableHead>📅 Solicitada Por</TableHead>
-                                <TableHead>📅 Vencimiento</TableHead>
+                                <TableHead className="text-center">Creador</TableHead>
+                                <TableHead className="text-center">Solicitada Para</TableHead>
+                                <TableHead className="text-center">Vencimiento</TableHead>
                                 {/* <TableHead>🛍️ Venta</TableHead> */}
-                                <TableHead>📅 Creada</TableHead>
-                                <TableHead>✏️ Actualizada</TableHead>
+                                <TableHead className="text-center">Creada</TableHead>
+                                <TableHead className="text-center">Actualizada</TableHead>
                                 <TableHead className="text-center">-</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -911,20 +910,13 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                             ) : (
                                 filteredProformas.map((proforma) => (
                                     <TableRow key={proforma.id} className={getProformaRowClassName(proforma.estado)}>
-                                        <TableCell className="font-small">#{proforma.id}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-center text-xs">#{proforma.id}</TableCell>
+                                        <TableCell className="text-center text-xs">
                                             <p className="text-xs">{proforma.cliente.nombre}</p>
                                         </TableCell>
-                                        <TableCell>Bs. {proforma.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</TableCell>
-                                        <TableCell>
-                                            {proforma.estado_logistica ? (
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-xs">{proforma.estado_logistica.icono}</span>
-                                                    <span className="text-xs">{proforma.estado_logistica.codigo}</span>
-                                                </div>
-                                            ) : (
-                                                <ProformaEstadoBadge estado={proforma.estado} />
-                                            )}
+                                        <TableCell className="text-center text-xs">Bs. {proforma.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</TableCell>
+                                        <TableCell className="text-center text-xs">
+                                            <ProformaEstadoBadge estado={proforma.estado} className="text-xs" />
                                         </TableCell>
                                         <TableCell className="text-center text-xs">
                                             {(proforma.usuario_creador as any)?.name || 'Sin asignar'}

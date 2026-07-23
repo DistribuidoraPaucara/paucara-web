@@ -44,15 +44,29 @@ class CrearProformaDTO extends BaseDTO
     public static function fromRequest(Request $request): self
     {
         $estadoInicial = $request->input('estado_inicial', 'BORRADOR');
-        $preventistaId = $request->input('preventista_id');
+        $usuarioAutenticado = \Illuminate\Support\Facades\Auth::user();
+        $usuarioId = $usuarioAutenticado?->id;
 
-        // ✅ NUEVO (2026-04-06): Debug log para preventista_id
+        // ✅ NUEVO (2026-07-22): Si el usuario autenticado tiene rol "preventista", asignarlo automáticamente
+        $preventistaId = null;
+        if ($usuarioAutenticado?->hasRole('preventista')) {
+            $preventistaId = $usuarioId;
+            \Illuminate\Support\Facades\Log::info('🎯 [CrearProformaDTO::fromRequest] Usuario autenticado es preventista - asignado automáticamente', [
+                'usuario_id' => $usuarioId,
+                'preventista_id' => $preventistaId,
+            ]);
+        } else {
+            // Si no es preventista, usar lo que viene del request
+            $preventistaId = $request->input('preventista_id');
+        }
+
+        // ✅ Debug log para preventista_id
         \Illuminate\Support\Facades\Log::debug('🔍 [CrearProformaDTO::fromRequest] Datos recibidos', [
             'cliente_id' => $request->input('cliente_id'),
             'preventista_id' => $preventistaId,
+            'usuario_tiene_rol_preventista' => $usuarioAutenticado?->hasRole('preventista') ?? false,
             'estado_inicial' => $estadoInicial,
             'requiere_envio' => $request->input('requiere_envio'),
-            'all_request' => $request->all(),
         ]);
 
         // ✅ Validar que estado sea BORRADOR o PENDIENTE
@@ -72,7 +86,7 @@ class CrearProformaDTO extends BaseDTO
             observaciones: $request->input('observaciones'),
             canal: $request->input('canal', 'PRESENCIAL'),
             politica_pago: $request->input('politica_pago', 'CONTRA_ENTREGA'),
-            usuario_id: \Illuminate\Support\Facades\Auth::id(),
+            usuario_id: $usuarioId,
             preventista_id: $preventistaId ? (int) $preventistaId : null,
             estado_inicial: $estadoInicial,
             // ✅ NUEVOS CAMPOS (2026-04-06): Detalles de envío

@@ -281,9 +281,9 @@ export default function ModernFilters({
     ];
 
     return (
-        <div className={cn('bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-4 shadow-sm', className)}>
+        <div className={cn('bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-2 shadow-sm', className)}>
             {/* Búsqueda en tiempo real */}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
                 <div className="flex-1">
                     <div className="relative group">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 h-4 w-4 transition-colors" />
@@ -344,7 +344,7 @@ export default function ModernFilters({
 
             {/* Filtros avanzados */}
             {mostrarFiltrosAvanzados && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {config.filters.map(field => renderFilterField(field))}
                     </div>

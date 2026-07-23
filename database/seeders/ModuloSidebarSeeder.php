@@ -377,6 +377,10 @@ class ModuloSidebarSeeder extends Seeder
                     'categoria'   => 'Comercial',
                     'permisos'    => ['clientes.manage'],
                 ],
+                'submenu' => [
+                    ['titulo' => 'Clientes', 'ruta' => '/clientes', 'icono' => 'Users', 'orden' => 1, 'permisos' => ['clientes.manage']],
+                    ['titulo' => 'Categorías de Cliente', 'ruta' => '/admin/categorias-cliente', 'icono' => 'FolderTree', 'orden' => 2, 'permisos' => ['admin']],
+                ],
             ],
             'localidades'     => [
                 'modulo' => [

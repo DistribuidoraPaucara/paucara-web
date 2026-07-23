@@ -844,8 +844,8 @@ class ProformaService
             // ✅ SIMPLIFICADO: Cargar reservas_proforma de esta proforma
             'reservas',
             'cliente',
-            'direccionSolicitada',
-            'direccionConfirmada',
+            'direccionSolicitada.localidad', // ✅ NUEVO (2026-07-23): Cargar localidad con dirección solicitada
+            'direccionConfirmada.localidad', // ✅ NUEVO (2026-07-23): Cargar localidad con dirección confirmada
             'moneda',
             'usuarioCreador',
             'preventista', // ✅ NUEVO (2026-07-18): Cargar preventista asignado

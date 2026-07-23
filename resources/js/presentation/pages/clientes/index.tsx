@@ -49,30 +49,25 @@ export default function ClientesIndex({ clientes, filters, localidades }: Client
       { title: 'Dashboard', href: clientesService.indexUrl() },
       { title: 'Clientes', href: clientesService.indexUrl() }
     ]}>
-      <div className="px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header with categorías button */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Clientes
-            </h1>
-          </div>
-          <button
-            onClick={() => router.visit('/admin/categorias-cliente')}
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 transition-colors"
-            title="Gestionar categorías de cliente"
-          >
-            <FolderTree className="h-5 w-5" />
-            Categorías
-          </button>
-        </div>
-
+      <div className="p-2">
         <GenericContainer<Cliente, ClienteFormData>
           entities={clientes}
           filters={filters}
           config={clientesConfig}
           service={clientesService}
-          extraData={{ localidades }}
+          extraData={{
+            localidades,
+            headerActions: (
+              <button
+                onClick={() => router.visit('/admin/categorias-cliente')}
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 transition-colors"
+                title="Gestionar categorías de cliente"
+              >
+                <FolderTree className="h-5 w-5" />
+                Categorías
+              </button>
+            )
+          }}
         />
       </div>
     </AppLayout>

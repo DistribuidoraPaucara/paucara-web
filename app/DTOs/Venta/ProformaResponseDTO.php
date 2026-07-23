@@ -105,6 +105,11 @@ class ProformaResponseDTO extends BaseDTO
                 'ciudad' => $model->direccionSolicitada->ciudad ?? null,
                 'departamento' => $model->direccionSolicitada->departamento ?? null,
                 'observaciones' => $model->direccionSolicitada->observaciones ?? null,
+                'localidad' => $model->direccionSolicitada->relationLoaded('localidad') && $model->direccionSolicitada->localidad ? [ // ✅ NUEVO (2026-07-23)
+                    'id' => $model->direccionSolicitada->localidad->id,
+                    'nombre' => $model->direccionSolicitada->localidad->nombre,
+                    'codigo' => $model->direccionSolicitada->localidad->codigo ?? null,
+                ] : null,
             ] : null,
             direccion_confirmada: $model->relationLoaded('direccionConfirmada') && $model->direccionConfirmada ? [
                 'id' => $model->direccionConfirmada->id,
@@ -114,6 +119,11 @@ class ProformaResponseDTO extends BaseDTO
                 'ciudad' => $model->direccionConfirmada->ciudad ?? null,
                 'departamento' => $model->direccionConfirmada->departamento ?? null,
                 'observaciones' => $model->direccionConfirmada->observaciones ?? null,
+                'localidad' => $model->direccionConfirmada->relationLoaded('localidad') && $model->direccionConfirmada->localidad ? [ // ✅ NUEVO (2026-07-23)
+                    'id' => $model->direccionConfirmada->localidad->id,
+                    'nombre' => $model->direccionConfirmada->localidad->nombre,
+                    'codigo' => $model->direccionConfirmada->localidad->codigo ?? null,
+                ] : null,
             ] : null,
             detalles: $model->detalles->map(function($det) use ($model) {
                 // ✅ NUEVO: Lógica de fallback para tipo_precio_id basada en cliente_id

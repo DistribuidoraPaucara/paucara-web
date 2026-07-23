@@ -1,14 +1,13 @@
-import { Head } from '@inertiajs/react';
-import type { PageProps } from '@inertiajs/core';
-import AppLayout from '@/layouts/app-layout';
 import type { Entrega } from '@/domain/entities/entregas';
 import type { Pagination } from '@/domain/entities/shared';
+import AppLayout from '@/layouts/app-layout';
+import type { PageProps } from '@inertiajs/core';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 
 // Componentes unificados
 import { EntregasHeader } from './components/EntregasHeader';
 import { EntregasTableView } from './components/EntregasTableView';
-import { EntregasDashboardView } from './components/EntregasDashboardView';
 
 interface Props extends PageProps {
     entregas: Pagination<Entrega>;
@@ -38,9 +37,7 @@ interface Props extends PageProps {
  */
 export default function EntregasIndex({ entregas, filtros, vehiculos = [], choferes = [], localidades = [], estadosLogisticos = [] }: Props) {
     // Estado de vista (inicializado desde filtros o 'simple' por defecto)
-    const [view, setView] = useState<'simple' | 'dashboard'>(
-        (filtros?.view as 'simple' | 'dashboard') || 'simple'
-    );
+    const [view, setView] = useState<'simple' | 'dashboard'>((filtros?.view as 'simple' | 'dashboard') || 'simple');
 
     // Sincronizar vista con URL
     const handleChangeView = (newView: 'simple' | 'dashboard') => {
@@ -54,29 +51,18 @@ export default function EntregasIndex({ entregas, filtros, vehiculos = [], chofe
 
     return (
         <AppLayout>
-            <Head title={view === 'simple' ? 'Entregas' : 'Dashboard de Entregas'} />
+            <Head title={'Entregas'} />
 
             <div className="space-y-6 p-4">
                 {/* Header con toggle */}
-                <EntregasHeader
-                    view={view}
-                    onChangeView={handleChangeView}
+                <EntregasHeader view={view} onChangeView={handleChangeView} />
+                <EntregasTableView
+                    entregas={entregas}
+                    vehiculos={vehiculos}
+                    choferes={choferes}
+                    localidades={localidades}
+                    estadosLogisticos={estadosLogisticos}
                 />
-
-                {/* Contenido condicional según vista */}
-                {view === 'simple' ? (
-                    <EntregasTableView
-                        entregas={entregas}
-                        vehiculos={vehiculos}
-                        choferes={choferes}
-                        localidades={localidades}
-                        estadosLogisticos={estadosLogisticos}
-                    />
-                ) : (
-                    <EntregasDashboardView
-                        autoRefresh={view === 'dashboard'} // Solo refrescar si está activa
-                    />
-                )}
             </div>
         </AppLayout>
     );

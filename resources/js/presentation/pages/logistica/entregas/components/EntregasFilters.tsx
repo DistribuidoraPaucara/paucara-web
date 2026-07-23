@@ -78,6 +78,10 @@ export function EntregasFilters({
     const [localidadSearch, setLocalidadSearch] = useState('');
     const [estadoLogisticoSearch, setEstadoLogisticoSearch] = useState('');
 
+    // ✅ NUEVO (2026-07-23): Estados locales para fechas (no actualizar URL hasta presionar Buscar)
+    const [fechaDesdeLocal, setFechaDesdeLocal] = useState(filtros.fecha_desde || '');
+    const [fechaHastaLocal, setFechaHastaLocal] = useState(filtros.fecha_hasta || '');
+
     const floatingInputClassName =
         'peer w-full rounded-lg border bg-background px-3 pb-2 pt-5 text-sm outline-none transition-colors placeholder:text-transparent focus:border-primary';
     const floatingLabelClassName =
@@ -403,15 +407,14 @@ export function EntregasFilters({
                                     <Button
                                         size="sm"
                                         variant={
-                                            filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0]
+                                            fechaDesdeLocal === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0]
                                                 ? 'default'
                                                 : 'outline'
                                         }
                                         onClick={() => {
                                             const ayer = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
-                                            onFilterChange('fecha_desde', ayer);
-                                            onFilterChange('fecha_hasta', ayer);
-                                            onApply?.({ ...filtros, fecha_desde: ayer, fecha_hasta: ayer });
+                                            setFechaDesdeLocal(ayer);
+                                            setFechaHastaLocal(ayer);
                                         }}
                                         disabled={isLoading}
                                     >
@@ -419,12 +422,11 @@ export function EntregasFilters({
                                     </Button>
                                     <Button
                                         size="sm"
-                                        variant={filtros.fecha_desde === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
+                                        variant={fechaDesdeLocal === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
                                         onClick={() => {
                                             const hoy = new Date().toISOString().split('T')[0];
-                                            onFilterChange('fecha_desde', hoy);
-                                            onFilterChange('fecha_hasta', hoy);
-                                            onApply?.({ ...filtros, fecha_desde: hoy, fecha_hasta: hoy });
+                                            setFechaDesdeLocal(hoy);
+                                            setFechaHastaLocal(hoy);
                                         }}
                                         disabled={isLoading}
                                     >
@@ -433,15 +435,14 @@ export function EntregasFilters({
                                     <Button
                                         size="sm"
                                         variant={
-                                            filtros.fecha_desde === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]
+                                            fechaDesdeLocal === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]
                                                 ? 'default'
                                                 : 'outline'
                                         }
                                         onClick={() => {
                                             const manana = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
-                                            onFilterChange('fecha_desde', manana);
-                                            onFilterChange('fecha_hasta', manana);
-                                            onApply?.({ ...filtros, fecha_desde: manana, fecha_hasta: manana });
+                                            setFechaDesdeLocal(manana);
+                                            setFechaHastaLocal(manana);
                                         }}
                                         disabled={isLoading}
                                     >
@@ -452,11 +453,13 @@ export function EntregasFilters({
                                     <div className="relative">
                                         <Input
                                             type="date"
-                                            value={filtros.fecha_desde || ''}
-                                            onChange={(e) => onFilterChange('fecha_desde', e.target.value)}
+                                            value={fechaDesdeLocal}
+                                            onChange={(e) => setFechaDesdeLocal(e.target.value)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
-                                                    onApply?.();
+                                                    onFilterChange('fecha_desde', fechaDesdeLocal);
+                                                    onFilterChange('fecha_hasta', fechaHastaLocal);
+                                                    onApply?.({ ...filtros, fecha_desde: fechaDesdeLocal, fecha_hasta: fechaHastaLocal });
                                                 }
                                             }}
                                             className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
@@ -469,11 +472,13 @@ export function EntregasFilters({
                                     <div className="relative">
                                         <Input
                                             type="date"
-                                            value={filtros.fecha_hasta || ''}
-                                            onChange={(e) => onFilterChange('fecha_hasta', e.target.value)}
+                                            value={fechaHastaLocal}
+                                            onChange={(e) => setFechaHastaLocal(e.target.value)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
-                                                    onApply?.();
+                                                    onFilterChange('fecha_desde', fechaDesdeLocal);
+                                                    onFilterChange('fecha_hasta', fechaHastaLocal);
+                                                    onApply?.({ ...filtros, fecha_desde: fechaDesdeLocal, fecha_hasta: fechaHastaLocal });
                                                 }
                                             }}
                                             className={`${floatingInputClassName} [&::-webkit-calendar-picker-indicator]:opacity-0`}
@@ -481,6 +486,21 @@ export function EntregasFilters({
                                         />
                                         <label className={floatingLabelClassName}>Hasta</label>
                                     </div>
+
+                                    {/* Botón Buscar para aplicar filtros de fecha */}
+                                    <Button
+                                        size="sm"
+                                        variant="default"
+                                        onClick={() => {
+                                            onFilterChange('fecha_desde', fechaDesdeLocal);
+                                            onFilterChange('fecha_hasta', fechaHastaLocal);
+                                            onApply?.({ ...filtros, fecha_desde: fechaDesdeLocal, fecha_hasta: fechaHastaLocal });
+                                        }}
+                                        disabled={isLoading}
+                                        className="whitespace-nowrap"
+                                    >
+                                        🔍 Buscar
+                                    </Button>
                                 </div>
                             </div>
                         </div>

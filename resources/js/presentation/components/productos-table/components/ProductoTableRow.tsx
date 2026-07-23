@@ -433,35 +433,35 @@ export default function ProductoTableRow({
             )}
 
             {/* Subtotal */}
-            <td className="px-2 py-4">
+            <td className="px-2 py-4 text-center">
                 <span className="text-sm font-bold text-gray-900 dark:text-white">
                     {formatCurrencyMinimalDecimals(detalle.subtotal)}
                 </span>
             </td>
 
             {/* Categoría */}
-            <td className="px-2 py-2">
+            <td className="px-2 py-2 text-center">
                 <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.categoria === 'string' ? productoInfo.categoria : productoInfo?.categoria?.nombre || '-'}
                 </span>
             </td>
 
             {/* Unidad */}
-            <td className="px-2 py-2">
+            <td className="px-2 py-2 text-center">
                 <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {detalle.unidad_medida_nombre || productoInfo?.unidad_medida?.nombre || '-'}
                 </span>
             </td>
 
             {/* Marca */}
-            <td className="px-2 py-2">
+            <td className="px-2 py-2 text-center">
                 <span className="text-xs font-small text-gray-700 dark:text-gray-300">
                     {typeof productoInfo?.marca === 'string' ? productoInfo.marca : productoInfo?.marca?.nombre || '-'}
                 </span>
             </td>
 
             {/* Acciones */}
-            <td className="px-2 py-4">
+            <td className="px-2 py-4 text-center">
                 <div className="flex items-center justify-center gap-1">
                     {/* Botón expandir/contraer combo */}
                     {detalle.producto && (detalle.producto as any).es_combo && (

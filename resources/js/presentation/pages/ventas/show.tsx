@@ -4,6 +4,14 @@ import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyWith2Decimals } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Dialog, DialogContent } from '@/presentation/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import ActualizarEstadoLogisticoModal from '@/presentation/components/ventas/ActualizarEstadoLogisticoModal';
 import AnularVentaModal from '@/presentation/components/ventas/AnularVentaModal';
 import ConfirmacionEntregaModal from '@/presentation/components/ventas/confirmacion-entrega-modal';
 import { ConfirmacionesModal } from '@/presentation/components/ventas/ConfirmacionesModal';
@@ -38,6 +46,8 @@ export default function VentaShow() {
     const [showImagenModal, setShowImagenModal] = useState(false);
     // ✅ NUEVO: Estado para modal de registrar confirmación
     const [showRegistrarConfirmacionModal, setShowRegistrarConfirmacionModal] = useState(false);
+    // ✅ NUEVO: Estado para modal de actualizar estado logístico
+    const [showActualizarEstadoModal, setShowActualizarEstadoModal] = useState(false);
 
     // Verificar si la venta está APROBADA
     const esAprobada = venta.estado_documento?.nombre?.toLowerCase() === 'aprobada' || venta.estado_documento?.codigo === 'APROBADO';
@@ -149,93 +159,92 @@ export default function VentaShow() {
             <div className="flex items-center justify-between px-6 pt-6">
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                     <p>{venta.numero}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Folio: {venta.id}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Folio: #{venta.id}</p>
                 </h1>
-                <div className="flex space-x-3">
-                    {venta.requiere_envio && venta.direccion_cliente && (
-                        <button
-                            onClick={() => setShowMapaUbicacion(true)}
-                            className="inline-flex items-center justify-center gap-1 rounded bg-orange-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-orange-700"
-                            title="Ver ubicación en el mapa"
-                        >
-                            <MapPin className="h-3 w-3" />
-                            Ver Ubicación
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+                            Acciones ⋮
                         </button>
-                    )}
-                    {/* Botón Registrar Confirmación - Solo si está aprobada */}
-                    {can('ventas.update') && esAprobada && (
-                        <button
-                            onClick={() => setShowRegistrarConfirmacionModal(true)}
-                            className="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-purple-700 focus:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:outline-none active:bg-purple-900 dark:focus:ring-offset-gray-800"
-                            title="Registrar nueva confirmación de entrega"
-                        >
-                            <Package className="mr-2 h-4 w-4" />+ Confirmación
-                        </button>
-                    )}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        {/* Ver Ubicación */}
+                        {venta.requiere_envio && venta.direccion_cliente && (
+                            <>
+                                <DropdownMenuItem onClick={() => setShowMapaUbicacion(true)}>
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    Ver Ubicación
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
 
-                    {/* Botón Ver Confirmaciones - Solo si hay confirmaciones */}
-                    {venta.confirmaciones && venta.confirmaciones.length > 0 && (
-                        <button
-                            onClick={() => setShowConfirmacionesModal(true)}
-                            className="inline-flex items-center rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-cyan-700 focus:bg-cyan-700 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:outline-none active:bg-cyan-900 dark:focus:ring-offset-gray-800"
-                            title="Ver confirmaciones de entrega"
-                        >
-                            <Package className="mr-2 h-4 w-4" />
-                            Ver Confirmaciones
-                        </button>
-                    )}
+                        {/* Registrar Confirmación */}
+                        {can('ventas.update') && esAprobada && (
+                            <DropdownMenuItem onClick={() => setShowRegistrarConfirmacionModal(true)}>
+                                <Package className="mr-2 h-4 w-4" />+ Registrar Confirmación
+                            </DropdownMenuItem>
+                        )}
 
-                    {/* Botón Reporte de Entrega - Solo si hay confirmación */}
-                    {venta.entregaConfirmacion && (
-                        <button
+                        {/* Ver Confirmaciones */}
+                        {venta.confirmaciones && venta.confirmaciones.length > 0 && (
+                            <DropdownMenuItem onClick={() => setShowConfirmacionesModal(true)}>
+                                <Package className="mr-2 h-4 w-4" />
+                                Ver Confirmaciones
+                            </DropdownMenuItem>
+                        )}
+
+                        {/* Reporte de Entrega */}
+                        {venta.entregaConfirmacion && (
+                            <DropdownMenuItem
+                                onClick={() => {
+                                    setModoReporte('entrega');
+                                    setOutputModal(true);
+                                }}
+                            >
+                                <Package className="mr-2 h-4 w-4" />
+                                Reporte Entrega
+                            </DropdownMenuItem>
+                        )}
+
+                        {/* Imprimir */}
+                        <DropdownMenuItem
                             onClick={() => {
-                                setModoReporte('entrega');
+                                setModoReporte('');
                                 setOutputModal(true);
                             }}
-                            className="inline-flex items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-green-700 focus:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none active:bg-green-900 dark:focus:ring-offset-gray-800"
-                            title="Imprimir reporte de entrega con confirmación"
                         >
-                            <Package className="mr-2 h-4 w-4" />
-                            Reporte Entrega
-                        </button>
-                    )}
+                            <Printer className="mr-2 h-4 w-4" />
+                            Imprimir
+                        </DropdownMenuItem>
 
-                    {/* Botón de Impresión/Exportación */}
-                    <button
-                        onClick={() => {
-                            setModoReporte('');
-                            setOutputModal(true);
-                        }}
-                        className="inline-flex items-center rounded-md border border-transparent bg-gray-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900 dark:focus:ring-offset-gray-800"
-                        title="Exportar/Imprimir documento"
-                    >
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir
-                    </button>
-
-                    {/* Botón Editar - Solo si NO está aprobada */}
-                    {can('ventas.update') && !esAprobada && (
-                        <Link
-                            href={`/ventas/${venta.id}/edit`}
-                            className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900 dark:focus:ring-offset-gray-800"
-                        >
+                        {/* Actualizar Estado Logístico */}
+                        <DropdownMenuItem onClick={() => setShowActualizarEstadoModal(true)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                        </Link>
-                    )}
+                            Actualizar Estado Logístico
+                        </DropdownMenuItem>
 
-                    {/* Botón Anular - Solo si está aprobada */}
-                    {can('ventas.update') && esAprobada && (
-                        <button
-                            onClick={() => setAnularModal({ isOpen: true })}
-                            disabled={isAnulando}
-                            className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-red-700 focus:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none active:bg-red-900 disabled:opacity-50 dark:focus:ring-offset-gray-800"
-                        >
-                            <AlertCircle className="mr-2 h-4 w-4" />
-                            {isAnulando ? 'Anulando...' : 'Anular'}
-                        </button>
-                    )}
-                </div>
+                        {can('ventas.update') && <DropdownMenuSeparator />}
+
+                        {/* Editar - Solo si NO está aprobada */}
+                        {can('ventas.update') && !esAprobada && (
+                            <DropdownMenuItem asChild>
+                                <Link href={`/ventas/${venta.id}/edit`}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Editar
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
+
+                        {/* Anular - Solo si está aprobada */}
+                        {can('ventas.update') && esAprobada && (
+                            <DropdownMenuItem onClick={() => setAnularModal({ isOpen: true })} disabled={isAnulando}>
+                                <AlertCircle className="mr-2 h-4 w-4" />
+                                {isAnulando ? 'Anulando...' : 'Anular'}
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div className="grid grid-cols-1 gap-6 p-2">
@@ -256,7 +265,7 @@ export default function VentaShow() {
                                     />
                                 </div>
                                 <div className="col-span-4 lg:col-span-5">
-                                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-5">
+                                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-5 items-start">
                                         {/* Vendedor */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
@@ -270,7 +279,7 @@ export default function VentaShow() {
                                             </div>
                                         </div>
                                         {/* Preventista */}
-                                        <div className="flex items-center space-x-3">
+                                        {venta.preventista && ( <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
                                                     <span className="text-lg">🧑‍💼</span>
@@ -282,7 +291,7 @@ export default function VentaShow() {
                                                     {venta.preventista?.name || 'No asignado'}
                                                 </p>
                                             </div>
-                                        </div>
+                                        </div> )}
                                         {/* Creada */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
@@ -392,9 +401,9 @@ export default function VentaShow() {
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-                                                        Estado Logístico
+                                                        Est. Logístico
                                                     </p>
-                                                    <div className="mt-1">
+                                                    <div className="mt-1 flex items-center gap-2">
                                                         <div
                                                             className="inline-block rounded-full border px-2 py-1 text-xs font-semibold"
                                                             style={{
@@ -403,7 +412,7 @@ export default function VentaShow() {
                                                                 borderColor: venta.estado_logistica.color,
                                                             }}
                                                         >
-                                                            {venta.estado_logistica.icono} {venta.estado_logistica.nombre}
+                                                            {venta.estado_logistica.nombre}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -444,36 +453,6 @@ export default function VentaShow() {
                                                     </p>
                                                 </div>
                                             </div>
-                                        )}
-                                        {/* ✅ NUEVO: Integración de EstadoLogisticoConfirmacion en el grid */}
-                                        {venta.confirmaciones && venta.confirmaciones.length > 0 && (
-                                            <>
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="flex-shrink-0">
-                                                        <div
-                                                            className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                                                venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
-                                                                    ? 'bg-green-100 dark:bg-green-900/30'
-                                                                    : 'bg-orange-100 dark:bg-orange-900/30'
-                                                            }`}
-                                                        >
-                                                            <span className="text-lg">
-                                                                {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_entrega === 'COMPLETA'
-                                                                    ? '✅'
-                                                                    : '⚠️'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-                                                            Tipo Entrega
-                                                        </p>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                            {venta.confirmaciones[venta.confirmaciones.length - 1].tipo_confirmacion}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -533,8 +512,9 @@ export default function VentaShow() {
                                                       .join(', ')
                                                 : '-';
 
-                                        const imagenPrincipal = ((detalle.producto as any)?.imagenes || []).find((img: any) => img.es_principal) ||
-                                                              ((detalle.producto as any)?.imagenes || [])[0];
+                                        const imagenPrincipal =
+                                            ((detalle.producto as any)?.imagenes || []).find((img: any) => img.es_principal) ||
+                                            ((detalle.producto as any)?.imagenes || [])[0];
 
                                         return (
                                             <>
@@ -545,12 +525,12 @@ export default function VentaShow() {
                                                                 <img
                                                                     src={imagenPrincipal.url}
                                                                     alt={detalle.producto.nombre}
-                                                                    className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                                    className="h-full w-full cursor-pointer object-cover transition-opacity hover:opacity-80"
                                                                     onClick={() => window.open(imagenPrincipal.url, '_blank')}
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className="h-16 w-16 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-400">
+                                                            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-zinc-800">
                                                                 <span>📦</span>
                                                             </div>
                                                         )}
@@ -602,8 +582,9 @@ export default function VentaShow() {
                                                                     ? item.precio_unitario
                                                                     : item.producto?.precio_venta || 0;
                                                             const subtotal = cantidadTotal * precioUnitario;
-                                                            const imagenCombo = (item.producto?.imagenes || []).find((img: any) => img.es_principal) ||
-                                                                               (item.producto?.imagenes || [])[0];
+                                                            const imagenCombo =
+                                                                (item.producto?.imagenes || []).find((img: any) => img.es_principal) ||
+                                                                (item.producto?.imagenes || [])[0];
                                                             return (
                                                                 <tr key={`${detalle.id}-item-${idx}`} className="bg-gray-50 dark:bg-zinc-800">
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
@@ -612,12 +593,12 @@ export default function VentaShow() {
                                                                                 <img
                                                                                     src={imagenCombo.url}
                                                                                     alt={item.producto?.nombre}
-                                                                                    className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                                                    className="h-full w-full cursor-pointer object-cover transition-opacity hover:opacity-80"
                                                                                     onClick={() => window.open(imagenCombo.url, '_blank')}
                                                                                 />
                                                                             </div>
                                                                         ) : (
-                                                                            <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-400 text-xs">
+                                                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-200 text-xs text-gray-400 dark:bg-zinc-700">
                                                                                 📦
                                                                             </div>
                                                                         )}
@@ -1253,6 +1234,17 @@ export default function VentaShow() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* ✅ Modal de Actualizar Estado Logístico */}
+            <ActualizarEstadoLogisticoModal
+                isOpen={showActualizarEstadoModal}
+                onClose={() => setShowActualizarEstadoModal(false)}
+                venta={venta}
+                onSuccess={() => {
+                    setShowActualizarEstadoModal(false);
+                    setTimeout(() => window.location.reload(), 500);
+                }}
+            />
         </AppLayout>
     );
 }
@@ -1264,35 +1256,45 @@ export default function VentaShow() {
 function ClienteInfo({ venta, imagenCargada, setImagenCargada, setShowImagenModal, setShowMapaUbicacion }: any) {
     return (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="flex items-start gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-center">
                 {/* Foto de perfil */}
-                <div className="flex-shrink-0">
-                    <div
-                        className="flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700"
-                        onClick={() => venta.cliente.foto_perfil && setShowImagenModal(true)}
-                    >
-                        {venta.cliente.foto_perfil && typeof venta.cliente.foto_perfil === 'string' && imagenCargada ? (
-                            <img
-                                src={`/storage/${venta.cliente.foto_perfil}`}
-                                alt={venta.cliente.nombre}
-                                className="h-full w-full object-cover"
-                                onError={() => setImagenCargada(false)}
-                            />
-                        ) : (
-                            <User className="h-7 w-7 text-gray-400 dark:text-gray-500" />
-                        )}
-                    </div>
+                <div
+                    className="flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700"
+                    onClick={() => venta.cliente.foto_perfil && setShowImagenModal(true)}
+                >
+                    {venta.cliente.foto_perfil && typeof venta.cliente.foto_perfil === 'string' && imagenCargada ? (
+                        <img
+                            src={`/storage/${venta.cliente.foto_perfil}`}
+                            alt={venta.cliente.nombre}
+                            className="h-full w-full object-cover"
+                            onError={() => setImagenCargada(false)}
+                        />
+                    ) : (
+                        <User className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+                    )}
                 </div>
 
                 {/* Datos del cliente */}
-                <div className="flex-1 space-y-2">
-                    <div>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">{venta.cliente.nombre}</p>
-                    </div>
+                <div>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{venta.cliente.nombre}</p>
 
                     {venta.cliente.nit && <p className="text-xs text-gray-600 dark:text-gray-400">NIT: {venta.cliente.nit}</p>}
 
-                    {venta.cliente.telefono && <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {venta.cliente.telefono}</p>}
+                    {venta.cliente.telefono && (
+                        <div className="flex items-center gap-2">
+                            {/* <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {venta.cliente.telefono}</p> */}
+                            <a
+                                href={`https://wa.me/${venta.cliente.telefono.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Abrir en WhatsApp"
+                                className="text-xs text-gray-600 dark:text-gray-400"
+                            >
+                                {/* <MessageCircle className="h-4 w-4" /> */}
+                                {venta.cliente.telefono}
+                            </a>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

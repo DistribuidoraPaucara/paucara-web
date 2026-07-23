@@ -117,7 +117,7 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
         { key: 'razon_social', label: 'Razon Social', type: 'text' },
         { key: 'nit', label: 'N° Documento', type: 'text' },
         { key: 'telefono', label: 'Teléfono', type: 'text' },
-        { key: 'email', label: 'Email', type: 'text' },
+        // { key: 'email', label: 'Email', type: 'text' },
         { key: 'localidad.nombre', label: 'Localidad', type: 'text' },
         {
             key: 'categorias',

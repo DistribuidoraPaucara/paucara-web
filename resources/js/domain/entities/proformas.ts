@@ -10,12 +10,19 @@ import type { Producto } from './productos';
 /**
  * Dirección de entrega
  */
+export interface Localidad {
+    id: Id;
+    nombre: string;
+    codigo?: string;
+}
+
 export interface Direccion {
     id: Id;
     direccion: string;
     latitud?: number;
     longitud?: number;
     observaciones?: string;
+    localidad?: Localidad; // ✅ NUEVO (2026-07-23): Localidad asociada a la dirección
 }
 
 /**
