@@ -445,6 +445,7 @@ export default function Step3Almacenes({
                                     </p>
                                 </div>
                             )}
+                        </div>
                     </div>
                 </TabsContent>
             </Tabs>
