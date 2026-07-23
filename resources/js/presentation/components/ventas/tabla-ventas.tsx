@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
-import { Eye, Edit, Trash2, MoreHorizontal, FileText, Truck, Store, ChevronDown, ChevronUp, MapPin, Package, Calendar, Printer, DollarSign, Loader2, RotateCcw } from 'lucide-react';
-import { formatCurrency, formatCurrencyWith2Decimals, formatDate } from '@/lib/utils';
-import type { Venta, FiltrosVentas } from '@/domain/entities/ventas';
 import type { Pagination } from '@/domain/entities/shared';
+import type { FiltrosVentas, Venta } from '@/domain/entities/ventas';
 import ventasService from '@/infrastructure/services/ventas.service';
-import AnularVentaModal from './AnularVentaModal';
+import { formatCurrencyWith2Decimals, formatDate } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import EstadoVentaBadge from './EstadoVentaBadge';
-import ReversionStockIndicador from './ReversionStockIndicador';
-import DetalleReversionModal from './DetalleReversionModal';
-import ConfirmacionEntregaModal from './confirmacion-entrega-modal';
+import { Table, TableBody, TableHead, TableCell, TableHeader, TableRow } from '@/presentation/components/ui/table';
+import { Link } from '@inertiajs/react';
+import { Calendar, ChevronDown, ChevronUp, Eye, FileText, MapPin, Package, Printer, Store, Trash2, Truck } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
+import AnularVentaModal from './AnularVentaModal';
+import DetalleReversionModal from './DetalleReversionModal';
+import EstadoVentaBadge from './EstadoVentaBadge';
+import ConfirmacionEntregaModal from './confirmacion-entrega-modal';
+import { Tab } from '@headlessui/react';
 
 interface TablaVentasProps {
     ventas: Pagination<Venta>;
@@ -35,7 +36,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
     // ✅ DEBUG: Verificar datos de dirección en consola
     React.useEffect(() => {
         if (ventas.data && ventas.data.length > 0) {
-            const ventaConDelivery = ventas.data.find(v => v.requiere_envio);
+            const ventaConDelivery = ventas.data.find((v) => v.requiere_envio);
             if (ventaConDelivery) {
                 console.log('📦 Venta con delivery - DEBUG:', {
                     id: ventaConDelivery.id,
@@ -175,49 +176,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
         }
     };
 
-    const getEstadoLogisticoLabel = (estado: string): string => {
-        // ✅ ACTUALIZADO: Incluir todos los estados posibles desde BD
-        const labelMap: { [key: string]: string } = {
-            'SIN_ENTREGA': 'Sin Entrega',
-            'PENDIENTE_ENVIO': 'Pendiente de Envío',   // ✅ NUEVO
-            'PROGRAMADO': 'Programado',
-            'EN_PREPARACION': 'En Preparación',
-            'PREPARANDO': 'Preparando',                 // ✅ NUEVO
-            'EN_TRANSITO': 'En Tránsito',
-            'ENVIADO': 'Enviado',                       // ✅ NUEVO
-            'ENTREGADA': 'Entregada',
-            'ENTREGADO': 'Entregado',                   // ✅ NUEVO
-            'PROBLEMAS': 'Con Problemas',
-            'CANCELADA': 'Cancelada',
-            'CANCELADO': 'Cancelado',                   // ✅ NUEVO
-            'PENDIENTE_RETIRO': 'Pendiente de Retiro', // ✅ NUEVO
-            'RETIRADO': 'Retirado'                      // ✅ NUEVO
-        };
-        return labelMap[estado] || 'Desconocido';
-    };
-
-    const getEstadoPagoBadgeStyles = (estado: string): { bg: string; text: string; label: string } => {
-        // ✅ NUEVO: Estilos para estado de pago
-        const styleMap: { [key: string]: { bg: string; text: string; label: string } } = {
-            'PENDIENTE': { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', label: 'Pendiente' },
-            'PAGADO': { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', label: 'Pagado' },
-            'PARCIALMENTE_PAGADO': { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-800 dark:text-orange-300', label: 'Parcialmente Pagado' },
-            'VENCIDO': { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', label: 'Vencido' },
-        };
-        return styleMap[estado] || { bg: 'bg-gray-100 dark:bg-gray-900/30', text: 'text-gray-800 dark:text-gray-300', label: estado || 'Desconocido' };
-    };
-
-    const getPoliticaPagoBadgeStyles = (politica: string): { bg: string; text: string; label: string } => {
-        // ✅ NUEVO: Estilos para política de pago
-        const styleMap: { [key: string]: { bg: string; text: string; label: string } } = {
-            'CONTRA_ENTREGA': { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-300', label: 'Contra Entrega' },
-            'ANTICIPADO_100': { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', label: 'Anticipado 100%' },
-            'MEDIO_MEDIO': { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-800 dark:text-indigo-300', label: 'Medio - Medio' },
-            'CREDITO': { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-800 dark:text-cyan-300', label: 'Crédito' },
-        };
-        return styleMap[politica] || { bg: 'bg-gray-100 dark:bg-gray-900/30', text: 'text-gray-800 dark:text-gray-300', label: politica || 'Desconocida' };
-    };
-
     const handleSort = (field: string) => {
         const currentSortDir = filtros?.sort_by === field && filtros?.sort_dir === 'asc' ? 'desc' : 'asc';
         ventasService.sort(field, currentSortDir);
@@ -233,46 +191,33 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
     // ✅ NUEVO: Icono diferencial para tipo de pago
     const getTipoPagoIcon = (codigo?: string): string => {
         const iconMap: { [key: string]: string } = {
-            'EFECTIVO': '💵',
-            'TRANSFERENCIA': '🏦',
-            'QR': '📱',
-            'TARJETA': '💳',
-            'CHEQUE': '📄',
-            'DEPOSITO': '🏧',
+            EFECTIVO: '💵',
+            TRANSFERENCIA: '🏦',
+            QR: '📱',
+            TARJETA: '💳',
+            CHEQUE: '📄',
+            DEPOSITO: '🏧',
         };
         return iconMap[codigo || ''] || '💳';
     };
 
-    /* const handleDelete = (venta: Venta) => {
-        ventasService.destroy(venta.id, {
-            onSuccess: () => {
-                if (onVentaDeleted) {
-                    onVentaDeleted(venta.id);
-                }
-            }
-        });
-    }; */
-
     if (!ventas.data || ventas.data.length === 0) {
         return (
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="p-8 text-center">
                     <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                        No hay ventas
-                    </h3>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay ventas</h3>
                     <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
                         {Object.keys(filtros || {}).length > 0
                             ? 'No se encontraron ventas con los filtros aplicados.'
-                            : 'Comienza creando tu primera venta.'
-                        }
+                            : 'Comienza creando tu primera venta.'}
                     </p>
                     <div className="mt-6">
                         <Link
                             href="/ventas/create"
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                            className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                         >
-                            <FileText className="w-4 h-4 mr-2" />
+                            <FileText className="mr-2 h-4 w-4" />
                             Nueva venta
                         </Link>
                     </div>
@@ -282,25 +227,20 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
     }
 
     return (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             {/* Header con información de paginación */}
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-zinc-700">
+            <div className="border-b border-gray-200 px-2 py-3 dark:border-zinc-700">
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700 dark:text-gray-300">
-                        Mostrando{' '}
-                        <span className="font-medium">{ventas.from}</span>
-                        {' '}-{' '}
-                        <span className="font-medium">{ventas.to}</span>
-                        {' '}de{' '}
-                        <span className="font-medium">{ventas.total}</span>
-                        {' '}ventas
+                        Mostrando <span className="font-medium">{ventas.from}</span> - <span className="font-medium">{ventas.to}</span> de{' '}
+                        <span className="font-medium">{ventas.total}</span> ventas
                     </div>
 
                     <div className="flex items-center space-x-2">
                         <select
                             value={filtros?.per_page || 15}
                             onChange={(e) => ventasService.changePerPage(Number(e.target.value))}
-                            className="text-sm border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:text-white"
+                            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                         >
                             <option value={10}>10 por página</option>
                             <option value={15}>15 por página</option>
@@ -312,191 +252,163 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
             </div>
 
             {/* Tabla */}
-            <div className="overflow-x-auto max-h-[calc(100vh-300px)] flex flex-col">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-                    <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-zinc-800">
-                        <tr>
-                            <th
-                                scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700"
+            <div className="overflow-x-auto">
+                <Table className="divide-y divide-gray-200 dark:divide-zinc-700">
+                    <TableHeader className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                        <TableRow className="border-gray-200 dark:border-gray-700">
+                            <TableHead className="px-2 py-2 text-center text-xs tracking-wider text-gray-500 uppercase dark:text-gray-300">
+                                Folio
+                            </TableHead>
+                            <TableHead
+                                className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
                                 onClick={() => handleSort('numero')}
                             >
-                                Número {getSortIcon('numero')}
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                Estado {getSortIcon('estado_documento.codigo')}
+                            </TableHead>
+                            <TableHead
+                                className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
                                 onClick={() => handleSort('cliente_id')}
                             >
                                 Cliente {getSortIcon('cliente_id')}
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700"
+                            </TableHead>
+                            <TableHead
+                                className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
                                 onClick={() => handleSort('total')}
                             >
                                 Total {getSortIcon('total')}
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700"
+                            </TableHead>
+                            <TableHead
+                                className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
                                 onClick={() => handleSort('requiere_envio')}
                             >
                                 🚚 Tipo Entrega {getSortIcon('requiere_envio')}
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            </TableHead>
+                            {/* preventista */}
+                            <TableHead className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700">
+                                Preventista {getSortIcon('preventista_id')}
+                            </TableHead>
+                            {/* creada por */}
+                            <TableHead className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700">
+                                Creada por {getSortIcon('usuario_id')}
+                            </TableHead>
+
+                            <TableHead className="px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase dark:text-gray-300">
                                 🕐 Creada
-                            </th>
-                            <th scope="col" className="px-6 py-3">
-                                <span className="sr-only">Acciones</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
+                            </TableHead>
+                            <TableHead className="px-2 py-2 text-center">-</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {ventas.data.map((venta) => (
                             <React.Fragment key={venta.id}>
-                                <tr className="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                            <p>Folio: {venta.id}</p>
-                                            <p>{venta.numero}</p>
-                                        </div>
+                                <TableRow className="transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800">
+                                    <TableCell className="text-center text-xs">
+                                        #{venta.id}
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2">
                                         <EstadoVentaBadge
                                             estado={venta.estado_documento?.codigo || 'PENDIENTE'}
-                                            tamaño="sm"
+                                            tamaño="xs"
                                             conIcono={true}
                                             mostrarLabel={true}
                                         />
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            {venta.proforma?.numero && (
-                                                <Link
-                                                    href={`/proformas/${venta.proforma.id}`}
-                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                                                    title="Ver proforma"
-                                                >
-                                                    Folio Proforma: {venta.proforma.id}
-                                                </Link>
-                                            )}
-                                        </div>
-                                        {venta.preventista && (
-                                            <div className="flex items-center space-x-2">
-                                                Prev.:
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    <strong>{venta.preventista.name}</strong>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900 dark:text-white">
-                                            {venta.cliente?.nombre || 'Sin cliente'}
-                                        </div>
-                                        {venta.cliente?.nit && (
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                NIT: {venta.cliente.nit}
-                                            </div>
-                                        )}
-                                        {/* ✅ NUEVO (2026-03-03): Mostrar observaciones de la dirección */}
-                                        {venta.requiere_envio && venta.direccionCliente?.observaciones && (
-                                            <div className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">
-                                                📍 {venta.direccionCliente.observaciones}
-                                            </div>
-                                        )}
-                                    </td>
+                                    <TableCell className="px-2 py-2">
+                                        <div className="text-xs text-gray-900 dark:text-white">{venta.cliente?.nombre || 'Sin cliente'}</div>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    <TableCell className="px-2 py-2">
+                                        <div className="text-xs text-gray-900 dark:text-white">
                                             {typeof venta.total === 'string'
                                                 ? formatCurrencyWith2Decimals(parseFloat(venta.total), venta.moneda?.codigo)
-                                                : formatCurrencyWith2Decimals(venta.total, venta.moneda?.codigo)
-                                            }
+                                                : formatCurrencyWith2Decimals(venta.total, venta.moneda?.codigo)}
                                         </div>
-                                        <div className="text-sm">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
                                             {venta.tipoPago ? (
                                                 <div className="flex items-center space-x-2">
-                                                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-                                                        <span className="text-lg">{getTipoPagoIcon(venta.tipoPago.codigo)}</span>
+                                                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                                                        <span className="text-xs">{getTipoPagoIcon(venta.tipoPago.codigo)}</span>
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">
-                                                            {venta.tipoPago.nombre}
-                                                        </p>
+                                                        <p className="font-small text-xs text-gray-900 dark:text-white">{venta.tipoPago.nombre}</p>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">Sin datos</span>
                                             )}
                                         </div>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center space-x-2">
+                                    <TableCell className="px-2 py-2">
+                                        <div className="flex flex-wrap items-start">
                                             {venta.requiere_envio ? (
                                                 <>
-                                                    <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                                    <div className="flex-1">
-                                                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    <div>
+                                                        <span className="inline-flex rounded-full bg-blue-100 px-1 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                                             🚚 Delivery
                                                         </span>
-                                                        {venta.entrega ? (
-                                                            <div className="text-xs mt-1 space-y-0.5">
-                                                                <div className="text-blue-700 dark:text-blue-300 font-medium">
-                                                                    📦 Entrega: {venta.entrega.numero_entrega || `#${venta.entrega.id}`}
-                                                                </div>
-                                                                {venta.entrega.chofer && (
-                                                                    <div className="text-gray-600 dark:text-gray-400">
-                                                                        🚗 {venta.entrega.chofer.name || venta.entrega.chofer.nombre}
-                                                                    </div>
+                                                        {venta.estadoLogistica ? (
+                                                            <div
+                                                                className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-white"
+                                                                style={{
+                                                                    backgroundColor: venta.estadoLogistica.color || '#6B7280',
+                                                                }}
+                                                            >
+                                                                {venta.estadoLogistica.icono && (
+                                                                    <span>{venta.estadoLogistica.icono}</span>
                                                                 )}
-                                                            </div>
-                                                        ) : venta.estado_logistico ? (
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                                {venta.estado_logistico}
+                                                                <span>{venta.estadoLogistica.nombre}</span>
                                                             </div>
                                                         ) : (
-                                                            <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                                                                Sin asignar
-                                                            </div>
+                                                            <div className="mt-1 text-xs text-orange-600 dark:text-orange-400">Sin asignar</div>
                                                         )}
                                                     </div>
                                                     <button
                                                         onClick={() => toggleRowExpanded(Number(venta.id))}
-                                                        className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors flex-shrink-0"
+                                                        className="rounded p-1 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                                         title="Ver detalles de entrega"
                                                     >
                                                         {expandedRows.has(Number(venta.id)) ? (
-                                                            <ChevronUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                            <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                                         ) : (
-                                                            <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                            <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                                         )}
                                                     </button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Store className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                    <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                                         🏪 Presencial
                                                     </span>
                                                 </>
                                             )}
                                         </div>
-                                    </td>
+                                    </TableCell>
+
+                                    <TableCell className="px-2 py-2">
+                                        <div className="text-xs text-gray-900 dark:text-white">{venta.preventista?.name || 'Sin preventista'}</div>
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2">
+                                        <div className="text-xs text-gray-900 dark:text-white">{venta.usuario?.name || 'Sin usuario'}</div>
+                                    </TableCell>
 
                                     {/* ✅ NUEVO: Fecha de Creación */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                    <TableCell className="px-2 py-2">
+                                        <div className="text-xs text-gray-700 dark:text-gray-300">
                                             {venta.created_at ? (
                                                 <>
-                                                    <div>{new Date(venta.created_at).toLocaleDateString('es-BO', {
-                                                        day: 'numeric',
-                                                        month: 'short',
-                                                        year: 'numeric'
-                                                    })}</div>
+                                                    <div>
+                                                        {new Date(venta.created_at).toLocaleDateString('es-BO', {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
                                                         {new Date(venta.created_at).toLocaleTimeString('es-BO', {
                                                             hour: '2-digit',
-                                                            minute: '2-digit'
+                                                            minute: '2-digit',
                                                         })}
                                                     </div>
                                                 </>
@@ -504,77 +416,76 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 <span className="text-gray-400">-</span>
                                             )}
                                         </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            creador: <span className="font-medium text-gray-900 dark:text-white">
-                                                {venta.usuario?.name || 'Sin usuario'}
-                                            </span>
-                                        </div>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <TableCell className="px-2 py-2 text-center text-xs">
                                         <div className="flex items-center justify-end space-x-2">
                                             {/* Ver */}
                                             <Link
                                                 href={ventasService.showUrl(venta.id)}
-                                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                className="rounded p-1 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                                                 title="Ver venta"
                                             >
-                                                <Eye className="w-4 h-4" />
+                                                <Eye className="h-4 w-4" />
                                             </Link>
 
                                             {/* Anular - Solo si está APROBADO */}
                                             {venta.estado_documento?.codigo === 'APROBADO' && (
                                                 <button
                                                     onClick={() => openAnularModal(venta)}
-                                                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    className="rounded p-1 text-red-600 transition-colors hover:bg-red-50 hover:text-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                                                     title="Anular venta"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             )}
 
                                             {/* ✅ Descargar en formato - Usar OutputSelectionModal */}
                                             <button
                                                 onClick={() => setOutputModal({ isOpen: true, venta })}
-                                                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                className="rounded p-1 text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                                                 title="Exportar documento"
                                             >
-                                                <Printer className="w-4 h-4" />
+                                                <Printer className="h-4 w-4" />
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
 
                                 {/* Fila expandible para detalles de delivery */}
                                 {venta.requiere_envio && expandedRows.has(Number(venta.id)) && (
-                                    <tr className="bg-blue-50 dark:bg-blue-900/10 border-t-2 border-blue-200 dark:border-blue-800">
+                                    <tr className="border-t-2 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/10">
                                         <td colSpan={12} className="px-6 py-4">
                                             <div className="space-y-4">
                                                 {/* ✅ NUEVO: Información de Entrega Asignada */}
                                                 {venta.entrega && (
-                                                    <div className="flex items-start space-x-3 p-3 bg-blue-100 dark:bg-blue-900/20 rounded border border-blue-300 dark:border-blue-700">
-                                                        <Package className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                                    <div className="flex items-start space-x-3 rounded border border-blue-300 bg-blue-100 p-3 dark:border-blue-700 dark:bg-blue-900/20">
+                                                        <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                         <div className="flex-1">
-                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                                            <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                                 📦 Entrega Asignada
                                                             </h4>
                                                             <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                                                                 <div>
-                                                                    <span className="font-medium">Número:</span> {venta.entrega.numero_entrega || `#${venta.entrega.id}`}
+                                                                    <span className="font-medium">Número:</span>{' '}
+                                                                    {venta.entrega.numero_entrega || `#${venta.entrega.id}`}
                                                                 </div>
                                                                 {venta.entrega.chofer && (
                                                                     <div>
-                                                                        <span className="font-medium">Chofer:</span> {venta.entrega.chofer.name || venta.entrega.chofer.nombre}
+                                                                        <span className="font-medium">Chofer:</span>{' '}
+                                                                        {venta.entrega.chofer.name || venta.entrega.chofer.nombre}
                                                                     </div>
                                                                 )}
                                                                 {venta.entrega.vehiculo && (
                                                                     <div>
-                                                                        <span className="font-medium">Vehículo:</span> {venta.entrega.vehiculo.placa} ({venta.entrega.vehiculo.marca})
+                                                                        <span className="font-medium">Vehículo:</span> {venta.entrega.vehiculo.placa}{' '}
+                                                                        ({venta.entrega.vehiculo.marca})
                                                                     </div>
                                                                 )}
                                                                 {venta.entrega.fecha_programada && (
                                                                     <div>
-                                                                        <span className="font-medium">Fecha Programada:</span> {formatDate(String(venta.entrega.fecha_programada))}
+                                                                        <span className="font-medium">Fecha Programada:</span>{' '}
+                                                                        {formatDate(String(venta.entrega.fecha_programada))}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -584,9 +495,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
 
                                                 {/* Dirección de entrega */}
                                                 <div className="flex items-start space-x-3">
-                                                    <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                                    <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                     <div className="flex-1">
-                                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                                        <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                             Dirección de Entrega
                                                         </h4>
                                                         <div className="space-y-2">
@@ -617,9 +528,10 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
 
                                                             {/* Coordenadas para mapas */}
                                                             {venta.direccionCliente?.latitud && venta.direccionCliente?.longitud && (
-                                                                <div className="mt-2 p-2 bg-white dark:bg-zinc-800 rounded border border-gray-200 dark:border-zinc-700">
-                                                                    <p className="text-xs text-gray-600 dark:text-gray-400 font-mono">
-                                                                        📍 Coordenadas: {Number(venta.direccionCliente.latitud).toFixed(4)}, {Number(venta.direccionCliente.longitud).toFixed(4)}
+                                                                <div className="mt-2 rounded border border-gray-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-800">
+                                                                    <p className="font-mono text-xs text-gray-600 dark:text-gray-400">
+                                                                        📍 Coordenadas: {Number(venta.direccionCliente.latitud).toFixed(4)},{' '}
+                                                                        {Number(venta.direccionCliente.longitud).toFixed(4)}
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -629,11 +541,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
 
                                                 {/* Estado logístico */}
                                                 <div className="flex items-start space-x-3">
-                                                    <Package className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                                    <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                     <div>
-                                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                                                            Estado Logístico
-                                                        </h4>
+                                                        <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Estado Logístico</h4>
                                                         <div className="flex items-center space-x-3">
                                                             {/* Badge mejorado del estado */}
                                                             <EstadoVentaBadge
@@ -649,9 +559,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 {/* Fecha de entrega prometida */}
                                                 {venta.fecha_entrega_comprometida && (
                                                     <div className="flex items-start space-x-3">
-                                                        <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                                        <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                         <div>
-                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                                                            <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
                                                                 Fecha Prometida de Entrega
                                                             </h4>
                                                             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -664,9 +574,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 {/* Peso de la venta */}
                                                 {venta.peso_total_estimado && (
                                                     <div className="flex items-start space-x-3">
-                                                        <Package className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                                        <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                         <div>
-                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                                                            <h4 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
                                                                 Peso Total Estimado
                                                             </h4>
                                                             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -678,11 +588,11 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
 
                                                 {/* ✅ NUEVO: Botón para ver detalles de confirmación de entrega */}
                                                 {venta.entregaConfirmacion && (
-                                                    <div className="flex items-start space-x-3 pt-4 border-t border-blue-200 dark:border-blue-800">
+                                                    <div className="flex items-start space-x-3 border-t border-blue-200 pt-4 dark:border-blue-800">
                                                         <div className="flex-1">
                                                             <button
                                                                 onClick={() => setConfirmacionEntregaModal({ isOpen: true, venta })}
-                                                                className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg text-sm font-medium transition"
+                                                                className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
                                                             >
                                                                 ✓ Ver Confirmación de Entrega
                                                             </button>
@@ -695,19 +605,19 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                 )}
                             </React.Fragment>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Paginación */}
             {ventas.last_page > 1 && (
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-zinc-700">
+                <div className="border-t border-gray-200 px-4 py-3 dark:border-zinc-700">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <button
                                 onClick={() => ventasService.goToPage(ventas.current_page - 1)}
                                 disabled={ventas.current_page <= 1}
-                                className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700"
                             >
                                 Anterior
                             </button>
@@ -733,10 +643,11 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                         <button
                                             key={pageNum}
                                             onClick={() => ventasService.goToPage(pageNum)}
-                                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${pageNum === ventas.current_page
-                                                ? 'bg-blue-600 text-white'
-                                                : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700'
-                                                }`}
+                                            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                                                pageNum === ventas.current_page
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'
+                                            }`}
                                         >
                                             {pageNum}
                                         </button>
@@ -747,7 +658,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                             <button
                                 onClick={() => ventasService.goToPage(ventas.current_page + 1)}
                                 disabled={ventas.current_page >= ventas.last_page}
-                                className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700"
                             >
                                 Siguiente
                             </button>
