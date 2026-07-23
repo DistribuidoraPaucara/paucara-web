@@ -26,6 +26,21 @@ export default function ToggleGroup({
     required = false,
     description,
 }: ToggleGroupProps) {
+    // 🔍 DEBUG: Mostrar opciones y cambios en consola
+    React.useEffect(() => {
+        console.log('🎛️ [ToggleGroup] Opciones renderizadas:', {
+            label,
+            total_opciones: options.length,
+            opciones_detalle: options.map(opt => ({
+                value: opt.value,
+                label: opt.label,
+                icon: opt.icon,
+                color: opt.color,
+            })),
+            valor_seleccionado: value,
+        });
+    }, [options, value, label]);
+
     return (
         <div className="space-y-1">
             {label && (
@@ -50,7 +65,17 @@ export default function ToggleGroup({
                         <button
                             key={option.value}
                             type="button"
-                            onClick={() => !disabled && onChange(option.value)}
+                            onClick={() => {
+                                if (!disabled) {
+                                    console.log('✅ [ToggleGroup] Opción seleccionada:', {
+                                        value: option.value,
+                                        label: option.label,
+                                        color: option.color,
+                                        icon: option.icon,
+                                    });
+                                    onChange(option.value);
+                                }
+                            }}
                             disabled={disabled}
                             style={isSelected ? selectedStyle : {}}
                             className={`

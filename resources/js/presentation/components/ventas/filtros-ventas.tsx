@@ -50,6 +50,16 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         }
     }, [hayFiltrosAvanzadosActivos]);
 
+    // 🔍 DEBUG: Mostrar estados_documento en consola
+    useEffect(() => {
+        console.log('📋 [FiltrosVentas] Datos que llegan del backend:', {
+            todos_los_estados: datosSeguros.estados_documento,
+            total_estados: datosSeguros.estados_documento.length,
+            estados_con_color: datosSeguros.estados_documento.filter(est => est.color),
+            estados_aprobadas_anuladas: datosSeguros.estados_documento.filter(est => [3, 5].includes(Number(est.id))),
+        });
+    }, [datosSeguros.estados_documento]);
+
     const handleFiltroChange = (campo: keyof FiltrosVentas, valor: string | number | null | undefined) => {
         const nuevosFiltros = { ...filtros, [campo]: valor };
         setFiltros(nuevosFiltros);
