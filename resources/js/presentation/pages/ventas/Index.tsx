@@ -42,6 +42,32 @@ export default function VentasIndex() {
         usuarios: []
     };
 
+    // 🔍 Handler para cambios en filtros
+    const handleFiltrosChange = (nuevosFiltros: FiltrosVentas) => {
+        console.log('🔄 [Index] Filtros cambiados:', nuevosFiltros);
+        const params = new URLSearchParams();
+
+        // Agregar solo filtros que tienen valor
+        if (nuevosFiltros.cliente_id) params.append('cliente_id', nuevosFiltros.cliente_id.toString());
+        if (nuevosFiltros.estado_documento_id) params.append('estado_documento_id', nuevosFiltros.estado_documento_id.toString());
+        if (nuevosFiltros.usuario_id) params.append('usuario_id', nuevosFiltros.usuario_id.toString());
+        if (nuevosFiltros.fecha_desde) params.append('fecha_desde', nuevosFiltros.fecha_desde);
+        if (nuevosFiltros.fecha_hasta) params.append('fecha_hasta', nuevosFiltros.fecha_hasta);
+        if (nuevosFiltros.monto_min) params.append('monto_min', nuevosFiltros.monto_min.toString());
+        if (nuevosFiltros.monto_max) params.append('monto_max', nuevosFiltros.monto_max.toString());
+        if (nuevosFiltros.moneda_id) params.append('moneda_id', nuevosFiltros.moneda_id.toString());
+        if (nuevosFiltros.id_desde) params.append('id_desde', nuevosFiltros.id_desde.toString());
+        if (nuevosFiltros.id_hasta) params.append('id_hasta', nuevosFiltros.id_hasta.toString());
+        if (nuevosFiltros.tipo_pago_id) params.append('tipo_pago_id', nuevosFiltros.tipo_pago_id.toString());
+        if (nuevosFiltros.preventista_id) params.append('preventista_id', nuevosFiltros.preventista_id.toString());
+
+        const queryString = params.toString();
+        const url = queryString ? `/ventas?${queryString}` : '/ventas';
+
+        console.log('📍 Navegando a:', url);
+        router.visit(url);
+    };
+
     return (
         <AppLayout breadcrumbs={[{ title: 'Ventas', href: '/ventas' }]}>
             <Head title="Ventas" />
@@ -107,6 +133,7 @@ export default function VentasIndex() {
                 <FiltrosVentasComponent
                     filtros={filtros}
                     datosParaFiltros={datosParaFiltros}
+                    onFiltrosChange={handleFiltrosChange}
                 />
 
                 {/* Tabla de ventas */}
