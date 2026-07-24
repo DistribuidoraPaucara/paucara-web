@@ -536,7 +536,9 @@ class CierreCajaService
             ->map(fn($grupo) => [
                 'codigo' => $grupo->first()?->tipoOperacion?->codigo ?? 'DESCONOCIDO',
                 'nombre' => $grupo->first()?->tipoOperacion?->nombre ?? 'Tipo desconocido',
-                'total' => (float) abs((float) $grupo->sum('monto')),
+                // ✅ CORREGIDO: Para VENTA/CREDITO, sumar desde venta.total (evita doble conteo)
+                // Para otros tipos, sumar desde movimientos.monto
+                'total' => (float) abs($this->calcularTotalIngresoPorTipo($grupo)),
                 'cantidad' => $grupo->count(),
             ])
             ->toArray();
@@ -544,6 +546,27 @@ class CierreCajaService
         // ✅ REFACTORIZADO (2026-06-20): Convertir a array indexado (no objeto asociativo)
         // Esto asegura que el frontend reciba un array que pueda iterar con .map()
         return array_values($desglose);
+    }
+
+    /**
+     * ✅ NUEVO (2026-07-24): Calcular total de ingreso evitando doble conteo
+     * Para VENTA/CREDITO: suma desde venta.total (una vez por venta)
+     * Para otros tipos: suma desde movimientos_caja.monto
+     */
+    private function calcularTotalIngresoPorTipo($grupo): float
+    {
+        $codigo = $grupo->first()?->tipoOperacion?->codigo;
+
+        // Para VENTA y CREDITO: agrupar por venta_id y sumar venta.total (evita doble conteo)
+        if (in_array($codigo, ['VENTA', 'CREDITO'])) {
+            return (float) $grupo
+                ->groupBy('venta_id')
+                ->map(fn($ventasGrupo) => $ventasGrupo->first()?->venta?->total ?? 0)
+                ->sum();
+        }
+
+        // Para otros tipos de ingreso (SERVICIO, PAGO_CREDITO, etc.): sumar movimientos.monto
+        return (float) abs((float) $grupo->sum('monto'));
     }
 
     /**

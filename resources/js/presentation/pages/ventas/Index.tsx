@@ -73,6 +73,10 @@ export default function VentasIndex() {
         if (nuevosFiltros.tipo_pago_id) params.append('tipo_pago_id', nuevosFiltros.tipo_pago_id.toString());
         if (nuevosFiltros.preventista_id) params.append('preventista_id', nuevosFiltros.preventista_id.toString());
 
+        // ✅ NUEVO: Agregar parámetros de ordenamiento
+        if (nuevosFiltros.sort_by) params.append('sort_by', nuevosFiltros.sort_by);
+        if (nuevosFiltros.sort_order) params.append('sort_order', nuevosFiltros.sort_order);
+
         const queryString = params.toString();
         const url = queryString ? `/ventas?${queryString}` : '/ventas';
 
