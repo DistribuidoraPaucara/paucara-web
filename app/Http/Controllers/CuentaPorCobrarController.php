@@ -66,8 +66,9 @@ class CuentaPorCobrarController extends Controller
                 $q->whereBetween('fecha_vencimiento', [$request->fecha_vencimiento_desde, $request->fecha_vencimiento_hasta]);
             })
             ->when($request->solo_vencidas, function ($q) {
-                $q->where('fecha_vencimiento', '<', now())
-                    ->where('estado', '!=', 'PAGADO');
+                $q->whereDate('fecha_vencimiento', '<', today())
+                    ->where('estado', '!=', 'PAGADO')
+                    ->where('saldo_pendiente', '>', 0);  // ✅ NUEVO: Excluir cuentas completamente pagadas
             });
 
         // Sorting - ✅ ACTUALIZADO: Ordenar por ID descendente por defecto
@@ -76,16 +77,25 @@ class CuentaPorCobrarController extends Controller
         $query->orderBy($sortField, $sortOrder);
 
         // ✅ ACTUALIZADO: Permitir cambiar per_page vía parámetro (50 por defecto)
-        $perPage = min((int)$request->get('per_page', 50), 500); // Máximo 500 para evitar sobrecarga
+        $perPage = min((int)$request->get('per_page', 25), 500); // Máximo 500 para evitar sobrecarga
         $cuentas = $query->paginate($perPage)->withQueryString();
+
+        // ✅ NUEVO: Recalcular dias_vencido dinámicamente para cada cuenta
+        $cuentas->getCollection()->transform(function ($cuenta) {
+            $cuenta->dias_vencido = $cuenta->calcularDiasVencido();
+            return $cuenta;
+        });
 
         // Estadísticas
         $estadisticas = [
-            'monto_total_pendiente' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')->sum('saldo_pendiente'),
+            'monto_total_pendiente' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                ->where('saldo_pendiente', '>', 0)->sum('saldo_pendiente'),  // ✅ Excluir pagadas
             'cuentas_vencidas'      => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
-                ->where('fecha_vencimiento', '<', now())->count(),
+                ->where('saldo_pendiente', '>', 0)  // ✅ Excluir pagadas
+                ->whereDate('fecha_vencimiento', '<', today())->count(),
             'monto_total_vencido'   => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
-                ->where('fecha_vencimiento', '<', now())->sum('saldo_pendiente'),
+                ->where('saldo_pendiente', '>', 0)  // ✅ Excluir pagadas
+                ->whereDate('fecha_vencimiento', '<', today())->sum('saldo_pendiente'),
             'total_mes'             => CuentaPorCobrar::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)->sum('monto_original'),
             'promedio_dias_pago'    => 0,
@@ -115,6 +125,9 @@ class CuentaPorCobrarController extends Controller
     {
         $cuentaPorCobrar->load(['venta.cliente', 'venta.detalles.producto', 'pagos.tipoPago', 'pagos.usuario']);
 
+        // ✅ NUEVO: Recalcular dias_vencido dinámicamente
+        $cuentaPorCobrar->dias_vencido = $cuentaPorCobrar->calcularDiasVencido();
+
         return Inertia::render('ventas/cuentas-por-cobrar/show', [
             'cuenta' => $cuentaPorCobrar,
         ]);
@@ -128,6 +141,9 @@ class CuentaPorCobrarController extends Controller
     {
         $formato = $request->input('formato', 'TICKET_80');      // A4, TICKET_80, TICKET_58
         $accion  = $request->input('accion', 'stream');          // download | stream
+        // ✅ NUEVO (2026-07-24): Recibir parámetros de desglose de pagos si existen
+        $efectivo = floatval($request->input('efectivo', 0));
+        $transferencia = floatval($request->input('transferencia', 0));
 
         Log::info('🖨️ [CuentaPorCobrarController::imprimir] INICIANDO', [
             'cuenta_id'         => $cuentaPorCobrar->id,
@@ -135,6 +151,8 @@ class CuentaPorCobrarController extends Controller
             'saldo_pendiente'   => $cuentaPorCobrar->saldo_pendiente,
             'formato'           => $formato,
             'accion'            => $accion,
+            'efectivo'          => $efectivo,
+            'transferencia'     => $transferencia,
             'user_id'           => auth()->id(),
         ]);
 
@@ -142,9 +160,19 @@ class CuentaPorCobrarController extends Controller
             Log::info('📝 [CuentaPorCobrarController::imprimir] Llamando ImpresionService', [
                 'cuenta_id' => $cuentaPorCobrar->id,
                 'formato' => $formato,
+                'efectivo' => $efectivo,
+                'transferencia' => $transferencia,
             ]);
 
-            $pdf = $this->impresionService->imprimirCuentaPorCobrar($cuentaPorCobrar, $formato);
+            // ✅ NUEVO (2026-07-24): Pasar opciones con desglose de pagos al servicio
+            $opciones = [];
+            if ($efectivo > 0 || $transferencia > 0) {
+                $opciones['mostrar_desglose_reciente'] = true;
+                $opciones['efectivo'] = $efectivo;
+                $opciones['transferencia'] = $transferencia;
+            }
+
+            $pdf = $this->impresionService->imprimirCuentaPorCobrar($cuentaPorCobrar, $formato, $opciones);
 
             Log::info('✅ [CuentaPorCobrarController::imprimir] PDF generado exitosamente', [
                 'cuenta_id' => $cuentaPorCobrar->id,
@@ -362,6 +390,145 @@ class CuentaPorCobrarController extends Controller
 
             return response()->json([
                 'message' => 'Error al registrar el pago: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // ✅ NUEVO (2026-07-23): Registrar múltiples pagos en una sola transacción
+    public function registrarPagos(Request $request, CuentaPorCobrar $cuentaPorCobrar): JsonResponse
+    {
+        try {
+            Log::info('📝 [PAGOS MÚLTIPLES CUENTAS POR COBRAR] Iniciando registro', [
+                'cuenta_id'  => $cuentaPorCobrar->id,
+                'usuario_id' => Auth::id(),
+                'cantidad_pagos' => count($request->input('pagos', [])),
+            ]);
+
+            // Validar datos
+            $validated = $request->validate([
+                'pagos'                              => 'required|array|min:1',
+                'pagos.*.tipo_pago_id'               => 'required|integer',
+                'pagos.*.monto'                      => 'required|numeric|min:0.01',
+                'pagos.*.fecha_pago'                 => 'required|date',
+                'pagos.*.numero_recibo'              => 'nullable|string',
+                'pagos.*.numero_transferencia'       => 'nullable|string',
+                'pagos.*.numero_cheque'              => 'nullable|string',
+                'pagos.*.observaciones'              => 'nullable|string',
+            ]);
+
+            // Verificar caja abierta
+            $apertura = AperturaCaja::where('user_id', Auth::id())
+                ->whereDoesntHave('cierre')
+                ->latest('fecha')
+                ->first();
+
+            if (! $apertura) {
+                return response()->json([
+                    'message' => 'No hay caja abierta. Abre una caja antes de registrar pagos.',
+                ], 422);
+            }
+
+            // Calcular monto total
+            $montoTotal = array_reduce($validated['pagos'], function ($carry, $pago) {
+                return $carry + $pago['monto'];
+            }, 0);
+
+            // Ejecutar en transacción
+            $pagosRegistrados = DB::transaction(function () use ($validated, $cuentaPorCobrar, $apertura, $montoTotal) {
+                $pagosCreados = [];
+
+                foreach ($validated['pagos'] as $datoPago) {
+                    // Calcular nuevo saldo
+                    $nuevoSaldoPendiente = $cuentaPorCobrar->saldo_pendiente - $datoPago['monto'];
+
+                    // Mejorar observaciones
+                    $numeroVenta = $cuentaPorCobrar->venta?->numero ?? 'N/A';
+                    $observacionesFormateadas = $datoPago['observaciones'] ?? '';
+                    if (!empty($observacionesFormateadas)) {
+                        $observacionesFormateadas .= " | ";
+                    }
+                    $observacionesFormateadas .= "Monto: {$datoPago['monto']} | Venta: {$numeroVenta} | Saldo anterior: {$cuentaPorCobrar->saldo_pendiente} | Saldo nuevo: " . max(0, $nuevoSaldoPendiente);
+
+                    // Crear registro de pago
+                    $pago = Pago::create([
+                        'numero_pago'          => Pago::generarNumeroPago(),
+                        'cuenta_por_cobrar_id' => $cuentaPorCobrar->id,
+                        'caja_id'              => $apertura->caja_id,
+                        'monto'                => $datoPago['monto'],
+                        'tipo_pago_id'         => $datoPago['tipo_pago_id'],
+                        'fecha'                => now(),
+                        'fecha_pago'           => $datoPago['fecha_pago'],
+                        'numero_recibo'        => $datoPago['numero_recibo'],
+                        'numero_transferencia' => $datoPago['numero_transferencia'],
+                        'numero_cheque'        => $datoPago['numero_cheque'],
+                        'observaciones'        => $observacionesFormateadas,
+                        'usuario_id'           => Auth::id(),
+                        'estado'               => 'REGISTRADO',
+                    ]);
+
+                    // Registrar movimiento de caja (INGRESO)
+                    $tipoOperacion = TipoOperacionCaja::where('codigo', 'PAGO')->firstOrFail();
+                    $tipoPago = TipoPago::find($datoPago['tipo_pago_id']);
+                    $numeroVentaMov = $cuentaPorCobrar->venta?->numero ?? 'N/A';
+
+                    MovimientoCaja::create([
+                        'apertura_caja_id'  => $apertura->id,
+                        'caja_id'           => $apertura->caja_id,
+                        'tipo_operacion_id' => $tipoOperacion->id,
+                        'numero_documento'  => $pago->numero_pago,
+                        'observaciones'     => "Pago de CxC ({$tipoPago?->nombre}) | Venta: {$numeroVentaMov} | Monto: {$datoPago['monto']}",
+                        'monto'             => $datoPago['monto'],
+                        'fecha'             => now(),
+                        'user_id'           => Auth::id(),
+                        'tipo_pago_id'      => $datoPago['tipo_pago_id'],
+                        'pago_id'           => $pago->id,
+                    ]);
+
+                    $pagosCreados[] = $pago;
+                }
+
+                // Actualizar saldo pendiente y monto pagado de la cuenta (una sola vez)
+                $nuevoSaldo = $cuentaPorCobrar->saldo_pendiente - $montoTotal;
+                $nuevoMontoPagado = ($cuentaPorCobrar->monto_pagado ?? 0) + $montoTotal;
+                $cuentaPorCobrar->update([
+                    'monto_pagado'    => $nuevoMontoPagado,
+                    'saldo_pendiente' => max(0, $nuevoSaldo),
+                    'estado'          => $nuevoSaldo <= 0 ? 'PAGADO' : 'PARCIAL',
+                ]);
+
+                Log::info('✅ [PAGOS MÚLTIPLES CUENTAS POR COBRAR] Pagos registrados exitosamente', [
+                    'cantidad_pagos' => count($pagosCreados),
+                    'monto_total'    => $montoTotal,
+                    'cuenta_id'      => $cuentaPorCobrar->id,
+                    'nuevo_saldo'    => $nuevoSaldo,
+                ]);
+
+                return $pagosCreados;
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pagos registrados exitosamente',
+                'data'    => [
+                    'pagos'  => $pagosRegistrados,
+                    'cuenta' => $cuentaPorCobrar->fresh(),
+                ],
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('❌ [PAGOS MÚLTIPLES CUENTAS POR COBRAR] Error registrando pagos', [
+                'cuenta_id'  => $cuentaPorCobrar->id,
+                'error'      => $e->getMessage(),
+                'usuario_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Error al registrar los pagos: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -711,8 +878,9 @@ class CuentaPorCobrarController extends Controller
                     $q->whereBetween('fecha_vencimiento', [$request->fecha_desde, $request->fecha_hasta]);
                 })
                 ->when($request->filled('solo_vencidas') && $request->boolean('solo_vencidas'), function ($q) {
-                    $q->where('fecha_vencimiento', '<', now())
-                        ->where('estado', '!=', 'PAGADO');
+                    $q->whereDate('fecha_vencimiento', '<', today())
+                        ->where('estado', '!=', 'PAGADO')
+                        ->where('saldo_pendiente', '>', 0);  // ✅ NUEVO: Excluir cuentas completamente pagadas
                 });
 
             // Ordenamiento
@@ -724,17 +892,27 @@ class CuentaPorCobrarController extends Controller
             $perPage = $request->input('per_page', 20);
             $cuentas = $query->paginate($perPage);
 
+            // ✅ NUEVO: Recalcular dias_vencido dinámicamente para cada cuenta
+            $cuentas->getCollection()->transform(function ($cuenta) {
+                $cuenta->dias_vencido = $cuenta->calcularDiasVencido();
+                return $cuenta;
+            });
+
             // Estadísticas
             $estadisticas = [
                 'total' => CuentaPorCobrar::count(),
-                'pendientes' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')->count(),
+                'pendientes' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                    ->where('saldo_pendiente', '>', 0)->count(),  // ✅ Excluir pagadas
                 'monto_total_pendiente' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
+                    ->where('saldo_pendiente', '>', 0)  // ✅ Excluir pagadas
                     ->sum(DB::raw('CAST(saldo_pendiente AS DECIMAL(10, 2))')),
                 'cuentas_vencidas' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
-                    ->where('fecha_vencimiento', '<', now())
+                    ->where('saldo_pendiente', '>', 0)  // ✅ Excluir pagadas
+                    ->whereDate('fecha_vencimiento', '<', today())
                     ->count(),
                 'monto_total_vencido' => CuentaPorCobrar::where('estado', '!=', 'PAGADO')
-                    ->where('fecha_vencimiento', '<', now())
+                    ->where('saldo_pendiente', '>', 0)  // ✅ Excluir pagadas
+                    ->whereDate('fecha_vencimiento', '<', today())
                     ->sum(DB::raw('CAST(saldo_pendiente AS DECIMAL(10, 2))')),
             ];
 

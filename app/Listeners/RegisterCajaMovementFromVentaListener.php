@@ -274,37 +274,26 @@ class RegisterCajaMovementFromVentaListener
             // Obtener los pagos desglosados de la venta
             $detallesPago = $venta->detallesPagoVenta()->with('tipoPago')->get();
 
-            if ($detallesPago->isNotEmpty()) {
-                // ✅ GARANTÍA: Sumar detalles y compararlos con total
-                $sumaPagos = $detallesPago->sum('monto');
-
-                Log::info('🔍 Validación de montos desglosados vs total', [
+            // ✅ NUEVO (2026-07-24): Si la venta tiene pagos desglosados, SKIP
+            // Los movimientos se crearán automáticamente cuando se creen los DetallePagoVenta
+            if ($event->tienePagosDesglosados) {
+                Log::info('⏭️ [RegisterCajaMovementFromVentaListener] Pagos desglosados → SKIP', [
                     'venta_id' => $venta->id,
                     'venta_numero' => $venta->numero,
-                    'total_venta' => $venta->total,
-                    'suma_detalles' => $sumaPagos,
-                    'diferencia' => abs($venta->total - $sumaPagos),
+                    'nota' => 'Movimientos se crearán vía CreateCajaMovementFromDetallePagoVenta listener cuando se registren los detalles',
                 ]);
 
-                // ✅ CORRECCIÓN: Si hay diferencia, ajustar el último detalle
-                if (abs($venta->total - $sumaPagos) > 0.01) {
-                    $ultimoDetalle = $detallesPago->last();
-                    $diferencia = $venta->total - $sumaPagos;
-                    $montoCorregido = $ultimoDetalle->monto + $diferencia;
+                return; // ✅ IMPORTANTE: No crear movimientos aquí
+            }
 
-                    Log::warning('⚠️ Diferencia detectada en detalles - ajustando último detalle', [
-                        'venta_id' => $venta->id,
-                        'venta_numero' => $venta->numero,
-                        'diferencia' => $diferencia,
-                        'monto_original' => $ultimoDetalle->monto,
-                        'monto_corregido' => $montoCorregido,
-                    ]);
+            // Fallback: si no hay pagos desglosados
+            if ($detallesPago->isNotEmpty()) {
+                Log::info('🔍 [RegisterCajaMovementFromVentaListener] Detalles encontrados (sin flag) - creando movimientos', [
+                    'venta_id' => $venta->id,
+                    'cantidad_detalles' => $detallesPago->count(),
+                ]);
 
-                    // Reemplazar el monto del último detalle en la colección
-                    $detallesPago[$detallesPago->count() - 1]->monto = $montoCorregido;
-                }
-
-                // Registrar cada pago desglosado (con montos corregidos si fue necesario)
+                // Registrar cada pago desglosado
                 foreach ($detallesPago as $detallePago) {
                     $movimiento = MovimientoCaja::create([
                         'caja_id' => $cajaAbierta->caja_id,
@@ -324,7 +313,6 @@ class RegisterCajaMovementFromVentaListener
 
                     Log::info('✅ Movimiento de pago desglosado registrado', [
                         'venta_id' => $venta->id,
-                        'venta_numero' => $venta->numero,
                         'tipo_pago' => $detallePago->tipoPago->nombre,
                         'monto' => $detallePago->monto,
                         'movimiento_id' => $movimiento->id,
@@ -332,6 +320,7 @@ class RegisterCajaMovementFromVentaListener
                 }
             } else {
                 // Fallback: si no hay detalles_pago_venta, crear UN SOLO movimiento con el total
+                // (para ventas con pago simple, no desglosado)
                 $movimiento = MovimientoCaja::create([
                     'caja_id' => $cajaAbierta->caja_id,
                     'user_id' => $usuario->id,

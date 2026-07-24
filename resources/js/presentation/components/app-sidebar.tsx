@@ -110,7 +110,7 @@ export function AppSidebar() {
                                 size="lg"
                                 asChild
                                 className={cn(
-                                    "group relative flex items-center justify-center w-full px-3 py-2.5 rounded-lg",
+                                    "group relative flex items-center justify-center w-full p-1 rounded-lg",
                                     "transition-all duration-200 ease-out",
                                     "hover:bg-sidebar-accent/50 dark:hover:bg-sidebar-accent/40",
                                     "border border-sidebar-foreground/10 dark:border-sidebar-foreground/10",

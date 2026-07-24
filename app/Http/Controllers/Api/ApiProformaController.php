@@ -3578,7 +3578,20 @@ class ApiProformaController extends Controller
 
                 // ✅ NUEVO: Registrar en venta_por_lotes CON detalle_venta_id ahora que los detalles existen
                 if ($resultadoConsumo['success'] && !empty($resultadoConsumo['consumo_info'])) {
+                    // ✅ ARREGLADO: Agrupar por stock_producto_id y sumar cantidades para evitar violación de UNIQUE
+                    $consumosAgrupados = [];
                     foreach ($resultadoConsumo['consumo_info'] as $consumo) {
+                        $key = $consumo['stock_producto_id'];
+                        if (!isset($consumosAgrupados[$key])) {
+                            $consumosAgrupados[$key] = $consumo;
+                            $consumosAgrupados[$key]['cantidad_consumida'] = (float)$consumo['cantidad_consumida'];
+                        } else {
+                            // Sumar cantidad si el mismo stock aparece múltiples veces
+                            $consumosAgrupados[$key]['cantidad_consumida'] += (float)$consumo['cantidad_consumida'];
+                        }
+                    }
+
+                    foreach ($consumosAgrupados as $consumo) {
                         \App\Models\VentaPorLote::create([
                             'venta_id' => $consumo['venta_id'],
                             'detalle_venta_id' => $detallesCreados[$consumo['producto_id']] ?? null,  // ✅ MAPEO: Usar detalle_venta_id creado
@@ -3600,7 +3613,7 @@ class ApiProformaController extends Controller
 
                     Log::info('✅ [convertirAVenta] venta_por_lotes registrada completa', [
                         'venta_id' => $venta->id,
-                        'cantidad_registros' => count($resultadoConsumo['consumo_info']),
+                        'cantidad_registros' => count($consumosAgrupados),
                     ]);
                 }
 

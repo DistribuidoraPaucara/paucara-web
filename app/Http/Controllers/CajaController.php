@@ -11,6 +11,7 @@ use App\Models\EstadoCierre;
 use App\Models\MovimientoCaja;
 use App\Models\TipoOperacionCaja;
 use App\Services\CierreCajaService;
+use App\Services\DesgloseMovimientoCajaService;
 use App\Services\ExcelExportService;
 use App\Services\MovimientoCajaService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -27,12 +28,19 @@ class CajaController extends Controller
     private ExcelExportService $excelExportService;
     private MovimientoCajaService $movimientoCajaService;
     private CierreCajaService $cierreCajaService;
+    private DesgloseMovimientoCajaService $desgloseService;
 
-    public function __construct(ExcelExportService $excelExportService, MovimientoCajaService $movimientoCajaService, CierreCajaService $cierreCajaService)
+    public function __construct(
+        ExcelExportService $excelExportService,
+        MovimientoCajaService $movimientoCajaService,
+        CierreCajaService $cierreCajaService,
+        DesgloseMovimientoCajaService $desgloseService
+    )
     {
         $this->excelExportService    = $excelExportService;
         $this->movimientoCajaService = $movimientoCajaService;
         $this->cierreCajaService     = $cierreCajaService;
+        $this->desgloseService       = $desgloseService;
 
         $this->middleware('permission:cajas.index')->only('index');
         $this->middleware('permission:cajas.show')->only('estadoCajas');
@@ -379,6 +387,11 @@ class CajaController extends Controller
             ]);
         }
 
+        // ✅ NUEVO: Calcular desglose de movimientos por tipo de pago (Efectivo vs Transferencia)
+        $desgloseMovimientos = $cajaAbiertaHoy
+            ? $this->desgloseService->obtenerDesgloseMovimientos($cajaAbiertaHoy)
+            : null;
+
         return Inertia::render('Cajas/Index', [
             'cajas'                     => $cajas,
             'cajaAbiertaHoy'            => $cajaAbiertaHoy,
@@ -409,6 +422,8 @@ class CajaController extends Controller
             // ✅ NUEVO (2026-06-20): Desglose dinámico de ingresos y egresos
             'desgloseIngresos'          => $datosResumen ? $datosResumen['desgloseIngresos'] ?? [] : [],
             'desgloseEgresos'           => $datosResumen ? $datosResumen['desgloseEgresos'] ?? [] : [],
+            // ✅ NUEVO (2026-07-24): Desglose de movimientos por tipo de pago (Efectivo vs Transferencia)
+            'desgloseMovimientos'       => $desgloseMovimientos,
         ]);
     }
 

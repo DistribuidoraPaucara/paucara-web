@@ -1,6 +1,6 @@
 @extends('impresion.layouts.base-ticket')
 
-@section('titulo', 'Venta #' . $documento->numero)
+@section('titulo', 'Venta #' . $documento->id)
 
 @section('contenido')
 

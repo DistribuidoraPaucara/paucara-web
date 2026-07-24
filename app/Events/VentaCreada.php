@@ -20,10 +20,12 @@ class VentaCreada
     use Dispatchable, SerializesModels;
 
     public Venta $venta;
+    public bool $tienePagosDesglosados; // ✅ NUEVO (2026-07-24): Flag para saber si se crearán pagos desglosados
 
-    public function __construct(Venta $venta)
+    public function __construct(Venta $venta, bool $tienePagosDesglosados = false)
     {
         $this->venta = $venta;
+        $this->tienePagosDesglosados = $tienePagosDesglosados;
 
         // Cargar relaciones necesarias
         $this->venta->load(['cliente', 'detalles', 'tipoPago']);

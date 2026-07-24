@@ -52,6 +52,8 @@ use App\Listeners\CrearCuentaPorCobrarListener;
 use App\Listeners\CreateCuentaPorCobrarFromVentaListener;
 use App\Listeners\RegisterCajaMovementFromVentaListener;
 use App\Listeners\SendCreditoCreadoNotification;
+use App\Events\DetallePagoVentaCreated;
+use App\Listeners\CreateCajaMovementFromDetallePagoVenta;
 use App\Listeners\SendCreditoPagoRegistradoNotification;
 use App\Listeners\SendCreditoVencidoNotification;
 use App\Listeners\SendCreditoCriticoNotification;
@@ -196,6 +198,11 @@ class EventServiceProvider extends ServiceProvider
         VentaCreada::class => [
             RegisterCajaMovementFromVentaListener::class, // ✅ NUEVO: Registrar movimiento de caja si hay pago
             CreateCuentaPorCobrarFromVentaListener::class, // ✅ NUEVO: Crear cuenta por cobrar si política_pago='CREDITO'
+        ],
+
+        // ✅ NUEVO (2026-07-24): Registrar movimiento de caja cuando se crea un DetallePagoVenta
+        DetallePagoVentaCreated::class => [
+            CreateCajaMovementFromDetallePagoVenta::class,
         ],
 
         VentaEstadoCambiado::class => [

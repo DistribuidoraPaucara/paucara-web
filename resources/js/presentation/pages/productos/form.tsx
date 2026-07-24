@@ -144,7 +144,7 @@ export default function ProductoForm({
             : initialProductoData,
     );
 
-    // console.log('💾 useForm data inicializada:', data);
+    console.log('💾 useForm data inicializada:', data);
     // console.log('🆔 proveedor_id en data del useForm:', data.proveedor_id);
 
     // Autosave: restaurar borrador en carga inicial (solo creación)

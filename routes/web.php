@@ -407,6 +407,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ Rutas para cuentas por cobrar
     Route::get('ventas/cuentas-por-cobrar/check-caja-abierta', [\App\Http\Controllers\CuentaPorCobrarController::class, 'checkCajaAbierta'])->name('cuentas-por-cobrar.check-caja-abierta');
     Route::post('ventas/cuentas-por-cobrar/{cuentaPorCobrar}/registrar-pago', [\App\Http\Controllers\CuentaPorCobrarController::class, 'registrarPago'])->name('cuentas-por-cobrar.registrar-pago');
+    Route::post('ventas/cuentas-por-cobrar/{cuentaPorCobrar}/registrar-pagos', [\App\Http\Controllers\CuentaPorCobrarController::class, 'registrarPagos'])->name('cuentas-por-cobrar.registrar-pagos'); // ✅ NUEVO: Múltiples pagos
     Route::post('ventas/cuentas-por-cobrar/{cuentaPorCobrar}/anular-pago/{pago}', [\App\Http\Controllers\CuentaPorCobrarController::class, 'anularPago'])->name('cuentas-por-cobrar.anular-pago');
 
     // ✅ NUEVO: Aplicar middleware CheckCajaAbierta para validar que hay caja abierta

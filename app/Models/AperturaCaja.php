@@ -43,6 +43,12 @@ class AperturaCaja extends Model
         return $this->hasOne(CierreCaja::class);
     }
 
+    // ✅ NUEVO (2026-07-24): Relación con movimientos de caja
+    public function movimientoCaja()
+    {
+        return $this->hasMany(MovimientoCaja::class, 'apertura_caja_id');
+    }
+
     // Scopes
     public function scopeDelDia($query, $fecha = null)
     {

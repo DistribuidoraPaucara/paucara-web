@@ -841,6 +841,10 @@ class ImpresionService
                 'cliente',
                 'venta',
                 'usuario',
+                'pagos' => function ($query) {
+                    $query->orderBy('created_at', 'desc')->limit(10);
+                },
+                'pagos.tipoPago',
             ]);
 
             \Log::info('✅ [ImpresionService::imprimirCuentaPorCobrar] Relaciones cargadas exitosamente', [
@@ -848,6 +852,7 @@ class ImpresionService
                 'tiene_cliente' => !!$cuentaPorCobrar->cliente,
                 'tiene_venta' => !!$cuentaPorCobrar->venta,
                 'tiene_usuario' => !!$cuentaPorCobrar->usuario,
+                'cantidad_pagos' => $cuentaPorCobrar->pagos->count(),
             ]);
 
             return $this->generarPDF('cuenta-por-cobrar', $cuentaPorCobrar, $formato, $opciones);

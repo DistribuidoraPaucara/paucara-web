@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
 export const porTipoPago = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ porTipoPago.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
 porTipoPago.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ porTipoPago.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
 porTipoPago.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ porTipoPago.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
 porTipoPago.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ porTipoPago.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
     const porTipoPagoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ porTipoPago.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
         porTipoPagoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ porTipoPago.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CajaController::porTipoPago
- * @see app/Http/Controllers/CajaController.php:2191
+ * @see app/Http/Controllers/CajaController.php:2206
  * @route '/cajas/resumen/por-tipo-pago'
  */
         porTipoPagoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

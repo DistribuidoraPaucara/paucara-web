@@ -37,6 +37,8 @@ import {
 } from '@/presentation/components/ui/alert-dialog';
 import type { CajasIndexProps } from '@/domain/entities/cajas';
 
+
+
 export default function Index(props: CajasIndexProps) {
     // ✅ DEBUG: Ver todos los props que llegan del backend
     console.log('🔍 [Cajas/Index] Props recibidos del backend:', props);
@@ -193,7 +195,9 @@ export default function Index(props: CajasIndexProps) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={[
+                { title: 'Mi caja', href: '/#' },
+            ]}>
             <Head title={titulo} />
 
             <div className="px-6 py-4">
@@ -218,6 +222,8 @@ export default function Index(props: CajasIndexProps) {
                         ventasCreditoTotales={ventasCreditoTotales}
                         desgloseIngresos={props.desgloseIngresos}  // ✅ NUEVO (2026-06-20)
                         desgloseEgresos={props.desgloseEgresos}   // ✅ NUEVO (2026-06-20)
+                        ventasPorTipoPago={props.ventasPorTipoPago} // ✅ NUEVO: Resumen de ventas por tipo de pago
+                        desgloseMovimientos={props.desgloseMovimientos} // ✅ NUEVO (2026-07-24): Desglose por tipo de pago
                         onAbrirClick={handleAbrirModal}
                         onCerrarClick={handleAbrirCierreModal}
                         onGastoClick={() => setShowMovimientoModal(true)}
@@ -228,27 +234,10 @@ export default function Index(props: CajasIndexProps) {
                         isConsolidating={isConsolidating}
                     />
 
-                    {/* ✅ NUEVO: Resumen de Caja con datos refactorizados */}
-                    {/* {cajaAbiertaHoy && (
-                        <ResumenCajaCard
-                            datosResumen={props.datosResumen}
-                            cargando={false}
-                        />
-                    )} */}
-
-                    {/* ✅ NUEVO: Desglose de Pagos por Tipo de Pago (detalles_pago_venta) */}
-                    {/* {cajaAbiertaHoy && (
-                        <DesglosePageosCard
-                            detallesPagoDesglosado={props.detallesPagoDesglosado}
-                            totalDetallesPago={props.totalDetallesPago || 0}
-                            cargando={false}
-                        />
-                    )} */}
-
                     {/* Tabs: Movimientos del Día vs Historial de Cajas */}
-                    <Tabs defaultValue="movimientos" className="space-y-6">
+                    <Tabs defaultValue="movimientos" className="space-y-2">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                            <div className="px-6 pb-0 flex justify-between items-center">
+                            <div className="px-2 pb-0 flex justify-between items-center">
                                 <TabsList className="bg-transparent border-gray-200 dark:border-gray-700">
                                     <TabsTrigger value="movimientos" className="dark:text-gray-300 dark:hover:text-gray-100">
                                         📊 Movimientos del Día

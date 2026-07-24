@@ -467,7 +467,9 @@ class VentaService
 
             // 3.6 Emitir evento (DESPUÉS de que todo esté persisted)
             Log::debug('📢 [VentaService::crear] Disparando evento VentaCreada');
-            event(new \App\Events\VentaCreada($venta));
+            // ✅ NUEVO (2026-07-24): Pasar flag de pagos desglosados para que el listener lo sepa
+            $tienePagosDesglosados = !empty($dto->pagos);
+            event(new \App\Events\VentaCreada($venta, $tienePagosDesglosados));
 
             return $venta;
         });

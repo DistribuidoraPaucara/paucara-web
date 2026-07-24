@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/presentation/components/ui/dialog';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal'; // ✅ NUEVO (2026-06-27)
+import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import { Button } from '@/presentation/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
+import axios from 'axios';
 import { AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal'; // ✅ NUEVO (2026-06-27)
 
 interface CuentaPendiente {
     id: number;
-    venta_id: number;
-    numero_venta: string;
+    venta_id?: number;
+    numero_venta?: string;
     referencia_documento?: string;
-    fecha_venta: string;
+    fecha_venta?: string;
     monto_original: number;
     saldo_pendiente: number;
     fecha_vencimiento: string;
@@ -32,9 +32,8 @@ interface RegistrarPagoModalProps {
     show: boolean;
     onHide: () => void;
     clienteId: number;
-    cuentasPendientes: CuentaPendiente[];
+    cuentaPorCobrar?: CuentaPendiente; // ✅ NUEVO: Cambiar de cuentasPendientes a cuentaPorCobrar
     onPagoRegistrado: () => void;
-    cuentaIdPreseleccionada?: number;
     tipo?: 'compras' | 'ventas';
     verificarCaja?: boolean;
     tipos_pago?: TipoPago[];
@@ -44,29 +43,27 @@ export default function RegistrarPagoModal({
     show,
     onHide,
     clienteId,
-    cuentasPendientes,
+    cuentaPorCobrar,
     onPagoRegistrado,
-    cuentaIdPreseleccionada,
     tipo = 'compras',
     verificarCaja = true,
     tipos_pago = [],
 }: RegistrarPagoModalProps) {
-
     console.log('✅ RegistrarPagoModal abierto:', {
         show,
         clienteId,
-        cuentaIdPreseleccionada,
-        cuentasDisponibles: cuentasPendientes.length,
+        cuentaId: cuentaPorCobrar?.id,
+        saldoPendiente: cuentaPorCobrar?.saldo_pendiente,
     });
     const [formData, setFormData] = useState({
         cuenta_id: '',
-        tipo_pago_id: '1',  // ✅ Por defecto: Efectivo
-        monto: '',
         fecha_pago: new Date().toISOString().split('T')[0],
-        numero_recibo: '',
-        numero_transferencia: '',
-        numero_cheque: '',
         observaciones: '',
+        // ✅ NUEVO: Pagos desglosados por tipo
+        montoEfectivo: '',
+        montoTransferencia: '',
+        numeroReciboEfectivo: '',
+        numeroTransferenciaTransferencia: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -75,6 +72,7 @@ export default function RegistrarPagoModal({
     // ✅ NUEVO (2026-06-27): Estados para modal de impresión
     const [mostrarModalImpresion, setMostrarModalImpresion] = useState(false);
     const [pagoRegistrado, setPagoRegistrado] = useState<any>(null);
+    const [cuentaIdParaImpresion, setCuentaIdParaImpresion] = useState<number>(0);
 
     // Estados para validación de caja abierta
     interface CajaInfo {
@@ -92,35 +90,18 @@ export default function RegistrarPagoModal({
     // ✅ Resetear formulario cuando se abre el modal
     useEffect(() => {
         if (show) {
-            // Convertir ID a string para sincronización con select
-            const defaultCuentaId = cuentaIdPreseleccionada ? String(cuentaIdPreseleccionada) : '';
             setFormData({
-                cuenta_id: defaultCuentaId,
-                tipo_pago_id: '1',  // ✅ Por defecto: Efectivo
-                monto: '',
+                cuenta_id: cuentaPorCobrar?.id ? String(cuentaPorCobrar.id) : '',
                 fecha_pago: new Date().toISOString().split('T')[0],
-                numero_recibo: '',
-                numero_transferencia: '',
-                numero_cheque: '',
                 observaciones: '',
+                montoEfectivo: '',
+                montoTransferencia: '',
+                numeroReciboEfectivo: '',
+                numeroTransferenciaTransferencia: '',
             });
             setError('');
         }
-    }, [show]);
-
-    // ✅ NUEVO: Actualizar cuenta preseleccionada si cambia
-    useEffect(() => {
-        if (show && cuentaIdPreseleccionada) {
-            setFormData((prev) => ({
-                ...prev,
-                cuenta_id: String(cuentaIdPreseleccionada),
-            }));
-            console.log('✅ Cuenta preseleccionada en modal:', {
-                cuentaIdPreseleccionada,
-                cuentasDisponibles: cuentasPendientes.length,
-            });
-        }
-    }, [cuentaIdPreseleccionada, show, cuentasPendientes]);
+    }, [show, cuentaPorCobrar?.id]);
 
     // ✅ NUEVO: Verificar si hay caja abierta cuando se abre el modal (solo si verificarCaja es true)
     useEffect(() => {
@@ -132,9 +113,7 @@ export default function RegistrarPagoModal({
     const verificarCajaAbierta = async () => {
         try {
             setCargandoCaja(true);
-            const ruta = tipo === 'ventas'
-                ? '/ventas/cuentas-por-cobrar/check-caja-abierta'
-                : '/compras/pagos/check-caja-abierta';
+            const ruta = tipo === 'ventas' ? '/ventas/cuentas-por-cobrar/check-caja-abierta' : '/compras/pagos/check-caja-abierta';
             const response = await fetch(ruta);
             const data = await response.json();
             setCajaInfo(data);
@@ -148,16 +127,17 @@ export default function RegistrarPagoModal({
         }
     };
 
-    // 🔍 Debug: Log de cuentas disponibles
+    // 🔍 Debug: Log de cuenta por cobrar
     useEffect(() => {
         if (show) {
-            console.log('RegistrarPagoModal - Cuentas disponibles:', {
-                isArray: Array.isArray(cuentasPendientes),
-                length: Array.isArray(cuentasPendientes) ? cuentasPendientes.length : 0,
-                cuentas: cuentasPendientes,
+            console.log('RegistrarPagoModal - Cuenta por cobrar:', {
+                cuentaId: cuentaPorCobrar?.id,
+                numeroVenta: cuentaPorCobrar?.numero_venta,
+                saldoPendiente: cuentaPorCobrar?.saldo_pendiente,
+                estado: cuentaPorCobrar?.estado,
             });
         }
-    }, [show, cuentasPendientes]);
+    }, [show, cuentaPorCobrar?.id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -169,33 +149,22 @@ export default function RegistrarPagoModal({
     };
 
     const validateForm = (): boolean => {
-        if (!formData.cuenta_id) {
-            setError('Seleccione una cuenta pendiente');
-            return false;
-        }
-        if (!formData.tipo_pago_id) {
-            setError('Seleccione un tipo de pago');
-            return false;
-        }
-        if (!formData.monto || parseFloat(formData.monto) <= 0) {
-            setError('Ingrese un monto válido');
+        if (!cuentaPorCobrar) {
+            setError('No hay cuenta seleccionada');
             return false;
         }
 
-        // Get the selected account
-        if (!Array.isArray(cuentasPendientes) || cuentasPendientes.length === 0) {
-            setError('No hay cuentas pendientes disponibles');
+        const montoEfectivo = parseFloat(formData.montoEfectivo || '0');
+        const montoTransferencia = parseFloat(formData.montoTransferencia || '0');
+        const montoTotal = montoEfectivo + montoTransferencia;
+
+        if (montoTotal <= 0) {
+            setError('Ingrese al menos un monto (Efectivo o Transferencia)');
             return false;
         }
 
-        const cuenta = cuentasPendientes.find((c) => c.id === parseInt(formData.cuenta_id));
-        if (!cuenta) {
-            setError('Cuenta inválida');
-            return false;
-        }
-
-        if (parseFloat(formData.monto) > cuenta.saldo_pendiente) {
-            setError(`El monto no puede exceder el saldo pendiente de ${cuenta.saldo_pendiente.toFixed(2)}`);
+        if (montoTotal > cuentaPorCobrar.saldo_pendiente) {
+            setError(`El monto total no puede exceder el saldo pendiente de ${cuentaPorCobrar.saldo_pendiente.toFixed(2)}`);
             return false;
         }
 
@@ -213,47 +182,63 @@ export default function RegistrarPagoModal({
             setLoading(true);
             setError('');
 
-            // Usar endpoint diferente según tipo de pago
-            let url: string;
-            let payload: any;
+            const montoEfectivo = parseFloat(formData.montoEfectivo || '0');
+            const montoTransferencia = parseFloat(formData.montoTransferencia || '0');
 
-            if (tipo === 'ventas') {
-                // Para cuentas por cobrar (ventas)
-                url = `/ventas/cuentas-por-cobrar/${formData.cuenta_id}/registrar-pago`;
-                payload = {
-                    tipo_pago_id: Number(formData.tipo_pago_id),
-                    monto: parseFloat(formData.monto),
+            // ✅ NUEVO: Construir array de pagos a registrar
+            const pagosARegistrar: any[] = [];
+
+            if (montoEfectivo > 0) {
+                pagosARegistrar.push({
+                    tipo_pago_id: 1, // Efectivo
+                    monto: montoEfectivo,
                     fecha_pago: formData.fecha_pago,
-                    numero_recibo: formData.numero_recibo || null,
-                    numero_transferencia: formData.numero_transferencia || null,
-                    numero_cheque: formData.numero_cheque || null,
+                    numero_recibo: formData.numeroReciboEfectivo || null,
+                    numero_transferencia: null,
+                    numero_cheque: null,
                     observaciones: formData.observaciones || null,
-                };
-            } else {
-                // Para cuentas por pagar (compras)
-                url = `/compras/cuentas-por-pagar/${formData.cuenta_id}/registrar-pago`;
-                payload = {
-                    tipo_pago_id: Number(formData.tipo_pago_id),
-                    monto: parseFloat(formData.monto),
-                    fecha_pago: formData.fecha_pago,
-                    numero_recibo: formData.numero_recibo || null,
-                    numero_transferencia: formData.numero_transferencia || null,
-                    numero_cheque: formData.numero_cheque || null,
-                    observaciones: formData.observaciones || null,
-                };
+                });
             }
 
-            const response = await axios.post(url, payload);
+            if (montoTransferencia > 0) {
+                pagosARegistrar.push({
+                    tipo_pago_id: 2, // Transferencia/QR
+                    monto: montoTransferencia,
+                    fecha_pago: formData.fecha_pago,
+                    numero_recibo: null,
+                    numero_transferencia: formData.numeroTransferenciaTransferencia || null,
+                    numero_cheque: null,
+                    observaciones: formData.observaciones || null,
+                });
+            }
+
+            // ✅ Usar ID de la cuenta directamente
+            if (!cuentaPorCobrar) {
+                setError('No hay cuenta seleccionada');
+                setLoading(false);
+                return;
+            }
+
+            // Usar endpoint diferente según tipo
+            const url =
+                tipo === 'ventas'
+                    ? `/ventas/cuentas-por-cobrar/${cuentaPorCobrar.id}/registrar-pagos`
+                    : `/compras/cuentas-por-pagar/${cuentaPorCobrar.id}/registrar-pagos`;
+
+            const response = await axios.post(url, { pagos: pagosARegistrar });
 
             // ✅ NUEVO: Mostrar información del pago registrado en toast
-            if (response.data.success && response.data.data?.pago) {
-                const pagoData = response.data.data.pago;
+            if (response.data.success && response.data.data?.pagos && response.data.data.pagos.length > 0) {
+                // Usar el primer pago registrado como referencia
+                const pagoData = response.data.data.pagos[0];
+                // Calcular monto total de todos los pagos
+                const montoTotal = response.data.data.pagos.reduce((sum: number, p: any) => sum + p.monto, 0);
                 const montoPagado = new Intl.NumberFormat('es-BO', {
                     style: 'currency',
                     currency: 'BOB',
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
-                }).format(pagoData.monto);
+                }).format(montoTotal);
 
                 const cuentaData = response.data.data.cuenta;
                 const nuevoSaldo = new Intl.NumberFormat('es-BO', {
@@ -272,14 +257,19 @@ export default function RegistrarPagoModal({
                         closeOnClick: true,
                         pauseOnHover: true,
                         draggable: true,
-                    }
+                    },
                 );
             }
 
             // ✅ NUEVO (2026-06-27): Abrir modal de impresión en lugar de cerrar directamente
             setTimeout(() => {
-                if (response.data.success && response.data.data?.pago) {
-                    setPagoRegistrado(response.data.data.pago);
+                if (response.data.success && response.data.data?.pagos && response.data.data.pagos.length > 0) {
+                    // Usar el primer pago registrado para el modal de impresión
+                    setPagoRegistrado(response.data.data.pagos[0]);
+                    // Guardar el ID de la cuenta para el modal de impresión (ANTES de cerrar)
+                    if (cuentaPorCobrar?.id) {
+                        setCuentaIdParaImpresion(cuentaPorCobrar.id);
+                    }
                     // Cerrar el modal de pago primero para que no bloquee el modal de impresión
                     onHide();
                     // Abrir el modal de impresión después de cerrar el anterior
@@ -310,11 +300,6 @@ export default function RegistrarPagoModal({
             setLoading(false);
         }
     };
-
-    const selectedCuenta =
-        formData.cuenta_id && Array.isArray(cuentasPendientes) && cuentasPendientes.length > 0
-            ? cuentasPendientes.find((c) => c.id === parseInt(formData.cuenta_id))
-            : null;
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('es-BO', {
@@ -350,34 +335,52 @@ export default function RegistrarPagoModal({
     return (
         <>
             <Dialog open={show} onOpenChange={onHide}>
-                <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 max-h-[90vh] flex flex-col">
-                    <DialogHeader className="border-b border-gray-200 dark:border-gray-800 pb-4 flex-shrink-0">
-                        <DialogTitle className="text-gray-900 dark:text-white">Registrar Pago de Crédito</DialogTitle>
+                <DialogContent
+                    className="flex max-h-[90vh] max-w-[90vw] max-w-lg flex-col border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                    style={{ maxWidth: '95vw', maxHeight: '95vh' }}
+                >
+                    <DialogHeader className="flex-shrink-0 border-b border-gray-200 pb-4 dark:border-gray-800">
+                        <DialogTitle className="text-gray-900 dark:text-white">Registrar Pago Credito {/* Total */}
+                                    {(formData.montoEfectivo || formData.montoTransferencia) && (
+                                        <div className="mt-2 pl-2 border-l border-blue-300 dark:border-blue-600">
+                                            <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                                Total:{' '}
+                                                {formatCurrency(
+                                                    parseFloat(formData.montoEfectivo || '0') + parseFloat(formData.montoTransferencia || '0'),
+                                                )}
+                                            </p>
+                                            {cuentaPorCobrar && (
+                                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                    Saldo: {formatCurrency(cuentaPorCobrar.saldo_pendiente)}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}</DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4 flex-1 overflow-y-auto pr-2">
-                    {/* Indicador de verificación de caja */}
-                    {cargandoCaja && (
-                        <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200">
-                            <AlertDescription className="text-xs flex items-center gap-2">
-                                <span className="inline-block w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
-                                Verificando estado de caja...
-                            </AlertDescription>
-                        </Alert>
-                    )}
+                    <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+                        {/* Indicador de verificación de caja */}
+                        {cargandoCaja && (
+                            <Alert className="border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                                <AlertDescription className="flex items-center gap-2 text-xs">
+                                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-blue-400 border-t-transparent"></span>
+                                    Verificando estado de caja...
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                    {/* Indicador de caja no abierta - solo si verificarCaja es true */}
-                    {verificarCaja && !cargandoCaja && cajaInfo && !cajaInfo.tiene_caja_abierta && (
-                        <Alert variant="destructive" className="border-red-500 bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription className="text-xs">
-                                🚫 No hay caja abierta. Abre una caja antes de registrar pagos.
-                            </AlertDescription>
-                        </Alert>
-                    )}
+                        {/* Indicador de caja no abierta - solo si verificarCaja es true */}
+                        {verificarCaja && !cargandoCaja && cajaInfo && !cajaInfo.tiene_caja_abierta && (
+                            <Alert variant="destructive" className="border-red-500 bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">
+                                    🚫 No hay caja abierta. Abre una caja antes de registrar pagos.
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                    {/* Indicador de caja abierta (hoy o días anteriores) - solo si verificarCaja es true */}
-                    {verificarCaja && !cargandoCaja && cajaInfo?.tiene_caja_abierta && (
+                        {/* Indicador de caja abierta (hoy o días anteriores) - solo si verificarCaja es true */}
+                        {/* {verificarCaja && !cargandoCaja && cajaInfo?.tiene_caja_abierta && (
                         <Alert className={`border text-xs ${cajaInfo.es_de_hoy
                             ? 'border-green-300 bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200'
                             : 'border-yellow-300 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-200'
@@ -395,236 +398,202 @@ export default function RegistrarPagoModal({
                                 </span>
                             </AlertDescription>
                         </Alert>
-                    )}
+                    )} */}
 
-                    {error && (
-                        <Alert variant="destructive" className="border-red-500 bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription className="text-xs">{error.split('\n')[0]}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Cuenta Pendiente */}
-                        <div className="space-y-2">
-                            <Label htmlFor="cuenta_id" className="text-gray-700 dark:text-gray-300">
-                                {tipo === 'ventas' ? 'Seleccionar Cuenta por Cobrar' : 'Seleccionar Cuenta por Pagar'}
-                            </Label>
-                            <select
-                                id="cuenta_id"
-                                name="cuenta_id"
-                                value={formData.cuenta_id}
-                                onChange={handleChange}
-                                disabled={loading}
-                                className="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-950 text-gray-900 dark:text-white px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <option value="">-- Seleccionar --</option>
-                                {Array.isArray(cuentasPendientes) && cuentasPendientes.map((cuenta) => {
-                                    let displayLabel = '';
-
-                                    if (tipo === 'ventas') {
-                                        if (cuenta.numero_venta) {
-                                            displayLabel = `Venta-${cuenta.numero_venta} | Cuenta-${cuenta.id}`;
-                                        } else {
-                                            displayLabel = `Crédito #${cuenta.id} | #${cuenta.referencia_documento || 'N/A'}`;
-                                        }
-                                    } else {
-                                        if (cuenta.numero_venta) {
-                                            displayLabel = `Compra #${cuenta.numero_venta} | Cuenta #${cuenta.id}`;
-                                        } else {
-                                            displayLabel = `Deuda #${cuenta.id}`;
-                                        }
-                                    }
-
-                                    return (
-                                        <option key={cuenta.id} value={String(cuenta.id)}>
-                                            {displayLabel} - {formatCurrency(cuenta.saldo_pendiente)} - Vence:{' '}
-                                            {new Date(cuenta.fecha_vencimiento).toLocaleDateString('es-BO')}
-                                        </option>
-                                    );
-                                })}
-                                {/* Fallback: Si la cuenta preseleccionada no está en la lista, mostrarla de todas formas */}
-                                {cuentaIdPreseleccionada &&
-                                    !cuentasPendientes.find((c) => c.id === cuentaIdPreseleccionada) && (
-                                        <option key={`selected-${cuentaIdPreseleccionada}`} value={String(cuentaIdPreseleccionada)}>
-                                            Cuenta #{cuentaIdPreseleccionada} (Seleccionada)
-                                        </option>
-                                    )}
-                            </select>
-                        </div>
-
-                        {/* Mostrar detalles de la cuenta seleccionada */}
-                        {selectedCuenta && (
-                            <div className="rounded-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950 p-3 text-sm text-blue-800 dark:text-blue-200">
-                                <p className="mb-1">
-                                    <strong>Saldo pendiente:</strong> {formatCurrency(selectedCuenta.saldo_pendiente)}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Monto original:</strong> {formatCurrency(selectedCuenta.monto_original)}
-                                </p>
-                                <p>
-                                    <strong>Vencimiento:</strong>{' '}
-                                    {new Date(selectedCuenta.fecha_vencimiento).toLocaleDateString('es-BO')}
-                                </p>
-                            </div>
+                        {error && (
+                            <Alert variant="destructive" className="border-red-500 bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">{error.split('\n')[0]}</AlertDescription>
+                            </Alert>
                         )}
 
-                        {/* Tipo de Pago */}
-                        <div className="space-y-2">
-                            <Label htmlFor="tipo_pago_id" className="text-gray-700 dark:text-gray-300">Tipo de Pago</Label>
-                            <select
-                                id="tipo_pago_id"
-                                name="tipo_pago_id"
-                                value={formData.tipo_pago_id}
-                                onChange={handleChange}
-                                disabled={loading}
-                                className="flex h-9 w-full rounded-md border border-input bg-white dark:bg-gray-950 text-gray-900 dark:text-white px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <option value="">-- Seleccionar --</option>
-                                {Array.isArray(tipos_pago) && tipos_pago.length > 0 ? (
-                                    tipos_pago.map((tipo) => (
-                                        <option key={tipo.id} value={String(tipo.id)}>
-                                            {tipo.nombre}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <>
-                                        <option value="1">Efectivo</option>
-                                        <option value="2">Transferencia / QR</option>
-                                        <option value="4">Cheque</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* ✅ NUEVO: Mostrar información de la cuenta directamente */}
+                            {cuentaPorCobrar && (
+                                <div className="rounded-md border-2 border-green-200 bg-green-50 p-4 text-sm dark:border-green-700 dark:bg-green-950">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-semibold text-green-900 dark:text-green-100">
+                                                {tipo === 'ventas' ? '📋 Cuenta por Cobrar' : '📋 Cuenta por Pagar'}
+                                            </span>
+                                            <span className="rounded bg-green-200 px-2 py-1 text-xs dark:bg-green-800">#{cuentaPorCobrar.id}</span>
+                                        </div>
 
-                        {/* Monto */}
-                        <div className="space-y-2">
-                            <Label htmlFor="monto" className="text-gray-700 dark:text-gray-300">Monto a Pagar</Label>
-                            <Input
-                                id="monto"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                name="monto"
-                                value={formData.monto}
-                                onChange={handleChange}
-                                disabled={loading}
-                                max={selectedCuenta ? selectedCuenta.saldo_pendiente : undefined}
-                                placeholder="0.00"
-                            />
-                            {selectedCuenta && (
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    Máximo: {formatCurrency(selectedCuenta.saldo_pendiente)}
-                                </p>
+                                        <div className="flex items-center justify-between">
+                                            {cuentaPorCobrar.venta_id && (
+                                                <p className="text-green-800 dark:text-green-200">
+                                                    <strong>Folio Venta:</strong> #{cuentaPorCobrar.venta_id}
+                                                </p>
+                                            )}
+                                            <p className="text-grey-800 dark:text-grey-200">
+                                                <strong>Monto original:</strong> {formatCurrency(cuentaPorCobrar.monto_original)}
+                                            </p>
+                                            <p className="text-yellow-800 dark:text-yellow-200">
+                                                <strong>Saldo pendiente:</strong> {formatCurrency(cuentaPorCobrar.saldo_pendiente)}
+                                            </p>
+
+                                            <p className="text-green-800 dark:text-green-200">
+                                                <strong>Vencimiento:</strong>{' '}
+                                                {new Date(cuentaPorCobrar.fecha_vencimiento).toLocaleDateString('es-BO')}
+                                            </p>
+
+                                            {cuentaPorCobrar.dias_vencido > 0 && (
+                                                <p className="font-semibold text-red-600 dark:text-red-400">
+                                                    ⚠️ <strong>{cuentaPorCobrar.dias_vencido} días vencido</strong>
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             )}
-                        </div>
 
-                        {/* Fecha de Pago */}
-                        <div className="space-y-2">
-                            <Label htmlFor="fecha_pago" className="text-gray-700 dark:text-gray-300">Fecha de Pago</Label>
-                            <Input
-                                id="fecha_pago"
-                                type="date"
-                                name="fecha_pago"
-                                value={formData.fecha_pago}
-                                onChange={handleChange}
-                                disabled={loading}
-                            />
-                        </div>
+                            {/* ✅ NUEVO: Montos desglosados por tipo de pago */}
+                            <div className="space-y-3 p-2">
+                                {/* <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">💰 Desglose de Pago</p> */}
 
-                        {/* Número de Recibo */}
-                        <div className="space-y-2">
-                            <Label htmlFor="numero_recibo" className="text-gray-700 dark:text-gray-300">Número de Recibo (Opcional)</Label>
-                            <Input
-                                id="numero_recibo"
-                                type="text"
-                                name="numero_recibo"
-                                value={formData.numero_recibo}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="Ej: REC-001"
-                            />
-                        </div>
+                                <div className="flex flex-wrap gap-4 items-center justify-center">
+                                    {/* Efectivo */}
+                                    <div className="space-y-1">
+                                        <Label htmlFor="montoEfectivo" className="text-sm text-gray-700 dark:text-gray-300">
+                                            💵 Efectivo
+                                        </Label>
+                                        <Input
+                                            id="montoEfectivo"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            name="montoEfectivo"
+                                            value={formData.montoEfectivo}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            placeholder="0.00"
+                                            className="text-sm"
+                                        />
+                                        {/* {formData.montoEfectivo && (
+                                            <Input
+                                                id="numeroReciboEfectivo"
+                                                type="text"
+                                                name="numeroReciboEfectivo"
+                                                value={formData.numeroReciboEfectivo}
+                                                onChange={handleChange}
+                                                disabled={loading}
+                                                placeholder="Nº Recibo (opcional)"
+                                                className="text-sm"
+                                            />
+                                        )} */}
+                                    </div>
 
-                        {/* Campos específicos según tipo de pago */}
-                        {formData.tipo_pago_id === '2' && (
+                                    {/* Transferencia/QR */}
+                                    <div className="space-y-1">
+                                        <Label htmlFor="montoTransferencia" className="text-sm text-gray-700 dark:text-gray-300">
+                                            🔄 Transferencia / QR
+                                        </Label>
+                                        <Input
+                                            id="montoTransferencia"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            name="montoTransferencia"
+                                            value={formData.montoTransferencia}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            placeholder="0.00"
+                                            className="text-sm"
+                                        />
+                                        {/* {formData.montoTransferencia && (
+                                            <Input
+                                                id="numeroTransferenciaTransferencia"
+                                                type="text"
+                                                name="numeroTransferenciaTransferencia"
+                                                value={formData.numeroTransferenciaTransferencia}
+                                                onChange={handleChange}
+                                                disabled={loading}
+                                                placeholder="Nº Transferencia (opcional)"
+                                                className="text-sm"
+                                            />
+                                        )} */}
+                                    </div>
+                                    
+                                    {/* Fecha de Pago */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fecha_pago" className="text-gray-700 dark:text-gray-300">
+                                            Fecha de Pago
+                                        </Label>
+                                        <Input
+                                            id="fecha_pago"
+                                            type="date"
+                                            name="fecha_pago"
+                                            value={formData.fecha_pago}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+                                    </div>
+
+                                    {/* Número de Recibo */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="numero_recibo" className="text-gray-700 dark:text-gray-300">
+                                            Número de Recibo (Opcional)
+                                        </Label>
+                                        <Input
+                                            id="numero_recibo"
+                                            type="text"
+                                            name="numero_recibo"
+                                            value={formData.numero_recibo}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            placeholder="Ej: REC-001"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Observaciones */}
                             <div className="space-y-2">
-                                <Label htmlFor="numero_transferencia" className="text-gray-700 dark:text-gray-300">Número de Transferencia (Opcional)</Label>
-                                <Input
-                                    id="numero_transferencia"
-                                    type="text"
-                                    name="numero_transferencia"
-                                    value={formData.numero_transferencia}
+                                <Label htmlFor="observaciones" className="text-gray-700 dark:text-gray-300">
+                                    Observaciones (Opcional)
+                                </Label>
+                                <textarea
+                                    id="observaciones"
+                                    name="observaciones"
+                                    value={formData.observaciones}
                                     onChange={handleChange}
                                     disabled={loading}
-                                    placeholder="Ej: TRF-12345"
+                                    placeholder="Notas o comentarios del pago"
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-950 dark:text-white"
                                 />
                             </div>
-                        )}
+                        </form>
+                    </div>
 
-                        {formData.tipo_pago_id === '3' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="numero_cheque" className="text-gray-700 dark:text-gray-300">Número de Cheque (Opcional)</Label>
-                                <Input
-                                    id="numero_cheque"
-                                    type="text"
-                                    name="numero_cheque"
-                                    value={formData.numero_cheque}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                    placeholder="Ej: CHQ-12345"
-                                />
-                            </div>
-                        )}
-
-                        {/* Observaciones */}
-                        <div className="space-y-2">
-                            <Label htmlFor="observaciones" className="text-gray-700 dark:text-gray-300">Observaciones (Opcional)</Label>
-                            <textarea
-                                id="observaciones"
-                                name="observaciones"
-                                value={formData.observaciones}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="Notas o comentarios del pago"
-                                rows={3}
-                                className="flex min-h-[60px] w-full rounded-md border border-input bg-white dark:bg-gray-950 text-gray-900 dark:text-white px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            />
-                        </div>
-                    </form>
-                </div>
-
-                <DialogFooter className="border-t border-gray-200 dark:border-gray-800 pt-4 flex justify-end gap-2 flex-shrink-0 mt-4">
-                    <Button
-                        variant="outline"
-                        onClick={onHide}
-                        disabled={loading}
-                        className="text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={
-                            loading ||
-                            !formData.cuenta_id ||
-                            !formData.tipo_pago_id ||
-                            !formData.monto ||
-                            cargandoCaja ||
-                            (verificarCaja && !cajaInfo?.tiene_caja_abierta)
-                        }
-                        className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-700 dark:hover:bg-blue-800"
-                        title={verificarCaja && !cajaInfo?.tiene_caja_abierta ? 'Abre una caja para registrar pagos' : ''}
-                    >
-                        {loading ? (
-                            <>
-                                <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                                Registrando...
-                            </>
-                        ) : (
-                            'Registrar Pago'
-                        )}
-                    </Button>
+                    <DialogFooter className="mt-4 flex flex-shrink-0 justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-800">
+                        <Button
+                            variant="outline"
+                            onClick={onHide}
+                            disabled={loading}
+                            className="border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={
+                                loading ||
+                                !formData.cuenta_id ||
+                                cargandoCaja ||
+                                (verificarCaja && !cajaInfo?.tiene_caja_abierta)
+                            }
+                            className="bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800"
+                            title={verificarCaja && !cajaInfo?.tiene_caja_abierta ? 'Abre una caja para registrar pagos' : ''}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                                    Registrando...
+                                </>
+                            ) : (
+                                'Registrar Pago'
+                            )}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -635,14 +604,20 @@ export default function RegistrarPagoModal({
                 onClose={() => {
                     setMostrarModalImpresion(false);
                     setPagoRegistrado(null);
+                    setCuentaIdParaImpresion(0);
                     onPagoRegistrado();
                     onHide();
                 }}
-                documentoId={pagoRegistrado?.id || 0}
+                documentoId={cuentaIdParaImpresion}
                 tipoDocumento="cuenta-por-cobrar"
                 documentoInfo={{
-                    numero: pagoRegistrado?.numero_pago,
+                    numero: cuentaIdParaImpresion ? `Pago CxC #${cuentaIdParaImpresion}` : 'Pago',
                     monto: pagoRegistrado?.monto,
+                }}
+                // ✅ NUEVO: Pasar montos desglosados para mostrar en impresión
+                printParams={{
+                    efectivo: parseFloat(formData.montoEfectivo) || 0,
+                    transferencia: parseFloat(formData.montoTransferencia) || 0,
                 }}
             />
         </>

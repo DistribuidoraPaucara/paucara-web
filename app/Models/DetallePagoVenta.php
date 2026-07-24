@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\DetallePagoVentaCreated;
 use Illuminate\Database\Eloquent\Model;
 
 class DetallePagoVenta extends Model
@@ -16,6 +17,11 @@ class DetallePagoVenta extends Model
         'fecha_pago',
         'comprobante',
         'observaciones',
+    ];
+
+    // ✅ NUEVO (2026-07-24): Eventos que se disparan cuando se crea el modelo
+    protected $dispatchesEvents = [
+        'created' => DetallePagoVentaCreated::class,
     ];
 
     protected function casts(): array

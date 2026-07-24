@@ -59,10 +59,29 @@ class CuentaPorCobrar extends Model
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
+    // ✅ NUEVO: Accessor para calcular días vencido dinámicamente
+    protected function diasVencido()
+    {
+        return $this->attributes['dias_vencido'] ?? $this->calcularDiasVencido();
+    }
+
+    public function calcularDiasVencido(): int
+    {
+        if (!$this->fecha_vencimiento) {
+            return 0;
+        }
+
+        $hoy = today();
+        $diasDiferencia = $hoy->diffInDays($this->fecha_vencimiento, false);
+
+        // Si es negativo, está vencido; si es positivo o cero, aún no vence
+        return max(0, -$diasDiferencia);
+    }
+
     // Scopes
     public function scopeVencidas($query)
     {
-        return $query->where('fecha_vencimiento', '<', now());
+        return $query->whereDate('fecha_vencimiento', '<', today());
     }
 
     public function scopePendientes($query)

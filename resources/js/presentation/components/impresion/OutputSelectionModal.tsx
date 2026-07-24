@@ -56,6 +56,8 @@ interface OutputSelectionModalProps {
     printType?: 'cierre' | 'movimientos';
     // ✅ NUEVO (2026-06-02): Modo de reporte especial (ej: 'entrega') que filtra formatos disponibles
     modoReporte?: string;
+    // ✅ NUEVO (2026-07-24): Parámetros adicionales para la impresión (ej: desglose de pagos)
+    printParams?: Record<string, any>;
 }
 
 type Accion = 'imprimir' | 'excel' | 'pdf' | 'imagen' | null;
@@ -177,6 +179,7 @@ export function OutputSelectionModal({
     documentoInfo = {},
     printType = undefined,
     modoReporte = undefined,
+    printParams = {},
 }: OutputSelectionModalProps) {
     const [accion, setAccion] = useState<Accion>(null);
     const [formatoSeleccionado, setFormatoSeleccionado] = useState<string>('');
@@ -350,7 +353,11 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
             } else if (tipoDocumento === 'cuenta-por-cobrar') {
                 // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - usar endpoint correcto
+                // ✅ NUEVO (2026-07-24): Agregar parámetros de desglose de pagos si existen
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
+                if (printParams?.efectivo !== undefined || printParams?.transferencia !== undefined) {
+                    url += `&efectivo=${printParams.efectivo ?? 0}&transferencia=${printParams.transferencia ?? 0}`;
+                }
             } else if (tipoDocumento === 'cuenta-por-pagar') {
                 // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - usar endpoint correcto
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=download`;
@@ -438,7 +445,11 @@ export function OutputSelectionModal({
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
             } else if (tipoDocumento === 'cuenta-por-cobrar') {
                 // ✅ CORREGIDO (2026-06-27): Para cuentas por cobrar - usar endpoint correcto con query params
+                // ✅ NUEVO (2026-07-24): Agregar parámetros de desglose de pagos si existen
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;
+                if (printParams?.efectivo !== undefined || printParams?.transferencia !== undefined) {
+                    url += `&efectivo=${printParams.efectivo ?? 0}&transferencia=${printParams.transferencia ?? 0}`;
+                }
             } else if (tipoDocumento === 'cuenta-por-pagar') {
                 // ✅ CORREGIDO (2026-06-27): Para cuentas por pagar - usar endpoint correcto con query params
                 url = `${rutaBase}/imprimir?formato=${formato}&accion=${accionURL}`;

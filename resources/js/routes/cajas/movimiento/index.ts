@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
 export const imprimir = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
 imprimir.url = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ imprimir.url = (args: { movimiento: number | { id: number } } | [movimiento: num
 
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
 imprimir.get = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -58,7 +58,7 @@ imprimir.get = (args: { movimiento: number | { id: number } } | [movimiento: num
 })
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
 imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -68,7 +68,7 @@ imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: nu
 
     /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
     const imprimirForm = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -78,7 +78,7 @@ imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: nu
 
             /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
         imprimirForm.get = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: nu
         })
             /**
 * @see \App\Http\Controllers\CajaController::imprimir
- * @see app/Http/Controllers/CajaController.php:2088
+ * @see app/Http/Controllers/CajaController.php:2103
  * @route '/cajas/movimiento/{movimiento}/imprimir'
  */
         imprimirForm.head = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -103,7 +103,7 @@ imprimir.head = (args: { movimiento: number | { id: number } } | [movimiento: nu
     imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CajaController::eliminar
- * @see app/Http/Controllers/CajaController.php:2133
+ * @see app/Http/Controllers/CajaController.php:2148
  * @route '/cajas/movimiento/{movimiento}/eliminar'
  */
 export const eliminar = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -118,7 +118,7 @@ eliminar.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::eliminar
- * @see app/Http/Controllers/CajaController.php:2133
+ * @see app/Http/Controllers/CajaController.php:2148
  * @route '/cajas/movimiento/{movimiento}/eliminar'
  */
 eliminar.url = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -151,7 +151,7 @@ eliminar.url = (args: { movimiento: number | { id: number } } | [movimiento: num
 
 /**
 * @see \App\Http\Controllers\CajaController::eliminar
- * @see app/Http/Controllers/CajaController.php:2133
+ * @see app/Http/Controllers/CajaController.php:2148
  * @route '/cajas/movimiento/{movimiento}/eliminar'
  */
 eliminar.delete = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -161,7 +161,7 @@ eliminar.delete = (args: { movimiento: number | { id: number } } | [movimiento: 
 
     /**
 * @see \App\Http\Controllers\CajaController::eliminar
- * @see app/Http/Controllers/CajaController.php:2133
+ * @see app/Http/Controllers/CajaController.php:2148
  * @route '/cajas/movimiento/{movimiento}/eliminar'
  */
     const eliminarForm = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -176,7 +176,7 @@ eliminar.delete = (args: { movimiento: number | { id: number } } | [movimiento: 
 
             /**
 * @see \App\Http\Controllers\CajaController::eliminar
- * @see app/Http/Controllers/CajaController.php:2133
+ * @see app/Http/Controllers/CajaController.php:2148
  * @route '/cajas/movimiento/{movimiento}/eliminar'
  */
         eliminarForm.delete = (args: { movimiento: number | { id: number } } | [movimiento: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -4,7 +4,6 @@ import { OutputSelectionModal } from '@/presentation/components/impresion/Output
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent } from '@/presentation/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
 import { Input } from '@/presentation/components/ui/input';
 import SearchSelect from '@/presentation/components/ui/search-select'; // ✅ NUEVO
@@ -445,9 +444,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         const estadoDisplay = (estado || '').toUpperCase();
 
         return (
-            <span
-                className={`mb-1 inline-flex items-center gap-2 px-2 py-1 text-xs font-xs ${info.bgColor} ${info.textColor} ${info.borderColor}`}
-            >
+            <span className={`text-xs rounded-full inline-flex items-center gap-1 px-2 py-1 ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
                 <IconComponent className="h-4 w-4" />
                 <span>{estadoDisplay}</span>
             </span>
@@ -500,9 +497,9 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
     const UrgenciaBadgeComponent = ({ diasVencido }: { diasVencido: number }) => {
         const info = getUrgenciaInfo(diasVencido);
         const IconComponent = info.icon;
-
+        
         return (
-            <span className={`inline-flex items-center gap-2 px-2 py-1 text-xs font-xs ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
+            <span className={`text-xs rounded-full inline-flex items-start gap-1 px-2 py-1 ${info.bgColor} ${info.textColor} ${info.borderColor}`}>
                 <IconComponent className="h-4 w-4" />
                 <span>{info.label}</span>
             </span>
@@ -612,7 +609,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         >
             <Head title="Cuentas por Cobrar" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -627,73 +624,51 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                 {/* Estadísticas Rápidas */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardContent className="p-1">
-                            <div className="flex items-center">
-                                <div className="rounded-lg bg-blue-100 p-1 dark:bg-blue-900/20">
-                                    <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pendiente</p>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(cuentasPorCobrar.estadisticas.monto_total_pendiente)}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="flex items-center rounded-lg bg-white p-2 shadow dark:bg-gray-800">
+                        <div className="rounded-lg bg-blue-100 p-1 dark:bg-blue-900/20">
+                            <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pendiente</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {formatCurrency(cuentasPorCobrar.estadisticas.monto_total_pendiente)}
+                            </p>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardContent className="p-1">
-                            <div className="flex items-center">
-                                <div className="rounded-lg bg-red-100 p-1 dark:bg-red-900/20">
-                                    <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Vencidas</p>
-                                    <p className="text-2xl font-bold text-red-600">
-                                        {formatCurrency(cuentasPorCobrar.estadisticas.monto_total_vencido)}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="flex items-center rounded-lg bg-white p-2 shadow dark:bg-gray-800">
+                        <div className="rounded-lg bg-red-100 p-1 dark:bg-red-900/20">
+                            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Vencidas</p>
+                            <p className="text-2xl font-bold text-red-600">{formatCurrency(cuentasPorCobrar.estadisticas.monto_total_vencido)}</p>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardContent className="p-1">
-                            <div className="flex items-center">
-                                <div className="rounded-lg bg-yellow-100 p-1 dark:bg-yellow-900/20">
-                                    <CreditCard className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Cuentas Vencidas</p>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {cuentasPorCobrar.estadisticas.cuentas_vencidas}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="flex items-center rounded-lg bg-white p-2 shadow dark:bg-gray-800">
+                        <div className="rounded-lg bg-yellow-100 p-1 dark:bg-yellow-900/20">
+                            <CreditCard className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                        </div>
+                        <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Cuentas Vencidas</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{cuentasPorCobrar.estadisticas.cuentas_vencidas}</p>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardContent className="p-1">
-                            <div className="flex items-center">
-                                <div className="rounded-lg bg-green-100 p-1 dark:bg-green-900/20">
-                                    <CreditCard className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio Días</p>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {cuentasPorCobrar.estadisticas.promedio_dias_pago}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="flex items-center rounded-lg bg-white p-2 shadow dark:bg-gray-800">
+                        <div className="rounded-lg bg-green-100 p-1 dark:bg-green-900/20">
+                            <CreditCard className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio Días</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{cuentasPorCobrar.estadisticas.promedio_dias_pago}</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Filtros */}
-                <div className="p-2">
+                <div className="border-t border-gray-200 p-2 dark:border-gray-700">
                     <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
@@ -704,10 +679,10 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 placeholder="ID cuenta, ID venta, referencia, número, cliente, usuario..."
                                 className="dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {/* <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Presiona <kbd className="rounded bg-gray-200 px-1.5 py-0.5 text-xs dark:bg-gray-700">Enter</kbd> para buscar
                                 rápidamente
-                            </p>
+                            </p> */}
                         </div>
                         {/* ✅ ACTUALIZADO: SearchSelect para cliente */}
                         <div className="space-y-2">
@@ -825,7 +800,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                         </div>
 
                         {/* Indicador de rango activo */}
-                        {filtros.fecha_vencimiento_desde && filtros.fecha_vencimiento_hasta && (
+                        {/* {filtros.fecha_vencimiento_desde && filtros.fecha_vencimiento_hasta && (
                             <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900/30 dark:bg-green-950/20">
                                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                                 <span className="text-sm text-green-700 dark:text-green-300">
@@ -833,10 +808,10 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                     {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
                                 </span>
                             </div>
-                        )}
+                        )} */}
                     </div>
 
-                    <div className="mt-6 flex justify-between gap-3">
+                    <div className="mt-2 flex justify-between gap-3">
                         <Button onClick={limpiarFiltros} variant="outline">
                             🔄 Limpiar Filtros
                         </Button>
@@ -848,7 +823,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                 {/* Tabla de Cuentas por Cobrar */}
                 <div>
-                    <div className="max-h-[600px] overflow-x-auto overflow-y-auto">
+                    <div className="overflow-y-auto rounded-lg border border-gray-200 shadow dark:border-gray-700">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
                                 <tr>
@@ -862,19 +837,27 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                         Cliente
                                     </th>
                                     <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Monto Original
+                                        Monto O.
+                                    </th>
+                                    <th className=" py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Saldo
                                     </th>
                                     <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Creación
                                     </th>
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Vencimiento
-                                    </th>
+                                    
                                     <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Estado
                                     </th>
-                                    <th className="px-2 py-2 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Acciones
+                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Vencimiento
+                                    </th>
+                                    {/* dias de retraso */}
+                                    <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Días Vencido
+                                    </th>
+                                    <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        -
                                     </th>
                                 </tr>
                             </thead>
@@ -882,47 +865,51 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 {cuentasPorCobrar.cuentas_por_cobrar.data.map((cuenta) => (
                                     <React.Fragment key={cuenta.id}>
                                         <tr className={`${getRowColorClass(cuenta.dias_vencido, cuenta.estado)} transition-colors duration-200`}>
-                                            <td className="px-2 py-2 whitespace-nowrap">#{cuenta.id}</td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
+                                            <td className="px-2 py-2 text-center">#{cuenta.id}</td>
+                                            <td className="px-2 py-2 text-center">
                                                 <div className="text-sm text-gray-900 dark:text-white">
-                                                    {/* <p>Folio CxC:  #{cuenta.id}</p> */}
                                                     {cuenta.venta && <p>#{cuenta.venta?.id}</p>}
                                                     <p>{cuenta?.referencia_documento}</p>
                                                 </div>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
+                                            <td className="px-2 py-2 text-left">
                                                 <div className="text-sm text-gray-900 dark:text-white">
                                                     {/* ✅ CORREGIDO: Mostrar cliente directo o cliente de venta */}
                                                     {cuenta.cliente?.nombre || cuenta.venta?.cliente?.nombre || 'Sin cliente'}
                                                 </div>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    Mnt. Org.: {formatCurrency(cuenta.monto_original)}
+                                            <td className="px-2 py-2 text-left">
+                                                <p className="text-xs font-medium text-gray-900 dark:text-white">
+                                                    {formatCurrency(cuenta.monto_original)}
                                                 </p>
-                                                <p className="text-sm font-medium text-amber-500">Saldo: {formatCurrency(cuenta.saldo_pendiente)}</p>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
-                                                <p className="text-sm text-gray-900 dark:text-white">{formatDate(cuenta.created_at)}</p>
+                                            <td className="px-2 py-2 text-left">
+                                                <p className="text-left font-medium text-yellow-500 dark:text-yellow-400">{formatCurrency(cuenta.saldo_pendiente)}</p>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
-                                                <p className="text-sm text-gray-900 dark:text-white">{formatDate(cuenta.fecha_vencimiento)}</p>
-                                                {cuenta.estado !== 'anulado' && <UrgenciaBadgeComponent diasVencido={cuenta.dias_vencido} />}
+                                            <td className="px-2 py-2 text-center">
+                                                <p className="text-sm text-gray-900 text-xs dark:text-white">{formatDate(cuenta.created_at)}</p>
                                             </td>
-                                            <td className="px-2 py-2 whitespace-nowrap">
+                                            
+                                            <td className="px-2 py-2 text-center text-xs">
                                                 <div className="text-xs">
                                                     <EstadoBadgeComponent estado={cuenta.estado} />
                                                 </div>
                                             </td>
-                                            <td className="px-2 py-2 text-right text-sm font-medium whitespace-nowrap">
+                                            <td className="px-2 py-2 text-center text-xs">
+                                                <p className="text-sm text-gray-900 text-xs dark:text-white">{formatDate(cuenta.fecha_vencimiento)}</p>                                                
+                                            </td>
+                                            <td className="px-2 py-2 text-center text-xs">
+                                                {cuenta.estado.toUpperCase() !== 'anulado'.toUpperCase() && cuenta.estado.toUpperCase() !== 'PAGADO'.toUpperCase() && <UrgenciaBadgeComponent diasVencido={cuenta.dias_vencido} />}
+                                            </td>
+                                            <td className="px-2 py-2 text-right text-sm font-medium text-center">
                                                 <div className="flex justify-end space-x-1">
-                                                    {cuenta.estado !== 'PAGADO' && cuenta.estado !== 'anulado' && (
+                                                    {cuenta.estado !== 'PAGADO' && cuenta.estado.toUpperCase() !== 'anulado'.toUpperCase() && (
                                                         <Button
                                                             size="sm"
                                                             onClick={() => handleAbrirModalPago(cuenta)}
                                                             className="bg-green-600 text-white hover:bg-green-700"
                                                         >
-                                                            Cobrar 💵
+                                                            Abonar 💵
                                                         </Button>
                                                     )}
                                                     <Button
@@ -937,32 +924,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                     >
                                                         <Printer className="h-4 w-4" />
                                                     </Button>
-                                                    {cuenta.pagos && cuenta.pagos.length > 0 && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => toggleRowExpanded(cuenta.id)}
-                                                            title={expandedRows.has(cuenta.id) ? 'Ocultar pagos' : 'Mostrar pagos'}
-                                                        >
-                                                            {expandedRows.has(cuenta.id) ? (
-                                                                <ChevronUp className="h-4 w-4" />
-                                                            ) : (
-                                                                <ChevronDown className="h-4 w-4" />
-                                                            )}
-                                                        </Button>
-                                                    )}
-
                                                     {/* ✅ NUEVO: Menú popup con opciones adicionales */}
                                                     <div className="relative" ref={menuAbiertoId === cuenta.id ? menuRef : null}>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => setMenuAbiertoId(menuAbiertoId === cuenta.id ? null : cuenta.id)}
-                                                            title="Más opciones"
-                                                        >
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-
                                                         {/* Menú Popup */}
                                                         {menuAbiertoId === cuenta.id && (
                                                             <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
@@ -1009,7 +972,29 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                 </div>
                                                             </div>
                                                         )}
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => setMenuAbiertoId(menuAbiertoId === cuenta.id ? null : cuenta.id)}
+                                                            title="Más opciones"
+                                                        >
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
+                                                    {cuenta.pagos && cuenta.pagos.length > 0 && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => toggleRowExpanded(cuenta.id)}
+                                                            title={expandedRows.has(cuenta.id) ? 'Ocultar pagos' : 'Mostrar pagos'}
+                                                        >
+                                                            {expandedRows.has(cuenta.id) ? (
+                                                                <ChevronUp className="h-4 w-4" />
+                                                            ) : (
+                                                                <ChevronDown className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -1344,9 +1329,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                         setCuentaSeleccionadaPago(null);
                     }}
                     clienteId={cuentaSeleccionadaPago?.cliente_id || 0}
-                    cuentasPendientes={cuentasDelCliente}
+                    cuentaPorCobrar={cuentaSeleccionadaPago || undefined}
                     onPagoRegistrado={handlePagoRegistrado}
-                    cuentaIdPreseleccionada={cuentaSeleccionadaPago?.id}
                     tipo="ventas"
                     tipos_pago={cuentasPorCobrar?.tipos_pago || []}
                 />
