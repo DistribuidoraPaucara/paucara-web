@@ -1,5 +1,83 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+export const apiGastosCajasAbiertas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: apiGastosCajasAbiertas.url(options),
+    method: 'get',
+})
+
+apiGastosCajasAbiertas.definition = {
+    methods: ["get","head"],
+    url: '/api/admin/gastos/cajas-abiertas',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+apiGastosCajasAbiertas.url = (options?: RouteQueryOptions) => {
+    return apiGastosCajasAbiertas.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+apiGastosCajasAbiertas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: apiGastosCajasAbiertas.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+apiGastosCajasAbiertas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: apiGastosCajasAbiertas.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+    const apiGastosCajasAbiertasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: apiGastosCajasAbiertas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+        apiGastosCajasAbiertasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: apiGastosCajasAbiertas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\GastoController::apiGastosCajasAbiertas
+ * @see app/Http/Controllers/GastoController.php:312
+ * @route '/api/admin/gastos/cajas-abiertas'
+ */
+        apiGastosCajasAbiertasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: apiGastosCajasAbiertas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    apiGastosCajasAbiertas.form = apiGastosCajasAbiertasForm
+/**
 * @see \App\Http\Controllers\GastoController::index
  * @see app/Http/Controllers/GastoController.php:23
  * @route '/cajas/gastos'
@@ -610,6 +688,6 @@ rechazar.post = (args: { id: string | number } | [id: string | number ] | string
         })
     
     rechazar.form = rechazarForm
-const GastoController = { index, create, store, destroy, adminIndex, aprobar, rechazar }
+const GastoController = { apiGastosCajasAbiertas, index, create, store, destroy, adminIndex, aprobar, rechazar }
 
 export default GastoController

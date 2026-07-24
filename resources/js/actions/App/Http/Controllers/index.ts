@@ -29,6 +29,7 @@ import ReporteCargoListController from './ReporteCargoListController'
 import ProveedorController from './ProveedorController'
 import ImageBackupController from './ImageBackupController'
 import AuditoriaCajaController from './AuditoriaCajaController'
+import GastoController from './GastoController'
 import ConciliacionCajaController from './ConciliacionCajaController'
 import AlertasController from './AlertasController'
 import PrestableController from './PrestableController'
@@ -80,7 +81,6 @@ import ServicioController from './ServicioController'
 import ImpresionProformasController from './ImpresionProformasController'
 import ReservaController from './ReservaController'
 import CajaController from './CajaController'
-import GastoController from './GastoController'
 import EgresosAnalisisController from './EgresosAnalisisController'
 import CierreDiarioGeneralController from './CierreDiarioGeneralController'
 import ImpresionControlVencimientosController from './ImpresionControlVencimientosController'
@@ -139,6 +139,7 @@ ReporteCargoListController,
 ProveedorController,
 ImageBackupController,
 AuditoriaCajaController,
+GastoController,
 ConciliacionCajaController,
 AlertasController,
 PrestableController,
@@ -190,7 +191,6 @@ ServicioController,
 ImpresionProformasController,
 ReservaController,
 CajaController,
-GastoController,
 EgresosAnalisisController,
 CierreDiarioGeneralController,
 ImpresionControlVencimientosController,

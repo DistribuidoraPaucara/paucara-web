@@ -45,14 +45,13 @@ export default function Index() {
 
             if (filtros.fecha_desde) params.append('fecha_desde', filtros.fecha_desde);
             if (filtros.fecha_hasta) params.append('fecha_hasta', filtros.fecha_hasta);
-            if (filtros.tipo_operacion_id) params.append('tipo_operacion_id', filtros.tipo_operacion_id.toString());
             if (filtros.categoria) params.append('categoria', filtros.categoria);
             if (filtros.monto_min) params.append('monto_min', filtros.monto_min.toString());
             if (filtros.monto_max) params.append('monto_max', filtros.monto_max.toString());
             if (filtros.estado_caja) params.append('estado_caja', filtros.estado_caja);
             if (filtros.per_page) params.append('per_page', filtros.per_page.toString());
 
-            const response = await fetch(`/api/egresos?${params.toString()}`, {
+            const response = await fetch(`/api/admin/gastos/cajas-abiertas?${params.toString()}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,11 +60,15 @@ export default function Index() {
             });
 
             if (!response.ok) {
-                throw new Error('Error al cargar datos de egresos');
+                throw new Error('Error al cargar datos de gastos');
             }
 
             const resultado = await response.json();
-            setDatos(resultado.data);
+            if (resultado.success) {
+                setDatos(resultado.data);
+            } else {
+                throw new Error(resultado.message || 'Error desconocido');
+            }
         } catch (err: any) {
             setError(err.message);
             toast.error('Error al cargar datos: ' + err.message);
@@ -146,7 +149,10 @@ export default function Index() {
                             <TabsContent value="tabla">
                                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
                                     <TablaEgresos
-                                        egresos={datos.egresos}
+                                        egresos={{
+                                            data: datos.egresos,
+                                            links: []
+                                        }}
                                         cargando={cargando}
                                         onPageChange={(page) => {
                                             // Implementar paginación si es necesario

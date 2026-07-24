@@ -1430,6 +1430,8 @@ Route::middleware(['auth', 'permission:admin.cierres.ver'])->prefix('admin/cierr
 Route::middleware(['auth', 'permission:cajas.gastos'])->prefix('admin/gastos')->group(function () {
     Route::get('/resumen', [\App\Http\Controllers\Api\AdminCajaApiController::class, 'resumenGastos'])
         ->name('api.admin.gastos.resumen');
+    Route::get('/cajas-abiertas', [\App\Http\Controllers\GastoController::class, 'apiGastosCajasAbiertas'])
+        ->name('api.admin.gastos.cajas-abiertas');
 });
 
 // ✅ Rutas API para conciliación de cajas (Regularización Ventas vs Movimientos)

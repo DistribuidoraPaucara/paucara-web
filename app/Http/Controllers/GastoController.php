@@ -305,4 +305,106 @@ class GastoController extends Controller
             return back()->withErrors(['error' => 'Error al eliminar gasto']);
         }
     }
+
+    /**
+     * API: Obtener gastos de cajas abiertas (JSON)
+     */
+    public function apiGastosCajasAbiertas(Request $request)
+    {
+        try {
+            // Obtener IDs de cajas abiertas (que no tienen cierre)
+            $cajasAbiertas = \App\Models\AperturaCaja::whereDoesntHave('cierre')
+                ->pluck('id');
+
+            $query = MovimientoCaja::with(['tipoOperacion', 'usuario', 'caja', 'aperturaCaja'])
+                ->whereHas('tipoOperacion', fn($q) => $q->where('codigo', 'GASTO'))
+                ->when($request->usuario_id, fn($q) => $q->where('user_id', $request->usuario_id))
+                ->when($request->categoria, function ($q) use ($request) {
+                    $q->where('descripcion', 'LIKE', "%[{$request->categoria}]%");
+                })
+                ->when($request->fecha_desde, fn($q) => $q->whereDate('fecha', '>=', $request->fecha_desde))
+                ->when($request->fecha_hasta, fn($q) => $q->whereDate('fecha', '<=', $request->fecha_hasta))
+                ->when($request->estado_caja === 'abierta', function ($q) use ($cajasAbiertas) {
+                    // Solo gastos de cajas abiertas
+                    $q->whereIn('apertura_caja_id', $cajasAbiertas);
+                })
+                ->when($request->estado_caja === 'cerrada', function ($q) use ($cajasAbiertas) {
+                    // Solo gastos de cajas cerradas
+                    $q->whereNotIn('apertura_caja_id', $cajasAbiertas);
+                })
+                ->when($request->busqueda, function ($q) use ($request) {
+                    $q->where('descripcion', 'LIKE', "%{$request->busqueda}%")
+                      ->orWhere('numero_documento', 'LIKE', "%{$request->busqueda}%");
+                });
+
+            $perPage = $request->per_page ?? 15;
+            $gastos = $query->orderBy('fecha', 'desc')->paginate($perPage);
+
+            // Mapear gastos al formato esperado por TablaEgresos
+            $gastosFormateados = $gastos->getCollection()->map(function ($gasto) use ($cajasAbiertas) {
+                preg_match('/\[([^\]]+)\]/', $gasto->descripcion, $matches);
+                $categoria = $matches[1] ?? 'VARIOS';
+
+                return [
+                    'id' => $gasto->id,
+                    'user_id' => $gasto->user_id,
+                    'usuario' => [
+                        'name' => $gasto->usuario?->name,
+                        'email' => $gasto->usuario?->email,
+                    ],
+                    'tipoOperacion' => [
+                        'nombre' => 'Gasto',
+                        'codigo' => 'GASTO',
+                    ],
+                    'caja' => [
+                        'id' => $gasto->caja_id,
+                        'nombre' => $gasto->caja?->nombre,
+                    ],
+                    'monto' => abs($gasto->monto),
+                    'descripcion' => str_replace("[{$categoria}] ", '', $gasto->descripcion),
+                    'categoria' => $categoria,
+                    'numero_comprobante' => $gasto->numero_documento,
+                    'proveedor' => $gasto->observaciones,
+                    'observaciones' => $gasto->observaciones,
+                    'fecha' => $gasto->fecha->format('Y-m-d H:i:s'),
+                    'created_at' => $gasto->created_at->format('Y-m-d H:i:s'),
+                    'estado_caja' => $gasto->aperturaCaja && $cajasAbiertas->contains($gasto->apertura_caja_id)
+                        ? 'abierta'
+                        : 'cerrada',
+                ];
+            });
+
+            // Calcular estadísticas
+            $estadisticas = [
+                'total_gastos' => $gastos->total(),
+                'monto_total' => abs($query->sum('monto')),
+                'promedio_gasto' => $gastos->total() > 0
+                    ? abs($query->sum('monto')) / $gastos->total()
+                    : 0,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'egresos' => $gastosFormateados,
+                    'totales' => $estadisticas,
+                    'pagina' => $gastos->currentPage(),
+                    'por_pagina' => $gastos->perPage(),
+                    'total' => $gastos->total(),
+                    'ultimas_paginas' => $gastos->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error obteniendo gastos de cajas abiertas', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener gastos de cajas abiertas',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
