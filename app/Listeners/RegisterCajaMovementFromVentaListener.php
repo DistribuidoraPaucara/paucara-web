@@ -274,17 +274,19 @@ class RegisterCajaMovementFromVentaListener
             // Obtener los pagos desglosados de la venta
             $detallesPago = $venta->detallesPagoVenta()->with('tipoPago')->get();
 
-            // ✅ NUEVO (2026-07-24): Si la venta tiene pagos desglosados, SKIP
-            // Los movimientos se crearán automáticamente cuando se creen los DetallePagoVenta
-            if ($event->tienePagosDesglosados) {
-                Log::info('⏭️ [RegisterCajaMovementFromVentaListener] Pagos desglosados → SKIP', [
-                    'venta_id' => $venta->id,
-                    'venta_numero' => $venta->numero,
-                    'nota' => 'Movimientos se crearán vía CreateCajaMovementFromDetallePagoVenta listener cuando se registren los detalles',
-                ]);
+            // ✅ NUEVO (2026-07-24): SIEMPRE SKIP - Los movimientos se crean en CreateCajaMovementFromDetallePagoVenta
+            // AMBOS listeners creaban movimientos causando duplicación
+            // Solución: RegisterCajaMovementFromVentaListener NO debe crear movimientos
+            // TODOS los movimientos se crean automáticamente cuando se crean los DetallePagoVenta
+            Log::info('⏭️ [RegisterCajaMovementFromVentaListener] SKIP - Movimientos se crearán vía CreateCajaMovementFromDetallePagoVenta', [
+                'venta_id' => $venta->id,
+                'venta_numero' => $venta->numero,
+                'politica' => $venta->politica_pago,
+                'monto_pagado' => $venta->monto_pagado,
+                'nota' => 'Este listener está deprecado. Todos los movimientos deben crearse en CreateCajaMovementFromDetallePagoVenta',
+            ]);
 
-                return; // ✅ IMPORTANTE: No crear movimientos aquí
-            }
+            return; // ✅ IMPORTANTE: NUNCA crear movimientos aquí (siempre se crean en CreateCajaMovementFromDetallePagoVenta)
 
             // Fallback: si no hay pagos desglosados
             if ($detallesPago->isNotEmpty()) {
