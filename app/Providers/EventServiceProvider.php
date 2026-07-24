@@ -196,7 +196,8 @@ class EventServiceProvider extends ServiceProvider
         // ══════════════════════════════════════════════════════════
 
         VentaCreada::class => [
-            RegisterCajaMovementFromVentaListener::class, // ✅ NUEVO: Registrar movimiento de caja si hay pago
+            // ✅ DESHABILITADO (2026-07-24): Evitar duplicación de movimientos_caja
+            // RegisterCajaMovementFromVentaListener::class, // Ahora usa CreateCajaMovementFromDetallePagoVenta
             CreateCuentaPorCobrarFromVentaListener::class, // ✅ NUEVO: Crear cuenta por cobrar si política_pago='CREDITO'
         ],
 
