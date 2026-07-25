@@ -82,7 +82,7 @@ export function getMovimientoIcon(monto: number): JSX.Element {
  * @example getMovimientoColor(-500) => "text-red-600"
  */
 export function getMovimientoColor(monto: number): string {
-    return monto >= 0 ? 'text-green-600' : 'text-red-600';
+    return monto >= 0 ? 'text-green-600' : 'text-red-400';
 }
 
 /**

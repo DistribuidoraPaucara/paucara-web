@@ -227,6 +227,13 @@ class Venta extends Model
         return $this->hasOne(MovimientoCaja::class, 'numero_documento', 'numero');
     }
 
+    // ✅ NUEVO (2026-07-24): Relación hasMany para obtener TODOS los movimientos de caja de una venta
+    // Útil cuando hay pagos desglosados (transferencia + efectivo = múltiples movimientos)
+    public function movimientosCaja()
+    {
+        return $this->hasMany(MovimientoCaja::class, 'venta_id', 'id');
+    }
+
     public function asientoContable()
     {
         return $this->morphOne(AsientoContable::class, 'asientable');
@@ -839,45 +846,56 @@ class Venta extends Model
      */
     public function revertirMovimientoCaja(?string $motivo = null, ?string $usuarioNombre = null): void
     {
-        if (!$this->movimientoCaja) {
-            return;
-        }
-
         try {
-            $movimientoOriginal = $this->movimientoCaja;
+            // ✅ CORREGIDO (2026-07-24): Obtener TODOS los movimientos VENTA de esta venta
+            // (no solo uno como antes) para manejar pagos desglosados (transferencia + efectivo)
+            $movimientosVenta = MovimientoCaja::where('venta_id', $this->id)
+                ->whereHas('tipoOperacion', fn($q) => $q->whereIn('codigo', ['VENTA', 'ANULADO-VENTA']))
+                ->get();
+
+            if ($movimientosVenta->isEmpty()) {
+                Log::info('ℹ️ No hay movimientos VENTA para revertir', [
+                    'venta_id' => $this->id,
+                    'venta_numero' => $this->numero,
+                ]);
+                return;
+            }
 
             // Obtener el tipo de operación ANULACION para la reversión
             $tipoOperacionAnulacion = TipoOperacionCaja::where('codigo', 'ANULACION')->firstOrFail();
 
-            // ✅ MEJORADO: Construir observaciones con motivo y usuario
-            $observacionesMovimiento = "Anulación de venta #{$this->numero}";
-            if (!empty($motivo)) {
-                $observacionesMovimiento .= " | Motivo: {$motivo}";
-            }
-            if (!empty($usuarioNombre)) {
-                $observacionesMovimiento .= " | Anulado por: {$usuarioNombre}";
-            }
+            // 1️⃣ Crear movimientos de reversión para TODOS los movimientos VENTA
+            foreach ($movimientosVenta as $movimientoOriginal) {
+                // Construir observaciones con motivo y usuario
+                $observacionesMovimiento = "Anulación de venta #{$this->numero}";
+                if (!empty($motivo)) {
+                    $observacionesMovimiento .= " | Motivo: {$motivo}";
+                }
+                if (!empty($usuarioNombre)) {
+                    $observacionesMovimiento .= " | Anulado por: {$usuarioNombre}";
+                }
 
-            // 1️⃣ Crear movimiento de reversión con monto negativo (para el movimiento principal de la venta)
-            MovimientoCaja::create([
-                'apertura_caja_id'    => $movimientoOriginal->apertura_caja_id,  // ✅ NUEVO (2026-06-20)
-                'caja_id'             => $movimientoOriginal->caja_id,
-                'user_id'             => Auth::id(),
-                'fecha'               => now(),
-                'monto'               => -abs($movimientoOriginal->monto), // Negativo para restar
-                'observaciones'       => $observacionesMovimiento,
-                'numero_documento'    => $this->numero . '-ANU',
-                'tipo_operacion_id'   => $tipoOperacionAnulacion->id,
-                'tipo_pago_id'        => $movimientoOriginal->tipo_pago_id, // Mantener mismo tipo de pago
-                'venta_id'            => $this->id,
-            ]);
+                MovimientoCaja::create([
+                    'apertura_caja_id'    => $movimientoOriginal->apertura_caja_id,
+                    'caja_id'             => $movimientoOriginal->caja_id,
+                    'user_id'             => Auth::id(),
+                    'fecha'               => now(),
+                    'monto'               => -abs($movimientoOriginal->monto), // Negativo para restar
+                    'observaciones'       => $observacionesMovimiento,
+                    'numero_documento'    => $this->numero . '-ANU-' . $movimientoOriginal->tipo_pago_id,
+                    'tipo_operacion_id'   => $tipoOperacionAnulacion->id,
+                    'tipo_pago_id'        => $movimientoOriginal->tipo_pago_id,
+                    'venta_id'            => $this->id,
+                ]);
 
-            Log::info('✅ Movimiento de caja de reversión (ANULACION) creado', [
-                'venta'                  => $this->numero,
-                'movimiento_original_id' => $movimientoOriginal->id,
-                'monto_original'         => $movimientoOriginal->monto,
-                'monto_reversa'          => -abs($movimientoOriginal->monto),
-            ]);
+                Log::info('✅ Movimiento de caja de reversión (ANULACION) creado', [
+                    'venta'                  => $this->numero,
+                    'movimiento_original_id' => $movimientoOriginal->id,
+                    'tipo_pago_id'           => $movimientoOriginal->tipo_pago_id,
+                    'monto_original'         => $movimientoOriginal->monto,
+                    'monto_reversa'          => -abs($movimientoOriginal->monto),
+                ]);
+            }
 
             // 2️⃣ ✅ NUEVO (2026-05-04): Anular movimientos de VUELTO asociados a la venta
             // Si la venta tuvo vuelto (cambio), también debe anularse

@@ -25,7 +25,14 @@ import {
     AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
-import { Eye, Loader2, Trash2 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import { Eye, Loader2, MoreVertical, Trash2 } from 'lucide-react';
 
 interface Props {
     cajaAbiertaHoy: AperturaCaja | null;
@@ -190,9 +197,14 @@ export function MovimientosDelDiaTable({
     const esHoy = fechaApertura.toDateString() === hoy.toDateString();
     const etiquetaPeriodo = esHoy ? 'del Día' : `desde ${fechaApertura.toLocaleDateString('es-BO', { month: 'short', day: 'numeric' })}`;
 
-    // ✅ MEJORADO: Agrupar movimientos por tipo, EXCLUYENDO ventas anuladas del tipo VENTA
+    // ✅ MEJORADO: Agrupar movimientos por tipo, EXCLUYENDO ventas anuladas del tipo VENTA y ANULADO-VENTA
     const movimientosAgrupados = movimientosHoy.reduce((acc: Record<string, MovimientoCaja[]>, mov) => {
         const tipo = mov.tipo_operacion.nombre;
+
+        // ✅ NUEVO: Excluir el tipo ANULADO-VENTA completamente
+        if (tipo === 'Venta Anulada' || tipo === 'ANULADO-VENTA') {
+            return acc; // Saltar movimientos de tipo ANULADO-VENTA
+        }
 
         // 🔴 IMPORTANTE: Si es VENTA, solo contar si está APROBADA (excluir ANULADAS)
         if (tipo === 'Venta' || tipo === 'VENTA') {
@@ -210,33 +222,35 @@ export function MovimientosDelDiaTable({
 
     // ✅ NUEVO: Obtener tipos únicos y calcular totales
     const tipos = Object.keys(movimientosAgrupados);
-    const totalesPorTipo = Object.entries(movimientosAgrupados).map(([tipo, movs]) => {
-        // ✅ ACTUALIZADO (2026-04-29): Para VENTA, usar totalDetallesPago (dinero real pagado desde detalles_pago_venta)
-        // Para otros tipos, sumar los montos localmente PERO solo si están APROBADOS
-        if (tipo === 'Venta' || tipo === 'VENTA') {
+    const totalesPorTipo = Object.entries(movimientosAgrupados)
+        .filter(([tipo]) => tipo !== 'Venta Anulada' && tipo !== 'ANULADO-VENTA') // ✅ NUEVO: Excluir ANULADO-VENTA
+        .map(([tipo, movs]) => {
+            // ✅ ACTUALIZADO (2026-04-29): Para VENTA, usar totalDetallesPago (dinero real pagado desde detalles_pago_venta)
+            // Para otros tipos, sumar los montos localmente PERO solo si están APROBADOS
+            if (tipo === 'Venta' || tipo === 'VENTA') {
+                return {
+                    tipo,
+                    total: totalDetallesPago || 0, // Usar dinero real pagado (desde detalles_pago_venta)
+                    count: movs.length,
+                };
+            }
+
+            // ✅ CORREGIDO (2026-04-30): Filtrar solo movimientos APROBADOS antes de sumar
+            const movsAprobados = movs.filter((m) => {
+                // Para movimientos con venta asociada, verificar que esté aprobada
+                if (m.venta?.estado_documento) {
+                    return m.venta.estado_documento.codigo === 'APROBADO';
+                }
+                // Para otros movimientos sin venta (gastos, etc.), incluirlos
+                return true;
+            });
+
             return {
                 tipo,
-                total: totalDetallesPago || 0, // Usar dinero real pagado (desde detalles_pago_venta)
-                count: movs.length,
+                total: movsAprobados.reduce((sum, m) => sum + m.monto, 0),
+                count: movsAprobados.length,
             };
-        }
-
-        // ✅ CORREGIDO (2026-04-30): Filtrar solo movimientos APROBADOS antes de sumar
-        const movsAprobados = movs.filter((m) => {
-            // Para movimientos con venta asociada, verificar que esté aprobada
-            if (m.venta?.estado_documento) {
-                return m.venta.estado_documento.codigo === 'APROBADO';
-            }
-            // Para otros movimientos sin venta (gastos, etc.), incluirlos
-            return true;
         });
-
-        return {
-            tipo,
-            total: movsAprobados.reduce((sum, m) => sum + m.monto, 0),
-            count: movsAprobados.length,
-        };
-    });
 
     // ✅ CORREGIDO (2026-04-30): Si hay totalDetallesPago pero NO hay movimiento VENTA en movimientosHoy,
     // agregar un card de VENTA manual (puede ocurrir si los movimientos aún no se crean en backend)
@@ -484,8 +498,8 @@ export function MovimientosDelDiaTable({
 
     return (
         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
-            <div className="p-6">
-                <div className="mb-6 flex items-center justify-between">
+            <div className="p-3">
+                <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Movimientos {etiquetaPeriodo}</h3>
                         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -516,7 +530,7 @@ export function MovimientosDelDiaTable({
                 </div>
 
                 {/* ✅ NUEVO: Filtros por tipo */}
-                <div className="mt-4 mb-6 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => setFiltroTipo(null)}
                         className={`rounded-full px-3 py-1 text-sm font-medium transition ${
@@ -527,39 +541,41 @@ export function MovimientosDelDiaTable({
                     >
                         Todos ({movimientosHoy.length})
                     </button>
-                    {tipos.map((tipo) => {
-                        // const total = totalesPorTipo.find(t => t.tipo === tipo)?.total || 0;
-                        return (
-                            <button
-                                key={tipo}
-                                onClick={() => {
-                                    setFiltroTipo(tipo);
-                                    // ✅ DEBUG: Mostrar en consola qué datos llegaron para este tipo
-                                    console.log(`\n📋 [MovimientosDelDiaTable] Datos del tipo: ${tipo}`, {
-                                        tipo,
-                                        cantidad: movimientosAgrupados[tipo].length,
-                                        movimientos: movimientosAgrupados[tipo],
-                                        detalles: movimientosAgrupados[tipo].map((m) => ({
-                                            id: m.id,
-                                            numero_documento: m.numero_documento,
-                                            monto: m.monto,
-                                            venta_id: m.venta_id,
-                                            venta_numero: m.venta?.numero,
-                                            venta_estado: m.venta?.estado_documento?.codigo,
-                                            fecha: m.fecha,
-                                        })),
-                                    });
-                                }}
-                                className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-                                    filtroTipo === tipo
-                                        ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                                }`}
-                            >
-                                {tipo} ({movimientosAgrupados[tipo].length})
-                            </button>
-                        );
-                    })}
+                    {tipos
+                        .filter((tipo) => tipo !== 'Venta Anulada' && tipo !== 'ANULADO-VENTA') // ✅ NUEVO: Excluir ANULADO-VENTA
+                        .map((tipo) => {
+                            // const total = totalesPorTipo.find(t => t.tipo === tipo)?.total || 0;
+                            return (
+                                <button
+                                    key={tipo}
+                                    onClick={() => {
+                                        setFiltroTipo(tipo);
+                                        // ✅ DEBUG: Mostrar en consola qué datos llegaron para este tipo
+                                        console.log(`\n📋 [MovimientosDelDiaTable] Datos del tipo: ${tipo}`, {
+                                            tipo,
+                                            cantidad: movimientosAgrupados[tipo].length,
+                                            movimientos: movimientosAgrupados[tipo],
+                                            detalles: movimientosAgrupados[tipo].map((m) => ({
+                                                id: m.id,
+                                                numero_documento: m.numero_documento,
+                                                monto: m.monto,
+                                                venta_id: m.venta_id,
+                                                venta_numero: m.venta?.numero,
+                                                venta_estado: m.venta?.estado_documento?.codigo,
+                                                fecha: m.fecha,
+                                            })),
+                                        });
+                                    }}
+                                    className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                                        filtroTipo === tipo
+                                            ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    {tipo} ({movimientosAgrupados[tipo].length})
+                                </button>
+                            );
+                        })}
                     <button
                         onClick={() => setFiltrosVisibles(!filtrosVisibles)}
                         className="ml-auto rounded bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
@@ -773,8 +789,7 @@ export function MovimientosDelDiaTable({
 
                 {/* ✅ NUEVO: Resumen por tipo de operación */}
                 {totalesPorTipo.length >= 1 && (
-                    <div className="mb-6">
-                        <h4 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">📊 Sumatoria por Tipo de Operación</h4>
+                    <div className="mb-2 mt-2">
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {totalesPorTipo.map(({ tipo, total, count }) => {
                                 // Obtener el código del tipo operación para usar los colores
@@ -791,7 +806,7 @@ export function MovimientosDelDiaTable({
                                 return (
                                     <div
                                         key={tipo}
-                                        className={`cursor-pointer rounded-lg border-l-4 p-4 transition hover:shadow-md ${
+                                        className={`cursor-pointer rounded-lg border-l-4 p-2 transition hover:shadow-md ${
                                             getTipoOperacionColor(codigo).includes('bg-green')
                                                 ? 'border-green-400 bg-green-50 dark:bg-green-900/20'
                                                 : getTipoOperacionColor(codigo).includes('bg-red')
@@ -813,17 +828,17 @@ export function MovimientosDelDiaTable({
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <p className="text-xs font-medium tracking-wide text-gray-600 uppercase dark:text-gray-400">{tipo}</p>
-                                                <p className={`mt-2 text-lg font-bold ${getMovimientoColor(total)}`}>
+                                                <p className={`mt-1 text-lg font-bold ${getMovimientoColor(total)}`}>
                                                     {formatCurrency(Math.abs(total))}
                                                 </p>
 
                                                 {/* ✅ NUEVO (2026-04-30): Mostrar desglose de tipos de pago para VENTA */}
                                                 {mostrarDesglose && (
-                                                    <div className="mt-2 space-y-1 border-t border-gray-300 pt-2 dark:border-gray-600">
+                                                    <div className="mt-1 space-y-1 border-t border-gray-300 pt-2 dark:border-gray-600">
                                                         {/* ✅ ACTUALIZADO (2026-05-03): SOLO mostrar EFECTIVO + TRANSFERENCIA (CRÉDITO tiene su propio card) */}
                                                         {detallesPagoDesglosado
                                                             .filter(
-                                                                (detalle) => detalle.codigo === 'EFECTIVO' || detalle.codigo === 'TRANSFERENCIA/QR',
+                                                                (detalle) => detalle.codigo.toUpperCase() === 'EFECTIVO' || detalle.codigo.toUpperCase() === 'TRANSFERENCIA/QR',
                                                             )
                                                             .map((detalle, idx) => (
                                                                 <div key={idx} className="flex items-center justify-between text-xs">
@@ -849,67 +864,54 @@ export function MovimientosDelDiaTable({
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Id</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Operación</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Descripcion</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Estado</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Pago</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Monto</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Fecha</th>
-                                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">-</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Id</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tipo Operación</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Estado</th>
+                                {/* <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Estado Pago</th> */}
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Pago</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Monto</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Fecha</th>
+                                <th className="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Descripcion</th>
+                                <th className="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">-</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             {movimientosAMostrar.map((movimiento) => (
                                 <React.Fragment key={movimiento.id}>
                                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-1 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                            <div className="flex items-center gap-2">
-                                                {/* {movimiento.venta && (
-                                                    <button
-                                                        onClick={() => toggleMovimientoExpandido(movimiento.id)}
-                                                        className="inline-flex items-center justify-center w-5 h-5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
-                                                        title={movimientosExpandidos.has(movimiento.id) ? 'Contraer detalles' : 'Ver detalles de venta'}
-                                                    >
-                                                        <svg className={`w-4 h-4 transition transform ${movimientosExpandidos.has(movimiento.id) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                    </button>
-                                                )} */}
-                                            </div>
+                                        <td className="px-1 py-2 text-sm text-gray-900 dark:text-gray-100">
                                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">#{movimiento.id}</p>
                                         </td>
-                                        <td className="px-1 py-4 text-sm">
+                                        <td className="px-1 py-2 text-left text-sm">
                                             <span
-                                                className={`rounded-full px-1 py-1 text-xs font-medium ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}
+                                                className={`inline-flex items-center rounded-full px-1 py-1 text-left text-xs ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}
                                             >
-                                                {movimiento.tipo_operacion.nombre}
+                                                {movimiento.tipo_operacion.nombre}{' '}
+                                                {(movimiento.venta_id || movimiento.pago_id) && (
+                                                    <div className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                                                        {movimiento.venta_id && (
+                                                            <span className="mr-2 inline-block">
+                                                                {' '}
+                                                                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                    #{movimiento.venta_id}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                        {movimiento.pago_id && (
+                                                            <span className="inline-block">
+                                                                {' '}
+                                                                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                    #{movimiento.pago_id}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </span>
-                                            {(movimiento.venta_id || movimiento.pago_id) && (
-                                                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                    {movimiento.venta_id && (
-                                                        <span className="mr-2 inline-block">
-                                                            Folio:{' '}
-                                                            <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                #{movimiento.venta_id}
-                                                            </span>
-                                                        </span>
-                                                    )}
-                                                    {movimiento.pago_id && (
-                                                        <span className="inline-block">
-                                                            Pago:{' '}
-                                                            <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                #{movimiento.pago_id}
-                                                            </span>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
                                         </td>
 
-                                        <td className="px-1 py-4 text-xs text-gray-900 dark:text-gray-100">{movimiento.observaciones}</td>
-                                        <td className="px-1 py-4 text-sm">
-                                            {movimiento.venta?.estado_documento ? (
+                                        <td className="px-1 py-2 text-sm">
+                                            {movimiento.venta?.estado_documento && (
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                                         movimiento.venta.estado_documento.codigo === 'APROBADO'
@@ -923,21 +925,33 @@ export function MovimientosDelDiaTable({
                                                 >
                                                     {movimiento.venta.estado_documento.nombre}
                                                 </span>
-                                            ) : (
-                                                <span className="text-gray-400 dark:text-gray-500">—</span>
+                                            )}
+                                            {movimiento.pago?.estado && (
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                        movimiento.pago.estado.toUpperCase() === 'REGISTRADO'
+                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                            : movimiento.pago.estado.toUpperCase() === 'ANULADO'
+                                                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}
+                                                    title={`Estado de pago: ${movimiento.pago.estado}`}
+                                                >
+                                                    {movimiento.pago.estado}
+                                                </span>
                                             )}
                                         </td>
-                                        <td className="px-1 py-4 text-sm">
+                                        <td className="px-1 py-2 text-sm">
                                             {movimiento.tipo_pago?.nombre ? (
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                        movimiento.tipo_pago.nombre === 'EFECTIVO'
+                                                        movimiento.tipo_pago.nombre.toUpperCase() === 'EFECTIVO'
                                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
-                                                            : movimiento.tipo_pago.nombre === 'TRANSFERENCIA/QR'
+                                                            : movimiento.tipo_pago.nombre.toUpperCase() === 'TRANSFERENCIA/QR'
                                                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                                              : movimiento.tipo_pago.nombre === 'CHEQUE'
+                                                              : movimiento.tipo_pago.nombre.toUpperCase() === 'CHEQUE'
                                                                 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                                                                : movimiento.tipo_pago.nombre === 'CREDITO'
+                                                                : movimiento.tipo_pago.nombre.toUpperCase() === 'CREDITO'
                                                                   ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'
                                                                   : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
                                                     }`}
@@ -948,7 +962,7 @@ export function MovimientosDelDiaTable({
                                                 <span className="text-gray-400 dark:text-gray-500">—</span>
                                             )}
                                         </td>
-                                        <td className="px-1 py-4 text-sm">
+                                        <td className="px-1 py-2 text-sm">
                                             {/* Monto */}
                                             <div className="flex items-center">
                                                 {getMovimientoIcon(toNumber(movimiento.monto))}
@@ -957,45 +971,31 @@ export function MovimientosDelDiaTable({
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-1 py-4 text-left text-xs text-gray-500 dark:text-gray-400">
+                                        <td className="px-1 py-2 text-left text-xs text-gray-500 dark:text-gray-400">
                                             {formatDateTime(movimiento.fecha)}
                                         </td>
-                                        <td className="px-1 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {/* ✅ NUEVO: Botón Ver Detalles de Venta */}
-                                                {movimiento.venta && (
+                                        <td className="max-w-[180px] px-1 py-2 text-xs text-gray-900 dark:text-gray-100">
+                                            {movimiento.observaciones ? (
+                                                <div className="truncate" title={movimiento.observaciones}>
+                                                    {movimiento.observaciones.length > 25
+                                                        ? `${movimiento.observaciones.slice(0, 25)}...`
+                                                        : movimiento.observaciones}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 dark:text-gray-500">—</span>
+                                            )}
+                                        </td>
+                                        <td className="px-1 py-2 text-right">
+                                            {/* ✅ MENÚ DROPDOWN DE ACCIONES */}
+                                            <div className="flex items-center justify-end">
+                                                {/* Imprimir Movimiento Individual */}
+                                                {movimiento.venta_id === null && movimiento.pago_id === null && (
                                                     <button
                                                         onClick={() => {
-                                                            setMovimientoVentaSeleccionado(movimiento);
-                                                            setMostrarModalVenta(true);
+                                                            setMovimientoSeleccionado(movimiento);
+                                                            setMostrarModalMovimientoIndividual(true);
                                                         }}
-                                                        className={`inline-flex items-center justify-center rounded-lg p-1.5 transition ${
-                                                            tieneDiscrepancia(movimiento)
-                                                                ? 'bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
-                                                                : 'bg-purple-100 text-purple-600 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50'
-                                                        }`}
-                                                        title={
-                                                            tieneDiscrepancia(movimiento)
-                                                                ? '⚠️ Discrepancia detectada - Ver detalles'
-                                                                : 'Ver detalles de venta'
-                                                        }
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </button>
-                                                )}
-
-                                                {/* Botón Imprimir Movimiento Individual */}
-                                                <button
-                                                    onClick={() => {
-                                                        setMovimientoSeleccionado(movimiento);
-                                                        setMostrarModalMovimientoIndividual(true);
-                                                    }}
-                                                    disabled={movimiento.venta_id !== null}
-                                                    className={`inline-flex items-center justify-center rounded-lg p-1.5 transition ${
-                                                        movimiento.venta_id !== null
-                                                            ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-50 dark:bg-gray-700 dark:text-gray-500'
-                                                            : 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'
-                                                    }`}
+                                                        disabled={movimiento.venta_id !== null}
                                                     title={
                                                         movimiento.venta_id !== null
                                                             ? 'No se puede imprimir movimientos vinculados a ventas'
@@ -1003,70 +1003,63 @@ export function MovimientosDelDiaTable({
                                                     }
                                                 >
                                                     <Printer className="h-4 w-4" />
-                                                </button>
+                                                </button> )}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button
+                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 transition hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                            title="Acciones"
+                                                        >
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        {/* Ver Detalles de Venta */}
+                                                        {movimiento.venta && (
+                                                            <>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        setMovimientoVentaSeleccionado(movimiento);
+                                                                        setMostrarModalVenta(true);
+                                                                    }}
+                                                                    className={
+                                                                        tieneDiscrepancia(movimiento)
+                                                                            ? 'text-orange-600 dark:text-orange-400'
+                                                                            : 'text-purple-600 dark:text-purple-400'
+                                                                    }
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                    {tieneDiscrepancia(movimiento)
+                                                                        ? '⚠️ Ver detalles (Discrepancia)'
+                                                                        : 'Ver detalles de venta'}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                            </>
+                                                        )}
 
-                                                {/* ✅ NUEVO: Botón Eliminar (para cualquier movimiento menos VENTA) */}
-                                                {movimiento.tipo_operacion.codigo !== 'VENTA' && movimiento.tipo_operacion.codigo !== 'PAGO' && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setMovimientoAEliminar(movimiento);
-                                                            setMostrarDialogoEliminacion(true);
-                                                        }}
-                                                        className="inline-flex items-center justify-center rounded-lg bg-red-100 p-1.5 text-red-600 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                                                        title="Eliminar este movimiento"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                )}
+                                                        {/* Eliminar (para cualquier movimiento menos VENTA/PAGO) */}
+                                                        {movimiento.tipo_operacion.codigo !== 'VENTA' &&
+                                                            movimiento.tipo_operacion.codigo !== 'PAGO' && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setMovimientoAEliminar(movimiento);
+                                                                            setMostrarDialogoEliminacion(true);
+                                                                        }}
+                                                                        variant="destructive"
+                                                                        title="Eliminar este movimiento"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                        Eliminar
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                         </td>
                                     </tr>
-                                    {/* ✅ NUEVA: Sub-fila de detalles de venta */}
-                                    {/* {movimiento.venta && movimientosExpandidos.has(movimiento.id) && (
-                                        <tr className="bg-gray-50 dark:bg-gray-700/50">
-                                            <td colSpan={6} className="px-6 py-4">
-                                                <div className="ml-8 space-y-3 border-l-2 border-blue-300 dark:border-blue-500 pl-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                            📋 Detalles de Venta #{movimiento.venta.id}
-                                                        </span>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                                                                Estado de Venta
-                                                            </div>
-                                                            {movimiento.venta.estado_documento ? (
-                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta.estado_documento.codigo === 'APROBADO'
-                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                                    : movimiento.venta.estado_documento.codigo === 'ANULADO'
-                                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                                                        : movimiento.venta.estado_documento.codigo === 'PENDIENTE'
-                                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                                                    }`}>
-                                                                    {movimiento.venta.estado_documento.nombre}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-sm text-gray-500 dark:text-gray-400">—</span>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                                                                Tipo de Entrega
-                                                            </div>
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${movimiento.venta?.requiere_envio
-                                                                ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-                                                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                                }`}>
-                                                                {movimiento.venta?.requiere_envio ? '🚚 DELIVERY' : '🏪 PRESENCIAL'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )} */}
                                 </React.Fragment>
                             ))}
                         </tbody>

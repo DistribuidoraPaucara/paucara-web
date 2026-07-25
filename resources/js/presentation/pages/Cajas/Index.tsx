@@ -200,7 +200,7 @@ export default function Index(props: CajasIndexProps) {
             ]}>
             <Head title={titulo} />
 
-            <div className="px-6 py-4">
+            <div className="px-3 py-2">
                 <div className="space-y-2">
                     {/* ✅ NUEVO: Banner si es vista admin */}
                     {esVistaAdmin && (

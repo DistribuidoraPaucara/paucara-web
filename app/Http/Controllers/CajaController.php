@@ -112,7 +112,7 @@ class CajaController extends Controller
                 ->where('fecha', '>=', $cajaAbiertaHoy->fecha)
                 ->with(['tipoOperacion', 'tipoPago', 'comprobantes', 'usuario', 'venta' => function($q) {
                     $q->select('id', 'numero', 'estado_documento_id', 'tipo_entrega', 'total', 'monto_pagado', 'monto_pendiente', 'requiere_envio'); // ✅ Agregar requiere_envio
-                }, 'venta.estadoDocumento']) // ✅ Cargar estado_documento con venta
+                }, 'venta.estadoDocumento', 'pago:id,estado']) // ✅ Cargar estado del pago (2026-07-24)
                 ->orderBy('id', 'desc')  // ✅ ACTUALIZADO: Ordenar por ID descendente
                 ->get()
                 // ✅ ACTUALIZADO (2026-03-09): Filtrar movimientos - Incluir VENTA APROBADA y ANULADA

@@ -13,7 +13,6 @@
 import type { AperturaCaja } from '@/domain/entities/cajas';
 import { formatCurrency, formatTime } from '@/lib/cajas.utils';
 import EstadoCierreBadge from '@/presentation/components/cajas/EstadoCierreBadge';
-import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface Cierre {
@@ -239,7 +238,7 @@ export function CajaEstadoCard({
                                 Apertura: {formatCurrency(datosActualizados?.apertura || cajaAbiertaHoy?.monto_apertura || 0)}
                             </p>
                         </div>
-                        <div className="flex items-start gap-3">
+                        <div className="grid grid-cols-1 gap-4 p-1 sm:grid-cols-3">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Entradas (Ingresos)</label>
                                 {datosActualizados ? (
@@ -248,22 +247,13 @@ export function CajaEstadoCard({
                                         {desgloseIngresos && desgloseIngresos.length > 0 ? (
                                             <div className="space-y-1">
                                                 {desgloseIngresos.map((ingreso: DesgloseIngreso, idx: number) => (
-                                                    <p key={idx} className="text-sm text-gray-600 dark:text-gray-400">
-                                                        {ingreso.nombre}: {formatCurrency(ingreso.total)}
-                                                    </p>
+                                                    <div key={idx} className="flex flex-row items-center justify-between rounded bg-green-50 p-1 text-sm dark:bg-green-900/10">
+                                                        <div>{ingreso.nombre}:</div>  
+                                                        <div>{formatCurrency(ingreso.total)}</div>
+                                                    </div>
                                                 ))}
 
-                                                {(!ventasPorTipoPago || ventasPorTipoPago.length === 0) && (
-                                                    <>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Efectivo: {formatCurrency(datosActualizados.totalEfectivo || 0)}
-                                                        </p>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Transferencias: {formatCurrency(datosActualizados.totalTransferencias || 0)}
-                                                        </p>
-                                                    </>
-                                                )}
-                                                <p className="mt-1 border-t border-gray-300 pt-1 text-lg font-semibold text-green-600 dark:text-green-400">
+                                                <p className="mt-1 border-t border-gray-300 pt-1 text-right text-lg font-semibold text-green-600 dark:text-green-400">
                                                     +{formatCurrency(datosActualizados.totalIngresos || 0)}
                                                 </p>
                                             </div>
@@ -274,6 +264,57 @@ export function CajaEstadoCard({
                                 ) : (
                                     <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">Sin movimientos</p>
                                 )}
+                                {/* ✅ REFERENCIAL: Total de TODAS las ventas (incluye crédito) */}
+                                {(datosActualizados?.totalVentas || datosActualizados?.ventasCreditoTotales) && (
+                                    <div>
+                                        {/* <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                            📊 TOTAL DE VENTAS (Contado + Crédito)
+                                        </label> */}
+                                        {/* mostrar detalles del credito */}
+                                        {(datosActualizados?.ventasCreditoTotales || 0) > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-600 dark:text-gray-400">Crédito:</span>
+                                                <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                    {formatCurrency(datosActualizados.ventasCreditoTotales)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold dark:border-gray-700">
+                                                <span className="text-gray-900 dark:text-white">TOTAL VENTAS:</span>
+                                                <span className="text-purple-600 dark:text-purple-400">
+                                                    {/* ✅ ACTUALIZADO (2026-05-03): Sumar totalDetallesPago (efectivo+transferencia) + ventasCreditoTotales */}
+                                                    {formatCurrency(
+                                                        (datosActualizados.totalDetallesPago || 0) + (datosActualizados.ventasCreditoTotales || 0),
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* ✅ NUEVO (2026-07-25): Mostrar dinámicamente ventasPorTipoPago */}
+                                {/* <div className="mt-2">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Ventas por tipo de pago:</p>
+                                    {ventasPorTipoPago && ventasPorTipoPago.length > 0 ? (
+                                        <>
+                                            {ventasPorTipoPago.map((venta, idx) => (
+                                                <div key={idx} className="flex flex-row items-center justify-between rounded bg-blue-50 p-1 text-sm dark:bg-blue-900/10">
+                                                    <div>{venta.tipo}:</div>
+                                                    <div>{formatCurrency(venta.total)} ({venta.cantidad})</div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Efectivo: {formatCurrency(datosActualizados.totalEfectivo || 0)}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Transferencias: {formatCurrency(datosActualizados.totalTransferencias || 0)}
+                                            </p>
+                                        </>
+                                    )}
+                                </div> */}
                             </div>
 
                             <div className="border-l border-gray-300 pl-2 dark:border-gray-700">
@@ -334,109 +375,17 @@ export function CajaEstadoCard({
                             </div>
 
                             <div className="border-l border-gray-300 pl-2 dark:border-gray-700">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">💰 Efectivo Esperado</label>
-                                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                                    {/* ✅ Backend calcula: efectivoEsperado = apertura + ingresos - egresos */}
-                                    {formatCurrency(datosActualizados?.efectivoEsperado || 0)}
-                                </p>
-                            </div>
-                        </div>
-                        {/* Montos - EFECTIVO REAL */}
-                        <div className="mt-2 flex items-start gap-4 border-t border-gray-300 pt-2 dark:border-gray-700">
-                            {/* ✅ REFERENCIAL: Total de TODAS las ventas (incluye crédito) */}
-                            {(datosActualizados?.totalVentas || datosActualizados?.ventasCreditoTotales) && (
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                        📊 TOTAL DE VENTAS (Contado + Crédito)
-                                    </label>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600 dark:text-gray-400">(Efectivo + Transferencia/QR):</span>
-                                            {/* ✅ ACTUALIZADO (2026-05-03): Mostrar SOLO totalDetallesPago (efectivo+transferencia), no totalVentas que incluye crédito */}
-                                            <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                {formatCurrency(datosActualizados.totalDetallesPago || 0)}
-                                            </span>
-                                        </div>
-                                        {(datosActualizados?.ventasCreditoTotales || 0) > 0 && (
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-gray-600 dark:text-gray-400">Ventas a Crédito:</span>
-                                                <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                    {formatCurrency(datosActualizados.ventasCreditoTotales)}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold dark:border-gray-700">
-                                            <span className="text-gray-900 dark:text-white">TOTAL VENTAS:</span>
-                                            <span className="text-purple-600 dark:text-purple-400">
-                                                {/* ✅ ACTUALIZADO (2026-05-03): Sumar totalDetallesPago (efectivo+transferencia) + ventasCreditoTotales */}
-                                                {formatCurrency(
-                                                    (datosActualizados.totalDetallesPago || 0) + (datosActualizados.ventasCreditoTotales || 0),
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">💰 Efectivo Esperado</label>
+                                    <p className="text-center text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                        {/* ✅ Backend calcula: efectivoEsperado = apertura + ingresos - egresos */}
+                                        {formatCurrency(datosActualizados?.efectivoEsperado || 0)}
+                                    </p>
                                 </div>
-                            )}
-                            {/* ✅ NUEVO (2026-07-24): Desglose de movimientos por tipo de pago - COLAPSABLE */}
-                            {desgloseMovimientos && (
-                                <div>
-                                    {/* Encabezado expandible */}
-                                    <button
-                                        onClick={() => setDesgloseExpanded(!desgloseExpanded)}
-                                        className="flex w-full items-center justify-between"
-                                    >
-                                        <p className="text-xs font-semibold tracking-widest text-purple-700 uppercase dark:text-purple-300">
-                                            💳 Resumen de Movimientos por Tipo de Pago
-                                        </p>
-                                        <ChevronDown
-                                            size={18}
-                                            className={`transform text-purple-600 transition-transform dark:text-purple-400 ${
-                                                desgloseExpanded ? 'rotate-180' : ''
-                                            }`}
-                                        />
-                                    </button>
-
-                                    {/* Contenido expandible */}
-                                    {desgloseExpanded && (
-                                        <div className="space-y-3 pt-2">
-                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                                {/* Entradas Efectivo */}
-                                                <div className="rounded-md bg-white p-2 text-center shadow-sm dark:bg-slate-800">
-                                                    <p className="text-xs text-gray-600 dark:text-gray-400">💵 Entradas Efectivo</p>
-                                                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                                                        {formatCurrency(desgloseMovimientos.entradas.efectivo)}
-                                                    </p>
-                                                </div>
-
-                                                {/* Entradas Transferencia */}
-                                                <div className="rounded-md bg-white p-2 text-center shadow-sm dark:bg-slate-800">
-                                                    <p className="text-xs text-gray-600 dark:text-gray-400">🔄 Entradas Transferencia</p>
-                                                    <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                                                        {formatCurrency(desgloseMovimientos.entradas.transferencia)}
-                                                    </p>
-                                                </div>
-
-                                                {/* Salidas Efectivo */}
-                                                <div className="rounded-md bg-white p-2 text-center shadow-sm dark:bg-slate-800">
-                                                    <p className="text-xs text-gray-600 dark:text-gray-400">💵 Salidas Efectivo</p>
-                                                    <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                                                        {formatCurrency(desgloseMovimientos.salidas.efectivo)}
-                                                    </p>
-                                                </div>
-
-                                                {/* Salidas Transferencia */}
-                                                <div className="rounded-md bg-white p-2 text-center shadow-sm dark:bg-slate-800">
-                                                    <p className="text-xs text-gray-600 dark:text-gray-400">🔄 Salidas Transferencia</p>
-                                                    <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                                                        {formatCurrency(desgloseMovimientos.salidas.transferencia)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {/* Totales por tipo */}
+                                {/* Totales por tipo */}
+                                {desgloseMovimientos && (
                                     <div>
-                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2">
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
                                             <div className="rounded-md bg-green-100 p-2 dark:bg-green-900/30">
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">Total Efectivo</p>
                                                 <p className="font-bold text-green-700 dark:text-green-300">
@@ -451,9 +400,61 @@ export function CajaEstadoCard({
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
+                        {/* Montos - EFECTIVO REAL */}
+                        {/* ✅ NUEVO (2026-07-24): Desglose de movimientos por tipo de pago - COLAPSABLE */}
+                        {desgloseMovimientos && (
+                            <div>
+                                {/* Encabezado expandible */}
+                                <button onClick={() => setDesgloseExpanded(!desgloseExpanded)} className="flex w-full items-center justify-between">
+                                    <p className="text-xs font-semibold tracking-widest text-purple-700 uppercase dark:text-purple-300">
+                                        💳 Efectivo Real Esperado
+                                    </p>
+                                </button>
+
+                                {/* Contenido expandible */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Entradas:</div>
+                                        <div className="grid grid-cols-1 items-start sm:grid-cols-2 gap-2">
+                                            {/* Entradas Efectivo */}
+                                            <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    💵Efectivo: {formatCurrency(desgloseMovimientos.entradas.efectivo)}
+                                                </p>
+                                            </div>
+
+                                            {/* Entradas Transferencia */}
+                                            <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    🔄Transferencia: {formatCurrency(desgloseMovimientos.entradas.transferencia)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center">
+                                        <p className="text-xs font-medium text-gray-700 dark:text-red-300">Salidas:</p>
+                                        <div className="grid grid-cols-1 items-start sm:grid-cols-2">
+                                            {/* Salidas Efectivo */}
+                                            <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
+                                                <p className="text-xs text-gray-600 dark:text-red-400">
+                                                    💵 Efectivo: {formatCurrency(desgloseMovimientos.salidas.efectivo)}
+                                                </p>
+                                            </div>
+
+                                            {/* Salidas Transferencia */}
+                                            <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
+                                                <p className="text-xs text-gray-600 dark:text-red-400">
+                                                    🔄 Transferencia {formatCurrency(desgloseMovimientos.salidas.transferencia)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Acciones - Usuario Normal */}

@@ -274,19 +274,54 @@ class RegisterCajaMovementFromVentaListener
             // Obtener los pagos desglosados de la venta
             $detallesPago = $venta->detallesPagoVenta()->with('tipoPago')->get();
 
-            // ✅ NUEVO (2026-07-24): SIEMPRE SKIP - Los movimientos se crean en CreateCajaMovementFromDetallePagoVenta
-            // AMBOS listeners creaban movimientos causando duplicación
-            // Solución: RegisterCajaMovementFromVentaListener NO debe crear movimientos
-            // TODOS los movimientos se crean automáticamente cuando se crean los DetallePagoVenta
+            // ✅ EXCEPCIÓN (2026-07-25): Ventas a CRÉDITO necesitan movimiento especial
+            // Para CRÉDITO: No se crean DetallePagoVenta, por lo que CreateCajaMovementFromDetallePagoVenta nunca se ejecuta
+            if ($esCREDITO) {
+                try {
+                    $tipoOperacionCredito = TipoOperacionCaja::where('codigo', 'CREDITO')->first();
+
+                    if ($tipoOperacionCredito && $cajaAbierta) {
+                        MovimientoCaja::create([
+                            'caja_id'             => $cajaAbierta->caja_id,
+                            'user_id'             => $usuario->id,
+                            'apertura_caja_id'    => $cajaAbierta->id,
+                            'tipo_operacion_id'   => $tipoOperacionCredito->id,
+                            'tipo_pago_id'        => $venta->tipo_pago_id,
+                            'numero_documento'    => $venta->numero,
+                            'monto'               => (float) $venta->total,
+                            'fecha'               => now(),
+                            'observaciones'       => "Crédito otorgado - Venta #{$venta->numero} | Cliente: {$venta->cliente?->nombre} | Monto: {$venta->total}",
+                            'venta_id'            => $venta->id,
+                        ]);
+
+                        Log::info('✅ Movimiento de caja CRÉDITO creado', [
+                            'venta_id'     => $venta->id,
+                            'venta_numero' => $venta->numero,
+                            'tipo_operacion' => 'CREDITO',
+                            'monto'        => $venta->total,
+                            'cliente'      => $venta->cliente?->nombre,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('⚠️ Error creando movimiento de caja CRÉDITO', [
+                        'venta_id' => $venta->id,
+                        'error'    => $e->getMessage(),
+                    ]);
+                }
+
+                return; // ✅ CRÉDITO registrado, no continuar
+            }
+
+            // Para NO-CRÉDITO: Los movimientos se crean en CreateCajaMovementFromDetallePagoVenta
             Log::info('⏭️ [RegisterCajaMovementFromVentaListener] SKIP - Movimientos se crearán vía CreateCajaMovementFromDetallePagoVenta', [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
                 'politica' => $venta->politica_pago,
                 'monto_pagado' => $venta->monto_pagado,
-                'nota' => 'Este listener está deprecado. Todos los movimientos deben crearse en CreateCajaMovementFromDetallePagoVenta',
+                'nota' => 'Venta NO-CRÉDITO: Movimientos se crearán cuando se creen los DetallePagoVenta',
             ]);
 
-            return; // ✅ IMPORTANTE: NUNCA crear movimientos aquí (siempre se crean en CreateCajaMovementFromDetallePagoVenta)
+            return; // ✅ IMPORTANTE: NO crear movimientos para NO-CRÉDITO (se crean en CreateCajaMovementFromDetallePagoVenta)
 
             // Fallback: si no hay pagos desglosados
             if ($detallesPago->isNotEmpty()) {
