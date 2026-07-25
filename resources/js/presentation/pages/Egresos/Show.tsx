@@ -77,7 +77,7 @@ export default function ShowEgreso() {
                     <h2 className="text-xl font-bold mb-4 dark:text-white">Detalles de Egresos</h2>
                     <div className="space-y-3">
                         {egreso.detalles.map((d) => {
-                            const totalDetalle = (d.monto_efectivo || 0) + (d.monto_transferencia || 0);
+                            const totalDetalle = parseFloat(String(d.monto_efectivo || 0)) + parseFloat(String(d.monto_transferencia || 0));
                             return (
                                 <div key={d.id} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border dark:border-slate-700">
                                     <div className="grid grid-cols-2 gap-4 mb-3">
