@@ -104,6 +104,14 @@ class EgresosController extends Controller
             ]);
 
             $egreso = DB::transaction(function () use ($validated, $totalEgreso, $estadoAprobado) {
+                // Obtener tipos de operación para efectivo y transferencia
+                $tipoOperacionEfectivo = TipoOperacionCaja::whereRaw("LOWER(nombre) LIKE ?", ['%efectivo%'])->first();
+                $tipoOperacionTransferencia = TipoOperacionCaja::whereRaw("LOWER(nombre) LIKE ?", ['%transferencia%', '%qr%'])->first();
+
+                // Si no existen, usar el tipo_operacion_caja_id del primer detalle como fallback
+                $tipoOpEfectivoId = $tipoOperacionEfectivo?->id ?? $validated['detalles'][0]['tipo_operacion_caja_id'];
+                $tipoOpTransferenciaId = $tipoOperacionTransferencia?->id ?? $validated['detalles'][0]['tipo_operacion_caja_id'];
+
                 // Crear egreso (cabecera)
                 $egreso = Egreso::create([
                     'numero' => '0',
@@ -164,6 +172,7 @@ class EgresosController extends Controller
 
                     // Crear movimientos en caja si hay caja abierta
                     // Un movimiento por cada tipo de pago (efectivo y/o transferencia)
+                    // Usa tipos de operación específicos para cada método de pago
                     if ($cajaAbierta) {
                         // Movimiento EFECTIVO
                         if ($montoEfectivo > 0) {
@@ -174,14 +183,15 @@ class EgresosController extends Controller
                                 'monto' => -$montoEfectivo, // Negativo para indicar SALIDA
                                 'observaciones' => "Detalle: {$detalle['concepto']} - EFECTIVO (Egreso #{$egreso->numero})",
                                 'numero_documento' => $egreso->numero,
-                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'tipo_operacion_id' => $tipoOpEfectivoId,
                                 'egreso_id' => $egreso->id,
                             ]);
 
                             Log::info('✅ [EgresosController::store] Movimiento EFECTIVO creado', [
                                 'concepto' => $detalle['concepto'],
                                 'monto' => -$montoEfectivo,
-                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'tipo_operacion_id' => $tipoOpEfectivoId,
+                                'tipo_pago' => 'EFECTIVO',
                             ]);
                         }
 
@@ -194,14 +204,15 @@ class EgresosController extends Controller
                                 'monto' => -$montoTransferencia, // Negativo para indicar SALIDA
                                 'observaciones' => "Detalle: {$detalle['concepto']} - TRANSFERENCIA/QR (Egreso #{$egreso->numero})",
                                 'numero_documento' => $egreso->numero,
-                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'tipo_operacion_id' => $tipoOpTransferenciaId,
                                 'egreso_id' => $egreso->id,
                             ]);
 
                             Log::info('✅ [EgresosController::store] Movimiento TRANSFERENCIA creado', [
                                 'concepto' => $detalle['concepto'],
                                 'monto' => -$montoTransferencia,
-                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'tipo_operacion_id' => $tipoOpTransferenciaId,
+                                'tipo_pago' => 'TRANSFERENCIA/QR',
                             ]);
                         }
                     }
