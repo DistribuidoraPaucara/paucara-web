@@ -257,7 +257,13 @@ class EgresosController extends Controller
      */
     public function show(Egreso $egreso): JsonResponse
     {
-        $egreso->load(['tipoOperacion', 'estadoDocumento', 'usuario', 'detalles', 'detallesPago']);
+        $egreso->load([
+            'tipoOperacion',
+            'estadoDocumento',
+            'usuario',
+            'detalles',
+            'detallesPago.tipoPago'
+        ]);
 
         return response()->json([
             'success' => true,

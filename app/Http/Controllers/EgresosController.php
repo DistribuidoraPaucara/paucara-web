@@ -43,7 +43,13 @@ class EgresosController extends Controller
      */
     public function show(Egreso $egreso)
     {
-        $egreso->load(['tipoOperacion', 'estadoDocumento', 'usuario', 'detalles', 'detallesPago']);
+        $egreso->load([
+            'tipoOperacion',
+            'estadoDocumento',
+            'usuario',
+            'detalles',
+            'detallesPago.tipoPago'
+        ]);
 
         return Inertia::render('Egresos/Show', [
             'egreso' => $egreso,
