@@ -162,25 +162,48 @@ class EgresosController extends Controller
                         'subtotal' => $totalPago,
                     ]);
 
-                    // Crear movimiento en caja si hay caja abierta
+                    // Crear movimientos en caja si hay caja abierta
+                    // Un movimiento por cada tipo de pago (efectivo y/o transferencia)
                     if ($cajaAbierta) {
-                        // Movimiento de SALIDA (negativo) - Un movimiento por detalle
-                        MovimientoCaja::create([
-                            'caja_id' => $cajaAbierta->caja_id,
-                            'user_id' => Auth::id(),
-                            'fecha' => now(),
-                            'monto' => -$totalPago, // Negativo para indicar SALIDA
-                            'observaciones' => "Detalle: {$detalle['concepto']} (Egreso #{$egreso->numero})",
-                            'numero_documento' => $egreso->numero,
-                            'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
-                            'egreso_id' => $egreso->id,
-                        ]);
+                        // Movimiento EFECTIVO
+                        if ($montoEfectivo > 0) {
+                            MovimientoCaja::create([
+                                'caja_id' => $cajaAbierta->caja_id,
+                                'user_id' => Auth::id(),
+                                'fecha' => now(),
+                                'monto' => -$montoEfectivo, // Negativo para indicar SALIDA
+                                'observaciones' => "Detalle: {$detalle['concepto']} - EFECTIVO (Egreso #{$egreso->numero})",
+                                'numero_documento' => $egreso->numero,
+                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'egreso_id' => $egreso->id,
+                            ]);
 
-                        Log::info('✅ [EgresosController::store] Movimiento de caja creado para detalle', [
-                            'concepto' => $detalle['concepto'],
-                            'monto' => -$totalPago,
-                            'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
-                        ]);
+                            Log::info('✅ [EgresosController::store] Movimiento EFECTIVO creado', [
+                                'concepto' => $detalle['concepto'],
+                                'monto' => -$montoEfectivo,
+                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                            ]);
+                        }
+
+                        // Movimiento TRANSFERENCIA/QR
+                        if ($montoTransferencia > 0) {
+                            MovimientoCaja::create([
+                                'caja_id' => $cajaAbierta->caja_id,
+                                'user_id' => Auth::id(),
+                                'fecha' => now(),
+                                'monto' => -$montoTransferencia, // Negativo para indicar SALIDA
+                                'observaciones' => "Detalle: {$detalle['concepto']} - TRANSFERENCIA/QR (Egreso #{$egreso->numero})",
+                                'numero_documento' => $egreso->numero,
+                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                                'egreso_id' => $egreso->id,
+                            ]);
+
+                            Log::info('✅ [EgresosController::store] Movimiento TRANSFERENCIA creado', [
+                                'concepto' => $detalle['concepto'],
+                                'monto' => -$montoTransferencia,
+                                'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                            ]);
+                        }
                     }
                 }
 
