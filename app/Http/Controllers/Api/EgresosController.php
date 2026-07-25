@@ -106,7 +106,7 @@ class EgresosController extends Controller
             $egreso = DB::transaction(function () use ($validated, $totalEgreso, $estadoAprobado) {
                 // Obtener tipos de pago para efectivo y transferencia
                 $tipoPagoEfectivo = TipoPago::where('codigo', 'EFECTIVO')->first();
-                $tipoPagoTransferencia = TipoPago::where('codigo', 'TRANSFERENCIA')->first();
+                $tipoPagoTransferencia = TipoPago::where('codigo', 'TRANSFERENCIA/QR')->first();
 
                 // IDs para usar en los movimientos de caja
                 $tipoPagoEfectivoId = $tipoPagoEfectivo?->id;
