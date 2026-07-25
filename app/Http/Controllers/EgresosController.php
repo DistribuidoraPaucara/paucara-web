@@ -19,7 +19,7 @@ class EgresosController extends Controller
             ->orderBy('fecha', 'desc')
             ->paginate(15);
 
-        return Inertia::render('egresos/Index', [
+        return Inertia::render('Egresos/Index', [
             'egresos' => $egresos,
         ]);
     }
@@ -32,7 +32,7 @@ class EgresosController extends Controller
         $tipos_operacion = TipoOperacionCaja::where('activo', true)->get();
         $tipos_pago = TipoPago::where('activo', true)->get();
 
-        return Inertia::render('egresos/Create', [
+        return Inertia::render('Egresos/Create', [
             'tipos_operacion' => $tipos_operacion,
             'tipos_pago' => $tipos_pago,
         ]);
@@ -45,7 +45,7 @@ class EgresosController extends Controller
     {
         $egreso->load(['tipoOperacion', 'estadoDocumento', 'usuario', 'detalles', 'detallesPago']);
 
-        return Inertia::render('egresos/Show', [
+        return Inertia::render('Egresos/Show', [
             'egreso' => $egreso,
         ]);
     }

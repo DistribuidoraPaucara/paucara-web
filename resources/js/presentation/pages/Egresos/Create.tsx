@@ -59,44 +59,46 @@ export default function CreateEgreso() {
         <AppLayout breadcrumbs={[{ title: "Egresos", href: "/egresos" }, { title: "Nuevo", href: "/egresos/create" }]}>
             <Head title="Nuevo Egreso" />
             <div className="space-y-4 p-4 max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold">Nuevo Egreso</h1>
-                {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{error}</div>}
-                <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border">
+                <h1 className="text-3xl font-bold dark:text-white">Nuevo Egreso</h1>
+                {error && <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">{error}</div>}
+                <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
                     <div>
-                        <label className="block text-sm font-medium mb-2">Tipo de Operación *</label>
-                        <select value={data.tipo_operacion_caja_id} onChange={(e) => setData("tipo_operacion_caja_id", e.target.value)} className="w-full px-3 py-2 border rounded-lg" required>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-100">Tipo de Operación *</label>
+                        <select value={data.tipo_operacion_caja_id} onChange={(e) => setData("tipo_operacion_caja_id", e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" required>
                             <option value="">Seleccionar...</option>
                             {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-2">Descripción</label>
-                        <textarea value={data.descripcion} onChange={(e) => setData("descripcion", e.target.value)} className="w-full px-3 py-2 border rounded-lg" rows={3} />
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-100">Descripción</label>
+                        <textarea value={data.descripcion} onChange={(e) => setData("descripcion", e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={3} />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-4">Detalles *</label>
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50"><tr><th className="px-3 py-2 text-left">Concepto</th><th className="px-3 py-2 text-center w-20">Cant.</th><th className="px-3 py-2 text-right w-32">Monto Unit.</th><th className="px-3 py-2 text-right w-32">Descuento</th><th className="px-3 py-2 text-right w-32">Subtotal</th><th className="w-10"></th></tr></thead>
-                            <tbody>
-                                {detalles.map((d, i) => (<tr key={i} className="border-b"><td className="px-3 py-2"><Input value={d.concepto} onChange={(e) => handleDetalleChange(i, "concepto", e.target.value)} placeholder="Concepto" required /></td><td className="px-3 py-2"><Input type="number" value={d.cantidad} onChange={(e) => handleDetalleChange(i, "cantidad", parseFloat(e.target.value))} min="1" /></td><td className="px-3 py-2"><Input type="number" value={d.monto_unitario} onChange={(e) => handleDetalleChange(i, "monto_unitario", parseFloat(e.target.value))} step="0.01" /></td><td className="px-3 py-2"><Input type="number" value={d.descuento} onChange={(e) => handleDetalleChange(i, "descuento", parseFloat(e.target.value))} step="0.01" /></td><td className="px-3 py-2 text-right font-semibold">Bs. {d.subtotal.toFixed(2)}</td><td className="px-3 py-2"><Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(i)} disabled={detalles.length === 1}><Trash2 className="w-4 h-4" /></Button></td></tr>))}
-                            </tbody>
-                        </table>
-                        <Button variant="outline" onClick={handleAddDetalle} className="mt-4"><Plus className="w-4 h-4 mr-2" /> Agregar Detalle</Button>
+                        <label className="block text-sm font-medium mb-4 dark:text-gray-100">Detalles *</label>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-slate-800"><tr><th className="px-3 py-2 text-left dark:text-gray-100">Concepto</th><th className="px-3 py-2 text-center w-20 dark:text-gray-100">Cant.</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Monto Unit.</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Descuento</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Subtotal</th><th className="w-10"></th></tr></thead>
+                                <tbody>
+                                    {detalles.map((d, i) => (<tr key={i} className="border-b dark:border-slate-700"><td className="px-3 py-2"><Input value={d.concepto} onChange={(e) => handleDetalleChange(i, "concepto", e.target.value)} placeholder="Concepto" required className="dark:bg-slate-800 dark:border-slate-600 dark:text-white" /></td><td className="px-3 py-2"><Input type="number" value={d.cantidad} onChange={(e) => handleDetalleChange(i, "cantidad", parseFloat(e.target.value))} min="1" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center" /></td><td className="px-3 py-2"><Input type="number" value={d.monto_unitario} onChange={(e) => handleDetalleChange(i, "monto_unitario", parseFloat(e.target.value))} step="0.01" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-right" /></td><td className="px-3 py-2"><Input type="number" value={d.descuento} onChange={(e) => handleDetalleChange(i, "descuento", parseFloat(e.target.value))} step="0.01" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-right" /></td><td className="px-3 py-2 text-right font-semibold dark:text-gray-100">Bs. {d.subtotal.toFixed(2)}</td><td className="px-3 py-2"><Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(i)} disabled={detalles.length === 1}><Trash2 className="w-4 h-4" /></Button></td></tr>))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <Button variant="outline" onClick={handleAddDetalle} className="mt-4 dark:border-slate-600 dark:text-white dark:hover:bg-slate-800"><Plus className="w-4 h-4 mr-2" /> Agregar Detalle</Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
-                        <div><label className="block text-sm font-medium mb-2">Efectivo</label><Input type="number" value={data.monto_efectivo} onChange={(e) => setData("monto_efectivo", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold" /></div>
-                        <div><label className="block text-sm font-medium mb-2">Transferencia/QR</label><Input type="number" value={data.monto_transferencia} onChange={(e) => setData("monto_transferencia", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold" /></div>
-                        <div className="bg-blue-100 p-4 rounded-lg"><p className="text-sm font-medium mb-1">Total</p><p className="text-2xl font-bold">Bs. {totalDetalles.toFixed(2)}</p></div>
+                    <div className="grid grid-cols-3 gap-4 bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <div><label className="block text-sm font-medium mb-2 dark:text-gray-100">Efectivo</label><Input type="number" value={data.monto_efectivo} onChange={(e) => setData("monto_efectivo", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
+                        <div><label className="block text-sm font-medium mb-2 dark:text-gray-100">Transferencia/QR</label><Input type="number" value={data.monto_transferencia} onChange={(e) => setData("monto_transferencia", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
+                        <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg"><p className="text-sm font-medium mb-1 dark:text-blue-200">Total</p><p className="text-2xl font-bold dark:text-blue-100">Bs. {totalDetalles.toFixed(2)}</p></div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-2">Observaciones</label>
-                        <textarea value={data.observaciones} onChange={(e) => setData("observaciones", e.target.value)} className="w-full px-3 py-2 border rounded-lg" rows={2} />
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-100">Observaciones</label>
+                        <textarea value={data.observaciones} onChange={(e) => setData("observaciones", e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} />
                     </div>
                     <div className="flex gap-4">
                         <Button type="submit" disabled={loading}>
                             {loading ? "Guardando..." : "Guardar Egreso"}
                         </Button>
-                        <Button variant="outline" onClick={() => router.visit("/egresos")}>
+                        <Button variant="outline" onClick={() => router.visit("/egresos")} className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-800">
                             Cancelar
                         </Button>
                     </div>
