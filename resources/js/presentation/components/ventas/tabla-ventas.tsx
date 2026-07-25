@@ -3,17 +3,16 @@ import type { FiltrosVentas, Venta } from '@/domain/entities/ventas';
 import ventasService from '@/infrastructure/services/ventas.service';
 import { formatCurrencyWith2Decimals, formatDate } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { Table, TableBody, TableHead, TableCell, TableHeader, TableRow } from '@/presentation/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Link } from '@inertiajs/react';
-import { Calendar, ChevronDown, ChevronUp, Eye, FileText, MapPin, Package, Printer, Store, Trash2, Truck } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Eye, FileText, MapPin, Package, Printer, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import AnularVentaModal from './AnularVentaModal';
-import DetalleReversionModal from './DetalleReversionModal';
-import EstadoVentaBadge from './EstadoVentaBadge';
 import ConfirmacionEntregaModal from './confirmacion-entrega-modal';
 import { ConfirmacionesModal } from './ConfirmacionesModal';
-import { Tab } from '@headlessui/react';
+import DetalleReversionModal from './DetalleReversionModal';
+import EstadoVentaBadge from './EstadoVentaBadge';
 
 interface TablaVentasProps {
     ventas: Pagination<Venta>;
@@ -281,7 +280,13 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                             >
                                 Total {getSortIcon('total')}
                             </TableHead>
-                            
+                            <TableHead
+                                className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700"
+                                onClick={() => handleSort('efectivo')}
+                            >
+                                Pago {getSortIcon('efectivo')}
+                            </TableHead>
+
                             {/* preventista */}
                             {/* <TableHead className="cursor-pointer px-2 py-2 text-left text-xs tracking-wider text-gray-500 uppercase hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-700">
                                 Preventista {getSortIcon('preventista_id')}
@@ -307,9 +312,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                         {ventas.data.map((venta) => (
                             <React.Fragment key={venta.id}>
                                 <TableRow className="transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800">
-                                    <TableCell className="text-center text-xs">
-                                        #{venta.id}
-                                    </TableCell>
+                                    <TableCell className="text-center text-xs">#{venta.id}</TableCell>
                                     <TableCell className="px-2 py-2">
                                         <EstadoVentaBadge
                                             estado={venta.estado_documento?.codigo || 'PENDIENTE'}
@@ -329,7 +332,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 ? formatCurrencyWith2Decimals(parseFloat(venta.total), venta.moneda?.codigo)
                                                 : formatCurrencyWith2Decimals(venta.total, venta.moneda?.codigo)}
                                         </div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2 text-left">
+                                        <div className="text-xs text-left text-gray-500 dark:text-gray-400">
                                             {venta.tipoPago ? (
                                                 <div className="flex items-center space-x-2">
                                                     <div className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
@@ -344,20 +349,8 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                             )}
                                         </div>
                                     </TableCell>
-
-                                    {/* <TableCell className="px-2 py-2">
-                                        <div
-                                            className="text-xs text-gray-900 dark:text-white truncate"
-                                            title={venta.preventista?.name || 'Sin preventista'}
-                                        >
-                                            {(venta.preventista?.name || 'Sin preventista').substring(0, 10)}
-                                        </div>
-                                    </TableCell> */}
                                     <TableCell className="px-2 py-2">
-                                        <div
-                                            className="text-xs text-gray-900 dark:text-white truncate"
-                                            title={venta.usuario?.name || 'Sin usuario'}
-                                        >
+                                        <div className="truncate text-xs text-gray-900 dark:text-white" title={venta.usuario?.name || 'Sin usuario'}>
                                             {(venta.usuario?.name || 'Sin usuario').substring(0, 10)}
                                         </div>
                                     </TableCell>
@@ -398,9 +391,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                                     backgroundColor: venta.estadoLogistica.color || '#6B7280',
                                                                 }}
                                                             >
-                                                                {venta.estadoLogistica.icono && (
-                                                                    <span>{venta.estadoLogistica.icono}</span>
-                                                                )}
+                                                                {venta.estadoLogistica.icono && <span>{venta.estadoLogistica.icono}</span>}
                                                                 <span>{venta.estadoLogistica.nombre}</span>
                                                             </div>
                                                         ) : (
@@ -480,9 +471,10 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                             <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                                 📦 Entrega Asignada
                                                             </h4>
-                                                            <div className="space-y-1 text-xs text-gray-700 dark:text-gray-300 flex flex-wrap gap-4">
+                                                            <div className="flex flex-wrap gap-4 space-y-1 text-xs text-gray-700 dark:text-gray-300">
                                                                 <div>
-                                                                    <span className="font-medium">Folio:</span>{' #'}
+                                                                    <span className="font-medium">Folio:</span>
+                                                                    {' #'}
                                                                     {venta.entrega.id}
                                                                 </div>
                                                                 {venta.entrega.chofer && (
@@ -567,7 +559,9 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                     <div className="flex items-start space-x-3">
                                                         <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                                                         <div>
-                                                            <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Estado Logístico</h4>
+                                                            <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
+                                                                Estado Logístico
+                                                            </h4>
                                                             <div className="flex items-center space-x-3">
                                                                 {/* Badge mejorado del estado */}
                                                                 <EstadoVentaBadge
@@ -627,7 +621,6 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                         </div>
                                                     )}
                                                 </div>
-
                                             </div>
                                         </td>
                                     </tr>

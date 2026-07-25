@@ -100,6 +100,22 @@ class ModuloSidebarSeeder extends Seeder
                 ],
             ],
 
+            // ===== MÓDULO: VENTAS RESORT =====
+            'ventas-resort'   => [
+                'modulo'  => [
+                    'titulo'      => 'Ventas Resort',
+                    'ruta'        => '/ventas-resort',
+                    'icono'       => 'Palmtree',
+                    'descripcion' => 'Gestión de ventas resort',
+                    'orden'       => 4,
+                    'categoria'   => 'Comercial',
+                    'permisos'    => ['ventas-resort.index'],
+                ],
+                'submenu' => [
+                    ['titulo' => 'Ventas Resort', 'ruta' => '/ventas-resort', 'icono' => 'List', 'orden' => 1, 'permisos' => ['ventas-resort.index']],
+                ],
+            ],
+
             // ===== MÓDULO: COMPRAS =====
             'compras'         => [
                 'modulo'  => [
@@ -276,6 +292,23 @@ class ModuloSidebarSeeder extends Seeder
                     ['titulo' => 'Productos Dañados', 'ruta' => '/admin/reportes-productos-danados', 'icono' => 'AlertCircle', 'orden' => 12, 'permisos' => ['admin']],
                     // ✅ NUEVO: Banners Publicitarios
                     ['titulo' => 'Banners Publicitarios', 'ruta' => '/admin/banners-publicitarios', 'icono' => 'Image', 'orden' => 13, 'permisos' => ['admin']],
+                ],
+            ],
+
+            // ===== MÓDULO: EGRESOS =====
+            'egresos'         => [
+                'modulo'  => [
+                    'titulo'      => 'Egresos',
+                    'ruta'        => '/egresos',
+                    'icono'       => 'TrendingDown',
+                    'descripcion' => 'Gestión de egresos y gastos',
+                    'orden'       => 11,
+                    'categoria'   => 'Finanzas',
+                    'permisos'    => ['egresos.index'],
+                ],
+                'submenu' => [
+                    ['titulo' => 'Egresos', 'ruta' => '/egresos', 'icono' => 'List', 'orden' => 1, 'permisos' => ['egresos.index']],
+                    ['titulo' => 'Nuevo Egreso', 'ruta' => '/egresos/create', 'icono' => 'Plus', 'orden' => 2, 'permisos' => ['egresos.create']],
                 ],
             ],
 

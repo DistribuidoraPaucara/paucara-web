@@ -30,6 +30,7 @@ import prestamosCliente from './prestamos-cliente'
 import prestamosEvento from './prestamos-evento'
 import prestamosProveedor from './prestamos-proveedor'
 import cuentasPorCobrar from './cuentas-por-cobrar'
+import egresosAnalisis from './egresos-analisis'
 import egresos from './egresos'
 import dashboard from './dashboard'
 import codigosBarra from './codigos-barra'
@@ -366,6 +367,7 @@ prestamosCliente,
 prestamosEvento,
 prestamosProveedor,
 cuentasPorCobrar,
+egresosAnalisis,
 egresos,
 dashboard,
 codigosBarra,

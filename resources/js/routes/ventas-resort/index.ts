@@ -1,8 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -11,31 +10,28 @@ export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 index.definition = {
     methods: ["get","head"],
-    url: '/api/egresos-analisis',
+    url: '/ventas-resort',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
 }
 
 /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
@@ -43,9 +39,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: index.url(options),
@@ -53,18 +48,16 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url(options),
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\Api\EgresosAnalisisController::index
- * @see app/Http/Controllers/Api/EgresosAnalisisController.php:19
- * @route '/api/egresos-analisis'
+ * @see routes/web.php:418
+ * @route '/ventas-resort'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url({
@@ -77,6 +70,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
-const EgresosAnalisisController = { index }
+const ventasResort = {
+    index,
+}
 
-export default EgresosAnalisisController
+export default ventasResort

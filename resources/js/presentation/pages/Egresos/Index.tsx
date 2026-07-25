@@ -1,184 +1,81 @@
-import { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+﻿import { Head, Link, usePage, router } from '@inertiajs/react';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
-import toast from 'react-hot-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
-import FiltrosEgresos from './components/FiltrosEgresos';
-import ResumenEgresos from './components/ResumenEgresos';
-import GraficoEgresoPorCategoria from './components/GraficoEgresoPorCategoria';
-import GraficoEgresoPorTipo from './components/GraficoEgresoPorTipo';
-import TablaEgresos from './components/TablaEgresos';
-import ComparativaPeriocos from './components/ComparativaPeriocos';
+import { useAuth } from '@/application/hooks/use-auth';
+import { Plus } from 'lucide-react';
+import { Button } from '@/presentation/components/ui/button';
+import type { Pagination } from '@/domain/entities/shared';
 
-interface Filtros {
-    fecha_desde?: string;
-    fecha_hasta?: string;
-    tipo_operacion_id?: number;
-    categoria?: string;
-    monto_min?: number;
-    monto_max?: number;
-    estado_caja?: 'abierta' | 'cerrada' | 'todas';
-    per_page?: number;
+interface Egreso {
+    id: number;
+    numero: string;
+    tipo_operacion: { id: number; nombre: string; codigo: string };
+    estado_documento: { id: number; nombre: string; codigo: string; color?: string };
+    usuario: { id: number; name: string };
+    fecha: string;
+    descripcion: string;
+    total: number;
+    estado_pago: string;
+    created_at: string;
 }
 
-export default function Index() {
-    const [filtros, setFiltros] = useState<Filtros>({
-        estado_caja: 'todas',
-        per_page: 15,
-    });
+interface PageProps extends InertiaPageProps { egresos: Pagination<Egreso> }
 
-    const [datos, setDatos] = useState<any>(null);
-    const [cargando, setCargando] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    // Cargar datos cuando cambien los filtros
-    useEffect(() => {
-        cargarDatos();
-    }, [filtros]);
-
-    const cargarDatos = async () => {
-        setCargando(true);
-        setError(null);
-
-        try {
-            const params = new URLSearchParams();
-
-            if (filtros.fecha_desde) params.append('fecha_desde', filtros.fecha_desde);
-            if (filtros.fecha_hasta) params.append('fecha_hasta', filtros.fecha_hasta);
-            if (filtros.categoria) params.append('categoria', filtros.categoria);
-            if (filtros.monto_min) params.append('monto_min', filtros.monto_min.toString());
-            if (filtros.monto_max) params.append('monto_max', filtros.monto_max.toString());
-            if (filtros.estado_caja) params.append('estado_caja', filtros.estado_caja);
-            if (filtros.per_page) params.append('per_page', filtros.per_page.toString());
-
-            const response = await fetch(`/api/admin/gastos/cajas-abiertas?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Error al cargar datos de gastos');
-            }
-
-            const resultado = await response.json();
-            if (resultado.success) {
-                setDatos(resultado.data);
-            } else {
-                throw new Error(resultado.message || 'Error desconocido');
-            }
-        } catch (err: any) {
-            setError(err.message);
-            toast.error('Error al cargar datos: ' + err.message);
-        } finally {
-            setCargando(false);
-        }
-    };
-
-    const handleFiltrosChange = (nuevosFiltros: Filtros) => {
-        setFiltros(nuevosFiltros);
-    };
+export default function EgresosIndex() {
+    const { props } = usePage<PageProps>();
+    const { can } = useAuth();
+    const egresos = props.egresos;
 
     return (
-        <AppLayout>
-            <Head title="Análisis de Egresos" />
-
-            <div className="px-2 py-2">
-                <div className="space-y-6">
-                    {/* Header */}
+        <AppLayout breadcrumbs={[{ title: 'Egresos', href: '/egresos' }]}>
+            <Head title="Egresos" />
+            <div className="space-y-4 p-4">
+                <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            📊 Análisis de Egresos
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
-                            Monitorea y analiza todos los egresos del sistema
-                        </p>
+                        <h1 className="text-3xl font-bold">Egresos</h1>
+                        <p className="text-gray-500 mt-1">Gestión de egresos y gastos</p>
                     </div>
-
-                    {/* Filtros */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            🔍 Filtros
-                        </h2>
-                        <FiltrosEgresos
-                            filtros={filtros}
-                            onFiltrosChange={handleFiltrosChange}
-                            cargando={cargando}
-                        />
-                    </div>
-
-                    {/* Resumen y Comparativa */}
-                    {/* {datos && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ResumenEgresos totales={datos.totales} />
-                            <ComparativaPeriocos comparativa={datos.comparativa_periodo_anterior} />
-                        </div>
-                    )} */}
-
-                    {/* Tabs: Gráficos y Tabla */}
-                    {datos && (
-                        <Tabs defaultValue="graficos" className="space-y-6">
-                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                                <div className="px-6 pb-0">
-                                    <TabsList className="bg-transparent border-gray-200 dark:border-gray-700">
-                                        <TabsTrigger value="graficos" className="dark:text-gray-300">
-                                            📈 Gráficos
-                                        </TabsTrigger>
-                                        <TabsTrigger value="tabla" className="dark:text-gray-300">
-                                            📋 Detalle
-                                        </TabsTrigger>
-                                    </TabsList>
-                                </div>
-                            </div>
-
-                            {/* Tab: Gráficos */}
-                            <TabsContent value="graficos">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                                        <GraficoEgresoPorCategoria datos={datos.por_categoria} />
-                                    </div>
-                                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                                        <GraficoEgresoPorTipo datos={datos.por_tipo} />
-                                    </div>
-                                </div>
-                            </TabsContent>
-
-                            {/* Tab: Tabla Detallada */}
-                            <TabsContent value="tabla">
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                                    <TablaEgresos
-                                        egresos={{
-                                            data: datos.egresos,
-                                            links: []
-                                        }}
-                                        cargando={cargando}
-                                        onPageChange={(page) => {
-                                            // Implementar paginación si es necesario
-                                        }}
-                                    />
-                                </div>
-                            </TabsContent>
-                        </Tabs>
+                    {can('egresos.create') && (
+                        <Button onClick={() => router.visit('/egresos/create')} className="gap-2">
+                            <Plus className="w-4 h-4" /> Nuevo Egreso
+                        </Button>
                     )}
-
-                    {cargando && (
-                        <div className="flex justify-center">
-                            <div className="text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                <p className="text-gray-600 dark:text-gray-400">Cargando datos...</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                            <p className="text-red-800 dark:text-red-300">
-                                ❌ Error: {error}
-                            </p>
-                        </div>
-                    )}
+                </div>
+                <div className="bg-white rounded-lg border overflow-hidden shadow-sm">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Número</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Fecha</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Tipo Operación</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Descripción</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Usuario</th>
+                                <th className="px-6 py-3 text-right text-sm font-semibold">Total</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Estado</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {egresos.data?.map((egreso) => (
+                                <tr key={egreso.id} className="border-b hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm font-medium">{egreso.numero}</td>
+                                    <td className="px-6 py-4 text-sm">{new Date(egreso.fecha).toLocaleDateString('es-ES')}</td>
+                                    <td className="px-6 py-4 text-sm">{egreso.tipo_operacion.nombre}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">{egreso.descripcion || '-'}</td>
+                                    <td className="px-6 py-4 text-sm">{egreso.usuario.name}</td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-right">Bs. {parseFloat(egreso.total).toFixed(2)}</td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${egreso.estado_documento.codigo === 'APROBADO' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {egreso.estado_documento.nombre}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <Button variant="ghost" size="sm" onClick={() => router.visit(`/egresos/${egreso.id}`)}>Ver</Button>
+                                    </td>
+                                </tr>
+                            )) || <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-500">No hay egresos registrados</td></tr>}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </AppLayout>

@@ -108,9 +108,9 @@ class LimpiarMovimientosCajaDuplicados extends Command
                 }
             }
 
-            if (!$verbose) {
+            if (!$detailed) {
                 $montoEliminado = $movimientosAEliminar->sum('monto');
-                $this->line("  ❌ {$idsEliminar->count()} duplicados a eliminar (monto total: {$montoEliminado})");
+                $this->line("  ❌ " . count($idsEliminar) . " duplicados a eliminar (monto total: {$montoEliminado})");
             }
 
             $this->line("  ✓ Mantener ID: " . reset($idsMantener));

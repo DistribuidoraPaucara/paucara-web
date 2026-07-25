@@ -12,7 +12,6 @@ use App\Models\Moneda;
 use App\Models\Producto;
 use App\Models\MovimientoCaja;
 use App\Models\TipoOperacionCaja;
-use App\Models\Caja;
 use App\Models\AperturaCaja;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,9 +74,9 @@ class VentasComidasController extends Controller
             $montoEfectivo = (float) ($validated['monto_efectivo'] ?? 0);
             $montoTransferencia = (float) ($validated['monto_transferencia'] ?? 0);
             $totalPago = $montoEfectivo + $montoTransferencia;
-            $totalVenta = (float) $validated['total'];
 
             // Validar que el pago sea >= al total de la venta (permitir cambio)
+            $totalVenta = (float) $validated['total'];
             if ($totalPago < $totalVenta - 0.01) { // Pequeña tolerancia por redondeo
                 return response()->json([
                     'success' => false,
@@ -130,7 +129,7 @@ class VentasComidasController extends Controller
                 ->first();
 
             // Crear dentro de una transacción
-            $venta = DB::transaction(function () use ($validated, $montoEfectivo, $montoTransferencia, $totalVenta, $totalPago, $vuelto, $cajaUsuario, $tipoPagoIdFinal) {
+            $venta = DB::transaction(function () use ($validated, $montoEfectivo, $montoTransferencia, $totalPago, $vuelto, $cajaUsuario, $tipoPagoIdFinal) {
                 // ✅ Ventas de comidas se crean directamente APROBADAS (se pagan inmediatamente)
                 $estadoAprobado = EstadoDocumento::obtenerEstadoAprobado();
 
@@ -246,69 +245,40 @@ class VentasComidasController extends Controller
                     }
                 }
 
-                // 💵 Log del vuelto si aplica
+                // 💵 Registrar SALIDA de cambio si aplica
                 if ($vuelto > 0.01) {
                     Log::info('💵 [VentasComidasController::store] VUELTO A ENTREGAR', [
                         'venta_id' => $venta->id,
                         'vuelto' => $vuelto,
                     ]);
-                }
 
-                // 📊 Registrar movimientos en la caja
-                $cajaAbierta = AperturaCaja::where('user_id', Auth::id())
-                    ->abiertas()
-                    ->latest('fecha')
-                    ->first();
+                    // Registrar movimiento de SALIDA para el cambio
+                    $cajaAbiertaCambio = AperturaCaja::where('user_id', Auth::id())
+                        ->abiertas()
+                        ->latest('fecha')
+                        ->first();
 
-                if ($cajaAbierta) {
-                    $tipoVenta = TipoOperacionCaja::where('codigo', TipoOperacionCaja::VENTA)->first();
+                    if ($cajaAbiertaCambio) {
+                        $tipoGasto = TipoOperacionCaja::where('codigo', 'GASTOS')->first();
 
-                    // Registrar movimiento EFECTIVO si aplica
-                    if ($montoEfectivo > 0) {
                         MovimientoCaja::create([
-                            'caja_id' => $cajaAbierta->caja_id,
+                            'caja_id' => $cajaAbiertaCambio->caja_id,
                             'user_id' => Auth::id(),
                             'fecha' => now(),
-                            'monto' => $montoEfectivo,
-                            'observaciones' => "Venta de comidas #{$venta->numero}",
+                            'monto' => -$vuelto, // Negativo para indicar SALIDA/EGRESOS
+                            'observaciones' => "Cambio venta de comidas #{$venta->numero}",
                             'numero_documento' => $venta->numero,
-                            'tipo_operacion_id' => $tipoVenta?->id,
+                            'tipo_operacion_id' => $tipoGasto?->id,
                             'tipo_pago_id' => $validated['tipo_pago_id'],
                             'venta_id' => $venta->id,
                         ]);
 
-                        Log::info('✅ [VentasComidasController::store] Movimiento EFECTIVO registrado en caja', [
+                        Log::info('✅ [VentasComidasController::store] Movimiento de SALIDA por cambio registrado', [
                             'venta_id' => $venta->id,
-                            'monto_efectivo' => $montoEfectivo,
-                            'caja_id' => $cajaAbierta->caja_id,
+                            'monto_cambio' => $vuelto,
+                            'caja_id' => $cajaAbiertaCambio->caja_id,
                         ]);
                     }
-
-                    // Registrar movimiento TRANSFERENCIA si aplica
-                    if ($montoTransferencia > 0) {
-                        MovimientoCaja::create([
-                            'caja_id' => $cajaAbierta->caja_id,
-                            'user_id' => Auth::id(),
-                            'fecha' => now(),
-                            'monto' => $montoTransferencia,
-                            'observaciones' => "Venta de comidas #{$venta->numero} (Transferencia/QR)",
-                            'numero_documento' => $venta->numero,
-                            'tipo_operacion_id' => $tipoVenta?->id,
-                            'tipo_pago_id' => $validated['tipo_pago_id'],
-                            'venta_id' => $venta->id,
-                        ]);
-
-                        Log::info('✅ [VentasComidasController::store] Movimiento TRANSFERENCIA registrado en caja', [
-                            'venta_id' => $venta->id,
-                            'monto_transferencia' => $montoTransferencia,
-                            'caja_id' => $cajaAbierta->caja_id,
-                        ]);
-                    }
-                } else {
-                    Log::warning('⚠️ [VentasComidasController::store] No hay caja abierta para registrar movimientos', [
-                        'user_id' => Auth::id(),
-                        'venta_id' => $venta->id,
-                    ]);
                 }
 
                 return $venta;

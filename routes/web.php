@@ -415,7 +415,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::resource('ventas', \App\Http\Controllers\VentaController::class)->except(['show'])->middleware('caja.abierta');
 
     // ✨ NUEVO: Ruta para interfaz de venta de comidas/helados
-    Route::get('ventas-comidas', function () {
+    Route::get('ventas-resort', function () {
         $clientes = \App\Models\Cliente::where('activo', true)
             ->select('id', 'nombre', 'nit')
             ->orderBy('nombre')
@@ -431,7 +431,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             'tiposPago' => $tiposPago,
             'auth' => ['user' => auth()->user()],
         ]);
-    })->name('ventas-comidas.index')->middleware('caja.abierta');
+    })->name('ventas-resort.index')->middleware('caja.abierta');
 
     // ==========================================
     // RUTAS DE IMPRESIÓN - VENTAS
@@ -1225,6 +1225,15 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ==========================================
     Route::prefix('ventas')->name('ventas.')->group(function () {
         Route::get('imprimir', [\App\Http\Controllers\ImpresionVentasController::class, 'imprimir'])->name('imprimir');
+    });
+
+    // ==========================================
+    // 💰 EGRESOS
+    // ==========================================
+    Route::prefix('egresos')->name('egresos.')->middleware('permission:egresos.index')->group(function () {
+        Route::get('/', [\App\Http\Controllers\EgresosController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\EgresosController::class, 'create'])->name('create')->middleware('permission:egresos.create');
+        Route::get('{egreso}', [\App\Http\Controllers\EgresosController::class, 'show'])->name('show');
     });
 
     // ==========================================

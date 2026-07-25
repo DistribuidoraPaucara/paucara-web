@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
- * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @see app/Http/Controllers/Api/VentasComidasController.php:54
  * @route '/api/ventas-comidas'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
- * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @see app/Http/Controllers/Api/VentasComidasController.php:54
  * @route '/api/ventas-comidas'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
- * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @see app/Http/Controllers/Api/VentasComidasController.php:54
  * @route '/api/ventas-comidas'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
- * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @see app/Http/Controllers/Api/VentasComidasController.php:54
  * @route '/api/ventas-comidas'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\VentasComidasController::store
- * @see app/Http/Controllers/Api/VentasComidasController.php:55
+ * @see app/Http/Controllers/Api/VentasComidasController.php:54
  * @route '/api/ventas-comidas'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

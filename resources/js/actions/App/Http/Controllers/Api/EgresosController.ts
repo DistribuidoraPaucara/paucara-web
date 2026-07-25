@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\EgresosController::index
  * @see app/Http/Controllers/Api/EgresosController.php:25
@@ -313,11 +313,6 @@ anular.post = (args: { egreso: number | { id: number } } | [egreso: number | { i
         })
     
     anular.form = anularForm
-const egresos = {
-    index,
-store,
-show,
-anular,
-}
+const EgresosController = { index, store, show, anular }
 
-export default egresos
+export default EgresosController

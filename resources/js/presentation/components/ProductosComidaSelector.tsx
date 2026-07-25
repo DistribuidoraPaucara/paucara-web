@@ -185,14 +185,12 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
 
     return (
         <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-                {/* <CardTitle className="text-gray-900 dark:text-white">🍦 Venta de Comidas/Helados</CardTitle> */}
-                <CardDescription>
-                    Selecciona un producto y agrega tus adicionales favoritos
-                </CardDescription>
-            </CardHeader>
             <CardContent>
-                <div className="space-y-6">
+                {/* <CardTitle className="text-gray-900 dark:text-white">🍦 Venta de Comidas/Helados</CardTitle> */}
+                <div>
+                    Selecciona un producto y agrega tus adicionales favoritos
+                </div>
+                <div className="space-y-6 mt-2">
                     {/* Grid de productos */}
                     {!productoSeleccionado ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -244,7 +242,7 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
                                                 </div>
                                             ) : (
                                                 <div className="w-full h-32 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-                                                    <span className="text-4xl">🍦</span>
+                                                    <span className="text-4xl">🛖</span>
                                                 </div>
                                             )}
 

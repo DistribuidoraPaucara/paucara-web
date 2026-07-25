@@ -106,6 +106,7 @@ import ConteoFisicoController from './ConteoFisicoController'
 import AnalisisAbcController from './AnalisisAbcController'
 import ImpresionStockController from './ImpresionStockController'
 import ImpresionVentasController from './ImpresionVentasController'
+import EgresosController from './EgresosController'
 import Settings from './Settings'
 const Controllers = {
     Api,
@@ -216,6 +217,7 @@ ConteoFisicoController,
 AnalisisAbcController,
 ImpresionStockController,
 ImpresionVentasController,
+EgresosController,
 Settings,
 }
 

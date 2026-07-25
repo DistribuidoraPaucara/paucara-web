@@ -1889,6 +1889,14 @@ Route::get('/cuentas-por-cobrar', [CuentaPorCobrarController::class, 'indexApi']
 Route::get('/cuentas-por-cobrar/{cuentaPorCobrar}', [CuentaPorCobrarController::class, 'showApi'])->name('api.cuentas-por-cobrar.show');
 
 // ✅ NUEVO 2026-07-22: API endpoint para Análisis de Egresos
+Route::prefix('egresos-analisis')->group(function () {
+    Route::get('/', [EgresosAnalisisController::class, 'index'])->name('api.egresos-analisis.index');
+});
+
+// ✅ NUEVO 2026-07-25: API CRUD para Egresos
 Route::prefix('egresos')->group(function () {
-    Route::get('/', [EgresosAnalisisController::class, 'index'])->name('api.egresos.index');
+    Route::get('/', [\App\Http\Controllers\Api\EgresosController::class, 'index'])->name('api.egresos.index');
+    Route::post('/', [\App\Http\Controllers\Api\EgresosController::class, 'store'])->name('api.egresos.store');
+    Route::get('{egreso}', [\App\Http\Controllers\Api\EgresosController::class, 'show'])->name('api.egresos.show');
+    Route::post('{egreso}/anular', [\App\Http\Controllers\Api\EgresosController::class, 'anular'])->name('api.egresos.anular');
 });

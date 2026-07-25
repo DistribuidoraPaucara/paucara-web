@@ -11,25 +11,16 @@
  * ✅ Guardado de venta
  */
 
-import { Head, Link, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useCarritoComidas } from '@/application/hooks/use-carrito-comidas';
+import { useClienteSearch } from '@/infrastructure/hooks/use-api-search';
 import AppLayout from '@/layouts/app-layout';
 import { ProductosComidaSelector } from '@/presentation/components/ProductosComidaSelector';
-import { DetalleProductoComida } from '@/presentation/components/DetalleProductoComida';
-import { useCarritoComidas } from '@/application/hooks/use-carrito-comidas';
-import InputSearch from '@/presentation/components/ui/input-search';
-import { useClienteSearch } from '@/infrastructure/hooks/use-api-search';
-import { Button } from '@/presentation/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/presentation/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { Trash2, ShoppingCart, Save, AlertCircle } from 'lucide-react';
+import InputSearch from '@/presentation/components/ui/input-search';
+import { Head } from '@inertiajs/react';
+import { Save, ShoppingCart, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Cliente {
     id: number;
@@ -116,10 +107,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                 }
 
                 // 💰 Cargar tipo de pago por defecto: EFECTIVO
-                const efectivo = tiposPago.find(tp =>
-                    tp.nombre.toLowerCase().includes('efectivo') ||
-                    tp.codigo.toUpperCase().includes('EFECTIVO')
-                );
+                const efectivo = tiposPago.find((tp) => tp.nombre.toLowerCase().includes('efectivo') || tp.codigo.toUpperCase().includes('EFECTIVO'));
 
                 if (efectivo) {
                     setTipoPagoId(efectivo.id.toString());
@@ -142,19 +130,19 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
 
         if (efectivo > 0 && transferencia === 0) {
             // Solo efectivo
-            const tipoPagoEfectivo = tiposPago.find(tp =>
-                tp.nombre.toLowerCase().includes('efectivo') ||
-                tp.codigo.toUpperCase().includes('EFECTIVO')
+            const tipoPagoEfectivo = tiposPago.find(
+                (tp) => tp.nombre.toLowerCase().includes('efectivo') || tp.codigo.toUpperCase().includes('EFECTIVO'),
             );
             nuevoTipoPago = tipoPagoEfectivo?.id.toString() || null;
             console.log('💳 Tipo de pago actualizado a EFECTIVO');
         } else if (transferencia > 0 && efectivo === 0) {
             // Solo transferencia: buscar tipo de pago TRANSFERENCIA/QR
-            const tipoPagoTransferencia = tiposPago.find(tp =>
-                tp.codigo.toUpperCase().includes('TRANSFERENCIA') ||
-                tp.codigo.toUpperCase().includes('QR') ||
-                tp.nombre.toLowerCase().includes('transferencia') ||
-                tp.nombre.toLowerCase().includes('qr')
+            const tipoPagoTransferencia = tiposPago.find(
+                (tp) =>
+                    tp.codigo.toUpperCase().includes('TRANSFERENCIA') ||
+                    tp.codigo.toUpperCase().includes('QR') ||
+                    tp.nombre.toLowerCase().includes('transferencia') ||
+                    tp.nombre.toLowerCase().includes('qr'),
             );
             nuevoTipoPago = tipoPagoTransferencia?.id.toString() || null;
             if (nuevoTipoPago) {
@@ -162,10 +150,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
             }
         } else if (efectivo > 0 && transferencia > 0) {
             // Ambos > 0: usar MIXTO
-            const tipoPagoMixto = tiposPago.find(tp =>
-                tp.codigo.toUpperCase() === 'MIXTO' ||
-                tp.nombre.toLowerCase().includes('mixto')
-            );
+            const tipoPagoMixto = tiposPago.find((tp) => tp.codigo.toUpperCase() === 'MIXTO' || tp.nombre.toLowerCase().includes('mixto'));
             nuevoTipoPago = tipoPagoMixto?.id.toString() || null;
             if (nuevoTipoPago) {
                 console.log('💳 Tipo de pago actualizado a MIXTO');
@@ -178,9 +163,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
     }, [montoEfectivo, montoTransferencia, tiposPago, tipoPagoId]);
 
     const handleAgregarProducto = (detalle: ProductoComidaConAdicionales) => {
-        const adicionalesDetalles = detalle.producto.adicionales?.filter(a =>
-            detalle.adicionalesSeleccionados.includes(a.id)
-        ) || [];
+        const adicionalesDetalles = detalle.producto.adicionales?.filter((a) => detalle.adicionalesSeleccionados.includes(a.id)) || [];
 
         carrito.agregarProducto(detalle as any, adicionalesDetalles);
         toast.success(`${detalle.producto.nombre} agregado al carrito`);
@@ -229,7 +212,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                 tipo_pago_id: parseInt(tipoPagoId),
                 monto_efectivo: efectivo,
                 monto_transferencia: transferencia,
-                productos_comida: carrito.items.map(item => ({
+                productos_comida: carrito.items.map((item) => ({
                     producto_id: item.producto_id,
                     nombre: item.nombre_producto,
                     precio_base: item.precio_base,
@@ -256,9 +239,10 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
 
             if (result.success) {
                 // Mostrar mensaje con información del vuelto
-                const mensaje = result.vuelto && result.vuelto > 0
-                    ? `✅ Venta registrada\n💵 Cambio: ${formatCurrency(result.vuelto)}`
-                    : '✅ Venta registrada exitosamente';
+                const mensaje =
+                    result.vuelto && result.vuelto > 0
+                        ? `✅ Venta registrada\n💵 Cambio: ${formatCurrency(result.vuelto)}`
+                        : '✅ Venta registrada exitosamente';
 
                 toast.success(mensaje);
 
@@ -307,73 +291,31 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
 
     return (
         <AppLayout>
-            <Head title="Venta de Comidas" />
+            <Head title="Venta Resort" />
             <Toaster position="top-right" />
 
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-gray-50 p-2 dark:bg-gray-900">
+                <div className="mx-auto max-w-7xl">
                     {/* Encabezado */}
-                    <div className="mb-8">
-                        <div className="flex justify-between items-start mb-2">
+                    <div className="mb-2">
+                        <div className="flex items-start justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    🍦 Venta de Comidas/Helados
-                                </h1>
-                                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">🛖Venta Resort</h1>
+                                <p className="text-gray-600 dark:text-gray-400">
                                     Vendedor: {auth.user.name} • {new Date().toLocaleDateString('es-BO')}
                                 </p>
                             </div>
-                            <Link
-                                href="/ventas"
-                                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-                            >
-                                ← Volver
-                            </Link>
                         </div>
                     </div>
 
                     {/* Layout Principal */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Panel Izquierdo: Selector de Productos */}
-                        <div className="lg:col-span-2">
-                            {mostrarSelector && (
-                                <ProductosComidaSelector
-                                    onAgregar={handleAgregarProducto}
-                                    onActualizar={carrito.actualizarCantidadPorProductoId}
-                                    onEliminar={carrito.eliminarProductoPorId}
-                                    onActualizarPrecio={carrito.actualizarPrecioBasePorProductoId}
-                                    productosEnCarrito={carrito.items.map(item => ({
-                                        producto_id: item.producto_id,
-                                        cantidad: item.cantidad,
-                                    }))}
-                                />
-                            )}
-
-                            {carrito.items.length > 0 && !mostrarSelector && (
-                                <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                                    <CardContent className="py-12 text-center">
-                                        <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                            Carrito actualizado
-                                        </p>
-                                        <button
-                                            onClick={() => setMostrarSelector(true)}
-                                            className="px-6 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
-                                        >
-                                            + Agregar más productos
-                                        </button>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
-
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
                         {/* Panel Derecho: Detalles y Resumen */}
                         <div className="space-y-4">
                             {/* Card: Cliente y Pagos */}
-                            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-lg text-gray-900 dark:text-white">Detalles</CardTitle>
-                                </CardHeader>
+                            <Card className="border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                                 <CardContent className="space-y-4">
+                                    <div className="text-md text-gray-900 dark:text-white">Detalles</div>
                                     {/* Cliente */}
                                     <InputSearch
                                         id="cliente_search"
@@ -398,147 +340,149 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                         className="w-full"
                                     />
                                     {clienteSeleccionado && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 -mt-2">
+                                        <p className="-mt-2 text-xs text-gray-600 dark:text-gray-400">
                                             {clienteSeleccionado.telefono && <span>📱 {clienteSeleccionado.telefono}</span>}
-                                            {clienteSeleccionado.nit && <span>{clienteSeleccionado.telefono ? ' • ' : ''}NIT: {clienteSeleccionado.nit}</span>}
+                                            {clienteSeleccionado.nit && (
+                                                <span>
+                                                    {clienteSeleccionado.telefono ? ' • ' : ''}NIT: {clienteSeleccionado.nit}
+                                                </span>
+                                            )}
                                         </p>
                                     )}
 
                                     {/* Pagos */}
-                                    <div className="space-y-3">
+                                    <div className="flex flex-wrap gap-4">
                                         {/* Monto Efectivo */}
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Efectivo</label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
-                                                <input
-                                                    type="number"
-                                                    value={montoEfectivo}
-                                                    onChange={(e) => setMontoEfectivo(e.target.value ? Number(e.target.value) : '')}
-                                                    placeholder="0.00"
-                                                    step="0.01"
-                                                    min="0"
-                                                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
+                                        <div className="flex-1">
+                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Efectivo</label>
+                                            <input
+                                                type="number"
+                                                value={montoEfectivo}
+                                                onChange={(e) => setMontoEfectivo(e.target.value ? Number(e.target.value) : '')}
+                                                placeholder="0.00"
+                                                step="0.01"
+                                                min="0"
+                                                className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            />
                                         </div>
 
                                         {/* Monto Transferencia/QR */}
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Transferencia/QR</label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
-                                                <input
-                                                    type="number"
-                                                    value={montoTransferencia}
-                                                    onChange={(e) => setMontoTransferencia(e.target.value ? Number(e.target.value) : '')}
-                                                    placeholder="0.00"
-                                                    step="0.01"
-                                                    min="0"
-                                                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
+                                        <div className="flex-1">
+                                            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                Transferencia/QR
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={montoTransferencia}
+                                                onChange={(e) => setMontoTransferencia(e.target.value ? Number(e.target.value) : '')}
+                                                placeholder="0.00"
+                                                step="0.01"
+                                                min="0"
+                                                className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            />
                                         </div>
                                     </div>
 
                                     {/* Tipo de Pago Leyenda */}
-                                    {tipoPagoId && (
-                                        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                    {/* {tipoPagoId && (
+                                        <div className="border-t border-gray-200 pt-2 dark:border-gray-700">
                                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                <strong>Tipo de pago:</strong> {tiposPago.find(t => t.id.toString() === tipoPagoId)?.nombre}
+                                                <strong>Tipo de pago:</strong> {tiposPago.find((t) => t.id.toString() === tipoPagoId)?.nombre}
                                             </p>
                                         </div>
-                                    )}
+                                    )} */}
 
                                     {/* Estado del Pago */}
-                                    <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <div className="flex justify-between items-center text-sm">
+                                    <div className="space-y-2 border-t border-gray-200 pt-2 dark:border-gray-700">
+                                        <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-700 dark:text-gray-300">Total pagado:</span>
                                             <span className="font-semibold text-gray-900 dark:text-white">
                                                 {formatCurrency((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0))}
                                             </span>
                                         </div>
                                         {carrito.items.length > 0 && (
-                                            <div className="flex justify-between items-center text-sm">
+                                            <div className="flex items-center justify-between text-sm">
                                                 <span className="text-gray-700 dark:text-gray-300">Total venta:</span>
                                                 <span className="font-semibold text-gray-900 dark:text-white">
                                                     {formatCurrency(carrito.calcularTotal())}
                                                 </span>
                                             </div>
                                         )}
-                                        {carrito.items.length > 0 && ((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)) >= carrito.calcularTotal() && (
-                                            <div className={`px-2 py-1.5 rounded text-xs font-semibold ${
-                                                ((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)) === carrito.calcularTotal()
-                                                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                    : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                            }`}>
-                                                {((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)) === carrito.calcularTotal()
-                                                    ? '✓ Pago exacto'
-                                                    : `💵 Cambio: ${formatCurrency(((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)) - carrito.calcularTotal())}`
-                                                }
-                                            </div>
-                                        )}
-                                        {carrito.items.length > 0 && ((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)) < carrito.calcularTotal() && (
-                                            <div className="px-2 py-1.5 rounded text-xs font-semibold bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                                                ❌ Falta: {formatCurrency(carrito.calcularTotal() - ((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)))}
-                                            </div>
-                                        )}
+                                        {carrito.items.length > 0 &&
+                                            (Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0) >= carrito.calcularTotal() && (
+                                                <div
+                                                    className={`rounded px-2 py-1.5 text-xs font-semibold ${
+                                                        (Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0) === carrito.calcularTotal()
+                                                            ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                                            : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                    }`}
+                                                >
+                                                    {(Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0) === carrito.calcularTotal()
+                                                        ? '✓ Pago exacto'
+                                                        : `💵 Cambio: ${formatCurrency((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0) - carrito.calcularTotal())}`}
+                                                </div>
+                                            )}
+                                        {carrito.items.length > 0 &&
+                                            (Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0) < carrito.calcularTotal() && (
+                                                <div className="rounded bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                                    ❌ Falta:{' '}
+                                                    {formatCurrency(
+                                                        carrito.calcularTotal() - ((Number(montoEfectivo) || 0) + (Number(montoTransferencia) || 0)),
+                                                    )}
+                                                </div>
+                                            )}
                                     </div>
                                 </CardContent>
                             </Card>
 
                             {/* Carrito Resumen */}
                             {carrito.items.length > 0 && (
-                                <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-6">
+                                <Card className="sticky top-6 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <CardHeader>
-                                        <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
+                                        <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
                                             <ShoppingCart size={20} />
                                             Resumen
                                         </CardTitle>
-                                        <CardDescription>
-                                            {carrito.totalItems} producto(s)
-                                        </CardDescription>
+                                        <CardDescription>{carrito.totalItems} producto(s)</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         {/* Items listado */}
-                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                        <div className="max-h-64 space-y-2 overflow-y-auto">
                                             {carrito.items.map((item, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900/50 rounded"
+                                                    className="flex items-center justify-between rounded bg-gray-50 p-2 dark:bg-gray-900/50"
                                                 >
                                                     <div className="flex-1 text-sm">
-                                                        <p className="font-medium text-gray-900 dark:text-white">
-                                                            {item.nombre_producto}
-                                                        </p>
+                                                        <p className="font-medium text-gray-900 dark:text-white">{item.nombre_producto}</p>
                                                         {(item.adicionales_detalles || []).length > 0 && (
                                                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                                +{(item.adicionales_detalles || []).map(a => a.nombre).join(', ')}
+                                                                +{(item.adicionales_detalles || []).map((a) => a.nombre).join(', ')}
                                                             </p>
                                                         )}
                                                     </div>
 
                                                     {/* Controles de cantidad */}
-                                                    <div className="flex items-center gap-2 mx-2">
+                                                    <div className="mx-2 flex items-center gap-2">
                                                         <button
                                                             onClick={() => carrito.decrementarCantidad(idx)}
                                                             disabled={item.cantidad <= 1}
-                                                            className="px-2 py-1 text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                                            className="rounded bg-red-100 px-2 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                                                         >
                                                             −
                                                         </button>
-                                                        <span className="font-semibold text-gray-900 dark:text-white w-6 text-center">
+                                                        <span className="w-6 text-center font-semibold text-gray-900 dark:text-white">
                                                             {item.cantidad}
                                                         </span>
                                                         <button
                                                             onClick={() => carrito.incrementarCantidad(idx)}
-                                                            className="px-2 py-1 text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition"
+                                                            className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700 transition hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
                                                         >
                                                             +
                                                         </button>
                                                     </div>
 
-                                                    <span className="font-semibold text-gray-900 dark:text-white text-sm whitespace-nowrap">
+                                                    <span className="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-white">
                                                         {formatCurrency(item.precio_total)}
                                                     </span>
 
@@ -548,7 +492,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                                             carrito.eliminarProducto(idx);
                                                             toast.success('Producto eliminado del carrito');
                                                         }}
-                                                        className="px-2 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded transition"
+                                                        className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
                                                     >
                                                         🗑️
                                                     </button>
@@ -557,11 +501,9 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                         </div>
 
                                         {/* Total */}
-                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <span className="font-semibold text-gray-900 dark:text-white">
-                                                    Total:
-                                                </span>
+                                        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <span className="font-semibold text-gray-900 dark:text-white">Total:</span>
                                                 <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                                                     {formatCurrency(carrito.calcularTotal())}
                                                 </span>
@@ -573,7 +515,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                                         carrito.limpiarCarrito();
                                                         toast.success('Carrito vaciado');
                                                     }}
-                                                    className="flex-1 px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center justify-center gap-2"
+                                                    className="flex flex-1 items-center justify-center gap-2 rounded border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                                                 >
                                                     <Trash2 size={16} />
                                                     Vaciar
@@ -581,7 +523,7 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                                 <button
                                                     onClick={handleGuardarVenta}
                                                     disabled={isSubmitting || !tipoPagoId}
-                                                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold text-sm rounded transition flex items-center justify-center gap-2"
+                                                    className="flex flex-1 items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-400"
                                                     title={!tipoPagoId ? 'Selecciona un tipo de pago' : ''}
                                                 >
                                                     <Save size={16} />
@@ -589,6 +531,35 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                                 </button>
                                             </div>
                                         </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                        {/* Panel Izquierdo: Selector de Productos */}
+                        <div className="lg:col-span-2">
+                            {mostrarSelector && (
+                                <ProductosComidaSelector
+                                    onAgregar={handleAgregarProducto}
+                                    onActualizar={carrito.actualizarCantidadPorProductoId}
+                                    onEliminar={carrito.eliminarProductoPorId}
+                                    onActualizarPrecio={carrito.actualizarPrecioBasePorProductoId}
+                                    productosEnCarrito={carrito.items.map((item) => ({
+                                        producto_id: item.producto_id,
+                                        cantidad: item.cantidad,
+                                    }))}
+                                />
+                            )}
+
+                            {carrito.items.length > 0 && !mostrarSelector && (
+                                <Card className="border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                                    <CardContent className="py-12 text-center">
+                                        <p className="mb-4 text-gray-500 dark:text-gray-400">Carrito actualizado</p>
+                                        <button
+                                            onClick={() => setMostrarSelector(true)}
+                                            className="rounded-lg border border-blue-600 px-6 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                        >
+                                            + Agregar más productos
+                                        </button>
                                     </CardContent>
                                 </Card>
                             )}
