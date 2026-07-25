@@ -93,54 +93,53 @@ export default function CreateEgreso() {
                             </Button>
                         </div>
 
-                        <div className="space-y-4">
-                            {detalles.map((detalle, index) => {
-                                const total = getDetalleTotal(detalle);
-
-                                return (
-                                    <div key={index} className="bg-white dark:bg-slate-800 p-4 rounded-lg border dark:border-slate-700 space-y-4">
-                                        {/* Fila 1: Concepto y Tipo de Operación */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium dark:text-gray-100 mb-1">Concepto *</label>
-                                                <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Ej: Café, Papel, Servicios..." required className="dark:bg-slate-700 dark:border-slate-600 dark:text-white" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium dark:text-gray-100 mb-1">Tipo de Operación *</label>
-                                                <select value={detalle.tipo_operacion_caja_id} onChange={(e) => handleDetalleChange(index, 'tipo_operacion_caja_id', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" required>
-                                                    <option value="">Seleccionar...</option>
-                                                    {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Fila 2: Efectivo y Transferencia */}
-                                        <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
-                                            <div>
-                                                <label className="block text-sm font-medium dark:text-blue-200 mb-2">Efectivo</label>
-                                                <Input type="number" value={detalle.monto_efectivo} onChange={(e) => handleDetalleChange(index, 'monto_efectivo', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-blue-800 dark:border-blue-600 dark:text-white font-semibold text-lg" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium dark:text-blue-200 mb-2">Transferencia/QR</label>
-                                                <Input type="number" value={detalle.monto_transferencia} onChange={(e) => handleDetalleChange(index, 'monto_transferencia', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-blue-800 dark:border-blue-600 dark:text-white font-semibold text-lg" />
-                                            </div>
-                                        </div>
-
-                                        {/* Resumen y eliminar */}
-                                        <div className="flex justify-between items-center">
-                                            <div className="bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded">
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-                                                <p className="text-2xl font-bold dark:text-white">Bs. {total.toFixed(2)}</p>
-                                            </div>
-                                            {detalles.length > 1 && (
-                                                <Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(index)} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900">
-                                                    <Trash2 className="w-5 h-5" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-100 dark:bg-slate-700">
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-left text-sm font-semibold dark:text-gray-100">Concepto</th>
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-left text-sm font-semibold dark:text-gray-100">Tipo de Operación</th>
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Efectivo</th>
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Transferencia/QR</th>
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Total</th>
+                                        <th className="border dark:border-slate-600 px-4 py-3 text-center text-sm font-semibold dark:text-gray-100">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {detalles.map((detalle, index) => {
+                                        const total = getDetalleTotal(detalle);
+                                        return (
+                                            <tr key={index} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">
+                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                    <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Ej: Café..." required className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" />
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                    <select value={detalle.tipo_operacion_caja_id} onChange={(e) => handleDetalleChange(index, 'tipo_operacion_caja_id', e.target.value)} className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" required>
+                                                        <option value="">Seleccionar...</option>
+                                                        {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
+                                                    </select>
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                    <Input type="number" value={detalle.monto_efectivo} onChange={(e) => handleDetalleChange(index, 'monto_efectivo', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-right" />
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                    <Input type="number" value={detalle.monto_transferencia} onChange={(e) => handleDetalleChange(index, 'monto_transferencia', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-right" />
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-4 py-3 text-right font-bold dark:text-white">
+                                                    Bs. {total.toFixed(2)}
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-4 py-3 text-center">
+                                                    {detalles.length > 1 && (
+                                                        <Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(index)} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900">
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
