@@ -304,6 +304,9 @@ class EgresosController extends Controller
             $estadoAnulado = EstadoDocumento::where('codigo', 'ANULADO')->first();
 
             DB::transaction(function () use ($egreso, $estadoAnulado) {
+                // Contar movimientos antes de eliminar
+                $movimientosCount = MovimientoCaja::where('egreso_id', $egreso->id)->count();
+
                 // Actualizar estado
                 $egreso->update([
                     'estado_documento_id' => $estadoAnulado->id,
@@ -312,12 +315,13 @@ class EgresosController extends Controller
                     'monto_pendiente' => $egreso->total,
                 ]);
 
-                // Eliminar movimientos de caja asociados (ahora hay uno por detalle)
+                // Eliminar movimientos de caja asociados (pueden ser múltiples por detalle si hay efectivo+transferencia)
                 MovimientoCaja::where('egreso_id', $egreso->id)->delete();
 
                 Log::info('🧹 [EgresosController::anular] Egreso anulado - Movimientos de caja eliminados', [
                     'egreso_id' => $egreso->id,
                     'numero' => $egreso->numero,
+                    'movimientos_eliminados' => $movimientosCount,
                 ]);
             });
 
