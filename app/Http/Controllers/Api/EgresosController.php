@@ -106,7 +106,7 @@ class EgresosController extends Controller
             $egreso = DB::transaction(function () use ($validated, $totalEgreso, $estadoAprobado) {
                 // Obtener tipos de operación para efectivo y transferencia
                 $tipoOperacionEfectivo = TipoOperacionCaja::whereRaw("LOWER(nombre) LIKE ?", ['%efectivo%'])->first();
-                $tipoOperacionTransferencia = TipoOperacionCaja::whereRaw("LOWER(nombre) LIKE ?", ['%transferencia%', '%qr%'])->first();
+                $tipoOperacionTransferencia = TipoOperacionCaja::whereRaw("LOWER(nombre) LIKE ? OR LOWER(nombre) LIKE ?", ['%transferencia%', '%qr%'])->first();
 
                 // Si no existen, usar el tipo_operacion_caja_id del primer detalle como fallback
                 $tipoOpEfectivoId = $tipoOperacionEfectivo?->id ?? $validated['detalles'][0]['tipo_operacion_caja_id'];
