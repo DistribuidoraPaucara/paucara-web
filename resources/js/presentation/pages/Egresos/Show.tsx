@@ -14,8 +14,16 @@ interface Egreso {
     fecha: string;
     descripcion: string;
     total: number;
-    detalles: Array<{ id: number; concepto: string; cantidad: number; monto_unitario: number; subtotal: number }>;
-    detalles_pago: Array<{ tipo_pago: { nombre: string }; monto: number }>;
+    detalles: Array<{
+        id: number;
+        concepto: string;
+        tipo_operacion_caja_id?: number;
+        tipoOperacion?: { nombre: string };
+        monto_efectivo?: number;
+        monto_transferencia?: number;
+        subtotal?: number;
+    }>;
+    detalles_pago?: Array<{ tipo_pago: { nombre: string }; monto: number }>;
 }
 
 interface PageProps { egreso: Egreso }
@@ -66,21 +74,57 @@ export default function ShowEgreso() {
                 {egreso.descripcion && <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700"><p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Descripción</p><p className="dark:text-gray-200">{egreso.descripcion}</p></div>}
 
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
-                    <h2 className="text-xl font-bold mb-4 dark:text-white">Detalles</h2>
-                    <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-slate-800"><tr><th className="px-4 py-2 text-left dark:text-gray-100">Concepto</th><th className="px-4 py-2 text-center dark:text-gray-100">Cantidad</th><th className="px-4 py-2 text-right dark:text-gray-100">Monto Unit.</th><th className="px-4 py-2 text-right dark:text-gray-100">Subtotal</th></tr></thead>
-                        <tbody>
-                            {egreso.detalles.map((d) => (<tr key={d.id} className="border-b dark:border-slate-700"><td className="px-4 py-2 dark:text-gray-200">{d.concepto}</td><td className="px-4 py-2 text-center dark:text-gray-200">{d.cantidad}</td><td className="px-4 py-2 text-right dark:text-gray-200">Bs. {parseFloat(String(d.monto_unitario)).toFixed(2)}</td><td className="px-4 py-2 text-right font-semibold dark:text-gray-100">Bs. {parseFloat(String(d.subtotal)).toFixed(2)}</td></tr>))}
-                        </tbody>
-                    </table>
+                    <h2 className="text-xl font-bold mb-4 dark:text-white">Detalles de Egresos</h2>
+                    <div className="space-y-3">
+                        {egreso.detalles.map((d) => {
+                            const totalDetalle = (d.monto_efectivo || 0) + (d.monto_transferencia || 0);
+                            return (
+                                <div key={d.id} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border dark:border-slate-700">
+                                    <div className="grid grid-cols-2 gap-4 mb-3">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Concepto</p>
+                                            <p className="text-base font-semibold dark:text-white">{d.concepto}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo de Operación</p>
+                                            <p className="text-base font-semibold dark:text-white">{d.tipoOperacion?.nombre || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900 p-3 rounded-lg">
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-600 dark:text-blue-300 mb-1">Efectivo</p>
+                                            <p className="text-lg font-bold text-blue-700 dark:text-blue-200">Bs. {parseFloat(String(d.monto_efectivo || 0)).toFixed(2)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-600 dark:text-blue-300 mb-1">Transferencia/QR</p>
+                                            <p className="text-lg font-bold text-blue-700 dark:text-blue-200">Bs. {parseFloat(String(d.monto_transferencia || 0)).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-2">
+                                        <div className="bg-white dark:bg-slate-700 px-3 py-1 rounded">
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
+                                            <p className="text-sm font-bold dark:text-white">Bs. {totalDetalle.toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
-                    <h2 className="text-xl font-bold mb-4 dark:text-white">Pagos</h2>
-                    <div className="space-y-2">
-                        {egreso.detalles_pago.map((p, i) => (<div key={i} className="flex justify-between py-2 border-b dark:border-slate-700 dark:text-gray-200"><span>{p.tipo_pago.nombre}</span><span className="font-semibold">Bs. {parseFloat(String(p.monto)).toFixed(2)}</span></div>))}
-                        <div className="flex justify-between py-2 text-lg font-bold bg-blue-50 dark:bg-blue-900 px-4 rounded mt-4 dark:text-blue-100"><span>Total</span><span>Bs. {parseFloat(String(egreso.total)).toFixed(2)}</span></div>
+                {egreso.detalles_pago && egreso.detalles_pago.length > 0 && (
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
+                        <h2 className="text-xl font-bold mb-4 dark:text-white">Resumen de Pagos</h2>
+                        <div className="space-y-2">
+                            {egreso.detalles_pago.map((p, i) => (<div key={i} className="flex justify-between py-2 border-b dark:border-slate-700 dark:text-gray-200"><span>{p.tipo_pago.nombre}</span><span className="font-semibold">Bs. {parseFloat(String(p.monto)).toFixed(2)}</span></div>))}
+                            <div className="flex justify-between py-2 text-lg font-bold bg-blue-50 dark:bg-blue-900 px-4 rounded mt-4 dark:text-blue-100"><span>Total</span><span>Bs. {parseFloat(String(egreso.total)).toFixed(2)}</span></div>
+                        </div>
                     </div>
+                )}
+
+                <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 p-6 rounded-lg border-2 border-green-200 dark:border-green-700">
+                    <p className="text-center text-gray-600 dark:text-gray-300 mb-2">Total del Egreso</p>
+                    <p className="text-center text-4xl font-bold text-green-600 dark:text-green-300">Bs. {parseFloat(String(egreso.total)).toFixed(2)}</p>
                 </div>
 
                 <Button variant="outline" onClick={() => router.visit("/egresos")} className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-800">Volver</Button>

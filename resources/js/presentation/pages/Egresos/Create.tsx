@@ -1,106 +1,168 @@
-﻿import { Head, useForm, usePage, router } from "@inertiajs/react";
-import { useState } from "react";
-import AppLayout from "@/layouts/app-layout";
-import { Button } from "@/presentation/components/ui/button";
-import { Input } from "@/presentation/components/ui/input";
-import { Trash2, Plus } from "lucide-react";
-import axios from "axios";
+import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import { Button } from '@/presentation/components/ui/button';
+import { Input } from '@/presentation/components/ui/input';
+import { Trash2, Plus } from 'lucide-react';
+import axios from 'axios';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 interface TipoOperacion { id: number; nombre: string }
 interface TipoPago { id: number; nombre: string }
-interface PageProps { tipos_operacion: TipoOperacion[]; tipos_pago: TipoPago[] }
-interface DetalleForm { concepto: string; cantidad: number; monto_unitario: number; descuento: number; subtotal: number }
+interface PageProps extends InertiaPageProps {
+    [key: string]: any;
+    tipos_operacion: TipoOperacion[];
+    tipos_pago: TipoPago[];
+}
+
+interface DetalleForm {
+    concepto: string;
+    tipo_operacion_caja_id: string;
+    monto_efectivo: number;
+    monto_transferencia: number;
+}
 
 export default function CreateEgreso() {
     const { props } = usePage<PageProps>();
-    const [detalles, setDetalles] = useState<DetalleForm[]>([{ concepto: "", cantidad: 1, monto_unitario: 0, descuento: 0, subtotal: 0 }]);
+    const initialDetalle: DetalleForm = { concepto: '', tipo_operacion_caja_id: '', monto_efectivo: 0, monto_transferencia: 0 };
+    const [detalles, setDetalles] = useState<DetalleForm[]>([initialDetalle]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const { data, setData } = useForm({ tipo_operacion_caja_id: "", descripcion: "", monto_efectivo: 0, monto_transferencia: 0, detalles, observaciones: "" });
+    const [error, setError] = useState('');
 
-    const handleDetalleChange = (index: number, field: string, value: any) => {
+    interface FormData {
+        descripcion: string;
+        detalles: DetalleForm[];
+        observaciones: string;
+    }
+
+    const { data, setData } = useForm<FormData>({ descripcion: '', detalles: [initialDetalle], observaciones: '' });
+
+    const handleDetalleChange = (index: number, field: keyof DetalleForm, value: any) => {
         const newDetalles = [...detalles];
-        newDetalles[index][field as keyof DetalleForm] = value;
-        if (["cantidad", "monto_unitario", "descuento"].includes(field)) {
-            newDetalles[index].subtotal = (newDetalles[index].cantidad * newDetalles[index].monto_unitario) - newDetalles[index].descuento;
-        }
+        (newDetalles[index] as any)[field] = value;
         setDetalles(newDetalles);
-        setData("detalles", newDetalles);
+        setData('detalles', newDetalles);
     };
 
     const handleAddDetalle = () => {
-        const newDetalles = [...detalles, { concepto: "", cantidad: 1, monto_unitario: 0, descuento: 0, subtotal: 0 }];
+        const newDetalles = [...detalles, { concepto: '', tipo_operacion_caja_id: '', monto_efectivo: 0, monto_transferencia: 0 }];
         setDetalles(newDetalles);
-        setData("detalles", newDetalles);
+        setData('detalles', newDetalles);
     };
 
     const handleRemoveDetalle = (index: number) => {
         const newDetalles = detalles.filter((_, i) => i !== index);
         setDetalles(newDetalles);
-        setData("detalles", newDetalles);
+        setData('detalles', newDetalles);
     };
 
-    const totalDetalles = detalles.reduce((sum, d) => sum + d.subtotal, 0);
+    const getDetalleTotal = (detalle: DetalleForm) => detalle.monto_efectivo + detalle.monto_transferencia;
+    const totalEgreso = detalles.reduce((sum, d) => sum + getDetalleTotal(d), 0);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post("/api/egresos", { ...data, detalles });
-            if (response.data.success) router.visit("/egresos");
+            const response = await axios.post('/api/egresos', { ...data, detalles });
+            if (response.data.success) router.visit('/egresos');
         } catch (err: any) {
-            setError(err.response?.data?.message || "Error al crear egreso");
+            setError(err.response?.data?.message || 'Error al crear egreso');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: "Egresos", href: "/egresos" }, { title: "Nuevo", href: "/egresos/create" }]}>
+        <AppLayout breadcrumbs={[{ title: 'Egresos', href: '/egresos' }, { title: 'Nuevo', href: '/egresos/create' }]}>
             <Head title="Nuevo Egreso" />
             <div className="space-y-4 p-4">
                 <h1 className="text-3xl font-bold dark:text-white">Nuevo Egreso</h1>
-                {error && <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-2 py-2 rounded">{error}</div>}
-                <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-900 p-2 rounded-lg border dark:border-slate-700">
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="block text-sm font-medium dark:text-gray-100">Tipo de Operación *</label>
-                            <select value={data.tipo_operacion_caja_id} onChange={(e) => setData("tipo_operacion_caja_id", e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" required>
-                                <option value="">Seleccionar...</option>
-                                {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium dark:text-gray-100">Descripción</label>
-                            <textarea value={data.descripcion} onChange={(e) => setData("descripcion", e.target.value)} className="w-full px-2 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" />
-                        </div>
-                    </div>
+                {error && <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
                     <div>
-                        <label className="block text-sm font-medium dark:text-gray-100">Detalles *</label>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-slate-800"><tr><th className="px-3 py-2 text-left dark:text-gray-100">Concepto</th><th className="px-3 py-2 text-center w-20 dark:text-gray-100">Cant.</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Monto Unit.</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Descuento</th><th className="px-3 py-2 text-right w-32 dark:text-gray-100">Subtotal</th><th className="w-10"></th></tr></thead>
-                                <tbody>
-                                    {detalles.map((d, i) => (<tr key={i} className="border-b dark:border-slate-700"><td className="px-3 py-2"><Input value={d.concepto} onChange={(e) => handleDetalleChange(i, "concepto", e.target.value)} placeholder="Concepto" required className="dark:bg-slate-800 dark:border-slate-600 dark:text-white" /></td><td className="px-3 py-2"><Input type="number" value={d.cantidad} onChange={(e) => handleDetalleChange(i, "cantidad", parseFloat(e.target.value))} min="1" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-center" /></td><td className="px-3 py-2"><Input type="number" value={d.monto_unitario} onChange={(e) => handleDetalleChange(i, "monto_unitario", parseFloat(e.target.value))} step="0.01" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-right" /></td><td className="px-3 py-2"><Input type="number" value={d.descuento} onChange={(e) => handleDetalleChange(i, "descuento", parseFloat(e.target.value))} step="0.01" className="dark:bg-slate-800 dark:border-slate-600 dark:text-white text-right" /></td><td className="px-3 py-2 text-right font-semibold dark:text-gray-100">Bs. {d.subtotal.toFixed(2)}</td><td className="px-3 py-2"><Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(i)} disabled={detalles.length === 1}><Trash2 className="w-4 h-4" /></Button></td></tr>))}
-                                </tbody>
-                            </table>
+                        <label className="block text-sm font-medium dark:text-gray-100 mb-2">Descripción General</label>
+                        <textarea value={data.descripcion} onChange={(e) => setData('descripcion', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} placeholder="Descripción general del egreso (opcional)" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold dark:text-white">Detalles del Egreso</h2>
+                            <Button variant="outline" onClick={handleAddDetalle} className="dark:border-slate-600 dark:text-white">
+                                <Plus className="w-4 h-4 mr-2" /> Agregar Detalle
+                            </Button>
                         </div>
-                        <Button variant="outline" onClick={handleAddDetalle} className="mt-2 dark:border-slate-600 dark:text-white dark:hover:bg-slate-800"><Plus className="w-4 h-4 mr-2" /> Agregar Detalle</Button>
+
+                        <div className="space-y-4">
+                            {detalles.map((detalle, index) => {
+                                const total = getDetalleTotal(detalle);
+
+                                return (
+                                    <div key={index} className="bg-white dark:bg-slate-800 p-4 rounded-lg border dark:border-slate-700 space-y-4">
+                                        {/* Fila 1: Concepto y Tipo de Operación */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium dark:text-gray-100 mb-1">Concepto *</label>
+                                                <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Ej: Café, Papel, Servicios..." required className="dark:bg-slate-700 dark:border-slate-600 dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium dark:text-gray-100 mb-1">Tipo de Operación *</label>
+                                                <select value={detalle.tipo_operacion_caja_id} onChange={(e) => handleDetalleChange(index, 'tipo_operacion_caja_id', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" required>
+                                                    <option value="">Seleccionar...</option>
+                                                    {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Fila 2: Efectivo y Transferencia */}
+                                        <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                                            <div>
+                                                <label className="block text-sm font-medium dark:text-blue-200 mb-2">Efectivo</label>
+                                                <Input type="number" value={detalle.monto_efectivo} onChange={(e) => handleDetalleChange(index, 'monto_efectivo', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-blue-800 dark:border-blue-600 dark:text-white font-semibold text-lg" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium dark:text-blue-200 mb-2">Transferencia/QR</label>
+                                                <Input type="number" value={detalle.monto_transferencia} onChange={(e) => handleDetalleChange(index, 'monto_transferencia', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-blue-800 dark:border-blue-600 dark:text-white font-semibold text-lg" />
+                                            </div>
+                                        </div>
+
+                                        {/* Resumen y eliminar */}
+                                        <div className="flex justify-between items-center">
+                                            <div className="bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
+                                                <p className="text-2xl font-bold dark:text-white">Bs. {total.toFixed(2)}</p>
+                                            </div>
+                                            {detalles.length > 1 && (
+                                                <Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(index)} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900">
+                                                    <Trash2 className="w-5 h-5" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 bg-gray-50 dark:bg-slate-800 p-2 rounded-lg">
-                        <div><label className="block text-sm font-medium mb-2 dark:text-gray-100">Efectivo</label><Input type="number" value={data.monto_efectivo} onChange={(e) => setData("monto_efectivo", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
-                        <div><label className="block text-sm font-medium mb-2 dark:text-gray-100">Transferencia/QR</label><Input type="number" value={data.monto_transferencia} onChange={(e) => setData("monto_transferencia", parseFloat(e.target.value))} step="0.01" min="0" className="text-lg font-semibold dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
-                        <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg"><p className="text-sm font-medium mb-1 dark:text-blue-200">Total</p><p className="text-2xl font-bold dark:text-blue-100">Bs. {totalDetalles.toFixed(2)}</p></div>
+
+                    {/* Total General */}
+                    <div className="bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800 p-6 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                        <p className="text-center text-gray-600 dark:text-gray-300 mb-2">Total del Egreso</p>
+                        <p className="text-center text-4xl font-bold text-blue-600 dark:text-blue-300">Bs. {totalEgreso.toFixed(2)}</p>
+                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">Cada detalle crea un movimiento de caja por separado</p>
                     </div>
+
+                    {/* Observaciones */}
                     <div>
-                        <label className="block text-sm font-medium mb-2 dark:text-gray-100">Observaciones</label>
-                        <textarea value={data.observaciones} onChange={(e) => setData("observaciones", e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} />
+                        <label className="block text-sm font-medium dark:text-gray-100 mb-2">Observaciones</label>
+                        <textarea value={data.observaciones} onChange={(e) => setData('observaciones', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} placeholder="Observaciones opcionales" />
                     </div>
+
+                    {/* Acciones */}
                     <div className="flex gap-4">
                         <Button type="submit" disabled={loading}>
-                            {loading ? "Guardando..." : "Guardar Egreso"}
+                            {loading ? 'Guardando...' : 'Guardar Egreso'}
                         </Button>
-                        <Button variant="outline" onClick={() => router.visit("/egresos")} className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-800">
+                        <Button variant="outline" onClick={() => router.visit('/egresos')} className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-800">
                             Cancelar
                         </Button>
                     </div>

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Egreso;
 use App\Models\DetalleEgreso;
-use App\Models\DetallePagoEgreso;
 use App\Models\EstadoDocumento;
 use App\Models\TipoOperacionCaja;
 use App\Models\TipoPago;
@@ -43,21 +42,25 @@ class EgresosController extends Controller
     }
 
     /**
-     * Crear un egreso
+     * Crear un egreso - ESTRUCTURA SIMPLIFICADA
+     * Cada detalle solo lleva: concepto, tipo_operacion_caja, monto_efectivo y monto_transferencia
+     * Cada detalle creará su propio movimiento_caja
      *
      * REQUEST:
      * {
-     *   "tipo_operacion_caja_id": 1,
-     *   "descripcion": "Gasto operativo",
-     *   "monto_efectivo": 100.00,
-     *   "monto_transferencia": 50.00,
+     *   "descripcion": "Gastos operativos",
      *   "detalles": [
      *     {
-     *       "concepto": "Café para oficina",
-     *       "cantidad": 1,
-     *       "monto_unitario": 50.00,
-     *       "descuento": 0,
-     *       "subtotal": 50.00
+     *       "concepto": "Café",
+     *       "tipo_operacion_caja_id": 1,
+     *       "monto_efectivo": 50.00,
+     *       "monto_transferencia": 0
+     *     },
+     *     {
+     *       "concepto": "Papel",
+     *       "tipo_operacion_caja_id": 2,
+     *       "monto_efectivo": 0,
+     *       "monto_transferencia": 60.00
      *     }
      *   ],
      *   "observaciones": null
@@ -67,58 +70,54 @@ class EgresosController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tipo_operacion_caja_id' => 'required|exists:tipo_operacion_caja,id',
                 'descripcion' => 'nullable|string',
-                'monto_efectivo' => 'nullable|numeric|min:0',
-                'monto_transferencia' => 'nullable|numeric|min:0',
                 'detalles' => 'required|array|min:1',
                 'detalles.*.concepto' => 'required|string',
-                'detalles.*.cantidad' => 'required|numeric|min:1',
-                'detalles.*.monto_unitario' => 'required|numeric|min:0',
-                'detalles.*.descuento' => 'nullable|numeric|min:0',
-                'detalles.*.subtotal' => 'required|numeric|min:0',
+                'detalles.*.tipo_operacion_caja_id' => 'required|exists:tipo_operacion_caja,id',
+                'detalles.*.monto_efectivo' => 'nullable|numeric|min:0',
+                'detalles.*.monto_transferencia' => 'nullable|numeric|min:0',
                 'observaciones' => 'nullable|string',
             ]);
 
-            $montoEfectivo = (float) ($validated['monto_efectivo'] ?? 0);
-            $montoTransferencia = (float) ($validated['monto_transferencia'] ?? 0);
-            $totalPago = $montoEfectivo + $montoTransferencia;
+            // Calcular totales por detalle
+            $totalEgreso = 0;
+            foreach ($validated['detalles'] as $detalle) {
+                $montoEfectivo = (float) ($detalle['monto_efectivo'] ?? 0);
+                $montoTransferencia = (float) ($detalle['monto_transferencia'] ?? 0);
+                $totalPago = $montoEfectivo + $montoTransferencia;
 
-            // Calcular total de detalles
-            $totalDetalles = collect($validated['detalles'])->sum('subtotal');
+                if ($totalPago <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Detalle '{$detalle['concepto']}': Debe ingresar al menos un monto (efectivo o transferencia)",
+                    ], 422);
+                }
 
-            if ($totalPago < $totalDetalles - 0.01) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Pago insuficiente. Total: {$totalDetalles}, Pagado: {$totalPago}",
-                ], 422);
+                $totalEgreso += $totalPago;
             }
 
             $estadoAprobado = EstadoDocumento::obtenerEstadoAprobado();
 
-            Log::info('💰 [EgresosController::store] Iniciando creación de egreso', [
-                'tipo_operacion_caja_id' => $validated['tipo_operacion_caja_id'],
-                'monto_efectivo' => $montoEfectivo,
-                'monto_transferencia' => $montoTransferencia,
+            Log::info('💰 [EgresosController::store] Iniciando creación de egreso con detalles granulares', [
                 'cantidad_detalles' => count($validated['detalles']),
-                'total' => $totalDetalles,
+                'total' => $totalEgreso,
             ]);
 
-            $egreso = DB::transaction(function () use ($validated, $montoEfectivo, $montoTransferencia, $totalDetalles, $totalPago, $estadoAprobado) {
-                // Crear egreso
+            $egreso = DB::transaction(function () use ($validated, $totalEgreso, $estadoAprobado) {
+                // Crear egreso (cabecera)
                 $egreso = Egreso::create([
                     'numero' => '0',
-                    'tipo_operacion_caja_id' => $validated['tipo_operacion_caja_id'],
+                    'tipo_operacion_caja_id' => $validated['detalles'][0]['tipo_operacion_caja_id'], // Del primer detalle
                     'estado_documento_id' => $estadoAprobado,
                     'usuario_id' => Auth::id(),
                     'fecha' => today(),
                     'descripcion' => $validated['descripcion'],
-                    'subtotal' => $totalDetalles,
+                    'subtotal' => $totalEgreso,
                     'descuento' => 0,
                     'impuesto' => 0,
-                    'total' => $totalDetalles,
+                    'total' => $totalEgreso,
                     'estado_pago' => 'PAGADA',
-                    'monto_pagado' => $totalPago,
+                    'monto_pagado' => $totalEgreso,
                     'monto_pendiente' => 0,
                     'observaciones' => $validated['observaciones'],
                 ]);
@@ -132,95 +131,73 @@ class EgresosController extends Controller
                     'numero' => $egreso->numero,
                 ]);
 
-                // Crear detalles
-                foreach ($validated['detalles'] as $detalle) {
-                    DetalleEgreso::create([
-                        'egreso_id' => $egreso->id,
-                        'concepto' => $detalle['concepto'],
-                        'cantidad' => $detalle['cantidad'],
-                        'monto_unitario' => $detalle['monto_unitario'],
-                        'descuento' => $detalle['descuento'] ?? 0,
-                        'subtotal' => $detalle['subtotal'],
-                    ]);
-                }
-
-                Log::info('✅ [EgresosController::store] Detalles creados', [
-                    'egreso_id' => $egreso->id,
-                    'cantidad_detalles' => count($validated['detalles']),
-                ]);
-
-                // Crear pagos - EFECTIVO
-                if ($montoEfectivo > 0) {
-                    DetallePagoEgreso::create([
-                        'egreso_id' => $egreso->id,
-                        'tipo_pago_id' => 1, // EFECTIVO
-                        'monto' => $montoEfectivo,
-                        'fecha_pago' => now(),
-                    ]);
-
-                    Log::info('✅ [EgresosController::store] Pago EFECTIVO registrado', [
-                        'egreso_id' => $egreso->id,
-                        'monto' => $montoEfectivo,
-                    ]);
-                }
-
-                // Crear pagos - TRANSFERENCIA
-                if ($montoTransferencia > 0) {
-                    $tipoPagoTransferencia = TipoPago::where('codigo', 'TRANSFERENCIA')
-                        ->orWhere('codigo', 'QR')
-                        ->first();
-
-                    if ($tipoPagoTransferencia) {
-                        DetallePagoEgreso::create([
-                            'egreso_id' => $egreso->id,
-                            'tipo_pago_id' => $tipoPagoTransferencia->id,
-                            'monto' => $montoTransferencia,
-                            'fecha_pago' => now(),
-                        ]);
-
-                        Log::info('✅ [EgresosController::store] Pago TRANSFERENCIA registrado', [
-                            'egreso_id' => $egreso->id,
-                            'monto' => $montoTransferencia,
-                        ]);
-                    }
-                }
-
-                // Registrar movimiento en caja (SALIDA = negativo)
+                // Obtener caja abierta una sola vez
                 $cajaAbierta = AperturaCaja::where('user_id', Auth::id())
                     ->abiertas()
                     ->latest('fecha')
                     ->first();
 
-                if ($cajaAbierta) {
-                    // Movimiento de SALIDA (negativo)
-                    MovimientoCaja::create([
-                        'caja_id' => $cajaAbierta->caja_id,
-                        'user_id' => Auth::id(),
-                        'fecha' => now(),
-                        'monto' => -$totalPago, // Negativo para indicar SALIDA
-                        'observaciones' => "Egreso #{$egreso->numero}",
-                        'numero_documento' => $egreso->numero,
-                        'tipo_operacion_id' => $egreso->tipo_operacion_caja_id,
+                // Procesar cada detalle
+                foreach ($validated['detalles'] as $detalle) {
+                    $montoEfectivo = (float) ($detalle['monto_efectivo'] ?? 0);
+                    $montoTransferencia = (float) ($detalle['monto_transferencia'] ?? 0);
+                    $totalPago = $montoEfectivo + $montoTransferencia;
+
+                    // Crear detalle (simplificado: sin cantidad, monto_unitario, descuento)
+                    $detalleEgreso = DetalleEgreso::create([
                         'egreso_id' => $egreso->id,
+                        'concepto' => $detalle['concepto'],
+                        'cantidad' => 1, // Default: 1 unidad
+                        'monto_unitario' => $totalPago, // El monto unitario es el total del detalle
+                        'descuento' => 0,
+                        'subtotal' => $totalPago,
+                        'tipo_operacion_caja_id' => $detalle['tipo_operacion_caja_id'],
+                        'monto_efectivo' => $montoEfectivo,
+                        'monto_transferencia' => $montoTransferencia,
                     ]);
 
-                    Log::info('✅ [EgresosController::store] Movimiento de SALIDA registrado en caja', [
-                        'egreso_id' => $egreso->id,
-                        'monto' => -$totalPago,
-                        'caja_id' => $cajaAbierta->caja_id,
+                    Log::info('✅ [EgresosController::store] Detalle creado', [
+                        'detalle_id' => $detalleEgreso->id,
+                        'concepto' => $detalle['concepto'],
+                        'subtotal' => $subtotal,
                     ]);
-                } else {
-                    Log::warning('⚠️ [EgresosController::store] No hay caja abierta', [
+
+                    // Crear movimiento en caja si hay caja abierta
+                    if ($cajaAbierta) {
+                        // Movimiento de SALIDA (negativo) - Un movimiento por detalle
+                        MovimientoCaja::create([
+                            'caja_id' => $cajaAbierta->caja_id,
+                            'user_id' => Auth::id(),
+                            'fecha' => now(),
+                            'monto' => -$totalPago, // Negativo para indicar SALIDA
+                            'observaciones' => "Detalle: {$detalle['concepto']} (Egreso #{$egreso->numero})",
+                            'numero_documento' => $egreso->numero,
+                            'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                            'egreso_id' => $egreso->id,
+                        ]);
+
+                        Log::info('✅ [EgresosController::store] Movimiento de caja creado para detalle', [
+                            'concepto' => $detalle['concepto'],
+                            'monto' => -$totalPago,
+                            'tipo_operacion_id' => $detalle['tipo_operacion_caja_id'],
+                        ]);
+                    }
+                }
+
+                if (!$cajaAbierta) {
+                    Log::warning('⚠️ [EgresosController::store] No hay caja abierta para registrar movimientos', [
                         'user_id' => Auth::id(),
+                        'egreso_id' => $egreso->id,
                     ]);
                 }
 
                 return $egreso;
             });
 
-            Log::info('🎉 [EgresosController::store] Egreso creado exitosamente', [
+            Log::info('🎉 [EgresosController::store] Egreso con detalles granulares creado exitosamente', [
                 'egreso_id' => $egreso->id,
                 'total' => $egreso->total,
+                'cantidad_detalles' => count($validated['detalles']),
             ]);
 
             return response()->json([
@@ -261,7 +238,7 @@ class EgresosController extends Controller
             'tipoOperacion',
             'estadoDocumento',
             'usuario',
-            'detalles',
+            'detalles.tipoOperacion',
             'detallesPago.tipoPago'
         ]);
 
@@ -295,10 +272,10 @@ class EgresosController extends Controller
                     'monto_pendiente' => $egreso->total,
                 ]);
 
-                // Eliminar movimientos de caja asociados
+                // Eliminar movimientos de caja asociados (ahora hay uno por detalle)
                 MovimientoCaja::where('egreso_id', $egreso->id)->delete();
 
-                Log::info('🧹 [EgresosController::anular] Egreso anulado', [
+                Log::info('🧹 [EgresosController::anular] Egreso anulado - Movimientos de caja eliminados', [
                     'egreso_id' => $egreso->id,
                     'numero' => $egreso->numero,
                 ]);
