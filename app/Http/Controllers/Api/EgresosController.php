@@ -159,7 +159,7 @@ class EgresosController extends Controller
                     Log::info('✅ [EgresosController::store] Detalle creado', [
                         'detalle_id' => $detalleEgreso->id,
                         'concepto' => $detalle['concepto'],
-                        'subtotal' => $subtotal,
+                        'subtotal' => $totalPago,
                     ]);
 
                     // Crear movimiento en caja si hay caja abierta
