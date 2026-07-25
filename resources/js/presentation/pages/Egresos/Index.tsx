@@ -63,7 +63,7 @@ export default function EgresosIndex() {
                                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{egreso.tipo_operacion.nombre}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{egreso.descripcion || '-'}</td>
                                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{egreso.usuario.name}</td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-right text-gray-900 dark:text-gray-100">Bs. {parseFloat(egreso.total).toFixed(2)}</td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-right text-gray-900 dark:text-gray-100">Bs. {parseFloat(String(egreso.total)).toFixed(2)}</td>
                                     <td className="px-6 py-4 text-sm">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                             egreso.estado_documento.codigo === 'APROBADO'

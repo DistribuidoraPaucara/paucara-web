@@ -70,7 +70,7 @@ export default function ShowEgreso() {
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-slate-800"><tr><th className="px-4 py-2 text-left dark:text-gray-100">Concepto</th><th className="px-4 py-2 text-center dark:text-gray-100">Cantidad</th><th className="px-4 py-2 text-right dark:text-gray-100">Monto Unit.</th><th className="px-4 py-2 text-right dark:text-gray-100">Subtotal</th></tr></thead>
                         <tbody>
-                            {egreso.detalles.map((d) => (<tr key={d.id} className="border-b dark:border-slate-700"><td className="px-4 py-2 dark:text-gray-200">{d.concepto}</td><td className="px-4 py-2 text-center dark:text-gray-200">{d.cantidad}</td><td className="px-4 py-2 text-right dark:text-gray-200">Bs. {d.monto_unitario.toFixed(2)}</td><td className="px-4 py-2 text-right font-semibold dark:text-gray-100">Bs. {d.subtotal.toFixed(2)}</td></tr>))}
+                            {egreso.detalles.map((d) => (<tr key={d.id} className="border-b dark:border-slate-700"><td className="px-4 py-2 dark:text-gray-200">{d.concepto}</td><td className="px-4 py-2 text-center dark:text-gray-200">{d.cantidad}</td><td className="px-4 py-2 text-right dark:text-gray-200">Bs. {parseFloat(String(d.monto_unitario)).toFixed(2)}</td><td className="px-4 py-2 text-right font-semibold dark:text-gray-100">Bs. {parseFloat(String(d.subtotal)).toFixed(2)}</td></tr>))}
                         </tbody>
                     </table>
                 </div>
@@ -78,8 +78,8 @@ export default function ShowEgreso() {
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
                     <h2 className="text-xl font-bold mb-4 dark:text-white">Pagos</h2>
                     <div className="space-y-2">
-                        {egreso.detalles_pago.map((p, i) => (<div key={i} className="flex justify-between py-2 border-b dark:border-slate-700 dark:text-gray-200"><span>{p.tipo_pago.nombre}</span><span className="font-semibold">Bs. {p.monto.toFixed(2)}</span></div>))}
-                        <div className="flex justify-between py-2 text-lg font-bold bg-blue-50 dark:bg-blue-900 px-4 rounded mt-4 dark:text-blue-100"><span>Total</span><span>Bs. {egreso.total.toFixed(2)}</span></div>
+                        {egreso.detalles_pago.map((p, i) => (<div key={i} className="flex justify-between py-2 border-b dark:border-slate-700 dark:text-gray-200"><span>{p.tipo_pago.nombre}</span><span className="font-semibold">Bs. {parseFloat(String(p.monto)).toFixed(2)}</span></div>))}
+                        <div className="flex justify-between py-2 text-lg font-bold bg-blue-50 dark:bg-blue-900 px-4 rounded mt-4 dark:text-blue-100"><span>Total</span><span>Bs. {parseFloat(String(egreso.total)).toFixed(2)}</span></div>
                     </div>
                 </div>
 
