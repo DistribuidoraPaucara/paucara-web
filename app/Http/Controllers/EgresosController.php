@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Egreso;
 use App\Models\TipoOperacionCaja;
 use App\Models\TipoPago;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
