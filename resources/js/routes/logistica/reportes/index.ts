@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteCargoListController::index
  * @see app/Http/Controllers/ReporteCargoListController.php:31
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCargoListController::index
- * @see app/Http/Controllers/ReporteCargoListController.php:31
- * @route '/logistica/reportes'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\EntregaController::choferEntregas
  * @see app/Http/Controllers/EntregaController.php:2696
@@ -119,42 +84,6 @@ choferEntregas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     url: choferEntregas.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2696
- * @route '/logistica/reportes/chofer-entregas'
- */
-    const choferEntregasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: choferEntregas.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2696
- * @route '/logistica/reportes/chofer-entregas'
- */
-        choferEntregasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferEntregas.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EntregaController::choferEntregas
- * @see app/Http/Controllers/EntregaController.php:2696
- * @route '/logistica/reportes/chofer-entregas'
- */
-        choferEntregasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferEntregas.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    choferEntregas.form = choferEntregasForm
 const reportes = {
     index,
 choferEntregas,

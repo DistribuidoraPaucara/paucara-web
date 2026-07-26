@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ConfiguracionSitioController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\EstadosLogisticaController;
 use App\Http\Controllers\EstadosDocumentoController;
@@ -110,6 +111,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     require __DIR__ . '/permisos.php';
 
     Route::resource('categorias', CategoriaController::class)->middleware('permission:categorias.manage');
+    Route::get('configuracion-sitio', [ConfiguracionSitioController::class, 'index'])->middleware('permission:empresas.manage')->name('configuracion-sitio.index');
+    Route::get('configuracion-sitio/editar', [ConfiguracionSitioController::class, 'edit'])->middleware('permission:empresas.manage')->name('configuracion-sitio.edit');
+    Route::post('configuracion-sitio', [ConfiguracionSitioController::class, 'update'])->middleware('permission:empresas.manage')->name('configuracion-sitio.update');
     Route::resource('estados-logistica', EstadosLogisticaController::class)->middleware('permission:estados-logistica.manage');
     Route::resource('estados-documento', EstadosDocumentoController::class)->middleware('permission:estados-documento.manage');
     Route::resource('tipo-operacion-caja', TipoOperacionCajaController::class);

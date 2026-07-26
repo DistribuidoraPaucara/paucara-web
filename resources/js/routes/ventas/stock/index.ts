@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\VentaController::verificar
  * @see app/Http/Controllers/VentaController.php:1730
@@ -33,27 +33,6 @@ verificar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\VentaController::verificar
- * @see app/Http/Controllers/VentaController.php:1730
- * @route '/ventas/stock/verificar'
- */
-    const verificarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: verificar.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::verificar
- * @see app/Http/Controllers/VentaController.php:1730
- * @route '/ventas/stock/verificar'
- */
-        verificarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: verificar.url(options),
-            method: 'post',
-        })
-    
-    verificar.form = verificarForm
 /**
 * @see \App\Http\Controllers\VentaController::producto
  * @see app/Http/Controllers/VentaController.php:1692
@@ -121,41 +100,6 @@ producto.head = (args: { producto: number | { id: number } } | [producto: number
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\VentaController::producto
- * @see app/Http/Controllers/VentaController.php:1692
- * @route '/ventas/stock/producto/{producto}'
- */
-    const productoForm = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: producto.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::producto
- * @see app/Http/Controllers/VentaController.php:1692
- * @route '/ventas/stock/producto/{producto}'
- */
-        productoForm.get = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: producto.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaController::producto
- * @see app/Http/Controllers/VentaController.php:1692
- * @route '/ventas/stock/producto/{producto}'
- */
-        productoForm.head = (args: { producto: number | { id: number } } | [producto: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: producto.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    producto.form = productoForm
 /**
 * @see \App\Http\Controllers\VentaController::bajo
  * @see app/Http/Controllers/VentaController.php:1659
@@ -199,41 +143,6 @@ bajo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\VentaController::bajo
- * @see app/Http/Controllers/VentaController.php:1659
- * @route '/ventas/stock/bajo'
- */
-    const bajoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: bajo.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::bajo
- * @see app/Http/Controllers/VentaController.php:1659
- * @route '/ventas/stock/bajo'
- */
-        bajoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: bajo.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaController::bajo
- * @see app/Http/Controllers/VentaController.php:1659
- * @route '/ventas/stock/bajo'
- */
-        bajoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: bajo.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    bajo.form = bajoForm
 /**
 * @see \App\Http\Controllers\VentaController::resumen
  * @see app/Http/Controllers/VentaController.php:0
@@ -295,42 +204,6 @@ resumen.head = (args: { venta: string | number } | [venta: string | number ] | s
     url: resumen.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\VentaController::resumen
- * @see app/Http/Controllers/VentaController.php:0
- * @route '/ventas/{venta}/stock/resumen'
- */
-    const resumenForm = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: resumen.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::resumen
- * @see app/Http/Controllers/VentaController.php:0
- * @route '/ventas/{venta}/stock/resumen'
- */
-        resumenForm.get = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: resumen.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaController::resumen
- * @see app/Http/Controllers/VentaController.php:0
- * @route '/ventas/{venta}/stock/resumen'
- */
-        resumenForm.head = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: resumen.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    resumen.form = resumenForm
 const stock = {
     verificar,
 producto,

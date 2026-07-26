@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteVentasController::disponibles
  * @see app/Http/Controllers/ReporteVentasController.php:953
@@ -41,42 +41,6 @@ disponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: disponibles.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:953
- * @route '/api/ventas/impresoras/disponibles'
- */
-    const disponiblesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: disponibles.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:953
- * @route '/api/ventas/impresoras/disponibles'
- */
-        disponiblesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: disponibles.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteVentasController::disponibles
- * @see app/Http/Controllers/ReporteVentasController.php:953
- * @route '/api/ventas/impresoras/disponibles'
- */
-        disponiblesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: disponibles.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    disponibles.form = disponiblesForm
 const impresoras = {
     disponibles,
 }

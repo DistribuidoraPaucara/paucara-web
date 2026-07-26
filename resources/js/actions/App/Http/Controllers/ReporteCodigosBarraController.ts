@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteCodigosBarraController::productosSinCodigo
  * @see app/Http/Controllers/ReporteCodigosBarraController.php:22
@@ -42,41 +42,6 @@ productosSinCodigo.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::productosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:22
- * @route '/reportes/codigos-barra/productos-sin-codigo'
- */
-    const productosSinCodigoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: productosSinCodigo.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::productosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:22
- * @route '/reportes/codigos-barra/productos-sin-codigo'
- */
-        productosSinCodigoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: productosSinCodigo.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::productosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:22
- * @route '/reportes/codigos-barra/productos-sin-codigo'
- */
-        productosSinCodigoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: productosSinCodigo.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    productosSinCodigo.form = productosSinCodigoForm
 /**
 * @see \App\Http\Controllers\ReporteCodigosBarraController::codigosDuplicadosInactivos
  * @see app/Http/Controllers/ReporteCodigosBarraController.php:78
@@ -120,41 +85,6 @@ codigosDuplicadosInactivos.head = (options?: RouteQueryOptions): RouteDefinition
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::codigosDuplicadosInactivos
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:78
- * @route '/reportes/codigos-barra/duplicados-inactivos'
- */
-    const codigosDuplicadosInactivosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: codigosDuplicadosInactivos.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::codigosDuplicadosInactivos
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:78
- * @route '/reportes/codigos-barra/duplicados-inactivos'
- */
-        codigosDuplicadosInactivosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: codigosDuplicadosInactivos.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::codigosDuplicadosInactivos
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:78
- * @route '/reportes/codigos-barra/duplicados-inactivos'
- */
-        codigosDuplicadosInactivosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: codigosDuplicadosInactivos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    codigosDuplicadosInactivos.form = codigosDuplicadosInactivosForm
 /**
 * @see \App\Http\Controllers\ReporteCodigosBarraController::historialCambios
  * @see app/Http/Controllers/ReporteCodigosBarraController.php:155
@@ -198,41 +128,6 @@ historialCambios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::historialCambios
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:155
- * @route '/reportes/codigos-barra/historial-cambios'
- */
-    const historialCambiosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: historialCambios.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::historialCambios
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:155
- * @route '/reportes/codigos-barra/historial-cambios'
- */
-        historialCambiosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: historialCambios.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::historialCambios
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:155
- * @route '/reportes/codigos-barra/historial-cambios'
- */
-        historialCambiosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: historialCambios.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    historialCambios.form = historialCambiosForm
 /**
 * @see \App\Http\Controllers\ReporteCodigosBarraController::descargarProductosSinCodigo
  * @see app/Http/Controllers/ReporteCodigosBarraController.php:229
@@ -276,41 +171,6 @@ descargarProductosSinCodigo.head = (options?: RouteQueryOptions): RouteDefinitio
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarProductosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:229
- * @route '/reportes/codigos-barra/descargar/productos-sin-codigo'
- */
-    const descargarProductosSinCodigoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: descargarProductosSinCodigo.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarProductosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:229
- * @route '/reportes/codigos-barra/descargar/productos-sin-codigo'
- */
-        descargarProductosSinCodigoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarProductosSinCodigo.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarProductosSinCodigo
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:229
- * @route '/reportes/codigos-barra/descargar/productos-sin-codigo'
- */
-        descargarProductosSinCodigoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarProductosSinCodigo.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    descargarProductosSinCodigo.form = descargarProductosSinCodigoForm
 /**
 * @see \App\Http\Controllers\ReporteCodigosBarraController::descargarHistorial
  * @see app/Http/Controllers/ReporteCodigosBarraController.php:253
@@ -353,42 +213,6 @@ descargarHistorial.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     url: descargarHistorial.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarHistorial
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:253
- * @route '/reportes/codigos-barra/descargar/historial'
- */
-    const descargarHistorialForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: descargarHistorial.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarHistorial
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:253
- * @route '/reportes/codigos-barra/descargar/historial'
- */
-        descargarHistorialForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarHistorial.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ReporteCodigosBarraController::descargarHistorial
- * @see app/Http/Controllers/ReporteCodigosBarraController.php:253
- * @route '/reportes/codigos-barra/descargar/historial'
- */
-        descargarHistorialForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarHistorial.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    descargarHistorial.form = descargarHistorialForm
 const ReporteCodigosBarraController = { productosSinCodigo, codigosDuplicadosInactivos, historialCambios, descargarProductosSinCodigo, descargarHistorial }
 
 export default ReporteCodigosBarraController

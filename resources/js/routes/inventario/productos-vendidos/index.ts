@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ImpresionProductosVendidosController::imprimir
  * @see app/Http/Controllers/ImpresionProductosVendidosController.php:18
@@ -41,42 +41,6 @@ imprimir.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: imprimir.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ImpresionProductosVendidosController::imprimir
- * @see app/Http/Controllers/ImpresionProductosVendidosController.php:18
- * @route '/inventario/productos-vendidos/imprimir'
- */
-    const imprimirForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ImpresionProductosVendidosController::imprimir
- * @see app/Http/Controllers/ImpresionProductosVendidosController.php:18
- * @route '/inventario/productos-vendidos/imprimir'
- */
-        imprimirForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ImpresionProductosVendidosController::imprimir
- * @see app/Http/Controllers/ImpresionProductosVendidosController.php:18
- * @route '/inventario/productos-vendidos/imprimir'
- */
-        imprimirForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 const productosVendidos = {
     imprimir,
 }

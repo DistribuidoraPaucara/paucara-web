@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AsientoContableController::libroMayor
  * @see app/Http/Controllers/AsientoContableController.php:103
@@ -42,41 +42,6 @@ libroMayor.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\AsientoContableController::libroMayor
- * @see app/Http/Controllers/AsientoContableController.php:103
- * @route '/contabilidad/reportes/libro-mayor'
- */
-    const libroMayorForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: libroMayor.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AsientoContableController::libroMayor
- * @see app/Http/Controllers/AsientoContableController.php:103
- * @route '/contabilidad/reportes/libro-mayor'
- */
-        libroMayorForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: libroMayor.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AsientoContableController::libroMayor
- * @see app/Http/Controllers/AsientoContableController.php:103
- * @route '/contabilidad/reportes/libro-mayor'
- */
-        libroMayorForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: libroMayor.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    libroMayor.form = libroMayorForm
 /**
 * @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
  * @see app/Http/Controllers/AsientoContableController.php:169
@@ -119,42 +84,6 @@ balanceComprobacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     url: balanceComprobacion.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
- * @see app/Http/Controllers/AsientoContableController.php:169
- * @route '/contabilidad/reportes/balance-comprobacion'
- */
-    const balanceComprobacionForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: balanceComprobacion.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
- * @see app/Http/Controllers/AsientoContableController.php:169
- * @route '/contabilidad/reportes/balance-comprobacion'
- */
-        balanceComprobacionForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: balanceComprobacion.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AsientoContableController::balanceComprobacion
- * @see app/Http/Controllers/AsientoContableController.php:169
- * @route '/contabilidad/reportes/balance-comprobacion'
- */
-        balanceComprobacionForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: balanceComprobacion.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    balanceComprobacion.form = balanceComprobacionForm
 const reportes = {
     libroMayor,
 balanceComprobacion,

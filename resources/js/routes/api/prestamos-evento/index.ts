@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 import devoluciones from './devoluciones'
 import devolucion from './devolucion'
 /**
@@ -67,42 +67,6 @@ imprimir.head = (args: { prestamo: number | { id: number } } | [prestamo: number
     url: imprimir.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:671
- * @route '/api/prestamos-evento/{prestamo}/imprimir'
- */
-    const imprimirForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:671
- * @route '/api/prestamos-evento/{prestamo}/imprimir'
- */
-        imprimirForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoEventoController::imprimir
- * @see app/Http/Controllers/PrestamoEventoController.php:671
- * @route '/api/prestamos-evento/{prestamo}/imprimir'
- */
-        imprimirForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 const prestamosEvento = {
     imprimir,
 devoluciones,

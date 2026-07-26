@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark'=> ($appearance ?? 'system') == 'dark'])>
 <head>
+    {{-- ===================================================
+         Datos de empresa desde BD (disponible en todo el head)
+         =================================================== --}}
+    @php
+        $empresa        = \App\Models\Empresa::principal();
+        $appName        = $empresa?->nombre_comercial ?? $empresa?->razon_social ?? config('app.name', 'App');
+        $faviconVersion = $empresa && $empresa->fav_ico ? md5($empresa->updated_at->timestamp) : '';
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=auto, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -16,7 +24,7 @@
             websocketUrl: wsUrl,
             apiUrl: "{{ env('VITE_API_URL', '/api') }}"
         };
-        window.__APP_NAME__ = "{{ config('app.name', 'Laravel') }}";
+        window.__APP_NAME__ = "{{ $appName }}";
     </script>
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
@@ -46,13 +54,19 @@
         }
     </style>
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+
+    <title inertia>{{ $appName }}</title>
+
+    {{-- Meta descripción desde BD --}}
+    @if($empresa?->mensaje_footer)
+        <meta name="description" content="{{ Str::limit(strip_tags($empresa->mensaje_footer), 160) }}">
+    @endif
+
+    {{-- PWA / Mobile: nombre de la app --}}
+    <meta name="application-name"            content="{{ $appName }}">
+    <meta name="apple-mobile-web-app-title"  content="{{ $appName }}">
 
     {{-- Favicon dinámico desde BD con versioning para evitar caché --}}
-    @php
-        $empresa = \App\Models\Empresa::principal();
-        $faviconVersion = $empresa && $empresa->fav_ico ? md5($empresa->updated_at->timestamp) : '';
-    @endphp
     <link rel="icon" href="/dynamic-favicon{{ $faviconVersion ? '?v=' . $faviconVersion : '' }}" sizes="any">
     <link rel="icon" href="{{ env('FAVICON_SVG', '/favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ env('APPLE_TOUCH_ICON', '/apple-touch-icon.png') }}">

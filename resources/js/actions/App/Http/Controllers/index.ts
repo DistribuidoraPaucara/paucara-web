@@ -47,6 +47,7 @@ import PublicStockController from './PublicStockController'
 import DashboardController from './DashboardController'
 import RoleController from './RoleController'
 import CategoriaController from './CategoriaController'
+import ConfiguracionSitioController from './ConfiguracionSitioController'
 import EstadosLogisticaController from './EstadosLogisticaController'
 import EstadosDocumentoController from './EstadosDocumentoController'
 import MarcaController from './MarcaController'
@@ -158,6 +159,7 @@ PublicStockController,
 DashboardController,
 RoleController,
 CategoriaController,
+ConfiguracionSitioController,
 EstadosLogisticaController,
 EstadosDocumentoController,
 MarcaController,

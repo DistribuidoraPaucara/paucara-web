@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::index
  * @see app/Http/Controllers/ModuloSidebarController.php:16
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::index
- * @see app/Http/Controllers/ModuloSidebarController.php:16
- * @route '/modulos-sidebar'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::index
- * @see app/Http/Controllers/ModuloSidebarController.php:16
- * @route '/modulos-sidebar'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::index
- * @see app/Http/Controllers/ModuloSidebarController.php:16
- * @route '/modulos-sidebar'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::create
  * @see app/Http/Controllers/ModuloSidebarController.php:55
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::create
- * @see app/Http/Controllers/ModuloSidebarController.php:55
- * @route '/modulos-sidebar/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::create
- * @see app/Http/Controllers/ModuloSidebarController.php:55
- * @route '/modulos-sidebar/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::create
- * @see app/Http/Controllers/ModuloSidebarController.php:55
- * @route '/modulos-sidebar/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::store
  * @see app/Http/Controllers/ModuloSidebarController.php:73
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::store
- * @see app/Http/Controllers/ModuloSidebarController.php:73
- * @route '/modulos-sidebar'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::store
- * @see app/Http/Controllers/ModuloSidebarController.php:73
- * @route '/modulos-sidebar'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::show
  * @see app/Http/Controllers/ModuloSidebarController.php:100
@@ -277,41 +186,6 @@ show.head = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::show
- * @see app/Http/Controllers/ModuloSidebarController.php:100
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-    const showForm = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::show
- * @see app/Http/Controllers/ModuloSidebarController.php:100
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-        showForm.get = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::show
- * @see app/Http/Controllers/ModuloSidebarController.php:100
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-        showForm.head = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::edit
  * @see app/Http/Controllers/ModuloSidebarController.php:112
@@ -379,41 +253,6 @@ edit.head = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::edit
- * @see app/Http/Controllers/ModuloSidebarController.php:112
- * @route '/modulos-sidebar/{moduloSidebar}/edit'
- */
-    const editForm = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::edit
- * @see app/Http/Controllers/ModuloSidebarController.php:112
- * @route '/modulos-sidebar/{moduloSidebar}/edit'
- */
-        editForm.get = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::edit
- * @see app/Http/Controllers/ModuloSidebarController.php:112
- * @route '/modulos-sidebar/{moduloSidebar}/edit'
- */
-        editForm.head = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::update
  * @see app/Http/Controllers/ModuloSidebarController.php:186
@@ -481,51 +320,6 @@ update.patch = (args: { moduloSidebar: number | { id: number } } | [moduloSideba
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::update
- * @see app/Http/Controllers/ModuloSidebarController.php:186
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-    const updateForm = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::update
- * @see app/Http/Controllers/ModuloSidebarController.php:186
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-        updateForm.put = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::update
- * @see app/Http/Controllers/ModuloSidebarController.php:186
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-        updateForm.patch = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::destroy
  * @see app/Http/Controllers/ModuloSidebarController.php:218
@@ -584,37 +378,6 @@ destroy.delete = (args: { moduloSidebar: number | { id: number } } | [moduloSide
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::destroy
- * @see app/Http/Controllers/ModuloSidebarController.php:218
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-    const destroyForm = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::destroy
- * @see app/Http/Controllers/ModuloSidebarController.php:218
- * @route '/modulos-sidebar/{moduloSidebar}'
- */
-        destroyForm.delete = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::actualizarOrden
  * @see app/Http/Controllers/ModuloSidebarController.php:251
@@ -649,27 +412,6 @@ actualizarOrden.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =>
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::actualizarOrden
- * @see app/Http/Controllers/ModuloSidebarController.php:251
- * @route '/modulos-sidebar/actualizar-orden'
- */
-    const actualizarOrdenForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: actualizarOrden.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::actualizarOrden
- * @see app/Http/Controllers/ModuloSidebarController.php:251
- * @route '/modulos-sidebar/actualizar-orden'
- */
-        actualizarOrdenForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: actualizarOrden.url(options),
-            method: 'post',
-        })
-    
-    actualizarOrden.form = actualizarOrdenForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::toggleActivo
  * @see app/Http/Controllers/ModuloSidebarController.php:270
@@ -728,37 +470,6 @@ toggleActivo.patch = (args: { moduloSidebar: number | { id: number } } | [modulo
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::toggleActivo
- * @see app/Http/Controllers/ModuloSidebarController.php:270
- * @route '/modulos-sidebar/{moduloSidebar}/toggle-activo'
- */
-    const toggleActivoForm = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: toggleActivo.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::toggleActivo
- * @see app/Http/Controllers/ModuloSidebarController.php:270
- * @route '/modulos-sidebar/{moduloSidebar}/toggle-activo'
- */
-        toggleActivoForm.patch = (args: { moduloSidebar: number | { id: number } } | [moduloSidebar: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: toggleActivo.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    toggleActivo.form = toggleActivoForm
 /**
 * @see \App\Http\Controllers\ModuloSidebarController::bulkUpdate
  * @see app/Http/Controllers/ModuloSidebarController.php:685
@@ -792,28 +503,6 @@ bulkUpdate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: bulkUpdate.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\ModuloSidebarController::bulkUpdate
- * @see app/Http/Controllers/ModuloSidebarController.php:685
- * @route '/modulos-sidebar/bulk-update'
- */
-    const bulkUpdateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: bulkUpdate.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\ModuloSidebarController::bulkUpdate
- * @see app/Http/Controllers/ModuloSidebarController.php:685
- * @route '/modulos-sidebar/bulk-update'
- */
-        bulkUpdateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: bulkUpdate.url(options),
-            method: 'post',
-        })
-    
-    bulkUpdate.form = bulkUpdateForm
 const modulosSidebar = {
     index,
 create,

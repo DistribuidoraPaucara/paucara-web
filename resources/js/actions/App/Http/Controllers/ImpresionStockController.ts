@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ImpresionStockController::imprimir
  * @see app/Http/Controllers/ImpresionStockController.php:17
@@ -42,41 +42,6 @@ imprimir.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ImpresionStockController::imprimir
- * @see app/Http/Controllers/ImpresionStockController.php:17
- * @route '/stock/imprimir'
- */
-    const imprimirForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ImpresionStockController::imprimir
- * @see app/Http/Controllers/ImpresionStockController.php:17
- * @route '/stock/imprimir'
- */
-        imprimirForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ImpresionStockController::imprimir
- * @see app/Http/Controllers/ImpresionStockController.php:17
- * @route '/stock/imprimir'
- */
-        imprimirForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\ImpresionStockController::preview
  * @see app/Http/Controllers/ImpresionStockController.php:106
@@ -119,42 +84,6 @@ preview.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: preview.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ImpresionStockController::preview
- * @see app/Http/Controllers/ImpresionStockController.php:106
- * @route '/stock/preview'
- */
-    const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: preview.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ImpresionStockController::preview
- * @see app/Http/Controllers/ImpresionStockController.php:106
- * @route '/stock/preview'
- */
-        previewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ImpresionStockController::preview
- * @see app/Http/Controllers/ImpresionStockController.php:106
- * @route '/stock/preview'
- */
-        previewForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: preview.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    preview.form = previewForm
 const ImpresionStockController = { imprimir, preview }
 
 export default ImpresionStockController

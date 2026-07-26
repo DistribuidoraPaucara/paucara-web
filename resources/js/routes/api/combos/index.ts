@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ComboController::capacidad
  * @see app/Http/Controllers/ComboController.php:457
@@ -66,41 +66,6 @@ capacidad.head = (args: { combo: number | { id: number } } | [combo: number | { 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-    const capacidadForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidad.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-        capacidadForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidad
- * @see app/Http/Controllers/ComboController.php:457
- * @route '/api/combos/{combo}/capacidad'
- */
-        capacidadForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidad.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidad.form = capacidadForm
 /**
 * @see \App\Http\Controllers\ComboController::capacidadDetalles
  * @see app/Http/Controllers/ComboController.php:481
@@ -167,42 +132,6 @@ capacidadDetalles.head = (args: { combo: number | { id: number } } | [combo: num
     url: capacidadDetalles.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-    const capacidadDetallesForm = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: capacidadDetalles.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetallesForm.get = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetalles.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\ComboController::capacidadDetalles
- * @see app/Http/Controllers/ComboController.php:481
- * @route '/api/combos/{combo}/capacidad-detalles'
- */
-        capacidadDetallesForm.head = (args: { combo: number | { id: number } } | [combo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: capacidadDetalles.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    capacidadDetalles.form = capacidadDetallesForm
 const combos = {
     capacidad,
 capacidadDetalles,

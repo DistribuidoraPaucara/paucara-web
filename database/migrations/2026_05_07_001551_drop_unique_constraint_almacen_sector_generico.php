@@ -11,9 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sectores', function (Blueprint $table) {
-            $table->dropUnique('uq_almacen_sector_generico');
-        });
+        // Solo eliminamos la restricción si existe en la BD (PostgreSQL)
+        $exists = \DB::select("
+            SELECT 1
+            FROM information_schema.table_constraints
+            WHERE table_name = 'sectores'
+              AND constraint_name = 'uq_almacen_sector_generico'
+        ");
+
+        if ($exists) {
+            Schema::table('sectores', function (Blueprint $table) {
+                $table->dropUnique('uq_almacen_sector_generico');
+            });
+        }
     }
 
     /**

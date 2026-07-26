@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::index
  * @see app/Http/Controllers/PrestamoVendidoController.php:25
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::index
- * @see app/Http/Controllers/PrestamoVendidoController.php:25
- * @route '/api/prestamos-vendidos'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::index
- * @see app/Http/Controllers/PrestamoVendidoController.php:25
- * @route '/api/prestamos-vendidos'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::index
- * @see app/Http/Controllers/PrestamoVendidoController.php:25
- * @route '/api/prestamos-vendidos'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::store
  * @see app/Http/Controllers/PrestamoVendidoController.php:121
@@ -111,27 +76,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::store
- * @see app/Http/Controllers/PrestamoVendidoController.php:121
- * @route '/api/prestamos-vendidos'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::store
- * @see app/Http/Controllers/PrestamoVendidoController.php:121
- * @route '/api/prestamos-vendidos'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::show
  * @see app/Http/Controllers/PrestamoVendidoController.php:99
@@ -199,41 +143,6 @@ show.head = (args: { venta: number | { id: number } } | [venta: number | { id: n
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:99
- * @route '/api/prestamos-vendidos/{venta}'
- */
-    const showForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:99
- * @route '/api/prestamos-vendidos/{venta}'
- */
-        showForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::show
- * @see app/Http/Controllers/PrestamoVendidoController.php:99
- * @route '/api/prestamos-vendidos/{venta}'
- */
-        showForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::agregarDetalle
  * @see app/Http/Controllers/PrestamoVendidoController.php:179
@@ -292,27 +201,6 @@ agregarDetalle.post = (args: { venta: number | { id: number } } | [venta: number
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::agregarDetalle
- * @see app/Http/Controllers/PrestamoVendidoController.php:179
- * @route '/api/prestamos-vendidos/{venta}/agregar-detalle'
- */
-    const agregarDetalleForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: agregarDetalle.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::agregarDetalle
- * @see app/Http/Controllers/PrestamoVendidoController.php:179
- * @route '/api/prestamos-vendidos/{venta}/agregar-detalle'
- */
-        agregarDetalleForm.post = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: agregarDetalle.url(args, options),
-            method: 'post',
-        })
-    
-    agregarDetalle.form = agregarDetalleForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::eliminarDetalle
  * @see app/Http/Controllers/PrestamoVendidoController.php:229
@@ -368,37 +256,6 @@ eliminarDetalle.delete = (args: { venta: number | { id: number }, detalle: numbe
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::eliminarDetalle
- * @see app/Http/Controllers/PrestamoVendidoController.php:229
- * @route '/api/prestamos-vendidos/{venta}/detalles/{detalle}'
- */
-    const eliminarDetalleForm = (args: { venta: number | { id: number }, detalle: number | { id: number } } | [venta: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: eliminarDetalle.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::eliminarDetalle
- * @see app/Http/Controllers/PrestamoVendidoController.php:229
- * @route '/api/prestamos-vendidos/{venta}/detalles/{detalle}'
- */
-        eliminarDetalleForm.delete = (args: { venta: number | { id: number }, detalle: number | { id: number } } | [venta: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: eliminarDetalle.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    eliminarDetalle.form = eliminarDetalleForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::confirmar
  * @see app/Http/Controllers/PrestamoVendidoController.php:264
@@ -457,27 +314,6 @@ confirmar.post = (args: { venta: number | { id: number } } | [venta: number | { 
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::confirmar
- * @see app/Http/Controllers/PrestamoVendidoController.php:264
- * @route '/api/prestamos-vendidos/{venta}/confirmar'
- */
-    const confirmarForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: confirmar.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::confirmar
- * @see app/Http/Controllers/PrestamoVendidoController.php:264
- * @route '/api/prestamos-vendidos/{venta}/confirmar'
- */
-        confirmarForm.post = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: confirmar.url(args, options),
-            method: 'post',
-        })
-    
-    confirmar.form = confirmarForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::cancelar
  * @see app/Http/Controllers/PrestamoVendidoController.php:292
@@ -536,27 +372,6 @@ cancelar.post = (args: { venta: number | { id: number } } | [venta: number | { i
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::cancelar
- * @see app/Http/Controllers/PrestamoVendidoController.php:292
- * @route '/api/prestamos-vendidos/{venta}/cancelar'
- */
-    const cancelarForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancelar.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::cancelar
- * @see app/Http/Controllers/PrestamoVendidoController.php:292
- * @route '/api/prestamos-vendidos/{venta}/cancelar'
- */
-        cancelarForm.post = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancelar.url(args, options),
-            method: 'post',
-        })
-    
-    cancelar.form = cancelarForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::imprimir
  * @see app/Http/Controllers/PrestamoVendidoController.php:326
@@ -624,41 +439,6 @@ imprimir.head = (args: { venta: number | { id: number } } | [venta: number | { i
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::imprimir
- * @see app/Http/Controllers/PrestamoVendidoController.php:326
- * @route '/api/prestamos-vendidos/{venta}/imprimir'
- */
-    const imprimirForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: imprimir.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::imprimir
- * @see app/Http/Controllers/PrestamoVendidoController.php:326
- * @route '/api/prestamos-vendidos/{venta}/imprimir'
- */
-        imprimirForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::imprimir
- * @see app/Http/Controllers/PrestamoVendidoController.php:326
- * @route '/api/prestamos-vendidos/{venta}/imprimir'
- */
-        imprimirForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: imprimir.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::descargarPdf
  * @see app/Http/Controllers/PrestamoVendidoController.php:357
@@ -726,41 +506,6 @@ descargarPdf.head = (args: { venta: number | { id: number } } | [venta: number |
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::descargarPdf
- * @see app/Http/Controllers/PrestamoVendidoController.php:357
- * @route '/api/prestamos-vendidos/{venta}/descargar-pdf'
- */
-    const descargarPdfForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: descargarPdf.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::descargarPdf
- * @see app/Http/Controllers/PrestamoVendidoController.php:357
- * @route '/api/prestamos-vendidos/{venta}/descargar-pdf'
- */
-        descargarPdfForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarPdf.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::descargarPdf
- * @see app/Http/Controllers/PrestamoVendidoController.php:357
- * @route '/api/prestamos-vendidos/{venta}/descargar-pdf'
- */
-        descargarPdfForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: descargarPdf.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    descargarPdf.form = descargarPdfForm
 /**
 * @see \App\Http\Controllers\PrestamoVendidoController::showWeb
  * @see app/Http/Controllers/PrestamoVendidoController.php:78
@@ -827,42 +572,6 @@ showWeb.head = (args: { venta: number | { id: number } } | [venta: number | { id
     url: showWeb.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\PrestamoVendidoController::showWeb
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-    const showWebForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: showWeb.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::showWeb
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-        showWebForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showWeb.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PrestamoVendidoController::showWeb
- * @see app/Http/Controllers/PrestamoVendidoController.php:78
- * @route '/prestamos/ventas/{venta}'
- */
-        showWebForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: showWeb.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    showWeb.form = showWebForm
 const PrestamoVendidoController = { index, store, show, agregarDetalle, eliminarDetalle, confirmar, cancelar, imprimir, descargarPdf, showWeb }
 
 export default PrestamoVendidoController

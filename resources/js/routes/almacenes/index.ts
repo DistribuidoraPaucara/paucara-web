@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\AlmacenController::index
  * @see app/Http/Controllers/AlmacenController.php:52
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::index
- * @see app/Http/Controllers/AlmacenController.php:52
- * @route '/almacenes'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::index
- * @see app/Http/Controllers/AlmacenController.php:52
- * @route '/almacenes'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AlmacenController::index
- * @see app/Http/Controllers/AlmacenController.php:52
- * @route '/almacenes'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\AlmacenController::create
  * @see app/Http/Controllers/AlmacenController.php:162
@@ -120,41 +85,6 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::create
- * @see app/Http/Controllers/AlmacenController.php:162
- * @route '/almacenes/create'
- */
-    const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: create.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::create
- * @see app/Http/Controllers/AlmacenController.php:162
- * @route '/almacenes/create'
- */
-        createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AlmacenController::create
- * @see app/Http/Controllers/AlmacenController.php:162
- * @route '/almacenes/create'
- */
-        createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: create.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    create.form = createForm
 /**
 * @see \App\Http\Controllers\AlmacenController::store
  * @see app/Http/Controllers/AlmacenController.php:177
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::store
- * @see app/Http/Controllers/AlmacenController.php:177
- * @route '/almacenes'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::store
- * @see app/Http/Controllers/AlmacenController.php:177
- * @route '/almacenes'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\AlmacenController::show
  * @see app/Http/Controllers/AlmacenController.php:0
@@ -272,41 +181,6 @@ show.head = (args: { almacene: string | number } | [almacene: string | number ] 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::show
- * @see app/Http/Controllers/AlmacenController.php:0
- * @route '/almacenes/{almacene}'
- */
-    const showForm = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::show
- * @see app/Http/Controllers/AlmacenController.php:0
- * @route '/almacenes/{almacene}'
- */
-        showForm.get = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AlmacenController::show
- * @see app/Http/Controllers/AlmacenController.php:0
- * @route '/almacenes/{almacene}'
- */
-        showForm.head = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\AlmacenController::edit
  * @see app/Http/Controllers/AlmacenController.php:203
@@ -369,41 +243,6 @@ edit.head = (args: { almacene: string | number } | [almacene: string | number ] 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::edit
- * @see app/Http/Controllers/AlmacenController.php:203
- * @route '/almacenes/{almacene}/edit'
- */
-    const editForm = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::edit
- * @see app/Http/Controllers/AlmacenController.php:203
- * @route '/almacenes/{almacene}/edit'
- */
-        editForm.get = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\AlmacenController::edit
- * @see app/Http/Controllers/AlmacenController.php:203
- * @route '/almacenes/{almacene}/edit'
- */
-        editForm.head = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Http\Controllers\AlmacenController::update
  * @see app/Http/Controllers/AlmacenController.php:222
@@ -466,51 +305,6 @@ update.patch = (args: { almacene: string | number } | [almacene: string | number
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\AlmacenController::update
- * @see app/Http/Controllers/AlmacenController.php:222
- * @route '/almacenes/{almacene}'
- */
-    const updateForm = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::update
- * @see app/Http/Controllers/AlmacenController.php:222
- * @route '/almacenes/{almacene}'
- */
-        updateForm.put = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\AlmacenController::update
- * @see app/Http/Controllers/AlmacenController.php:222
- * @route '/almacenes/{almacene}'
- */
-        updateForm.patch = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\AlmacenController::destroy
  * @see app/Http/Controllers/AlmacenController.php:244
@@ -563,38 +357,6 @@ destroy.delete = (args: { almacene: string | number } | [almacene: string | numb
     url: destroy.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Http\Controllers\AlmacenController::destroy
- * @see app/Http/Controllers/AlmacenController.php:244
- * @route '/almacenes/{almacene}'
- */
-    const destroyForm = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\AlmacenController::destroy
- * @see app/Http/Controllers/AlmacenController.php:244
- * @route '/almacenes/{almacene}'
- */
-        destroyForm.delete = (args: { almacene: string | number } | [almacene: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 const almacenes = {
     index,
 create,

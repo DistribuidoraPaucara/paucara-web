@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
  * @see app/Http/Controllers/EmpleadoController.php:695
@@ -42,41 +42,6 @@ departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
- * @route '/empleados-data/departamentos'
- */
-    const departamentosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: departamentos.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
- * @route '/empleados-data/departamentos'
- */
-        departamentosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: departamentos.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
- * @route '/empleados-data/departamentos'
- */
-        departamentosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: departamentos.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    departamentos.form = departamentosForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
  * @see app/Http/Controllers/EmpleadoController.php:705
@@ -120,41 +85,6 @@ tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
- * @route '/empleados-data/tipos-contrato'
- */
-    const tiposContratoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: tiposContrato.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
- * @route '/empleados-data/tipos-contrato'
- */
-        tiposContratoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: tiposContrato.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
- * @route '/empleados-data/tipos-contrato'
- */
-        tiposContratoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: tiposContrato.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    tiposContrato.form = tiposContratoForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::estados
  * @see app/Http/Controllers/EmpleadoController.php:714
@@ -198,41 +128,6 @@ estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
- * @route '/empleados-data/estados'
- */
-    const estadosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: estados.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
- * @route '/empleados-data/estados'
- */
-        estadosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estados.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
- * @route '/empleados-data/estados'
- */
-        estadosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: estados.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    estados.form = estadosForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
  * @see app/Http/Controllers/EmpleadoController.php:729
@@ -276,41 +171,6 @@ supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
- * @route '/empleados-data/supervisores'
- */
-    const supervisoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: supervisores.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
- * @route '/empleados-data/supervisores'
- */
-        supervisoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: supervisores.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
- * @route '/empleados-data/supervisores'
- */
-        supervisoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: supervisores.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    supervisores.form = supervisoresForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::roles
  * @see app/Http/Controllers/EmpleadoController.php:776
@@ -354,41 +214,6 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
- * @route '/empleados-data/roles'
- */
-    const rolesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: roles.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
- * @route '/empleados-data/roles'
- */
-        rolesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: roles.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
- * @route '/empleados-data/roles'
- */
-        rolesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: roles.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    roles.form = rolesForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
  * @see app/Http/Controllers/EmpleadoController.php:902
@@ -422,28 +247,6 @@ rolSugerido.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: rolSugerido.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
- * @route '/empleados-data/rol-sugerido'
- */
-    const rolSugeridoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: rolSugerido.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
- * @route '/empleados-data/rol-sugerido'
- */
-        rolSugeridoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: rolSugerido.url(options),
-            method: 'post',
-        })
-    
-    rolSugerido.form = rolSugeridoForm
 const data = {
     departamentos,
 tiposContrato,

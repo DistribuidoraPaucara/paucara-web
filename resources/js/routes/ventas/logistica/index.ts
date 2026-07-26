@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\VentaLogisticaController::show
  * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
@@ -65,42 +65,6 @@ show.head = (args: { venta: number | { id: number } } | [venta: number | { id: n
     url: show.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-    const showForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-        showForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\VentaLogisticaController::show
- * @see app/Http/Controllers/Api/VentaLogisticaController.php:32
- * @route '/api/ventas/{venta}/logistica'
- */
-        showForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 const logistica = {
     show,
 }

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use App\Models\AperturaCaja;
+use App\Models\ConfiguracionSitio;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -41,6 +42,7 @@ class HandleInertiaRequests extends Middleware
 
         // ✅ Obtener estado de caja del usuario para mostrar en NavHeader
         $cajaStatus = $this->getCajaStatus($request->user());
+        $configuracionSitio = ConfiguracionSitio::actual();
 
         // 🔍 DEBUG: Verificar token en sesión con diagnosticos completos
         $sessionId = $request->session()->getId();
@@ -80,6 +82,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'site' => $configuracionSitio ? [
+                'nombre' => $configuracionSitio->nombre,
+                'imagen' => $configuracionSitio->imagen,
+            ] : null,
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user,

@@ -32,7 +32,7 @@ class StoreEmpresaRequest extends FormRequest
             'logo_principal' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_compacto' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
             'logo_footer' => ['nullable', 'file', 'image', 'max:4096', 'mimes:jpeg,png,jpg,gif'],
-            'fav_ico' => ['nullable', 'file', 'max:2048', 'mimes:x-icon,image/png,image/svg+xml,png,svg'],
+            'fav_ico' => ['nullable', 'file', 'max:2048', 'mimes:ico,png,svg,x-icon'],
             'mensaje_footer' => ['nullable', 'string', 'max:500'],
             'mensaje_legal' => ['nullable', 'string'],
             'activo' => ['nullable', 'boolean'],
