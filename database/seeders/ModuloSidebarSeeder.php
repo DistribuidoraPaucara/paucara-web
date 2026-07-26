@@ -448,13 +448,24 @@ class ModuloSidebarSeeder extends Seeder
                     'permisos'    => ['tipos-pago.manage'],
                 ],
             ],
+            'tipo_operacion_caja' => [
+                'modulo' => [
+                    'titulo'      => 'Tipos de Operación Caja',
+                    'ruta'        => '/tipo-operacion-caja',
+                    'icono'       => 'ArrowUpDown',
+                    'descripcion' => 'Gestión de tipos de operación de caja',
+                    'orden'       => 20,
+                    'categoria'   => 'Configuración',
+                    'permisos'    => ['tipo-operacion-caja.manage'],
+                ],
+            ],
             'tipos_documento' => [
                 'modulo' => [
                     'titulo'      => 'Tipos de Documento',
                     'ruta'        => '/tipos-documento',
                     'icono'       => 'FileText',
                     'descripcion' => 'Gestión de tipos de documento',
-                    'orden'       => 20,
+                    'orden'       => 21,
                     'categoria'   => 'Configuración',
                     'permisos'    => ['tipos_documento.manage'],
                 ],
