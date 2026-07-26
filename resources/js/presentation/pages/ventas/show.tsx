@@ -253,7 +253,13 @@ export default function VentaShow() {
                     {/* Información de la venta + Cliente */}
                     <div>
                         {/* Datos secundarios - Card unificado */}
-                        <div className="col-span-2 rounded-lg border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 p-2 dark:border-zinc-700 dark:from-zinc-800 dark:to-zinc-900">
+                        <div
+                            className="col-span-2 rounded-lg border p-2"
+                            style={{
+                                backgroundColor: venta.estado_logistica?.color ? `${venta.estado_logistica.color}26` : undefined,
+                                borderColor: venta.estado_logistica?.color ?? undefined,
+                            }}
+                        >
                             <div className="grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-6">
                                 <div>
                                     <ClienteInfo

@@ -3,22 +3,17 @@ import type { ProformaAppExterna } from '@/domain/entities/logistica';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent } from '@/presentation/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/presentation/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/presentation/components/ui/dropdown-menu';
 import { Input } from '@/presentation/components/ui/input';
 import { Link } from '@inertiajs/react';
 import {
-    AlertCircle,
     ArrowDown,
     ArrowUp,
-    CheckCircle,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
-    Clock,
     Eye,
-    FileCheck,
     Filter,
     MoreVertical,
     Pencil,
@@ -351,87 +346,27 @@ export function ProformasSection({
         return filtered;
     }, [proformas, sortField, sortDirection, dateFrom, dateTo, amountFrom, amountTo]);
 
-    // Función para obtener estilos de los botones de filtro
-    const getFilterButtonStyles = (estado: string, isActive: boolean) => {
-        const baseStyles = 'font-medium transition-all duration-200 flex items-center gap-2';
-
-        if (estado === 'TODOS') {
-            return isActive
-                ? `${baseStyles} bg-slate-900 dark:bg-slate-700 text-white border border-slate-700 dark:border-slate-500`
-                : `${baseStyles} bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700`;
-        }
-
-        const stateStyles = {
-            BORRADOR: {
-                active: 'bg-gray-500 dark:bg-gray-600 text-white border border-gray-600 dark:border-gray-700 shadow-md',
-                inactive:
-                    'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-900/50',
-            },
-            PENDIENTE: {
-                active: 'bg-yellow-500 dark:bg-yellow-600 text-white border border-yellow-600 dark:border-yellow-700 shadow-md',
-                inactive:
-                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700 hover:bg-yellow-200 dark:hover:bg-yellow-900/50',
-            },
-            APROBADA: {
-                active: 'bg-green-500 dark:bg-green-600 text-white border border-green-600 dark:border-green-700 shadow-md',
-                inactive:
-                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50',
-            },
-            RECHAZADA: {
-                active: 'bg-red-500 dark:bg-red-600 text-white border border-red-600 dark:border-red-700 shadow-md',
-                inactive:
-                    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-900/50',
-            },
-            CONVERTIDA: {
-                active: 'bg-blue-500 dark:bg-blue-600 text-white border border-blue-600 dark:border-blue-700 shadow-md',
-                inactive:
-                    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-900/50',
-            },
-            VENCIDA: {
-                active: 'bg-gray-500 dark:bg-gray-600 text-white border border-gray-600 dark:border-gray-700 shadow-md',
-                inactive:
-                    'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700',
-            },
-        };
-
-        const style = stateStyles[estado as keyof typeof stateStyles];
-        return style ? `${baseStyles} ${isActive ? style.active : style.inactive}` : baseStyles;
-    };
-
-    // Función para obtener ícono del filtro según estado
-    const getFilterIcon = (estado: string) => {
-        switch (estado) {
-            case 'BORRADOR':
-                return <Pencil className="h-4 w-4" />;
-            case 'PENDIENTE':
-                return <Clock className="h-4 w-4" />;
-            case 'APROBADA':
-                return <CheckCircle className="h-4 w-4" />;
-            case 'RECHAZADA':
-                return <XCircle className="h-4 w-4" />;
-            case 'CONVERTIDA':
-                return <FileCheck className="h-4 w-4" />;
-            case 'VENCIDA':
-                return <AlertCircle className="h-4 w-4" />;
-            case 'TODOS':
-                return <Filter className="h-4 w-4" />;
-            default:
-                return null;
-        }
-    };
-
     return (
-        <Card className="dark:border-slate-700 dark:bg-slate-900">
+        <div className="rounded-lg border bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             {/* <CardHeader>
                 <CardTitle className="dark:text-white">Pedidos</CardTitle>
             </CardHeader> */}
-            <CardContent className="space-y-2">
+            <div className="space-y-2">
                 {/* SECCIÓN 1: Búsqueda y Estado (Siempre Visible) */}
-                <div className="space-y-4 border-b pb-4 dark:border-slate-700">
+                <div className="space-y-4">
                     {/* Búsqueda */}
                     <div>
-                        <label className="block text-sm">Búsqueda</label>
-                        <div className="flex gap-2 items-end">
+                        <div className="mb-2 flex items-center justify-between border-b pb-1 dark:border-slate-700">
+                            <label className="block text-sm">Búsqueda</label>
+                            {/* ver reservas con /reservas */}
+                            <h3 className="rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                Ver reservas:{' '}
+                                <a href="/reservas" className="text-blue-500 hover:underline">
+                                    /reservas
+                                </a>
+                            </h3>
+                        </div>
+                        <div className="flex items-end gap-2">
                             <Input
                                 placeholder="Número de proforma, cliente, CI, teléfono..."
                                 value={searchInput}
@@ -483,204 +418,6 @@ export function ProformasSection({
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        {/* SECCIÓN 3: Botón para mostrar todas */}
-                        <div>
-                            <p className="text-xs dark:text-gray-300">Estado de Proforma</p>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Button
-                                    onClick={() => {
-                                        setFiltroEstadoProforma('TODOS');
-                                        setFiltroFechaEntregaSolicitadaDesde('');
-                                        setFiltroFechaEntregaSolicitadaHasta('');
-                                        setFiltroHoraEntregaSolicitadaDesde('');
-                                        setFiltroHoraEntregaSolicitadaHasta('');
-                                        setSoloVencidas(false);
-                                    }}
-                                    className="bg-indigo-600 text-xs text-white transition-all hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600"
-                                >
-                                    🔓 Mostrar TODAS
-                                </Button>
-                                {/* Filtro Vencidas */}
-                                <Button
-                                    onClick={() => setSoloVencidas(!soloVencidas)}
-                                    className={`text-xs transition-all ${
-                                        soloVencidas
-                                            ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800'
-                                            : 'border border-orange-300 bg-orange-100 text-orange-700 hover:bg-orange-200 dark:border-orange-700 dark:bg-orange-900/40 dark:text-orange-400 dark:hover:bg-orange-900/50'
-                                    }`}
-                                >
-                                    {/* <AlertCircle className="mr-1 h-4 w-4" /> */}
-                                    {soloVencidas ? '✓ Vencidas' : '⚠️ Vencidas'}
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="text-sm font-medium dark:text-gray-300">📆 Fechas de Entrega Solicitada</p>
-                            <div className="grid grid-cols-3 gap-2 md:grid-cols-3">
-                                {/* Ayer */}
-                                <Button
-                                    onClick={() => {
-                                        const d = new Date();
-                                        d.setDate(d.getDate() - 1);
-                                        const fechaStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                        setFiltroFechaEntregaSolicitadaDesde(fechaStr);
-                                        setFiltroFechaEntregaSolicitadaHasta(fechaStr);
-                                    }}
-                                    className={`p-2 text-xs transition-all ${
-                                        (() => {
-                                            const d = new Date();
-                                            d.setDate(d.getDate() - 1);
-                                            const yesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                            return filtroFechaEntregaSolicitadaDesde === yesterday && filtroFechaEntregaSolicitadaHasta === yesterday;
-                                        })()
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800'
-                                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/50'
-                                    }`}
-                                >
-                                    <span>
-                                        Ayer /{' '}
-                                        {(() => {
-                                            const d = new Date();
-                                            d.setDate(d.getDate() - 1);
-                                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                                        })()}
-                                    </span>
-                                    {/* <span className="text-xs opacity-80">
-                                    
-                                </span> */}
-                                </Button>
-
-                                {/* Hoy */}
-                                <Button
-                                    onClick={() => {
-                                        const d = new Date();
-                                        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                        setFiltroFechaEntregaSolicitadaDesde(today);
-                                        setFiltroFechaEntregaSolicitadaHasta(today);
-                                    }}
-                                    className={`text-xs transition-all ${
-                                        (() => {
-                                            const d = new Date();
-                                            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                            return filtroFechaEntregaSolicitadaDesde === today && filtroFechaEntregaSolicitadaHasta === today;
-                                        })()
-                                            ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
-                                            : 'border border-green-300 bg-green-100 text-green-700 hover:bg-green-200 dark:border-green-700 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/50'
-                                    }`}
-                                >
-                                    <span>
-                                        Hoy /{' '}
-                                        {(() => {
-                                            const d = new Date();
-                                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                                        })()}
-                                    </span>
-                                </Button>
-
-                                {/* Mañana */}
-                                <Button
-                                    onClick={() => {
-                                        const d = new Date();
-                                        d.setDate(d.getDate() + 1);
-                                        const fechaStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                        setFiltroFechaEntregaSolicitadaDesde(fechaStr);
-                                        setFiltroFechaEntregaSolicitadaHasta(fechaStr);
-                                    }}
-                                    className={`text-xs transition-all ${
-                                        (() => {
-                                            const d = new Date();
-                                            d.setDate(d.getDate() + 1);
-                                            const tomorrow = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                            return filtroFechaEntregaSolicitadaDesde === tomorrow && filtroFechaEntregaSolicitadaHasta === tomorrow;
-                                        })()
-                                            ? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800'
-                                            : 'border border-purple-300 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-400 dark:hover:bg-purple-900/50'
-                                    }`}
-                                >
-                                    <span>
-                                        Mañana /{' '}
-                                        {(() => {
-                                            const d = new Date();
-                                            d.setDate(d.getDate() + 1);
-                                            return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                                        })()}
-                                    </span>
-                                </Button>
-                            </div>
-                        </div>
-                        {/* SECCIÓN 2: Filtros por Turno Horario */}
-                        <div>
-                            <p className="text-sm font-medium dark:text-gray-300">🕐 Turnos de Entrega</p>
-                            <div className="flex flex-wrap items-center gap-2">
-                                {/* Turno Mañana */}
-                                <Button
-                                    onClick={() => {
-                                        const isChecked =
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('08:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('09:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('10:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('11:') ||
-                                            filtroHoraEntregaSolicitadaDesde === '12:00';
-                                        if (isChecked) {
-                                            setFiltroHoraEntregaSolicitadaDesde('');
-                                            setFiltroHoraEntregaSolicitadaHasta('');
-                                        } else {
-                                            setFiltroHoraEntregaSolicitadaDesde('08:00');
-                                            setFiltroHoraEntregaSolicitadaHasta('12:00');
-                                        }
-                                    }}
-                                    className={`text-xs transition-all ${(() => {
-                                        const isChecked =
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('08:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('09:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('10:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('11:') ||
-                                            filtroHoraEntregaSolicitadaDesde === '12:00';
-                                        return isChecked
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800'
-                                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/50';
-                                    })()}`}
-                                >
-                                    🌅 Mañana (08-12)
-                                </Button>
-
-                                {/* Turno Tarde */}
-                                <Button
-                                    onClick={() => {
-                                        const isChecked =
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('14:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('15:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('16:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('17:') ||
-                                            filtroHoraEntregaSolicitadaDesde === '18:00';
-                                        if (isChecked) {
-                                            setFiltroHoraEntregaSolicitadaDesde('');
-                                            setFiltroHoraEntregaSolicitadaHasta('');
-                                        } else {
-                                            setFiltroHoraEntregaSolicitadaDesde('14:00');
-                                            setFiltroHoraEntregaSolicitadaHasta('18:00');
-                                        }
-                                    }}
-                                    className={`text-xs transition-all ${(() => {
-                                        const isChecked =
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('14:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('15:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('16:') ||
-                                            filtroHoraEntregaSolicitadaDesde?.startsWith('17:') ||
-                                            filtroHoraEntregaSolicitadaDesde === '18:00';
-                                        return isChecked
-                                            ? 'bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800'
-                                            : 'border border-orange-300 bg-orange-100 text-orange-700 hover:bg-orange-200 dark:border-orange-700 dark:bg-orange-900/40 dark:text-orange-400 dark:hover:bg-orange-900/50';
-                                    })()}`}
-                                >
-                                    ☀️ Tarde (14-18)
-                                </Button>
                             </div>
                         </div>
                     </div>
@@ -748,196 +485,216 @@ export function ProformasSection({
                     )}
                 </div>
 
-                {/* SECCIÓN 2: Filtros Activos (Chips) */}
-                {activeFiltersCount > 0 && (
-                    <div className="space-y-2 border-b pb-4 dark:border-slate-700">
-                        <p className="text-sm font-medium dark:text-gray-300">Filtros Activos ({activeFiltersCount})</p>
-                        <div className="flex flex-wrap gap-2">
-                            {filtroLocalidad && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    Localidad: {localidades.find((l) => l.id.toString() === filtroLocalidad)?.nombre}
-                                    <button onClick={() => setFiltroLocalidad('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filtroTipoEntrega && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    {filtroTipoEntrega === 'DELIVERY' ? '🚚 Delivery' : '🏪 Pickup'}
-                                    <button onClick={() => setFiltroTipoEntrega('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filtroPoliticaPago && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    💳 {filtroPoliticaPago.replace(/_/g, ' ')}
-                                    <button onClick={() => setFiltroPoliticaPago('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filtroEstadoLogistica && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    Logístico: {estadosLogistica.find((e) => e.id.toString() === filtroEstadoLogistica)?.nombre}
-                                    <button onClick={() => setFiltroEstadoLogistica('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filtroCoordinacionCompletada && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    {filtroCoordinacionCompletada === 'true' ? '✓ Completada' : '⏳ Pendiente'}
-                                    <button onClick={() => setFiltroCoordinacionCompletada('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filtroUsuarioAprobador && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    👤 {usuariosAprobadores.find((u) => u.id.toString() === filtroUsuarioAprobador)?.name}
-                                    <button onClick={() => setFiltroUsuarioAprobador('')} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {soloVencidas && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    ⚠️ Solo Vencidas
-                                    <button onClick={() => setSoloVencidas(false)} className="rounded-full p-0.5 hover:bg-slate-600">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {(dateFrom || dateTo) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    📅 {dateFrom}-{dateTo}
-                                    <button
-                                        onClick={() => {
-                                            setDateFrom('');
-                                            setDateTo('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {(amountFrom || amountTo) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    💵 {amountFrom || '0'}-{amountTo || '∞'}
-                                    <button
-                                        onClick={() => {
-                                            setAmountFrom('');
-                                            setAmountTo('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {/* ✅ Badges de filtros de fechas y horas */}
-                            {(filtroFechaVencimientoDesde || filtroFechaVencimientoHasta) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    ⏰ Vencimiento: {filtroFechaVencimientoDesde}-{filtroFechaVencimientoHasta}
-                                    <button
-                                        onClick={() => {
-                                            setFiltroFechaVencimientoDesde('');
-                                            setFiltroFechaVencimientoHasta('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {(filtroFechaCreacionDesde || filtroFechaCreacionHasta) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    📅 Creación: {filtroFechaCreacionDesde}-{filtroFechaCreacionHasta}
-                                    <button
-                                        onClick={() => {
-                                            setFiltroFechaCreacionDesde('');
-                                            setFiltroFechaCreacionHasta('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {(filtroFechaEntregaSolicitadaDesde || filtroFechaEntregaSolicitadaHasta) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    📦 Entrega: {filtroFechaEntregaSolicitadaDesde}-{filtroFechaEntregaSolicitadaHasta}
-                                    <button
-                                        onClick={() => {
-                                            setFiltroFechaEntregaSolicitadaDesde('');
-                                            setFiltroFechaEntregaSolicitadaHasta('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {(filtroHoraEntregaSolicitadaDesde || filtroHoraEntregaSolicitadaHasta) && (
-                                <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
-                                    🕐 Hora: {filtroHoraEntregaSolicitadaDesde}-{filtroHoraEntregaSolicitadaHasta}
-                                    <button
-                                        onClick={() => {
-                                            setFiltroHoraEntregaSolicitadaDesde('');
-                                            setFiltroHoraEntregaSolicitadaHasta('');
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-slate-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                    setFiltroLocalidad('');
-                                    setFiltroTipoEntrega('');
-                                    setFiltroPoliticaPago('');
-                                    setFiltroEstadoLogistica('');
-                                    setFiltroCoordinacionCompletada('');
-                                    setFiltroUsuarioAprobador('');
-                                    setSoloVencidas(false);
-                                    setDateFrom('');
-                                    setDateTo('');
-                                    setAmountFrom('');
-                                    setAmountTo('');
-                                    // ✅ Limpiar nuevos filtros de fechas y horas
-                                    setFiltroFechaVencimientoDesde('');
-                                    setFiltroFechaVencimientoHasta('');
-                                    setFiltroFechaEntregaSolicitadaDesde('');
-                                    setFiltroFechaEntregaSolicitadaHasta('');
-                                    setFiltroHoraEntregaSolicitadaDesde('');
-                                    setFiltroHoraEntregaSolicitadaHasta('');
-                                }}
-                                className="text-red-600 dark:border-slate-600 dark:text-red-400 dark:text-slate-300"
-                            >
-                                Limpiar Todos
-                            </Button>
-                        </div>
-                    </div>
-                )}
-
                 {/* SECCIÓN 3: Filtros Avanzados (Collapsible) */}
                 <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
                     <CollapsibleTrigger asChild>
-                        <Button
-                            variant="outline"
-                            className="w-full justify-between dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                            <span className="flex items-center gap-2">
-                                <Filter className="h-4 w-4" />
-                                Filtros Avanzados
-                            </span>
-                            <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
-                        </Button>
+                        <div className="flex flex-wrap items-end justify-between gap-2 border-b py-2 dark:border-slate-700">
+                            {/* SECCIÓN 3: Botón para mostrar todas */}
+                            <div>
+                                <p className="text-xs dark:text-gray-300">Estado de Proforma</p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        onClick={() => {
+                                            setFiltroEstadoProforma('TODOS');
+                                            setFiltroFechaEntregaSolicitadaDesde('');
+                                            setFiltroFechaEntregaSolicitadaHasta('');
+                                            setFiltroHoraEntregaSolicitadaDesde('');
+                                            setFiltroHoraEntregaSolicitadaHasta('');
+                                            setSoloVencidas(false);
+                                        }}
+                                        className="bg-indigo-600 text-xs text-white transition-all hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+                                    >
+                                        🔓 Mostrar TODAS
+                                    </Button>
+                                    {/* Filtro Vencidas */}
+                                    <Button
+                                        onClick={() => setSoloVencidas(!soloVencidas)}
+                                        className={`text-xs transition-all ${
+                                            soloVencidas
+                                                ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800'
+                                                : 'border border-orange-300 bg-orange-100 text-orange-700 hover:bg-orange-200 dark:border-orange-700 dark:bg-orange-900/40 dark:text-orange-400 dark:hover:bg-orange-900/50'
+                                        }`}
+                                    >
+                                        {/* <AlertCircle className="mr-1 h-4 w-4" /> */}
+                                        {soloVencidas ? '✓ Vencidas' : '⚠️ Vencidas'}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-medium dark:text-gray-300">📆 Fechas de Entrega Solicitada</p>
+                                <div className="grid grid-cols-3 gap-2 md:grid-cols-3">
+                                    {/* Ayer */}
+                                    <Button
+                                        onClick={() => {
+                                            const d = new Date();
+                                            d.setDate(d.getDate() - 1);
+                                            const fechaStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                            setFiltroFechaEntregaSolicitadaDesde(fechaStr);
+                                            setFiltroFechaEntregaSolicitadaHasta(fechaStr);
+                                        }}
+                                        className={`p-2 text-xs transition-all ${
+                                            (() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() - 1);
+                                                const yesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                                return (
+                                                    filtroFechaEntregaSolicitadaDesde === yesterday && filtroFechaEntregaSolicitadaHasta === yesterday
+                                                );
+                                            })()
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800'
+                                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/50'
+                                        }`}
+                                    >
+                                        <span>
+                                            Ayer /{' '}
+                                            {(() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() - 1);
+                                                return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                                            })()}
+                                        </span>
+                                        {/* <span className="text-xs opacity-80">
+                                    
+                                </span> */}
+                                    </Button>
+
+                                    {/* Hoy */}
+                                    <Button
+                                        onClick={() => {
+                                            const d = new Date();
+                                            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                            setFiltroFechaEntregaSolicitadaDesde(today);
+                                            setFiltroFechaEntregaSolicitadaHasta(today);
+                                        }}
+                                        className={`text-xs transition-all ${
+                                            (() => {
+                                                const d = new Date();
+                                                const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                                return filtroFechaEntregaSolicitadaDesde === today && filtroFechaEntregaSolicitadaHasta === today;
+                                            })()
+                                                ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
+                                                : 'border border-green-300 bg-green-100 text-green-700 hover:bg-green-200 dark:border-green-700 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/50'
+                                        }`}
+                                    >
+                                        <span>
+                                            Hoy /{' '}
+                                            {(() => {
+                                                const d = new Date();
+                                                return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                                            })()}
+                                        </span>
+                                    </Button>
+
+                                    {/* Mañana */}
+                                    <Button
+                                        onClick={() => {
+                                            const d = new Date();
+                                            d.setDate(d.getDate() + 1);
+                                            const fechaStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                            setFiltroFechaEntregaSolicitadaDesde(fechaStr);
+                                            setFiltroFechaEntregaSolicitadaHasta(fechaStr);
+                                        }}
+                                        className={`text-xs transition-all ${
+                                            (() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() + 1);
+                                                const tomorrow = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                                return (
+                                                    filtroFechaEntregaSolicitadaDesde === tomorrow && filtroFechaEntregaSolicitadaHasta === tomorrow
+                                                );
+                                            })()
+                                                ? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800'
+                                                : 'border border-purple-300 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-400 dark:hover:bg-purple-900/50'
+                                        }`}
+                                    >
+                                        <span>
+                                            Mañana /{' '}
+                                            {(() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() + 1);
+                                                return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                                            })()}
+                                        </span>
+                                    </Button>
+                                </div>
+                            </div>
+                            {/* SECCIÓN 2: Filtros por Turno Horario */}
+                            <div>
+                                <p className="text-sm font-medium dark:text-gray-300">🕐 Turnos de Entrega</p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Turno Mañana */}
+                                    <Button
+                                        onClick={() => {
+                                            const isChecked =
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('08:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('09:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('10:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('11:') ||
+                                                filtroHoraEntregaSolicitadaDesde === '12:00';
+                                            if (isChecked) {
+                                                setFiltroHoraEntregaSolicitadaDesde('');
+                                                setFiltroHoraEntregaSolicitadaHasta('');
+                                            } else {
+                                                setFiltroHoraEntregaSolicitadaDesde('08:00');
+                                                setFiltroHoraEntregaSolicitadaHasta('12:00');
+                                            }
+                                        }}
+                                        className={`text-xs transition-all ${(() => {
+                                            const isChecked =
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('08:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('09:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('10:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('11:') ||
+                                                filtroHoraEntregaSolicitadaDesde === '12:00';
+                                            return isChecked
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800'
+                                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/50';
+                                        })()}`}
+                                    >
+                                        🌅 Mañana (08-12)
+                                    </Button>
+
+                                    {/* Turno Tarde */}
+                                    <Button
+                                        onClick={() => {
+                                            const isChecked =
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('14:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('15:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('16:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('17:') ||
+                                                filtroHoraEntregaSolicitadaDesde === '18:00';
+                                            if (isChecked) {
+                                                setFiltroHoraEntregaSolicitadaDesde('');
+                                                setFiltroHoraEntregaSolicitadaHasta('');
+                                            } else {
+                                                setFiltroHoraEntregaSolicitadaDesde('14:00');
+                                                setFiltroHoraEntregaSolicitadaHasta('18:00');
+                                            }
+                                        }}
+                                        className={`text-xs transition-all ${(() => {
+                                            const isChecked =
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('14:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('15:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('16:') ||
+                                                filtroHoraEntregaSolicitadaDesde?.startsWith('17:') ||
+                                                filtroHoraEntregaSolicitadaDesde === '18:00';
+                                            return isChecked
+                                                ? 'bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800'
+                                                : 'border border-orange-300 bg-orange-100 text-orange-700 hover:bg-orange-200 dark:border-orange-700 dark:bg-orange-900/40 dark:text-orange-400 dark:hover:bg-orange-900/50';
+                                        })()}`}
+                                    >
+                                        ☀️ Tarde (14-18)
+                                    </Button>
+                                </div>
+                            </div>
+                            <Button variant="outline" className="dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
+                                <span className="flex items-center gap-2">
+                                    <Filter className="h-4 w-4" />
+                                </span>
+                                <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                            </Button>
+                        </div>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="mt-4 space-y-4">
@@ -1072,9 +829,188 @@ export function ProformasSection({
                     </CollapsibleContent>
                 </Collapsible>
 
-                {/* Información de paginación */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Mostrando {paginationInfo.from}-{paginationInfo.to} de {paginationInfo.total}
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                    {/* SECCIÓN 2: Filtros Activos (Chips) */}
+                    {activeFiltersCount > 0 && (
+                        <div className="space-y-2 dark:border-slate-700">
+                            <p className="text-sm font-medium dark:text-gray-300">Filtros Activos ({activeFiltersCount})</p>
+                            <div className="flex flex-wrap gap-2">
+                                {filtroLocalidad && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        Localidad: {localidades.find((l) => l.id.toString() === filtroLocalidad)?.nombre}
+                                        <button onClick={() => setFiltroLocalidad('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {filtroTipoEntrega && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        {filtroTipoEntrega === 'DELIVERY' ? '🚚 Delivery' : '🏪 Pickup'}
+                                        <button onClick={() => setFiltroTipoEntrega('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {filtroPoliticaPago && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        💳 {filtroPoliticaPago.replace(/_/g, ' ')}
+                                        <button onClick={() => setFiltroPoliticaPago('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {filtroEstadoLogistica && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        Logístico: {estadosLogistica.find((e) => e.id.toString() === filtroEstadoLogistica)?.nombre}
+                                        <button onClick={() => setFiltroEstadoLogistica('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {filtroCoordinacionCompletada && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        {filtroCoordinacionCompletada === 'true' ? '✓ Completada' : '⏳ Pendiente'}
+                                        <button onClick={() => setFiltroCoordinacionCompletada('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {filtroUsuarioAprobador && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        👤 {usuariosAprobadores.find((u) => u.id.toString() === filtroUsuarioAprobador)?.name}
+                                        <button onClick={() => setFiltroUsuarioAprobador('')} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {soloVencidas && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        ⚠️ Solo Vencidas
+                                        <button onClick={() => setSoloVencidas(false)} className="rounded-full p-0.5 hover:bg-slate-600">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {(dateFrom || dateTo) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        📅 {dateFrom}-{dateTo}
+                                        <button
+                                            onClick={() => {
+                                                setDateFrom('');
+                                                setDateTo('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {(amountFrom || amountTo) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        💵 {amountFrom || '0'}-{amountTo || '∞'}
+                                        <button
+                                            onClick={() => {
+                                                setAmountFrom('');
+                                                setAmountTo('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {/* ✅ Badges de filtros de fechas y horas */}
+                                {(filtroFechaVencimientoDesde || filtroFechaVencimientoHasta) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        ⏰ Vencimiento: {filtroFechaVencimientoDesde}-{filtroFechaVencimientoHasta}
+                                        <button
+                                            onClick={() => {
+                                                setFiltroFechaVencimientoDesde('');
+                                                setFiltroFechaVencimientoHasta('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {(filtroFechaCreacionDesde || filtroFechaCreacionHasta) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        📅 Creación: {filtroFechaCreacionDesde}-{filtroFechaCreacionHasta}
+                                        <button
+                                            onClick={() => {
+                                                setFiltroFechaCreacionDesde('');
+                                                setFiltroFechaCreacionHasta('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {(filtroFechaEntregaSolicitadaDesde || filtroFechaEntregaSolicitadaHasta) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        📦 Entrega: {filtroFechaEntregaSolicitadaDesde}-{filtroFechaEntregaSolicitadaHasta}
+                                        <button
+                                            onClick={() => {
+                                                setFiltroFechaEntregaSolicitadaDesde('');
+                                                setFiltroFechaEntregaSolicitadaHasta('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                {(filtroHoraEntregaSolicitadaDesde || filtroHoraEntregaSolicitadaHasta) && (
+                                    <Badge variant="secondary" className="flex items-center gap-2 pr-1 pl-3 dark:bg-slate-700 dark:text-gray-300">
+                                        🕐 Hora: {filtroHoraEntregaSolicitadaDesde}-{filtroHoraEntregaSolicitadaHasta}
+                                        <button
+                                            onClick={() => {
+                                                setFiltroHoraEntregaSolicitadaDesde('');
+                                                setFiltroHoraEntregaSolicitadaHasta('');
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-slate-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setFiltroLocalidad('');
+                                        setFiltroTipoEntrega('');
+                                        setFiltroPoliticaPago('');
+                                        setFiltroEstadoLogistica('');
+                                        setFiltroCoordinacionCompletada('');
+                                        setFiltroUsuarioAprobador('');
+                                        setSoloVencidas(false);
+                                        setDateFrom('');
+                                        setDateTo('');
+                                        setAmountFrom('');
+                                        setAmountTo('');
+                                        // ✅ Limpiar nuevos filtros de fechas y horas
+                                        setFiltroFechaVencimientoDesde('');
+                                        setFiltroFechaVencimientoHasta('');
+                                        setFiltroFechaEntregaSolicitadaDesde('');
+                                        setFiltroFechaEntregaSolicitadaHasta('');
+                                        setFiltroHoraEntregaSolicitadaDesde('');
+                                        setFiltroHoraEntregaSolicitadaHasta('');
+                                    }}
+                                    className="text-red-600 dark:border-slate-600 dark:text-red-400 dark:text-slate-300"
+                                >
+                                    Limpiar Todos
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Información de paginación */}
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Mostrando {paginationInfo.from}-{paginationInfo.to} de {paginationInfo.total}
+                    </div>
                 </div>
 
                 {/* Tabla */}
@@ -1108,8 +1044,15 @@ export function ProformasSection({
                                 </th>
 
                                 {/* ✅ NUEVO: Columna Fecha Entrega Solicitada */}
-                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Creada</th>
-                                <th className="px-2 py-2 text-center font-medium dark:text-gray-300">Solicitado Para</th>
+                                <th className="border-l border-emerald-200 bg-emerald-50/80 px-2 py-2 text-center font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
+                                    Creada
+                                </th>
+                                <th className="border-l border-sky-200 bg-sky-50/80 px-2 py-2 text-center font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-300">
+                                    Solicitado Para
+                                </th>
+                                <th className="border-l border-rose-200 bg-rose-50/80 px-2 py-2 text-center text-xs font-medium text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300">
+                                    Vencimiento
+                                </th>
                                 <th className="px-2 py-2 text-center font-medium dark:text-gray-300">-</th>
                             </tr>
                         </thead>
@@ -1128,7 +1071,7 @@ export function ProformasSection({
                                         </Link>
                                     </td>
                                     {/* ✅ PRIMERA COLUMNA: ESTADO DESTACADO CON COLOR DEL BACKEND */}
-                                    <td className="px-2 py-2 text-xs text-center">
+                                    <td className="px-2 py-2 text-center text-xs">
                                         {(() => {
                                             const estadoStyle = getEstadoBadgeStyle(proforma.estado);
                                             return (
@@ -1142,7 +1085,7 @@ export function ProformasSection({
                                         })()}
                                     </td>
                                     <td className="px-2 py-2 text-xs">{String(proforma.cliente_nombre)}</td>
-                                    <td className="p-1 text-xs text-center">
+                                    <td className="p-1 text-center text-xs">
                                         <Badge
                                             variant="outline"
                                             className={`text-xs ${
@@ -1154,11 +1097,11 @@ export function ProformasSection({
                                             {String(proforma.usuario_creador_nombre)}
                                         </Badge>
                                     </td>
-                                    <td className="p-1 text-xs text-center">📍{String(proforma.localidad_nombre)}</td>
+                                    <td className="p-1 text-center text-xs">📍{String(proforma.localidad_nombre)}</td>
                                     <td className="px-2 py-2 text-left text-xs">
                                         Bs {proforma.total.toLocaleString('es-BO', { maximumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-2 py-2 text-xs text-center text-muted-foreground dark:text-gray-400">
+                                    <td className="border-l border-emerald-200 bg-emerald-50/30 px-2 py-2 text-center text-xs text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/10 dark:text-emerald-300">
                                         <div className="whitespace-nowrap">
                                             {proforma.created_at ? (
                                                 <>
@@ -1182,7 +1125,7 @@ export function ProformasSection({
                                         </div>
                                     </td>
                                     {/* ✅ NUEVO: Columna Fecha & Hora Entrega Solicitada */}
-                                    <td className="px-2 py-2 text-xs text-center text-muted-foreground dark:text-gray-400">
+                                    <td className="border-l border-sky-200 bg-sky-50/30 px-2 py-2 text-center text-xs text-sky-700 dark:border-sky-800 dark:bg-sky-900/10 dark:text-sky-300">
                                         <div className="whitespace-nowrap">
                                             {proforma.fecha_entrega_solicitada ? (
                                                 <>
@@ -1208,7 +1151,7 @@ export function ProformasSection({
                                         </div>
                                     </td>
                                     {/* ✅ NUEVO: Columna Fecha Vencimiento */}
-                                    {/* <td className="px-2 py-2 text-xs text-muted-foreground dark:text-gray-400">
+                                    <td className="border-l border-rose-200 bg-rose-50/30 px-2 py-2 text-xs text-rose-700 dark:border-rose-800 dark:bg-rose-900/10 dark:text-rose-300">
                                         <div className="whitespace-nowrap">
                                             {proforma.fecha_vencimiento ? (
                                                 <>
@@ -1227,7 +1170,7 @@ export function ProformasSection({
                                                 <span className="text-gray-400 dark:text-gray-500">-</span>
                                             )}
                                         </div>
-                                    </td> */}
+                                    </td>
                                     {/* <td className="px-2 py-2 text-xs text-muted-foreground dark:text-gray-400">
                                         <div className="whitespace-nowrap">
                                             {proforma.updated_at ? (
@@ -1357,7 +1300,7 @@ export function ProformasSection({
                         }}
                     />
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

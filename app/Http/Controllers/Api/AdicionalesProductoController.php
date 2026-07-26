@@ -97,7 +97,7 @@ class AdicionalesProductoController extends Controller
      */
     public function productosComida(): JsonResponse
     {
-        $productos = Producto::where('es_producto_comida', true)
+        $productos = Producto::where('permite_venta_sin_stock', true)
             ->where('activo', true)
             ->with([
                 'adicionales' => function($q) {
@@ -113,7 +113,7 @@ class AdicionalesProductoController extends Controller
                     $q->orderBy('es_principal', 'desc')->orderBy('orden');
                 }
             ])
-            ->get(['id', 'nombre', 'descripcion', 'precio_venta', 'es_producto_comida']); // ✨ Incluir precio_venta como fallback
+            ->get(['id', 'nombre', 'descripcion', 'precio_venta', 'permite_venta_sin_stock']); // ✨ Incluir precio_venta como fallback
 
         // Mapear productos para incluir el precio de VENTA correcto
         $productosFormatted = $productos->map(function($producto) {

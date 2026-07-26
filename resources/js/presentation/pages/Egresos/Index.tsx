@@ -81,13 +81,13 @@ export default function EgresosIndex() {
                 </div>
 
                 {/* Buscador */}
-                <div className="rounded-lg border bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                    <div className="mb-4 flex items-center gap-2">
+                <div className="rounded-lg border bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="flex items-center gap-2">
                         <Search className="h-5 w-5 text-gray-400" />
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 items-end">
                         {/* Búsqueda por Número */}
                         <div>
                             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
@@ -228,7 +228,7 @@ export default function EgresosIndex() {
 
                 {/* Paginación */}
                 {egresos.links && (
-                    <div className="flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="flex items-center justify-between rounded-lg border bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                             Mostrando {egresos.from} a {egresos.to} de {egresos.total} egresos
                         </div>

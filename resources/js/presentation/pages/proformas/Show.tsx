@@ -1632,7 +1632,13 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                 )}
 
                 {/* Header - Similar a ventas: 1/3 título + 2/3 datos */}
-                <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                <div
+                    className="rounded-lg border p-2 shadow-sm"
+                    style={{
+                        backgroundColor: proforma.estado_logistica?.color ? `${proforma.estado_logistica.color}26` : undefined,
+                        borderColor: proforma.estado_logistica?.color ?? undefined,
+                    }}
+                >
                     {/* Columnas 2-3: Datos secundarios (2/3) */}
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-6">
                         {/* ✅ NUEVO: Foto del Cliente */}

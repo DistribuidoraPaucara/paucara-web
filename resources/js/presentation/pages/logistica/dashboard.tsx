@@ -60,6 +60,8 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
         requestNotificationPermission();
     }, [requestNotificationPermission]);
 
+    // El backend aplica el rango por defecto de hoy cuando no hay filtros explícitos.
+    // El frontend solo debe conservar los filtros que el usuario haya elegido manualmente.
     /* const {
         stats: proformaStats,
         loading: loadingProformaStats,
@@ -141,7 +143,7 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
     // Ver proforma
     const handleVerProforma = (proforma: ProformaAppExterna) => {
         // ✅ ACTUALIZADO: Usar router.visit() para navegar en la misma página (no abre nueva pestaña)
-        router.visit(`/proformas/${proforma.id}`);
+        router.visit(`/proformas/${proforma.id}`); 
     };
 
     // ✅ NUEVO: Editar proforma
@@ -191,6 +193,10 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
                     setFiltroFechaVencimientoDesde={proformaFilters.setFiltroFechaVencimientoDesde}
                     filtroFechaVencimientoHasta={proformaFilters.filtroFechaVencimientoHasta}
                     setFiltroFechaVencimientoHasta={proformaFilters.setFiltroFechaVencimientoHasta}
+                    filtroFechaCreacionDesde={proformaFilters.filtroFechaCreacionDesde}
+                    setFiltroFechaCreacionDesde={proformaFilters.setFiltroFechaCreacionDesde}
+                    filtroFechaCreacionHasta={proformaFilters.filtroFechaCreacionHasta}
+                    setFiltroFechaCreacionHasta={proformaFilters.setFiltroFechaCreacionHasta}
                     filtroFechaEntregaSolicitadaDesde={proformaFilters.filtroFechaEntregaSolicitadaDesde}
                     setFiltroFechaEntregaSolicitadaDesde={proformaFilters.setFiltroFechaEntregaSolicitadaDesde}
                     filtroFechaEntregaSolicitadaHasta={proformaFilters.filtroFechaEntregaSolicitadaHasta}

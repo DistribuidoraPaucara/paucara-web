@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\EgresosController::index
- * @see app/Http/Controllers/Api/EgresosController.php:25
+ * @see app/Http/Controllers/Api/EgresosController.php:24
  * @route '/api/egresos'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\EgresosController::store
- * @see app/Http/Controllers/Api/EgresosController.php:66
+ * @see app/Http/Controllers/Api/EgresosController.php:69
  * @route '/api/egresos'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::store
- * @see app/Http/Controllers/Api/EgresosController.php:66
+ * @see app/Http/Controllers/Api/EgresosController.php:69
  * @route '/api/egresos'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::store
- * @see app/Http/Controllers/Api/EgresosController.php:66
+ * @see app/Http/Controllers/Api/EgresosController.php:69
  * @route '/api/egresos'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\EgresosController::store
- * @see app/Http/Controllers/Api/EgresosController.php:66
+ * @see app/Http/Controllers/Api/EgresosController.php:69
  * @route '/api/egresos'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\EgresosController::store
- * @see app/Http/Controllers/Api/EgresosController.php:66
+ * @see app/Http/Controllers/Api/EgresosController.php:69
  * @route '/api/egresos'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
 export const show = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
 show.url = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ show.url = (args: { egreso: number | { id: number } } | [egreso: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
 show.get = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ show.get = (args: { egreso: number | { id: number } } | [egreso: number | { id: 
 })
 /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
 show.head = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ show.head = (args: { egreso: number | { id: number } } | [egreso: number | { id:
 
     /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
     const showForm = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ show.head = (args: { egreso: number | { id: number } } | [egreso: number | { id:
 
             /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
         showForm.get = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ show.head = (args: { egreso: number | { id: number } } | [egreso: number | { id:
         })
             /**
 * @see \App\Http\Controllers\Api\EgresosController::show
- * @see app/Http/Controllers/Api/EgresosController.php:258
+ * @see app/Http/Controllers/Api/EgresosController.php:275
  * @route '/api/egresos/{egreso}'
  */
         showForm.head = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ show.head = (args: { egreso: number | { id: number } } | [egreso: number | { id:
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\EgresosController::anular
- * @see app/Http/Controllers/Api/EgresosController.php:271
+ * @see app/Http/Controllers/Api/EgresosController.php:294
  * @route '/api/egresos/{egreso}/anular'
  */
 export const anular = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -251,7 +251,7 @@ anular.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::anular
- * @see app/Http/Controllers/Api/EgresosController.php:271
+ * @see app/Http/Controllers/Api/EgresosController.php:294
  * @route '/api/egresos/{egreso}/anular'
  */
 anular.url = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ anular.url = (args: { egreso: number | { id: number } } | [egreso: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\EgresosController::anular
- * @see app/Http/Controllers/Api/EgresosController.php:271
+ * @see app/Http/Controllers/Api/EgresosController.php:294
  * @route '/api/egresos/{egreso}/anular'
  */
 anular.post = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -294,7 +294,7 @@ anular.post = (args: { egreso: number | { id: number } } | [egreso: number | { i
 
     /**
 * @see \App\Http\Controllers\Api\EgresosController::anular
- * @see app/Http/Controllers/Api/EgresosController.php:271
+ * @see app/Http/Controllers/Api/EgresosController.php:294
  * @route '/api/egresos/{egreso}/anular'
  */
     const anularForm = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +304,7 @@ anular.post = (args: { egreso: number | { id: number } } | [egreso: number | { i
 
             /**
 * @see \App\Http\Controllers\Api\EgresosController::anular
- * @see app/Http/Controllers/Api/EgresosController.php:271
+ * @see app/Http/Controllers/Api/EgresosController.php:294
  * @route '/api/egresos/{egreso}/anular'
  */
         anularForm.post = (args: { egreso: number | { id: number } } | [egreso: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

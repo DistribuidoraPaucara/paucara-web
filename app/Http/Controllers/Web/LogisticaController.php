@@ -144,55 +144,78 @@ class LogisticaController extends Controller
 
         // ✅ Filtro por fecha de entrega solicitada (desde/hasta)
         // ✅ MEJORADO 2026-03-06: Asegurar que se filtra por fecha completa (00:00:00 a 23:59:59)
-        // ✅ NUEVO: Si no hay parámetros, usar default: desde ayer hasta hoy
+        // ✅ NUEVO: Al abrir el dashboard sin filtros, usar default: ayer-hoy.
+        // Si el usuario ya está aplicando búsqueda u otros filtros, no forzar el rango de fechas.
         $fechaEntregaSolicitadaDesde = null;
         $fechaEntregaSolicitadaHasta = null;
 
-        // Si no hay parámetro fecha_desde, aplicar default: AYER
-        if (!request()->has('fecha_entrega_solicitada_desde') || request('fecha_entrega_solicitada_desde') === '') {
-            $yesterday = now()->subDay();
-            $fechaEntregaSolicitadaDesde = $yesterday->format('Y-m-d 00:00:00');
+        $tieneFechaDesde = request()->filled('fecha_entrega_solicitada_desde');
+        $tieneFechaHasta = request()->filled('fecha_entrega_solicitada_hasta');
+        $tieneFechaExplicita = $tieneFechaDesde || $tieneFechaHasta;
 
-            Log::info('LogisticaController::dashboard - SIN parámetro fecha_desde, aplicando default (AYER)', [
-                'fecha_default' => $fechaEntregaSolicitadaDesde,
+        $estadoExplicito = request()->filled('estado')
+            && request('estado') !== ''
+            && request('estado') !== 'TODOS'
+            && request('estado') !== 'PENDIENTE';
+
+        $tieneBusquedaOFilros = request()->filled('search')
+            || $estadoExplicito
+            || request()->hasAny([
+                'localidad_id',
+                'tipo_entrega',
+                'politica_pago',
+                'estado_logistica_id',
+                'coordinacion_completada',
+                'usuario_aprobador_id',
+                'solo_vencidas',
+                'fecha_vencimiento_desde',
+                'fecha_vencimiento_hasta',
+                'fecha_creacion_desde',
+                'fecha_creacion_hasta',
+                'hora_entrega_solicitada_desde',
+                'hora_entrega_solicitada_hasta',
             ]);
-            $query->where('fecha_entrega_solicitada', '>=', $fechaEntregaSolicitadaDesde);
-        } else {
-            $fechaEntregaSolicitadaDesde = request('fecha_entrega_solicitada_desde');
-            // Si solo tiene fecha (YYYY-MM-DD), agregar la hora de inicio del día
-            if (strlen($fechaEntregaSolicitadaDesde) === 10) {
-                $fechaEntregaSolicitadaDesde .= ' 00:00:00';
+
+        if ($tieneFechaExplicita) {
+            if ($tieneFechaDesde) {
+                $fechaEntregaSolicitadaDesde = request('fecha_entrega_solicitada_desde');
+                if (strlen($fechaEntregaSolicitadaDesde) === 10) {
+                    $fechaEntregaSolicitadaDesde .= ' 00:00:00';
+                }
+                $query->where('fecha_entrega_solicitada', '>=', $fechaEntregaSolicitadaDesde);
             }
-            Log::info('LogisticaController::dashboard - Aplicando filtro fecha_desde (USUARIO)', [
-                'fecha_original'  => request('fecha_entrega_solicitada_desde'),
-                'fecha_procesada' => $fechaEntregaSolicitadaDesde,
-            ]);
-            $query->where('fecha_entrega_solicitada', '>=', $fechaEntregaSolicitadaDesde);
-        }
 
-        // Si no hay parámetro fecha_hasta, aplicar default: HOY
-        if (!request()->has('fecha_entrega_solicitada_hasta') || request('fecha_entrega_solicitada_hasta') === '') {
+            if ($tieneFechaHasta) {
+                $fechaEntregaSolicitadaHasta = request('fecha_entrega_solicitada_hasta');
+                if (strlen($fechaEntregaSolicitadaHasta) === 10) {
+                    $fechaEntregaSolicitadaHasta .= ' 23:59:59';
+                }
+                $query->where('fecha_entrega_solicitada', '<=', $fechaEntregaSolicitadaHasta);
+            }
+
+            Log::info('LogisticaController::dashboard - Aplicando filtro de fecha explícito', [
+                'fecha_desde' => $fechaEntregaSolicitadaDesde,
+                'fecha_hasta' => $fechaEntregaSolicitadaHasta,
+            ]);
+        } elseif (! $tieneBusquedaOFilros) {
             $today = now();
-            $fechaEntregaSolicitadaHasta = $today->format('Y-m-d 23:59:59');
+            $fechaEntregaSolicitadaDesde = $today->copy()->startOfDay()->format('Y-m-d H:i:s');
+            $fechaEntregaSolicitadaHasta = $today->copy()->endOfDay()->format('Y-m-d H:i:s');
 
-            Log::info('LogisticaController::dashboard - SIN parámetro fecha_hasta, aplicando default (HOY)', [
-                'fecha_default' => $fechaEntregaSolicitadaHasta,
+            Log::info('LogisticaController::dashboard - SIN filtros explícitos, aplicando default (SOLO HOY)', [
+                'fecha_desde' => $fechaEntregaSolicitadaDesde,
+                'fecha_hasta' => $fechaEntregaSolicitadaHasta,
             ]);
+
+            $query->where('fecha_entrega_solicitada', '>=', $fechaEntregaSolicitadaDesde);
             $query->where('fecha_entrega_solicitada', '<=', $fechaEntregaSolicitadaHasta);
         } else {
-            $fechaEntregaSolicitadaHasta = request('fecha_entrega_solicitada_hasta');
-            // Si solo tiene fecha (YYYY-MM-DD), agregar la hora del final del día
-            if (strlen($fechaEntregaSolicitadaHasta) === 10) {
-                $fechaEntregaSolicitadaHasta .= ' 23:59:59';
-            }
-            Log::info('LogisticaController::dashboard - Aplicando filtro fecha_hasta (USUARIO)', [
-                'fecha_original'  => request('fecha_entrega_solicitada_hasta'),
-                'fecha_procesada' => $fechaEntregaSolicitadaHasta,
+            Log::info('LogisticaController::dashboard - Búsqueda/filros activos, omitiendo rango de fechas por defecto', [
+                'search' => request('search'),
+                'estado' => request('estado'),
             ]);
-            $query->where('fecha_entrega_solicitada', '<=', $fechaEntregaSolicitadaHasta);
         }
 
-        // ✅ NUEVO 2026-03-06: Log para verificar filtros de fecha de entrega
         Log::info('LogisticaController::dashboard - Resumen después de filtros de fecha', [
             'fecha_desde'           => $fechaEntregaSolicitadaDesde,
             'fecha_hasta'           => $fechaEntregaSolicitadaHasta,

@@ -75,19 +75,19 @@ export default function CreateEgreso() {
     return (
         <AppLayout breadcrumbs={[{ title: 'Egresos', href: '/egresos' }, { title: 'Nuevo', href: '/egresos/create' }]}>
             <Head title="Nuevo Egreso" />
-            <div className="space-y-4 p-4">
+            <div className="space-y-4 p-2">
                 <h1 className="text-3xl font-bold dark:text-white">Nuevo Egreso</h1>
                 {error && <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">{error}</div>}
 
-                <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-700">
+                <form onSubmit={handleSubmit} className="space-y-2 bg-white dark:bg-slate-900 p-4 rounded-lg border dark:border-slate-700">
                     <div>
                         <label className="block text-sm font-medium dark:text-gray-100 mb-2">Descripción General</label>
-                        <textarea value={data.descripcion} onChange={(e) => setData('descripcion', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} placeholder="Descripción general del egreso (opcional)" />
+                        <textarea value={data.descripcion} onChange={(e) => setData('descripcion', e.target.value)} className="w-full px-2 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" placeholder="Descripción general del egreso (opcional)" />
                     </div>
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold dark:text-white">Detalles del Egreso</h2>
+                            <h3 className="font-bold dark:text-white">Detalles del Egreso</h3>
                             <Button variant="outline" onClick={handleAddDetalle} className="dark:border-slate-600 dark:text-white">
                                 <Plus className="w-4 h-4 mr-2" /> Agregar Detalle
                             </Button>
@@ -97,12 +97,12 @@ export default function CreateEgreso() {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-gray-100 dark:bg-slate-700">
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-left text-sm font-semibold dark:text-gray-100">Concepto</th>
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-left text-sm font-semibold dark:text-gray-100">Tipo de Operación</th>
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Efectivo</th>
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Transferencia/QR</th>
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-right text-sm font-semibold dark:text-gray-100">Total</th>
-                                        <th className="border dark:border-slate-600 px-4 py-3 text-center text-sm font-semibold dark:text-gray-100">Acción</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Concepto</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Tipo de Operación</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Efectivo</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Transferencia/QR</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Total</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-center text-sm font-semibold dark:text-gray-100">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,25 +110,25 @@ export default function CreateEgreso() {
                                         const total = getDetalleTotal(detalle);
                                         return (
                                             <tr key={index} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">
-                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                <td className="border dark:border-slate-600 px-2 py-2">
                                                     <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Ej: Café..." required className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" />
                                                 </td>
-                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                <td className="border dark:border-slate-600 px-2 py-2">
                                                     <select value={detalle.tipo_operacion_caja_id} onChange={(e) => handleDetalleChange(index, 'tipo_operacion_caja_id', e.target.value)} className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" required>
                                                         <option value="">Seleccionar...</option>
                                                         {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
                                                     </select>
                                                 </td>
-                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                <td className="border dark:border-slate-600 px-2 py-2">
                                                     <Input type="number" value={detalle.monto_efectivo} onChange={(e) => handleDetalleChange(index, 'monto_efectivo', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-right" />
                                                 </td>
-                                                <td className="border dark:border-slate-600 px-4 py-3">
+                                                <td className="border dark:border-slate-600 px-2 py-2">
                                                     <Input type="number" value={detalle.monto_transferencia} onChange={(e) => handleDetalleChange(index, 'monto_transferencia', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-right" />
                                                 </td>
-                                                <td className="border dark:border-slate-600 px-4 py-3 text-right font-bold dark:text-white">
+                                                <td className="border dark:border-slate-600 px-2 py-2 text-right font-bold dark:text-white">
                                                     Bs. {total.toFixed(2)}
                                                 </td>
-                                                <td className="border dark:border-slate-600 px-4 py-3 text-center">
+                                                <td className="border dark:border-slate-600 px-2 py-2 text-center">
                                                     {detalles.length > 1 && (
                                                         <Button variant="ghost" size="sm" onClick={() => handleRemoveDetalle(index)} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900">
                                                             <Trash2 className="w-4 h-4" />
@@ -144,17 +144,17 @@ export default function CreateEgreso() {
                     </div>
 
                     {/* Total General */}
-                    <div className="bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800 p-6 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                    <div className="bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800 p-2 rounded-lg border-2 border-blue-200 dark:border-blue-700">
                         <p className="text-center text-gray-600 dark:text-gray-300 mb-2">Total del Egreso</p>
                         <p className="text-center text-4xl font-bold text-blue-600 dark:text-blue-300">Bs. {totalEgreso.toFixed(2)}</p>
-                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">Cada detalle crea un movimiento de caja por separado</p>
+                        {/* <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">Cada detalle crea un movimiento de caja por separado</p> */}
                     </div>
 
                     {/* Observaciones */}
-                    <div>
+                    {/* <div>
                         <label className="block text-sm font-medium dark:text-gray-100 mb-2">Observaciones</label>
                         <textarea value={data.observaciones} onChange={(e) => setData('observaciones', e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" rows={2} placeholder="Observaciones opcionales" />
-                    </div>
+                    </div> */}
 
                     {/* Acciones */}
                     <div className="flex gap-4">

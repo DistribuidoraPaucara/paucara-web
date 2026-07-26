@@ -757,12 +757,14 @@ class ProductoController extends Controller
             'peso'              => $producto->peso ? (float) $producto->peso : null,
             'unidad_medida_id'  => $producto->unidad_medida_id ? (int) $producto->unidad_medida_id : null,
             'fecha_vencimiento' => null,
-            'activo'            => (bool) $producto->activo,
-            'stock_minimo'      => $producto->stock_minimo ? (int) $producto->stock_minimo : null,
-            'stock_maximo'      => $producto->stock_maximo ? (int) $producto->stock_maximo : null,
-            'limite_venta'      => $producto->limite_venta ? (int) $producto->limite_venta : null, // ✨ NUEVO
-            'principio_activo'  => $producto->principio_activo ?? null,                            // ✨ NUEVO - Medicamento
-            'uso_de_medicacion' => $producto->uso_de_medicacion ?? null,                           // ✨ NUEVO - Medicamento
+            'activo'                    => (bool) $producto->activo,
+            'es_producto_comida'        => (bool) $producto->es_producto_comida,
+            'permite_venta_sin_stock'   => (bool) $producto->permite_venta_sin_stock,
+            'stock_minimo'              => $producto->stock_minimo ? (int) $producto->stock_minimo : null,
+            'stock_maximo'              => $producto->stock_maximo ? (int) $producto->stock_maximo : null,
+            'limite_venta'              => $producto->limite_venta ? (int) $producto->limite_venta : null, // ✨ NUEVO
+            'principio_activo'          => $producto->principio_activo ?? null,                            // ✨ NUEVO - Medicamento
+            'uso_de_medicacion'         => $producto->uso_de_medicacion ?? null,                           // ✨ NUEVO - Medicamento
             'perfil'            => $perfil ? ['id' => $perfil->id, 'url' => $perfil->url] : null,
             'galeria'           => $galeria,
             'precios'           => $precios,

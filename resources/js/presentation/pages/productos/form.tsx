@@ -627,8 +627,8 @@ export default function ProductoForm({
         >
             <Head title={isEditing ? `Editar: ${producto.sku}` : 'Nuevo producto'} />
 
-            <div className="px-3 py-1">
-                <div className="flex-row items-center justify-between p-2">
+            <div className="px-2 py-1">
+                <div className="flex flex-wrap items-center justify-between p-2">
                     {!isEditing && (
                         <div>
                             <div className="text-bold text-xl">{isEditing ? `Editar: ${producto.nombre}` : 'Nuevo'}</div>

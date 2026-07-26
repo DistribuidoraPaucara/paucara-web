@@ -14,6 +14,9 @@ class DetalleEgreso extends Model
         'monto_unitario',
         'descuento',
         'subtotal',
+        'tipo_operacion_caja_id',
+        'monto_efectivo',
+        'monto_transferencia',
     ];
 
     protected $casts = [
@@ -25,5 +28,10 @@ class DetalleEgreso extends Model
     public function egreso(): BelongsTo
     {
         return $this->belongsTo(Egreso::class, 'egreso_id');
+    }
+
+    public function tipoOperacion(): BelongsTo
+    {
+        return $this->belongsTo(TipoOperacionCaja::class, 'tipo_operacion_caja_id');
     }
 }

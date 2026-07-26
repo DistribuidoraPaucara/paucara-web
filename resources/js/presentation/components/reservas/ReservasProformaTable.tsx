@@ -21,11 +21,19 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
     const [totalReservas, setTotalReservas] = useState(0);
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
 
-    // Obtener fecha de hoy en formato YYYY-MM-DD
-    const today = new Date().toISOString().split('T')[0];
+    const getLocalDateString = (date: Date = new Date()) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // Obtener fecha de hoy en formato YYYY-MM-DD sin afectar la zona horaria local
+    const today = getLocalDateString();
 
     const [filters, setFilters] = useState<ReservaProformaFilters>({
         ordenamiento: 'fecha_expiracion-asc',
+        estado: 'ACTIVA',
         // ✅ NUEVO (2026-07-18): Filtrar por fecha de reserva (hoy por defecto)
         fecha_reserva_desde: today,
         fecha_reserva_hasta: today,
@@ -35,7 +43,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         proforma_busqueda: '',
         // ✅ NUEVO (2026-07-18): Búsqueda por nombre de cliente
         cliente_nombre: '',
-        estado: '',
+        estado: 'ACTIVA',
         producto_id: '', // ✅ NUEVO: Filtro por producto (ID exacto)
         producto_busqueda: '', // ✅ NUEVO (2026-02-12): Búsqueda flexible por ID, SKU o nombre
         vencimiento: '',
@@ -169,7 +177,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
             proforma_busqueda: '',
             // ✅ NUEVO (2026-07-18): Limpiar filtro de nombre de cliente
             cliente_nombre: '',
-            estado: '',
+            estado: 'ACTIVA',
             producto_id: '', // ✅ NUEVO: Limpiar filtro de producto
             producto_busqueda: '', // ✅ NUEVO (2026-02-12): Limpiar búsqueda de producto
             vencimiento: '',
@@ -183,6 +191,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         });
         setFilters({
             ordenamiento: 'fecha_expiracion-asc',
+            estado: 'ACTIVA',
             // ✅ NUEVO (2026-07-18): Mantener filtro por fecha de reserva (hoy por defecto)
             fecha_reserva_desde: today,
             fecha_reserva_hasta: today,
@@ -190,6 +199,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         setCurrentPage(1);
         onFiltersChange?.({
             ordenamiento: 'fecha_expiracion-asc',
+            estado: 'ACTIVA',
             fecha_reserva_desde: today,
             fecha_reserva_hasta: today,
         });
@@ -244,37 +254,6 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         return colors[estado] || 'bg-gray-100 text-gray-800';
     };
 
-    const getVencimientoBadge = (reserva: ReservaProforma) => {
-        if (reserva.estado !== 'ACTIVA') {
-            return null;
-        }
-
-        if (reserva.esta_expirada) {
-            return (
-                <Badge className="flex items-center gap-1 bg-red-100 text-red-800">
-                    <AlertTriangle className="h-3 w-3" />
-                    Expirada
-                </Badge>
-            );
-        }
-
-        if (reserva.dias_para_expirar !== null && reserva.dias_para_expirar <= 1) {
-            return (
-                <Badge className="flex items-center gap-1 bg-yellow-100 text-yellow-800">
-                    <AlertTriangle className="h-3 w-3" />
-                    Vence hoy
-                </Badge>
-            );
-        }
-
-        return (
-            <Badge className="flex items-center gap-1 bg-green-100 text-green-800">
-                <CheckCircle2 className="h-3 w-3" />
-                Vigente
-            </Badge>
-        );
-    };
-
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('es-BO', {
             style: 'currency',
@@ -284,7 +263,16 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('es-ES');
+
+        const normalized = dateString.split('T')[0];
+        const [year, month, day] = normalized.split('-').map(Number);
+
+        if (!year || !month || !day) {
+            return '-';
+        }
+
+        const parsedDate = new Date(year, month - 1, day);
+        return parsedDate.toLocaleDateString('es-ES');
     };
 
     return (
