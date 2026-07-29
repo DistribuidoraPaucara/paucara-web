@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PagoVentaController::registrarPagos
  * @see app/Http/Controllers/Api/PagoVentaController.php:19
@@ -57,6 +57,27 @@ registrarPagos.post = (args: { venta: number | { id: number } } | [venta: number
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PagoVentaController::registrarPagos
+ * @see app/Http/Controllers/Api/PagoVentaController.php:19
+ * @route '/api/ventas/{venta}/pagos/registrar'
+ */
+    const registrarPagosForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: registrarPagos.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::registrarPagos
+ * @see app/Http/Controllers/Api/PagoVentaController.php:19
+ * @route '/api/ventas/{venta}/pagos/registrar'
+ */
+        registrarPagosForm.post = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: registrarPagos.url(args, options),
+            method: 'post',
+        })
+    
+    registrarPagos.form = registrarPagosForm
 /**
 * @see \App\Http\Controllers\Api\PagoVentaController::obtenerResumen
  * @see app/Http/Controllers/Api/PagoVentaController.php:47
@@ -124,6 +145,41 @@ obtenerResumen.head = (args: { venta: number | { id: number } } | [venta: number
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerResumen
+ * @see app/Http/Controllers/Api/PagoVentaController.php:47
+ * @route '/api/ventas/{venta}/pagos/resumen'
+ */
+    const obtenerResumenForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerResumen.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerResumen
+ * @see app/Http/Controllers/Api/PagoVentaController.php:47
+ * @route '/api/ventas/{venta}/pagos/resumen'
+ */
+        obtenerResumenForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerResumen.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerResumen
+ * @see app/Http/Controllers/Api/PagoVentaController.php:47
+ * @route '/api/ventas/{venta}/pagos/resumen'
+ */
+        obtenerResumenForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerResumen.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerResumen.form = obtenerResumenForm
 /**
 * @see \App\Http\Controllers\Api\PagoVentaController::obtenerDetalle
  * @see app/Http/Controllers/Api/PagoVentaController.php:62
@@ -191,6 +247,41 @@ obtenerDetalle.head = (args: { venta: number | { id: number } } | [venta: number
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerDetalle
+ * @see app/Http/Controllers/Api/PagoVentaController.php:62
+ * @route '/api/ventas/{venta}/pagos/detalle'
+ */
+    const obtenerDetalleForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerDetalle.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerDetalle
+ * @see app/Http/Controllers/Api/PagoVentaController.php:62
+ * @route '/api/ventas/{venta}/pagos/detalle'
+ */
+        obtenerDetalleForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDetalle.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::obtenerDetalle
+ * @see app/Http/Controllers/Api/PagoVentaController.php:62
+ * @route '/api/ventas/{venta}/pagos/detalle'
+ */
+        obtenerDetalleForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDetalle.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerDetalle.form = obtenerDetalleForm
 /**
 * @see \App\Http\Controllers\Api\PagoVentaController::reporteCaja
  * @see app/Http/Controllers/Api/PagoVentaController.php:92
@@ -233,6 +324,42 @@ reporteCaja.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: reporteCaja.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\PagoVentaController::reporteCaja
+ * @see app/Http/Controllers/Api/PagoVentaController.php:92
+ * @route '/api/ventas/pagos/reporte-caja'
+ */
+    const reporteCajaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteCaja.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::reporteCaja
+ * @see app/Http/Controllers/Api/PagoVentaController.php:92
+ * @route '/api/ventas/pagos/reporte-caja'
+ */
+        reporteCajaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteCaja.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PagoVentaController::reporteCaja
+ * @see app/Http/Controllers/Api/PagoVentaController.php:92
+ * @route '/api/ventas/pagos/reporte-caja'
+ */
+        reporteCajaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteCaja.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteCaja.form = reporteCajaForm
 const PagoVentaController = { registrarPagos, obtenerResumen, obtenerDetalle, reporteCaja }
 
 export default PagoVentaController

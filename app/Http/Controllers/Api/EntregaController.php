@@ -4416,6 +4416,11 @@ class EntregaController extends Controller
                 ];
             });
 
+            Log::info('✅ [VENTAS_RESUMIDAS] Ventas resumidas obtenidas', [
+                'entrega_id' => $id,
+                'total_ventas' => $ventasResumidas->count(),
+            ]);
+
             // ✅ Cálculo de totales desde las confirmaciones
             $totalVentas = $ventasResumidas->count();
             $montoTotal  = $ventasResumidas->sum('total');
@@ -4428,17 +4433,22 @@ class EntregaController extends Controller
 
             foreach ($entrega->ventas as $venta) {
                 $confirmacionReciente = $venta->confirmaciones->first();
+                // mostrar en logs
+                Log::info("Procesando venta #{$venta->numero} (ID: {$venta->id}) - Confirmación reciente: " . ($confirmacionReciente ? $confirmacionReciente->id : 'N/A'));
 
-                if ($confirmacionReciente) {
+                if ($confirmacionReciente != null) {                    
                     // Procesar desglose de pagos para separar efectivo y QR
                     if ($confirmacionReciente->desglose_pagos && is_array($confirmacionReciente->desglose_pagos)) {
                         foreach ($confirmacionReciente->desglose_pagos as $pago) {
+                            Log::info("Desglose pago: " . json_encode($pago));
+                            $tipo_pago_id = $pago['tipo_pago_id'] ?? null;
                             $nombre = $pago['tipo_pago_nombre'] ?? '';
                             $monto  = (float) ($pago['monto'] ?? 0);
+                            Log::info("-----------Desglose pago: tipo_pago_id={$tipo_pago_id}, nombre={$nombre}, monto={$monto}------------");
 
-                            if (stripos($nombre, 'efectivo') !== false || stripos($nombre, 'cash') !== false) {
+                            if (stripos($nombre, 'Efectivo') !== false || stripos($nombre, 'efectivo') !== false) {
                                 $efectivoRegistrado += $monto;
-                            } elseif (stripos($nombre, 'qr') !== false || stripos($nombre, 'transferencia') !== false) {
+                            } elseif (stripos($nombre, 'Transferencia / QR') !== false || stripos($nombre, 'Transferencia \/ QR') !== false) {
                                 $qrRegistrado += $monto;
                             }
                         }
@@ -4934,13 +4944,13 @@ class EntregaController extends Controller
             // Actualizar la venta con el nuevo estado logístico y observaciones
             if ($nuevoEstadoLogisticoId) {
                 $venta->update([
-                    'estado_entrega_id'        => $nuevoEstadoLogisticoId,
+                    'estado_logistico_id'        => $nuevoEstadoLogisticoId,
                     'observaciones_logistica'    => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
                 ]);
 
                 Log::info('✅ Estado logístico de venta actualizado', [
                     'venta_id'              => $venta_id,
-                    'estado_entrega_id'   => $nuevoEstadoLogisticoId,
+                    'estado_logistico_id'   => $nuevoEstadoLogisticoId,
                     'tipo_confirmacion'     => $tipoConfirmacion,
                 ]);
             }

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ConfiguracionSitioController::index
  * @see app/Http/Controllers/ConfiguracionSitioController.php:14
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::index
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:14
+ * @route '/configuracion-sitio'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::index
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:14
+ * @route '/configuracion-sitio'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::index
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:14
+ * @route '/configuracion-sitio'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ConfiguracionSitioController::edit
  * @see app/Http/Controllers/ConfiguracionSitioController.php:21
@@ -85,6 +120,41 @@ edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::edit
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:21
+ * @route '/configuracion-sitio/editar'
+ */
+    const editForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: edit.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::edit
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:21
+ * @route '/configuracion-sitio/editar'
+ */
+        editForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::edit
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:21
+ * @route '/configuracion-sitio/editar'
+ */
+        editForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: edit.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    edit.form = editForm
 /**
 * @see \App\Http\Controllers\ConfiguracionSitioController::update
  * @see app/Http/Controllers/ConfiguracionSitioController.php:28
@@ -118,6 +188,28 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: update.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::update
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:28
+ * @route '/configuracion-sitio'
+ */
+    const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ConfiguracionSitioController::update
+ * @see app/Http/Controllers/ConfiguracionSitioController.php:28
+ * @route '/configuracion-sitio'
+ */
+        updateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(options),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 const ConfiguracionSitioController = { index, edit, update }
 
 export default ConfiguracionSitioController

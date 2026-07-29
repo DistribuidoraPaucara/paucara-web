@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::index
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:16
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::index
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:16
+ * @route '/admin/banners-publicitarios'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::index
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:16
+ * @route '/admin/banners-publicitarios'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::index
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:16
+ * @route '/admin/banners-publicitarios'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::store
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:107
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::store
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:107
+ * @route '/admin/banners-publicitarios'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::store
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:107
+ * @route '/admin/banners-publicitarios'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::update
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:166
@@ -134,6 +190,27 @@ update.post = (args: { banner: number | { id: number } } | [banner: number | { i
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::update
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:166
+ * @route '/admin/banners-publicitarios/{banner}'
+ */
+    const updateForm = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::update
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:166
+ * @route '/admin/banners-publicitarios/{banner}'
+ */
+        updateForm.post = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, options),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::toggle
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:222
@@ -192,6 +269,37 @@ toggle.patch = (args: { banner: number | { id: number } } | [banner: number | { 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::toggle
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:222
+ * @route '/admin/banners-publicitarios/{banner}/toggle'
+ */
+    const toggleForm = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: toggle.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::toggle
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:222
+ * @route '/admin/banners-publicitarios/{banner}/toggle'
+ */
+        toggleForm.patch = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: toggle.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    toggle.form = toggleForm
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::destroy
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:274
@@ -250,6 +358,37 @@ destroy.delete = (args: { banner: number | { id: number } } | [banner: number | 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::destroy
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:274
+ * @route '/admin/banners-publicitarios/{banner}'
+ */
+    const destroyForm = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::destroy
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:274
+ * @route '/admin/banners-publicitarios/{banner}'
+ */
+        destroyForm.delete = (args: { banner: number | { id: number } } | [banner: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\BannerPublicitarioAdminController::actualizarOrden
  * @see app/Http/Controllers/BannerPublicitarioAdminController.php:247
@@ -283,6 +422,28 @@ actualizarOrden.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =>
     url: actualizarOrden.url(options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::actualizarOrden
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:247
+ * @route '/admin/banners-publicitarios/actualizar-orden'
+ */
+    const actualizarOrdenForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizarOrden.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\BannerPublicitarioAdminController::actualizarOrden
+ * @see app/Http/Controllers/BannerPublicitarioAdminController.php:247
+ * @route '/admin/banners-publicitarios/actualizar-orden'
+ */
+        actualizarOrdenForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizarOrden.url(options),
+            method: 'post',
+        })
+    
+    actualizarOrden.form = actualizarOrdenForm
 const bannersPublicitarios = {
     index,
 store,

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReportesController::reporteStock
  * @see app/Http/Controllers/ReportesController.php:38
@@ -45,6 +45,41 @@ reporteStockec402e57b4db65007c852c173c196923.head = (options?: RouteQueryOptions
     /**
 * @see \App\Http\Controllers\ReportesController::reporteStock
  * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock'
+ */
+    const reporteStockec402e57b4db65007c852c173c196923Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteStockec402e57b4db65007c852c173c196923.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock'
+ */
+        reporteStockec402e57b4db65007c852c173c196923Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStockec402e57b4db65007c852c173c196923.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock'
+ */
+        reporteStockec402e57b4db65007c852c173c196923Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStockec402e57b4db65007c852c173c196923.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteStockec402e57b4db65007c852c173c196923.form = reporteStockec402e57b4db65007c852c173c196923Form
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
  * @route '/api/reportes/stock-prestables'
  */
 const reporteStock822a6e12475770bbd39c7de11afb2a2d = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -84,6 +119,42 @@ reporteStock822a6e12475770bbd39c7de11afb2a2d.head = (options?: RouteQueryOptions
     url: reporteStock822a6e12475770bbd39c7de11afb2a2d.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock-prestables'
+ */
+    const reporteStock822a6e12475770bbd39c7de11afb2a2dForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteStock822a6e12475770bbd39c7de11afb2a2d.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock-prestables'
+ */
+        reporteStock822a6e12475770bbd39c7de11afb2a2dForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStock822a6e12475770bbd39c7de11afb2a2d.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStock
+ * @see app/Http/Controllers/ReportesController.php:38
+ * @route '/api/reportes/stock-prestables'
+ */
+        reporteStock822a6e12475770bbd39c7de11afb2a2dForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStock822a6e12475770bbd39c7de11afb2a2d.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteStock822a6e12475770bbd39c7de11afb2a2d.form = reporteStock822a6e12475770bbd39c7de11afb2a2dForm
 
 export const reporteStock = {
     '/api/reportes/stock': reporteStockec402e57b4db65007c852c173c196923,
@@ -133,6 +204,41 @@ reporteStockBajo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteStockBajo
+ * @see app/Http/Controllers/ReportesController.php:80
+ * @route '/api/reportes/stock/bajo'
+ */
+    const reporteStockBajoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteStockBajo.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStockBajo
+ * @see app/Http/Controllers/ReportesController.php:80
+ * @route '/api/reportes/stock/bajo'
+ */
+        reporteStockBajoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStockBajo.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteStockBajo
+ * @see app/Http/Controllers/ReportesController.php:80
+ * @route '/api/reportes/stock/bajo'
+ */
+        reporteStockBajoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteStockBajo.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteStockBajo.form = reporteStockBajoForm
 /**
 * @see \App\Http\Controllers\ReportesController::stockBajoPrestables
  * @see app/Http/Controllers/ReportesController.php:120
@@ -176,6 +282,41 @@ stockBajoPrestables.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReportesController::stockBajoPrestables
+ * @see app/Http/Controllers/ReportesController.php:120
+ * @route '/api/reportes/stock-bajo-prestables'
+ */
+    const stockBajoPrestablesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: stockBajoPrestables.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::stockBajoPrestables
+ * @see app/Http/Controllers/ReportesController.php:120
+ * @route '/api/reportes/stock-bajo-prestables'
+ */
+        stockBajoPrestablesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockBajoPrestables.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::stockBajoPrestables
+ * @see app/Http/Controllers/ReportesController.php:120
+ * @route '/api/reportes/stock-bajo-prestables'
+ */
+        stockBajoPrestablesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockBajoPrestables.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    stockBajoPrestables.form = stockBajoPrestablesForm
 /**
 * @see \App\Http\Controllers\ReportesController::reportePrestamosCliente
  * @see app/Http/Controllers/ReportesController.php:152
@@ -219,6 +360,41 @@ reportePrestamosCliente.head = (options?: RouteQueryOptions): RouteDefinition<'h
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReportesController::reportePrestamosCliente
+ * @see app/Http/Controllers/ReportesController.php:152
+ * @route '/api/reportes/prestamos/cliente'
+ */
+    const reportePrestamosClienteForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reportePrestamosCliente.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reportePrestamosCliente
+ * @see app/Http/Controllers/ReportesController.php:152
+ * @route '/api/reportes/prestamos/cliente'
+ */
+        reportePrestamosClienteForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reportePrestamosCliente.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reportePrestamosCliente
+ * @see app/Http/Controllers/ReportesController.php:152
+ * @route '/api/reportes/prestamos/cliente'
+ */
+        reportePrestamosClienteForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reportePrestamosCliente.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reportePrestamosCliente.form = reportePrestamosClienteForm
 /**
 * @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
  * @see app/Http/Controllers/ReportesController.php:194
@@ -265,6 +441,41 @@ reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be.head = (options?: 
     /**
 * @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
  * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones/pendientes'
+ */
+    const reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11beForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones/pendientes'
+ */
+        reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11beForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones/pendientes'
+ */
+        reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11beForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be.form = reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11beForm
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
  * @route '/api/reportes/devoluciones-pendientes'
  */
 const reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -304,6 +515,42 @@ reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.head = (options?: 
     url: reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones-pendientes'
+ */
+    const reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones-pendientes'
+ */
+        reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDevolucionesPendientes
+ * @see app/Http/Controllers/ReportesController.php:194
+ * @route '/api/reportes/devoluciones-pendientes'
+ */
+        reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36.form = reporteDevolucionesPendientesc1c2b4a5a9b90be0fa689d5266485a36Form
 
 export const reporteDevolucionesPendientes = {
     '/api/reportes/devoluciones/pendientes': reporteDevolucionesPendientesfeb7f32901fe4a52c74067a42ebe11be,
@@ -356,6 +603,41 @@ reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472.head = (options?: RouteQueryOption
     /**
 * @see \App\Http\Controllers\ReportesController::reporteDeudas
  * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/proveedor/deudas'
+ */
+    const reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/proveedor/deudas'
+ */
+        reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/proveedor/deudas'
+ */
+        reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472.form = reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472Form
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
  * @route '/api/reportes/deudas-proveedores'
  */
 const reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -395,6 +677,42 @@ reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.head = (options?: RouteQueryOption
     url: reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/deudas-proveedores'
+ */
+    const reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/deudas-proveedores'
+ */
+        reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteDeudas
+ * @see app/Http/Controllers/ReportesController.php:241
+ * @route '/api/reportes/deudas-proveedores'
+ */
+        reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066.form = reporteDeudas27cb8cc9cf8c94a75cde6f0f5bfaf066Form
 
 export const reporteDeudas = {
     '/api/reportes/proveedor/deudas': reporteDeudas9fb4d9b4133b4bf6d3a741ef8389d472,
@@ -443,6 +761,42 @@ reporteResumen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     url: reporteResumen.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReportesController::reporteResumen
+ * @see app/Http/Controllers/ReportesController.php:285
+ * @route '/api/reportes/resumen-prestamos'
+ */
+    const reporteResumenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reporteResumen.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteResumen
+ * @see app/Http/Controllers/ReportesController.php:285
+ * @route '/api/reportes/resumen-prestamos'
+ */
+        reporteResumenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteResumen.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReportesController::reporteResumen
+ * @see app/Http/Controllers/ReportesController.php:285
+ * @route '/api/reportes/resumen-prestamos'
+ */
+        reporteResumenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reporteResumen.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reporteResumen.form = reporteResumenForm
 const ReportesController = { reporteStock, reporteStockBajo, stockBajoPrestables, reportePrestamosCliente, reporteDevolucionesPendientes, reporteDeudas, reporteResumen }
 
 export default ReportesController

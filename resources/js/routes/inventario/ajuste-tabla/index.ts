@@ -1,6 +1,6 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:777
  * @route '/inventario/ajuste-tabla'
  */
 export const form = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ form.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:777
  * @route '/inventario/ajuste-tabla'
  */
 form.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ form.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:777
  * @route '/inventario/ajuste-tabla'
  */
 form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -30,13 +30,46 @@ form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:777
  * @route '/inventario/ajuste-tabla'
  */
 form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/web.php:777
+ * @route '/inventario/ajuste-tabla'
+ */
+    const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: form.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:777
+ * @route '/inventario/ajuste-tabla'
+ */
+        formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: form.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:777
+ * @route '/inventario/ajuste-tabla'
+ */
+        formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: form.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    form.form = formForm
 const ajusteTabla = {
     form,
 }

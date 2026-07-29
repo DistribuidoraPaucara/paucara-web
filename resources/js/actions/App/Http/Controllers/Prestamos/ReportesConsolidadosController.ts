@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockDetallado
  * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:26
@@ -42,6 +42,41 @@ stockDetallado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockDetallado
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:26
+ * @route '/api/reportes/prestables/stock-detalle'
+ */
+    const stockDetalladoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: stockDetallado.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockDetallado
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:26
+ * @route '/api/reportes/prestables/stock-detalle'
+ */
+        stockDetalladoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockDetallado.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockDetallado
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:26
+ * @route '/api/reportes/prestables/stock-detalle'
+ */
+        stockDetalladoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockDetallado.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    stockDetallado.form = stockDetalladoForm
 /**
 * @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockPorAlmacen
  * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:63
@@ -85,6 +120,41 @@ stockPorAlmacen.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockPorAlmacen
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:63
+ * @route '/api/reportes/prestables/stock-por-almacen'
+ */
+    const stockPorAlmacenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: stockPorAlmacen.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockPorAlmacen
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:63
+ * @route '/api/reportes/prestables/stock-por-almacen'
+ */
+        stockPorAlmacenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockPorAlmacen.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::stockPorAlmacen
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:63
+ * @route '/api/reportes/prestables/stock-por-almacen'
+ */
+        stockPorAlmacenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: stockPorAlmacen.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    stockPorAlmacen.form = stockPorAlmacenForm
 /**
 * @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::deudaProveedores
  * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:179
@@ -128,6 +198,41 @@ deudaProveedores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::deudaProveedores
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:179
+ * @route '/api/reportes/prestables/deuda-proveedores'
+ */
+    const deudaProveedoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: deudaProveedores.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::deudaProveedores
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:179
+ * @route '/api/reportes/prestables/deuda-proveedores'
+ */
+        deudaProveedoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: deudaProveedores.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::deudaProveedores
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:179
+ * @route '/api/reportes/prestables/deuda-proveedores'
+ */
+        deudaProveedoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: deudaProveedores.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    deudaProveedores.form = deudaProveedoresForm
 /**
 * @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::resumenGeneral
  * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:256
@@ -170,6 +275,42 @@ resumenGeneral.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     url: resumenGeneral.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::resumenGeneral
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:256
+ * @route '/api/reportes/prestables/resumen-general'
+ */
+    const resumenGeneralForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: resumenGeneral.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::resumenGeneral
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:256
+ * @route '/api/reportes/prestables/resumen-general'
+ */
+        resumenGeneralForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: resumenGeneral.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Prestamos\ReportesConsolidadosController::resumenGeneral
+ * @see app/Http/Controllers/Prestamos/ReportesConsolidadosController.php:256
+ * @route '/api/reportes/prestables/resumen-general'
+ */
+        resumenGeneralForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: resumenGeneral.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    resumenGeneral.form = resumenGeneralForm
 const ReportesConsolidadosController = { stockDetallado, stockPorAlmacen, deudaProveedores, resumenGeneral }
 
 export default ReportesConsolidadosController

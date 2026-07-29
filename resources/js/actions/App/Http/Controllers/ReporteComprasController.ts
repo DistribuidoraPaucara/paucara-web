@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteComprasController::index
  * @see app/Http/Controllers/ReporteComprasController.php:18
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteComprasController::index
+ * @see app/Http/Controllers/ReporteComprasController.php:18
+ * @route '/compras/reportes'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::index
+ * @see app/Http/Controllers/ReporteComprasController.php:18
+ * @route '/compras/reportes'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::index
+ * @see app/Http/Controllers/ReporteComprasController.php:18
+ * @route '/compras/reportes'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\ReporteComprasController::exportMethod
  * @see app/Http/Controllers/ReporteComprasController.php:245
@@ -85,6 +120,41 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ReporteComprasController::exportMethod
+ * @see app/Http/Controllers/ReporteComprasController.php:245
+ * @route '/compras/reportes/export'
+ */
+    const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: exportMethod.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::exportMethod
+ * @see app/Http/Controllers/ReporteComprasController.php:245
+ * @route '/compras/reportes/export'
+ */
+        exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportMethod.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::exportMethod
+ * @see app/Http/Controllers/ReporteComprasController.php:245
+ * @route '/compras/reportes/export'
+ */
+        exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportMethod.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    exportMethod.form = exportMethodForm
 /**
 * @see \App\Http\Controllers\ReporteComprasController::exportPdf
  * @see app/Http/Controllers/ReporteComprasController.php:368
@@ -127,6 +197,42 @@ exportPdf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: exportPdf.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReporteComprasController::exportPdf
+ * @see app/Http/Controllers/ReporteComprasController.php:368
+ * @route '/compras/reportes/export-pdf'
+ */
+    const exportPdfForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: exportPdf.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::exportPdf
+ * @see app/Http/Controllers/ReporteComprasController.php:368
+ * @route '/compras/reportes/export-pdf'
+ */
+        exportPdfForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportPdf.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteComprasController::exportPdf
+ * @see app/Http/Controllers/ReporteComprasController.php:368
+ * @route '/compras/reportes/export-pdf'
+ */
+        exportPdfForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportPdf.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    exportPdf.form = exportPdfForm
 const ReporteComprasController = { index, exportMethod, exportPdf, export: exportMethod }
 
 export default ReporteComprasController

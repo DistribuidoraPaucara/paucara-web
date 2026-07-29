@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::index
  * @see app/Http/Controllers/Api/RutaApiController.php:26
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::index
+ * @see app/Http/Controllers/Api/RutaApiController.php:26
+ * @route '/api/rutas'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::index
+ * @see app/Http/Controllers/Api/RutaApiController.php:26
+ * @route '/api/rutas'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::index
+ * @see app/Http/Controllers/Api/RutaApiController.php:26
+ * @route '/api/rutas'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::planificar
  * @see app/Http/Controllers/Api/RutaApiController.php:66
@@ -76,6 +111,27 @@ planificar.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::planificar
+ * @see app/Http/Controllers/Api/RutaApiController.php:66
+ * @route '/api/rutas/planificar'
+ */
+    const planificarForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: planificar.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::planificar
+ * @see app/Http/Controllers/Api/RutaApiController.php:66
+ * @route '/api/rutas/planificar'
+ */
+        planificarForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: planificar.url(options),
+            method: 'post',
+        })
+    
+    planificar.form = planificarForm
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::show
  * @see app/Http/Controllers/Api/RutaApiController.php:105
@@ -143,6 +199,41 @@ show.head = (args: { ruta: number | { id: number } } | [ruta: number | { id: num
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::show
+ * @see app/Http/Controllers/Api/RutaApiController.php:105
+ * @route '/api/rutas/{ruta}'
+ */
+    const showForm = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::show
+ * @see app/Http/Controllers/Api/RutaApiController.php:105
+ * @route '/api/rutas/{ruta}'
+ */
+        showForm.get = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::show
+ * @see app/Http/Controllers/Api/RutaApiController.php:105
+ * @route '/api/rutas/{ruta}'
+ */
+        showForm.head = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::actualizarEstado
  * @see app/Http/Controllers/Api/RutaApiController.php:178
@@ -201,6 +292,37 @@ actualizarEstado.patch = (args: { ruta: number | { id: number } } | [ruta: numbe
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::actualizarEstado
+ * @see app/Http/Controllers/Api/RutaApiController.php:178
+ * @route '/api/rutas/{ruta}/estado'
+ */
+    const actualizarEstadoForm = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizarEstado.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::actualizarEstado
+ * @see app/Http/Controllers/Api/RutaApiController.php:178
+ * @route '/api/rutas/{ruta}/estado'
+ */
+        actualizarEstadoForm.patch = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizarEstado.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    actualizarEstado.form = actualizarEstadoForm
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::obtenerDetalles
  * @see app/Http/Controllers/Api/RutaApiController.php:144
@@ -268,6 +390,41 @@ obtenerDetalles.head = (args: { ruta: number | { id: number } } | [ruta: number 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::obtenerDetalles
+ * @see app/Http/Controllers/Api/RutaApiController.php:144
+ * @route '/api/rutas/{ruta}/detalles'
+ */
+    const obtenerDetallesForm = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerDetalles.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::obtenerDetalles
+ * @see app/Http/Controllers/Api/RutaApiController.php:144
+ * @route '/api/rutas/{ruta}/detalles'
+ */
+        obtenerDetallesForm.get = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDetalles.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::obtenerDetalles
+ * @see app/Http/Controllers/Api/RutaApiController.php:144
+ * @route '/api/rutas/{ruta}/detalles'
+ */
+        obtenerDetallesForm.head = (args: { ruta: number | { id: number } } | [ruta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerDetalles.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerDetalles.form = obtenerDetallesForm
 /**
 * @see \App\Http\Controllers\Api\RutaApiController::completarDetalle
  * @see app/Http/Controllers/Api/RutaApiController.php:218
@@ -322,6 +479,28 @@ completarDetalle.post = (args: { ruta: number | { id: number }, detalle: number 
     url: completarDetalle.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\RutaApiController::completarDetalle
+ * @see app/Http/Controllers/Api/RutaApiController.php:218
+ * @route '/api/rutas/{ruta}/detalles/{detalle}/completar'
+ */
+    const completarDetalleForm = (args: { ruta: number | { id: number }, detalle: number | { id: number } } | [ruta: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: completarDetalle.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RutaApiController::completarDetalle
+ * @see app/Http/Controllers/Api/RutaApiController.php:218
+ * @route '/api/rutas/{ruta}/detalles/{detalle}/completar'
+ */
+        completarDetalleForm.post = (args: { ruta: number | { id: number }, detalle: number | { id: number } } | [ruta: number | { id: number }, detalle: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: completarDetalle.url(args, options),
+            method: 'post',
+        })
+    
+    completarDetalle.form = completarDetalleForm
 const RutaApiController = { index, planificar, show, actualizarEstado, obtenerDetalles, completarDetalle }
 
 export default RutaApiController

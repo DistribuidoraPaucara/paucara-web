@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 import proformas from './proformas'
 import tiposPago from './tipos-pago'
 import modulosSidebar from './modulos-sidebar'
@@ -77,6 +77,41 @@ modulosSidebar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\ModuloSidebarController::modulosSidebar
+ * @see app/Http/Controllers/ModuloSidebarController.php:281
+ * @route '/api/modulos-sidebar'
+ */
+    const modulosSidebarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: modulosSidebar.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ModuloSidebarController::modulosSidebar
+ * @see app/Http/Controllers/ModuloSidebarController.php:281
+ * @route '/api/modulos-sidebar'
+ */
+        modulosSidebarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: modulosSidebar.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ModuloSidebarController::modulosSidebar
+ * @see app/Http/Controllers/ModuloSidebarController.php:281
+ * @route '/api/modulos-sidebar'
+ */
+        modulosSidebarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: modulosSidebar.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    modulosSidebar.form = modulosSidebarForm
 /**
 * @see \App\Http\Controllers\Auth\DashboardRedirectController::dashboardRedirect
  * @see app/Http/Controllers/Auth/DashboardRedirectController.php:81
@@ -120,8 +155,43 @@ dashboardRedirect.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Auth\DashboardRedirectController::dashboardRedirect
+ * @see app/Http/Controllers/Auth/DashboardRedirectController.php:81
+ * @route '/api/dashboard-redirect'
+ */
+    const dashboardRedirectForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: dashboardRedirect.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Auth\DashboardRedirectController::dashboardRedirect
+ * @see app/Http/Controllers/Auth/DashboardRedirectController.php:81
+ * @route '/api/dashboard-redirect'
+ */
+        dashboardRedirectForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: dashboardRedirect.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Auth\DashboardRedirectController::dashboardRedirect
+ * @see app/Http/Controllers/Auth/DashboardRedirectController.php:81
+ * @route '/api/dashboard-redirect'
+ */
+        dashboardRedirectForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: dashboardRedirect.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    dashboardRedirect.form = dashboardRedirectForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:412
  * @route '/api/preventistas'
  */
 export const preventistas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -135,7 +205,7 @@ preventistas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:412
  * @route '/api/preventistas'
  */
 preventistas.url = (options?: RouteQueryOptions) => {
@@ -143,7 +213,7 @@ preventistas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:412
  * @route '/api/preventistas'
  */
 preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -151,7 +221,7 @@ preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:412
  * @route '/api/preventistas'
  */
 preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -159,8 +229,40 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+ * @see routes/api.php:412
+ * @route '/api/preventistas'
+ */
+    const preventistasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: preventistas.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/api.php:412
+ * @route '/api/preventistas'
+ */
+        preventistasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: preventistas.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/api.php:412
+ * @route '/api/preventistas'
+ */
+        preventistasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: preventistas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    preventistas.form = preventistasForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1531
  * @route '/api/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -174,7 +276,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1531
  * @route '/api/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -182,7 +284,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1531
  * @route '/api/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,13 +292,46 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1531
  * @route '/api/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: logs.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/api.php:1531
+ * @route '/api/logs'
+ */
+    const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: logs.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/api.php:1531
+ * @route '/api/logs'
+ */
+        logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/api.php:1531
+ * @route '/api/logs'
+ */
+        logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    logs.form = logsForm
 const api = {
     proformas,
 tiposPago,

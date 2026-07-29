@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::indexApi
  * @see app/Http/Controllers/CategoriaClienteController.php:32
@@ -42,6 +42,41 @@ indexApi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::indexApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:32
+ * @route '/api/categorias-cliente'
+ */
+    const indexApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: indexApi.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::indexApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:32
+ * @route '/api/categorias-cliente'
+ */
+        indexApiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::indexApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:32
+ * @route '/api/categorias-cliente'
+ */
+        indexApiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: indexApi.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    indexApi.form = indexApiForm
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::storeApi
  * @see app/Http/Controllers/CategoriaClienteController.php:60
@@ -76,6 +111,27 @@ storeApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::storeApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:60
+ * @route '/api/categorias-cliente'
+ */
+    const storeApiForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: storeApi.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::storeApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:60
+ * @route '/api/categorias-cliente'
+ */
+        storeApiForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: storeApi.url(options),
+            method: 'post',
+        })
+    
+    storeApi.form = storeApiForm
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::showApi
  * @see app/Http/Controllers/CategoriaClienteController.php:79
@@ -143,6 +199,41 @@ showApi.head = (args: { categoria: number | { id: number } } | [categoria: numbe
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::showApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:79
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+    const showApiForm = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: showApi.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::showApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:79
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+        showApiForm.get = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::showApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:79
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+        showApiForm.head = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: showApi.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    showApi.form = showApiForm
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::updateApi
  * @see app/Http/Controllers/CategoriaClienteController.php:90
@@ -201,6 +292,37 @@ updateApi.put = (args: { categoria: number | { id: number } } | [categoria: numb
     method: 'put',
 })
 
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::updateApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:90
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+    const updateApiForm = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: updateApi.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::updateApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:90
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+        updateApiForm.put = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: updateApi.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    updateApi.form = updateApiForm
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::destroyApi
  * @see app/Http/Controllers/CategoriaClienteController.php:107
@@ -259,6 +381,37 @@ destroyApi.delete = (args: { categoria: number | { id: number } } | [categoria: 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::destroyApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:107
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+    const destroyApiForm = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroyApi.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::destroyApi
+ * @see app/Http/Controllers/CategoriaClienteController.php:107
+ * @route '/api/categorias-cliente/{categoria}'
+ */
+        destroyApiForm.delete = (args: { categoria: number | { id: number } } | [categoria: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroyApi.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroyApi.form = destroyApiForm
 /**
 * @see \App\Http\Controllers\CategoriaClienteController::index
  * @see app/Http/Controllers/CategoriaClienteController.php:18
@@ -301,6 +454,42 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\CategoriaClienteController::index
+ * @see app/Http/Controllers/CategoriaClienteController.php:18
+ * @route '/admin/categorias-cliente'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::index
+ * @see app/Http/Controllers/CategoriaClienteController.php:18
+ * @route '/admin/categorias-cliente'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CategoriaClienteController::index
+ * @see app/Http/Controllers/CategoriaClienteController.php:18
+ * @route '/admin/categorias-cliente'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 const CategoriaClienteController = { indexApi, storeApi, showApi, updateApi, destroyApi, index }
 
 export default CategoriaClienteController

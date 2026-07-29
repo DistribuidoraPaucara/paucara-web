@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReporteController::ventasPorProducto
  * @see app/Http/Controllers/ReporteController.php:19
@@ -41,6 +41,42 @@ ventasPorProducto.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     url: ventasPorProducto.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\ReporteController::ventasPorProducto
+ * @see app/Http/Controllers/ReporteController.php:19
+ * @route '/ventas/reportes/ventas-por-producto'
+ */
+    const ventasPorProductoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: ventasPorProducto.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ReporteController::ventasPorProducto
+ * @see app/Http/Controllers/ReporteController.php:19
+ * @route '/ventas/reportes/ventas-por-producto'
+ */
+        ventasPorProductoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ventasPorProducto.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ReporteController::ventasPorProducto
+ * @see app/Http/Controllers/ReporteController.php:19
+ * @route '/ventas/reportes/ventas-por-producto'
+ */
+        ventasPorProductoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: ventasPorProducto.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    ventasPorProducto.form = ventasPorProductoForm
 const reportes = {
     ventasPorProducto,
 }

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\InventarioController::index
  * @see app/Http/Controllers/InventarioController.php:1970
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1970
+ * @route '/inventario/mermas'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1970
+ * @route '/inventario/mermas'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::index
+ * @see app/Http/Controllers/InventarioController.php:1970
+ * @route '/inventario/mermas'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\InventarioController::registrar
  * @see app/Http/Controllers/InventarioController.php:2075
@@ -85,6 +120,41 @@ registrar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::registrar
+ * @see app/Http/Controllers/InventarioController.php:2075
+ * @route '/inventario/mermas/registrar'
+ */
+    const registrarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: registrar.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::registrar
+ * @see app/Http/Controllers/InventarioController.php:2075
+ * @route '/inventario/mermas/registrar'
+ */
+        registrarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: registrar.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::registrar
+ * @see app/Http/Controllers/InventarioController.php:2075
+ * @route '/inventario/mermas/registrar'
+ */
+        registrarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: registrar.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    registrar.form = registrarForm
 /**
 * @see \App\Http\Controllers\InventarioController::store
  * @see app/Http/Controllers/InventarioController.php:1724
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::store
+ * @see app/Http/Controllers/InventarioController.php:1724
+ * @route '/inventario/mermas/registrar'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::store
+ * @see app/Http/Controllers/InventarioController.php:1724
+ * @route '/inventario/mermas/registrar'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\InventarioController::show
  * @see app/Http/Controllers/InventarioController.php:2314
@@ -186,6 +277,41 @@ show.head = (args: { merma: number | { id: number } } | [merma: number | { id: n
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:2314
+ * @route '/inventario/mermas/{merma}'
+ */
+    const showForm = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:2314
+ * @route '/inventario/mermas/{merma}'
+ */
+        showForm.get = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::show
+ * @see app/Http/Controllers/InventarioController.php:2314
+ * @route '/inventario/mermas/{merma}'
+ */
+        showForm.head = (args: { merma: number | { id: number } } | [merma: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\InventarioController::aprobar
  * @see app/Http/Controllers/InventarioController.php:2462
@@ -239,6 +365,27 @@ aprobar.post = (args: { merma: string | number } | [merma: string | number ] | s
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::aprobar
+ * @see app/Http/Controllers/InventarioController.php:2462
+ * @route '/inventario/mermas/{merma}/aprobar'
+ */
+    const aprobarForm = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: aprobar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::aprobar
+ * @see app/Http/Controllers/InventarioController.php:2462
+ * @route '/inventario/mermas/{merma}/aprobar'
+ */
+        aprobarForm.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: aprobar.url(args, options),
+            method: 'post',
+        })
+    
+    aprobar.form = aprobarForm
 /**
 * @see \App\Http\Controllers\InventarioController::rechazar
  * @see app/Http/Controllers/InventarioController.php:2512
@@ -292,6 +439,27 @@ rechazar.post = (args: { merma: string | number } | [merma: string | number ] | 
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\InventarioController::rechazar
+ * @see app/Http/Controllers/InventarioController.php:2512
+ * @route '/inventario/mermas/{merma}/rechazar'
+ */
+    const rechazarForm = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: rechazar.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::rechazar
+ * @see app/Http/Controllers/InventarioController.php:2512
+ * @route '/inventario/mermas/{merma}/rechazar'
+ */
+        rechazarForm.post = (args: { merma: string | number } | [merma: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: rechazar.url(args, options),
+            method: 'post',
+        })
+    
+    rechazar.form = rechazarForm
 /**
 * @see \App\Http\Controllers\InventarioController::imprimir
  * @see app/Http/Controllers/InventarioController.php:4096
@@ -353,6 +521,42 @@ imprimir.head = (args: { id: string | number } | [id: string | number ] | string
     url: imprimir.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\InventarioController::imprimir
+ * @see app/Http/Controllers/InventarioController.php:4096
+ * @route '/inventario/mermas/{id}/imprimir'
+ */
+    const imprimirForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\InventarioController::imprimir
+ * @see app/Http/Controllers/InventarioController.php:4096
+ * @route '/inventario/mermas/{id}/imprimir'
+ */
+        imprimirForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\InventarioController::imprimir
+ * @see app/Http/Controllers/InventarioController.php:4096
+ * @route '/inventario/mermas/{id}/imprimir'
+ */
+        imprimirForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 const mermas = {
     index,
 registrar,

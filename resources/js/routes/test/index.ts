@@ -1,6 +1,6 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:69
  * @route '/test-csrf'
  */
 export const csrf = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -14,7 +14,7 @@ csrf.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:69
  * @route '/test-csrf'
  */
 csrf.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ csrf.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:69
  * @route '/test-csrf'
  */
 csrf.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -30,8 +30,27 @@ csrf.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+ * @see routes/web.php:69
+ * @route '/test-csrf'
+ */
+    const csrfForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: csrf.url(options),
+        method: 'post',
+    })
+
+            /**
+ * @see routes/web.php:69
+ * @route '/test-csrf'
+ */
+        csrfForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: csrf.url(options),
+            method: 'post',
+        })
+    
+    csrf.form = csrfForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:74
  * @route '/test-logo'
  */
 export const logo = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -45,7 +64,7 @@ logo.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:74
  * @route '/test-logo'
  */
 logo.url = (options?: RouteQueryOptions) => {
@@ -53,7 +72,7 @@ logo.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:74
  * @route '/test-logo'
  */
 logo.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -61,13 +80,46 @@ logo.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:74
  * @route '/test-logo'
  */
 logo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: logo.url(options),
     method: 'head',
 })
+
+    /**
+ * @see routes/web.php:74
+ * @route '/test-logo'
+ */
+    const logoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: logo.url(options),
+        method: 'get',
+    })
+
+            /**
+ * @see routes/web.php:74
+ * @route '/test-logo'
+ */
+        logoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logo.url(options),
+            method: 'get',
+        })
+            /**
+ * @see routes/web.php:74
+ * @route '/test-logo'
+ */
+        logoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logo.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    logo.form = logoForm
 const test = {
     csrf,
 logo,

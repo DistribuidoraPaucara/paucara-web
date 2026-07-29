@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::clientesIndex
  * @see app/Http/Controllers/PrestamosInertiaController.php:43
@@ -42,6 +42,41 @@ clientesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+    const clientesIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: clientesIndex.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+        clientesIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientesIndex.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:43
+ * @route '/prestamos/clientes'
+ */
+        clientesIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientesIndex.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    clientesIndex.form = clientesIndexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::clientesCrear
  * @see app/Http/Controllers/PrestamosInertiaController.php:51
@@ -85,6 +120,41 @@ clientesCrear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+    const clientesCrearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: clientesCrear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+        clientesCrearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientesCrear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:51
+ * @route '/prestamos/clientes/crear'
+ */
+        clientesCrearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: clientesCrear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    clientesCrear.form = clientesCrearForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::clientesStore
  * @see app/Http/Controllers/PrestamosInertiaController.php:111
@@ -119,6 +189,27 @@ clientesStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:111
+ * @route '/prestamos/clientes'
+ */
+    const clientesStoreForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: clientesStore.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::clientesStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:111
+ * @route '/prestamos/clientes'
+ */
+        clientesStoreForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: clientesStore.url(options),
+            method: 'post',
+        })
+    
+    clientesStore.form = clientesStoreForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresIndex
  * @see app/Http/Controllers/PrestamosInertiaController.php:120
@@ -162,6 +253,41 @@ proveedoresIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:120
+ * @route '/prestamos/proveedores'
+ */
+    const proveedoresIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: proveedoresIndex.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:120
+ * @route '/prestamos/proveedores'
+ */
+        proveedoresIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresIndex.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:120
+ * @route '/prestamos/proveedores'
+ */
+        proveedoresIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresIndex.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    proveedoresIndex.form = proveedoresIndexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresPrestamosCrear
  * @see app/Http/Controllers/PrestamosInertiaController.php:131
@@ -205,6 +331,41 @@ proveedoresPrestamosCrear.head = (options?: RouteQueryOptions): RouteDefinition<
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresPrestamosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:131
+ * @route '/prestamos/proveedores/prestamos/crear'
+ */
+    const proveedoresPrestamosCrearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: proveedoresPrestamosCrear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresPrestamosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:131
+ * @route '/prestamos/proveedores/prestamos/crear'
+ */
+        proveedoresPrestamosCrearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresPrestamosCrear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresPrestamosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:131
+ * @route '/prestamos/proveedores/prestamos/crear'
+ */
+        proveedoresPrestamosCrearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresPrestamosCrear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    proveedoresPrestamosCrear.form = proveedoresPrestamosCrearForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
  * @see app/Http/Controllers/PrestamosInertiaController.php:234
@@ -248,6 +409,41 @@ proveedoresComprasCrear.head = (options?: RouteQueryOptions): RouteDefinition<'h
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
+ * @route '/prestamos/proveedores/compras/crear'
+ */
+    const proveedoresComprasCrearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: proveedoresComprasCrear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
+ * @route '/prestamos/proveedores/compras/crear'
+ */
+        proveedoresComprasCrearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresComprasCrear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresComprasCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:234
+ * @route '/prestamos/proveedores/compras/crear'
+ */
+        proveedoresComprasCrearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: proveedoresComprasCrear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    proveedoresComprasCrear.form = proveedoresComprasCrearForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
  * @see app/Http/Controllers/PrestamosInertiaController.php:265
@@ -282,6 +478,27 @@ proveedoresStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @route '/prestamos/proveedores'
+ */
+    const proveedoresStoreForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: proveedoresStore.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::proveedoresStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @route '/prestamos/proveedores'
+ */
+        proveedoresStoreForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: proveedoresStore.url(options),
+            method: 'post',
+        })
+    
+    proveedoresStore.form = proveedoresStoreForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
  * @see app/Http/Controllers/PrestamosInertiaController.php:274
@@ -325,6 +542,41 @@ eventosIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
+ * @route '/prestamos/eventos'
+ */
+    const eventosIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: eventosIndex.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
+ * @route '/prestamos/eventos'
+ */
+        eventosIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosIndex.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosIndex
+ * @see app/Http/Controllers/PrestamosInertiaController.php:274
+ * @route '/prestamos/eventos'
+ */
+        eventosIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosIndex.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    eventosIndex.form = eventosIndexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
  * @see app/Http/Controllers/PrestamosInertiaController.php:296
@@ -368,6 +620,41 @@ eventosCrear.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
+ * @route '/prestamos/eventos/crear'
+ */
+    const eventosCrearForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: eventosCrear.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
+ * @route '/prestamos/eventos/crear'
+ */
+        eventosCrearForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosCrear.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosCrear
+ * @see app/Http/Controllers/PrestamosInertiaController.php:296
+ * @route '/prestamos/eventos/crear'
+ */
+        eventosCrearForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosCrear.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    eventosCrear.form = eventosCrearForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
  * @see app/Http/Controllers/PrestamosInertiaController.php:350
@@ -402,6 +689,27 @@ eventosStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
+ * @route '/prestamos/eventos'
+ */
+    const eventosStoreForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: eventosStore.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosStore
+ * @see app/Http/Controllers/PrestamosInertiaController.php:350
+ * @route '/prestamos/eventos'
+ */
+        eventosStoreForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: eventosStore.url(options),
+            method: 'post',
+        })
+    
+    eventosStore.form = eventosStoreForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
  * @see app/Http/Controllers/PrestamosInertiaController.php:359
@@ -469,6 +777,41 @@ eventosShow.head = (args: { prestamo: number | { id: number } } | [prestamo: num
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
+ * @route '/prestamos/eventos/{prestamo}'
+ */
+    const eventosShowForm = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: eventosShow.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
+ * @route '/prestamos/eventos/{prestamo}'
+ */
+        eventosShowForm.get = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosShow.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::eventosShow
+ * @see app/Http/Controllers/PrestamosInertiaController.php:359
+ * @route '/prestamos/eventos/{prestamo}'
+ */
+        eventosShowForm.head = (args: { prestamo: number | { id: number } } | [prestamo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: eventosShow.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    eventosShow.form = eventosShowForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::reportes
  * @see app/Http/Controllers/PrestamosInertiaController.php:392
@@ -511,6 +854,42 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: reportes.url(options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\PrestamosInertiaController::reportes
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
+ * @route '/prestamos/reportes'
+ */
+    const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: reportes.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::reportes
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
+ * @route '/prestamos/reportes'
+ */
+        reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reportes.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosInertiaController::reportes
+ * @see app/Http/Controllers/PrestamosInertiaController.php:392
+ * @route '/prestamos/reportes'
+ */
+        reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: reportes.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    reportes.form = reportesForm
 const PrestamosInertiaController = { clientesIndex, clientesCrear, clientesStore, proveedoresIndex, proveedoresPrestamosCrear, proveedoresComprasCrear, proveedoresStore, eventosIndex, eventosCrear, eventosStore, eventosShow, reportes }
 
 export default PrestamosInertiaController

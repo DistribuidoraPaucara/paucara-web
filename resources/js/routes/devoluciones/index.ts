@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\DevolucionController::index
  * @see app/Http/Controllers/DevolucionController.php:46
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\DevolucionController::index
+ * @see app/Http/Controllers/DevolucionController.php:46
+ * @route '/devoluciones'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\DevolucionController::index
+ * @see app/Http/Controllers/DevolucionController.php:46
+ * @route '/devoluciones'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\DevolucionController::index
+ * @see app/Http/Controllers/DevolucionController.php:46
+ * @route '/devoluciones'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\DevolucionController::show
  * @see app/Http/Controllers/DevolucionController.php:258
@@ -109,6 +144,41 @@ show.head = (args: { devolucion: number | { id: number } } | [devolucion: number
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\DevolucionController::show
+ * @see app/Http/Controllers/DevolucionController.php:258
+ * @route '/devoluciones/{devolucion}'
+ */
+    const showForm = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\DevolucionController::show
+ * @see app/Http/Controllers/DevolucionController.php:258
+ * @route '/devoluciones/{devolucion}'
+ */
+        showForm.get = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\DevolucionController::show
+ * @see app/Http/Controllers/DevolucionController.php:258
+ * @route '/devoluciones/{devolucion}'
+ */
+        showForm.head = (args: { devolucion: number | { id: number } } | [devolucion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\DevolucionController::create
  * @see app/Http/Controllers/DevolucionController.php:114
@@ -176,6 +246,41 @@ create.head = (args: { venta: number | { id: number } } | [venta: number | { id:
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\DevolucionController::create
+ * @see app/Http/Controllers/DevolucionController.php:114
+ * @route '/ventas/{venta}/devoluciones/create'
+ */
+    const createForm = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: create.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\DevolucionController::create
+ * @see app/Http/Controllers/DevolucionController.php:114
+ * @route '/ventas/{venta}/devoluciones/create'
+ */
+        createForm.get = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\DevolucionController::create
+ * @see app/Http/Controllers/DevolucionController.php:114
+ * @route '/ventas/{venta}/devoluciones/create'
+ */
+        createForm.head = (args: { venta: number | { id: number } } | [venta: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: create.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    create.form = createForm
 /**
 * @see \App\Http\Controllers\DevolucionController::store
  * @see app/Http/Controllers/DevolucionController.php:167
@@ -228,6 +333,28 @@ store.post = (args: { venta: string | number } | [venta: string | number ] | str
     url: store.url(args, options),
     method: 'post',
 })
+
+    /**
+* @see \App\Http\Controllers\DevolucionController::store
+ * @see app/Http/Controllers/DevolucionController.php:167
+ * @route '/ventas/{venta}/devoluciones'
+ */
+    const storeForm = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\DevolucionController::store
+ * @see app/Http/Controllers/DevolucionController.php:167
+ * @route '/ventas/{venta}/devoluciones'
+ */
+        storeForm.post = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(args, options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 const devoluciones = {
     index,
 show,

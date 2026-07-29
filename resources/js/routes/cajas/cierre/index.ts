@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\CajaController::imprimir
  * @see app/Http/Controllers/CajaController.php:1904
@@ -66,6 +66,41 @@ imprimir.head = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:1904
+ * @route '/cajas/{aperturaCaja}/cierre/imprimir'
+ */
+    const imprimirForm = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: imprimir.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:1904
+ * @route '/cajas/{aperturaCaja}/cierre/imprimir'
+ */
+        imprimirForm.get = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CajaController::imprimir
+ * @see app/Http/Controllers/CajaController.php:1904
+ * @route '/cajas/{aperturaCaja}/cierre/imprimir'
+ */
+        imprimirForm.head = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: imprimir.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    imprimir.form = imprimirForm
 /**
 * @see \App\Http\Controllers\CajaController::exportarExcel
  * @see app/Http/Controllers/CajaController.php:1936
@@ -132,6 +167,42 @@ exportarExcel.head = (args: { aperturaCaja: number | { id: number } } | [apertur
     url: exportarExcel.url(args, options),
     method: 'head',
 })
+
+    /**
+* @see \App\Http\Controllers\CajaController::exportarExcel
+ * @see app/Http/Controllers/CajaController.php:1936
+ * @route '/cajas/{aperturaCaja}/cierre/exportar-excel'
+ */
+    const exportarExcelForm = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: exportarExcel.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CajaController::exportarExcel
+ * @see app/Http/Controllers/CajaController.php:1936
+ * @route '/cajas/{aperturaCaja}/cierre/exportar-excel'
+ */
+        exportarExcelForm.get = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportarExcel.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CajaController::exportarExcel
+ * @see app/Http/Controllers/CajaController.php:1936
+ * @route '/cajas/{aperturaCaja}/cierre/exportar-excel'
+ */
+        exportarExcelForm.head = (args: { aperturaCaja: number | { id: number } } | [aperturaCaja: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportarExcel.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    exportarExcel.form = exportarExcelForm
 const cierre = {
     imprimir,
 exportarExcel,
