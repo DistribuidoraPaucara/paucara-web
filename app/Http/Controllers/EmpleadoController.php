@@ -610,42 +610,46 @@ class EmpleadoController extends Controller
                     Caja::where('user_id', $user->id)
                         ->update(['nombre' => $request->nombre]);
                 }
+            }
 
-                // Sincronizar roles (recibe nombres de roles como strings)
-                // Buscar roles case-insensitive y sincronizar con nombres exactos
-                if ($request->has('roles')) {
-                    $roleNames = is_array($request->roles) ? $request->roles : [];
+            // Sincronizar roles FUERA del bloque condicional - siempre sincronizar si hay roles en el request
+            if ($empleado->user && $request->has('roles')) {
+                $user = $empleado->user;
+                $roleNames = is_array($request->roles) ? $request->roles : [];
 
-                    // Encontrar roles exactos en la BD (case-insensitive)
-                    $exactRoleNames = [];
-                    foreach ($roleNames as $roleName) {
-                        $role = Role::whereRaw('LOWER(name) = ?', [strtolower($roleName)])->first();
-                        if ($role) {
-                            $exactRoleNames[] = $role->name;
-                        }
+                // Encontrar roles exactos en la BD (case-insensitive)
+                $exactRoleNames = [];
+                foreach ($roleNames as $roleName) {
+                    $role = Role::whereRaw('LOWER(name) = ?', [strtolower($roleName)])->first();
+                    if ($role) {
+                        $exactRoleNames[] = $role->name;
                     }
-
-                    // Sincronizar con nombres exactos
-                    $user->syncRoles($exactRoleNames);
                 }
 
-                // Sincronizar permisos directos (recibe nombres como strings)
-                // Buscar permisos case-insensitive y sincronizar con nombres exactos
-                if ($request->has('permissions')) {
-                    $permissionNames = is_array($request->permissions) ? $request->permissions : [];
+                // Sincronizar con nombres exactos - REEMPLAZA todos los roles con estos
+                Log::info('Sincronizando roles', ['roles' => $exactRoleNames, 'user_id' => $user->id]);
+                $user->syncRoles($exactRoleNames);
+                Log::info('Roles sincronizados', ['roles_after' => $user->roles->pluck('name')->toArray()]);
+            }
 
-                    // Encontrar permisos exactos en la BD (case-insensitive)
-                    $exactPermissionNames = [];
-                    foreach ($permissionNames as $permissionName) {
-                        $permission = Permission::whereRaw('LOWER(name) = ?', [strtolower($permissionName)])->first();
-                        if ($permission) {
-                            $exactPermissionNames[] = $permission->name;
-                        }
+            // Sincronizar permisos directos FUERA del bloque condicional - siempre sincronizar si hay permisos en el request
+            if ($empleado->user && $request->has('permissions')) {
+                $user = $empleado->user;
+                $permissionNames = is_array($request->permissions) ? $request->permissions : [];
+
+                // Encontrar permisos exactos en la BD (case-insensitive)
+                $exactPermissionNames = [];
+                foreach ($permissionNames as $permissionName) {
+                    $permission = Permission::whereRaw('LOWER(name) = ?', [strtolower($permissionName)])->first();
+                    if ($permission) {
+                        $exactPermissionNames[] = $permission->name;
                     }
-
-                    // Sincronizar con nombres exactos
-                    $user->syncPermissions($exactPermissionNames);
                 }
+
+                // Sincronizar con nombres exactos - REEMPLAZA todos los permisos con estos
+                Log::info('Sincronizando permisos', ['permissions' => $exactPermissionNames, 'user_id' => $user->id]);
+                $user->syncPermissions($exactPermissionNames);
+                Log::info('Permisos sincronizados', ['permissions_after' => $user->permissions->pluck('name')->toArray()]);
             }
 
             // Preparar datos de actualización del empleado - SOLO campos presentes en request
