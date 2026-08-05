@@ -93,6 +93,7 @@ export default function GenericFormFields<F extends BaseFormData>({
         disabled: fieldDisabled,
         field,
         formData: data, // 🆕 Pasar todo el formData para campos que lo necesiten (como MapPicker)
+        extraData, // 🆕 Pasar extraData para campos como EmpleadoAccesoSistema
       });
     }
 
@@ -486,11 +487,11 @@ export default function GenericFormFields<F extends BaseFormData>({
           </p>
         )}
 
-        {!error && descriptionValue && field.type !== 'boolean' && (
+        {/* {!error && descriptionValue && field.type !== 'boolean' && (
           <p className="text-xs text-muted-foreground">
             {descriptionValue}
           </p>
-        )}
+        )} */}
       </div>
     );
   };

@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
         // ✅ NUEVO: Permisos de Sectores
         $this->call(SectorPermissionsSeeder::class);
 
+        // ✅ NUEVO: Actualizar descripciones de permisos para tooltips
+        $this->call(UpdatePermissionsDescriptionsSeeder::class);
+
         // COMENTADO: Mapeo de Capacidades a Permisos reales
         // Nota: Este seeder crea roles duplicados (preventista, chofer, cajero, etc.)
         // Usamos solo RolesAndPermissionsSeeder para roles y el sistema de Capabilities para UI

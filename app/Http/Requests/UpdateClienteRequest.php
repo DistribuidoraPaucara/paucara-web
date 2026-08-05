@@ -22,6 +22,17 @@ class UpdateClienteRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Convertir strings JSON a arrays (FormData serializa arrays como JSON)
+        $arrayFields = ['direcciones', 'ventanas_entrega', 'categorias_ids'];
+        foreach ($arrayFields as $field) {
+            if ($this->has($field) && is_string($this->input($field))) {
+                $decoded = json_decode($this->input($field), true);
+                if (is_array($decoded)) {
+                    $this->merge([$field => $decoded]);
+                }
+            }
+        }
+
         // Convertir valores booleanos para API
         if ($this->isApiRequest()) {
             $data = [];
@@ -30,6 +41,9 @@ class UpdateClienteRequest extends FormRequest
             }
             if ($this->has('crear_usuario')) {
                 $data['crear_usuario'] = $this->convertToBoolean($this->input('crear_usuario'));
+            }
+            if ($this->has('cambiar_credenciales')) {
+                $data['cambiar_credenciales'] = $this->convertToBoolean($this->input('cambiar_credenciales'));
             }
             if ($this->has('puede_tener_credito')) {
                 $data['puede_tener_credito'] = $this->convertToBoolean($this->input('puede_tener_credito'));
@@ -111,7 +125,14 @@ class UpdateClienteRequest extends FormRequest
         return [
             // Campos básicos
             'codigo_cliente'                 => 'nullable|string|max:50',
-            'crear_usuario'                  => 'nullable|boolean',
+            'crear_usuario'                  => 'sometimes|boolean|nullable',
+            'cambiar_credenciales'           => 'sometimes|boolean|nullable', // ✅ NUEVO
+            'usernick'                       => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('users', 'usernick')->ignore($cliente->user_id),
+            ],
             'password'                       => 'nullable|string|min:8',
             'password_confirmation'          => 'required_with:password|same:password',
             'nombre'                         => 'sometimes|required|string|max:255',
@@ -120,9 +141,9 @@ class UpdateClienteRequest extends FormRequest
             'email'                          => 'nullable|email|max:255',
             'telefono'                       => 'nullable|string|max:20',
             'limite_credito'                 => 'nullable|numeric|min:0',
-            'puede_tener_credito'            => 'nullable|boolean',
+            'puede_tener_credito'            => 'sometimes|boolean|nullable',
             'localidad_id'                   => 'nullable|exists:localidades,id',
-            'activo'                         => 'nullable|boolean',
+            'activo'                         => 'sometimes|boolean|nullable',
             'observaciones'                  => 'nullable|string',
 
             // Archivos de imagen (opcionales)
@@ -131,8 +152,8 @@ class UpdateClienteRequest extends FormRequest
             'ci_reverso'                     => 'nullable|sometimes|image|mimes:jpeg,jpg,png,gif|max:5120',
 
             // Direcciones opcionales
-            'direcciones'                    => 'nullable|array',
-            'direcciones.*.direccion'        => 'nullable|string|max:500', // ✅ Opcional - usuario puede borrar el texto
+            'direcciones'                    => 'sometimes|nullable|array',
+            'direcciones.*.direccion'        => 'nullable|string|max:500',
             'direcciones.*.latitud'          => 'required_with:direcciones|numeric|between:-90,90',
             'direcciones.*.longitud'         => 'required_with:direcciones|numeric|between:-180,180',
             'direcciones.*.observaciones'    => 'nullable|string|max:1000',
@@ -140,14 +161,14 @@ class UpdateClienteRequest extends FormRequest
             'direcciones.*.activa'           => 'nullable|boolean',
 
             // Ventanas de entrega preferidas (opcional)
-            'ventanas_entrega'               => 'nullable|array',
+            'ventanas_entrega'               => 'sometimes|nullable|array',
             'ventanas_entrega.*.dia_semana'  => 'required_with:ventanas_entrega|integer|between:0,6',
             'ventanas_entrega.*.hora_inicio' => 'required_with:ventanas_entrega|date_format:H:i',
             'ventanas_entrega.*.hora_fin'    => 'required_with:ventanas_entrega|date_format:H:i',
             'ventanas_entrega.*.activo'      => 'nullable|boolean',
 
             // Categorías del cliente (opcional)
-            'categorias_ids'                 => 'nullable|array',
+            'categorias_ids'                 => 'sometimes|nullable|array',
             'categorias_ids.*'               => 'integer|exists:categorias_cliente,id',
 
             // Teleféfono único ignorando el cliente actual

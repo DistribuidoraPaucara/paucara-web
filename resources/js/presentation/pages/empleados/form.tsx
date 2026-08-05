@@ -11,12 +11,20 @@ interface EmpleadosFormProps {
     empleado?: Empleado | null;
     extraData?: {
         supervisores?: Array<{ id: number; nombre: string; cargo?: string; }>;
-        roles?: Array<{ value: string; label: string; description?: string; }>;
+        roles?: Array<{ id: number; name: string }>;
+        permissions?: Record<string, string[]>;
+        rolesAsignados?: Array<{ id: number; name: string; permissions: string[] }>;
+        rolesDisponibles?: Array<{ id: number; name: string; permissions: string[] }>;
+        permisosAsignados?: string[];
+        permisosHeredados?: string[];
+        permisosDisponibles?: Record<string, string[]>;
         cargoRoleMapping?: Record<string, string>;
         camposRol?: Record<string, any>;
         rolFuncional?: string;
         datosRolGuardados?: Record<string, any>;
         departamentos?: string[];
+        userRoles?: number[];
+        userPermissions?: number[];
     };
 }
 
@@ -40,6 +48,32 @@ const initialEmpleadoData: EmpleadoFormData = {
 export default function EmpleadosForm({ empleado, extraData }: EmpleadosFormProps) {
     const isEditing = !!empleado;
 
+    // Debug: Ver qué roles y permisos llegan desde el backend
+    if (typeof window !== 'undefined') {
+        console.log('=== 🔐 ROLES Y PERMISOS DEL BACKEND ===');
+        console.log('rolesAsignados:', (extraData as any)?.rolesAsignados);
+        console.log('rolesDisponibles:', (extraData as any)?.rolesDisponibles);
+        console.log('permisosAsignados:', (extraData as any)?.permisosAsignados);
+        console.log('permisosHeredados:', (extraData as any)?.permisosHeredados);
+        console.log('permisosDisponibles:', (extraData as any)?.permisosDisponibles);
+        console.log('=====================================');
+    }
+
+    // Preparar datos iniciales con usernick y roles del usuario asociado
+    let initialData = { ...initialEmpleadoData };
+
+    if (isEditing && empleado) {
+        // Mapear usernick desde entity.user.usernick
+        if (empleado.user?.usernick) {
+            initialData.usernick = empleado.user.usernick;
+        }
+
+        // Mapear roles desde entity.roles (array de strings)
+        if (empleado.roles && Array.isArray(empleado.roles)) {
+            initialData.roles = empleado.roles as unknown as string[];
+        }
+    }
+
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/' },
@@ -50,7 +84,7 @@ export default function EmpleadosForm({ empleado, extraData }: EmpleadosFormProp
                 entity={empleado}
                 config={empleadosConfig}
                 service={empleadosService}
-                initialData={initialEmpleadoData}
+                initialData={initialData}
                 extraData={extraData}
                 loadOptions={async (fieldKey: string) => {
                     // Cargar opciones dinámicamente para campos específicos

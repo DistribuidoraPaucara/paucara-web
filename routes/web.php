@@ -325,6 +325,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
 
     // Rutas para gestión de empleados
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
+    Route::get('empleados/{empleado}/acceso-sistema', [\App\Http\Controllers\EmpleadoController::class, 'editAccesoSistema'])->name('empleados.acceso-sistema');
     Route::patch('empleados/{empleado}/toggle-estado', [\App\Http\Controllers\EmpleadoController::class, 'toggleEstado'])->name('empleados.toggle-estado');
     Route::patch('empleados/{empleado}/toggle-acceso-sistema', [\App\Http\Controllers\EmpleadoController::class, 'toggleAccesoSistema'])->name('empleados.toggle-acceso-sistema');
     Route::post('empleados/crear-rapido', [\App\Http\Controllers\EmpleadoController::class, 'crearEmpleadoRapido'])->name('empleados.crear-rapido');
@@ -1248,6 +1249,16 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Prestamos\DashboardController::class, 'dashboard'])->name('dashboard-alt');
         Route::get('stock', [\App\Http\Controllers\Prestamos\StockController::class, 'stock'])->name('stock');
         Route::get('alertas', [\App\Http\Controllers\Prestamos\AlertasController::class, 'alertas'])->name('alertas');
+    });
+
+    // ✨ NUEVO: Notificaciones Recurrentes
+    Route::prefix('notificaciones')->name('notificaciones.')->middleware('permission:admin')->group(function () {
+        Route::get('recurrentes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'index'])->name('recurrentes.index');
+        Route::post('recurrentes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'store'])->name('recurrentes.store');
+        Route::get('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'show'])->name('recurrentes.show');
+        Route::put('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'update'])->name('recurrentes.update');
+        Route::delete('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'destroy'])->name('recurrentes.destroy');
+        Route::post('recurrentes/{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviar'])->name('recurrentes.enviar');
     });
 });
 

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
 export const departamentos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ departamentos.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
 departamentos.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ departamentos.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
 departamentos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ departamentos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
 departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
     const departamentosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
         departamentosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
         })
             /**
 * @see \App\Http\Controllers\EmpleadoController::departamentos
- * @see app/Http/Controllers/EmpleadoController.php:695
+ * @see app/Http/Controllers/EmpleadoController.php:861
  * @route '/empleados-data/departamentos'
  */
         departamentosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ departamentos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     departamentos.form = departamentosForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
 export const tiposContrato = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ tiposContrato.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
 tiposContrato.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ tiposContrato.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
 tiposContrato.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ tiposContrato.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
 tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
     const tiposContratoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
         tiposContratoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
         })
             /**
 * @see \App\Http\Controllers\EmpleadoController::tiposContrato
- * @see app/Http/Controllers/EmpleadoController.php:705
+ * @see app/Http/Controllers/EmpleadoController.php:871
  * @route '/empleados-data/tipos-contrato'
  */
         tiposContratoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ tiposContrato.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     tiposContrato.form = tiposContratoForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
 export const estados = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ estados.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
 estados.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ estados.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
 estados.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ estados.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
 estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
     const estadosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
         estadosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EmpleadoController::estados
- * @see app/Http/Controllers/EmpleadoController.php:714
+ * @see app/Http/Controllers/EmpleadoController.php:880
  * @route '/empleados-data/estados'
  */
         estadosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ estados.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     estados.form = estadosForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
 export const supervisores = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ supervisores.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
 supervisores.url = (options?: RouteQueryOptions) => {
@@ -259,7 +259,7 @@ supervisores.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
 supervisores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ supervisores.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
 supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -278,7 +278,7 @@ supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
     const supervisoresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -288,7 +288,7 @@ supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
         supervisoresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EmpleadoController::supervisores
- * @see app/Http/Controllers/EmpleadoController.php:729
+ * @see app/Http/Controllers/EmpleadoController.php:895
  * @route '/empleados-data/supervisores'
  */
         supervisoresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ supervisores.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     supervisores.form = supervisoresForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
 export const roles = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ roles.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
 roles.url = (options?: RouteQueryOptions) => {
@@ -337,7 +337,7 @@ roles.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
 roles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -346,7 +346,7 @@ roles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
 roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -356,7 +356,7 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
     const rolesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -366,7 +366,7 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
         rolesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -375,7 +375,7 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\EmpleadoController::roles
- * @see app/Http/Controllers/EmpleadoController.php:776
+ * @see app/Http/Controllers/EmpleadoController.php:942
  * @route '/empleados-data/roles'
  */
         rolesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -391,7 +391,7 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     roles.form = rolesForm
 /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
+ * @see app/Http/Controllers/EmpleadoController.php:1068
  * @route '/empleados-data/rol-sugerido'
  */
 export const rolSugerido = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -406,7 +406,7 @@ rolSugerido.definition = {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
+ * @see app/Http/Controllers/EmpleadoController.php:1068
  * @route '/empleados-data/rol-sugerido'
  */
 rolSugerido.url = (options?: RouteQueryOptions) => {
@@ -415,7 +415,7 @@ rolSugerido.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
+ * @see app/Http/Controllers/EmpleadoController.php:1068
  * @route '/empleados-data/rol-sugerido'
  */
 rolSugerido.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -425,7 +425,7 @@ rolSugerido.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
+ * @see app/Http/Controllers/EmpleadoController.php:1068
  * @route '/empleados-data/rol-sugerido'
  */
     const rolSugeridoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -435,7 +435,7 @@ rolSugerido.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\EmpleadoController::rolSugerido
- * @see app/Http/Controllers/EmpleadoController.php:902
+ * @see app/Http/Controllers/EmpleadoController.php:1068
  * @route '/empleados-data/rol-sugerido'
  */
         rolSugeridoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

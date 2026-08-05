@@ -442,17 +442,30 @@ class ClienteController extends Controller
                         'user_actualizado_completo' => $user->toArray(),
                     ]);
                 } else {
-                    // Crear nuevo usuario usando teléfono como usernick y password
-                    if ($request->telefono) {
-                        $telefono = $request->telefono;
-                        $usernick = $this->generarUsernickUnico($telefono);
+                    // Crear nuevo usuario con datos del request o teléfono como fallback
+                    $usernick = null;
+                    $password = null;
 
+                    // 🆕 Usar usernick del request si se proporciona, sino generar desde teléfono
+                    if ($request->filled('usernick')) {
+                        $usernick = $request->usernick;
+                    } elseif ($request->filled('telefono')) {
+                        $usernick = $this->generarUsernickUnico($request->telefono);
+                    }
+
+                    // 🆕 Usar password del request si se proporciona, sino usar teléfono
+                    if ($request->filled('password')) {
+                        $password = Hash::make($request->password);
+                    } elseif ($request->filled('telefono')) {
+                        $password = Hash::make($request->telefono);
+                    }
+
+                    if ($usernick && $password) {
                         $userData = [
                             'name'       => $request->nombre,
                             'usernick'   => $usernick,
-                            'password'   => Hash::make($telefono),
+                            'password'   => $password,
                             'activo'     => true,
-                            // ✅ NUEVO: Asignar la empresa_id del usuario autenticado
                             'empresa_id' => Auth::user()?->empresa_id,
                         ];
 
@@ -464,6 +477,13 @@ class ClienteController extends Controller
                         $user = User::create($userData);
                         $this->assignClientRoleOptimized($user);
                         $data['user_id'] = $user->id;
+
+                        Log::info('✅ NUEVO USUARIO CREADO', [
+                            'cliente_id' => $cliente->id,
+                            'user_id'    => $user->id,
+                            'usernick'   => $usernick,
+                            'nombre'     => $request->nombre,
+                        ]);
                     }
                 }
             }
@@ -2567,9 +2587,10 @@ class ClienteController extends Controller
     public function actualizarPassword(ClienteModel $cliente, Request $request): JsonResponse
     {
         try {
-            // Validar que password === password_confirmation
+            // Validar que password === password_confirmation, usernick es opcional
             $validated = $request->validate([
                 'password' => 'required|string|min:6|confirmed',
+                'usernick' => 'nullable|string|max:255|unique:users,usernick,' . $cliente->user_id,
             ]);
 
             // Obtener el usuario del cliente
@@ -2582,32 +2603,41 @@ class ClienteController extends Controller
                 ], 404);
             }
 
-            // Actualizar contraseña
-            $user->update([
+            // Preparar datos a actualizar
+            $updates = [
                 'password' => Hash::make($validated['password']),
-            ]);
+            ];
+
+            // Agregar usernick si se proporcionó
+            if (!empty($validated['usernick'])) {
+                $updates['usernick'] = $validated['usernick'];
+            }
+
+            // Actualizar usuario
+            $user->update($updates);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Contraseña del usuario actualizada exitosamente',
+                'message' => 'Usuario actualizado exitosamente',
                 'user_id' => $user->id,
                 'cliente_id' => $cliente->id,
+                'usernick' => $user->usernick,
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Las contraseñas no coinciden o no cumplen los requisitos',
+                'message' => 'Validación fallida. Las contraseñas no coinciden, el usernick es inválido o ya está en uso',
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error al actualizar contraseña', [
+            Log::error('Error al actualizar contraseña/usernick', [
                 'cliente_id' => $cliente->id,
                 'error' => $e->getMessage(),
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la contraseña',
+                'message' => 'Error al actualizar los datos',
             ], 500);
         }
     }

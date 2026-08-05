@@ -395,7 +395,7 @@ class VentaController extends Controller
                             'cliente_presente'        => $conf->cliente_presente,
                             'motivo_rechazo'          => $conf->motivo_rechazo ?? null,
                             'observaciones_logistica' => $conf->observaciones_logistica ?? null,
-                            'fotos'                   => $conf->fotos ? json_decode($conf->fotos, true) : [],
+                            'fotos'                   => is_string($conf->fotos) ? json_decode($conf->fotos, true) : ($conf->fotos ?? []),
                             'firma_digital_url'       => $conf->firma_digital_url ?? null,
                             'foto_comprobante'        => $conf->foto_comprobante ?? null,
                             'estado_pago'             => $conf->estado_pago ?? null,

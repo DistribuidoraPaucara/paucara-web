@@ -1,7 +1,7 @@
 // Configuration: Empleados module configuration
 import type { ModuleConfig } from '@/domain/entities/generic';
 import type { Empleado, EmpleadoFormData } from '@/domain/entities/empleados';
-import RolesSelector from '@/presentation/components/empleados/RolesSelector';
+import EmpleadoAccesoSistema from '@/presentation/components/empleados/EmpleadoAccesoSistema';
 import { createElement } from 'react';
 import { Badge } from '@/presentation/components/ui/badge';
 
@@ -22,12 +22,14 @@ export const empleadosConfig: ModuleConfig<Empleado, EmpleadoFormData> = {
             title: 'Información Personal',
             description: 'Datos personales del empleado',
             order: 1,
+            icon: 'User',
         },
         {
             id: 'Acceso al Sistema',
             title: 'Acceso al Sistema',
-            description: 'Configuración de acceso',
+            description: 'Configuración de acceso, roles y permisos',
             order: 4,
+            icon: 'Lock',
         },
     ],
 
@@ -151,6 +153,15 @@ export const empleadosConfig: ModuleConfig<Empleado, EmpleadoFormData> = {
             colSpan: 3, // 🆕 Ocupa todo el ancho
             section: 'Información Personal',
         },
+        /* {
+            key: 'foto_perfil',
+            label: 'Foto de Perfil',
+            type: 'file',
+            colSpan: 3,
+            fullWidth: true,
+            section: 'Información Personal',
+            description: 'Foto de identificación del empleado (JPG, PNG o GIF)',
+        }, */
         // Campo personalizado para ubicación en mapa (DESHABILITADO - Las columnas latitud y longitud no existen en la tabla empleados)
         // {
         //     key: 'coordenadas',
@@ -196,91 +207,69 @@ export const empleadosConfig: ModuleConfig<Empleado, EmpleadoFormData> = {
             hidden: true, // 🆕 OCULTO - Se maneja internamente
             defaultValue: 'activo', // 🆕 Por defecto activo al crear
         },
-        // Campos de acceso al sistema
+        // Campos de acceso al sistema (booleano para habilitar)
         {
             key: 'puede_acceder_sistema',
             label: 'Puede Acceder al Sistema',
             type: 'boolean',
             colSpan: 3,
             section: 'Acceso al Sistema',
-            description: 'Habilitar para crear un usuario de sistema',
+            description: 'Habilitar para crear un usuario de sistema con roles y permisos',
         },
+        // Componente integrado de Acceso al Sistema (roles, permisos y credenciales)
         {
-            key: 'usernick',
-            label: 'Nombre de Usuario (Nick)',
-            type: 'text',
-            required: true, // 🆕 Requerido cuando puede acceder al sistema
-            placeholder: 'Nick para iniciar sesión',
-            validation: { maxLength: 50 },
-            colSpan: 1,
-            section: 'Acceso al Sistema',
-            visible: (data) => !!data.puede_acceder_sistema, // 🆕 Solo visible si puede_acceder_sistema es true
-            description: 'Requerido para login - Se puede usar nick o teléfono',
-        },
-        {
-            key: 'roles',
-            label: 'Roles de Sistema',
+            key: 'acceso_sistema_config',
+            label: 'Configuración de Acceso',
             type: 'custom',
             colSpan: 3,
+            fullWidth: true,
             section: 'Acceso al Sistema',
             visible: (data) => !!data.puede_acceder_sistema,
-            description: 'Selecciona uno o más roles que tendrá el empleado',
-            fullWidth: true,
-            render: ({ value, onChange, disabled, formData }) => {
-                return createElement(RolesSelector, {
-                    value: value as string[] || [],
-                    onChange: onChange as (roles: string[]) => void,
+            render: ({ value, onChange, disabled, field, ...props }) => {
+                const formData = (props as any).formData || {};
+                const extraData = (props as any).extraData || {};
+                return createElement(EmpleadoAccesoSistema, {
+                    empleado: formData,
+                    usernick: formData.usernick || '',
+                    onUsernickChange: (v) => {
+                        onChange({ ...formData, usernick: v });
+                    },
+                    password: formData.password || '',
+                    onPasswordChange: (v) => {
+                        onChange({ ...formData, password: v });
+                    },
+                    passwordConfirmation: formData.password_confirmation || '',
+                    onPasswordConfirmationChange: (v) => {
+                        onChange({ ...formData, password_confirmation: v });
+                    },
+                    selectedRoles: (formData.roles as string[]) || [],
+                    onRolesChange: (v) => {
+                        // Solo actualizar el estado local, no disparar onChange que causa submit
+                        // formData.roles será actualizado solo cuando se guarde
+                        onChange({ ...formData, roles: v });
+                    },
+                    selectedPermissions: (formData.permissions as string[]) || [],
+                    onPermissionsChange: (v) => {
+                        // Solo actualizar el estado local, no disparar onChange que causa submit
+                        onChange({ ...formData, permissions: v });
+                    },
+                    fotoPerfil: formData.foto_perfil || formData.foto_perfil_preview || null,
+                    onFotoPerfilChange: (file) => {
+                        onChange({ ...formData, foto_perfil: file });
+                    },
                     disabled: Boolean(disabled),
-                    puedeAccederSistema: (formData as EmpleadoFormData)?.puede_acceder_sistema ?? false,
-                    label: 'Roles de Sistema'
-                });
+                    puedeAccederSistema: formData.puede_acceder_sistema ?? false,
+                    isEditing: !!formData.id,
+                    rolesDisponibles: extraData.roles || [],
+                    rolesAsignados: extraData.rolesAsignados || [],
+                    permisosAsignados: extraData.permisosAsignados || [],
+                    permisosHeredados: extraData.permisosHeredados || [],
+                    permisosDisponibles: extraData.permisosDisponibles || {},
+                    rolesDisponiblesDetallados: extraData.rolesDisponibles || [],
+                    permisosAsignadosMap: extraData.permisosAsignadosMap || {},
+                    permisosHeredadosMap: extraData.permisosHeredadosMap || {},
+                } as any);
             }
-        },
-        // Campos de contraseña
-        {
-            key: 'password',
-            label: 'Contraseña',
-            type: 'password',
-            required: (data) => {
-                // Requerido solo cuando se crea un nuevo empleado con acceso al sistema
-                return !!data.puede_acceder_sistema && !data.id;
-            },
-            placeholder: (data) => {
-                // Placeholder diferente según si es creación o edición
-                return data.id
-                    ? 'Dejar vacío para mantener la contraseña actual'
-                    : 'Mínimo 8 caracteres';
-            },
-            validation: { minLength: 8 },
-            colSpan: 1,
-            section: 'Acceso al Sistema',
-            visible: (data) => {
-                // Visible si puede acceder al sistema
-                return !!data.puede_acceder_sistema;
-            },
-            description: (data) => {
-                return data.id
-                    ? 'Mínimo 8 caracteres. Dejar vacío para no cambiar'
-                    : 'Mínimo 8 caracteres';
-            },
-        },
-        {
-            key: 'password_confirmation',
-            label: 'Confirmar Contraseña',
-            type: 'password',
-            required: (data) => {
-                // Requerido solo si se está creando un nuevo empleado con acceso al sistema
-                // O si se está cambiando la contraseña en edición
-                return !!data.puede_acceder_sistema && (!data.id || !!data.password);
-            },
-            placeholder: 'Repetir la contraseña',
-            colSpan: 1,
-            section: 'Acceso al Sistema',
-            visible: (data) => {
-                // Visible si puede acceder al sistema
-                return !!data.puede_acceder_sistema;
-            },
-            description: 'Debe coincidir con la contraseña',
         },
     ],
 

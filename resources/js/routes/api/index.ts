@@ -32,6 +32,7 @@ import prestamosProveedor from './prestamos-proveedor'
 import cuentasPorCobrar from './cuentas-por-cobrar'
 import egresosAnalisis from './egresos-analisis'
 import egresos from './egresos'
+import notificaciones from './notificaciones'
 import dashboard from './dashboard'
 import codigosBarra from './codigos-barra'
 /**
@@ -369,6 +370,7 @@ prestamosProveedor,
 cuentasPorCobrar,
 egresosAnalisis,
 egresos,
+notificaciones,
 dashboard,
 codigosBarra,
 }

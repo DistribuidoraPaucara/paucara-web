@@ -1900,3 +1900,8 @@ Route::prefix('egresos')->group(function () {
     Route::get('{egreso}', [\App\Http\Controllers\Api\EgresosController::class, 'show'])->name('api.egresos.show');
     Route::post('{egreso}/anular', [\App\Http\Controllers\Api\EgresosController::class, 'anular'])->name('api.egresos.anular');
 });
+
+// ✨ NUEVO: API para Notificaciones Recurrentes (App móvil)
+Route::prefix('notificaciones')->group(function () {
+    Route::get('pendientes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'pendientesApp'])->name('api.notificaciones.pendientes');
+});

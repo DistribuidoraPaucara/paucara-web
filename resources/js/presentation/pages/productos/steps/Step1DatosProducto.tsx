@@ -5,6 +5,7 @@ import InputSearch from '@/presentation/components/ui/input-search';
 import { Label } from '@/presentation/components/ui/label';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import { FeatureToggle } from '@/presentation/components/ui/feature-toggle';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/presentation/components/ui/tooltip';
 import { useState } from 'react';
 
 interface Option {
@@ -209,24 +210,37 @@ function Step1DatosProducto({
             {/* 📱 1 fila con 3 columnas responsivas: Nombre, SKU, Proveedor */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                    <InputSearch
-                        id="nombre"
-                        label="Nombre del Producto *"
-                        value={data.nombre ?? ''}
-                        onChange={(value) => {
-                            // 🔑 IMPORTANTE: Guardar INMEDIATAMENTE el nombre mientras escribes
-                            setData('nombre', String(value || ''));
-                            // Luego procesar la selección (búsqueda, carga de producto existente, etc)
-                            handleProductoSelection(value);
-                        }}
-                        onSearch={searchProductos}
-                        placeholder="Busca un producto existente o escribe uno nuevo"
-                        emptyText="No se encontró el producto. Puedes crear uno nuevo"
-                        error={errors.nombre}
-                        showCreateIconButton={false}
-                        displayValue={data.nombre}
-                    />
-                    <div className="mt-1 text-xs text-muted-foreground">💡 Busca productos existentes por nombre para cargarlos automáticamente</div>
+                    <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                            <InputSearch
+                                id="nombre"
+                                label="Nombre del Producto *"
+                                value={data.nombre ?? ''}
+                                onChange={(value) => {
+                                    // 🔑 IMPORTANTE: Guardar INMEDIATAMENTE el nombre mientras escribes
+                                    setData('nombre', String(value || ''));
+                                    // Luego procesar la selección (búsqueda, carga de producto existente, etc)
+                                    handleProductoSelection(value);
+                                }}
+                                onSearch={searchProductos}
+                                placeholder="Busca un producto existente o escribe uno nuevo"
+                                emptyText="No se encontró el producto. Puedes crear uno nuevo"
+                                error={errors.nombre}
+                                showCreateIconButton={false}
+                                displayValue={data.nombre}
+                            />
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button className="mb-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Busca productos existentes por nombre para cargarlos automáticamente</TooltipContent>
+                        </Tooltip>
+                    </div>
                     {lastProductSearchQuery && lastProductSearchQuery.length >= 2 && !productSearchResultsFound && (
                         <div className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
                             ⚠️ No encontramos "{lastProductSearchQuery}". Puedes crear uno nuevo con este nombre.
@@ -234,120 +248,148 @@ function Step1DatosProducto({
                     )}
                 </div>
                 <div>
-                    <div className="relative">
-                        <label
-                            htmlFor="sku"
-                            className={`pointer-events-none absolute left-3 transition-all duration-200 ${
-                                data.sku
-                                    ? 'top-[-6px] text-xs font-medium text-blue-600 dark:text-blue-400'
-                                    : 'top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400'
-                            }`}
-                        >
-                            SKU / Código (opcional)
-                        </label>
-                        <Input
-                            id="sku"
-                            value={data.sku ?? ''}
-                            onChange={(e) => setData('sku', e.target.value)}
-                            placeholder=""
-                            className={`pt-2 ${getInputClassName('sku')}`}
-                        />
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="relative flex-1">
+                            <label
+                                htmlFor="sku"
+                                className={`pointer-events-none absolute left-3 transition-all duration-200 ${
+                                    data.sku
+                                        ? 'top-[-6px] text-xs font-medium text-blue-600 dark:text-blue-400'
+                                        : 'top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400'
+                                }`}
+                            >
+                                SKU / Código (opcional)
+                            </label>
+                            <Input
+                                id="sku"
+                                value={data.sku ?? ''}
+                                onChange={(e) => setData('sku', e.target.value)}
+                                placeholder=""
+                                className={`pt-2 ${getInputClassName('sku')}`}
+                            />
+                            {errors.sku && <div className="mt-1 text-sm text-red-500">⚠️ {errors.sku}</div>}
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Si no lo ingresas, se generará automáticamente (ej.: PRO0001)</TooltipContent>
+                        </Tooltip>
                     </div>
-                    {errors.sku && <div className="mt-1 text-sm text-red-500">⚠️ {errors.sku}</div>}
-                    <div className="mt-1 text-xs text-muted-foreground">💡 Si no lo ingresas, se generará automáticamente (ej.: PRO0001)</div>
                 </div>
                 <div>
-                    <InputSearch
-                        id="proveedor"
-                        label="Proveedor (opcional)"
-                        value={data.proveedor_id ?? ''}
-                        onChange={(value) => setData('proveedor_id', value ? Number(value) : '')}
-                        onSearch={searchProveedores}
-                        placeholder="busca o crea tu proveedor"
-                        emptyText="No se encontró ningún proveedor. Puedes crear uno nuevo clickeando el botón +"
-                        error={errors.proveedor_id}
-                        showCreateIconButton={true}
-                        createIconButtonTitle="Crear nuevo proveedor con el nombre buscado"
-                        onCreateClick={(searchQuery) => {
-                            if (!searchQuery || searchQuery.length < 2) {
-                                NotificationService.warning('Por favor escribe al menos 2 caracteres para el proveedor');
-                                return;
-                            }
-                            console.log('🚀 onCreateClick ejecutado con query:', searchQuery);
-                            // Crear nuevo proveedor automáticamente con solo el nombre
-                            const createProveedor = async (nombre: string) => {
-                                console.log('🔧 Creando proveedor:', nombre);
-                                try {
-                                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                    console.log('🔑 CSRF Token encontrado:', !!csrfToken);
-                                    const response = await fetch('/api/proveedores', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }),
-                                        },
-                                        body: JSON.stringify({ nombre }),
-                                    });
-
-                                    console.log('📡 Respuesta del servidor:', response.status);
-
-                                    if (response.ok) {
-                                        const result = await response.json();
-                                        console.log('✅ Respuesta completa:', result);
-                                        if (result.success) {
-                                            setData('proveedor_id', result.data.id);
-                                            console.log('💾 Proveedor ID actualizado:', result.data.id);
-                                            // Mostrar notificación de éxito
-                                            NotificationService.success(result.message || 'Proveedor creado exitosamente');
-                                        } else {
-                                            console.error('❌ Error del servidor:', result.message);
-
-                                            // Manejar errores de validación específicos
-                                            if (result.errors?.nombre) {
-                                                NotificationService.error(
-                                                    'Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.',
-                                                );
-                                            } else {
-                                                NotificationService.error(result.message || 'Error al crear el proveedor');
-                                            }
-                                        }
-                                    } else {
-                                        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
-                                        console.error('❌ Error HTTP:', response.status, errorData.message);
-
-                                        // Manejar errores de validación específicos
-                                        if (response.status === 422 && errorData.errors?.nombre) {
-                                            NotificationService.error('Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.');
-                                        } else {
-                                            NotificationService.error(errorData.message || 'Error al crear el proveedor');
-                                        }
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="relative flex-1">
+                            <label
+                                htmlFor="sku"
+                                className={`pointer-events-none absolute left-3 transition-all duration-200 ${
+                                    data.sku
+                                        ? 'top-[-6px] text-xs font-medium text-blue-600 dark:text-blue-400'
+                                        : 'top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400'
+                                }`}
+                            >
+                                Proveedor (opcional)
+                            </label>
+                            <InputSearch
+                                id="proveedor"
+                                label=""
+                                value={data.proveedor_id ?? ''}
+                                onChange={(value) => setData('proveedor_id', value ? Number(value) : '')}
+                                onSearch={searchProveedores}
+                                placeholder="Busca o crea tu Proveedor"
+                                emptyText="No se encontró ningún proveedor. Puedes crear uno nuevo clickeando el botón +"
+                                error={errors.proveedor_id}
+                                showCreateIconButton={true}
+                                createIconButtonTitle="Crear nuevo proveedor con el nombre buscado"
+                                onCreateClick={(searchQuery) => {
+                                    if (!searchQuery || searchQuery.length < 2) {
+                                        NotificationService.warning('Por favor escribe al menos 2 caracteres para el proveedor');
+                                        return;
                                     }
-                                } catch (error) {
-                                    console.error('❌ Error de red:', error);
-                                    NotificationService.error('Error de conexión al crear el proveedor');
-                                }
-                            };
+                                    console.log('🚀 onCreateClick ejecutado con query:', searchQuery);
+                                    // Crear nuevo proveedor automáticamente con solo el nombre
+                                    const createProveedor = async (nombre: string) => {
+                                        console.log('🔧 Creando proveedor:', nombre);
+                                        try {
+                                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                            console.log('🔑 CSRF Token encontrado:', !!csrfToken);
+                                            const response = await fetch('/api/proveedores', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }),
+                                                },
+                                                body: JSON.stringify({ nombre }),
+                                            });
 
-                            createProveedor(searchQuery);
-                        }}
-                        displayValue={
-                            data.proveedor
-                                ? `${data.proveedor.nombre}${data.proveedor.razon_social ? ` - ${data.proveedor.razon_social}` : ''}`
-                                : undefined
-                        }
-                    />
-                    <div className="mt-1 px-1 text-xs">
-                        {lastSearchQuery && lastSearchQuery.length >= 2 && !searchResultsFound ? (
-                            <div className="font-semibold text-amber-700 dark:text-amber-200">
-                                ⚠️ No encontramos "{lastSearchQuery}" en la base de datos. Puedes crearlo haciendo clic en el botón ➕.
-                            </div>
-                        ) : (
-                            <div className="text-muted-foreground">
-                                💡 Si no encuentras el proveedor, puedes crearlo haciendo clic en el botón ➕. El sistema evitará crear proveedores
-                                con nombres duplicados.
-                            </div>
-                        )}
+                                            console.log('📡 Respuesta del servidor:', response.status);
+
+                                            if (response.ok) {
+                                                const result = await response.json();
+                                                console.log('✅ Respuesta completa:', result);
+                                                if (result.success) {
+                                                    setData('proveedor_id', result.data.id);
+                                                    console.log('💾 Proveedor ID actualizado:', result.data.id);
+                                                    // Mostrar notificación de éxito
+                                                    NotificationService.success(result.message || 'Proveedor creado exitosamente');
+                                                } else {
+                                                    console.error('❌ Error del servidor:', result.message);
+
+                                                    // Manejar errores de validación específicos
+                                                    if (result.errors?.nombre) {
+                                                        NotificationService.error(
+                                                            'Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.',
+                                                        );
+                                                    } else {
+                                                        NotificationService.error(result.message || 'Error al crear el proveedor');
+                                                    }
+                                                }
+                                            } else {
+                                                const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+                                                console.error('❌ Error HTTP:', response.status, errorData.message);
+
+                                                // Manejar errores de validación específicos
+                                                if (response.status === 422 && errorData.errors?.nombre) {
+                                                    NotificationService.error('Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.');
+                                                } else {
+                                                    NotificationService.error(errorData.message || 'Error al crear el proveedor');
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.error('❌ Error de red:', error);
+                                            NotificationService.error('Error de conexión al crear el proveedor');
+                                        }
+                                    };
+
+                                    createProveedor(searchQuery);
+                                }}
+                                displayValue={
+                                    data.proveedor
+                                        ? `${data.proveedor.nombre}${data.proveedor.razon_social ? ` - ${data.proveedor.razon_social}` : ''}`
+                                        : undefined
+                                }
+                            />
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Si no encuentras el proveedor, puedes crearlo haciendo clic en el botón ➕. El sistema evitará crear proveedores con nombres duplicados.</TooltipContent>
+                        </Tooltip>
                     </div>
+                    {lastSearchQuery && lastSearchQuery.length >= 2 && !searchResultsFound && (
+                        <div className="mt-1 px-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
+                            ⚠️ No encontramos "{lastSearchQuery}" en la base de datos. Puedes crearlo haciendo clic en el botón ➕.
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -384,7 +426,7 @@ function Step1DatosProducto({
                         id="unidad_medida_id"
                         label="Unidad de medida"
                         placeholder="Seleccione una unidad"
-                        value={data.unidad_medida_id ?? ''}
+                        value={data.unidad_medida_id ?? (unidadesOptions.find(u => u.description === 'UN')?.value ?? '')}
                         options={unidadesOptions}
                         onChange={(value) => setData('unidad_medida_id', value ? Number(value) : '')}
                         error={errors.unidad_medida_id}
@@ -481,6 +523,16 @@ function Step1DatosProducto({
                         <Label htmlFor="stock_minimo" className="flex items-center gap-2">
                             Stock Mínimo
                             <span className="text-xs font-normal text-muted-foreground">(Alerta global)</span>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Recibirás una alerta cuando el stock total sea menor a este valor</TooltipContent>
+                            </Tooltip>
                         </Label>
                         <Input
                             id="stock_minimo"
@@ -493,12 +545,21 @@ function Step1DatosProducto({
                             placeholder="Ej: 10"
                         />
                         {errors.stock_minimo && <div className="mt-1 text-sm text-red-500">⚠️ {errors.stock_minimo}</div>}
-                        <div className="text-xs text-muted-foreground">💡 Recibirás una alerta cuando el stock total sea menor a este valor</div>
                     </div>
                     <div className="space-y-1">
                         <Label htmlFor="stock_maximo" className="flex items-center gap-2">
                             Stock Máximo
                             <span className="text-xs font-normal text-muted-foreground">(Alerta global)</span>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Recibirás una alerta cuando el stock total supere este valor</TooltipContent>
+                            </Tooltip>
                         </Label>
                         <Input
                             id="stock_maximo"
@@ -511,12 +572,21 @@ function Step1DatosProducto({
                             placeholder="Ej: 100"
                         />
                         {errors.stock_maximo && <div className="mt-1 text-sm text-red-500">⚠️ {errors.stock_maximo}</div>}
-                        <div className="text-xs text-muted-foreground">💡 Recibirás una alerta cuando el stock total supere este valor</div>
                     </div>
                     <div className="space-y-1">
                         <Label htmlFor="limite_venta" className="flex items-center gap-2">
                             Límite de Venta
                             <span className="text-xs font-normal text-muted-foreground">(Máximo por venta)</span>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Cantidad máxima permitida para adicionar al carrito. Dejar vacío = sin límite</TooltipContent>
+                            </Tooltip>
                         </Label>
                         <Input
                             id="limite_venta"
@@ -532,9 +602,6 @@ function Step1DatosProducto({
                             placeholder="Ej: 50 (dejar vacío para sin límite)"
                         />
                         {errors.limite_venta && <div className="mt-1 text-sm text-red-500">⚠️ {errors.limite_venta}</div>}
-                        <div className="text-xs text-muted-foreground">
-                            💡 Cantidad máxima permitida para adicionar al carrito. Dejar vacío = sin límite
-                        </div>
                     </div>
                 </div>
             </div>
@@ -636,6 +703,16 @@ function Step1DatosProducto({
                         <div className="space-y-1">
                             <Label htmlFor="principio_activo" className="flex items-center gap-2">
                                 <span className="text-blue-600 dark:text-blue-400">⚗️</span> Principio Activo
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Ingresa el ingrediente activo del medicamento</TooltipContent>
+                                </Tooltip>
                             </Label>
                             <textarea
                                 id="principio_activo"
@@ -646,12 +723,21 @@ function Step1DatosProducto({
                                 rows={3}
                             />
                             {errors.principio_activo && <div className="mt-1 text-sm text-red-500">⚠️ {errors.principio_activo}</div>}
-                            <div className="mt-1 text-xs text-muted-foreground">💡 Ingresa el ingrediente activo del medicamento</div>
                         </div>
 
                         <div className="space-y-1">
                             <Label htmlFor="uso_de_medicacion" className="flex items-center gap-2">
                                 <span className="text-blue-600 dark:text-blue-400">📋</span> Uso / Indicaciones
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
+                                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Describe las indicaciones o usos principales del medicamento</TooltipContent>
+                                </Tooltip>
                             </Label>
                             <textarea
                                 id="uso_de_medicacion"
@@ -662,7 +748,6 @@ function Step1DatosProducto({
                                 rows={3}
                             />
                             {errors.uso_de_medicacion && <div className="mt-1 text-sm text-red-500">⚠️ {errors.uso_de_medicacion}</div>}
-                            <div className="mt-1 text-xs text-muted-foreground">💡 Describe las indicaciones o usos principales del medicamento</div>
                         </div>
                     </div>
                 </div>

@@ -8,9 +8,9 @@
  * ✅ Agregar al carrito con detalles
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { Loader2, Plus, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
+import { Loader2, Plus, X, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Adicional {
@@ -63,11 +63,23 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
     const [adicionalesSeleccionados, setAdicionalesSeleccionados] = useState<number[]>([]);
     const [cantidad, setCantidad] = useState(1);
     const [precioBaseEditable, setPrecioBaseEditable] = useState(0);
+    const [busqueda, setBusqueda] = useState<string>('');
 
     // Obtener cantidad de un producto en el carrito
     const getCantidadEnCarrito = (productoId: number): number => {
         return productosEnCarrito.find(p => p.producto_id === productoId)?.cantidad || 0;
     };
+
+    // Filtrar productos según el término de búsqueda
+    const productosFiltrados = useMemo(() => {
+        if (!busqueda.trim()) return productos;
+
+        const termino = busqueda.toLowerCase();
+        return productos.filter(producto =>
+            producto.nombre.toLowerCase().includes(termino) ||
+            (producto.descripcion && producto.descripcion.toLowerCase().includes(termino))
+        );
+    }, [productos, busqueda]);
 
     // Actualizar carrito cuando cambia precio base o adicionales si el producto ya está en carrito
     useEffect(() => {
@@ -193,15 +205,43 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
                 <div className="space-y-6 mt-2">
                     {/* Grid de productos */}
                     {!productoSeleccionado ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {productos.length === 0 ? (
-                                <div className="col-span-full text-center py-8">
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        No hay productos de comida disponibles
-                                    </p>
-                                </div>
-                            ) : (
-                                productos.map(producto => {
+                        <>
+                            {/* Buscador de productos */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar producto..."
+                                    value={busqueda}
+                                    onChange={(e) => setBusqueda(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                                />
+                                {busqueda && (
+                                    <button
+                                        onClick={() => setBusqueda('')}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Grid de productos */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {productos.length === 0 ? (
+                                    <div className="col-span-full text-center py-8">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            No hay productos de comida disponibles
+                                        </p>
+                                    </div>
+                                ) : productosFiltrados.length === 0 ? (
+                                    <div className="col-span-full text-center py-8">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            No se encontraron productos que coincidan con "{busqueda}"
+                                        </p>
+                                    </div>
+                                ) : (
+                                    productosFiltrados.map(producto => {
                                     const cantidadEnCarrito = getCantidadEnCarrito(producto.id);
                                     return (
                                         <button
@@ -269,9 +309,10 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
                                             </div>
                                         </button>
                                     );
-                                })
-                            )}
-                        </div>
+                                    })
+                                )}
+                            </div>
+                        </>
                     ) : (
                         /* Vista de detalle del producto seleccionado */
                         <div className="space-y-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900/50">

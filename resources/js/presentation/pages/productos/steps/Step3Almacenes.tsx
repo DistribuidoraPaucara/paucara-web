@@ -4,6 +4,8 @@ import { Checkbox } from '@/presentation/components/ui/checkbox';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
 import SearchSelect from '@/presentation/components/ui/search-select';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/presentation/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface Option {
@@ -12,7 +14,7 @@ interface Option {
 }
 
 export interface Step3Props {
-    data: { almacenes: StockAlmacen[] };
+    data: { almacenes: StockAlmacen[]; globalSectorId?: number }; // ✨ NUEVO: Incluir globalSectorId en data
     setData: (key: string, value: any) => void; // ✨ NUEVO: Para actualizar estado atomicamente
     almacenesOptions: Option[];
     sectores?: Record<number | string, Option[]>; // ✨ NUEVO: Sectores pre-cargados del backend
@@ -89,10 +91,9 @@ export default function Step3Almacenes({
     const [sectoresOptions, setSectoresOptions] = useState<Record<number | string, Option[]>>(sectores || {});
     const [setLoadingSectores] = useState<Record<number | string, boolean>>({});
 
-    // ✨ NUEVO: Pre-llenar globalSectorId con el sector del primer almacén que tenga uno
-    const initialSectorId = (data.almacenes || []).find((a: StockAlmacen) => a.sector_id)?.sector_id;
+    // ✨ NUEVO: Pre-llenar globalSectorId desde data.globalSectorId o del primer almacén
+    const initialSectorId = data.globalSectorId || (data.almacenes || []).find((a: StockAlmacen) => a.sector_id)?.sector_id;
     const [globalSectorId, setGlobalSectorId] = useState<number | undefined>(initialSectorId);
-    const [activeTab, setActiveTab] = useState<'almacenes' | 'sector'>('sector');
     const [expandedAlmacenes, setExpandedAlmacenes] = useState<boolean>(true);
 
     // Cargar sectores cuando se selecciona un almacén
@@ -179,7 +180,7 @@ export default function Step3Almacenes({
                     });
 
                     return (
-                        <div className="mt-2 rounded-lg border-2 border-slate-300 bg-gradient-to-r from-slate-100 to-slate-50 p-2 dark:border-slate-700 dark:from-slate-950 dark:to-slate-900">
+                        <div className="mt-2">
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                                 {/* Total General */}
                                 <div className="justify-content items-center rounded-md border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/50">
@@ -207,35 +208,82 @@ export default function Step3Almacenes({
                         </div>
                     );
                 })()}
-            <div className="w-full items-center justify-between gap-2 mt-4">
-                {/* Tabs Navigation - DIVs en lugar de componente Tabs */}
-                <div className="grid w-full grid-cols-2 border-b border-border bg-background">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('almacenes')}
-                        className={`px-4 py-2 text-sm font-medium text-center transition-colors ${
-                            activeTab === 'almacenes'
-                                ? 'border-b-2 border-blue-600 text-blue-600'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        📦 Almacenes
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('sector')}
-                        className={`px-4 py-2 text-sm font-medium text-center transition-colors ${
-                            activeTab === 'sector'
-                                ? 'border-b-2 border-blue-600 text-blue-600'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        🏢 Sector Global
-                    </button>
+            <div className="w-full items-center justify-between gap-2 mt-4 space-y-6">
+                {/* SECCIÓN 1: SECTOR GLOBAL */}
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Label className="block text-sm font-medium">🏢 Asignar Sector</Label>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button type="button" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <HelpCircle size={16} />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                Asigna un sector a todos los lotes del producto. Se aplicará cuando guardes el formulario.
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div>
+                            <div className="flex items-center gap-1 mb-2">
+                                <Label className="block text-xs font-semibold text-foreground">Sector *</Label>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button type="button" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                            <HelpCircle size={14} />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Ubicación física dentro del almacén donde se guardan los lotes
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                            <SearchSelect
+                                id="sector-global"
+                                placeholder="Seleccione un sector"
+                                value={globalSectorId ? String(globalSectorId) : ''}
+                                options={Object.values(sectoresOptions).flat()}
+                                onChange={(value) => {
+                                    // ⚠️ Solo guardar en estado local, NO aplicar automáticamente
+                                    const sectorId = value ? Number(value) : undefined;
+                                    setGlobalSectorId(sectorId);
+                                }}
+                                allowClear={true}
+                            />
+                        </div>
+
+                        {/* Botón para guardar sector seleccionado */}
+                        {/* <Button
+                            type="button"
+                            size="sm"
+                            variant="default"
+                            onClick={() => {
+                                // Solo guardar el globalSectorId en data, la aplicación ocurre al guardar el formulario
+                                if (globalSectorId !== undefined) {
+                                    setData('globalSectorId', globalSectorId);
+                                }
+                            }}
+                            disabled={!globalSectorId}
+                        >
+                            ✨ Guardar sector seleccionado
+                        </Button> */}
+
+                        {/* Resumen de aplicación */}
+                        {/* {globalSectorId && (data.almacenes || []).length > 0 && (
+                            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    ℹ️ El sector se aplicará a <span className="font-bold">{(data.almacenes || []).length}</span>{' '}
+                                    lote{(data.almacenes || []).length !== 1 ? 's' : ''} cuando guardes el formulario.
+                                </p>
+                            </div>
+                        )} */}
+                    </div>
                 </div>
 
-                {/* TAB 1: ALMACENES Y STOCK */}
-                {activeTab === 'almacenes' && <div className="space-y-4 mt-2">
+                {/* SECCIÓN 2: ALMACENES Y STOCK (LOTES) */}
+                <div className="space-y-4 mt-2">
                     <div>
                         <div className="flex items-center justify-between">
                             <button
@@ -257,7 +305,19 @@ export default function Step3Almacenes({
                             <div key={i} className="mt-2 flex items-end gap-1 overflow-x-auto pb-1">
                                 {/* Almacén */}
                                 <div className="flex-shrink-0">
-                                    <Label className="text-xs font-semibold text-foreground">Almacén* #{a.id}</Label>
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <Label className="text-xs font-semibold text-foreground">Almacén* #{a.id}</Label>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                    <HelpCircle size={12} />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">
+                                                Selecciona el almacén donde se guarda este lote
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </div>
                                     <SearchSelect
                                         id={`almacen-select-${i}`}
                                         placeholder="Sel."
@@ -270,7 +330,19 @@ export default function Step3Almacenes({
 
                                 {/* Lote */}
                                 <div className="flex-shrink-0 w-24">
-                                    <Label className="text-xs font-semibold text-foreground">Lote</Label>
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <Label className="text-xs font-semibold text-foreground">Lote</Label>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                    <HelpCircle size={12} />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">
+                                                Identificador del lote para trazabilidad
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </div>
                                     <Input
                                         size="sm"
                                         value={a.lote || ''}
@@ -293,7 +365,17 @@ export default function Step3Almacenes({
                                             }}
                                             className="h-4 w-4"
                                         />
-                                        <Label htmlFor={`has-exp-${i}`} className="text-xs cursor-pointer whitespace-nowrap">Vto.</Label>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <label htmlFor={`has-exp-${i}`} className="text-xs cursor-pointer whitespace-nowrap flex items-center gap-1 hover:text-blue-600">
+                                                    Vto.
+                                                    <HelpCircle size={11} className="text-gray-400" />
+                                                </label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">
+                                                Fecha de vencimiento del lote (opcional)
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <Input
                                         type="date"
@@ -316,7 +398,19 @@ export default function Step3Almacenes({
                                         <>
                                             {/* Cantidad Total */}
                                             <div className="flex-shrink-0 w-20">
-                                                <Label className="text-xs font-semibold text-foreground">Total</Label>
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Label className="text-xs font-semibold text-foreground">Total</Label>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                                <HelpCircle size={12} />
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top">
+                                                            Cantidad total del lote en almacén
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </div>
                                                 <Input
                                                     type="number"
                                                     inputMode="decimal"
@@ -339,7 +433,19 @@ export default function Step3Almacenes({
 
                                             {/* Disponible */}
                                             <div className="flex-shrink-0 w-20">
-                                                <Label className="text-xs font-semibold text-foreground">Disp.</Label>
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Label className="text-xs font-semibold text-foreground">Disp.</Label>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                                <HelpCircle size={12} />
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top">
+                                                            Cantidad disponible para vender
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </div>
                                                 <Input
                                                     type="number"
                                                     inputMode="decimal"
@@ -363,7 +469,19 @@ export default function Step3Almacenes({
 
                                             {/* Reservada */}
                                             <div className="flex-shrink-0 w-20">
-                                                <Label className="text-xs font-semibold text-foreground">Res.</Label>
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Label className="text-xs font-semibold text-foreground">Res.</Label>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                                <HelpCircle size={12} />
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top">
+                                                            Cantidad reservada para pedidos pendientes
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </div>
                                                 <Input
                                                     type="number"
                                                     inputMode="decimal"
@@ -408,63 +526,7 @@ export default function Step3Almacenes({
                             </div>
                         ))}
                     </div>
-                </div>}
-
-                {/* TAB 2: SECTOR GLOBAL */}
-                {activeTab === 'sector' && <div className="space-y-4">
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
-                        <Label className="mb-2 block text-sm font-medium">🏢 Asignar Sector</Label>
-                        <p className="mb-4 text-xs text-gray-600 dark:text-gray-400">Selecciona UN sector para TODOS los lotes de este producto</p>
-
-                        <div className="space-y-3">
-                            <div>
-                                <Label className="mb-2 block text-xs font-semibold text-foreground">Sector *</Label>
-                                <SearchSelect
-                                    id="sector-global"
-                                    placeholder="Seleccione un sector"
-                                    value={globalSectorId ? String(globalSectorId) : ''}
-                                    options={Object.values(sectoresOptions).flat()}
-                                    onChange={(value) => {
-                                        // ⚠️ Solo guardar en estado local, NO aplicar automáticamente
-                                        const sectorId = value ? Number(value) : undefined;
-                                        setGlobalSectorId(sectorId);
-                                    }}
-                                    allowClear={true}
-                                />
-                            </div>
-
-                            {/* Botón para aplicar sector */}
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="default"
-                                onClick={() => {
-                                    // Aplicar sector solo cuando el usuario hace clic
-                                    if (globalSectorId && (data.almacenes || []).length > 0) {
-                                        const updated = data.almacenes.map((a) => ({
-                                            ...a,
-                                            sector_id: globalSectorId,
-                                        }));
-                                        setData('almacenes', updated);
-                                    }
-                                }}
-                                disabled={!globalSectorId || !data.almacenes || data.almacenes.length === 0}
-                            >
-                                ✨ Aplicar sector a todos los lotes
-                            </Button>
-
-                            {/* Resumen de aplicación */}
-                            {globalSectorId && (data.almacenes || []).length > 0 && (
-                                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
-                                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                                        ℹ️ Presiona "Aplicar sector" para asignar a <span className="font-bold">{(data.almacenes || []).length}</span>{' '}
-                                        lote{(data.almacenes || []).length !== 1 ? 's' : ''}, luego guarda el formulario.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>}
+                </div>
             </div>
         </div>
     );

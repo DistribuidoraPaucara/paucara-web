@@ -120,6 +120,7 @@ export interface ProductoFormData extends BaseFormData {
   precios: Precio[];
   codigos: CodigoBarra[];
   almacenes?: StockAlmacen[];
+  globalSectorId?: number; // ✨ NUEVO: Sector global para aplicar a todos los lotes
   conversiones?: ConversionUnidad[]; // ✨ NUEVO: Conversiones de unidad (frontend only)
 }
 

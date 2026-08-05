@@ -17,10 +17,12 @@ import AppLayout from '@/layouts/app-layout';
 import { ProductosComidaSelector } from '@/presentation/components/ProductosComidaSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
 import InputSearch from '@/presentation/components/ui/input-search';
+import ModalCrearCliente from '@/presentation/components/ui/modal-crear-cliente';
 import { Head } from '@inertiajs/react';
 import { Save, ShoppingCart, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import { NotificationService } from '@/infrastructure/services/notification.service';
 
 interface Cliente {
     id: number;
@@ -77,6 +79,8 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
     const [montoTransferencia, setMontoTransferencia] = useState<number | ''>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [mostrarSelector, setMostrarSelector] = useState(true);
+    const [showCreateClienteModal, setShowCreateClienteModal] = useState(false);
+    const [clienteSearchQuery, setClienteSearchQuery] = useState('');
 
     // Hook para búsqueda de clientes en tiempo real
     const { search: searchClientes } = useClienteSearch();
@@ -120,6 +124,41 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
 
         cargarDefectos();
     }, []); // ✅ Array vacío: ejecutar solo una vez al montar
+
+    // Función para abrir el modal de crear cliente
+    const handleCreateCliente = (searchQuery: string) => {
+        setClienteSearchQuery(searchQuery);
+        setShowCreateClienteModal(true);
+    };
+
+    // Función para manejar cuando se crea un cliente exitosamente
+    const handleClienteCreated = (cliente: Cliente) => {
+        // Actualizar el valor del cliente en el formulario
+        setClienteValue(cliente.id);
+        setClienteDisplay(cliente.nombre + (cliente.telefono ? ` (${cliente.telefono})` : ''));
+        setClienteSeleccionado(cliente);
+
+        // Crear una descripción completa del cliente para mostrar en la notificación
+        const descripcionCliente = [
+            cliente.nombre,
+            cliente.nit ? `NIT/CI: ${cliente.nit}` : '',
+            cliente.telefono ? `Tel: ${cliente.telefono}` : '',
+            cliente.email ? `Email: ${cliente.email}` : '',
+        ]
+            .filter(Boolean)
+            .join(' • ');
+
+        // Mostrar notificación detallada del cliente creado y seleccionado
+        try {
+            NotificationService.success(`✅ Cliente creado y seleccionado: ${descripcionCliente}`);
+        } catch (error) {
+            console.error('Error en NotificationService:', error);
+            toast.success(`✅ Cliente creado y seleccionado: ${cliente.nombre}`);
+        }
+
+        // Limpiar la query de búsqueda ya que ahora tenemos el cliente seleccionado
+        setClienteSearchQuery('');
+    };
 
     // 💳 Actualizar tipo de pago automáticamente según los montos
     useEffect(() => {
@@ -336,7 +375,11 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                                         placeholder="CLIENTE GENERAL..."
                                         emptyText="No se encontraron clientes"
                                         allowScanner={false}
-                                        showCreateButton={false}
+                                        showCreateButton={true}
+                                        onCreateClick={handleCreateCliente}
+                                        createButtonText="Crear Cliente"
+                                        showCreateIconButton={true}
+                                        createIconButtonTitle="Crear nuevo cliente"
                                         className="w-full"
                                     />
                                     {clienteSeleccionado && (
@@ -567,6 +610,14 @@ export default function VentasComidas({ clientes, tiposPago, auth }: VentasComid
                     </div>
                 </div>
             </div>
+
+            {/* Modal para crear cliente */}
+            <ModalCrearCliente
+                isOpen={showCreateClienteModal}
+                onClose={() => setShowCreateClienteModal(false)}
+                onClienteCreated={handleClienteCreated}
+                searchQuery={clienteSearchQuery}
+            />
         </AppLayout>
     );
 }

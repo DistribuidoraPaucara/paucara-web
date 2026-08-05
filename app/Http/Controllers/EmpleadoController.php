@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class EmpleadoController extends Controller
 {
@@ -115,31 +116,38 @@ class EmpleadoController extends Controller
         // Obtener solo los roles que el usuario actual puede asignar
         $rolesPermitidos = $this->getRolesAsignablesPorUsuario();
 
-        $roles = Role::orderBy('name')
+        // Obtener roles disponibles con sus permisos
+        $allRoles = Role::with('permissions')
+            ->orderBy('name')
             ->get()
             ->filter(function ($role) use ($rolesPermitidos) {
                 // Solo incluir roles que el usuario tiene permiso de asignar
                 return in_array($role->name, $rolesPermitidos);
             })
-            ->map(function ($role) use ($rolesPermitidos) {
-                $description = 'Rol del sistema: ' . $role->name;
-
-                // Agregar indicador visual para roles privilegiados
-                if (in_array($role->name, ['Super Admin', 'Admin', 'admin'])) {
-                    $description .= ' 🔒';
-                }
-
+            ->map(function ($role) {
                 return [
-                    'value'       => $role->name,
-                    'label'       => $role->name,
-                    'description' => $description,
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->pluck('name')->toArray(),
                 ];
             })
-            ->values(); // Reindexar después del filtro
+            ->values()
+            ->toArray();
+
+        // Obtener todos los permisos agrupados por categoría
+        $allPermissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
 
         return Inertia::render('empleados/create', [
-            'supervisores' => $supervisores,
-            'roles'        => $roles,
+            'supervisores'               => $supervisores,
+            'roles'                      => $allRoles,
+            'permissions'                => $allPermissions,
+            'rolesAsignados'             => [],
+            'rolesDisponibles'           => $allRoles,
+            'permisosAsignados'          => [],
+            'permisosHeredados'          => [],
+            'permisosDisponibles'        => $allPermissions->map(fn($permisos) => $permisos->pluck('name')->toArray())->toArray(),
         ]);
     }
 
@@ -209,9 +217,10 @@ class EmpleadoController extends Controller
                         'empresa_id'        => Auth::user()?->empresa_id,
                     ]);
 
-                    // Asignar múltiples roles
+                    // Asignar múltiples roles (case-insensitive)
                     if (! empty($rolesAsignados)) {
-                        $user->syncRoles($rolesAsignados);
+                        $rolesAsignadosLower = array_map('strtolower', $rolesAsignados);
+                        $user->syncRoles($rolesAsignadosLower);
                     }
                 }
 
@@ -292,13 +301,46 @@ class EmpleadoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    public function editAccesoSistema(Empleado $empleado)
+    {
+        // Cargar roles y permisos del usuario asociado
+        $empleado->load(['user.roles', 'user.permissions']);
+
+        // Si no tiene usuario, no puede ver permisos
+        if (!$empleado->user_id) {
+            return redirect()->route('empleados.edit', $empleado->id)
+                ->with('error', 'Este empleado no tiene un usuario del sistema.');
+        }
+
+        // Obtener todos los roles disponibles
+        $roles = Role::orderBy('name')->get();
+
+        // Obtener todos los permisos agrupados por categoría
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
+
+        // Obtener roles y permisos del usuario del empleado
+        $userRoles = $empleado->user ? $empleado->user->roles->pluck('id')->toArray() : [];
+        $userPermissions = $empleado->user ? $empleado->user->permissions->pluck('id')->toArray() : [];
+
+        return Inertia::render('empleados/acceso-sistema', [
+            'empleado'        => $empleado,
+            'roles'           => $roles,
+            'permissions'     => $permissions,
+            'userRoles'       => $userRoles,
+            'userPermissions' => $userPermissions,
+        ]);
+    }
+
     public function edit(Empleado $empleado)
     {
-        $empleado->load(['user.roles']);
+        // Cargar roles y permisos del usuario asociado
+        $empleado->load(['user.roles.permissions', 'user.permissions']);
 
         $supervisores = Empleado::with('user')
             ->activos()
-            ->where('id', '!=', $empleado->id) // No puede ser supervisor de sí mismo
+            ->where('id', '!=', $empleado->id)
             ->get()
             ->map(function ($emp) {
                 return [
@@ -307,36 +349,102 @@ class EmpleadoController extends Controller
                 ];
             });
 
-        // Obtener solo los roles que el usuario actual puede asignar
-        $rolesPermitidos = $this->getRolesAsignablesPorUsuario();
+        // Obtener todos los roles disponibles con sus permisos
+        $allRoles = Role::with('permissions')->orderBy('name')->get();
 
-        $roles = Role::orderBy('name')
-            ->get()
-            ->filter(function ($role) use ($rolesPermitidos) {
-                // Solo incluir roles que el usuario tiene permiso de asignar
-                return in_array($role->name, $rolesPermitidos);
-            })
-            ->map(function ($role) use ($rolesPermitidos) {
-                $description = 'Rol del sistema: ' . $role->name;
+        // Obtener todos los permisos agrupados por categoría
+        $allPermissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
 
-                // Agregar indicador visual para roles privilegiados
-                if (in_array($role->name, ['Super Admin', 'Admin', 'admin'])) {
-                    $description .= ' 🔒';
+        // Obtener roles asignados al usuario
+        $userRolesAssigned = $empleado->user ? $empleado->user->roles->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'permissions' => $role->permissions->pluck('name')->toArray(),
+            ];
+        })->toArray() : [];
+
+        // Obtener roles disponibles (no asignados)
+        $userRoleIds = $empleado->user ? $empleado->user->roles->pluck('id')->toArray() : [];
+        $rolesNotAssigned = $allRoles->filter(function ($role) use ($userRoleIds) {
+            return !in_array($role->id, $userRoleIds);
+        })->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'permissions' => $role->permissions->pluck('name')->toArray(),
+            ];
+        })->values()->toArray();
+
+        // Obtener permisos asignados (directos, no heredados de roles)
+        $userPermissionsDirectAssigned = $empleado->user ? $empleado->user->permissions->pluck('name')->toArray() : [];
+        $userPermissionIds = $empleado->user ? $empleado->user->permissions->pluck('id')->toArray() : [];
+
+        // Crear mapeo de permisos directos asignados con sus descripciones
+        $permisosAsignadosMap = [];
+        if ($empleado->user) {
+            foreach ($empleado->user->permissions as $permission) {
+                $permisosAsignadosMap[$permission->name] = $permission->description;
+            }
+        }
+
+        // Obtener permisos heredados de roles (con descripción)
+        $inheritedPermissions = [];
+        $inheritedPermissionsMap = [];
+        if ($empleado->user) {
+            foreach ($empleado->user->roles as $role) {
+                foreach ($role->permissions as $permission) {
+                    if (!in_array($permission->name, $inheritedPermissions)) {
+                        $inheritedPermissions[] = $permission->name;
+                        $inheritedPermissionsMap[$permission->name] = $permission->description;
+                    }
                 }
+            }
+        }
 
-                return [
-                    'value'       => $role->name,
-                    'label'       => $role->name,
-                    'description' => $description,
-                ];
+        // Obtener permisos disponibles (no asignados directamente)
+        $allPermissionIds = Permission::pluck('id')->toArray();
+        $permissionsNotAssigned = Permission::whereNotIn('id', $userPermissionIds)
+            ->orderBy('name')
+            ->get()
+            ->groupBy(function ($permission) {
+                return explode('.', $permission->name)[0];
             })
-            ->values(); // Reindexar después del filtro
+            ->map(function ($permissions) {
+                return $permissions->pluck('name')->toArray();
+            })
+            ->toArray();
 
-        return Inertia::render('empleados/edit', [
-            'empleado'     => $empleado, // Los accessors automáticamente agregan nombre, email, usernick, roles
-            'supervisores' => $supervisores,
-            'roles'        => $roles,
+        $responseData = [
+            'empleado'                    => $empleado,
+            'supervisores'                => $supervisores,
+            'roles'                       => $allRoles,
+            'permissions'                 => $allPermissions,
+            'userRoles'                   => $empleado->user ? $empleado->user->roles->pluck('id')->toArray() : [],
+            'userPermissions'             => $userPermissionIds,
+            'rolesAsignados'              => $userRolesAssigned,
+            'rolesDisponibles'            => $rolesNotAssigned,
+            'permisosAsignados'           => $userPermissionsDirectAssigned,
+            'permisosAsignadosMap'        => $permisosAsignadosMap,
+            'permisosHeredados'           => array_values($inheritedPermissions),
+            'permisosHeredadosMap'        => $inheritedPermissionsMap,
+            'permisosDisponibles'         => $permissionsNotAssigned,
+        ];
+
+        // Debug: Log de datos enviados
+        Log::info('📤 DATOS ENVIADOS AL FRONTEND - EDIT', [
+            'empleado_id' => $empleado->id,
+            'tiene_usuario' => !!$empleado->user,
+            'rolesAsignados' => count($userRolesAssigned),
+            'rolesDisponibles' => count($rolesNotAssigned),
+            'permisosAsignados' => count($userPermissionsDirectAssigned),
+            'permisosHeredados' => count($inheritedPermissions),
+            'permisosDisponiblesCategories' => count($permissionsNotAssigned),
         ]);
+
+        return Inertia::render('empleados/edit', $responseData);
     }
 
     /**
@@ -415,13 +523,31 @@ class EmpleadoController extends Controller
             $rules['roles.*'] = 'exists:roles,name';
         }
 
+        if ($request->has('permissions')) {
+            $rules['permissions']   = 'nullable|array';
+            $rules['permissions.*'] = 'exists:permissions,name';
+        }
+
         // Validar solo los campos presentes
         $request->validate($rules);
 
-        // VALIDACIÓN CRÍTICA: Verificar que el usuario tenga permiso para asignar los roles solicitados
+        // VALIDACIÓN CRÍTICA: Verificar que el usuario tenga permiso para asignar NUEVOS roles
+        // (No validar roles que se están removiendo, solo los que se están agregando)
         if ($request->has('roles') && is_array($request->roles) && ! empty($request->roles)) {
             try {
-                $this->validarPermisosAsignacionRoles($request->roles);
+                // Obtener roles actuales del usuario
+                $rolesActuales = $empleado->user ? $empleado->user->roles->pluck('name')->toArray() : [];
+
+                // Obtener roles nuevos
+                $rolesNuevos = $request->roles;
+
+                // Encontrar solo los roles que se están AGREGANDO (no los que ya tiene)
+                $rolesAgregar = array_diff($rolesNuevos, $rolesActuales);
+
+                // Solo validar los nuevos roles
+                if (!empty($rolesAgregar)) {
+                    $this->validarPermisosAsignacionRoles($rolesAgregar);
+                }
             } catch (Exception $e) {
                 return back()->withErrors([
                     'roles' => $e->getMessage(),
@@ -429,14 +555,19 @@ class EmpleadoController extends Controller
             }
         }
 
-        // VALIDACIÓN: Verificar compatibilidad de roles
+        // VALIDACIÓN: Verificar compatibilidad de roles (solo nuevos)
         if ($request->has('roles') && is_array($request->roles) && ! empty($request->roles)) {
             try {
                 $rolesActuales      = $empleado->user?->roles->pluck('name')->toArray() ?? [];
-                $rolActualPrincipal = count($rolesActuales) > 0 ? $rolesActuales[0] : null;
+                $rolesNuevos        = $request->roles;
+                $rolesAgregar       = array_diff($rolesNuevos, $rolesActuales);
 
-                $validador = new RoleCompatibilityValidator();
-                $validador->validar($request->roles, $rolActualPrincipal);
+                // Solo validar compatibilidad si hay nuevos roles
+                if (!empty($rolesAgregar)) {
+                    $rolActualPrincipal = count($rolesActuales) > 0 ? $rolesActuales[0] : null;
+                    $validador = new RoleCompatibilityValidator();
+                    $validador->validar($rolesAgregar, $rolActualPrincipal);
+                }
             } catch (Exception $e) {
                 return back()->withErrors([
                     'roles' => $e->getMessage(),
@@ -480,9 +611,40 @@ class EmpleadoController extends Controller
                         ->update(['nombre' => $request->nombre]);
                 }
 
-                // Actualizar roles si se especifican
-                if ($request->has('roles') && is_array($request->roles)) {
-                    $user->syncRoles($request->roles);
+                // Sincronizar roles (recibe nombres de roles como strings)
+                // Buscar roles case-insensitive y sincronizar con nombres exactos
+                if ($request->has('roles')) {
+                    $roleNames = is_array($request->roles) ? $request->roles : [];
+
+                    // Encontrar roles exactos en la BD (case-insensitive)
+                    $exactRoleNames = [];
+                    foreach ($roleNames as $roleName) {
+                        $role = Role::whereRaw('LOWER(name) = ?', [strtolower($roleName)])->first();
+                        if ($role) {
+                            $exactRoleNames[] = $role->name;
+                        }
+                    }
+
+                    // Sincronizar con nombres exactos
+                    $user->syncRoles($exactRoleNames);
+                }
+
+                // Sincronizar permisos directos (recibe nombres como strings)
+                // Buscar permisos case-insensitive y sincronizar con nombres exactos
+                if ($request->has('permissions')) {
+                    $permissionNames = is_array($request->permissions) ? $request->permissions : [];
+
+                    // Encontrar permisos exactos en la BD (case-insensitive)
+                    $exactPermissionNames = [];
+                    foreach ($permissionNames as $permissionName) {
+                        $permission = Permission::whereRaw('LOWER(name) = ?', [strtolower($permissionName)])->first();
+                        if ($permission) {
+                            $exactPermissionNames[] = $permission->name;
+                        }
+                    }
+
+                    // Sincronizar con nombres exactos
+                    $user->syncPermissions($exactPermissionNames);
                 }
             }
 
@@ -583,6 +745,7 @@ class EmpleadoController extends Controller
     /**
      * Valida que el usuario actual pueda asignar los roles solicitados
      * Lanza una excepción si intenta asignar roles no permitidos
+     * Comparación CASE-INSENSITIVE
      */
     private function validarPermisosAsignacionRoles(array $rolesASolicitados): void
     {
@@ -592,8 +755,11 @@ class EmpleadoController extends Controller
             throw new \Exception('No tiene permisos para asignar roles a empleados.');
         }
 
+        // Convertir roles permitidos a minúsculas para comparación case-insensitive
+        $rolesPermitidosLower = array_map('strtolower', $rolesPermitidos);
+
         foreach ($rolesASolicitados as $rol) {
-            if (! in_array($rol, $rolesPermitidos)) {
+            if (! in_array(strtolower($rol), $rolesPermitidosLower)) {
                 throw new \Exception("No tiene permisos para asignar el rol: {$rol}");
             }
         }
