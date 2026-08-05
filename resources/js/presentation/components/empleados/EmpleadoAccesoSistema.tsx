@@ -113,18 +113,18 @@ export default function EmpleadoAccesoSistema({
         });
     }
 
-    // Sincronizar cambios locales directamente a formData (sin debounce para evitar ciclos infinitos)
+    // Sincronizar cambios locales a formData sin debounce
     useEffect(() => {
         if (JSON.stringify(localRoles) !== JSON.stringify(selectedRoles) && onRolesChange) {
             onRolesChange(localRoles);
         }
-    }, [localRoles]);
+    }, [localRoles, onRolesChange]);
 
     useEffect(() => {
         if (JSON.stringify(localPermissions) !== JSON.stringify(selectedPermissions) && onPermissionsChange) {
             onPermissionsChange(localPermissions);
         }
-    }, [localPermissions]);
+    }, [localPermissions, onPermissionsChange]);
 
     // Cargar roles disponibles con permisos (si no vienen desde props)
     useEffect(() => {
