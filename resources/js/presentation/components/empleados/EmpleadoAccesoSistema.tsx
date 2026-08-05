@@ -113,38 +113,18 @@ export default function EmpleadoAccesoSistema({
         });
     }
 
-    // Sincronizar datos del backend (cambios externos) a estado local
+    // Sincronizar cambios locales directamente a formData (sin debounce para evitar ciclos infinitos)
     useEffect(() => {
-        if (rolesAsignados && Array.isArray(rolesAsignados)) {
-            const backendRoles = rolesAsignados.map((r: any) => typeof r === 'string' ? r : r.name);
-            if (JSON.stringify(backendRoles) !== JSON.stringify(localRoles)) {
-                setLocalRoles(backendRoles);
-            }
+        if (JSON.stringify(localRoles) !== JSON.stringify(selectedRoles) && onRolesChange) {
+            onRolesChange(localRoles);
         }
-    }, [rolesAsignados]);
+    }, [localRoles]);
 
     useEffect(() => {
-        if (permisosAsignados && Array.isArray(permisosAsignados) && permisosAsignados.length > 0) {
-            if (JSON.stringify(permisosAsignados) !== JSON.stringify(localPermissions)) {
-                setLocalPermissions(permisosAsignados);
-            }
+        if (JSON.stringify(localPermissions) !== JSON.stringify(selectedPermissions) && onPermissionsChange) {
+            onPermissionsChange(localPermissions);
         }
-    }, [permisosAsignados]);
-
-    // Sincronizar estado local con formData cuando termina de hacer cambios (debounce 500ms)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            // Solo actualizar onChange si los valores locales son diferentes
-            if (JSON.stringify(localRoles) !== JSON.stringify(selectedRoles) && onRolesChange) {
-                onRolesChange(localRoles);
-            }
-            if (JSON.stringify(localPermissions) !== JSON.stringify(selectedPermissions) && onPermissionsChange) {
-                onPermissionsChange(localPermissions);
-            }
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [localRoles, localPermissions, selectedRoles, selectedPermissions, onRolesChange, onPermissionsChange]);
+    }, [localPermissions]);
 
     // Cargar roles disponibles con permisos (si no vienen desde props)
     useEffect(() => {
