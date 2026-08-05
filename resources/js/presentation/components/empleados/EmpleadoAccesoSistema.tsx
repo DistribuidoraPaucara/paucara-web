@@ -118,13 +118,13 @@ export default function EmpleadoAccesoSistema({
         if (JSON.stringify(localRoles) !== JSON.stringify(selectedRoles) && onRolesChange) {
             onRolesChange(localRoles);
         }
-    }, [localRoles, onRolesChange]);
+    }, [localRoles]); // Solo depende de localRoles
 
     useEffect(() => {
         if (JSON.stringify(localPermissions) !== JSON.stringify(selectedPermissions) && onPermissionsChange) {
             onPermissionsChange(localPermissions);
         }
-    }, [localPermissions, onPermissionsChange]);
+    }, [localPermissions]); // Solo depende de localPermissions
 
     // Cargar roles disponibles con permisos (si no vienen desde props)
     useEffect(() => {
