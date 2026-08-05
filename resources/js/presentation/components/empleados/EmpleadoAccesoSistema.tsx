@@ -81,50 +81,6 @@ export default function EmpleadoAccesoSistema({
     const [activeTab, setActiveTab] = useState<'assigned' | 'available'>('assigned');
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
     const [searchPermiso, setSearchPermiso] = useState<string>('');
-    // Estado local para roles y permisos - inicializar desde datos reales del backend
-    const [localRoles, setLocalRoles] = useState<string[]>(() => {
-        if (rolesAsignados && Array.isArray(rolesAsignados)) {
-            return rolesAsignados.map((r: any) => typeof r === 'string' ? r : r.name);
-        }
-        return selectedRoles || [];
-    });
-    const [localPermissions, setLocalPermissions] = useState<string[]>(() => {
-        if (permisosAsignados && Array.isArray(permisosAsignados) && permisosAsignados.length > 0) {
-            return permisosAsignados;
-        }
-        return selectedPermissions || [];
-    });
-
-    // Debug
-    if (typeof window !== 'undefined') {
-        console.log('🔍 EmpleadoAccesoSistema - Props recibidas:', {
-            rolesAsignados: rolesAsignados?.length || 0,
-            rolesDisponiblesDetallados: rolesDisponiblesDetallados?.length || 0,
-            permisosAsignados: permisosAsignados?.length || 0,
-            permisosHeredados: permisosHeredados?.length || 0,
-            permisosDisponiblesCategories: permisosDisponibles ? Object.keys(permisosDisponibles).length : 0,
-            permisosAsignadosMapKeys: Object.keys(permisosAsignadosMap || {}).length,
-            permisosHeredadosMapKeys: Object.keys(permisosHeredadosMap || {}).length,
-            loading,
-        });
-        console.log('📋 Mapeos de descripciones:', {
-            permisosAsignadosMap,
-            permisosHeredadosMap,
-        });
-    }
-
-    // Sincronizar cambios locales a formData sin debounce
-    useEffect(() => {
-        if (JSON.stringify(localRoles) !== JSON.stringify(selectedRoles) && onRolesChange) {
-            onRolesChange(localRoles);
-        }
-    }, [localRoles]); // Solo depende de localRoles
-
-    useEffect(() => {
-        if (JSON.stringify(localPermissions) !== JSON.stringify(selectedPermissions) && onPermissionsChange) {
-            onPermissionsChange(localPermissions);
-        }
-    }, [localPermissions]); // Solo depende de localPermissions
 
     // Cargar roles disponibles con permisos (si no vienen desde props)
     useEffect(() => {
@@ -175,9 +131,10 @@ export default function EmpleadoAccesoSistema({
     const toggleRole = (roleName: string) => {
         if (disabled || !puedeAccederSistema) return;
 
-        // Solo actualizar estado local, NO llamar onChange que dispara submit
-        const newRoles = localRoles.includes(roleName) ? localRoles.filter((r) => r !== roleName) : [...localRoles, roleName];
-        setLocalRoles(newRoles);
+        const newRoles = selectedRoles.includes(roleName)
+            ? selectedRoles.filter((r) => r !== roleName)
+            : [...selectedRoles, roleName];
+        onRolesChange?.(newRoles);
     };
 
     const toggleCategory = (categoria: string) => {
@@ -189,9 +146,8 @@ export default function EmpleadoAccesoSistema({
 
     const removePermission = (permiso: string) => {
         if (disabled) return;
-        // Solo actualizar estado local, NO llamar onChange que dispara submit
-        const newPermissions = localPermissions.filter((p) => p !== permiso);
-        setLocalPermissions(newPermissions);
+        const newPermissions = selectedPermissions.filter((p) => p !== permiso);
+        onPermissionsChange?.(newPermissions);
     };
 
     // Helper para renderizar permiso con tooltip
@@ -243,7 +199,7 @@ export default function EmpleadoAccesoSistema({
         );
     }
 
-    const selectedRoleObjects = roles.filter((r) => localRoles.includes(r.value));
+    const selectedRoleObjects = roles.filter((r) => selectedRoles.includes(r.value));
 
     return (
         <div className="space-y-6">
@@ -433,14 +389,14 @@ export default function EmpleadoAccesoSistema({
                             {activeTab === 'assigned' && (
                                 <div className="space-y-6">
                                     {/* Roles Asignados */}
-                                    {localRoles && localRoles.length > 0 && (
+                                    {selectedRoles && selectedRoles.length > 0 && (
                                         <div>
                                             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                Roles Asignados ({localRoles.length})
+                                                Roles Asignados ({selectedRoles.length})
                                             </h4>
                                             <div className="flex flex-wrap space-y-2 gap-2 items-start">
-                                                {localRoles.map((roleName: string, idx: number) => {
+                                                {selectedRoles.map((roleName: string, idx: number) => {
                                                     return (
                                                         <div
                                                             key={idx}
@@ -494,11 +450,11 @@ export default function EmpleadoAccesoSistema({
                                     )}
 
                                     {/* Permisos Directos Asignados - Agrupados por Categoría (Collapsible) */}
-                                    {localPermissions && localPermissions.length > 0 && (
+                                    {selectedPermissions && selectedPermissions.length > 0 && (
                                         <div>
                                             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                 <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                                Permisos Directos ({localPermissions.length})
+                                                Permisos Directos ({selectedPermissions.length})
                                             </h4>
                                             {/* Buscador de permisos */}
                                             <div className="relative mb-4">
@@ -513,7 +469,7 @@ export default function EmpleadoAccesoSistema({
                                             </div>
                                             <div className="space-y-3">
                                                 {Object.entries(
-                                                    (localPermissions as string[])
+                                                    (selectedPermissions as string[])
                                                         .filter((p) => p.toLowerCase().includes(searchPermiso.toLowerCase()))
                                                         .reduce((acc: Record<string, string[]>, permiso: string) => {
                                                             const categoria = permiso.split('.')[0];
@@ -623,7 +579,7 @@ export default function EmpleadoAccesoSistema({
                                         </div>
                                     )} */}
 
-                                    {!localRoles?.length && !localPermissions?.length && (
+                                    {!selectedRoles?.length && !selectedPermissions?.length && (
                                         <div className="py-8 text-center text-gray-600 dark:text-gray-400">
                                             <Shield className="mx-auto mb-2 h-12 w-12 opacity-50" />
                                             <p>Sin roles ni permisos asignados</p>
@@ -641,7 +597,7 @@ export default function EmpleadoAccesoSistema({
                                             <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Roles por Asignar</h4>
                                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                                 {rolesDisponiblesDetallados.map((role: any) => {
-                                                    const isSelected = localRoles.includes(role.name);
+                                                    const isSelected = selectedRoles.includes(role.name);
                                                     return (
                                                         <div
                                                             key={role.id}
