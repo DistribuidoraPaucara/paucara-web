@@ -433,15 +433,14 @@ export default function EmpleadoAccesoSistema({
                             {activeTab === 'assigned' && (
                                 <div className="space-y-6">
                                     {/* Roles Asignados */}
-                                    {Array.isArray(rolesAsignados) && rolesAsignados.length > 0 && (
+                                    {localRoles && localRoles.length > 0 && (
                                         <div>
                                             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                                                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                Roles Asignados ({rolesAsignados.length})
+                                                Roles Asignados ({localRoles.length})
                                             </h4>
                                             <div className="flex flex-wrap space-y-2 gap-2 items-start">
-                                                {rolesAsignados.map((role: any, idx: number) => {
-                                                    const roleName = typeof role === 'string' ? role : role.name || '';
+                                                {localRoles.map((roleName: string, idx: number) => {
                                                     return (
                                                         <div
                                                             key={idx}
@@ -624,7 +623,7 @@ export default function EmpleadoAccesoSistema({
                                         </div>
                                     )} */}
 
-                                    {!rolesAsignados?.length && !permisosAsignados?.length && !permisosHeredados?.length && (
+                                    {!localRoles?.length && !localPermissions?.length && (
                                         <div className="py-8 text-center text-gray-600 dark:text-gray-400">
                                             <Shield className="mx-auto mb-2 h-12 w-12 opacity-50" />
                                             <p>Sin roles ni permisos asignados</p>
