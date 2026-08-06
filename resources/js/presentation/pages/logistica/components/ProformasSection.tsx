@@ -360,9 +360,9 @@ export function ProformasSection({
                             <label className="block text-sm">Búsqueda</label>
                             {/* ver reservas con /reservas */}
                             <h3 className="rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                Ver reservas:{' '}
+                                Ver reservas por Productos:{' '}
                                 <a href="/reservas" className="text-blue-500 hover:underline">
-                                    /reservas
+                                    /reservas por productos
                                 </a>
                             </h3>
                         </div>

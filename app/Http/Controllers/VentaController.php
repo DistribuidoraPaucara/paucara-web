@@ -2857,9 +2857,48 @@ class VentaController extends Controller
             $confirmacionId = $confirmacion->id;
             $confirmacion->delete();
 
+            // ✅ NUEVO: Actualizar estado logístico si no hay más confirmaciones
+            $confirmacionesRestantes = $venta->confirmaciones()->count();
+
+            if ($confirmacionesRestantes === 0) {
+                // Si la venta tiene una entrega asignada, usar el estado de la entrega
+                if ($venta->entrega_id && $venta->entrega) {
+                    // Obtener el estado logístico de la entrega
+                    $estadoEntrega = $venta->entrega->estadoEntrega;
+                    if ($estadoEntrega) {
+                        $venta->update(['estado_logistico_id' => $estadoEntrega->id]);
+                        Log::info('✅ Estado logístico actualizado desde entrega', [
+                            'venta_id' => $venta->id,
+                            'estado_anterior' => 'ENTREGADA',
+                            'estado_nuevo' => $estadoEntrega->codigo,
+                            'entrega_id' => $venta->entrega_id,
+                        ]);
+                    }
+                } else {
+                    // Si no tiene entrega, buscar estado logístico 'SIN_ENTREGA'
+                    $estadoSinEntrega = EstadoLogistica::where('codigo', 'SIN_ENTREGA')
+                        ->where('categoria', 'venta_logistica')
+                        ->first();
+
+                    if ($estadoSinEntrega) {
+                        $venta->update(['estado_logistico_id' => $estadoSinEntrega->id]);
+                        Log::info('✅ Estado logístico actualizado a SIN_ENTREGA', [
+                            'venta_id' => $venta->id,
+                            'estado_anterior' => 'ENTREGADA',
+                            'estado_nuevo' => 'SIN_ENTREGA',
+                        ]);
+                    } else {
+                        Log::warning('⚠️ No se encontró estado logístico SIN_ENTREGA', [
+                            'venta_id' => $venta->id,
+                        ]);
+                    }
+                }
+            }
+
             Log::info('✅ Confirmación de entrega eliminada', [
                 'confirmacion_id' => $confirmacionId,
                 'venta_id' => $venta->id,
+                'confirmaciones_restantes' => $confirmacionesRestantes,
                 'eliminado_por' => Auth::id(),
             ]);
 

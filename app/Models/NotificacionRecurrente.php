@@ -9,6 +9,8 @@ class NotificacionRecurrente extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'notificaciones_recurrentes';
+
     protected $fillable = [
         'titulo',
         'descripcion',

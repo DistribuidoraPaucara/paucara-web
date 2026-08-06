@@ -91,62 +91,6 @@ export default function VentaShow() {
     console.log('🔍 VentaShow - Venta cargada:', venta.numero);
     console.log('📦 TODOS LOS DATOS DE LA VENTA:', JSON.stringify(venta, null, 2));
 
-    const getCuentaEstadoColor = (estado: string) => {
-        switch (estado.toLowerCase()) {
-            case 'pendiente':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-            case 'pagada':
-                return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-            case 'vencida':
-                return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-            default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-        }
-    };
-
-    const getEstadoLogisticoColor = (codigo?: string) => {
-        const estadoMap: Record<string, { clase: string; emoji: string; nombre: string }> = {
-            PROGRAMADO: {
-                clase: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
-                emoji: '📅',
-                nombre: 'Programada',
-            },
-            EN_PREPARACION: {
-                clase: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
-                emoji: '📦',
-                nombre: 'En Preparación',
-            },
-            EN_TRANSITO: {
-                clase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
-                emoji: '🚚',
-                nombre: 'En Tránsito',
-            },
-            ENTREGADA: {
-                clase: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
-                emoji: '✅',
-                nombre: 'Entregada',
-            },
-            PROBLEMAS: {
-                clase: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
-                emoji: '⚠️',
-                nombre: 'Problemas',
-            },
-            CANCELADA: {
-                clase: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
-                emoji: '❌',
-                nombre: 'Cancelada',
-            },
-        };
-
-        return (
-            estadoMap[codigo || ''] || {
-                clase: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
-                emoji: '❓',
-                nombre: codigo || 'Desconocido',
-            }
-        );
-    };
-
     return (
         <AppLayout
             breadcrumbs={[
@@ -1281,20 +1225,20 @@ function ClienteInfo({ venta, imagenCargada, setImagenCargada, setShowImagenModa
                 </div>
 
                 {/* Datos del cliente */}
-                <div>
+                <div className="text-center">
                     <p className="text-sm font-bold text-gray-900 dark:text-white">{venta.cliente.nombre}</p>
 
                     {venta.cliente.nit && <p className="text-xs text-gray-600 dark:text-gray-400">NIT: {venta.cliente.nit}</p>}
 
                     {venta.cliente.telefono && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                             {/* <p className="text-xs text-gray-600 dark:text-gray-400">Tel: {venta.cliente.telefono}</p> */}
                             <a
                                 href={`https://wa.me/${venta.cliente.telefono.replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title="Abrir en WhatsApp"
-                                className="text-xs text-gray-600 dark:text-gray-400"
+                                className="block text-xs text-center text-green-600 dark:text-green-400"
                             >
                                 {/* <MessageCircle className="h-4 w-4" /> */}
                                 {venta.cliente.telefono}

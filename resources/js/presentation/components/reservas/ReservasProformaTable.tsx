@@ -275,6 +275,24 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
         return parsedDate.toLocaleDateString('es-ES');
     };
 
+    const formatDateTime = (dateString: string | null) => {
+        if (!dateString) return '-';
+
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return '-';
+        }
+
+        const datePart = date.toLocaleDateString('es-ES');
+        const timePart = date.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+
+        return `${datePart} ${timePart}`;
+    };
+
     return (
         <div className="space-y-4">
             {/* Filtros Avanzados */}
@@ -543,7 +561,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                                     {formatCurrency(reserva.valor_reservado)}
                                                 </div>
                                             </td> */}
-                                        <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.created_at)}</td>
+                                        <td className="px-2 py-2 text-center text-xs">{formatDateTime(reserva.created_at)}</td>
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_reserva)}</td>
                                         <td className="px-2 py-2 text-center text-xs">{formatDate(reserva.fecha_expiracion)}</td>
                                         {/* ✅ NUEVO (2026-07-22): Columna de vencimiento del lote */}

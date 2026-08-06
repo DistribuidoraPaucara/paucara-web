@@ -126,7 +126,7 @@ export default function NotificacionesRecurrentes({
 
     const handleSearch = () => {
         router.get(
-            route('notificaciones.recurrentes.index'),
+            '/notificaciones/recurrentes',
             {
                 search: searchTerm,
                 tipo: tipoFilter,
@@ -142,15 +142,23 @@ export default function NotificacionesRecurrentes({
         setTipoFilter('');
         setFrecuenciaFilter('');
         setEstadoFilter('');
-        router.get(route('notificaciones.recurrentes.index'), {}, { preserveScroll: true });
+        router.get('/notificaciones/recurrentes', {}, { preserveScroll: true });
     };
 
     const handleCreate = async () => {
         setLoading(true);
         try {
+            // ✅ Convertir dias_semana a JSON string si es array
+            const dataToSend = {
+                ...formData,
+                dias_semana: Array.isArray(formData.dias_semana)
+                    ? JSON.stringify(formData.dias_semana)
+                    : formData.dias_semana,
+            };
+
             const response = await axios.post(
-                route('notificaciones.recurrentes.store'),
-                formData
+                '/notificaciones/recurrentes',
+                dataToSend
             );
 
             if (response.data.success) {
@@ -171,7 +179,30 @@ export default function NotificacionesRecurrentes({
                 router.reload();
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Error al crear notificación');
+            // ✅ Mostrar errores de validación detallados
+            const errorMessage = error.response?.data?.message || 'Error al crear notificación';
+            const validationErrors = error.response?.data?.errors;
+
+            if (validationErrors) {
+                // Si hay errores de validación específicos
+                const errorList = Object.entries(validationErrors)
+                    .map(([field, messages]: [string, any]) => {
+                        const msgs = Array.isArray(messages) ? messages.join(', ') : messages;
+                        return `${field}: ${msgs}`;
+                    })
+                    .join('\n');
+
+                toast.error(
+                    <div className="whitespace-pre-wrap text-sm">
+                        <p className="font-semibold mb-2">{errorMessage}</p>
+                        {errorList}
+                    </div>,
+                    { autoClose: 5000 }
+                );
+            } else {
+                toast.error(errorMessage);
+            }
+
             console.error('Error:', error);
         } finally {
             setLoading(false);
@@ -183,7 +214,7 @@ export default function NotificacionesRecurrentes({
 
         try {
             const response = await axios.delete(
-                route('notificaciones.recurrentes.destroy', id)
+                `/notificaciones/recurrentes/${id}`
             );
 
             if (response.data.success) {
@@ -201,7 +232,7 @@ export default function NotificacionesRecurrentes({
         setLoading(true);
         try {
             const response = await axios.post(
-                route('notificaciones.recurrentes.enviar', id)
+                `/notificaciones/recurrentes/${id}/enviar`
             );
 
             if (response.data.success) {
@@ -296,7 +327,6 @@ export default function NotificacionesRecurrentes({
                                     <SelectValue placeholder="Tipo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Todos</SelectItem>
                                     {tiposNotificacion.map((tipo) => (
                                         <SelectItem key={tipo.value} value={tipo.value}>
                                             {tipo.label}
@@ -310,7 +340,6 @@ export default function NotificacionesRecurrentes({
                                     <SelectValue placeholder="Frecuencia" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Todos</SelectItem>
                                     {frecuencias.map((freq) => (
                                         <SelectItem key={freq.value} value={freq.value}>
                                             {freq.label}
@@ -324,7 +353,6 @@ export default function NotificacionesRecurrentes({
                                     <SelectValue placeholder="Estado" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Todos</SelectItem>
                                     <SelectItem value="activo">✓ Activo</SelectItem>
                                     <SelectItem value="inactivo">✗ Inactivo</SelectItem>
                                 </SelectContent>
@@ -487,7 +515,7 @@ export default function NotificacionesRecurrentes({
                                         variant="outline"
                                         onClick={() =>
                                             router.get(
-                                                route('notificaciones.recurrentes.index'),
+                                                '/notificaciones/recurrentes',
                                                 {
                                                     page: notificaciones.current_page - 1,
                                                     ...filters,
@@ -502,7 +530,7 @@ export default function NotificacionesRecurrentes({
                                     <Button
                                         onClick={() =>
                                             router.get(
-                                                route('notificaciones.recurrentes.index'),
+                                                '/notificaciones/recurrentes',
                                                 {
                                                     page: notificaciones.current_page + 1,
                                                     ...filters,
