@@ -176,9 +176,13 @@ class ActualizarStockMasivoController extends Controller
                             }
 
                             // Actualizar cantidad en el lote específico
+                            // Mantener la invariante: cantidad = disponible + reservada
+                            $cantidadReservada = (int)$stockProducto->cantidad_reservada;
+                            $cantidadDisponible = max(0, $cantidadNueva - $cantidadReservada);
+
                             $stockProducto->update([
                                 'cantidad' => $cantidadNueva,
-                                'cantidad_disponible' => max(0, $cantidadNueva),
+                                'cantidad_disponible' => $cantidadDisponible,
                                 'fecha_actualizacion' => now(),
                             ]);
 
