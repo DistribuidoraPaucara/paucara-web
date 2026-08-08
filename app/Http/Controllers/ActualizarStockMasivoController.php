@@ -37,7 +37,7 @@ class ActualizarStockMasivoController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Inventario/ActualizarStockMasivo', [
+        return Inertia::render('inventario/ActualizarStockMasivo', [
             'message' => 'Cargue un CSV para actualizar el stock masivamente',
         ]);
     }
