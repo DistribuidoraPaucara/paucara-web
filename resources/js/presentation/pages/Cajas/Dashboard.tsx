@@ -133,6 +133,37 @@ export default function Dashboard({
   metricas,
   resumen_diario_total, // ✅ NUEVO (2026-08-07): Consolidado de todos los turnos
 }: Props) {
+  // ✅ NUEVO (2026-08-07): Logs para debug - ver datos del backend en consola
+  console.log('🎯 [Dashboard] Props recibidas del backend:', {
+    cajas,
+    aperturas_hoy,
+    metricas,
+    resumen_diario_total,
+  });
+
+  console.log('📋 [Dashboard] Aperturas detalladas:', aperturas_hoy.map(apertura => ({
+    id: apertura.id,
+    caja_id: apertura.caja_id,
+    user_id: apertura.user_id,
+    monto_apertura: apertura.monto_apertura,
+    ingresos: apertura.ingresos,
+    egresos: apertura.egresos,
+    efectivo_esperado: apertura.efectivo_esperado,
+    fecha: apertura.fecha,
+    created_at: apertura.created_at,
+    cierre: apertura.cierre ? {
+      id: apertura.cierre.id,
+      monto_real: apertura.cierre.monto_real,
+      diferencia: apertura.cierre.diferencia,
+      fecha_cierre: apertura.cierre.fecha_cierre,
+      estado: apertura.cierre.estado,
+      created_at: apertura.cierre.created_at,
+    } : null,
+  })));
+
+  console.log('💰 [Dashboard] Resumen diario total:', resumen_diario_total);
+  console.log('🏪 [Dashboard] Cajas:', cajas);
+
   const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'abierta' | 'cerrada'>('todos');
@@ -551,7 +582,7 @@ export default function Dashboard({
 
           {/* ✅ NUEVO (2026-08-07): Tabla de Desglose de Turnos del Día */}
           <Card className="p-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
               📋 Desglose de Turnos del Día
               <Badge className="bg-gray-600 dark:bg-gray-700">
                 {aperturas_hoy.length} turnos
@@ -765,207 +796,6 @@ export default function Dashboard({
               )}
             </div>
           </Card>
-
-          {/* Búsqueda y filtros */}
-          {/* <Card className="p-2">
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  <Input
-                    placeholder="Buscar por nombre, usuario o ID..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                </div>
-                <Button
-                  onClick={() => setFiltrosVisibles(!filtrosVisibles)}
-                  variant="outline"
-                  className="dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white transition-colors"
-                >
-                  {filtrosVisibles ? '🔼 Ocultar Filtros' : '🔽 Mostrar Filtros'}
-                </Button>
-              </div>
-              {filtrosVisibles && (
-                <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-lg space-y-4 border border-gray-200 dark:border-slate-700">
-                  <div className="flex flex-wrap gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                        Estado de Caja
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant={filtroEstado === 'todos' ? 'default' : 'outline'}
-                          onClick={() => setFiltroEstado('todos')}
-                          className={filtroEstado === 'todos' ? 'dark:bg-blue-700 dark:hover:bg-blue-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                        >
-                          Todos
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={filtroEstado === 'abierta' ? 'default' : 'outline'}
-                          onClick={() => setFiltroEstado('abierta')}
-                          className={filtroEstado === 'abierta' ? 'dark:bg-green-700 dark:hover:bg-green-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                        >
-                          🟢 Abierta
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={filtroEstado === 'cerrada' ? 'default' : 'outline'}
-                          onClick={() => setFiltroEstado('cerrada')}
-                          className={filtroEstado === 'cerrada' ? 'dark:bg-red-700 dark:hover:bg-red-800' : 'dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-800'}
-                        >
-                          🔴 Cerrada
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                        Rango de Fechas
-                      </p>
-                      <div className="flex gap-2 flex-wrap items-center">
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-600 dark:text-gray-400">Desde:</label>
-                          <input
-                            type="date"
-                            value={fechaDesde}
-                            onChange={(e) => setFechaDesde(e.target.value)}
-                            className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-gray-600 dark:text-gray-400">Hasta:</label>
-                          <input
-                            type="date"
-                            value={fechaHasta}
-                            onChange={(e) => setFechaHasta(e.target.value)}
-                            className="px-2 py-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                          />
-                        </div>
-                        {(fechaDesde || fechaHasta) && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setFechaDesde('');
-                              setFechaHasta('');
-                            }}
-                            className="text-xs dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                          >
-                            Limpiar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-300 dark:border-slate-700">
-                    ✅ Mostrando <strong className="dark:text-gray-300">{cajasFiltradas.length}</strong> de <strong className="dark:text-gray-300">{cajas.length}</strong> cajas
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card> */}
-
-          {/* Tabla de cajas */}
-          {/* <div>
-            <Table>
-              <TableHeader>
-                <TableRow className="dark:border-slate-700">
-                  <TableHead className="dark:text-gray-300">Caja</TableHead>
-                  <TableHead className="dark:text-gray-300">Usuario</TableHead>
-                  <TableHead className="dark:text-gray-300">Estado</TableHead>
-                  <TableHead className="text-right dark:text-gray-300">Apertura</TableHead>
-                  <TableHead className="text-right dark:text-gray-300">Ingresos</TableHead>
-                  <TableHead className="text-right dark:text-gray-300">Egresos</TableHead>
-                  <TableHead className="text-right dark:text-gray-300">Efectivo Esperado</TableHead>
-                  <TableHead className="dark:text-gray-300">Última Actividad</TableHead>
-                  <TableHead className="text-right dark:text-gray-300">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cajasFiltradas.length > 0 ? (
-                  cajasFiltradas.map((caja) => {
-                    const estado = obtenerEstadoCaja(caja.id);
-                    const monto = obtenerMontoCaja(caja.id);
-                    const apertura = aperturas_hoy.find(
-                      (a) => a.caja_id === caja.id
-                    );
-
-                    return (
-                      <TableRow key={caja.id} className="dark:border-slate-700 hover:dark:bg-slate-700">
-                        <TableCell className="font-medium dark:text-white">
-                          #{caja.id}
-                        </TableCell>
-                        <TableCell className="dark:text-gray-300">{caja.usuario.name}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              estado === 'abierta' ? 'default' : 'secondary'
-                            }
-                            className="dark:bg-slate-700 text-white dark:text-gray-300"
-                          >
-                            {estado === 'abierta'
-                              ? '🟢 Abierta'
-                              : '🔴 Cerrada'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-semibold text-right dark:text-white">
-                          Bs {apertura?.monto_apertura?.toFixed(2) || '0.00'}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-green-400 font-semibold">
-                          Bs {apertura?.ingresos?.toFixed(2) || '0.00'}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-red-400 font-semibold">
-                          Bs {apertura?.egresos?.toFixed(2) || '0.00'}
-                        </TableCell>
-                        <TableCell className="text-right dark:text-purple-400 font-bold text-lg">
-                          Bs {apertura?.efectivo_esperado?.toFixed(2) || '0.00'}
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            const actividad = obtenerUltimaActividad(caja.id, caja.cierres_pendientes || 0);
-                            const colorClasses = {
-                              vacia: 'text-gray-500 dark:text-gray-400',
-                              abierta: 'text-green-600 dark:text-green-400 font-medium',
-                              'cerrada-pendiente': 'text-yellow-600 dark:text-yellow-400 font-medium',
-                              cerrada: 'text-blue-600 dark:text-blue-400',
-                            };
-                            return (
-                              <span className={`text-sm ${colorClasses[actividad.tipo as keyof typeof colorClasses]}`}>
-                                {actividad.texto}
-                              </span>
-                            );
-                          })()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="dark:hover:bg-slate-600 dark:text-gray-300"
-                            onClick={() => {
-                              console.log('Navegando a caja del usuario:', caja.user_id);
-                              router.visit(`/cajas/user/${caja.user_id}`);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow className="dark:border-slate-700">
-                    <TableCell colSpan={7} className="text-center py-4 text-gray-500 dark:text-gray-400">
-                      No se encontraron cajas
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div> */}
 
           {/* ✅ NUEVO: Modal de Confirmación - Cierre Diario General */}
           <Dialog open={mostrarModalCierre} onOpenChange={setMostrarModalCierre}>
