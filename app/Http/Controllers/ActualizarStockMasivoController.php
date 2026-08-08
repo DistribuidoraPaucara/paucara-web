@@ -45,7 +45,7 @@ class ActualizarStockMasivoController extends Controller
     /**
      * Descargar plantilla CSV con productos actuales
      *
-     * Estructura: id|sku|nombre|cantidad_total|lote_fifo
+     * Estructura: id,sku,nombre,cantidad_total,lote_fifo
      * - cantidad_total: suma de todos los lotes del producto
      * - lote_fifo: lote más antiguo (FIFO) para actualización
      */
@@ -65,7 +65,7 @@ class ActualizarStockMasivoController extends Controller
 
             // Crear CSV en memoria
             $csv = Writer::createFromString('');
-            $csv->setDelimiter('|');
+            $csv->setDelimiter(',');
 
             // Escribir encabezados
             $csv->insertOne(['id', 'sku', 'nombre', 'cantidad_total', 'lote_fifo']);
@@ -105,6 +105,7 @@ class ActualizarStockMasivoController extends Controller
     /**
      * Procesar CSV cargado y actualizar stock
      *
+     * Formato esperado: id,sku,nombre,cantidad_total,lote_fifo
      * Lógica:
      * - Si lote está vacío y no hay stock: crear con lote=null
      * - Si lote está especificado: actualizar ese lote específicamente
@@ -122,7 +123,7 @@ class ActualizarStockMasivoController extends Controller
             return DB::transaction(function () use ($request) {
                 $file = $request->file('csv');
                 $csv = Reader::createFromPath($file->getRealPath(), 'r');
-                $csv->setDelimiter('|');
+                $csv->setDelimiter(',');
                 $csv->setHeaderOffset(0); // Primera fila es encabezado
 
                 $almacenId = auth()->user()->empresa->almacen_id ?? 1;

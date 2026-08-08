@@ -2,7 +2,7 @@
  * Page: Actualizar Stock Masivo
  *
  * Permitir actualización masiva de stock mediante CSV:
- * ✅ Descargar plantilla CSV (id|sku|nombre|cantidad_total|lote_fifo)
+ * ✅ Descargar plantilla CSV (id,sku,nombre,cantidad_total,lote_fifo)
  * ✅ Cargar CSV y procesar con trazabilidad de lote
  * ✅ Crear movimientos en movimientos_inventario con lote registrado
  * ✅ Crear lote=null si no existe stock previo
