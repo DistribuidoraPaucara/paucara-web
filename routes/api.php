@@ -1919,7 +1919,7 @@ Route::prefix('notificaciones')->group(function () {
 });
 
 // ✅ NUEVO (2026-08-07): API para Actualización Masiva de Stock
-Route::prefix('actualizar-stock-masivo')->middleware('auth:sanctum')->group(function () {
+Route::prefix('actualizar-stock-masivo')->middleware('auth')->group(function () {
     Route::get('descargar-plantilla', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'descargarPlantilla'])->name('api.actualizar-stock-masivo.descargar-plantilla');
     Route::post('procesar-csv', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'procesarCSV'])->name('api.actualizar-stock-masivo.procesar-csv');
 });
