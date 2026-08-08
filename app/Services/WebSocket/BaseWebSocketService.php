@@ -168,6 +168,34 @@ abstract class BaseWebSocketService
     }
 
     /**
+     * ✅ NUEVO: Enviar notificación a múltiples canales y roles simultáneamente
+     * Útil para notificar a: admins, cajeros, cliente específico, etc. en un solo evento
+     *
+     * @param string $event Nombre del evento (ej: 'proforma.creada')
+     * @param array $data Datos del evento
+     * @param array $userIds IDs de usuarios específicos a notificar
+     * @param array $roles Roles a notificar (admins, cajeros, etc.)
+     * @return bool True si al menos una notificación se envió exitosamente
+     */
+    public function notifyMultiChannel(string $event, array $data, array $userIds = [], array $roles = []): bool
+    {
+        $results = [];
+
+        // 📬 Notificar usuarios específicos
+        foreach ($userIds as $userId) {
+            $results[] = $this->notifyUser($userId, $event, $data);
+        }
+
+        // 👥 Notificar por roles
+        foreach ($roles as $role) {
+            $results[] = $this->notifyRole($role, $event, $data);
+        }
+
+        // Retornar true si al menos una notificación se envió
+        return !empty($results) && in_array(true, $results, true);
+    }
+
+    /**
      * Broadcast a todos los usuarios conectados
      */
     public function broadcast(string $event, array $data): bool

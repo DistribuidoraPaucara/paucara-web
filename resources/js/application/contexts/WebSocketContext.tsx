@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { usePage } from '@inertiajs/react';
 import websocketService from '@/infrastructure/services/websocket.service';
 
 export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -22,6 +21,8 @@ interface WebSocketProviderProps {
   children: ReactNode;
   autoConnect?: boolean;
   channels?: string[];
+  sanctumToken?: string;
+  userId?: number;
 }
 
 /**
@@ -31,9 +32,10 @@ interface WebSocketProviderProps {
 export function WebSocketProvider({
   children,
   autoConnect = true,
-  channels = []
+  channels = [],
+  sanctumToken,
+  userId
 }: WebSocketProviderProps) {
-  const { props } = usePage();
   const [status, setStatus] = useState<WebSocketStatus>('disconnected');
   const [socketId, setSocketId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -136,25 +138,21 @@ export function WebSocketProvider({
 
   /**
    * Efecto: Conectar automáticamente cuando se monta el Provider
-   * Usa el token desde props.auth.sanctumToken (más confiable que sessionStorage)
+   * Usa el token desde las props recibidas
    */
   useEffect(() => {
     if (!autoConnect || connectionInitializedRef.current) {
       return;
     }
 
-    // ✅ NUEVO: Obtener token de props de Inertia (mucho más confiable)
-    const sanctumToken = (props?.auth as any)?.sanctumToken;
-    const userId = (props?.auth as any)?.user?.id;
-
-    // console.log('🔍 [WebSocketContext] Token disponible en props:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
+    // console.log('🔍 [WebSocketContext] Token disponible:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
     // console.log('🔍 [WebSocketContext] User ID:', userId);
 
     if (sanctumToken && !connectionInitializedRef.current) {
-      // console.log('🚀 Iniciando conexión automática del WebSocket Context con token de props...');
+      // console.log('🚀 Iniciando conexión automática del WebSocket Context con token...');
       connect(sanctumToken, userId);
     }
-  }, [autoConnect, connect, (props?.auth as any)?.sanctumToken, (props?.auth as any)?.user?.id]);
+  }, [autoConnect, connect, sanctumToken, userId]);
 
   /**
    * Listeners para eventos del servicio
@@ -179,9 +177,10 @@ export function WebSocketProvider({
       setError(data.error);
     };
 
-    websocketService.on('websocket:connected', handleConnected);
-    websocketService.on('websocket:disconnected', handleDisconnected);
-    websocketService.on('websocket:error', handleError);
+    // ✅ Usar onLocal() para eventos locales que se emiten antes de que el socket esté listo
+    websocketService.onLocal('websocket:connected', handleConnected);
+    websocketService.onLocal('websocket:disconnected', handleDisconnected);
+    websocketService.onLocal('websocket:error', handleError);
 
     return () => {
       websocketService.off('websocket:connected', handleConnected);

@@ -152,6 +152,34 @@ export interface EntregaEstadoCambioEvent {
   destinatario: 'admins' | 'cajeros';
 }
 
+export interface EntregaListoEvent {
+  entrega_id: number;
+  numero_entrega: string;
+  chofer_id: number;
+  chofer_nombre: string;
+  vehiculo_placa: string;
+  user_id: number;
+  ventas_count: number;
+  peso_kg: number;
+  volumen_m3: number;
+  mensaje: string;
+}
+
+export interface EntregaListoClienteEvent {
+  venta_id: number;
+  venta_numero: string;
+  entrega_id: number;
+  entrega_numero: string;
+  cliente_nombre: string;
+  cliente_id: number;
+  user_id: number;
+  chofer_nombre: string;
+  vehiculo_placa: string;
+  total: number;
+  mensaje: string;
+  tipo: 'cliente_entrega_listo';
+}
+
 // ==================== UBICACION EVENTS ====================
 export interface UbicacionActualizadaEvent {
   id: number;
@@ -325,6 +353,10 @@ export type WebSocketEvent =
   | { event: 'proforma.convertida'; data: ProformaConvertedEvent }
   | { event: 'proforma.coordinacion-actualizada'; data: ProformaCoordinationEvent }
   | { event: 'entrega.asignada'; data: EntregaAsignadaEvent }
+  | { event: 'entrega.listo'; data: EntregaListoEvent }
+  | { event: 'entrega.listo-cliente'; data: EntregaListoClienteEvent }
+  | { event: 'venta.confirmada.entrega'; data: EntregaListoEvent }
+  | { event: 'cliente.venta.confirmada'; data: EntregaListoClienteEvent }
   | { event: 'entrega.en-camino'; data: EntregaEnCaminoEvent }
   | { event: 'entrega.confirmada'; data: EntregaConfirmadaEvent }
   | { event: 'entrega.completada'; data: EntregaCompletadaEvent }
@@ -351,13 +383,18 @@ export type EventHandler<T extends WebSocketEvent['data']> = (data: T) => void;
 
 // ==================== ROLE-BASED VISIBILITY ====================
 export const EVENT_ROLE_MAPPING: Record<string, string[]> = {
-  'proforma.creada': ['preventista', 'cajero', 'manager', 'admin'],
+  // ✅ MULTI-CANAL: Proformas notifican a múltiples roles simultáneamente
+  'proforma.creada': ['preventista', 'cajero', 'manager', 'admin', 'cliente'],
   'proforma.aprobada': ['preventista', 'cajero', 'cliente', 'manager', 'admin'],
-  'proforma.rechazada': ['preventista', 'cliente', 'manager', 'admin'],
-  'proforma.convertida': ['preventista', 'logistica', 'cobrador', 'manager', 'admin'],
+  'proforma.rechazada': ['preventista', 'cajero', 'cliente', 'manager', 'admin'],
+  'proforma.convertida': ['preventista', 'logistica', 'cobrador', 'manager', 'admin', 'cliente'],
   'proforma.coordinacion-actualizada': ['manager', 'admin'],
 
   'entrega.asignada': ['chofer', 'logistica', 'manager', 'admin'],
+  'entrega.listo': ['logistica', 'manager', 'admin'],
+  'entrega.listo-cliente': ['cliente', 'preventista'],
+  'venta.confirmada.entrega': ['logistica', 'manager', 'admin'],
+  'cliente.venta.confirmada': ['cliente', 'preventista'],
   'entrega.en-camino': ['logistica', 'cobrador', 'manager', 'admin', 'cliente'],
   'entrega.confirmada': ['cliente', 'logistica', 'manager', 'admin'],
   'entrega.completada': ['cliente', 'logistica', 'cobrador', 'manager', 'admin'],

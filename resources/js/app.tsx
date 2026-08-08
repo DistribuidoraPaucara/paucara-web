@@ -16,6 +16,7 @@ import { initializeTheme } from '@/presentation/hooks/use-appearance';
 import { configureAxios } from '@/infrastructure/config/axios.config';
 import { EstadosProvider } from '@/application/contexts/EstadosContext';
 import { NotificationsProvider } from '@/application/contexts/notifications-context';
+import { WebSocketProvider } from '@/application/contexts/WebSocketContext';
 
 // Get appName from window props injected by Laravel, fallback to env, then 'Laravel'
 const getAppName = (): string => {
@@ -55,17 +56,108 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
+        // ✅ IMPORTANTE: Las props de la página están en props.initialPage.props, no en props
+        const pageProps = (props.initialPage?.props as any) || {};
+        const authData = pageProps.auth || {};
+
+        console.log('📋 [app.tsx] Inertia Config:', props);
+        console.log('📋 [app.tsx] Page Props:', pageProps);
+        console.log('🔐 [app.tsx] Auth Data:', authData);
+
         // ✅ Obtener datos del usuario de las props de Inertia
-        const userId = (props.auth?.user as any)?.id || undefined;
-        const userRoles = (props.auth?.roles as any) || [];
+        const userId = authData.user?.id || undefined;
+        const userRoles = authData.roles || [];
+
+        // ✅ NUEVO: Intentar obtener token SINCRONAMENTE
+        // 1. Primero desde props de Inertia
+        let sanctumToken = authData.sanctumToken;
+        console.log('🔐 [app.tsx] Token desde props:', sanctumToken ? 'SI' : 'NO');
+
+        // 2. Si no está en props, buscar en sessionStorage
+        if (!sanctumToken && typeof window !== 'undefined') {
+            sanctumToken = sessionStorage.getItem('auth_token');
+            if (sanctumToken) {
+                console.log('🔐 [app.tsx] Token desde sessionStorage: SI');
+            }
+        }
+
+        // 3. Si aún no hay token pero el usuario está autenticado, obtenerlo del endpoint SINCRONAMENTE
+        if (!sanctumToken && userId && typeof window !== 'undefined') {
+            console.log('🔐 [app.tsx] Intentando obtener token del endpoint (sincronamente)...');
+
+            // Hacer petición SINCRÓNA usando XMLHttpRequest o esperar con async
+            // Para que funcione, necesitamos crear una Promesa que resuelva antes de renderizar
+            // Pero setup() no es async, así que haremos una petición "pseudo-sincróna"
+            // usando XMLHttpRequest con async=false (deprecated pero funciona)
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', '/api/auth/sanctum-token', false); // false = sincróno
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.withCredentials = true; // Incluir cookies
+                xhr.send();
+
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success && data.token) {
+                        sanctumToken = data.token;
+                        sessionStorage.setItem('auth_token', sanctumToken);
+                        console.log('✅ [app.tsx] Token obtenido del endpoint (sincronamente)');
+                    }
+                } else {
+                    console.warn('⚠️ [app.tsx] Error en endpoint:', xhr.status);
+                }
+            } catch (err) {
+                console.error('❌ [app.tsx] Error obteniendo token:', err);
+            }
+        }
+
+        // 4. Guardar token en sessionStorage
+        if (sanctumToken && typeof window !== 'undefined') {
+            sessionStorage.setItem('auth_token', sanctumToken);
+        }
+
+        console.log('🔐 [app.tsx] Valores finales:');
+        console.log(`   userId: ${userId}`);
+        console.log(`   userRoles: ${userRoles.join(', ')}`);
+        console.log(`   sanctumToken: ${sanctumToken ? sanctumToken.substring(0, 20) + '...' : 'undefined'}`);
+
+        // ✅ Configurar canales a suscribirse según roles
+        const channels = [];
+
+        // Siempre suscribirse al canal personal
+        if (userId) {
+            channels.push(`user_${userId}`);
+        }
+
+        // Suscribirse a canales según roles
+        if (userRoles.includes('admin') || userRoles.includes('Admin')) {
+            channels.push('admin.proformas');
+            channels.push('admin.entregas');
+        }
+        if (userRoles.includes('manager') || userRoles.includes('Manager')) {
+            channels.push('admin.proformas'); // Managers ven proformas también
+        }
+        if (userRoles.includes('cajero') || userRoles.includes('Cajero')) {
+            channels.push('admin.proformas'); // Cajeros ven proformas también
+        }
+        if (userRoles.includes('preventista') || userRoles.includes('Preventista')) {
+            channels.push('preventista.proformas');
+        }
 
         root.render(
             <>
-                <EstadosProvider>
-                    <NotificationsProvider userId={userId} userRoles={userRoles}>
-                        <App {...props} />
-                    </NotificationsProvider>
-                </EstadosProvider>
+                <WebSocketProvider
+                    autoConnect={true}
+                    sanctumToken={sanctumToken}
+                    userId={userId}
+                    channels={channels}
+                >
+                    <EstadosProvider>
+                        <NotificationsProvider userId={userId} userRoles={userRoles}>
+                            <App {...props} />
+                        </NotificationsProvider>
+                    </EstadosProvider>
+                </WebSocketProvider>
                 <ToastContainer
                     position="top-right"
                     autoClose={5000}

@@ -109,6 +109,40 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: '📦 Nueva Entrega',
         message: (d) => `${d.clienteNombre} - ${d.numero}`,
       },
+      'entrega.listo': {
+        title: '📤 Entrega Lista para Salida',
+        message: (d) => `${d.numero_entrega} - ${d.ventas_count} venta${d.ventas_count > 1 ? 's' : ''} - Chofer: ${d.chofer_nombre}`,
+      },
+      'entrega.listo-cliente': {
+        title: '📤 Tu Pedido Salió a Entrega',
+        message: (d) => `Pedido #${d.venta_numero} - Vehículo: ${d.vehiculo_placa} - Chofer: ${d.chofer_nombre}`,
+      },
+      'venta.confirmada.entrega': {
+        title: '✅ Venta Confirmada',
+        message: (d) => {
+          const msgMap: Record<string, string> = {
+            'COMPLETA': `✅ Venta ${d.venta_numero} entregada a ${d.cliente_nombre}`,
+            'RECHAZADO': `❌ Venta ${d.venta_numero} rechazada por ${d.cliente_nombre}`,
+            'DEVOLUCION_PARCIAL': `⚠️ Venta ${d.venta_numero} - devolución parcial`,
+            'CLIENTE_CERRADO': `🏪 Venta ${d.venta_numero} - local cerrado`,
+            'NO_CONTACTADO': `📞 Venta ${d.venta_numero} - no contactado`,
+          };
+          return msgMap[d.tipo_confirmacion] || `Venta ${d.venta_numero} confirmada`;
+        },
+      },
+      'cliente.venta.confirmada': {
+        title: '✅ Tu Pedido Fue Confirmado',
+        message: (d) => {
+          const msgMap: Record<string, string> = {
+            'COMPLETA': `✅ Tu pedido #${d.venta_numero} fue entregado correctamente`,
+            'RECHAZADO': `❌ Tu pedido #${d.venta_numero} fue rechazado`,
+            'DEVOLUCION_PARCIAL': `⚠️ Tu pedido #${d.venta_numero} tiene devolución parcial`,
+            'CLIENTE_CERRADO': `🏪 Tu local estaba cerrado. Pedido #${d.venta_numero}`,
+            'NO_CONTACTADO': `📞 No pudimos contactarte para pedido #${d.venta_numero}`,
+          };
+          return msgMap[d.tipo_confirmacion] || `Tu pedido #${d.venta_numero} fue confirmado`;
+        },
+      },
       'entrega.rechazada': {
         title: '❌ Entrega Rechazada',
         message: (d) => `${d.clienteNombre} - ${d.razon}`,
@@ -296,39 +330,40 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
   const listenersConfiguredRef = useRef(false);
 
   /**
-   * Setup all event listeners
+   * Setup all event listeners (función extraída para reutilizar)
+   * ✅ CORREGIDO (2026-08-08): Se ejecuta cuando el WebSocket se conecte, no solo al montar
    */
-  useEffect(() => {
+  const setupAllListeners = useCallback(() => {
+    // ✅ Esperar a que el WebSocket esté conectado
     if (!websocketService.isSocketConnected()) {
-      // console.warn('WebSocket no conectado, esperando conexión...');
-      // Reset flag si desconecta
-      listenersConfiguredRef.current = false;
+      console.log('⏳ WebSocket no conectado aún, esperando...');
       return;
     }
 
-    // ✅ IMPORTANTE: Evitar reconfiguración múltiple de listeners
-    // Solo configurar UNA VEZ cuando el WebSocket se conecta
     if (listenersConfiguredRef.current) {
       console.log('ℹ️ Listeners ya configurados, omitiendo reconfiguración');
       return;
     }
 
-    // console.log('🔔 Configurando listeners de notificaciones unificadas...');
+    console.log('🔔 Configurando listeners de notificaciones unificadas...');
 
     // PROFORMA EVENTS
     const setupListener = (eventName: string) => {
       try {
+        console.log(`🔌 Registrando listener para evento: ${eventName}`);
         const listener = handleNotification(eventName);
         websocketService.on(eventName, listener);
         listenersRef.current.set(eventName, () => {
           websocketService.off(eventName, listener);
         });
+        console.log(`✅ Listener registrado: ${eventName}`);
       } catch (error) {
-        console.error(`Error configurando listener para ${eventName}:`, error);
+        console.error(`❌ Error configurando listener para ${eventName}:`, error);
       }
     };
 
     // Setup all listeners
+    console.log('📡 Iniciando registro de listeners...');
     const events = [
       'proforma.creada',
       'proforma.aprobada',
@@ -340,6 +375,10 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'entrega.confirmada',
       'entrega.completada',
       'entrega.creada',
+      'entrega.listo',
+      'entrega.listo-cliente',
+      'venta.confirmada.entrega',
+      'cliente.venta.confirmada',
       'entrega.rechazada',
       'entrega.estado-cambio',
       'venta.preparacion-carga',
@@ -367,9 +406,12 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
     ];
 
     events.forEach(setupListener);
+    console.log(`✅ Total de listeners registrados: ${events.length}`);
+    console.log(`📋 Eventos registrados:`, events);
 
     // Auto-subscribe to channels if configured
     if (autoSubscribePublic) {
+      console.log('📌 Auto-suscribiendo a canales públicos...');
       websocketService.subscribeToPublicProformas();
       websocketService.subscribeToPublicDeliveries();
       websocketService.subscribeToPublicRoutes();
@@ -377,6 +419,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
     }
 
     if (autoSubscribeUser && userId) {
+      console.log(`📌 Auto-suscribiendo a canal del usuario: user_${userId}`);
       websocketService.subscribeToUser(userId);
     }
 
@@ -388,15 +431,38 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
     listenersConfiguredRef.current = true;
 
     console.log('✅ Listeners de notificaciones configurados exitosamente');
+  }, [shouldReceiveNotification, createNotification, onNotification, onError, autoSubscribePublic, autoSubscribeUser, userId, orgId]);
 
-    // Cleanup
+  /**
+   * Ejecutar setup cuando el WebSocket esté listo
+   * ✅ CORREGIDO (2026-08-08): Usar onLocal() para escuchar eventos de conexión
+   */
+  useEffect(() => {
+    // Intentar configurar inmediatamente si ya está conectado
+    setupAllListeners();
+
+    // También configurar cuando se conecte después
+    const handleWebSocketConnected = () => {
+      console.log('📡 WebSocket conectado, configurando listeners...');
+      // Limpiar listeners anteriores para evitar duplicados
+      listenersRef.current.forEach(cleanup => cleanup());
+      listenersRef.current.clear();
+      // Resetear flag para permitir reconfiguracion cuando se reconecte
+      listenersConfiguredRef.current = false;
+      setupAllListeners();
+    };
+
+    // ✅ Usar onLocal() porque websocket:connected es un evento local, no de socket
+    websocketService.onLocal('websocket:connected', handleWebSocketConnected);
+
     return () => {
-      // console.log('🧹 Limpiando listeners de notificaciones...');
+      websocketService.off('websocket:connected', handleWebSocketConnected);
+      // Cleanup listeners
       listenersConfiguredRef.current = false;
       listenersRef.current.forEach(cleanup => cleanup());
       listenersRef.current.clear();
     };
-  }, []); // ✅ Dependencias vacías - solo se ejecuta una vez en mount
+  }, [setupAllListeners]);
 
   /**
    * Fetch alertas de cuentas vencidas con delay (post-login)

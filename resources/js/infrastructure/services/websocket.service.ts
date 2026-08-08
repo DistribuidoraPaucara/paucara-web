@@ -136,14 +136,18 @@ class WebSocketService {
       return;
     }
 
-    // console.log(`📡 Suscribiendo a canal: ${channelName}`);
+    console.log(`📡 Suscribiendo a canal: ${channelName}`);
     this.subscribedChannels.add(channelName);
+
+    // ✅ CORREGIDO (2026-08-08): Usar sessionStorage en lugar de localStorage (consistente con app.tsx)
+    const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+    console.log(`🔐 Token para suscripción: ${token ? token.substring(0, 20) + '...' : 'NO ENCONTRADO'}`);
 
     // Join the room
     this.socket.emit('subscribe', {
       channel: channelName,
       auth: {
-        token: localStorage.getItem('auth_token'),
+        token: token,
       },
     });
 
@@ -184,7 +188,7 @@ class WebSocketService {
   }
 
   /**
-   * Listen to specific event on a channel
+   * Listen to specific event on a channel (requires socket connection)
    * Example: on('entrega.123', 'ubicacion.actualizada', handler)
    * Or general: on('ubicacion.actualizada', handler)
    */
@@ -206,6 +210,18 @@ class WebSocketService {
 
     // Add callback to listeners
     this.listeners.get(eventName)!.add(callback);
+  }
+
+  /**
+   * Listen to local events (works even without socket connection)
+   * Used for internal events like 'websocket:connected', 'websocket:disconnected', etc.
+   */
+  onLocal(eventName: string, callback: EventListener): void {
+    if (!this.listeners.has(eventName)) {
+      this.listeners.set(eventName, new Set());
+    }
+    this.listeners.get(eventName)!.add(callback);
+    console.log(`🔌 Listener local registrado para: ${eventName}`);
   }
 
   /**
@@ -478,7 +494,7 @@ class WebSocketService {
    * Subscribe to user-specific notifications
    */
   subscribeToUser(userId: number): void {
-    this.subscribeTo(`private.user.${userId}`);
+    this.subscribeTo(`user_${userId}`);
   }
 
   /**

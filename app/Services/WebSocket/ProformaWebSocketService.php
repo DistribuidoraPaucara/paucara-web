@@ -10,15 +10,20 @@ namespace App\Services\WebSocket;
 class ProformaWebSocketService extends BaseWebSocketService
 {
     /**
-     * Notificar creación de proforma
+     * ✅ MEJORADO: Notificar creación de proforma a MÚLTIPLES CANALES
+     * Notifica simultáneamente a:
+     * - Admins (web)
+     * - Cajeros (web)
+     * - Cliente propietario (mobile/web)
+     * - Preventista que creó (web)
      */
     public function notifyCreated($proforma): bool
     {
-        return $this->send('notify/proforma-created', [
+        $eventData = [
             'id' => $proforma->id,
             'numero' => $proforma->numero,
             'cliente_id' => $proforma->cliente_id,
-            'user_id' => $proforma->cliente?->user_id, // ✅ NUEVO: Incluir user_id para routing correcto en WebSocket
+            'clienteNombre' => $proforma->cliente?->nombre ?? 'Cliente',
             'cliente' => [
                 'id' => $proforma->cliente_id,
                 'nombre' => $proforma->cliente?->nombre ?? 'Cliente',
@@ -40,22 +45,35 @@ class ProformaWebSocketService extends BaseWebSocketService
             })->toArray(),
             'fecha_creacion' => $proforma->created_at?->toIso8601String(),
             'fecha_vencimiento' => $proforma->fecha_vencimiento?->toIso8601String(),
-        ]);
+        ];
+
+        // 🎯 Recopilar usuarios y roles a notificar
+        $userIds = [];
+        $roles = ['admin', 'cajero', 'manager', 'preventista'];
+
+        // 📱 Agregar cliente específico si tiene user_id
+        if ($proforma->cliente?->user_id) {
+            $userIds[] = $proforma->cliente->user_id;
+        }
+
+        // ✅ Enviar a múltiples canales en un solo evento
+        return $this->notifyMultiChannel('proforma.creada', $eventData, $userIds, $roles);
     }
 
     /**
-     * Notificar aprobación de proforma
-     * ✅ Incluye usuario_creador_id para que Node.js notifique al preventista que creó la proforma
+     * ✅ MEJORADO: Notificar aprobación de proforma a MÚLTIPLES CANALES
+     * Notifica simultáneamente a:
+     * - Cliente propietario (mobile/web)
+     * - Preventista que creó (web)
+     * - Admins/Managers/Cajeros (web) para supervisión
      */
     public function notifyApproved($proforma): bool
     {
-        return $this->send('notify/proforma-approved', [
+        $eventData = [
             'id' => $proforma->id,
             'numero' => $proforma->numero,
             'cliente_id' => $proforma->cliente_id,
-            'user_id' => $proforma->cliente?->user_id, // ✅ NUEVO: Incluir user_id para routing correcto en WebSocket
-            'cliente_nombre' => $proforma->cliente?->nombre ?? 'Cliente', // ✅ NUEVO: Nombre del cliente para notificación personalizada
-            'usuario_creador_id' => $proforma->usuario_creador_id, // ✅ NUEVO: ID del preventista creador para notificarlo
+            'clienteNombre' => $proforma->cliente?->nombre ?? 'Cliente',
             'estado' => $proforma->estado,
             'total' => (float) $proforma->total,
             'usuario_aprobador' => [
@@ -64,21 +82,40 @@ class ProformaWebSocketService extends BaseWebSocketService
             ],
             'comentarios' => $proforma->comentario_aprobacion,
             'fecha_aprobacion' => $proforma->fecha_aprobacion?->toIso8601String(),
-        ]);
+        ];
+
+        // 🎯 Recopilar usuarios y roles a notificar
+        $userIds = [];
+        $roles = ['admin', 'manager', 'cajero'];
+
+        // 📱 Agregar cliente si tiene user_id
+        if ($proforma->cliente?->user_id) {
+            $userIds[] = $proforma->cliente->user_id;
+        }
+
+        // 👤 Agregar preventista creador si existe
+        if ($proforma->usuario_creador_id) {
+            $userIds[] = $proforma->usuario_creador_id;
+        }
+
+        // ✅ Enviar a múltiples canales en un solo evento
+        return $this->notifyMultiChannel('proforma.aprobada', $eventData, $userIds, $roles);
     }
 
     /**
-     * Notificar rechazo de proforma
-     * ✅ Incluye usuario_creador_id para que Node.js notifique al preventista que creó la proforma
+     * ✅ MEJORADO: Notificar rechazo de proforma a MÚLTIPLES CANALES
+     * Notifica simultáneamente a:
+     * - Cliente propietario (CRÍTICO: debe saber que fue rechazada)
+     * - Preventista que creó (CRÍTICO: debe saber que fue rechazada)
+     * - Admins/Managers/Cajeros (web) para supervisión
      */
     public function notifyRejected($proforma, ?string $motivoRechazo = null): bool
     {
-        return $this->send('notify/proforma-rejected', [
+        $eventData = [
             'id' => $proforma->id,
             'numero' => $proforma->numero,
             'cliente_id' => $proforma->cliente_id,
-            'user_id' => $proforma->cliente?->user_id, // ✅ NUEVO: Incluir user_id para routing correcto en WebSocket
-            'usuario_creador_id' => $proforma->usuario_creador_id, // ✅ NUEVO: ID del preventista creador para notificarlo
+            'clienteNombre' => $proforma->cliente?->nombre ?? 'Cliente',
             'estado' => $proforma->estado,
             'usuario_rechazador' => [
                 'id' => $proforma->usuario_aprobador_id ?? auth()->id(),
@@ -86,27 +123,64 @@ class ProformaWebSocketService extends BaseWebSocketService
             ],
             'motivo_rechazo' => $motivoRechazo ?? 'Sin motivo especificado',
             'fecha_rechazo' => now()->toIso8601String(),
-        ]);
+        ];
+
+        // 🎯 Recopilar usuarios y roles a notificar
+        $userIds = [];
+        $roles = ['admin', 'manager', 'cajero'];
+
+        // 📱 Agregar cliente si tiene user_id (CRÍTICO)
+        if ($proforma->cliente?->user_id) {
+            $userIds[] = $proforma->cliente->user_id;
+        }
+
+        // 👤 Agregar preventista creador si existe (CRÍTICO)
+        if ($proforma->usuario_creador_id) {
+            $userIds[] = $proforma->usuario_creador_id;
+        }
+
+        // ✅ Enviar a múltiples canales en un solo evento
+        return $this->notifyMultiChannel('proforma.rechazada', $eventData, $userIds, $roles);
     }
 
     /**
-     * Notificar conversión de proforma a venta
-     * ✅ Incluye usuario_creador_id para que Node.js notifique tanto al cliente como al preventista
+     * ✅ MEJORADO: Notificar conversión de proforma a venta a MÚLTIPLES CANALES
+     * Notifica simultáneamente a:
+     * - Cliente propietario (mobile/web): "Tu pedido ha sido confirmado"
+     * - Preventista que creó (web): "Tu proforma fue convertida"
+     * - Logística (web): "Hay una nueva venta para preparar"
+     * - Cobradores (web): "Hay una nueva venta para cobrar"
+     * - Admins/Managers (web) para supervisión
      */
     public function notifyConverted($proforma, $venta): bool
     {
-        return $this->send('notify/proforma-converted', [
+        $eventData = [
             'proforma_id' => $proforma->id,
             'proforma_numero' => $proforma->numero,
             'venta_id' => $venta->id,
             'venta_numero' => $venta->numero ?? null,
             'cliente_id' => $proforma->cliente_id,
-            'user_id' => $proforma->cliente?->user_id, // ✅ NUEVO: Incluir user_id para routing correcto en WebSocket
-            'usuario_creador_id' => $proforma->usuario_creador_id, // ✅ NUEVO: ID del preventista creador para notificarlo
-            'cliente_nombre' => $proforma->cliente?->nombre ?? 'Cliente', // ✅ NUEVO: Incluir nombre del cliente
+            'clienteNombre' => $proforma->cliente?->nombre ?? 'Cliente',
             'total' => (float) $proforma->total,
             'fecha_conversion' => now()->toIso8601String(),
-        ]);
+        ];
+
+        // 🎯 Recopilar usuarios y roles a notificar
+        $userIds = [];
+        $roles = ['admin', 'manager', 'logistica', 'cobrador'];
+
+        // 📱 Agregar cliente si tiene user_id (propietario del pedido)
+        if ($proforma->cliente?->user_id) {
+            $userIds[] = $proforma->cliente->user_id;
+        }
+
+        // 👤 Agregar preventista creador si existe (quería saber que se convirtió)
+        if ($proforma->usuario_creador_id) {
+            $userIds[] = $proforma->usuario_creador_id;
+        }
+
+        // ✅ Enviar a múltiples canales en un solo evento
+        return $this->notifyMultiChannel('proforma.convertida', $eventData, $userIds, $roles);
     }
 
     /**
