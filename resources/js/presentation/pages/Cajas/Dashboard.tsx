@@ -596,7 +596,7 @@ export default function Dashboard({
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold text-xs">ID Apertura</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold text-xs">ID Cierre</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Usuario</TableHead>
-                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Caja</TableHead>
+                    {/* <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Caja</TableHead> */}
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Apertura</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Cierre</TableHead>
                     <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Monto Apertura</TableHead>
@@ -662,9 +662,9 @@ export default function Dashboard({
                         </TableCell>
 
                         {/* Caja */}
-                        <TableCell className="text-gray-700 dark:text-gray-300">
+                        {/* <TableCell className="text-gray-700 dark:text-gray-300">
                           {caja?.nombre || `Caja ${apertura.caja_id}`}
-                        </TableCell>
+                        </TableCell> */}
 
                         {/* Hora Apertura */}
                         <TableCell className={`text-sm ${esAperturaAntigua ? 'font-bold text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>
@@ -773,10 +773,15 @@ export default function Dashboard({
                             size="sm"
                             variant="ghost"
                             className="dark:hover:bg-slate-600 dark:text-gray-300"
-                            title="Ver detalles de la caja"
+                            title={apertura.cierre ? 'Ver reporte diario' : 'Ver detalles de la caja'}
                             onClick={() => {
-                              console.log('Navegando a caja del usuario:', apertura.user_id);
-                              router.visit(`/cajas/user/${apertura.user_id}`);
+                              if (apertura.cierre) {
+                                console.log('Navegando a reporte diario:', apertura.cierre.id);
+                                router.visit(`/cajas/admin/reportes-diarios/${apertura.cierre.id}`);
+                              } else {
+                                console.log('Navegando a caja del usuario:', apertura.user_id);
+                                router.visit(`/cajas/user/${apertura.user_id}`);
+                              }
                             }}
                           >
                             <Eye className="h-4 w-4" />
