@@ -2,10 +2,10 @@
  * Page: Actualizar Stock Masivo
  *
  * Permitir actualización masiva de stock mediante CSV:
- * ✅ Descargar plantilla CSV (id|sku|nombre|cantidad)
- * ✅ Cargar CSV y procesar
- * ✅ Mostrar vista previa de cambios
- * ✅ Crear movimientos en movimientos_inventario
+ * ✅ Descargar plantilla CSV (id|sku|nombre|cantidad_total|lote_fifo)
+ * ✅ Cargar CSV y procesar con trazabilidad de lote
+ * ✅ Crear movimientos en movimientos_inventario con lote registrado
+ * ✅ Crear lote=null si no existe stock previo
  */
 
 import React, { useState, useRef } from 'react';
@@ -158,19 +158,19 @@ export default function ActualizarStockMasivo() {
           <ol className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
             <li className="flex items-start gap-3">
               <span className="font-bold">1.</span>
-              <span>Descarga la plantilla CSV con todos los productos</span>
+              <span><strong>Descarga</strong> la plantilla CSV: id | sku | nombre | cantidad_total | lote_fifo</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="font-bold">2.</span>
-              <span>Edita el archivo: modifica la columna "cantidad" con los nuevos valores</span>
+              <span><strong>Edita:</strong> Cambiar "cantidad_total" con el nuevo valor. El "lote_fifo" es el lote más antiguo; déjalo igual o especifica otro</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="font-bold">3.</span>
-              <span>Carga el archivo aquí</span>
+              <span><strong>Carga</strong> el archivo editado aquí</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="font-bold">4.</span>
-              <span>Se crearán movimientos automáticos en el inventario</span>
+              <span><strong>Resultado:</strong> Se actualiza el stock del lote y se crea movimiento con trazabilidad. Si no hay stock previo, crea lote=null</span>
             </li>
           </ol>
         </Card>
@@ -181,7 +181,7 @@ export default function ActualizarStockMasivo() {
           <Card className="p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📥 Descargar Plantilla</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              La plantilla incluye: ID, SKU, Nombre del producto y Stock actual
+              Plantilla con 5 columnas: ID, SKU, Nombre, Cantidad Total (suma de lotes) y Lote FIFO (más antiguo)
             </p>
             <Button
               onClick={descargarPlantilla}

@@ -45,35 +45,45 @@ class ActualizarStockMasivoController extends Controller
     /**
      * Descargar plantilla CSV con productos actuales
      *
-     * Estructura: id|sku|nombre|cantidad
-     * La cantidad es stock_productos.cantidad actual
+     * Estructura: id|sku|nombre|cantidad_total|lote_fifo
+     * - cantidad_total: suma de todos los lotes del producto
+     * - lote_fifo: lote más antiguo (FIFO) para actualización
      */
     public function descargarPlantilla()
     {
         Log::info('📥 [ActualizarStockMasivo] Descargando plantilla CSV');
 
         try {
-            // Obtener todos los productos con su stock
-            $productos = Producto::with(['stockProductos'])
-                ->get();
+            $almacenId = auth()->user()->empresa->almacen_id ?? 1;
+
+            // Obtener todos los productos con su stock en el almacén del usuario
+            $productos = Producto::with(['stockProductos' => function ($query) use ($almacenId) {
+                $query->where('almacen_id', $almacenId)
+                    ->orderBy('fecha_vencimiento', 'asc')
+                    ->orderBy('created_at', 'asc');
+            }])->get();
 
             // Crear CSV en memoria
             $csv = Writer::createFromString('');
             $csv->setDelimiter('|');
 
             // Escribir encabezados
-            $csv->insertOne(['id', 'sku', 'nombre', 'cantidad']);
+            $csv->insertOne(['id', 'sku', 'nombre', 'cantidad_total', 'lote_fifo']);
 
             // Escribir datos de productos
             $productos->each(function ($producto) use ($csv) {
                 // Sumar cantidad total de todos los lotes del producto
                 $cantidadTotal = $producto->stockProductos->sum('cantidad') ?? 0;
 
+                // Obtener lote FIFO (primero de la lista ordenada)
+                $loteFifo = $producto->stockProductos->first()?->lote ?? null;
+
                 $csv->insertOne([
                     $producto->id,
                     $producto->sku,
                     $producto->nombre,
                     $cantidadTotal,
+                    $loteFifo ?? '', // Vacío si no hay lote
                 ]);
             });
 
@@ -94,6 +104,11 @@ class ActualizarStockMasivoController extends Controller
 
     /**
      * Procesar CSV cargado y actualizar stock
+     *
+     * Lógica:
+     * - Si lote está vacío y no hay stock: crear con lote=null
+     * - Si lote está especificado: actualizar ese lote específicamente
+     * - Registra movimiento con lote_id para trazabilidad
      */
     public function procesarCSV(Request $request)
     {
@@ -110,6 +125,7 @@ class ActualizarStockMasivoController extends Controller
                 $csv->setDelimiter('|');
                 $csv->setHeaderOffset(0); // Primera fila es encabezado
 
+                $almacenId = auth()->user()->empresa->almacen_id ?? 1;
                 $registrosActualizados = 0;
                 $errores = [];
                 $movimientos = [];
@@ -118,7 +134,8 @@ class ActualizarStockMasivoController extends Controller
                 foreach ($csv as $index => $fila) {
                     try {
                         $productoId = (int) ($fila['id'] ?? 0);
-                        $cantidadNueva = (int) ($fila['cantidad'] ?? 0);
+                        $cantidadNueva = (int) ($fila['cantidad_total'] ?? 0);
+                        $loteFifo = trim($fila['lote_fifo'] ?? '');
 
                         if (!$productoId) {
                             $errores[] = "Fila " . ($index + 2) . ": ID de producto inválido";
@@ -132,9 +149,6 @@ class ActualizarStockMasivoController extends Controller
                             continue;
                         }
 
-                        // Obtener almacén del usuario autenticado
-                        $almacenId = auth()->user()->empresa->almacen_id ?? 1;
-
                         // Obtener stock actual (suma de todos los lotes)
                         $stockActual = StockProducto::where('producto_id', $productoId)
                             ->where('almacen_id', $almacenId)
@@ -142,25 +156,42 @@ class ActualizarStockMasivoController extends Controller
 
                         $diferencia = $cantidadNueva - $stockActual;
 
-                        if ($diferencia !== 0) {
-                            // Actualizar o crear stock_productos
-                            $this->actualizarStock(
+                        if ($diferencia !== 0 || $stockActual === 0) {
+                            // Obtener o crear stock_producto
+                            $stockProducto = $this->obtenerOCrearStockProducto(
                                 $productoId,
                                 $almacenId,
+                                $loteFifo,
                                 $cantidadNueva,
                                 $stockActual
                             );
 
+                            if (!$stockProducto) {
+                                $errores[] = "Fila " . ($index + 2) . ": No se pudo obtener/crear stock para el producto";
+                                continue;
+                            }
+
+                            // Actualizar cantidad en el lote específico
+                            $stockProducto->update([
+                                'cantidad' => $cantidadNueva,
+                                'cantidad_disponible' => max(0, $cantidadNueva),
+                                'fecha_actualizacion' => now(),
+                            ]);
+
                             // Crear movimiento en movimientos_inventario
-                            $this->crearMovimiento(
+                            $movimiento = $this->crearMovimiento(
                                 $productoId,
+                                $stockProducto->id,
                                 $diferencia,
                                 $stockActual,
                                 $cantidadNueva,
-                                $producto
+                                $producto,
+                                $stockProducto->lote
                             );
 
-                            $movimientos[] = $movimiento;
+                            if ($movimiento) {
+                                $movimientos[] = $movimiento;
+                            }
                         }
 
                         $registrosActualizados++;
@@ -168,6 +199,7 @@ class ActualizarStockMasivoController extends Controller
                         Log::info('✅ [ActualizarStockMasivo] Producto actualizado', [
                             'producto_id' => $productoId,
                             'nombre' => $producto->nombre,
+                            'lote' => $loteFifo ?: 'null',
                             'stock_anterior' => $stockActual,
                             'stock_nuevo' => $cantidadNueva,
                             'diferencia' => $diferencia,
@@ -212,22 +244,32 @@ class ActualizarStockMasivoController extends Controller
     }
 
     /**
-     * Actualizar stock_productos
+     * Obtener o crear stock_producto
      *
-     * Lógica: Si no hay lotes, crear uno. Si hay, sumar/restar según diferencia.
+     * Lógica:
+     * - Si lote está vacío y no hay stock: crear con lote=null
+     * - Si lote está especificado: buscar ese lote
+     * - Si lote existe: retornar ese stock
+     * - Si no existe: crear nuevo con ese lote
      */
-    private function actualizarStock(int $productoId, int $almacenId, int $cantidadNueva, int $stockActual)
-    {
+    private function obtenerOCrearStockProducto(
+        int $productoId,
+        int $almacenId,
+        string $loteFifo,
+        int $cantidadNueva,
+        int $stockActual
+    ): ?StockProducto {
         $stocks = StockProducto::where('producto_id', $productoId)
             ->where('almacen_id', $almacenId)
             ->get();
 
-        if ($stocks->isEmpty()) {
-            // Crear nuevo stock
-            StockProducto::create([
+        // Si lote está vacío y no hay stock: crear con lote=null
+        if (empty($loteFifo) && $stocks->isEmpty()) {
+            $stockProducto = StockProducto::create([
                 'producto_id' => $productoId,
                 'almacen_id' => $almacenId,
-                'lote' => 'CARGA-' . date('Y-m-d'),
+                'sector_id' => 1, // Primer sector
+                'lote' => null,
                 'cantidad' => $cantidadNueva,
                 'cantidad_disponible' => $cantidadNueva,
                 'cantidad_reservada' => 0,
@@ -235,55 +277,72 @@ class ActualizarStockMasivoController extends Controller
                 'fecha_actualizacion' => now(),
             ]);
 
-            Log::info('📦 [ActualizarStockMasivo] Stock creado', [
+            Log::info('📦 [ActualizarStockMasivo] Stock creado (lote=null)', [
                 'producto_id' => $productoId,
                 'cantidad' => $cantidadNueva,
             ]);
 
-        } else {
-            // Actualizar primer lote (el más antiguo)
-            $diferencia = $cantidadNueva - $stockActual;
+            return $stockProducto;
+        }
 
-            $stocks->first()->update([
+        // Si lote está vacío pero hay stock: usar el lote FIFO (más antiguo)
+        if (empty($loteFifo) && !$stocks->isEmpty()) {
+            return $stocks->first();
+        }
+
+        // Si lote está especificado: buscar ese lote
+        if (!empty($loteFifo)) {
+            $stock = StockProducto::where('producto_id', $productoId)
+                ->where('almacen_id', $almacenId)
+                ->where('lote', $loteFifo)
+                ->first();
+
+            if ($stock) {
+                return $stock;
+            }
+
+            // Si lote no existe: crear nuevo con ese lote
+            $stockProducto = StockProducto::create([
+                'producto_id' => $productoId,
+                'almacen_id' => $almacenId,
+                'sector_id' => 1, // Primer sector
+                'lote' => $loteFifo,
                 'cantidad' => $cantidadNueva,
-                'cantidad_disponible' => max(0, $cantidadNueva),
+                'cantidad_disponible' => $cantidadNueva,
+                'cantidad_reservada' => 0,
+                'fecha_vencimiento' => null,
                 'fecha_actualizacion' => now(),
             ]);
 
-            Log::info('📦 [ActualizarStockMasivo] Stock actualizado', [
+            Log::info('📦 [ActualizarStockMasivo] Stock creado (lote especificado)', [
                 'producto_id' => $productoId,
-                'cantidad_anterior' => $stockActual,
-                'cantidad_nueva' => $cantidadNueva,
+                'lote' => $loteFifo,
+                'cantidad' => $cantidadNueva,
             ]);
+
+            return $stockProducto;
         }
+
+        return null;
     }
 
     /**
      * Crear movimiento en movimientos_inventario
      *
-     * Tipo: AJUSTE_MASIVO (nuevo tipo)
+     * Tipo: AJUSTE_MASIVO con trazabilidad de lote
      */
     private function crearMovimiento(
         int $productoId,
+        int $stockProductoId,
         int $diferencia,
         int $stockAnterior,
         int $stockNuevo,
-        Producto $producto
+        Producto $producto,
+        ?string $lote = null
     )
     {
-        // Obtener stock_producto para el movimiento
-        $stockProducto = StockProducto::where('producto_id', $productoId)
-            ->first();
-
-        if (!$stockProducto) {
-            Log::warning('⚠️ [ActualizarStockMasivo] No hay stock_producto para crear movimiento', [
-                'producto_id' => $productoId,
-            ]);
-            return null;
-        }
-
         return $this->movimientoStockService->registrarMovimientoYActualizar(
-            stockProductoId: $stockProducto->id,
+            stockProductoId: $stockProductoId,
             cantidad: $diferencia,
             tipo: MovimientoInventario::TIPO_AJUSTE_MASIVO,
             referencia_tipo: 'ajuste_masivo',
@@ -291,6 +350,7 @@ class ActualizarStockMasivoController extends Controller
             metadataAdicional: [
                 'producto_id' => $productoId,
                 'producto_nombre' => $producto->nombre,
+                'lote' => $lote ?? 'null',
                 'stock_anterior' => $stockAnterior,
                 'stock_nuevo' => $stockNuevo,
                 'tipo_ajuste' => 'Carga masiva de stock',
