@@ -175,18 +175,8 @@ class ActualizarStockMasivoController extends Controller
                                 continue;
                             }
 
-                            // Actualizar cantidad en el lote específico
-                            // Mantener la invariante: cantidad = disponible + reservada
-                            $cantidadReservada = (int)$stockProducto->cantidad_reservada;
-                            $cantidadDisponible = max(0, $cantidadNueva - $cantidadReservada);
-
-                            $stockProducto->update([
-                                'cantidad' => $cantidadNueva,
-                                'cantidad_disponible' => $cantidadDisponible,
-                                'fecha_actualizacion' => now(),
-                            ]);
-
                             // Crear movimiento en movimientos_inventario
+                            // El servicio se encarga de actualizar el stock automáticamente
                             try {
                                 $movimiento = $this->crearMovimiento(
                                     $productoId,
