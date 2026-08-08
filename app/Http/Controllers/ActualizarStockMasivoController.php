@@ -87,9 +87,12 @@ class ActualizarStockMasivoController extends Controller
                 ]);
             });
 
+            // Agregar BOM UTF-8 para que Excel interprete correctamente los caracteres especiales
+            $csvContent = "\xEF\xBB\xBF" . $csv->toString();
+
             // Descargar archivo
-            return response($csv->toString())
-                ->header('Content-Type', 'text/csv')
+            return response($csvContent)
+                ->header('Content-Type', 'text/csv; charset=utf-8')
                 ->header('Content-Disposition', 'attachment; filename="plantilla-actualizar-stock-' . date('Y-m-d-His') . '.csv"');
 
         } catch (\Exception $e) {
