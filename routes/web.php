@@ -854,8 +854,6 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         // ✅ NUEVO (2026-08-07): Rutas para actualización masiva de stock
         Route::prefix('actualizar-stock-masivo')->name('actualizar-stock-masivo.')->middleware('permission:inventario.ajuste.form')->group(function () {
             Route::get('/', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'index'])->name('index');
-            Route::get('descargar-plantilla', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'descargarPlantilla'])->withoutMiddleware('App\Http\Middleware\HandleInertiaRequests')->name('descargar-plantilla');
-            Route::post('procesar-csv', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'procesarCSV'])->middleware('permission:inventario.ajuste.procesar')->name('procesar-csv');
         });
 
         // Rutas para gestión de reservas de inventario

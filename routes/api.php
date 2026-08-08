@@ -196,6 +196,8 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
     // ✅ NUEVO: Refrescar permisos sin logout
     Route::get('/auth/refresh-permissions', [AuthController::class, 'refreshPermissions']);
+    // ✅ NUEVO: Obtener token Sanctum para WebSocket (frontend)
+    Route::get('/auth/sanctum-token', [AuthController::class, 'getSanctumToken']);
 
     // ✅ NUEVO: API DE PERMISOS (para mobile o admin panel)
     Route::prefix('permisos')->group(function () {
@@ -1901,7 +1903,23 @@ Route::prefix('egresos')->group(function () {
     Route::post('{egreso}/anular', [\App\Http\Controllers\Api\EgresosController::class, 'anular'])->name('api.egresos.anular');
 });
 
-// ✨ NUEVO: API para Notificaciones Recurrentes (App móvil)
+// ✨ NUEVO: API para Notificaciones Recurrentes
+// ✅ RUTA PÚBLICA: Notificaciones para móviles (sin permisos)
+Route::get('notificaciones/public/list', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'indexPublic'])->name('api.notificaciones.public');
+
+// ✅ RUTAS CON PERMISOS: Panel administrativo
 Route::prefix('notificaciones')->group(function () {
-    Route::get('pendientes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'pendientesApp'])->name('api.notificaciones.pendientes');
+    Route::get('/', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'index'])->name('api.notificaciones.index');
+    Route::post('/', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'store'])->name('api.notificaciones.store');
+    Route::get('roles/list', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'getRoles'])->name('api.notificaciones.roles');
+    Route::get('{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'show'])->name('api.notificaciones.show');
+    Route::put('{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'update'])->name('api.notificaciones.update');
+    Route::delete('{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'destroy'])->name('api.notificaciones.destroy');
+    Route::post('{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviarManual'])->name('api.notificaciones.enviar');
+});
+
+// ✅ NUEVO (2026-08-07): API para Actualización Masiva de Stock
+Route::prefix('actualizar-stock-masivo')->middleware('auth:sanctum')->group(function () {
+    Route::get('descargar-plantilla', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'descargarPlantilla'])->name('api.actualizar-stock-masivo.descargar-plantilla');
+    Route::post('procesar-csv', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'procesarCSV'])->name('api.actualizar-stock-masivo.procesar-csv');
 });

@@ -48,7 +48,17 @@ export default function ActualizarStockMasivo() {
   const descargarPlantilla = async () => {
     setCargando(true);
     try {
-      const response = await fetch('/inventario/actualizar-stock-masivo/descargar-plantilla');
+      const response = await fetch('/api/actualizar-stock-masivo/descargar-plantilla', {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/csv',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -93,12 +103,9 @@ export default function ActualizarStockMasivo() {
     formData.append('csv', archivo);
 
     try {
-      const response = await fetch('/inventario/actualizar-stock-masivo/procesar-csv', {
+      const response = await fetch('/api/actualizar-stock-masivo/procesar-csv', {
         method: 'POST',
         body: formData,
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
       });
 
       const data = await response.json();
