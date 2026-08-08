@@ -1109,11 +1109,11 @@ class CajaController extends Controller
 
         $efectivoEsperado = $montosApertura + $totalIngresos - $totalEgresos;
 
-        // ✅ NUEVO (2026-08-07): Calcular RESUMEN DIARIO consolidado (TODOS los turnos del día)
-        $todasAperturasDia = AperturaCaja::with(['cierre', 'cierre.estadoCierre'])
-            ->whereDate('fecha', today())
-            ->get();
-
+        // ✅ NUEVO (2026-08-07): Calcular RESUMEN DIARIO consolidado
+        // CONSIDERA:
+        // - Cajas ABIERTAS (sin cierre) hace días + hoy
+        // - Cajas CERRADAS hoy (con cierre, fecha = hoy)
+        // Usar misma lógica que tabla: $aperturasParaTabla
         $resumenDiarioTotal = [
             'total_montos_apertura' => (float) 0,
             'total_ingresos'        => (float) 0,
@@ -1124,7 +1124,7 @@ class CajaController extends Controller
             'turnos_cerrados'       => 0,
         ];
 
-        foreach ($todasAperturasDia as $apertura) {
+        foreach ($aperturasParaTabla as $apertura) {
             $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
             $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
             $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
