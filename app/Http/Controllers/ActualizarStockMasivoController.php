@@ -60,7 +60,7 @@ class ActualizarStockMasivoController extends Controller
             $productos = Producto::with(['stock' => function ($query) use ($almacenId) {
                 $query->where('almacen_id', $almacenId)
                     ->orderBy('fecha_vencimiento', 'asc')
-                    ->orderBy('created_at', 'asc');
+                    ->orderBy('fecha_actualizacion', 'asc');
             }])->get();
 
             // Crear CSV en memoria
