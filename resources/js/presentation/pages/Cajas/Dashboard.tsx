@@ -549,6 +549,161 @@ export default function Dashboard({
             </Card>
           )}
 
+          {/* ✅ NUEVO (2026-08-07): Tabla de Desglose de Turnos del Día */}
+          <Card className="p-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              📋 Desglose de Turnos del Día
+              <Badge className="bg-gray-600 dark:bg-gray-700">
+                {aperturas_hoy.length} turnos
+              </Badge>
+            </h3>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Usuario</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Caja</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Apertura</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Cierre</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Monto Apertura</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Ingresos</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Egresos</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Esperado</TableHead>
+                    <TableHead className="text-center text-gray-700 dark:text-gray-300 font-semibold">Estado</TableHead>
+                    <TableHead className="text-center text-gray-700 dark:text-gray-300 font-semibold">Diferencia</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {aperturas_hoy.map((apertura) => {
+                    const caja = cajas.find(c => c.id === apertura.caja_id);
+                    const esCerrada = !!apertura.cierre;
+                    const diferencia = esCerrada
+                      ? (Number(apertura.cierre?.monto_real || 0) - Number(apertura.efectivo_esperado || 0))
+                      : null;
+
+                    return (
+                      <TableRow
+                        key={apertura.id}
+                        className={`border-b border-gray-200 dark:border-slate-700 ${
+                          esCerrada
+                            ? 'bg-red-50 dark:bg-red-950/20'
+                            : 'bg-green-50 dark:bg-green-950/20'
+                        } hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors`}
+                      >
+                        {/* Usuario */}
+                        <TableCell className="font-medium text-gray-900 dark:text-white">
+                          {caja?.usuario?.name || 'N/A'}
+                        </TableCell>
+
+                        {/* Caja */}
+                        <TableCell className="text-gray-700 dark:text-gray-300">
+                          {caja?.nombre || `Caja ${apertura.caja_id}`}
+                        </TableCell>
+
+                        {/* Hora Apertura */}
+                        <TableCell className="text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(apertura.fecha).toLocaleTimeString('es-BO', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                          })}
+                        </TableCell>
+
+                        {/* Hora Cierre */}
+                        <TableCell className="text-sm text-gray-600 dark:text-gray-400">
+                          {esCerrada && apertura.cierre
+                            ? new Date(apertura.cierre.fecha_cierre).toLocaleTimeString('es-BO', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })
+                            : '-'}
+                        </TableCell>
+
+                        {/* Monto Apertura */}
+                        <TableCell className="text-right font-medium text-gray-900 dark:text-white">
+                          Bs. {Number(apertura.monto_apertura).toLocaleString('es-BO', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+
+                        {/* Ingresos */}
+                        <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">
+                          +Bs. {Number(apertura.ingresos).toLocaleString('es-BO', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+
+                        {/* Egresos */}
+                        <TableCell className="text-right text-red-600 dark:text-red-400 font-medium">
+                          -Bs. {Number(apertura.egresos).toLocaleString('es-BO', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+
+                        {/* Efectivo Esperado */}
+                        <TableCell className="text-right font-bold text-blue-600 dark:text-blue-400">
+                          Bs. {Number(apertura.efectivo_esperado).toLocaleString('es-BO', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+
+                        {/* Estado */}
+                        <TableCell className="text-center">
+                          {esCerrada ? (
+                            <Badge className={`
+                              ${apertura.cierre?.estado === 'CONSOLIDADA'
+                                ? 'bg-green-600 dark:bg-green-700'
+                                : apertura.cierre?.estado === 'RECHAZADA'
+                                ? 'bg-red-600 dark:bg-red-700'
+                                : 'bg-yellow-600 dark:bg-yellow-700'}
+                            `}>
+                              {apertura.cierre?.estado || 'Cerrada'}
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-green-600 dark:bg-green-700">
+                              🟢 Abierta
+                            </Badge>
+                          )}
+                        </TableCell>
+
+                        {/* Diferencia */}
+                        <TableCell className="text-center">
+                          {esCerrada && diferencia !== null ? (
+                            <span className={`font-bold ${
+                              Math.abs(diferencia) < 0.01
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}>
+                              {diferencia >= 0 ? '+' : ''}Bs. {diferencia.toLocaleString('es-BO', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
+              {aperturas_hoy.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <p className="text-lg font-medium">No hay turnos registrados hoy</p>
+                  <p className="text-sm">Las aperturas de cajas aparecerán aquí</p>
+                </div>
+              )}
+            </div>
+          </Card>
+
           {/* Búsqueda y filtros */}
           <Card className="p-2">
             <div className="space-y-4">
