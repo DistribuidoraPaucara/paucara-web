@@ -80,10 +80,14 @@ class StockValidationService
             MovimientoInventario::TIPO_LIBERACION_RESERVA => $this->validarLiberacion($stock, $cantidad),
             MovimientoInventario::TIPO_SALIDA_VENTA => $this->validarVentaDirecta($stock, $cantidad),
             MovimientoInventario::TIPO_CONSUMO_RESERVA => $this->validarVentaConsumo($stock, $cantidad),
+            // ✅ NUEVO: Comidas - Seguimiento sin descuento de stock
+            MovimientoInventario::TIPO_SALIDA_COMIDA => null, // Comida: solo seguimiento, no valida stock
+            MovimientoInventario::TIPO_SALIDA_COMIDA_SIN_STOCK => null, // Comida sin stock: solo seguimiento, no valida stock
             // Entradas: No necesitan validación especial (aumentan stock)
             MovimientoInventario::TIPO_ENTRADA_AJUSTE,
             MovimientoInventario::TIPO_ENTRADA_COMPRA,
-            MovimientoInventario::TIPO_ENTRADA_DEVOLUCION => null,  // ✅ Las entradas siempre son válidas, no requieren validación
+            MovimientoInventario::TIPO_ENTRADA_DEVOLUCION,
+            MovimientoInventario::TIPO_AJUSTE_MASIVO => null,  // ✅ Las entradas siempre son válidas, no requieren validación. AJUSTE_MASIVO: entrada desde carga CSV
             default => throw new InvalidArgumentException("Tipo de movimiento desconocido: {$tipo}"),
         };
     }
