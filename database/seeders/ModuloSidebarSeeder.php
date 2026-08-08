@@ -76,7 +76,7 @@ class ModuloSidebarSeeder extends Seeder
                     ['titulo' => 'Transferencias', 'ruta' => '/inventario/transferencias', 'icono' => 'ArrowRightLeft', 'orden' => 5, 'permisos' => ['inventario.transferencias.index']],
                     ['titulo' => 'Mermas', 'ruta' => '/inventario/mermas', 'icono' => 'Package2', 'orden' => 6, 'permisos' => ['inventario.mermas.index']],
                     ['titulo' => 'Ajustes', 'ruta' => '/inventario/ajuste', 'icono' => 'Settings', 'orden' => 7, 'permisos' => ['inventario.ajuste.form']],
-                    ['titulo' => 'Carga Masiva', 'ruta' => '/inventario/ajuste-masivo', 'icono' => 'FileUp', 'orden' => 8, 'permisos' => ['inventario.ajuste.form']],
+                    ['titulo' => 'Actualizar Stock Masivo', 'ruta' => '/inventario/actualizar-stock-masivo', 'icono' => 'FileUp', 'orden' => 8, 'permisos' => ['inventario.ajuste.form']],
                     ['titulo' => 'Tipos de Ajuste', 'ruta' => '/inventario/tipos-ajuste-inventario', 'icono' => 'Sliders', 'orden' => 9, 'permisos' => ['inventario.tipos-ajuste.index']],
                     ['titulo' => 'Reportes', 'ruta' => '/inventario/reportes', 'icono' => 'FileText', 'orden' => 10, 'permisos' => ['reportes.inventario.stock-actual']],
                 ],
