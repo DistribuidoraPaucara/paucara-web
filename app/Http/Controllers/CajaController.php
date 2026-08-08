@@ -1001,13 +1001,13 @@ class CajaController extends Controller
                 ->map(fn($grupo) => $grupo->first()); // Tomar la más reciente por caja
         }
 
-        // Obtener IDs de cajas según filtro
-        $cajaIds = $aperturasColleccion->pluck('caja_id')->toArray();
-
-        // ✅ Obtener cajas según estado
+        // ✅ NUEVO (2026-08-07): Obtener TODAS las cajas, no solo las que tienen aperturas
+        // Esto permite que el admin vea cajas sin aperturas también
         $cajas = Caja::with(['usuario'])
-            ->whereIn('id', $cajaIds)
             ->get();
+
+        // Obtener IDs de cajas según filtro (para compatibilidad con cajas_abiertas)
+        $cajaIds = $aperturasColleccion->pluck('caja_id')->toArray();
 
         // ✅ NUEVO (2026-08-07): Obtener aperturas para la tabla del Dashboard
         // Considerar:
