@@ -56,8 +56,16 @@ class ProformaWebSocketService extends BaseWebSocketService
             $userIds[] = $proforma->cliente->user_id;
         }
 
+        // 👤 Agregar preventistas (usuario_creador_id y preventista_id)
+        if ($proforma->usuario_creador_id) {
+            $userIds[] = $proforma->usuario_creador_id;
+        }
+        if ($proforma->preventista_id && $proforma->preventista_id !== $proforma->usuario_creador_id) {
+            $userIds[] = $proforma->preventista_id;
+        }
+
         // ✅ Enviar a múltiples canales en un solo evento
-        return $this->notifyMultiChannel('proforma.creada', $eventData, $userIds, $roles);
+        return $this->notifyMultiChannel('proforma.creada', $eventData, array_unique($userIds), $roles);
     }
 
     /**
@@ -93,13 +101,16 @@ class ProformaWebSocketService extends BaseWebSocketService
             $userIds[] = $proforma->cliente->user_id;
         }
 
-        // 👤 Agregar preventista creador si existe
+        // 👤 Agregar preventistas (usuario_creador_id y preventista_id)
         if ($proforma->usuario_creador_id) {
             $userIds[] = $proforma->usuario_creador_id;
         }
+        if ($proforma->preventista_id && $proforma->preventista_id !== $proforma->usuario_creador_id) {
+            $userIds[] = $proforma->preventista_id;
+        }
 
         // ✅ Enviar a múltiples canales en un solo evento
-        return $this->notifyMultiChannel('proforma.aprobada', $eventData, $userIds, $roles);
+        return $this->notifyMultiChannel('proforma.aprobada', $eventData, array_unique($userIds), $roles);
     }
 
     /**
@@ -134,13 +145,16 @@ class ProformaWebSocketService extends BaseWebSocketService
             $userIds[] = $proforma->cliente->user_id;
         }
 
-        // 👤 Agregar preventista creador si existe (CRÍTICO)
+        // 👤 Agregar preventistas (usuario_creador_id y preventista_id) - CRÍTICO
         if ($proforma->usuario_creador_id) {
             $userIds[] = $proforma->usuario_creador_id;
         }
+        if ($proforma->preventista_id && $proforma->preventista_id !== $proforma->usuario_creador_id) {
+            $userIds[] = $proforma->preventista_id;
+        }
 
         // ✅ Enviar a múltiples canales en un solo evento
-        return $this->notifyMultiChannel('proforma.rechazada', $eventData, $userIds, $roles);
+        return $this->notifyMultiChannel('proforma.rechazada', $eventData, array_unique($userIds), $roles);
     }
 
     /**
@@ -174,13 +188,16 @@ class ProformaWebSocketService extends BaseWebSocketService
             $userIds[] = $proforma->cliente->user_id;
         }
 
-        // 👤 Agregar preventista creador si existe (quería saber que se convirtió)
+        // 👤 Agregar preventistas (usuario_creador_id y preventista_id)
         if ($proforma->usuario_creador_id) {
             $userIds[] = $proforma->usuario_creador_id;
         }
+        if ($proforma->preventista_id && $proforma->preventista_id !== $proforma->usuario_creador_id) {
+            $userIds[] = $proforma->preventista_id;
+        }
 
         // ✅ Enviar a múltiples canales en un solo evento
-        return $this->notifyMultiChannel('proforma.convertida', $eventData, $userIds, $roles);
+        return $this->notifyMultiChannel('proforma.convertida', $eventData, array_unique($userIds), $roles);
     }
 
     /**
