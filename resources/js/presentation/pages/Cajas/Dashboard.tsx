@@ -582,12 +582,25 @@ export default function Dashboard({
                       ? (Number(apertura.cierre?.monto_real || 0) - Number(apertura.efectivo_esperado || 0))
                       : null;
 
+                    // ✅ NUEVO (2026-08-07): Verificar si la apertura es antigua (abierta hace días)
+                    const fechaApertura = new Date(apertura.fecha);
+                    const hoy = new Date();
+                    hoy.setHours(0, 0, 0, 0);
+                    fechaApertura.setHours(0, 0, 0, 0);
+
+                    const esAperturaAntigua = fechaApertura < hoy && !esCerrada;
+                    const diasDesdeApertura = esCerrada
+                      ? 0
+                      : Math.floor((hoy.getTime() - fechaApertura.getTime()) / (1000 * 60 * 60 * 24));
+
                     return (
                       <TableRow
                         key={apertura.id}
                         className={`border-b border-gray-200 dark:border-slate-700 ${
                           esCerrada
                             ? 'bg-red-50 dark:bg-red-950/20'
+                            : esAperturaAntigua
+                            ? 'bg-yellow-50 dark:bg-yellow-950/20'  // ✅ Amarillo para cajas abiertas hace días
                             : 'bg-green-50 dark:bg-green-950/20'
                         } hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors`}
                       >
@@ -602,12 +615,24 @@ export default function Dashboard({
                         </TableCell>
 
                         {/* Hora Apertura */}
-                        <TableCell className="text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(apertura.fecha).toLocaleTimeString('es-BO', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                          })}
+                        <TableCell className={`text-sm ${esAperturaAntigua ? 'font-bold text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                          <div>
+                            {new Date(apertura.fecha).toLocaleTimeString('es-BO', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false
+                            })}
+                          </div>
+                          {esAperturaAntigua && (
+                            <div className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                              ⚠️ Hace {diasDesdeApertura} día{diasDesdeApertura > 1 ? 's' : ''}
+                            </div>
+                          )}
+                          {esAperturaAntigua && (
+                            <div className="text-xs text-orange-500 dark:text-orange-300">
+                              {new Date(apertura.fecha).toLocaleDateString('es-BO')}
+                            </div>
+                          )}
                         </TableCell>
 
                         {/* Hora Cierre */}

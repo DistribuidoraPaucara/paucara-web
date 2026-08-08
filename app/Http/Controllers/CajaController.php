@@ -1009,12 +1009,30 @@ class CajaController extends Controller
             ->whereIn('id', $cajaIds)
             ->get();
 
-        // ✅ NUEVO: Obtener aperturas para la tabla
+        // ✅ NUEVO (2026-08-07): Obtener aperturas para la tabla del Dashboard
+        // Considerar:
+        // 1. Cajas ABIERTAS hace días (sin cierre, cualquier fecha anterior)
+        // 2. Cajas CERRADAS hoy (con cierre, fecha = hoy)
+        $aperturasAbriertasAntiguos = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
+            ->whereDoesntHave('cierre')  // SIN cierre = abierta
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        $aperturasCerradasHoy = AperturaCaja::with(['cierre.estadoCierre', 'caja.usuario'])
+            ->whereHas('cierre')  // CON cierre = cerrada
+            ->whereDate('fecha', today())  // Cerrada HOY
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        // ✅ Fusionar ambas colecciones para la tabla
+        $aperturasParaTabla = $aperturasAbriertasAntiguos->concat($aperturasCerradasHoy);
+
+        // ✅ Para mantener compatibilidad con filtros existentes, también fusionar con colección original
         $aperturasDiarias = AperturaCaja::with(['cierre.estadoCierre'])
             ->whereDate('fecha', today())
             ->get();
 
-        // ✅ Fusionar aperturas
+        // ✅ Fusionar aperturas (mantener compatibilidad)
         $aperturasColleccion = $aperturasColleccion->union($aperturasDiarias)->unique('id');
 
         // ✅ NUEVO (2026-07-22): Métricas solo de cajas abiertas
@@ -1040,8 +1058,8 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Transformar aperturas usando CierreCajaService (IGUAL que endpoint cajas/user/{userId})
-        $aperturas_hoy = $aperturasColleccion->map(function ($apertura) {
+        // ✅ NUEVO (2026-08-07): Transformar aperturas para tabla (cajas abiertas antiguos + cerradas hoy)
+        $aperturas_hoy = $aperturasParaTabla->map(function ($apertura) {
             // Usar el mismo servicio para calcular ingresos/egresos
             $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
 
