@@ -113,10 +113,20 @@ class MovimientoStockService
                         $nuevaDisponible
                     ),
 
+                    // ✅ NUEVO: Comidas - Solo seguimiento, NO descuentan stock
+                    MovimientoInventario::TIPO_SALIDA_COMIDA,
+                    MovimientoInventario::TIPO_SALIDA_COMIDA_SIN_STOCK => $this->aplicarSeguimientoComida(
+                        $cantidad,
+                        $nuevoTotal,
+                        $nuevaReservada,
+                        $nuevaDisponible
+                    ),
+
                     // ✅ ENTRADAS: Aumentan el stock total
                     MovimientoInventario::TIPO_ENTRADA_AJUSTE,
                     MovimientoInventario::TIPO_ENTRADA_COMPRA,
-                    MovimientoInventario::TIPO_ENTRADA_DEVOLUCION => $this->aplicarEntrada(
+                    MovimientoInventario::TIPO_ENTRADA_DEVOLUCION,
+                    MovimientoInventario::TIPO_AJUSTE_MASIVO => $this->aplicarEntrada(  // ✅ NUEVO (2026-08-07): Ajuste masivo
                         $cantidad,
                         $nuevoTotal,
                         $nuevaReservada,
@@ -530,6 +540,21 @@ class MovimientoStockService
     }
 
     /**
+     * ✅ NUEVO: Aplicar seguimiento de comida - NO modifica stock
+     * Solo registra auditoría sin cambiar cantidades
+     */
+    private function aplicarSeguimientoComida(
+        int $cantidad,
+        int &$nuevoTotal,
+        int &$nuevaReservada,
+        int &$nuevaDisponible
+    ): void {
+        // ✅ NO hacer nada: mantener valores anteriores
+        // La cantidad se registra en metadatos para auditoría
+        // pero no modifica stock_productos
+    }
+
+    /**
      * ✅ NUEVO (2026-06-09): Obtener descripción legible del tipo de movimiento
      */
     private function obtenerDescripcionTipo(string $tipo): string
@@ -539,6 +564,9 @@ class MovimientoStockService
             MovimientoInventario::TIPO_LIBERACION_RESERVA => 'Liberación de reserva',
             MovimientoInventario::TIPO_SALIDA_VENTA => 'Venta directa (sin proforma)',
             MovimientoInventario::TIPO_CONSUMO_RESERVA => 'Consumo de reserva (conversión a venta)',
+            MovimientoInventario::TIPO_SALIDA_COMIDA => 'Venta de comida (sin descuento de stock)',
+            MovimientoInventario::TIPO_SALIDA_COMIDA_SIN_STOCK => 'Venta de comida sin stock disponible',
+            MovimientoInventario::TIPO_AJUSTE_MASIVO => 'Ajuste masivo de stock (carga CSV)', // ✅ NUEVO (2026-08-07)
             default => $tipo,
         };
     }

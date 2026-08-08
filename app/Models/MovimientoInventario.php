@@ -97,8 +97,11 @@ class MovimientoInventario extends Model
     const TIPO_ENTRADA_AJUSTE = 'ENTRADA_AJUSTE';
     const TIPO_SALIDA_AJUSTE = 'SALIDA_AJUSTE';
     const TIPO_AJUSTE = 'AJUSTE'; // Tipo genérico de ajuste
+    const TIPO_AJUSTE_MASIVO = 'AJUSTE_MASIVO'; // ✅ NUEVO (2026-08-07): Ajuste masivo de stock desde CSV
     const TIPO_SALIDA_MERMA = 'SALIDA_MERMA';
     const TIPO_SALIDA_VENTA = 'SALIDA_VENTA';
+    const TIPO_SALIDA_COMIDA = 'SALIDA_COMIDA'; // ✅ NUEVO: Salida por venta de comida (seguimiento sin descuento)
+    const TIPO_SALIDA_COMIDA_SIN_STOCK = 'SALIDA_COMIDA_SIN_STOCK'; // ✅ NUEVO: Salida de comida sin stock disponible
     const TIPO_ENTRADA_COMPRA = 'ENTRADA_COMPRA';
     const TIPO_ENTRADA_DEVOLUCION = 'ENTRADA_DEVOLUCION'; // ✅ NUEVO: Entrada por devolución de cliente
     const TIPO_TRANSFERENCIA = 'TRANSFERENCIA'; // Para transferencias entre almacenes

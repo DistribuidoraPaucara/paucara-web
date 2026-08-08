@@ -438,6 +438,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         ]);
     })->name('ventas-resort.index')->middleware('caja.abierta');
 
+    // ✅ NUEVO: API para buscar productos de comidas (permite venta sin stock)
+    Route::get('api/productos-comidas/buscar', [\App\Http\Controllers\ProductoController::class, 'buscarProductosComidas'])->name('api.productos-comidas.buscar');
+
     // ==========================================
     // RUTAS DE IMPRESIÓN - VENTAS
     // ==========================================
@@ -848,6 +851,13 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
             Route::post('draft/{borrador}/complete', [\App\Http\Controllers\InventarioInicialController::class, 'completeDraft'])->middleware('permission:inventario.ajuste.procesar')->name('draft.complete');
         });
 
+        // ✅ NUEVO (2026-08-07): Rutas para actualización masiva de stock
+        Route::prefix('actualizar-stock-masivo')->name('actualizar-stock-masivo.')->middleware('permission:inventario.ajuste.form')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'index'])->name('index');
+            Route::get('descargar-plantilla', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'descargarPlantilla'])->name('descargar-plantilla');
+            Route::post('procesar-csv', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'procesarCSV'])->middleware('permission:inventario.ajuste.procesar')->name('procesar-csv');
+        });
+
         // Rutas para gestión de reservas de inventario
         Route::prefix('reservas')->name('reservas.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Inventario\ReservaProformaController::class, 'index'])->middleware('permission:inventario.reservas.index')->name('index');
@@ -1252,14 +1262,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     });
 
     // ✨ NUEVO: Notificaciones Recurrentes
-    Route::prefix('notificaciones')->name('notificaciones.')->middleware('permission:admin')->group(function () {
-        Route::get('recurrentes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'index'])->name('recurrentes.index');
-        Route::post('recurrentes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'store'])->name('recurrentes.store');
-        Route::get('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'show'])->name('recurrentes.show');
-        Route::put('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'update'])->name('recurrentes.update');
-        Route::delete('recurrentes/{notificacion}', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'destroy'])->name('recurrentes.destroy');
-        Route::post('recurrentes/{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviar'])->name('recurrentes.enviar');
-    });
+    Route::resource('notificaciones', \App\Http\Controllers\NotificacionRecurrenteController::class);
+    Route::post('notificaciones/{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviarManual'])->name('notificaciones.enviar');
 });
 
 require __DIR__ . '/settings.php';
