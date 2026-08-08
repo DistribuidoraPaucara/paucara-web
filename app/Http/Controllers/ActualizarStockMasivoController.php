@@ -183,18 +183,29 @@ class ActualizarStockMasivoController extends Controller
                             ]);
 
                             // Crear movimiento en movimientos_inventario
-                            $movimiento = $this->crearMovimiento(
-                                $productoId,
-                                $stockProducto->id,
-                                $diferencia,
-                                $stockActual,
-                                $cantidadNueva,
-                                $producto,
-                                $stockProducto->lote
-                            );
+                            try {
+                                $movimiento = $this->crearMovimiento(
+                                    $productoId,
+                                    $stockProducto->id,
+                                    $diferencia,
+                                    $stockActual,
+                                    $cantidadNueva,
+                                    $producto,
+                                    $stockProducto->lote
+                                );
 
-                            if ($movimiento) {
-                                $movimientos[] = $movimiento;
+                                if ($movimiento) {
+                                    $movimientos[] = $movimiento;
+                                }
+                            } catch (\Exception $e) {
+                                Log::error('❌ Error creando movimiento', [
+                                    'fila' => $index + 2,
+                                    'producto_id' => $productoId,
+                                    'tipo_movimiento' => 'AJUSTE_MASIVO',
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                ]);
+                                $errores[] = "Fila " . ($index + 2) . ": " . $e->getMessage();
                             }
                         }
 
