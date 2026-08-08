@@ -401,7 +401,7 @@ export default function Dashboard({
                 Gestión de Cajas
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Monitoreo en tiempo real de todas las cajas
+                Monitoreo en tiempo real de todas las cajas y sus aperturas/cierres, con métricas y reportes diarios.
               </p>
             </div>
             {/* ✅ NUEVO: Botón de Cierre Diario General */}
@@ -412,7 +412,7 @@ export default function Dashboard({
                 className="dark:border-slate-600 dark:text-white dark:hover:bg-slate-700"
               >
                 <FileText className="mr-2 h-4 w-4" />
-                Reportes Diarios
+                Mostrar Todas las Aperturas y Cierres
               </Button>
               {/* <Button
                 onClick={() => setMostrarModalCierre(true)}
@@ -425,12 +425,12 @@ export default function Dashboard({
           </div>
 
           {/* Métricas de Ingresos, Egresos y Efectivo Esperado */}
-          <MetricasCard metricas={metricas} />
+          {/* <MetricasCard metricas={metricas} /> */}
 
           {/* ✅ NUEVO (2026-08-07): Resumen Diario Consolidado (TODOS los turnos del día) */}
           {resumen_diario_total && (
             <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-2 border-blue-200 dark:border-blue-800">
-              <div className="mb-4">
+              <div>
                 <h3 className="text-lg font-bold text-blue-900 dark:text-blue-200 flex items-center gap-2">
                   📊 Resumen Diario Consolidado
                   <Badge className="bg-blue-600 dark:bg-blue-700">{resumen_diario_total.turnos_count} turnos</Badge>
@@ -515,7 +515,7 @@ export default function Dashboard({
               </div>
 
               {/* Desglose de Turnos */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Turnos Abiertos */}
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-green-200 dark:border-green-800">
                   <div className="flex items-center gap-3">
@@ -572,6 +572,7 @@ export default function Dashboard({
                     <TableHead className="text-right text-gray-700 dark:text-gray-300 font-semibold">Esperado</TableHead>
                     <TableHead className="text-center text-gray-700 dark:text-gray-300 font-semibold">Estado</TableHead>
                     <TableHead className="text-center text-gray-700 dark:text-gray-300 font-semibold">Diferencia</TableHead>
+                    <TableHead className="text-center text-gray-700 dark:text-gray-300 font-semibold">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -714,6 +715,22 @@ export default function Dashboard({
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
+
+                        {/* ✅ NUEVO (2026-08-07): Acciones - Ver detalles de caja/apertura */}
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="dark:hover:bg-slate-600 dark:text-gray-300"
+                            title="Ver detalles de la caja"
+                            onClick={() => {
+                              console.log('Navegando a caja del usuario:', apertura.user_id);
+                              router.visit(`/cajas/user/${apertura.user_id}`);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -730,9 +747,8 @@ export default function Dashboard({
           </Card>
 
           {/* Búsqueda y filtros */}
-          <Card className="p-2">
+          {/* <Card className="p-2">
             <div className="space-y-4">
-              {/* Búsqueda */}
               <div className="flex gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -751,12 +767,9 @@ export default function Dashboard({
                   {filtrosVisibles ? '🔼 Ocultar Filtros' : '🔽 Mostrar Filtros'}
                 </Button>
               </div>
-
-              {/* Filtros Avanzados */}
               {filtrosVisibles && (
                 <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-lg space-y-4 border border-gray-200 dark:border-slate-700">
                   <div className="flex flex-wrap gap-4">
-                    {/* Fila 1: Estado de Caja */}
                     <div>
                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                         Estado de Caja
@@ -789,7 +802,6 @@ export default function Dashboard({
                       </div>
                     </div>
 
-                    {/* Fila 4: Rango de Fechas */}
                     <div>
                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                         Rango de Fechas
@@ -829,18 +841,16 @@ export default function Dashboard({
                       </div>
                     </div>
                   </div>
-
-                  {/* Resumen de Filtros */}
                   <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-300 dark:border-slate-700">
                     ✅ Mostrando <strong className="dark:text-gray-300">{cajasFiltradas.length}</strong> de <strong className="dark:text-gray-300">{cajas.length}</strong> cajas
                   </div>
                 </div>
               )}
             </div>
-          </Card>
+          </Card> */}
 
           {/* Tabla de cajas */}
-          <div>
+          {/* <div>
             <Table>
               <TableHeader>
                 <TableRow className="dark:border-slate-700">
@@ -935,7 +945,7 @@ export default function Dashboard({
                 )}
               </TableBody>
             </Table>
-          </div>
+          </div> */}
 
           {/* ✅ NUEVO: Modal de Confirmación - Cierre Diario General */}
           <Dialog open={mostrarModalCierre} onOpenChange={setMostrarModalCierre}>
