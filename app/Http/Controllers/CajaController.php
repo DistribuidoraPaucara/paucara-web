@@ -434,9 +434,10 @@ class CajaController extends Controller
     public function abrirCaja(Request $request, $userId = null)
     {
         $request->validate([
-            'caja_id'        => 'required|exists:cajas,id',
-            'monto_apertura' => 'required|numeric|min:0',
-            'observaciones'  => 'nullable|string|max:500',
+            'caja_id'                      => 'required|exists:cajas,id',
+            'monto_apertura_efectivo'      => 'nullable|numeric|min:0',
+            'monto_apertura_transferencia' => 'nullable|numeric|min:0',
+            'observaciones'                => 'nullable|string|max:500',
         ]);
 
         $usuarioAutenticado = Auth::user();
@@ -475,39 +476,92 @@ class CajaController extends Controller
                 ]);
             }
 
+            // Calcular montos
+            $montoEfectivo = (float) ($request->monto_apertura_efectivo ?? 0);
+            $montoTransferencia = (float) ($request->monto_apertura_transferencia ?? 0);
+            $montoTotal = $montoEfectivo + $montoTransferencia;
+
+            // ✅ DEBUGGING: Log de montos recibidos
+            Log::info('💰 [abrirCaja] Montos recibidos del frontend', [
+                'monto_apertura_efectivo' => $request->monto_apertura_efectivo,
+                'monto_apertura_transferencia' => $request->monto_apertura_transferencia,
+                'monto_efectivo_calculado' => $montoEfectivo,
+                'monto_transferencia_calculado' => $montoTransferencia,
+                'monto_total' => $montoTotal,
+            ]);
+
             // Crear apertura de caja
             $apertura = AperturaCaja::create([
                 'caja_id'        => $request->caja_id,
                 'user_id'        => $usuarioDestino->id,
                 'fecha'          => now(),
-                'monto_apertura' => $request->monto_apertura,
+                'monto_apertura' => $montoTotal,  // ✅ NUEVO: Total de ambos tipos de pago
                 'observaciones'  => $request->observaciones,
             ]);
 
-            // Crear movimiento inicial si hay monto de apertura
-            if ($request->monto_apertura > 0) {
-                $tipoOperacion = TipoOperacionCaja::where('codigo', 'APERTURA')->first();
+            // Obtener tipo de operación APERTURA
+            $tipoOperacion = TipoOperacionCaja::where('codigo', 'APERTURA')->first();
 
-                if ($tipoOperacion) {
-                    MovimientoCaja::create([
+            // ✅ NUEVO: Crear movimiento para EFECTIVO (si hay monto)
+            if ($montoEfectivo > 0 && $tipoOperacion) {
+                $tipoPagoEfectivo = \App\Models\TipoPago::where('codigo', 'EFECTIVO')->first();
+
+                MovimientoCaja::create([
+                    'caja_id'           => $request->caja_id,
+                    'user_id'           => $usuarioDestino->id,
+                    'apertura_caja_id'  => $apertura->id,
+                    'tipo_operacion_id' => $tipoOperacion->id,
+                    'tipo_pago_id'      => $tipoPagoEfectivo?->id,
+                    'numero_documento'  => 'APERTURA-EFECT-' . date('Ymd') . '-' . $usuarioDestino->id,
+                    'descripcion'       => 'Apertura de caja (Efectivo) - ' . $caja->nombre,
+                    'monto'             => $montoEfectivo,
+                    'fecha'             => now(),
+                ]);
+            }
+
+            // ✅ NUEVO: Crear movimiento para TRANSFERENCIA/QR (si hay monto)
+            if ($montoTransferencia > 0 && $tipoOperacion) {
+                // ✅ CORREGIDO: Buscar por código exacto 'TRANSFERENCIA/QR'
+                $tipoPagoTransferencia = \App\Models\TipoPago::where('codigo', 'TRANSFERENCIA/QR')->first();
+
+                Log::info('🔍 [abrirCaja] Buscando tipo pago TRANSFERENCIA/QR', [
+                    'tipo_pago_encontrado' => $tipoPagoTransferencia ? $tipoPagoTransferencia->toArray() : null,
+                    'todos_tipos_pago' => \App\Models\TipoPago::all(['id', 'codigo', 'nombre'])->toArray(),
+                ]);
+
+                if ($tipoPagoTransferencia) {
+                    $movimientoTransferencia = MovimientoCaja::create([
                         'caja_id'           => $request->caja_id,
                         'user_id'           => $usuarioDestino->id,
-                        'apertura_caja_id'  => $apertura->id,  // ✅ NUEVO: Asignar apertura directa
+                        'apertura_caja_id'  => $apertura->id,
                         'tipo_operacion_id' => $tipoOperacion->id,
-                        'numero_documento'  => 'APERTURA-' . date('Ymd') . '-' . $usuarioDestino->id,
-                        'descripcion'       => 'Apertura de caja - ' . $caja->nombre,
-                        'monto'             => $request->monto_apertura,
+                        'tipo_pago_id'      => $tipoPagoTransferencia->id,
+                        'numero_documento'  => 'APERTURA-TRANS-' . date('Ymd') . '-' . $usuarioDestino->id,
+                        'descripcion'       => 'Apertura de caja (Transferencia/QR) - ' . $caja->nombre,
+                        'monto'             => $montoTransferencia,
                         'fecha'             => now(),
+                    ]);
+
+                    Log::info('✅ [abrirCaja] Movimiento TRANSFERENCIA creado exitosamente', [
+                        'movimiento_id' => $movimientoTransferencia->id,
+                        'monto' => $montoTransferencia,
+                        'tipo_pago_id' => $tipoPagoTransferencia->id,
+                    ]);
+                } else {
+                    Log::warning('⚠️ [abrirCaja] No se encontró tipo de pago TRANSFERENCIA/QR', [
+                        'montoTransferencia' => $montoTransferencia,
                     ]);
                 }
             }
 
             DB::commit();
 
-            Log::info('Caja abierta exitosamente', [
+            Log::info('✅ Caja abierta exitosamente', [
                 'user_id'        => $usuarioDestino->id,
                 'caja_id'        => $request->caja_id,
-                'monto_apertura' => $request->monto_apertura,
+                'monto_apertura' => $montoTotal,
+                'monto_efectivo' => $montoEfectivo,
+                'monto_transferencia' => $montoTransferencia,
                 'abierta_por'    => $usuarioAutenticado->id,
             ]);
 
@@ -1016,7 +1070,7 @@ class CajaController extends Controller
             ];
         });
 
-        // ✅ NUEVO: Usar CierreCajaService para calcular ingresos/egresos (IGUAL que endpoint cajas/user/{userId})
+        // ✅ NUEVO (2026-08-07): Usar CierreCajaService para calcular ingresos/egresos (IGUAL que endpoint cajas/user/{userId})
         $aperturasAbiertas = $aperturasColleccion->filter(fn($a) => !$a->cierre);
 
         $totalIngresos = (float) 0;
@@ -1037,6 +1091,43 @@ class CajaController extends Controller
 
         $efectivoEsperado = $montosApertura + $totalIngresos - $totalEgresos;
 
+        // ✅ NUEVO (2026-08-07): Calcular RESUMEN DIARIO consolidado (TODOS los turnos del día)
+        $todasAperturasDia = AperturaCaja::with(['cierre', 'cierre.estadoCierre'])
+            ->whereDate('fecha', today())
+            ->get();
+
+        $resumenDiarioTotal = [
+            'total_montos_apertura' => (float) 0,
+            'total_ingresos'        => (float) 0,
+            'total_egresos'         => (float) 0,
+            'efectivo_esperado'     => (float) 0,
+            'turnos_count'          => 0,
+            'turnos_abiertos'       => 0,
+            'turnos_cerrados'       => 0,
+        ];
+
+        foreach ($todasAperturasDia as $apertura) {
+            $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
+            $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
+            $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
+
+            $resumenDiarioTotal['total_montos_apertura'] += (float) $apertura->monto_apertura;
+            $resumenDiarioTotal['total_ingresos'] += $ingresosApertura;
+            $resumenDiarioTotal['total_egresos'] += $egresosApertura;
+            $resumenDiarioTotal['turnos_count']++;
+
+            if ($apertura->cierre) {
+                $resumenDiarioTotal['turnos_cerrados']++;
+            } else {
+                $resumenDiarioTotal['turnos_abiertos']++;
+            }
+        }
+
+        $resumenDiarioTotal['efectivo_esperado'] =
+            $resumenDiarioTotal['total_montos_apertura'] +
+            $resumenDiarioTotal['total_ingresos'] -
+            $resumenDiarioTotal['total_egresos'];
+
         $metricas = [
             'total_cajas'            => $cajas->count(),
             'cajas_abiertas'         => $cajas_abiertas,
@@ -1050,9 +1141,10 @@ class CajaController extends Controller
         ];
 
         return Inertia::render('Cajas/Dashboard', [
-            'cajas'         => $cajasEnriquecidas->values(),
-            'aperturas_hoy' => $aperturas_hoy->values(), // ✅ Convertir Collection a array
-            'metricas'      => $metricas,
+            'cajas'                 => $cajasEnriquecidas->values(),
+            'aperturas_hoy'         => $aperturas_hoy->values(), // ✅ Convertir Collection a array
+            'metricas'              => $metricas,
+            'resumen_diario_total'  => $resumenDiarioTotal, // ✅ NUEVO (2026-08-07): Consolidado de todos los turnos
         ]);
     }
 

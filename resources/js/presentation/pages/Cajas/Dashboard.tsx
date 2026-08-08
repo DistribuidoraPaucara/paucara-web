@@ -91,6 +91,16 @@ interface Apertura {
   } | null;
 }
 
+interface ResumenDiarioTotal {
+  total_montos_apertura: number;
+  total_ingresos: number;
+  total_egresos: number;
+  efectivo_esperado: number;
+  turnos_count: number;
+  turnos_abiertos: number;
+  turnos_cerrados: number;
+}
+
 interface Props {
   cajas: Caja[];
   aperturas_hoy: Apertura[];
@@ -103,6 +113,7 @@ interface Props {
     efectivo_esperado: number;
     montos_apertura: number;
   };
+  resumen_diario_total?: ResumenDiarioTotal; // ✅ NUEVO (2026-08-07): Consolidado de todos los turnos
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -120,6 +131,7 @@ export default function Dashboard({
   cajas,
   aperturas_hoy,
   metricas,
+  resumen_diario_total, // ✅ NUEVO (2026-08-07): Consolidado de todos los turnos
 }: Props) {
   const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(false);
@@ -414,6 +426,128 @@ export default function Dashboard({
 
           {/* Métricas de Ingresos, Egresos y Efectivo Esperado */}
           <MetricasCard metricas={metricas} />
+
+          {/* ✅ NUEVO (2026-08-07): Resumen Diario Consolidado (TODOS los turnos del día) */}
+          {resumen_diario_total && (
+            <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-2 border-blue-200 dark:border-blue-800">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-blue-900 dark:text-blue-200 flex items-center gap-2">
+                  📊 Resumen Diario Consolidado
+                  <Badge className="bg-blue-600 dark:bg-blue-700">{resumen_diario_total.turnos_count} turnos</Badge>
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Consolidación de todos los turnos del día (abiertos + cerrados)
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Total de Montos de Apertura */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
+                        Total Montos Apertura
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                        Bs. {resumen_diario_total.total_montos_apertura.toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-3xl">💰</div>
+                  </div>
+                </div>
+
+                {/* Total de Ingresos */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase">
+                        Total Ingresos
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
+                        +Bs. {resumen_diario_total.total_ingresos.toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-3xl">📈</div>
+                  </div>
+                </div>
+
+                {/* Total de Egresos */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase">
+                        Total Egresos
+                      </p>
+                      <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
+                        -Bs. {resumen_diario_total.total_egresos.toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-3xl">📉</div>
+                  </div>
+                </div>
+
+                {/* Efectivo Esperado Total */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">
+                        Efectivo Esperado
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                        Bs. {resumen_diario_total.efectivo_esperado.toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-3xl">🎯</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desglose de Turnos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {/* Turnos Abiertos */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">🟢</div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
+                        Turnos Abiertos
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {resumen_diario_total.turnos_abiertos}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Turnos Cerrados */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">🔴</div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
+                        Turnos Cerrados
+                      </p>
+                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {resumen_diario_total.turnos_cerrados}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Búsqueda y filtros */}
           <Card className="p-2">
