@@ -562,6 +562,8 @@ export default function Dashboard({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold text-xs">ID Apertura</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300 font-semibold text-xs">ID Cierre</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Usuario</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Caja</TableHead>
                     <TableHead className="text-gray-700 dark:text-gray-300 font-semibold">Apertura</TableHead>
@@ -605,6 +607,24 @@ export default function Dashboard({
                             : 'bg-green-50 dark:bg-green-950/20'
                         } hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors`}
                       >
+                        {/* ✅ NUEVO (2026-08-07): ID Apertura */}
+                        <TableCell className="text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30">
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded">
+                            #{apertura.id}
+                          </span>
+                        </TableCell>
+
+                        {/* ✅ NUEVO (2026-08-07): ID Cierre */}
+                        <TableCell className="text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30">
+                          {esCerrada && apertura.cierre ? (
+                            <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 rounded">
+                              #{apertura.cierre.id}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+
                         {/* Usuario */}
                         <TableCell className="font-medium text-gray-900 dark:text-white">
                           {caja?.usuario?.name || 'N/A'}
