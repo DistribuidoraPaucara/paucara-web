@@ -57,7 +57,7 @@ class ActualizarStockMasivoController extends Controller
             $almacenId = auth()->user()->empresa->almacen_id ?? 1;
 
             // Obtener todos los productos con su stock en el almacén del usuario
-            $productos = Producto::with(['stockProductos' => function ($query) use ($almacenId) {
+            $productos = Producto::with(['stock' => function ($query) use ($almacenId) {
                 $query->where('almacen_id', $almacenId)
                     ->orderBy('fecha_vencimiento', 'asc')
                     ->orderBy('created_at', 'asc');
@@ -73,10 +73,10 @@ class ActualizarStockMasivoController extends Controller
             // Escribir datos de productos
             $productos->each(function ($producto) use ($csv) {
                 // Sumar cantidad total de todos los lotes del producto
-                $cantidadTotal = $producto->stockProductos->sum('cantidad') ?? 0;
+                $cantidadTotal = $producto->stock->sum('cantidad') ?? 0;
 
                 // Obtener lote FIFO (primero de la lista ordenada)
-                $loteFifo = $producto->stockProductos->first()?->lote ?? null;
+                $loteFifo = $producto->stock->first()?->lote ?? null;
 
                 $csv->insertOne([
                     $producto->id,
