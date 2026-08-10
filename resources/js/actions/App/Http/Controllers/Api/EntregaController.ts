@@ -1169,7 +1169,7 @@ crearConfirmacion.post = (args: { id: string | number, venta_id: string | number
     crearConfirmacion.form = crearConfirmacionForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmacion
- * @see app/Http/Controllers/Api/EntregaController.php:5026
+ * @see app/Http/Controllers/Api/EntregaController.php:5041
  * @route '/api/chofer/entregas/confirmaciones/{confirmacion_id}'
  */
 export const actualizarConfirmacion = (args: { confirmacion_id: string | number } | [confirmacion_id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -1184,7 +1184,7 @@ actualizarConfirmacion.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmacion
- * @see app/Http/Controllers/Api/EntregaController.php:5026
+ * @see app/Http/Controllers/Api/EntregaController.php:5041
  * @route '/api/chofer/entregas/confirmaciones/{confirmacion_id}'
  */
 actualizarConfirmacion.url = (args: { confirmacion_id: string | number } | [confirmacion_id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -1212,7 +1212,7 @@ actualizarConfirmacion.url = (args: { confirmacion_id: string | number } | [conf
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmacion
- * @see app/Http/Controllers/Api/EntregaController.php:5026
+ * @see app/Http/Controllers/Api/EntregaController.php:5041
  * @route '/api/chofer/entregas/confirmaciones/{confirmacion_id}'
  */
 actualizarConfirmacion.put = (args: { confirmacion_id: string | number } | [confirmacion_id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -1222,7 +1222,7 @@ actualizarConfirmacion.put = (args: { confirmacion_id: string | number } | [conf
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmacion
- * @see app/Http/Controllers/Api/EntregaController.php:5026
+ * @see app/Http/Controllers/Api/EntregaController.php:5041
  * @route '/api/chofer/entregas/confirmaciones/{confirmacion_id}'
  */
     const actualizarConfirmacionForm = (args: { confirmacion_id: string | number } | [confirmacion_id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1237,7 +1237,7 @@ actualizarConfirmacion.put = (args: { confirmacion_id: string | number } | [conf
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmacion
- * @see app/Http/Controllers/Api/EntregaController.php:5026
+ * @see app/Http/Controllers/Api/EntregaController.php:5041
  * @route '/api/chofer/entregas/confirmaciones/{confirmacion_id}'
  */
         actualizarConfirmacionForm.put = (args: { confirmacion_id: string | number } | [confirmacion_id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

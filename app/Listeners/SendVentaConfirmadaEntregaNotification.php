@@ -34,6 +34,19 @@ class SendVentaConfirmadaEntregaNotification implements ShouldQueue
             // Notificar al cliente sobre la confirmación
             $this->notificationService->notifyClienteVentaConfirmada($event->venta, $event->entrega, $event->confirmacion);
 
+            // ✅ NUEVO: Notificar al preventista de la venta si existe
+            if ($event->venta->preventista_id) {
+                $preventista = \App\Models\User::find($event->venta->preventista_id);
+                if ($preventista) {
+                    $this->notificationService->notifyPreventistaVentaConfirmada($event->venta, $event->entrega, $event->confirmacion, $preventista);
+                    Log::info('✅ [SendVentaConfirmadaEntregaNotification] Notificación enviada al preventista', [
+                        'venta_id' => $event->venta->id,
+                        'preventista_id' => $preventista->id,
+                        'preventista_nombre' => $preventista->name,
+                    ]);
+                }
+            }
+
             Log::info('✅ [SendVentaConfirmadaEntregaNotification] Notificaciones enviadas exitosamente');
 
         } catch (\Exception $e) {

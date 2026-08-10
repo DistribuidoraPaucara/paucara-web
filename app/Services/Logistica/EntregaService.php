@@ -1032,6 +1032,20 @@ class EntregaService
             // Recargar relaciones para WebSocket
             $entrega->load(['chofer', 'ventas.cliente', 'vehiculo']);
 
+            // ✅ NUEVO: Disparar evento específico para notificación amigable al cliente
+            try {
+                event(new \App\Events\EntregaSalidoAEntrega($entrega, $estadoAnterior));
+                \Log::info('✅ [LISTO_ENTREGA] Evento EntregaSalidoAEntrega disparado', [
+                    'entrega_id' => $entrega->id,
+                    'estado_anterior' => $estadoAnterior,
+                ]);
+            } catch (\Exception $e) {
+                \Log::warning('⚠️ Error al disparar evento EntregaSalidoAEntrega', [
+                    'entrega_id' => $entrega->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             return $entrega;
         });
 

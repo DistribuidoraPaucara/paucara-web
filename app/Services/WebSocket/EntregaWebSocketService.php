@@ -656,6 +656,34 @@ class EntregaWebSocketService extends BaseWebSocketService
     }
 
     /**
+     * ✅ NUEVO: Notificar al preventista que su venta fue confirmada
+     */
+    public function notifyPreventistaVentaConfirmada($venta, $entrega, $confirmacion, $preventista): bool
+    {
+        if (!$preventista || !$preventista->id) {
+            \Log::warning('EntregaWebSocketService: Preventista sin ID', [
+                'venta_id' => $venta->id,
+                'preventista_id' => $preventista?->id,
+            ]);
+            return false;
+        }
+
+        return $this->send('notify/preventista-venta-confirmada', [
+            'venta_id' => $venta->id,
+            'venta_numero' => $venta->numero,
+            'entrega_id' => $entrega->id,
+            'entrega_numero' => $entrega->numero_entrega,
+            'cliente_nombre' => $venta->cliente?->nombre ?? 'Cliente',
+            'cliente_id' => $venta->cliente_id,
+            'user_id' => $preventista->id,
+            'preventista_id' => $preventista->id,
+            'preventista_nombre' => $preventista->name,
+            'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+            'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer',
+        ]);
+    }
+
+    /**
      * ✅ NUEVO: Notificar a preventista, managers y admins que una venta está EN_TRANSITO
      */
     public function notifyVentaEnTransito($venta, $entrega, $user, $tipo = 'preventista'): bool
@@ -674,5 +702,4 @@ class EntregaWebSocketService extends BaseWebSocketService
             'mensaje' => "🚚 Venta #{$venta->numero} está EN_TRANSITO - Sus productos están en camino",
             'tipo' => $tipo,
         ]);
-    }
-}
+    }}

@@ -91,12 +91,28 @@ class EntregaObserver
                     'estado_nuevo' => $estadoNuevo,
                 ]);
 
-                // ✅ FASE 6: Usar servicio de notificaciones (BD + WebSocket)
-                $this->notificationService->notifyEstadoSincronizado(
-                    $entrega,
-                    $estadoNuevo,
-                    $estadoAnterior
+                // ✅ SKIP: No enviar notificación genérica si es PREPARACION_CARGA → EN_TRANSITO
+                // En ese caso se dispara el evento EntregaSalidoAEntrega con mensaje específico
+                $esPreparacionATransito = (
+                    $estadoAnterior === Entrega::ESTADO_PREPARACION_CARGA &&
+                    $estadoNuevo === 'EN_TRANSITO'
+                ) || (
+                    $entrega->getOriginal('estado') === Entrega::ESTADO_PREPARACION_CARGA &&
+                    $estadoNuevo === 'EN_TRANSITO'
                 );
+
+                if (!$esPreparacionATransito) {
+                    // ✅ FASE 6: Usar servicio de notificaciones (BD + WebSocket)
+                    $this->notificationService->notifyEstadoSincronizado(
+                        $entrega,
+                        $estadoNuevo,
+                        $estadoAnterior
+                    );
+                } else {
+                    Log::info('⏭️ EntregaObserver: Saltando notificación genérica (PREPARACION_CARGA → EN_TRANSITO será manejado por EntregaSalidoAEntrega)', [
+                        'entrega_id' => $entrega->id,
+                    ]);
+                }
 
                 Log::info('✅ EntregaObserver: Notificaciones de cambio de estado enviadas', [
                     'entrega_id' => $entrega->id,

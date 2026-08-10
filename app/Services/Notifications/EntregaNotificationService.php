@@ -900,6 +900,72 @@ class EntregaNotificationService
     }
 
     /**
+     * ✅ NUEVO: Notificar al preventista que su venta fue confirmada como entregada
+     */
+    public function notifyPreventistaVentaConfirmada(Venta $venta, Entrega $entrega, $confirmacion, $preventista): bool
+    {
+        try {
+            if (!$preventista || !$preventista->id) {
+                Log::warning('EntregaNotificationService::notifyPreventistaVentaConfirmada - Preventista sin ID', [
+                    'venta_id' => $venta->id,
+                    'preventista_id' => $preventista?->id,
+                ]);
+                return true;
+            }
+
+            $tipoConfirmacion = $confirmacion->tipo_confirmacion;
+            $ventaNumero = $venta->numero;
+            $clienteNombre = $venta->cliente?->nombre ?? 'Cliente';
+            $choferNombre = $entrega->chofer?->name ?? 'Chofer';
+
+            $mensaje = match ($tipoConfirmacion) {
+                'COMPLETA' => "✅ Tu venta #{$ventaNumero} a {$clienteNombre} fue confirmada como entregada.",
+                'RECHAZADO' => "❌ Tu venta #{$ventaNumero} a {$clienteNombre} fue rechazada.",
+                'DEVOLUCION_PARCIAL' => "⚠️ Tu venta #{$ventaNumero} a {$clienteNombre} tiene devolución parcial.",
+                'CLIENTE_CERRADO' => "🏪 Tu venta #{$ventaNumero} a {$clienteNombre} - local cerrado.",
+                'NO_CONTACTADO' => "📞 Tu venta #{$ventaNumero} a {$clienteNombre} - no contactado.",
+                default => "Actualización en tu venta #{$ventaNumero}"
+            };
+
+            // Guardar en BD
+            $this->dbNotificationService->create([$preventista->id], 'preventista.venta.confirmada', [
+                'venta_numero' => $ventaNumero,
+                'venta_id' => $venta->id,
+                'cliente_nombre' => $clienteNombre,
+                'cliente_id' => $venta->cliente_id,
+                'entrega_numero' => $entrega->numero_entrega,
+                'entrega_id' => $entrega->id,
+                'tipo_confirmacion' => $tipoConfirmacion,
+                'chofer_nombre' => $choferNombre,
+                'preventista_id' => $preventista->id,
+                'mensaje' => $mensaje,
+            ], [
+                'venta_id' => $venta->id,
+                'entrega_id' => $entrega->id,
+            ]);
+
+            // Enviar WebSocket
+            $this->wsService->notifyPreventistaVentaConfirmada($venta, $entrega, $confirmacion, $preventista);
+
+            Log::info('✅ EntregaNotificationService::notifyPreventistaVentaConfirmada enviado', [
+                'venta_id' => $venta->id,
+                'preventista_id' => $preventista->id,
+                'tipo_confirmacion' => $tipoConfirmacion,
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en EntregaNotificationService::notifyPreventistaVentaConfirmada', [
+                'venta_id' => $venta->id,
+                'preventista_id' => $preventista?->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * ✅ NUEVO: Notificar a preventista, managers y admins cuando una venta está EN_TRANSITO
      */
     public function notifyVentaEnTransito(Venta $venta, Entrega $entrega, $user, $tipo = 'preventista'): bool
@@ -913,7 +979,7 @@ class EntregaNotificationService
             $mensaje = "🚚 Venta #{$venta->numero} está EN_TRANSITO - Sus productos están en camino. Chofer: {$choferNombre}";
 
             // Guardar en BD
-            $this->dbNotificationService->create([$user->id], 'venta.en_transito', [
+            $this->dbNotificationService->create([$user->id], 'venta.en-transito', [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
                 'entrega_id' => $entrega->id,
@@ -947,6 +1013,56 @@ class EntregaNotificationService
                 'venta_id' => $venta->id,
                 'entrega_id' => $entrega->id,
                 'user_id' => $user?->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Notificar al cliente que su entrega salió a entrega (mensaje amigable)
+     * Usa el método existente notifyVentaEnTransito() que ya está configurado
+     */
+    public function notifyClienteEntregaSalidoAEntrega(Venta $venta, Entrega $entrega): bool
+    {
+        try {
+            $cliente = $venta->cliente;
+
+            if (!$cliente || !$cliente->user_id) {
+                return true;
+            }
+
+            // Reutilizar el método existente notifyVentaEnTransito que ya funciona
+            return $this->notifyVentaEnTransito($venta, $entrega, $cliente, 'cliente');
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en EntregaNotificationService::notifyClienteEntregaSalidoAEntrega', [
+                'venta_id' => $venta->id,
+                'cliente_id' => $venta->cliente_id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Notificar al preventista que su venta salió a entrega
+     * Usa el método existente notifyVentaEnTransito() que ya está configurado
+     */
+    public function notifyPreventistaEntregaSalidoAEntrega(Venta $venta, Entrega $entrega, $preventista): bool
+    {
+        try {
+            if (!$preventista || !$preventista->id) {
+                return true;
+            }
+
+            // Reutilizar el método existente notifyVentaEnTransito que ya funciona
+            return $this->notifyVentaEnTransito($venta, $entrega, $preventista, 'preventista');
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error en EntregaNotificationService::notifyPreventistaEntregaSalidoAEntrega', [
+                'venta_id' => $venta->id,
+                'preventista_id' => $preventista?->id,
                 'error' => $e->getMessage(),
             ]);
             return false;

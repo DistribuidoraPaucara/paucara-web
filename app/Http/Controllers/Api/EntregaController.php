@@ -4956,16 +4956,30 @@ class EntregaController extends Controller
             }
 
             // Actualizar la venta con el nuevo estado logístico y observaciones
-            if ($nuevoEstadoLogisticoId) {
-                $venta->update([
-                    'estado_logistico_id'        => $nuevoEstadoLogisticoId,
-                    'observaciones_logistica'    => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+            $actualizarVenta = [
+                'estado_logistico_id'        => $nuevoEstadoLogisticoId,
+                'observaciones_logistica'    => $validated['observaciones_logistica'] ?? $venta->observaciones_logistica,
+            ];
+
+            // ✅ NUEVO: Si tipo_confirmacion=COMPLETA y estado_pago=PAGADO, actualizar estado_pago de la venta
+            if ($tipoConfirmacion === 'COMPLETA' && $estadoPago === 'PAGADO') {
+                $actualizarVenta['estado_pago'] = 'PAGADO';
+                Log::info('✅ [crearConfirmacion] Actualizando estado_pago a PAGADO', [
+                    'venta_id'           => $venta_id,
+                    'tipo_confirmacion'  => $tipoConfirmacion,
+                    'dinero_recibido'    => $totalDineroRecibido,
+                    'total_venta'        => $venta->total,
                 ]);
+            }
+
+            if ($nuevoEstadoLogisticoId) {
+                $venta->update($actualizarVenta);
 
                 Log::info('✅ Estado logístico de venta actualizado', [
                     'venta_id'              => $venta_id,
                     'estado_logistico_id'   => $nuevoEstadoLogisticoId,
                     'tipo_confirmacion'     => $tipoConfirmacion,
+                    'estado_pago'           => $actualizarVenta['estado_pago'] ?? $venta->estado_pago,
                 ]);
             }
 
@@ -4975,6 +4989,7 @@ class EntregaController extends Controller
                 'venta_id'          => $venta_id,
                 'tipo_confirmacion' => $tipoConfirmacion,
                 'estado_pago'       => $estadoPago,
+                'venta_estado_pago' => $actualizarVenta['estado_pago'] ?? $venta->estado_pago,
             ]);
 
             // ✅ NUEVO: Disparar evento para notificaciones en tiempo real

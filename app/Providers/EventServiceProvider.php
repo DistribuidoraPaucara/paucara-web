@@ -15,6 +15,7 @@ use App\Events\EntregaEnCamino;
 use App\Events\EntregaEstadoCambiado;
 use App\Events\EntregaListoParaEntrega;
 use App\Events\EntregaRechazada;
+use App\Events\EntregaSalidoAEntrega;
 use App\Events\MarcarLlegadaConfirmada;
 use App\Events\NovedadEntregaReportada;
 use App\Events\ProformaActualizada;
@@ -48,6 +49,7 @@ use App\Listeners\SendProformaUpdatedNotification;
 use App\Listeners\SendEntregaAsignadaNotification;
 use App\Listeners\SendEntregaListoParaEntregaNotification;
 use App\Listeners\SendVentaConfirmadaEntregaNotification;
+use App\Listeners\SendEntregaSalidoAEntregaNotification;
 use App\Listeners\Venta\BroadcastProformaCreada;
 use App\Events\NotificacionRecurrenteEmitida;
 use App\Listeners\Notificaciones\BroadcastNotificacionRecurrente;
@@ -173,6 +175,10 @@ class EventServiceProvider extends ServiceProvider
 
         EntregaListoParaEntrega::class => [
             SendEntregaListoParaEntregaNotification::class, // ✅ Notifica al creador y clientes cuando entrega está lista
+        ],
+
+        EntregaSalidoAEntrega::class => [
+            SendEntregaSalidoAEntregaNotification::class, // ✅ Notifica al cliente y preventista cuando entrega sale a entrega
         ],
 
         // ✅ NUEVO: Evento cuando se confirma una venta como entregada
