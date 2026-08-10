@@ -654,4 +654,25 @@ class EntregaWebSocketService extends BaseWebSocketService
             'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer',
         ]);
     }
+
+    /**
+     * ✅ NUEVO: Notificar a preventista, managers y admins que una venta está EN_TRANSITO
+     */
+    public function notifyVentaEnTransito($venta, $entrega, $user, $tipo = 'preventista'): bool
+    {
+        return $this->send('notify/venta-en-transito', [
+            'venta_id' => $venta->id,
+            'venta_numero' => $venta->numero,
+            'entrega_id' => $entrega->id,
+            'entrega_numero' => $entrega->numero_entrega,
+            'cliente_nombre' => $venta->cliente?->nombre ?? 'Cliente',
+            'cliente_id' => $venta->cliente_id,
+            'user_id' => $user->id,
+            'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer asignado',
+            'chofer_id' => $entrega->chofer_id,
+            'total' => (float) $venta->total,
+            'mensaje' => "🚚 Venta #{$venta->numero} está EN_TRANSITO - Sus productos están en camino",
+            'tipo' => $tipo,
+        ]);
+    }
 }
