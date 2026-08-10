@@ -71,6 +71,10 @@ class AdminController extends Controller
             'periodo' => $periodo,
             'titulo' => 'Dashboard Administrativo',
             'descripcion' => 'Resumen completo del sistema',
+            'auth' => [
+                'user' => $user,
+                'roles' => $user->roles->pluck('name')->toArray(),
+            ],
         ]);
     }
 }

@@ -12,6 +12,7 @@ import vehiculos from './vehiculos'
 import transferencias from './transferencias'
 import mermas from './mermas'
 import inicial from './inicial'
+import actualizarStockMasivo from './actualizar-stock-masivo'
 import reservas from './reservas'
 /**
 * @see \App\Http\Controllers\InventarioController::index
@@ -657,6 +658,7 @@ vehiculos,
 transferencias,
 mermas,
 inicial,
+actualizarStockMasivo,
 reservas,
 }
 

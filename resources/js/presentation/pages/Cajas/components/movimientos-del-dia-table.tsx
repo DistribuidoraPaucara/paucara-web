@@ -887,21 +887,29 @@ export function MovimientosDelDiaTable({
                                                 className={`inline-flex items-center rounded-full px-1 py-1 text-left text-xs ${getTipoOperacionColor(movimiento.tipo_operacion.codigo)}`}
                                             >
                                                 {movimiento.tipo_operacion.nombre}{' '}
-                                                {(movimiento.venta_id || movimiento.pago_id) && (
+                                                {(movimiento.venta_id || movimiento.pago_id || movimiento.egreso_id) && (
                                                     <div className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                                                         {movimiento.venta_id && (
                                                             <span className="mr-2 inline-block">
                                                                 {' '}
                                                                 <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                    #{movimiento.venta_id}
+                                                                    Vta #{movimiento.venta_id}
                                                                 </span>
                                                             </span>
                                                         )}
                                                         {movimiento.pago_id && (
-                                                            <span className="inline-block">
+                                                            <span className="mr-2 inline-block">
                                                                 {' '}
                                                                 <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                                    #{movimiento.pago_id}
+                                                                    Pgo #{movimiento.pago_id}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                        {movimiento.egreso_id && (
+                                                            <span className="inline-block">
+                                                                {' '}
+                                                                <span className="font-semibold text-white-600 dark:text-white-400">
+                                                                    Egr #{movimiento.egreso_id}
                                                                 </span>
                                                             </span>
                                                         )}
@@ -938,6 +946,20 @@ export function MovimientosDelDiaTable({
                                                     title={`Estado de pago: ${movimiento.pago.estado}`}
                                                 >
                                                     {movimiento.pago.estado}
+                                                </span>
+                                            )}
+                                            {movimiento.egreso?.estado_documento && (
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                        movimiento.egreso.estado_documento.codigo === 'APROBADO'
+                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                            : movimiento.egreso.estado_documento.codigo === 'ANULADO'
+                                                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                                    }`}
+                                                    title={`Estado de egreso: ${movimiento.egreso.estado_documento.nombre}`}
+                                                >
+                                                    {movimiento.egreso.estado_documento.nombre}
                                                 </span>
                                             )}
                                         </td>

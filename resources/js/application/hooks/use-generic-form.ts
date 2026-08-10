@@ -132,8 +132,14 @@ export function useGenericForm<T extends BaseEntity, F extends BaseFormData>(
               // Booleanos como 0/1 para que Laravel los interprete correctamente
               formData.append(key, value ? '1' : '0');
             } else if (Array.isArray(value)) {
-              // Arrays como JSON (vacíos o no)
-              formData.append(key, JSON.stringify(value));
+              // Arrays: agregar cada valor con notación [] para que Laravel lo interprete como array
+              if (value.length === 0) {
+                formData.append(key + '[]', '');
+              } else {
+                value.forEach((item) => {
+                  formData.append(key + '[]', String(item));
+                });
+              }
             } else if (typeof value === 'object') {
               // Otros objetos a JSON
               formData.append(key, JSON.stringify(value));

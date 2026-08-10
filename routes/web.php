@@ -1246,6 +1246,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::prefix('egresos')->name('egresos.')->middleware('permission:egresos.index')->group(function () {
         Route::get('/', [\App\Http\Controllers\EgresosController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\EgresosController::class, 'create'])->name('create')->middleware('permission:egresos.create');
+        Route::get('{egreso}/imprimir', [\App\Http\Controllers\EgresosController::class, 'imprimir'])->name('imprimir')->where('egreso', '[0-9]+');
         Route::get('{egreso}', [\App\Http\Controllers\EgresosController::class, 'show'])->name('show');
     });
 

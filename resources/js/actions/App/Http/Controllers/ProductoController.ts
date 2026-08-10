@@ -2484,6 +2484,84 @@ destroy.delete = (args: { producto: number | { id: number } } | [producto: numbe
         })
     
     destroy.form = destroyForm
-const ProductoController = { indexApi, filtros, buscarApi, listarApi, showApi, obtenerStock, obtenerStockMultiples, storeApi, obtenerTodosSinRestriccion, updateApi, destroyApi, historialPrecios, importarProductosMasivos, validarProductosCSV, listarCargasMasivas, verCargaMasiva, revertirCargaMasiva, createModerno, getPaginados, getFiltrosData, index, create, store, edit, update, destroy }
+/**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+export const buscarProductosComidas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: buscarProductosComidas.url(options),
+    method: 'get',
+})
+
+buscarProductosComidas.definition = {
+    methods: ["get","head"],
+    url: '/api/productos-comidas/buscar',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+buscarProductosComidas.url = (options?: RouteQueryOptions) => {
+    return buscarProductosComidas.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+buscarProductosComidas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: buscarProductosComidas.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+buscarProductosComidas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: buscarProductosComidas.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+    const buscarProductosComidasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: buscarProductosComidas.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+        buscarProductosComidasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: buscarProductosComidas.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\ProductoController::buscarProductosComidas
+ * @see app/Http/Controllers/ProductoController.php:4115
+ * @route '/api/productos-comidas/buscar'
+ */
+        buscarProductosComidasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: buscarProductosComidas.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    buscarProductosComidas.form = buscarProductosComidasForm
+const ProductoController = { indexApi, filtros, buscarApi, listarApi, showApi, obtenerStock, obtenerStockMultiples, storeApi, obtenerTodosSinRestriccion, updateApi, destroyApi, historialPrecios, importarProductosMasivos, validarProductosCSV, listarCargasMasivas, verCargaMasiva, revertirCargaMasiva, createModerno, getPaginados, getFiltrosData, index, create, store, edit, update, destroy, buscarProductosComidas }
 
 export default ProductoController

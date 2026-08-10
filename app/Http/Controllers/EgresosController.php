@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Egreso;
+use App\Models\Empresa;
 use App\Models\TipoOperacionCaja;
 use App\Models\TipoPago;
 use App\Models\User;
+use App\Services\ImpresionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class EgresosController extends Controller
 {
@@ -78,5 +82,47 @@ class EgresosController extends Controller
         return Inertia::render('Egresos/Show', [
             'egreso' => $egreso,
         ]);
+    }
+
+    /**
+     * Imprimir egreso en PDF
+     *
+     * @param Egreso $egreso
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function imprimir(Egreso $egreso, Request $request)
+    {
+        Log::info('🖨️ [EgresosController::imprimir] Método llamado', [
+            'egreso_id' => $egreso->id,
+            'user_id'   => auth()->id(),
+            'formato'   => $request->input('formato'),
+            'accion'    => $request->input('accion'),
+        ]);
+
+        $formato = $request->input('formato', 'A4');      // A4, TICKET_80, TICKET_58
+        $accion  = $request->input('accion', 'download'); // download | stream
+
+        try {
+            // ✅ Usar ImpresionService para generar PDF
+            $impresionService = app(ImpresionService::class);
+            $pdf = $impresionService->imprimirEgreso($egreso, $formato);
+
+            $nombreArchivo = "egreso_{$egreso->numero}_{$formato}.pdf";
+
+            return $accion === 'stream'
+                ? $pdf->stream($nombreArchivo)
+                : $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            Log::error('❌ Error generando PDF de egreso', [
+                'egreso_id' => $egreso->id,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar PDF: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

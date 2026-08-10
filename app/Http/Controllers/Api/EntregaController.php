@@ -1299,27 +1299,26 @@ class EntregaController extends Controller
                 'vehiculo',
             ]);
 
-            // ✅ NUEVO: Notificar a cliente, admin y cajero que venta fue entregada
+            // ✅ NUEVO: Disparar evento VentaConfirmadaEntregada
+            // Esto activa automáticamente el listener SendVentaConfirmadaEntregadaNotification
+            // que coordina BD + WebSocket (mismo patrón que Proformas)
             try {
-                $wsService = app(EntregaWebSocketService::class);
-                // Pasar información sobre tipo de entrega y confirmación para personalizar notificaciones
-                $wsService->notifyVentaEntregada(
+                event(new \App\Events\VentaConfirmadaEntregada(
                     venta: $venta,
                     entrega: $entrega,
-                    cliente: $venta->cliente,
+                    confirmacion: $confirmacion,
                     tipoEntrega: $tipoEntrega ?? 'COMPLETA',
                     tipoNovedad: $tipoNovedad,
-                    confirmacion: $confirmacion,
                     estadoPago: $estadoPago,
                     totalRecibido: $totalDineroRecibido ?? 0
-                );
-                Log::info('✅ Notificación WebSocket enviada sobre venta entregada');
+                ));
+                Log::info('✅ Evento VentaConfirmadaEntregada disparado - Notificaciones en proceso');
             } catch (\Exception $e) {
-                Log::warning('⚠️ No se pudo enviar notificación WebSocket sobre venta entregada', [
+                Log::warning('⚠️ No se pudo disparar evento de notificación', [
                     'venta_id' => $venta_id,
                     'error'    => $e->getMessage(),
                 ]);
-                // No interrumpir el flujo si falla la notificación WebSocket
+                // No interrumpir el flujo si falla la notificación
             }
 
             return response()->json([
@@ -2215,6 +2214,21 @@ class EntregaController extends Controller
                 'entrega_id'   => $id,
                 'nuevo_estado' => $dto->estado ?? null,
             ]);
+
+            // ✅ NUEVO: Disparar evento para notificar a creador y clientes
+            try {
+                $entrega->refresh(); // Recargar para obtener relaciones
+                event(new \App\Events\EntregaListoParaEntrega($entrega));
+                Log::info('📢 Evento EntregaListoParaEntrega disparado exitosamente', [
+                    'entrega_id'     => $entrega->id,
+                    'numero_entrega' => $entrega->numero_entrega,
+                ]);
+            } catch (\Exception $eventError) {
+                Log::warning('⚠️ Error al emitir evento EntregaListoParaEntrega (no crítico)', [
+                    'entrega_id' => $entrega->id,
+                    'error'      => $eventError->getMessage(),
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -4962,6 +4976,20 @@ class EntregaController extends Controller
                 'tipo_confirmacion' => $tipoConfirmacion,
                 'estado_pago'       => $estadoPago,
             ]);
+
+            // ✅ NUEVO: Disparar evento para notificaciones en tiempo real
+            try {
+                event(new \App\Events\VentaConfirmadaEntrega($venta, $entrega, $confirmacion));
+                Log::info('✅ Evento VentaConfirmadaEntrega disparado', [
+                    'venta_id' => $venta_id,
+                    'entrega_id' => $id,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('⚠️ Error al disparar evento VentaConfirmadaEntrega', [
+                    'error' => $e->getMessage(),
+                ]);
+                // No fallar si hay error en evento
+            }
 
             return response()->json([
                 'success' => true,

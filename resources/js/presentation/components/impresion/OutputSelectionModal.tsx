@@ -35,7 +35,8 @@ export type TipoDocumento =
     | 'devoluciones-evento'
     | 'prestamos-vendidos'
     | 'compras-prestables'
-    | 'control-vencimientos';
+    | 'control-vencimientos'
+    | 'egreso';
 
 interface FormatoConfig {
     formato: string;
@@ -162,6 +163,10 @@ const FORMATO_CONFIG: Record<TipoDocumento, FormatoConfig[]> = {
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
     'control-vencimientos': [
+        { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
+    ],
+    egreso: [
+        { formato: 'TICKET_80', nombre: 'Ticket 80mm (Default)', descripcion: 'Impresora térmica 80mm' },
         { formato: 'A4', nombre: 'Hoja Completa (A4)', descripcion: 'Formato estándar A4' },
     ],
 };

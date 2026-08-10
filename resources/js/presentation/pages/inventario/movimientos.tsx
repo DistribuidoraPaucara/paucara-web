@@ -12,7 +12,15 @@ import MovimientosStats from '@/presentation/components/Inventario/MovimientosSt
 import { ImprimirMovimientosButton } from '@/presentation/components/impresion/ImprimirMovimientosButton';
 import { ImprimirProductosVendidosButton } from '@/presentation/components/impresion/ImprimirProductosVendidosButton';
 import { Button } from '@/presentation/components/ui/button';
-import { Plus, BarChart3, List } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuCheckboxItem,
+    DropdownMenuSeparator,
+} from '@/presentation/components/ui/dropdown-menu';
+import { Plus, BarChart3, MoreVertical, Eye, EyeOff, List } from 'lucide-react';
 import type {
     MovimientoInventario,
     MovimientosStats as MovimientosStatsType,
@@ -132,38 +140,69 @@ const MovimientosInventarioPage: React.FC<PageProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* ✅ NUEVO (2026-06-28): Botón para mostrar/ocultar valores por lote */}
-                        <button
-                            onClick={() => setMostrarValoresPorLote(!mostrarValoresPorLote)}
-                            className={`px-3 py-2 text-sm rounded-md font-medium transition-colors ${
-                                mostrarValoresPorLote
-                                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                            title="Mostrar/Ocultar valores por lote en la tabla"
-                        >
-                            {mostrarValoresPorLote ? '✓ Valores por Lote' : 'Valores por Lote'}
-                        </button>
+                        {/* ✅ Dropdown con acciones flotante */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon" title="Acciones">
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                {/* Mostrar/Ocultar valores por lote */}
+                                <DropdownMenuCheckboxItem
+                                    checked={mostrarValoresPorLote}
+                                    onCheckedChange={() => setMostrarValoresPorLote(!mostrarValoresPorLote)}
+                                    className="cursor-pointer"
+                                >
+                                    {mostrarValoresPorLote ? (
+                                        <Eye className="w-4 h-4 mr-2" />
+                                    ) : (
+                                        <EyeOff className="w-4 h-4 mr-2" />
+                                    )}
+                                    Valores por Lote
+                                </DropdownMenuCheckboxItem>
 
-                        <ImprimirMovimientosButton
-                            movimientos={movimientos.data as any}
-                            filtros={filtros}
-                        />
+                                <DropdownMenuSeparator />
 
-                        <ImprimirProductosVendidosButton
-                            productosVendidos={productosVendidosHoy}
-                            fecha={new Date().toISOString().split('T')[0]}
-                        />
+                                {/* Imprimir movimientos */}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem asChild>
+                                        <div className="cursor-pointer">
+                                            <ImprimirMovimientosButton
+                                                movimientos={movimientos.data as any}
+                                                filtros={filtros}
+                                            />
+                                        </div>
+                                    </DropdownMenuItem>
+                                </div>
 
-                        <Button variant="outline" onClick={handleGoToReportes}>
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            Reportes
-                        </Button>
+                                {/* Imprimir productos vendidos */}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem asChild>
+                                        <div className="cursor-pointer">
+                                            <ImprimirProductosVendidosButton
+                                                productosVendidos={productosVendidosHoy}
+                                                fecha={new Date().toISOString().split('T')[0]}
+                                            />
+                                        </div>
+                                    </DropdownMenuItem>
+                                </div>
 
-                        <Button onClick={handleCreateAjuste}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Ajustar Stock
-                        </Button>
+                                <DropdownMenuSeparator />
+
+                                {/* Reportes */}
+                                <DropdownMenuItem onClick={handleGoToReportes} className="cursor-pointer">
+                                    <BarChart3 className="w-4 h-4 mr-2" />
+                                    Reportes
+                                </DropdownMenuItem>
+
+                                {/* Ajustar Stock */}
+                                <DropdownMenuItem onClick={handleCreateAjuste} className="cursor-pointer">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Ajustar Stock
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

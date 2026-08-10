@@ -6,6 +6,9 @@ import { Input } from '@/presentation/components/ui/input';
 import { Trash2, Plus } from 'lucide-react';
 import axios from 'axios';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { CATEGORIAS_GASTO, CATEGORIAS_PAGO_SUELDO, CATEGORIAS_ANTICIPO } from '@/constants/categorias-gasto';
+import { OutputSelectionModal, type TipoDocumento } from '@/presentation/components/impresion/OutputSelectionModal';
+import toast from 'react-hot-toast';
 
 interface TipoOperacion { id: number; nombre: string }
 interface TipoPago { id: number; nombre: string }
@@ -17,6 +20,7 @@ interface PageProps extends InertiaPageProps {
 
 interface DetalleForm {
     concepto: string;
+    categoria?: string;
     tipo_operacion_caja_id: string;
     monto_efectivo: number;
     monto_transferencia: number;
@@ -28,6 +32,7 @@ export default function CreateEgreso() {
     const [detalles, setDetalles] = useState<DetalleForm[]>([initialDetalle]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [outputModal, setOutputModal] = useState<{ isOpen: boolean; egresoId?: number }>({ isOpen: false });
 
     interface FormData {
         descripcion: string;
@@ -35,7 +40,14 @@ export default function CreateEgreso() {
         observaciones: string;
     }
 
-    const { data, setData } = useForm<FormData>({ descripcion: '', detalles: [initialDetalle], observaciones: '' });
+    // Obtener fecha actual formateada
+    const fechaHoy = new Date().toLocaleDateString('es-BO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+
+    const { data, setData } = useForm<FormData>({ descripcion: `Salida Diaria - ${fechaHoy}`, detalles: [initialDetalle], observaciones: '' });
 
     const handleDetalleChange = (index: number, field: keyof DetalleForm, value: any) => {
         const newDetalles = [...detalles];
@@ -45,9 +57,21 @@ export default function CreateEgreso() {
     };
 
     const handleAddDetalle = () => {
-        const newDetalles = [...detalles, { concepto: '', tipo_operacion_caja_id: '', monto_efectivo: 0, monto_transferencia: 0 }];
+        const newDetalles = [...detalles, { concepto: '', categoria: '', tipo_operacion_caja_id: '', monto_efectivo: 0, monto_transferencia: 0 }];
         setDetalles(newDetalles);
         setData('detalles', newDetalles);
+    };
+
+    // Obtener categorías según el tipo de operación
+    const getCategoriasPorTipo = (tipoId: string): Record<string, string> => {
+        const tipo = props.tipos_operacion.find(t => t.id.toString() === tipoId);
+        if (!tipo) return {};
+
+        const codigo = tipo.nombre?.toUpperCase() || '';
+        if (codigo.includes('GASTO')) return CATEGORIAS_GASTO;
+        if (codigo.includes('PAGO') || codigo.includes('SUELDO')) return CATEGORIAS_PAGO_SUELDO;
+        if (codigo.includes('ANTICIPO')) return CATEGORIAS_ANTICIPO;
+        return CATEGORIAS_GASTO; // Default
     };
 
     const handleRemoveDetalle = (index: number) => {
@@ -62,11 +86,24 @@ export default function CreateEgreso() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
         try {
             const response = await axios.post('/api/egresos', { ...data, detalles });
-            if (response.data.success) router.visit('/egresos');
+            if (response.data.success) {
+                console.log('✅ Egreso creado exitosamente:', response.data);
+                toast.success('Egreso registrado correctamente');
+
+                // ✅ Abrir modal de impresión con el ID del egreso
+                setOutputModal({
+                    isOpen: true,
+                    egresoId: response.data.egreso_id || response.data.data?.id,
+                });
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Error al crear egreso');
+            const errorMessage = err.response?.data?.message || 'Error al crear egreso';
+            setError(errorMessage);
+            toast.error(errorMessage);
+            console.error('❌ Error al crear egreso:', err);
         } finally {
             setLoading(false);
         }
@@ -97,8 +134,9 @@ export default function CreateEgreso() {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-gray-100 dark:bg-slate-700">
-                                        <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Concepto</th>
                                         <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Tipo de Operación</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Categoría</th>
+                                        <th className="border dark:border-slate-600 px-2 py-2 text-left text-sm font-semibold dark:text-gray-100">Concepto</th>
                                         <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Efectivo</th>
                                         <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Transferencia/QR</th>
                                         <th className="border dark:border-slate-600 px-2 py-2 text-right text-sm font-semibold dark:text-gray-100">Total</th>
@@ -108,16 +146,23 @@ export default function CreateEgreso() {
                                 <tbody>
                                     {detalles.map((detalle, index) => {
                                         const total = getDetalleTotal(detalle);
+                                        const categoriasDisponibles = getCategoriasPorTipo(detalle.tipo_operacion_caja_id);
                                         return (
                                             <tr key={index} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">
-                                                <td className="border dark:border-slate-600 px-2 py-2">
-                                                    <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Ej: Café..." required className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" />
-                                                </td>
                                                 <td className="border dark:border-slate-600 px-2 py-2">
                                                     <select value={detalle.tipo_operacion_caja_id} onChange={(e) => handleDetalleChange(index, 'tipo_operacion_caja_id', e.target.value)} className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" required>
                                                         <option value="">Seleccionar...</option>
                                                         {props.tipos_operacion.map((t) => (<option key={t.id} value={t.id}>{t.nombre}</option>))}
                                                     </select>
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-2 py-2">
+                                                    <select value={detalle.categoria || ''} onChange={(e) => handleDetalleChange(index, 'categoria', e.target.value)} className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm">
+                                                        <option value="">Seleccionar...</option>
+                                                        {Object.entries(categoriasDisponibles).map(([key, valor]) => (<option key={key} value={key}>{valor}</option>))}
+                                                    </select>
+                                                </td>
+                                                <td className="border dark:border-slate-600 px-2 py-2">
+                                                    <Input value={detalle.concepto} onChange={(e) => handleDetalleChange(index, 'concepto', e.target.value)} placeholder="Concepto (opcional)" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" />
                                                 </td>
                                                 <td className="border dark:border-slate-600 px-2 py-2">
                                                     <Input type="number" value={detalle.monto_efectivo} onChange={(e) => handleDetalleChange(index, 'monto_efectivo', parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder="0.00" className="dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-right" />
@@ -167,6 +212,24 @@ export default function CreateEgreso() {
                     </div>
                 </form>
             </div>
+
+            {/* ✅ Modal de selección de formato/acción para impresión */}
+            {outputModal.egresoId && (
+                <OutputSelectionModal
+                    isOpen={outputModal.isOpen}
+                    onClose={() => {
+                        setOutputModal({ isOpen: false });
+                        // ✅ Después de cerrar el modal, volver al listado
+                        setTimeout(() => router.visit('/egresos'), 500);
+                    }}
+                    documentoId={outputModal.egresoId}
+                    tipoDocumento="egreso"
+                    documentoInfo={{
+                        numero: `Egreso #${outputModal.egresoId}`,
+                        fecha: new Date().toLocaleDateString('es-BO'),
+                    }}
+                />
+            )}
         </AppLayout>
     );
 }

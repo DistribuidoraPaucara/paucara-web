@@ -17,7 +17,7 @@ export function NotificationsProvider({ children, userRoles = [], userId }: { ch
     userRoles: userRoles,
     filterByRoles: true,
     autoSubscribePublic: true,
-    autoSubscribeUser: userId,
+    autoSubscribeUser: !!userId,
     userId: userId,
     fetchAlertasVencidas: true, // ✅ Se ejecuta UNA SOLA VEZ aquí
   });

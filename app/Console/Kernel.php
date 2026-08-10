@@ -16,6 +16,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('reservas:liberar-inconsistentes')
             ->dailyAt('02:00')
             ->appendOutputTo(storage_path('logs/reservas-cleanup.log'));
+
+        // Enviar notificaciones recurrentes cada minuto
+        $schedule->command('notificaciones:enviar')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/notificaciones.log'));
     }
 
     /**

@@ -4098,4 +4098,129 @@ class ProductoController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ✅ NUEVO: Buscar productos de comidas (permite venta sin stock)
+     *
+     * GET /api/productos-comidas/buscar?q=helado
+     *
+     * Carga TODOS los productos que:
+     * 1. Tengan stock disponible EN almacén actual
+     * 2. O tengan permite_venta_sin_stock = true
+     *
+     * Especialmente diseñado para:
+     * - Ventas de comidas/helados (resort)
+     * - Productos que pueden venderse sin inventario
+     */
+    public function buscarProductosComidas(Request $request): JsonResponse
+    {
+        $q                = $request->string('q');
+        $limite           = $request->integer('limite', 20);
+        $tipoBusqueda     = $request->string('tipo_busqueda', 'parcial');
+        $clienteId        = $request->integer('cliente_id', null);
+
+        // Obtener almacén del usuario
+        $empresa   = $this->obtenerEmpresa($request);
+        $almacenId = $empresa?->almacen_id_principal ?? config('inventario.almacen_principal_id', 1);
+
+        if (!$q || strlen($q) < 2) {
+            return ApiResponse::success([]);
+        }
+
+        Log::info('🍦 [ProductoController::buscarProductosComidas] Buscando productos de comidas', [
+            'q'              => $q,
+            'tipo_busqueda'  => $tipoBusqueda,
+            'almacen_id'     => $almacenId,
+            'cliente_id'     => $clienteId,
+            'limite'         => $limite,
+        ]);
+
+        $searchLower   = strtolower($q);
+        $userEmpresaId = auth()->user()?->empresa_id;
+        $esExacta      = $tipoBusqueda === 'exacta';
+
+        // ✅ CLAVE: Siempre permitir productos sin stock para comidas
+        $permitirProductosSinStock = true;
+
+        // Función auxiliar para construir query
+        $construirQueryBase = function ($query) use ($userEmpresaId, $almacenId, $permitirProductosSinStock) {
+            return $query
+                ->select([
+                    'id', 'nombre', 'codigo_barras', 'sku', 'categoria_id', 'marca_id',
+                    'descripcion', 'peso', 'unidad_medida_id', 'proveedor_id',
+                    'stock_minimo', 'stock_maximo', 'limite_venta', 'activo', 'es_fraccionado',
+                    'empresa_id', 'es_combo', 'permite_venta_sin_stock', 'es_producto_comida'
+                ])
+                ->when($userEmpresaId, fn($q) => $q->where('empresa_id', $userEmpresaId))
+                ->where('activo', true)
+                // ✅ Para comidas: NO filtrar por stock (permitir todos)
+                ->when(!$permitirProductosSinStock, function ($q) use ($almacenId) {
+                    return $q->where(function ($subQ) use ($almacenId) {
+                        // Productos con stock disponible
+                        $subQ->whereHas('stock', function ($sq) use ($almacenId) {
+                            $sq->where('almacen_id', $almacenId)->where('cantidad_disponible', '>', 0);
+                        })
+                        // O productos con permiso de venta sin stock
+                            ->orWhere('permite_venta_sin_stock', true);
+                    });
+                });
+        };
+
+        // PRIORIDAD 1: Buscar por ID exacto
+        if (is_numeric($q)) {
+            $productoPorId = $construirQueryBase(Producto::query())
+                ->where('id', $q)
+                ->limit(1)
+                ->get();
+
+            if ($productoPorId && $productoPorId->count() > 0) {
+                Log::info('✅ Producto comida encontrado por ID: ' . $q);
+                return $this->mapearProductos($productoPorId, $almacenId, 'venta', $clienteId);
+            }
+        }
+
+        // PRIORIDAD 2: Buscar por SKU exacto
+        $queryProductoPorSku = Producto::query()
+            ->select([
+                'id', 'nombre', 'codigo_barras', 'sku', 'categoria_id', 'marca_id',
+                'descripcion', 'peso', 'unidad_medida_id', 'proveedor_id',
+                'stock_minimo', 'stock_maximo', 'limite_venta', 'activo', 'es_fraccionado',
+                'empresa_id', 'es_combo', 'permite_venta_sin_stock', 'es_producto_comida'
+            ])
+            ->where('activo', true)
+            ->when($userEmpresaId, fn($q) => $q->where('empresa_id', $userEmpresaId))
+            ->whereRaw('LOWER(sku) = ?', [$searchLower]);
+
+        $productoPorSku = $queryProductoPorSku->limit(1)->get();
+
+        if ($productoPorSku && $productoPorSku->count() > 0) {
+            Log::info('✅ Producto comida encontrado por SKU: ' . $q);
+            return $this->mapearProductos($productoPorSku, $almacenId, 'venta', $clienteId);
+        }
+
+        // PRIORIDAD 3: Búsqueda normal por nombre, código, descripción
+        $productos = $construirQueryBase(Producto::query())
+            ->where(function ($query) use ($searchLower, $esExacta) {
+                if ($esExacta) {
+                    $query->where('codigo_barras', $searchLower)
+                        ->orWhere('sku', $searchLower);
+                } else {
+                    // Búsqueda parcial: nombre, descripción, código_barras, sku
+                    $query->whereRaw('LOWER(nombre) LIKE ?', ['%' . $searchLower . '%'])
+                        ->orWhereRaw('LOWER(descripcion) LIKE ?', ['%' . $searchLower . '%'])
+                        ->orWhereRaw('LOWER(codigo_barras) LIKE ?', ['%' . $searchLower . '%'])
+                        ->orWhereRaw('LOWER(sku) LIKE ?', ['%' . $searchLower . '%']);
+                }
+            })
+            ->limit($limite)
+            ->get();
+
+        Log::info('✅ [ProductoController::buscarProductosComidas] Búsqueda completada', [
+            'q'       => $q,
+            'resultados' => $productos->count(),
+            'almacen_id' => $almacenId,
+        ]);
+
+        return $this->mapearProductos($productos, $almacenId, 'venta', $clienteId);
+    }
 }

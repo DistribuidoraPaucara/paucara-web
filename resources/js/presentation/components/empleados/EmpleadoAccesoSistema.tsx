@@ -3,7 +3,7 @@ import { Badge } from '@/presentation/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/presentation/components/ui/tooltip';
 import axios from 'axios';
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Search, Shield, User, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Eye, EyeOff, Search, Shield, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface RoleOption {
@@ -77,10 +77,10 @@ export default function EmpleadoAccesoSistema({
     const [roles, setRoles] = useState<RoleOption[]>(rolesDisponibles as RoleOption[]);
     const [loading, setLoading] = useState(!rolesDisponibles?.length && !rolesDisponiblesDetallados?.length);
     const [showPassword, setShowPassword] = useState(false);
-    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'assigned' | 'available'>('assigned');
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+    const [searchRoles, setSearchRoles] = useState<string>('');
     const [searchPermiso, setSearchPermiso] = useState<string>('');
+    const [calculatedInheritedPermissions, setCalculatedInheritedPermissions] = useState<string[]>([]);
 
     // Cargar roles disponibles con permisos (si no vienen desde props)
     useEffect(() => {
@@ -110,23 +110,24 @@ export default function EmpleadoAccesoSistema({
         cargarRoles();
     }, [rolesDisponibles, rolesDisponiblesDetallados]);
 
-    // Manejar carga de foto
-    const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Preview
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                setFotoPreview(ev.target?.result as string);
-            };
-            reader.readAsDataURL(file);
+    // Calcular permisos heredados de los roles seleccionados
+    useEffect(() => {
+        const inherited: Set<string> = new Set();
 
-            // Notificar cambio
-            if (onFotoPerfilChange) {
-                onFotoPerfilChange(file);
-            }
+        // Si tenemos datos detallados de roles, usarlos para calcular permisos heredados
+        if (rolesDisponiblesDetallados && rolesDisponiblesDetallados.length > 0) {
+            selectedRoles.forEach((roleName: string) => {
+                const roleData = rolesDisponiblesDetallados.find((r: any) => r.name === roleName);
+                if (roleData && roleData.permissions && Array.isArray(roleData.permissions)) {
+                    roleData.permissions.forEach((perm: string) => {
+                        inherited.add(perm);
+                    });
+                }
+            });
         }
-    };
+
+        setCalculatedInheritedPermissions(Array.from(inherited));
+    }, [selectedRoles, rolesDisponiblesDetallados]);
 
     const toggleRole = (roleName: string) => {
         if (disabled || !puedeAccederSistema) return;
@@ -210,57 +211,6 @@ export default function EmpleadoAccesoSistema({
                 </Alert>
             )}
 
-            {/* Foto de Perfil */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Foto de Perfil
-                    </CardTitle>
-                    <CardDescription>Foto de identificación del empleado</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex gap-6">
-                        {/* Preview */}
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-                                {fotoPreview ? (
-                                    <img src={fotoPreview} alt="Preview" className="h-full w-full object-cover" />
-                                ) : fotoPerfil && typeof fotoPerfil === 'string' ? (
-                                    <img
-                                        src={fotoPerfil.startsWith('/storage/') ? fotoPerfil : `/storage/${fotoPerfil}`}
-                                        alt="Perfil"
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <User className="h-12 w-12 text-gray-400" />
-                                )}
-                            </div>
-                            <span className="text-xs text-gray-500">{empleado?.nombre || 'Empleado'}</span>
-                        </div>
-
-                        {/* Upload */}
-                        <div className="flex flex-1 flex-col gap-3">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFotoChange}
-                                disabled={disabled}
-                                className="hidden"
-                                id="foto-perfil-input"
-                            />
-                            <label
-                                htmlFor="foto-perfil-input"
-                                className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-center font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Cambiar Foto
-                            </label>
-                            <p className="text-xs text-gray-500">JPG, PNG o GIF (máx 5MB)</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Credenciales */}
             <Card>
                 <CardHeader>
@@ -300,6 +250,10 @@ export default function EmpleadoAccesoSistema({
                                     placeholder={isEditing ? 'Dejar vacío para mantener actual' : 'Mínimo 8 caracteres'}
                                     disabled={disabled}
                                     minLength={8}
+                                    autoComplete="new-password"
+                                    spellCheck={false}
+                                    data-form-type="other"
+                                    data-lpignore="true"
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 />
                                 <button
@@ -322,6 +276,10 @@ export default function EmpleadoAccesoSistema({
                                 placeholder="Repetir la contraseña"
                                 disabled={disabled}
                                 minLength={8}
+                                autoComplete="new-password"
+                                spellCheck={false}
+                                data-form-type="other"
+                                data-lpignore="true"
                                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             />
                         </div>
@@ -338,117 +296,13 @@ export default function EmpleadoAccesoSistema({
                     </CardTitle>
                     <CardDescription>Visualiza los roles y permisos asignados y disponibles</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent>
                     {loading ? (
                         <div className="py-8 text-center">Cargando información...</div>
                     ) : (
                         <>
-                            {/* Tabs: Asignados vs Disponibles - Sin botones para evitar submit */}
-                            <div className="flex border-b border-gray-200 dark:border-gray-700">
-                                <div
-                                    onClick={() => setActiveTab('assigned')}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            setActiveTab('assigned');
-                                        }
-                                    }}
-                                    className={`cursor-pointer border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-                                        activeTab === 'assigned'
-                                            ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                            : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                                >
-                                    <CheckCircle2 className="mr-2 inline-block h-4 w-4" />
-                                    Asignados
-                                </div>
-                                <div
-                                    onClick={() => setActiveTab('available')}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            setActiveTab('available');
-                                        }
-                                    }}
-                                    className={`cursor-pointer border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-                                        activeTab === 'available'
-                                            ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                            : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                                >
-                                    <Plus className="mr-2 inline-block h-4 w-4" />
-                                    Disponibles ({rolesDisponiblesDetallados?.length || 0})
-                                </div>
-                            </div>
-
-                            {/* TAB 1: Roles y Permisos ASIGNADOS */}
-                            {activeTab === 'assigned' && (
-                                <div className="space-y-6">
-                                    {/* Roles Asignados */}
-                                    {selectedRoles && selectedRoles.length > 0 && (
-                                        <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                Roles Asignados ({selectedRoles.length})
-                                            </h4>
-                                            <div className="flex flex-wrap space-y-2 gap-2 items-start">
-                                                {selectedRoles.map((roleName: string, idx: number) => {
-                                                    return (
-                                                        <div
-                                                            key={idx}
-                                                            className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30"
-                                                        >
-                                                            <div className="flex items-start justify-between">
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                                                                        ✓ {roleName}
-                                                                    </p>
-                                                                    {/* Mostrar permisos del rol */}
-                                                                    {/* {typeof role === 'object' && role.permissions && role.permissions.length > 0 && (
-                                                                        <div className="mt-2 flex flex-wrap gap-1">
-                                                                            {role.permissions.slice(0, 5).map((perm: string, i: number) => (
-                                                                                <Badge
-                                                                                    key={i}
-                                                                                    variant="outline"
-                                                                                    className="border-green-300 bg-white text-xs dark:border-green-700 dark:bg-gray-800"
-                                                                                >
-                                                                                    {perm}
-                                                                                </Badge>
-                                                                            ))}
-                                                                            {role.permissions.length > 5 && (
-                                                                                <Badge
-                                                                                    variant="outline"
-                                                                                    className="bg-white text-xs dark:bg-gray-800"
-                                                                                >
-                                                                                    +{role.permissions.length - 5} más
-                                                                                </Badge>
-                                                                            )}
-                                                                        </div>
-                                                                    )} */}
-                                                                </div>
-                                                                {
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => toggleRole(roleName)}
-                                                                        className="ml-2 text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                                                                        disabled={disabled}
-                                                                        title="Remover rol"
-                                                                    >
-                                                                        <X className="h-4 w-4" />
-                                                                    </button>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-
+                            {/* Vista Unificada: Roles y Permisos */}
+                            <div className="space-y-6">
                                     {/* Permisos Directos Asignados - Agrupados por Categoría (Collapsible) */}
                                     {selectedPermissions && selectedPermissions.length > 0 && (
                                         <div>
@@ -525,84 +379,33 @@ export default function EmpleadoAccesoSistema({
                                         </div>
                                     )}
 
-                                    {/* Permisos Heredados de Roles - Agrupados por Categoría (Collapsible) */}
-                                    {/* {permisosHeredados && permisosHeredados.length > 0 && (
-                                        <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                                                <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                                Permisos Heredados de Roles ({permisosHeredados.length})
-                                            </h4>
-                                            <div className="space-y-3">
-                                                {Object.entries(
-                                                    (permisosHeredados as string[]).reduce((acc: Record<string, string[]>, permiso: string) => {
-                                                        const categoria = permiso.split('.')[0];
-                                                        if (!acc[categoria]) acc[categoria] = [];
-                                                        acc[categoria].push(permiso);
-                                                        return acc;
-                                                    }, {}),
-                                                )
-                                                    .sort(([a], [b]) => a.localeCompare(b))
-                                                    .map(([categoria, permisos]) => {
-                                                        const isExpanded = expandedCategories[`heredado-${categoria}`];
-                                                        return (
-                                                            <div key={categoria} className="rounded-lg bg-purple-50 p-3 dark:bg-purple-900/20">
-                                                                <div
-                                                                    onClick={() => toggleCategory(`heredado-${categoria}`)}
-                                                                    className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80"
-                                                                >
-                                                                    {isExpanded ? (
-                                                                        <ChevronDown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                                                    ) : (
-                                                                        <ChevronRight className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                                                    )}
-                                                                    <p className="flex-1 text-xs font-semibold text-purple-700 uppercase dark:text-purple-300">
-                                                                        📂 {categoria} ({permisos.length})
-                                                                    </p>
-                                                                </div>
-                                                                {isExpanded && (
-                                                                    <div className="mt-3 flex flex-wrap gap-2">
-                                                                        {permisos.map((permiso: string, idx: number) => (
-                                                                            <Badge
-                                                                                key={idx}
-                                                                                variant="outline"
-                                                                                className="border-purple-300 bg-white text-xs text-purple-700 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-200"
-                                                                            >
-                                                                                {permiso.split('.').slice(1).join('.')}
-                                                                            </Badge>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                            </div>
-                                        </div>
-                                    )} */}
-
-                                    {!selectedRoles?.length && !selectedPermissions?.length && (
+                                    {/* {!selectedRoles?.length && !selectedPermissions?.length && (
                                         <div className="py-8 text-center text-gray-600 dark:text-gray-400">
                                             <Shield className="mx-auto mb-2 h-12 w-12 opacity-50" />
                                             <p>Sin roles ni permisos asignados</p>
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
-                            )}
 
-                            {/* TAB 2: Roles y Permisos DISPONIBLES */}
-                            {activeTab === 'available' && (
-                                <div className="space-y-6">
+                            {/* Listado Unificado de Permisos */}
+                            <div>
+                                <div>
                                     {/* Roles Disponibles */}
                                     {rolesDisponiblesDetallados && rolesDisponiblesDetallados.length > 0 ? (
                                         <div>
-                                            <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Roles por Asignar</h4>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                                {rolesDisponiblesDetallados.map((role: any) => {
+                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Todos los Roles</h4>
+                                            <div className="relative mb-4">
+                                                <Search className="absolute top-2.5 left-3 h-4 w-4 text-gray-400" />
+                                                <input type="text" placeholder="Buscar roles..." value={searchRoles} onChange={(e) => setSearchRoles(e.target.value)} className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-9 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                                {rolesDisponiblesDetallados.filter((role: any) => role.name.toLowerCase().includes(searchRoles.toLowerCase())).map((role: any) => {
                                                     const isSelected = selectedRoles.includes(role.name);
                                                     return (
                                                         <div
                                                             key={role.id}
                                                             onClick={() => toggleRole(role.name)}
-                                                            className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                                                            className={`cursor-pointer rounded-lg border-2 p-2 transition-all ${
                                                                 isSelected
                                                                     ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-950'
                                                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-900'
@@ -623,25 +426,32 @@ export default function EmpleadoAccesoSistema({
                                                                         {role.name}
                                                                     </h5>
                                                                     {role.permissions && role.permissions.length > 0 && (
-                                                                        <div className="mt-2 flex flex-wrap gap-1">
-                                                                            {role.permissions.slice(0, 3).map((perm: string, i: number) => (
-                                                                                <Badge
-                                                                                    key={i}
-                                                                                    variant="outline"
-                                                                                    className="bg-gray-100 text-xs dark:bg-gray-800"
-                                                                                >
-                                                                                    {perm}
-                                                                                </Badge>
-                                                                            ))}
-                                                                            {role.permissions.length > 3 && (
-                                                                                <Badge
-                                                                                    variant="outline"
-                                                                                    className="bg-gray-100 text-xs dark:bg-gray-800"
-                                                                                >
-                                                                                    +{role.permissions.length - 3}
-                                                                                </Badge>
-                                                                            )}
-                                                                        </div>
+                                                                        <TooltipProvider>
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger asChild>
+                                                                                    <div className="mt-2 inline-flex items-center gap-2 cursor-help">
+                                                                                        <Badge
+                                                                                            variant="outline"
+                                                                                            className="bg-blue-100 text-blue-800 text-xs dark:bg-blue-900/40 dark:text-blue-200 border-blue-300 dark:border-blue-700"
+                                                                                        >
+                                                                                            📋 {role.permissions.length} permisos
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent className="max-w-sm">
+                                                                                    <div className="space-y-2">
+                                                                                        <p className="font-semibold text-sm">Permisos del rol:</p>
+                                                                                        <div className="space-y-1">
+                                                                                            {role.permissions.map((perm: string, i: number) => (
+                                                                                                <div key={i} className="text-xs py-0.5">
+                                                                                                    • {perm}
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -657,41 +467,127 @@ export default function EmpleadoAccesoSistema({
                                         </div>
                                     )}
 
-                                    {/* Permisos Disponibles por Categoría */}
-                                    {permisosDisponibles && Object.keys(permisosDisponibles).length > 0 && (
-                                        <div>
-                                            <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                                                Permisos Disponibles por Asignar
-                                            </h4>
-                                            <div className="space-y-3">
-                                                {Object.entries(permisosDisponibles)
-                                                    .sort(([a], [b]) => a.localeCompare(b))
-                                                    .map(([categoria, permisos]: [string, any]) => (
+                                    {/* Listado Unificado de Permisos con Checkboxes */}
+                                    <div>
+                                        {(() => {
+                                            const selectedCount = selectedPermissions.length + calculatedInheritedPermissions.length;
+                                            const totalCount = Object.values(permisosDisponibles).flat().length;
+
+                                            return (
+                                                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                                                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                    Permisos
+                                                    <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                                                        <span>✓ {selectedCount}</span>
+                                                        <span className="text-blue-400">/</span>
+                                                        <span>{totalCount}</span>
+                                                    </span>
+                                                </h4>
+                                            );
+                                        })()}
+
+
+                                        {/* Buscador */}
+                                        <div className="relative mb-4">
+                                            <Search className="absolute top-2.5 left-3 h-4 w-4 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar permisos..."
+                                                value={searchPermiso}
+                                                onChange={(e) => setSearchPermiso(e.target.value)}
+                                                className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-9 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            />
+                                        </div>
+
+                                        {/* Listado por Categoría */}
+                                        <div className="space-y-2 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+                                            {permisosDisponibles && Object.keys(permisosDisponibles).length > 0 && Object.entries(permisosDisponibles)
+                                                .sort(([a], [b]) => a.localeCompare(b))
+                                                .map(([categoria, permisos]: [string, any]) => {
+                                                    const filteredPermisos = (permisos as string[]).filter((p: string) =>
+                                                        p.toLowerCase().includes(searchPermiso.toLowerCase())
+                                                    );
+
+                                                    if (filteredPermisos.length === 0) return null;
+
+                                                    const isExpanded = expandedCategories[`permisos-${categoria}`];
+
+                                                    return (
                                                         <div
                                                             key={categoria}
-                                                            className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/30"
+                                                            className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900/30"
                                                         >
-                                                            <p className="mb-2 text-xs font-semibold text-gray-700 uppercase dark:text-gray-300">
-                                                                📂 {categoria}
-                                                            </p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {(permisos as string[]).map((permiso: string, idx: number) => (
-                                                                    <Badge
-                                                                        key={idx}
-                                                                        variant="outline"
-                                                                        className="border-gray-300 bg-white text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                                                                    >
-                                                                        {permiso.split('.').slice(1).join('.')}
-                                                                    </Badge>
-                                                                ))}
+                                                            <div
+                                                                onClick={() => toggleCategory(`permisos-${categoria}`)}
+                                                                className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80"
+                                                            >
+                                                                {isExpanded ? (
+                                                                    <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                                ) : (
+                                                                    <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                                )}
+                                                                <p className="flex-1 text-xs font-semibold text-gray-700 uppercase dark:text-gray-300">
+                                                                    📂 {categoria} ({filteredPermisos.length})
+                                                                </p>
                                                             </div>
+
+                                                            {isExpanded && (
+                                                                <div className="mt-3 space-y-2">
+                                                                    {filteredPermisos.map((permiso: string, idx: number) => {
+                                                                        const isHerited = calculatedInheritedPermissions.includes(permiso);
+                                                                        const isDirect = selectedPermissions.includes(permiso);
+                                                                        const isChecked = isHerited || isDirect;
+
+                                                                        return (
+                                                                            <div
+                                                                                key={idx}
+                                                                                className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    id={`perm-${permiso}`}
+                                                                                    checked={isChecked}
+                                                                                    onChange={(e) => {
+                                                                                        if (isHerited && !isDirect) {
+                                                                                            // No permitir desmarcar permisos heredados puros
+                                                                                            return;
+                                                                                        }
+                                                                                        if (e.target.checked) {
+                                                                                            onPermissionsChange?.([...selectedPermissions, permiso]);
+                                                                                        } else {
+                                                                                            onPermissionsChange?.(selectedPermissions.filter(p => p !== permiso));
+                                                                                        }
+                                                                                    }}
+                                                                                    disabled={isHerited && !isDirect}
+                                                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                />
+                                                                                <label
+                                                                                    htmlFor={`perm-${permiso}`}
+                                                                                    className={`flex-1 text-sm flex items-center gap-2 cursor-pointer ${
+                                                                                        isHerited && !isDirect
+                                                                                            ? 'cursor-not-allowed opacity-70'
+                                                                                            : ''
+                                                                                    }`}
+                                                                                >
+                                                                                    <span>{permiso.split('.').slice(1).join('.')}</span>
+                                                                                    {isHerited && (
+                                                                                        <Badge variant="outline" className="bg-purple-100 text-purple-700 text-xs dark:bg-purple-900/30 dark:text-purple-200">
+                                                                                            heredado
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </label>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    ))}
-                                            </div>
+                                                    );
+                                                })}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
-                            )}
+                            </div>
                         </>
                     )}
                 </CardContent>

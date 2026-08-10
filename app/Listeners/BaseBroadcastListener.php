@@ -19,7 +19,7 @@ use Illuminate\Queue\SerializesModels;
  * ✓ Listener solo COMUNICA cambios
  * ✓ Listener puede fallar sin afectar transacción
  */
-abstract class BaseBroadcastListener
+abstract class BaseBroadcastListener implements ShouldBroadcast
 {
     use SerializesModels;
 

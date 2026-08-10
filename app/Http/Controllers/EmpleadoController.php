@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -148,6 +149,8 @@ class EmpleadoController extends Controller
             'permisosAsignados'          => [],
             'permisosHeredados'          => [],
             'permisosDisponibles'        => $allPermissions->map(fn($permisos) => $permisos->pluck('name')->toArray())->toArray(),
+            'permisosAsignadosMap'       => [],
+            'permisosHeredadosMap'       => [],
         ]);
     }
 
@@ -366,11 +369,9 @@ class EmpleadoController extends Controller
             ];
         })->toArray() : [];
 
-        // Obtener roles disponibles (no asignados)
-        $userRoleIds = $empleado->user ? $empleado->user->roles->pluck('id')->toArray() : [];
-        $rolesNotAssigned = $allRoles->filter(function ($role) use ($userRoleIds) {
-            return !in_array($role->id, $userRoleIds);
-        })->map(function ($role) {
+        // Obtener TODOS los roles disponibles (no solo los no asignados)
+        // El componente frontend necesita ver todos para marcar cuál está seleccionado
+        $allRolesFormatted = $allRoles->map(function ($role) {
             return [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -425,7 +426,7 @@ class EmpleadoController extends Controller
             'userRoles'                   => $empleado->user ? $empleado->user->roles->pluck('id')->toArray() : [],
             'userPermissions'             => $userPermissionIds,
             'rolesAsignados'              => $userRolesAssigned,
-            'rolesDisponibles'            => $rolesNotAssigned,
+            'rolesDisponibles'            => $allRolesFormatted,
             'permisosAsignados'           => $userPermissionsDirectAssigned,
             'permisosAsignadosMap'        => $permisosAsignadosMap,
             'permisosHeredados'           => array_values($inheritedPermissions),
@@ -438,7 +439,7 @@ class EmpleadoController extends Controller
             'empleado_id' => $empleado->id,
             'tiene_usuario' => !!$empleado->user,
             'rolesAsignados' => count($userRolesAssigned),
-            'rolesDisponibles' => count($rolesNotAssigned),
+            'rolesDisponibles' => count($allRolesFormatted),
             'permisosAsignados' => count($userPermissionsDirectAssigned),
             'permisosHeredados' => count($inheritedPermissions),
             'permisosDisponiblesCategories' => count($permissionsNotAssigned),
@@ -482,7 +483,7 @@ class EmpleadoController extends Controller
 
         if ($request->has('ci')) {
             $rules['ci'] = [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 Rule::unique('empleados')->ignore($empleado->id),
@@ -507,6 +508,10 @@ class EmpleadoController extends Controller
 
         if ($request->has('puede_acceder_sistema')) {
             $rules['puede_acceder_sistema'] = 'required|boolean';
+        }
+
+        if ($request->hasFile('foto_perfil')) {
+            $rules['foto_perfil'] = 'nullable|image|mimes:jpeg,png,gif|max:5120';
         }
 
         if ($request->has('usernick')) {
@@ -673,6 +678,18 @@ class EmpleadoController extends Controller
 
             if ($request->has('puede_acceder_sistema')) {
                 $datosActualizacion['puede_acceder_sistema'] = $request->puede_acceder_sistema;
+            }
+
+            // Manejar foto de perfil
+            if ($request->hasFile('foto_perfil')) {
+                // Eliminar foto anterior si existe
+                if ($empleado->foto_perfil && Storage::exists('public/' . $empleado->foto_perfil)) {
+                    Storage::delete('public/' . $empleado->foto_perfil);
+                }
+
+                // Guardar nueva foto
+                $fotoPath = $request->file('foto_perfil')->store('empleados', 'public');
+                $datosActualizacion['foto_perfil'] = $fotoPath;
             }
 
             // Actualizar empleado SOLO si hay datos para actualizar

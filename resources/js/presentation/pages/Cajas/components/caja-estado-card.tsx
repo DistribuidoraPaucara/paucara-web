@@ -230,15 +230,15 @@ export function CajaEstadoCard({
 
     return (
         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
-            <div className="p-4">
-                <div className="flex items-center items-start justify-between">
-                    <div>
+            <div className="p-4 sm:p-6">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex-1 space-y-6">
                         <div className="block">
                             <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                                 Apertura: {formatCurrency(datosActualizados?.apertura || cajaAbiertaHoy?.monto_apertura || 0)}
                             </p>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 p-1 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Entradas (Ingresos)</label>
                                 {datosActualizados ? (
@@ -247,8 +247,11 @@ export function CajaEstadoCard({
                                         {desgloseIngresos && desgloseIngresos.length > 0 ? (
                                             <div className="space-y-1">
                                                 {desgloseIngresos.map((ingreso: DesgloseIngreso, idx: number) => (
-                                                    <div key={idx} className="flex flex-row items-center justify-between rounded bg-green-50 p-1 text-sm dark:bg-green-900/10">
-                                                        <div>{ingreso.nombre}:</div>  
+                                                    <div
+                                                        key={idx}
+                                                        className="flex flex-row items-center justify-between rounded bg-green-50 p-1 text-sm dark:bg-green-900/10"
+                                                    >
+                                                        <div>{ingreso.nombre}:</div>
                                                         <div>{formatCurrency(ingreso.total)}</div>
                                                     </div>
                                                 ))}
@@ -279,45 +282,27 @@ export function CajaEstadoCard({
                                                 </span>
                                             </div>
                                         )}
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold dark:border-gray-700">
-                                                <span className="text-gray-900 dark:text-white">TOTAL VENTAS:</span>
-                                                <span className="text-purple-600 dark:text-purple-400">
-                                                    {/* ✅ ACTUALIZADO (2026-05-03): Sumar totalDetallesPago (efectivo+transferencia) + ventasCreditoTotales */}
-                                                    {formatCurrency(
-                                                        (datosActualizados.totalDetallesPago || 0) + (datosActualizados.ventasCreditoTotales || 0),
-                                                    )}
-                                                </span>
+                                        {/* mostrar si sumatoria es > 0*/}
+                                        {(datosActualizados.totalDetallesPago || 0) + (datosActualizados.ventasCreditoTotales || 0) > 0 && (
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold dark:border-gray-700">
+                                                    <span className="text-gray-900 dark:text-white">TOTAL VENTAS:</span>
+                                                    <span className="text-purple-600 dark:text-purple-400">
+                                                        {/* ✅ ACTUALIZADO (2026-05-03): Sumar totalDetallesPago (efectivo+transferencia) + ventasCreditoTotales */}
+                                                        {formatCurrency(
+                                                            (datosActualizados.totalDetallesPago || 0) +
+                                                                (datosActualizados.ventasCreditoTotales || 0),
+                                                        )}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
-                                {/* ✅ NUEVO (2026-07-25): Mostrar dinámicamente ventasPorTipoPago */}
-                                {/* <div className="mt-2">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Ventas por tipo de pago:</p>
-                                    {ventasPorTipoPago && ventasPorTipoPago.length > 0 ? (
-                                        <>
-                                            {ventasPorTipoPago.map((venta, idx) => (
-                                                <div key={idx} className="flex flex-row items-center justify-between rounded bg-blue-50 p-1 text-sm dark:bg-blue-900/10">
-                                                    <div>{venta.tipo}:</div>
-                                                    <div>{formatCurrency(venta.total)} ({venta.cantidad})</div>
-                                                </div>
-                                            ))}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                Efectivo: {formatCurrency(datosActualizados.totalEfectivo || 0)}
-                                            </p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                Transferencias: {formatCurrency(datosActualizados.totalTransferencias || 0)}
-                                            </p>
-                                        </>
-                                    )}
-                                </div> */}
                             </div>
 
-                            <div className="border-l border-gray-300 pl-2 dark:border-gray-700">
+                            {/* SALIDAS */}
+                            <div className="mt-4 border-t border-gray-300 pt-4 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-4 dark:border-gray-700">
                                 <div className="block items-center justify-between">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Salidas (Egresos Desglosado)</label>
                                     {cargandoDatos && <span className="text-xs text-blue-600 dark:text-blue-400">Actualizando...</span>}
@@ -373,8 +358,8 @@ export function CajaEstadoCard({
                                     <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">Sin egresos</p>
                                 )}
                             </div>
-
-                            <div className="border-l border-gray-300 pl-2 dark:border-gray-700">
+                            {/* EFECTIVO ESPERADO */}
+                            <div className="mt-4 border-t border-gray-300 pt-4 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-4 dark:border-gray-700">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">💰 Efectivo Esperado</label>
                                     <p className="text-center text-2xl font-bold text-yellow-600 dark:text-yellow-400">
@@ -384,8 +369,8 @@ export function CajaEstadoCard({
                                 </div>
                                 {/* Totales por tipo */}
                                 {desgloseMovimientos && (
-                                    <div>
-                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+                                    <div className="mt-4">
+                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                             <div className="rounded-md bg-green-100 p-2 dark:bg-green-900/30">
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">Total Efectivo</p>
                                                 <p className="font-bold text-green-700 dark:text-green-300">
@@ -415,10 +400,10 @@ export function CajaEstadoCard({
                                 </button>
 
                                 {/* Contenido expandible */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2">
-                                    <div className="flex flex-wrap items-center gap-2">
+                                <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                    <div className="flex flex-col gap-3">
                                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Entradas:</div>
-                                        <div className="grid grid-cols-1 items-start sm:grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2">
                                             {/* Entradas Efectivo */}
                                             <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -434,9 +419,9 @@ export function CajaEstadoCard({
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-wrap items-center">
+                                    <div className="flex flex-col gap-3">
                                         <p className="text-xs font-medium text-gray-700 dark:text-red-300">Salidas:</p>
-                                        <div className="grid grid-cols-1 items-start sm:grid-cols-2">
+                                        <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2">
                                             {/* Salidas Efectivo */}
                                             <div className="rounded-md bg-white p-1 text-left shadow-sm dark:bg-slate-800">
                                                 <p className="text-xs text-gray-600 dark:text-red-400">
@@ -459,7 +444,7 @@ export function CajaEstadoCard({
 
                     {/* Acciones - Usuario Normal */}
                     {!esVistaAdmin && (
-                        <div className="border-l border-gray-300 pl-4 dark:border-gray-700">
+                        <div className="mt-6 border-t border-gray-300 pt-6 lg:mt-0 lg:w-auto lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6 dark:border-gray-700">
                             {/* Información de la Caja */}
                             <div className="space-y-2">
                                 <div className="mb-2 flex items-center justify-between">

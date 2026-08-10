@@ -353,4 +353,52 @@ class AuthController extends Controller
             'permissions_updated_at' => now()->timestamp,
         ]);
     }
+
+    /**
+     * ✅ NUEVO: Obtener token Sanctum actual del usuario autenticado
+     * Usado por el frontend para guardar en sessionStorage después del login web
+     * Este endpoint requiere autenticación (session web o token)
+     */
+    public function getSanctumToken(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Usuario no autenticado',
+            ], 401);
+        }
+
+        // Obtener el token actual desde la sesión (guardado por AuthenticatedSessionController)
+        $sanctumToken = $request->session()->get('sanctum_token');
+
+        if (!$sanctumToken) {
+            // Si no está en sesión, intentar obtener del usuario (último token creado)
+            $token = $user->currentAccessToken();
+            if (!$token) {
+                // Si no hay token actual, crear uno nuevo
+                $sanctumToken = $user->createToken('web-session')->plainTextToken;
+                // Guardar en sesión para que el middleware lo encuentre
+                $request->session()->put('sanctum_token', $sanctumToken);
+            } else {
+                // No podemos recuperar el plainText de un token existente
+                // Crear uno nuevo en su lugar
+                $user->tokens()->where('name', '!=', 'web-session')->delete();
+                $sanctumToken = $user->createToken('web-session')->plainTextToken;
+                $request->session()->put('sanctum_token', $sanctumToken);
+            }
+        }
+
+        \Illuminate\Support\Facades\Log::info('✅ [AuthController] Token Sanctum recuperado para frontend', [
+            'user_id' => $user->id,
+            'token_preview' => substr($sanctumToken, 0, 20) . '...',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'token' => $sanctumToken,
+            'user_id' => $user->id,
+        ]);
+    }
 }

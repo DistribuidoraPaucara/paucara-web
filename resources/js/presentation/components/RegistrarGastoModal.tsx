@@ -7,32 +7,7 @@ import { Label } from '@/presentation/components/ui/label';
 import { Textarea } from '@/presentation/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
 import toast from 'react-hot-toast';
-
-const CATEGORIAS_GASTO = {
-    'TRANSPORTE': 'Transporte',
-    'LIMPIEZA': 'Limpieza',
-    'MANTENIMIENTO': 'Mantenimiento',
-    'SERVICIOS': 'Servicios',
-    'ALIMENTACION_DESAYUNO': '🍳 Desayuno',
-    'ALIMENTACION_ALMUERZO': '🍽️ Almuerzo',
-    'ALIMENTACION_CENA': '🥘 Cena',
-    'ALIMENTACION_REFRIGERIO': '☕ Refrigerio',
-    'ALIMENTACION_OTROS': '🍴 Otros Alimentos',
-    'VARIOS': 'Varios',
-};
-
-const CATEGORIAS_PAGO_SUELDO = {
-    'SUELDO': 'Sueldo',
-    'BONO': 'Bono',
-    'COMISIÓN': 'Comisión',
-    'LIQUIDACIÓN': 'Liquidación',
-};
-
-const CATEGORIAS_ANTICIPO = {
-    'ADELANTO': 'Adelanto de Sueldo',
-    'PRÉSTAMO': 'Préstamo a Empleado',
-    'OTROS': 'Otros Anticipos',
-};
+import { CATEGORIAS_GASTO, CATEGORIAS_PAGO_SUELDO, CATEGORIAS_ANTICIPO } from '@/constants/categorias-gasto';
 
 interface TipoOperacion {
     id: number;
@@ -69,32 +44,18 @@ export default function RegistrarMovimientoModal({
             console.log('📋 [RegistrarMovimientoModal] Modal abierto con props:', {
                 tiposOperacion: tiposOperacion,
                 tiposOperacionClasificados: tiposOperacionClasificados,
-                tiposPago: tiposPago,
                 total_tipos: tiposOperacion.length,
                 total_tipos_entrada: tiposOperacionClasificados.ENTRADA?.length || 0,
                 total_tipos_salida: tiposOperacionClasificados.SALIDA?.length || 0,
                 total_tipos_ajuste: tiposOperacionClasificados.AJUSTE?.length || 0,
-                total_pagos: tiposPago.length,
             });
-
-            // ✅ NUEVO: Seleccionar "Efectivo" por defecto si está disponible
-            if (tiposPago && tiposPago.length > 0) {
-                const efectivo = tiposPago.find(tipo =>
-                    tipo.codigo?.toUpperCase() === 'EFECTIVO' ||
-                    tipo.nombre?.toUpperCase() === 'EFECTIVO'
-                );
-                if (efectivo) {
-                    console.log('✅ [RegistrarMovimientoModal] Tipo de pago "Efectivo" seleccionado por defecto:', efectivo);
-                    setData('tipo_pago_id', efectivo.id.toString());
-                }
-            }
         }
-    }, [show, tiposOperacion, tiposOperacionClasificados, tiposPago]);
+    }, [show, tiposOperacion, tiposOperacionClasificados]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         tipo_operacion_id: '',
-        tipo_pago_id: '',
-        monto: '',
+        monto_efectivo: '',
+        monto_transferencia: '',
         numero_documento: '',
         categoria: '',
         observaciones: '',
@@ -117,6 +78,11 @@ export default function RegistrarMovimientoModal({
         }
     }, [data.tipo_operacion_id, tiposOperacion]);
 
+    // Calcular monto total
+    const montoEfectivo = parseFloat(data.monto_efectivo) || 0;
+    const montoTransferencia = parseFloat(data.monto_transferencia) || 0;
+    const montoTotal = montoEfectivo + montoTransferencia;
+
     // Filtrar tipos de operación válidos (excluir APERTURA y CIERRE que tienen sus propios modales)
     const tiposOperacionValidos = tiposOperacion.filter(tipo =>
         !['APERTURA', 'CIERRE'].includes(tipo.codigo)
@@ -129,8 +95,8 @@ export default function RegistrarMovimientoModal({
             tipo_operacion_id: data.tipo_operacion_id,
             tipo_operacion_nombre: tipoSeleccionado?.nombre,
             tipo_operacion_codigo: tipoSeleccionado?.codigo,
-            tipo_pago_id: data.tipo_pago_id,
-            monto: data.monto,
+            monto_efectivo: data.monto_efectivo,
+            monto_transferencia: data.monto_transferencia,
             categoria: data.categoria,
             numero_documento: data.numero_documento,
             observaciones: data.observaciones,
@@ -147,39 +113,63 @@ export default function RegistrarMovimientoModal({
             },
             body: JSON.stringify({
                 tipo_operacion_id: data.tipo_operacion_id,
-                tipo_pago_id: data.tipo_pago_id,
-                monto: data.monto,
+                monto_efectivo: data.monto_efectivo ? parseFloat(data.monto_efectivo) : 0,
+                monto_transferencia: data.monto_transferencia ? parseFloat(data.monto_transferencia) : 0,
                 numero_documento: data.numero_documento,
                 categoria: data.categoria,
                 observaciones: data.observaciones,
             }),
         })
         .then(async (response) => {
-            const result = await response.json();
+            let result;
+            const contentType = response.headers.get('content-type');
 
-            if (!response.ok) {
-                throw new Error(result.message || 'Error al registrar movimiento');
+            // Intentar parsear como JSON
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                // Si no es JSON, es probablemente un error HTML
+                const text = await response.text();
+                console.error('❌ [RegistrarMovimientoModal] Respuesta no-JSON del backend:', text.substring(0, 200));
+                throw new Error(`Error del servidor (${response.status}): Respuesta inválida`);
             }
 
-            console.log('✅ [RegistrarMovimientoModal] Movimiento registrado exitosamente en backend:', {
-                movimientoId: result.movimiento_id,
+            if (!response.ok) {
+                const errorMessage = result.message || result.errors || 'Error al registrar movimiento';
+                console.error('❌ [RegistrarMovimientoModal] Error en respuesta:', {
+                    status: response.status,
+                    message: errorMessage,
+                    errors: result.errors,
+                    fullResponse: result,
+                });
+                throw new Error(errorMessage);
+            }
+
+            console.log('✅ [RegistrarMovimientoModal] Movimiento(s) registrado(s) exitosamente en backend:', {
+                movimientosIds: result.movimientos_ids,
+                movimientosCount: result.movimientos_count,
                 tipoOperacion: result.tipo_operacion,
             });
 
-            toast.success('Movimiento registrado exitosamente');
+            const mensaje = result.movimientos_count > 1
+                ? `${result.movimientos_count} movimientos registrados exitosamente`
+                : 'Movimiento registrado exitosamente';
+            toast.success(mensaje);
 
-            // ✅ VALIDAR que el ID fue retornado correctamente
-            if (!result.movimiento_id) {
-                throw new Error('No se obtuvo movimiento_id del backend');
+            // ✅ VALIDAR que al menos un ID fue retornado correctamente
+            if (!result.movimientos_ids || result.movimientos_ids.length === 0) {
+                throw new Error('No se obtuvo ID de movimiento del backend');
             }
 
-            console.log('✅ [RegistrarMovimientoModal] ID del movimiento obtenido:', result.movimiento_id);
+            console.log('✅ [RegistrarMovimientoModal] IDs de movimientos obtenidos:', result.movimientos_ids);
 
             // ✅ NUEVO: Crear objeto movimiento con los datos retornados
+            const montoTotal = (parseFloat(data.monto_efectivo) || 0) + (parseFloat(data.monto_transferencia) || 0);
             const movimientoData = {
-                id: result.movimiento_id,
+                ids: result.movimientos_ids,
                 tipo_operacion: result.tipo_operacion || tipoSeleccionado,
-                monto: data.monto,
+                monto_total: montoTotal,
+                movimientos_count: result.movimientos_count,
                 observaciones: data.observaciones,
             };
 
@@ -248,9 +238,12 @@ export default function RegistrarMovimientoModal({
             esEgreso: esEgreso,
             data_tipo_operacion_id: data.tipo_operacion_id,
             data_categoria: data.categoria,
+            monto_efectivo: data.monto_efectivo,
+            monto_transferencia: data.monto_transferencia,
+            monto_total: montoTotal,
             mostrar_categoria: (esGasto || esPagoSueldo || esAnticipo),
         });
-    }, [tipoSeleccionado, esGasto, esPagoSueldo, esAnticipo, data.tipo_operacion_id]);
+    }, [tipoSeleccionado, esGasto, esPagoSueldo, esAnticipo, data.tipo_operacion_id, montoTotal]);
 
     const handleArchivoSeleccionado = (e: React.ChangeEvent<HTMLInputElement>) => {
         const archivo = e.target.files?.[0];
@@ -391,52 +384,67 @@ export default function RegistrarMovimientoModal({
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="monto" className="text-gray-900 dark:text-gray-100">Monto (Bs) *</Label>
-                            <div className="relative">
-                                {esEgreso && (
-                                    <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400 font-semibold">-</span>
-                                )}
-                                <Input
-                                    id="monto"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={data.monto}
-                                    onChange={(e) => setData('monto', e.target.value)}
-                                    placeholder="0.00"
-                                    className={`text-right dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600 ${esEgreso ? 'pl-8' : ''}`}
-                                />
+                        {/* Monto Efectivo y Transferencia */}
+                        <div className="space-y-3">
+                            <Label className="text-gray-900 dark:text-gray-100 font-semibold">Montos por Tipo de Pago</Label>
+
+                            {/* Monto Efectivo */}
+                            <div className="space-y-2">
+                                <Label htmlFor="monto_efectivo" className="text-gray-900 dark:text-gray-100">
+                                    💵 Efectivo (Bs)
+                                </Label>
+                                <div className="relative">
+                                    {esEgreso && (
+                                        <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400 font-semibold">-</span>
+                                    )}
+                                    <Input
+                                        id="monto_efectivo"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.monto_efectivo}
+                                        onChange={(e) => setData('monto_efectivo', e.target.value)}
+                                        placeholder="0.00"
+                                        className={`text-right dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600 ${esEgreso ? 'pl-8' : ''}`}
+                                    />
+                                </div>
                             </div>
-                            {errors.monto && (
-                                <p className="text-sm text-red-600 dark:text-red-400">{errors.monto}</p>
+
+                            {/* Monto Transferencia/QR */}
+                            <div className="space-y-2">
+                                <Label htmlFor="monto_transferencia" className="text-gray-900 dark:text-gray-100">
+                                    🔄 Transferencia/QR (Bs)
+                                </Label>
+                                <div className="relative">
+                                    {esEgreso && (
+                                        <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400 font-semibold">-</span>
+                                    )}
+                                    <Input
+                                        id="monto_transferencia"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.monto_transferencia}
+                                        onChange={(e) => setData('monto_transferencia', e.target.value)}
+                                        placeholder="0.00"
+                                        className={`text-right dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600 ${esEgreso ? 'pl-8' : ''}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Total */}
+                            {montoTotal > 0 && (
+                                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+                                        💰 Total: Bs {montoTotal.toFixed(2)}
+                                    </p>
+                                </div>
                             )}
+
                             {esEgreso && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Se registrará como egreso (monto negativo)
+                                    Se registrará como egreso (montos negativos)
                                 </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="tipo_pago_id" className="text-gray-900 dark:text-gray-100">Tipo de Pago</Label>
-                            <Select
-                                value={data.tipo_pago_id}
-                                onValueChange={(value) => setData('tipo_pago_id', value)}
-                            >
-                                <SelectTrigger className="dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600">
-                                    <SelectValue placeholder="Selecciona el tipo de pago (opcional)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {tiposPago.map((tipo) => (
-                                        <SelectItem key={tipo.id} value={tipo.id.toString()}>
-                                            {tipo.nombre}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.tipo_pago_id && (
-                                <p className="text-sm text-red-600 dark:text-red-400">{errors.tipo_pago_id}</p>
                             )}
                         </div>
 
@@ -550,7 +558,7 @@ export default function RegistrarMovimientoModal({
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing || !data.tipo_operacion_id || !data.monto || ((esGasto || esPagoSueldo || esAnticipo) && !data.categoria)}
+                            disabled={processing || !data.tipo_operacion_id || montoTotal <= 0 || ((esGasto || esPagoSueldo || esAnticipo) && !data.categoria)}
                             className={getColorButton()}
                         >
                             {processing ? (

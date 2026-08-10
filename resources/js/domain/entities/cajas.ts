@@ -62,6 +62,7 @@ export interface MovimientoCaja {
     tipo_pago?: any;  // ✅ NUEVO: Tipo de pago
     venta_id?: number;   // ✅ NUEVO: ID de venta para análisis de rango
     pago_id?: number;    // ✅ NUEVO: ID de pago para análisis de rango
+    egreso_id?: number;  // ✅ NUEVO (2026-08-08): ID de egreso para trazabilidad
     comprobantes?: ComprobanteMovimiento[];
     usuario?: Usuario;   // ✅ NUEVO: Usuario que realizó el movimiento
     venta?: {           // ✅ NUEVO (2026-02-11): Venta asociada con su estado y tipo entrega
@@ -92,6 +93,15 @@ export interface MovimientoCaja {
                 nombre: string;
             };
         }>;
+    };
+    egreso?: {          // ✅ NUEVO (2026-08-08): Egreso asociado
+        id: number;
+        numero?: string;
+        estado_documento?: {
+            id: number;
+            codigo: string;
+            nombre: string;
+        };
     };
 }
 

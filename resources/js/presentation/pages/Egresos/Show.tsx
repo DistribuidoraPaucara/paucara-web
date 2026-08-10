@@ -2,8 +2,9 @@
 import { Button } from '@/presentation/components/ui/button';
 import { Head, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Printer } from 'lucide-react';
 import { useState } from 'react';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 
 interface Egreso {
     id: number;
@@ -35,6 +36,7 @@ export default function ShowEgreso() {
     const egreso = props.egreso;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [printModal, setPrintModal] = useState<{ isOpen: boolean; egresoId?: number; egresoNumero?: string }>({ isOpen: false });
 
     const handleAnular = async () => {
         if (!confirm('¿Estás seguro de que deseas anular este egreso?')) return;
@@ -63,11 +65,20 @@ export default function ShowEgreso() {
                         <h1 className="text-3xl font-bold dark:text-white">{egreso.numero}</h1>
                         <p className="mt-1 text-gray-500 dark:text-gray-400">{new Date(egreso.fecha).toLocaleDateString('es-ES')}</p>
                     </div>
-                    {egreso.estado_documento.codigo === 'APROBADO' && (
-                        <Button variant="destructive" onClick={handleAnular} disabled={loading}>
-                            {loading ? 'Anulando...' : 'Anular Egreso'}
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setPrintModal({ isOpen: true, egresoId: egreso.id, egresoNumero: egreso.numero })}
+                            variant="outline"
+                            className="gap-2 dark:border-slate-600 dark:text-white"
+                        >
+                            <Printer className="h-4 w-4" /> Imprimir
                         </Button>
-                    )}
+                        {egreso.estado_documento.codigo === 'APROBADO' && (
+                            <Button variant="destructive" onClick={handleAnular} disabled={loading}>
+                                {loading ? 'Anulando...' : 'Anular Egreso'}
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {error && (
@@ -159,6 +170,20 @@ export default function ShowEgreso() {
                     </p>
                 </div>
             </div>
+
+            {/* ✅ Modal de selección de formato/acción para impresión */}
+            {printModal.egresoId && (
+                <OutputSelectionModal
+                    isOpen={printModal.isOpen}
+                    onClose={() => setPrintModal({ isOpen: false })}
+                    documentoId={printModal.egresoId}
+                    tipoDocumento="egreso"
+                    documentoInfo={{
+                        numero: printModal.egresoNumero || `Egreso #${printModal.egresoId}`,
+                        fecha: new Date().toLocaleDateString('es-BO'),
+                    }}
+                />
+            )}
         </AppLayout>
     );
 }

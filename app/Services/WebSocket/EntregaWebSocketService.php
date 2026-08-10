@@ -376,7 +376,8 @@ class EntregaWebSocketService extends BaseWebSocketService
                 rol: 'admin'
             );
 
-            // Datos comunes para la notificación
+            // Datos comunes para la notificación - SOLO información logística
+            // Sin información de pago (eso se maneja por separado)
             $notificacionData = [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
@@ -389,10 +390,8 @@ class EntregaWebSocketService extends BaseWebSocketService
                     'nombre' => $entrega->chofer?->name ?? 'Chofer',
                 ],
                 'total' => (float) $venta->total,
-                'tipo_entrega' => $tipoEntrega,
-                'tipo_novedad' => $tipoNovedad,
-                'estado_pago' => $estadoPago,
-                'total_recibido' => $totalRecibido ?? 0,
+                'tipo_confirmacion' => $tipoEntrega,  // ✅ CLAVE: COMPLETA, RECHAZADO, DEVOLUCION_PARCIAL, CLIENTE_CERRADO, NO_CONTACTADO
+                'tipo_novedad' => $tipoNovedad,       // Para referencia interna
                 'estado' => 'ENTREGADA',
                 'fecha_entrega' => now()->toIso8601String(),
                 'categoria' => 'venta_entregada',
@@ -477,7 +476,8 @@ class EntregaWebSocketService extends BaseWebSocketService
     }
 
     /**
-     * ✅ Generar mensaje personalizado según tipo de entrega y novedad
+     * ✅ ACTUALIZADO: Generar mensaje personalizado SOLO basado en tipo_confirmacion
+     * Sin información de pago - Solo estado logístico
      * Mensajes diferentes para cliente vs admin
      */
     private function generarMensajeEntrega(
@@ -491,41 +491,167 @@ class EntregaWebSocketService extends BaseWebSocketService
     ): string {
         $cliente = $venta->cliente?->nombre ?? 'Cliente';
         $chofer = $entrega->chofer?->name ?? 'Chofer';
+        $ventaNumero = $venta->numero ?? 'N/A';
 
-        if ($tipoEntrega === 'COMPLETA') {
-            // ✅ Entrega exitosa
-            if ($rol === 'cliente') {
-                return match ($estadoPago) {
-                    'PAGADO' => "✅ Tu venta #{$venta->numero} fue entregada y pagada correctamente por {$chofer}",
-                    'PARCIAL' => "✅ Tu venta #{$venta->numero} fue entregada. Pago recibido: Bs. {$totalRecibido} (Saldo pendiente)",
-                    'NO_PAGADO' => "✅ Tu venta #{$venta->numero} fue entregada sin pago registrado",
-                    default => "✅ Tu venta #{$venta->numero} fue entregada exitosamente por {$chofer}"
-                };
-            } else {
-                return match ($estadoPago) {
-                    'PAGADO' => "✅ Venta #{$venta->numero} ({$cliente}) - Entregada y pagada - Bs. {$venta->total}",
-                    'PARCIAL' => "✅ Venta #{$venta->numero} ({$cliente}) - Entregada, pago parcial: Bs. {$totalRecibido}",
-                    'NO_PAGADO' => "⚠️ Venta #{$venta->numero} ({$cliente}) - Entregada sin pago - Monto: Bs. {$venta->total}",
-                    default => "✅ Venta #{$venta->numero} ({$cliente}) entregada correctamente"
-                };
-            }
-        } else {
-            // ❌ Entrega con NOVEDAD
-            $mensajeNovedad = match ($tipoNovedad) {
-                'TIENDA_CERRADA' => '🏪 Tienda cerrada',
-                'CLIENTE_AUSENTE' => '👤 Cliente ausente',
-                'CLIENTE_RECHAZA' => '❌ Cliente rechazó la entrega',
-                'CLIENTE_NO_IDENTIFICADO' => '🚫 Cliente no identificado',
-                'DEVOLUCIÓN_PARCIAL' => '📦 Devolución parcial de productos',
-                'OTRO' => '⚠️ Novedad en la entrega',
-                default => '⚠️ Entrega con novedad'
+        // Mapeo directo de tipo_confirmacion (valores: COMPLETA, RECHAZADO, DEVOLUCION_PARCIAL, CLIENTE_CERRADO, NO_CONTACTADO)
+        if ($rol === 'cliente') {
+            // Mensajes para el cliente - Lenguaje amigable
+            return match ($tipoEntrega) {
+                'COMPLETA' => "✅ Tu pedido #{$ventaNumero} fue entregado correctamente.",
+                'RECHAZADO' => "❌ Tu pedido #{$ventaNumero} fue rechazado. Por favor contacta con nuestro equipo.",
+                'DEVOLUCION_PARCIAL' => "⚠️ Tu pedido #{$ventaNumero} tiene una devolución parcial. Nos contactaremos pronto.",
+                'CLIENTE_CERRADO' => "🏪 Tu local estaba cerrado. Reintentar la entrega pronto.",
+                'NO_CONTACTADO' => "📞 No pudimos contactarte. Te intentaremos alcanzar nuevamente.",
+                default => "ℹ️ Actualización en tu pedido #{$ventaNumero}. Consulta la app para más detalles."
             };
-
-            if ($rol === 'cliente') {
-                return "⚠️ Tu venta #{$venta->numero} tiene una novedad: {$mensajeNovedad}. Por favor, contacta con el equipo de logística";
-            } else {
-                return "{$mensajeNovedad} - Venta #{$venta->numero} ({$cliente}) - Requiere acción";
-            }
+        } else {
+            // Mensajes para admins - Más detallados
+            return match ($tipoEntrega) {
+                'COMPLETA' => "✅ Venta #{$ventaNumero} ({$cliente}) - ENTREGADA - Chofer: {$chofer}",
+                'RECHAZADO' => "❌ Venta #{$ventaNumero} ({$cliente}) - RECHAZADA - Requiere revisión",
+                'DEVOLUCION_PARCIAL' => "⚠️ Venta #{$ventaNumero} ({$cliente}) - DEVOLUCION PARCIAL - Revisar productos",
+                'CLIENTE_CERRADO' => "🏪 Venta #{$ventaNumero} ({$cliente}) - LOCAL CERRADO - Reintentar",
+                'NO_CONTACTADO' => "📞 Venta #{$ventaNumero} ({$cliente}) - NO CONTACTADO - Requiere acción",
+                default => "ℹ️ Venta #{$ventaNumero} ({$cliente}) - Estado actualizado"
+            };
         }
+    }
+
+    /**
+     * ✅ NUEVO: Notificar que una entrega está lista para partir
+     */
+    public function notifyEntregaListoParaEntrega($entrega): bool
+    {
+        if (!$entrega->relationLoaded('creador')) {
+            $entrega->load('creador');
+        }
+
+        $creador = $entrega->creador;
+
+        if (!$creador) {
+            \Log::warning('EntregaWebSocketService: Creador no encontrado', [
+                'entrega_id' => $entrega->id,
+                'created_by' => $entrega->created_by,
+            ]);
+            return false;
+        }
+
+        $choferNombre = $entrega->chofer?->name ?? 'Asignado';
+        $mensaje = "📤 La entrega {$entrega->numero_entrega} está lista para salir. Chofer: {$choferNombre}";
+
+        return $this->send('notify/entrega-listo-para-entrega', [
+            'entrega_id' => $entrega->id,
+            'numero_entrega' => $entrega->numero_entrega,
+            'chofer_id' => $entrega->chofer_id,
+            'chofer_nombre' => $choferNombre,
+            'vehiculo_placa' => $entrega->vehiculo?->placa ?? 'Vehículo',
+            'user_id' => $creador->id, // ✅ Para routing en Node.js
+            'ventas_count' => $entrega->ventas()->count() ?? 0,
+            'peso_kg' => $entrega->peso_total ?? 0,
+            'volumen_m3' => $entrega->volumen_total ?? 0,
+            'mensaje' => $mensaje,
+        ]);
+    }
+
+    /**
+     * ✅ NUEVO: Notificar al cliente que su entrega/venta está lista
+     */
+    public function notifyClienteEntregaListo($venta, $entrega): bool
+    {
+        if (!$venta->relationLoaded('cliente')) {
+            $venta->load('cliente');
+        }
+
+        $cliente = $venta->cliente;
+
+        if (!$cliente || !$cliente->user_id) {
+            \Log::warning('EntregaWebSocketService: Cliente sin user_id', [
+                'venta_id' => $venta->id,
+                'cliente_id' => $venta->cliente_id,
+            ]);
+            return false;
+        }
+
+        return $this->send('notify/cliente-entrega-listo', [
+            'venta_id' => $venta->id,
+            'venta_numero' => $venta->numero,
+            'entrega_id' => $entrega->id,
+            'entrega_numero' => $entrega->numero_entrega,
+            'cliente_nombre' => $cliente->nombre,
+            'cliente_id' => $cliente->id,
+            'user_id' => $cliente->user_id, // ✅ Para routing en Node.js
+            'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer',
+            'vehiculo_placa' => $entrega->vehiculo?->placa ?? 'Vehículo',
+            'total' => (float) $venta->total,
+            'mensaje' => "📤 Tu pedido #{$venta->numero} está en el camión y será entregado pronto.",
+            'tipo' => 'cliente_entrega_listo',
+        ]);
+    }
+
+    /**
+     * ✅ NUEVO: Notificar que una venta fue confirmada como entregada
+     * Envía notificación al creador de la entrega con tipo_confirmacion
+     */
+    public function notifyVentaConfirmadaEntrega($venta, $entrega, $confirmacion): bool
+    {
+        if (!$entrega->relationLoaded('creador')) {
+            $entrega->load('creador');
+        }
+
+        $creador = $entrega->creador;
+
+        if (!$creador) {
+            \Log::warning('EntregaWebSocketService: Entrega sin creador', [
+                'entrega_id' => $entrega->id,
+                'venta_id' => $venta->id,
+            ]);
+            return false;
+        }
+
+        return $this->send('notify/venta-confirmada-entrega', [
+            'venta_id' => $venta->id,
+            'venta_numero' => $venta->numero,
+            'entrega_id' => $entrega->id,
+            'entrega_numero' => $entrega->numero_entrega,
+            'cliente_nombre' => $venta->cliente?->nombre ?? 'Cliente',
+            'cliente_id' => $venta->cliente_id,
+            'user_id' => $creador->id,
+            'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+            'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer',
+            'total' => (float) $venta->total,
+        ]);
+    }
+
+    /**
+     * ✅ NUEVO: Notificar al cliente que su venta fue confirmada como entregada
+     * Envía solo tipo_confirmacion sin información de pago
+     */
+    public function notifyClienteVentaConfirmada($venta, $entrega, $confirmacion): bool
+    {
+        if (!$venta->relationLoaded('cliente')) {
+            $venta->load('cliente');
+        }
+
+        $cliente = $venta->cliente;
+
+        if (!$cliente || !$cliente->user_id) {
+            \Log::warning('EntregaWebSocketService: Cliente sin user_id', [
+                'venta_id' => $venta->id,
+                'cliente_id' => $venta->cliente_id,
+            ]);
+            return false;
+        }
+
+        return $this->send('notify/cliente-venta-confirmada', [
+            'venta_id' => $venta->id,
+            'venta_numero' => $venta->numero,
+            'entrega_id' => $entrega->id,
+            'entrega_numero' => $entrega->numero_entrega,
+            'cliente_nombre' => $cliente->nombre,
+            'cliente_id' => $cliente->id,
+            'user_id' => $cliente->user_id,
+            'tipo_confirmacion' => $confirmacion->tipo_confirmacion,
+            'chofer_nombre' => $entrega->chofer?->name ?? 'Chofer',
+        ]);
     }
 }

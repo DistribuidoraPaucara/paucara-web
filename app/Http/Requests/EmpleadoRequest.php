@@ -21,7 +21,7 @@ class EmpleadoRequest extends FormRequest
     {
         $rules = [
             'nombre'                => 'required|string|max:255',
-            'ci'                    => 'required|string|max:20',
+            'ci'                    => 'nullable|string|max:20',
             'telefono'              => 'nullable|string|max:20',
             'direccion'             => 'nullable|string|max:255',
             'fecha_ingreso'         => 'required|date',
@@ -76,6 +76,7 @@ class EmpleadoRequest extends FormRequest
         return [
             'nombre.required'     => 'El nombre es obligatorio.',
             'ci.required'         => 'El número de documento de identidad es obligatorio.',
+            'ci.string'           => 'El número de documento de identidad debe ser texto.',
             'telefono.required'   => 'El número de teléfono es obligatorio.',
             'estado.in'           => 'El estado del empleado no es válido.',
             'email.required_if'   => 'El email es obligatorio cuando se crea un usuario.',

@@ -1,11 +1,11 @@
 import NotificationService from '@/infrastructure/services/notification.service';
 import { Checkbox } from '@/presentation/components/ui/checkbox';
+import { FeatureToggle } from '@/presentation/components/ui/feature-toggle';
 import { Input } from '@/presentation/components/ui/input';
 import InputSearch from '@/presentation/components/ui/input-search';
 import { Label } from '@/presentation/components/ui/label';
 import SearchSelect from '@/presentation/components/ui/search-select';
-import { FeatureToggle } from '@/presentation/components/ui/feature-toggle';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/presentation/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/presentation/components/ui/tooltip';
 import { useState } from 'react';
 
 interface Option {
@@ -234,7 +234,12 @@ function Step1DatosProducto({
                             <TooltipTrigger asChild>
                                 <button className="mb-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
                                 </button>
                             </TooltipTrigger>
@@ -248,7 +253,7 @@ function Step1DatosProducto({
                     )}
                 </div>
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="mb-1 flex items-center gap-2">
                         <div className="relative flex-1">
                             <label
                                 htmlFor="sku"
@@ -273,7 +278,12 @@ function Step1DatosProducto({
                             <TooltipTrigger asChild>
                                 <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
                                 </button>
                             </TooltipTrigger>
@@ -282,9 +292,9 @@ function Step1DatosProducto({
                     </div>
                 </div>
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="mb-1 flex items-center gap-2">
                         <div className="relative flex-1">
-                            <label
+                            {/* <label
                                 htmlFor="sku"
                                 className={`pointer-events-none absolute left-3 transition-all duration-200 ${
                                     data.sku
@@ -293,7 +303,7 @@ function Step1DatosProducto({
                                 }`}
                             >
                                 Proveedor (opcional)
-                            </label>
+                            </label> */}
                             <InputSearch
                                 id="proveedor"
                                 label=""
@@ -354,7 +364,9 @@ function Step1DatosProducto({
 
                                                 // Manejar errores de validación específicos
                                                 if (response.status === 422 && errorData.errors?.nombre) {
-                                                    NotificationService.error('Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.');
+                                                    NotificationService.error(
+                                                        'Ya existe un proveedor con ese nombre. Por favor, elige un nombre diferente.',
+                                                    );
                                                 } else {
                                                     NotificationService.error(errorData.message || 'Error al crear el proveedor');
                                                 }
@@ -378,11 +390,19 @@ function Step1DatosProducto({
                             <TooltipTrigger asChild>
                                 <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
                                 </button>
                             </TooltipTrigger>
-                            <TooltipContent>Si no encuentras el proveedor, puedes crearlo haciendo clic en el botón ➕. El sistema evitará crear proveedores con nombres duplicados.</TooltipContent>
+                            <TooltipContent>
+                                Si no encuentras el proveedor, puedes crearlo haciendo clic en el botón ➕. El sistema evitará crear proveedores con
+                                nombres duplicados.
+                            </TooltipContent>
                         </Tooltip>
                     </div>
                     {lastSearchQuery && lastSearchQuery.length >= 2 && !searchResultsFound && (
@@ -426,7 +446,7 @@ function Step1DatosProducto({
                         id="unidad_medida_id"
                         label="Unidad de medida"
                         placeholder="Seleccione una unidad"
-                        value={data.unidad_medida_id ?? (unidadesOptions.find(u => u.description === 'UN')?.value ?? '')}
+                        value={data.unidad_medida_id ?? unidadesOptions.find((u) => u.description === 'UN')?.value ?? ''}
                         options={unidadesOptions}
                         onChange={(value) => setData('unidad_medida_id', value ? Number(value) : '')}
                         error={errors.unidad_medida_id}
@@ -499,7 +519,7 @@ function Step1DatosProducto({
                     {errors.descripcion && <div className="mt-1 text-sm text-red-500">⚠️ {errors.descripcion}</div>}
                 </div>
             </div>
-            <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/20">
+            <div className="mt-2 border-t border-blue-200 p-2">
                 <div className="flex items-start gap-2">
                     <svg
                         className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
@@ -514,7 +534,7 @@ function Step1DatosProducto({
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <div className="text-sm text-blue-800 dark:text-blue-200">
+                    <div className="text-sm text-blue-800 dark:text-blue-200 mb-2">
                         <strong>Alertas de Stock Globales:</strong> Para evitar agotamientos, configura estos valores.
                     </div>
                 </div>
@@ -527,7 +547,12 @@ function Step1DatosProducto({
                                 <TooltipTrigger asChild>
                                     <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
                                         </svg>
                                     </button>
                                 </TooltipTrigger>
@@ -554,7 +579,12 @@ function Step1DatosProducto({
                                 <TooltipTrigger asChild>
                                     <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
                                         </svg>
                                     </button>
                                 </TooltipTrigger>
@@ -581,7 +611,12 @@ function Step1DatosProducto({
                                 <TooltipTrigger asChild>
                                     <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
                                         </svg>
                                     </button>
                                 </TooltipTrigger>
@@ -606,71 +641,66 @@ function Step1DatosProducto({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-4 text-sm text-muted-foreground">
-              {/* ✨ NUEVA SECCIÓN: Productos Fraccionados */}
-              {permite_productos_fraccionados && (
-                  <FeatureToggle
-                      id="es_fraccionado"
-                      checked={!!data.es_fraccionado}
-                      onCheckedChange={(v) => setData('es_fraccionado', !!v)}
-                      icon="⚡"
-                      title="Productos Fraccionados"
-                      description="Permite fraccionamiento de este producto en diferentes unidades de medida."
-                      colorScheme="blue"
-                  />
-              )}
+            <div className="border-t border-gray-200 pt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                {/* ✨ NUEVA SECCIÓN: Productos Fraccionados */}
+                {permite_productos_fraccionados && (
+                    <FeatureToggle
+                        id="es_fraccionado"
+                        checked={!!data.es_fraccionado}
+                        onCheckedChange={(v) => setData('es_fraccionado', !!v)}
+                        icon="⚡"
+                        title="Productos Fraccionados"
+                        description="Permite fraccionamiento de este producto en diferentes unidades de medida."
+                        colorScheme="blue"
+                    />
+                )}
 
-              {/* 🍦 NUEVA SECCIÓN: Producto de Comida/Helado */}
-              <FeatureToggle
-                  id="es_producto_comida"
-                  checked={!!data.es_producto_comida}
-                  onCheckedChange={(v) => setData('es_producto_comida', !!v)}
-                  icon="🍦"
-                  title="Producto Resort"
-                  description="Marca este producto si es una comida o helado que se vende sin control de stock."
-                  hint="Ejemplo: Helados, postres, bebidas personalizadas"
-                  colorScheme="orange"
-                  // additionalContent={
-                  //     <div>
-                  //         <p className="text-sm font-medium">💡 <strong>Próximo Paso:</strong> Agrega adicionales (extras) en la pestaña <strong>"Productos de Comida"</strong></p>
-                  //         <p className="mt-1 text-xs opacity-75">Ejemplos: Leche extra (+3Bs), Chocolate (+5Bs), Uvas Pasa (+2Bs)</p>
-                  //     </div>
-                  // }
-              />
+                {/* 🍦 NUEVA SECCIÓN: Producto de Comida/Helado */}
+                {/* <FeatureToggle
+                    id="es_producto_comida"
+                    checked={!!data.es_producto_comida}
+                    onCheckedChange={(v) => setData('es_producto_comida', !!v)}
+                    icon="🍦"
+                    title="Producto Resort"
+                    description="Marca este producto si es una comida o helado que se vende sin control de stock."
+                    hint="Ejemplo: Helados, postres, bebidas personalizadas"
+                    colorScheme="orange"
+                /> */}
 
-              {/* ✅ NUEVA SECCIÓN: Venta sin Stock (solo para farmacias) */}
-              {es_farmacia && (
-                  <FeatureToggle
-                      id="permite_venta_sin_stock"
-                      checked={!!data.permite_venta_sin_stock}
-                      onCheckedChange={(v) => setData('permite_venta_sin_stock', !!v)}
-                      icon="⚙️"
-                      title="Vender sin Stock"
-                      description="Marca este producto si es un servicio que se puede vender incluso sin inventario disponible."
-                      hint="Ejemplo: Inyecciones, curaciones, aplicación de medicamentos"
-                      colorScheme="purple"
-                      /* additionalContent={
+                {/* ✅ NUEVA SECCIÓN: Venta sin Stock (solo para farmacias) */}
+                <FeatureToggle
+                    id="permite_venta_sin_stock"
+                    checked={!!data.permite_venta_sin_stock}
+                    onCheckedChange={(v) => setData('permite_venta_sin_stock', !!v)}
+                    icon="⚙️"
+                    title="Vender sin Stock"
+                    description="Marca este producto si es un servicio que se puede vender incluso sin inventario disponible."
+                    hint="Ejemplo: Inyecciones, curaciones, aplicación de medicamentos"
+                    colorScheme="purple"
+                    /* additionalContent={
                           <div>
                               <p className="text-sm font-medium">✅ <strong>Servicio Habilitado:</strong> Este producto se puede vender sin stock disponible</p>
                               <p className="mt-1 text-xs opacity-75">Se permitirá crear ventas incluso si el inventario es 0 o negativo</p>
                           </div>
                       } */
-                  />
-              )}
+                />
 
-              {/* ✨ NUEVA SECCIÓN: Visibilidad en App */}
-              <FeatureToggle
-                  id="visible_app"
-                  checked={!!data.visible_app}
-                  onCheckedChange={(v) => setData('visible_app', !!v)}
-                  icon="👁️"
-                  title="Visible en App"
-                  description={data.visible_app ? '✅ Este producto es visible en la aplicación móvil' : '❌ Este producto está oculto en la aplicación móvil'}
-                  hint="Desactiva esta opción si quieres ocultarlo de los clientes en la app"
-                  colorScheme="green"
-              />
+                {/* ✨ NUEVA SECCIÓN: Visibilidad en App */}
+                <FeatureToggle
+                    id="visible_app"
+                    checked={!!data.visible_app}
+                    onCheckedChange={(v) => setData('visible_app', !!v)}
+                    icon="👁️"
+                    title="Visible en App"
+                    description={
+                        data.visible_app
+                            ? '✅ Este producto es visible en la aplicación móvil'
+                            : '❌ Este producto está oculto en la aplicación móvil'
+                    }
+                    hint="Desactiva esta opción si quieres ocultarlo de los clientes en la app"
+                    colorScheme="green"
+                />
             </div>
-
 
             {/* ✨ NUEVA SECCIÓN: Información de Medicamentos (solo para farmacias) */}
             {es_farmacia && (
@@ -707,7 +737,12 @@ function Step1DatosProducto({
                                     <TooltipTrigger asChild>
                                         <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
                                             </svg>
                                         </button>
                                     </TooltipTrigger>
@@ -732,7 +767,12 @@ function Step1DatosProducto({
                                     <TooltipTrigger asChild>
                                         <button className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
                                             </svg>
                                         </button>
                                     </TooltipTrigger>

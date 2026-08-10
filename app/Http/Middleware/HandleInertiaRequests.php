@@ -44,33 +44,44 @@ class HandleInertiaRequests extends Middleware
         $cajaStatus = $this->getCajaStatus($request->user());
         $configuracionSitio = ConfiguracionSitio::actual();
 
-        // 🔍 DEBUG: Verificar token en sesión con diagnosticos completos
-        $sessionId = $request->session()->getId();
-        $sessionData = $request->session()->all();
-        $sanctumToken = $request->session()->get('sanctum_token');
+        // ✅ Obtener token Sanctum de sesión (guardado en AuthenticatedSessionController)
+        $sanctumToken = null;
 
-        /* \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] Estado completo de sesión:', [
-            'session_id' => $sessionId,
-            'session_keys' => array_keys($sessionData),
-            'has_sanctum_token' => isset($sessionData['sanctum_token']),
-            'sanctum_token_is_null' => $sanctumToken === null,
-            'user_id' => $request->user()?->id,
-            'user_name' => $request->user()?->name,
-            'request_path' => $request->getPathInfo(),
-        ]); */
+        if ($request->user()) {
+            // Obtener del header Authorization primero (para requests de API)
+            $authHeader = $request->header('Authorization');
+            if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+                $sanctumToken = substr($authHeader, 7);
+            }
 
-        if (!$sanctumToken) {
-            /* \Illuminate\Support\Facades\Log::info('🔍 [HandleInertiaRequests] ✅ Token ENCONTRADO en sesión:', [
-                'token_preview' => substr($sanctumToken, 0, 20) . '...',
-                'user_id' => $request->user()?->id,
-                'user_name' => $request->user()?->name,
-                'session_id' => $sessionId,
-            ]); */
-            \Illuminate\Support\Facades\Log::warning('⚠️  [HandleInertiaRequests] ❌ NO hay token en sesión - Se enviarán props con sanctumToken = null', [
-                'session_id' => $sessionId,
-                'user_id' => $request->user()?->id,
-                'request_path' => $request->getPathInfo(),
-            ]);
+            // Si no está en header, buscar en sesión
+            if (!$sanctumToken) {
+                $sanctumToken = $request->session()->get('sanctum_token');
+            }
+
+            // Último recurso: obtener del modelo si existe un token activo
+            if (!$sanctumToken) {
+                $token = $request->user()->currentAccessToken();
+                if ($token) {
+                    // NOTA: currentAccessToken() devuelve el modelo del token, no el plainText
+                    // Necesitaríamos regenerarlo o usar otra estrategia
+                    // Por ahora simplemente lo dejamos nulo si no está en sesión
+                }
+            }
+
+            if ($sanctumToken) {
+                \Illuminate\Support\Facades\Log::info('✅ [HandleInertiaRequests] Token Sanctum encontrado', [
+                    'token_preview' => substr($sanctumToken, 0, 20) . '...',
+                    'user_id' => $request->user()?->id,
+                    'session_id' => $request->session()->getId(),
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::warning('⚠️  [HandleInertiaRequests] ❌ Token Sanctum no encontrado en sesión', [
+                    'user_id' => $request->user()?->id,
+                    'session_id' => $request->session()->getId(),
+                    'session_keys' => array_keys($request->session()->all()),
+                ]);
+            }
         }
 
         // ✅ CORREGIDO (2026-04-16): Cargar relación empresa del usuario
@@ -78,6 +89,13 @@ class HandleInertiaRequests extends Middleware
         if ($user) {
             $user->load('empresa');
         }
+
+        \Illuminate\Support\Facades\Log::info('🔐 [HandleInertiaRequests] Auth props', [
+            'user_id' => $user?->id,
+            'user_name' => $user?->name,
+            'is_authenticated' => $user !== null,
+            'request_path' => $request->getPathInfo(),
+        ]);
 
         return [
             ...parent::share($request),

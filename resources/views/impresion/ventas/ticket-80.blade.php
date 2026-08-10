@@ -10,14 +10,17 @@
 <div class="documento-titulo" style="font-size:12px;">{{ $documento->tipoDocumento->nombre ?? 'Folio: ' }} N°{{ $documento->id }}</div>
 <div class="documento-numero" style="font-size:12px;">{{ $documento->numero }}</div>
 <div class="center" style="margin-top: 3px; font-size:11px">
-    <p style="margin: 2px 0;"><strong>Creados:</strong> {{ $documento->created_at->format('d/m/Y H:i') }}</p>
-    <p style="margin: 2px 0;"><strong>Emisión:</strong> {{ now()->format('d/m/Y H:i') }}</p>
+    <p style="margin: 2px 0;"><strong>Creado:</strong> {{ $documento->created_at->format('d/m/Y H:i') }}</p>
+    <!-- <p style="margin: 2px 0;"><strong>Emisión:</strong> {{ now()->format('d/m/Y H:i') }}</p> -->
     @if($documento->estadoDocumento)
-        <p style="margin: 2px 0;"><strong>Estado:</strong> {{ $documento->estadoDocumento->nombre }}</p>
+    <p style="margin: 2px 0;"><strong>{{ strtoupper($documento->estadoDocumento->nombre) }}</strong></p>
     @endif
     @if($documento->confirmaciones && $documento->confirmaciones->count() > 0)
-        @php $confirmacion = $documento->confirmaciones->first(); @endphp
-        <p style="margin: 2px 0;"><strong>Entrega:</strong> {{ $confirmacion->tipo_entrega === 'COMPLETA' ? 'Completa' : 'Con Novedad' }}</p>
+    @php $confirmacion = $documento->confirmaciones->sortByDesc('id')->first(); @endphp
+    <!-- <p style="margin: 2px 0;"><strong>Entrega:</strong> {{ $confirmacion->tipo_entrega === 'COMPLETA' ? 'Completa' : 'Con Novedad' }}</p> -->
+    @if($confirmacion->tipo_confirmacion)
+    <p style="margin: 2px 0;"><strong>Estado:</strong> {{ ucfirst(str_replace('_', ' ', strtolower($confirmacion->tipo_confirmacion))) }}</p>
+    @endif
     @endif
 </div>
 
@@ -27,11 +30,11 @@
 
 {{-- ==================== INFO DEL CLIENTE ==================== --}}
 <div class="documento-info" style="font-size:12px;">
-    <p><strong>Cliente:</strong> {{ $documento->cliente->nombre }}</p>
+    <p><strong>Cliente:</strong> {{ strtoupper($documento->cliente->nombre) }}</p>
     @if($documento->cliente->razon_social)
-    <p><strong>Razon Social:</strong> {{ $documento->cliente->razon_social }}</p>
+    <p><strong>Razon Social:</strong> {{ strtoupper($documento->cliente->razon_social) }}</p>
     @endif
-    <p><strong>Cód. Cliente:</strong> #{{ $documento->cliente->id }} | {{ $documento->cliente->codigo_cliente }}</p>
+    <!-- <p><strong>Cód. Cliente:</strong> #{{ $documento->cliente->id }} | {{ $documento->cliente->codigo_cliente }}</p> -->
     @if($documento->cliente->nit)
     <p><strong>NIT/CI:</strong> {{ $documento->cliente->nit }}</p>
     @endif
@@ -44,38 +47,38 @@
     <p><strong>Dirección:</strong> {{ $documento->direccionCliente->direccion ?? 'Sin dirección' }}</p>
     @endif --}}
     @if($documento->direccionCliente)
-    <p style="center"><strong>Dir:</strong> {{ $documento->direccionCliente->observaciones ?? 'Sin direccion' }}</p>
+    <p style="center"><strong>Dir:</strong> {{ strtoupper($documento->direccionCliente->observaciones ?? 'Sin direccion') }}</p>
     @endif
     <table style="width: 100%; border-collapse: collapse;">
         <tr>
             @if($documento->usuario)
             <td style="width: 50%; padding: 2px 5px 2px 0;"><strong>Vendedor:</strong> {{ $documento->usuario->name }}</td>
             @endif
-            @if($documento->movimientoCaja && $documento->movimientoCaja->caja)
-            <td style="width: 50%; padding: 2px 0;"><strong>Caja:</strong> {{ $documento->movimientoCaja->caja->nombre }}</td>
-            @endif
+            <td style="width: 50%; padding: 2px 0;">
+                {{-- ✅ NUEVO: Mostrar preventista (desde proforma O directamente de preventista_id) --}}
+                @php
+                $preventista = null;
+                // Prioridad 1: Usuario creador de la proforma (si existe)
+                if ($documento->proforma_id && $documento->proforma && $documento->proforma->usuarioCreador) {
+                $preventista = $documento->proforma->usuarioCreador;
+                }
+                // Prioridad 2: Preventista directo (preventista_id)
+                elseif ($documento->preventista_id && $documento->preventista) {
+                $preventista = $documento->preventista;
+                }
+                @endphp
+                @if($preventista)
+                <p><strong>Prev.:</strong> {{ $preventista->name }}</p>
+                @endif
+            </td>
         </tr>
     </table>
-    {{-- ✅ NUEVO: Mostrar preventista (desde proforma O directamente de preventista_id) --}}
-    @php
-    $preventista = null;
-    // Prioridad 1: Usuario creador de la proforma (si existe)
-    if ($documento->proforma_id && $documento->proforma && $documento->proforma->usuarioCreador) {
-        $preventista = $documento->proforma->usuarioCreador;
-    }
-    // Prioridad 2: Preventista directo (preventista_id)
-    elseif ($documento->preventista_id && $documento->preventista) {
-        $preventista = $documento->preventista;
-    }
-    @endphp
-    @if($preventista)
-    <p><strong>Preventista:</strong> {{ $preventista->name }}</p>
-    @endif
+
 </div>
 
 @if($documento->movimientoCaja)
 <div class="documento-info" style="font-size:13px;">
-    
+
     @if($documento->detalles && $documento->detalles->first())
     @php
     $primeraLinea = $documento->detalles->first();
@@ -87,9 +90,9 @@
     }
     }
     @endphp
-    @if($almacen)
+    <!-- @if($almacen)
     <p><strong>Almacén:</strong> {{ $almacen->nombre }}</p>
-    @endif
+    @endif -->
     @endif
 </div>
 @endif
@@ -106,21 +109,21 @@
 {{-- ==================== TOTALES ==================== --}}
 @include('impresion.ventas.partials._totales')
 
-<div class="separador"></div>
+<!-- <div class="separador"></div>
 @if($documento->tipoPago)
 <div class="center bold" style="font-size: 12px; margin-top: 2px;">
     Tipo Pago: <strong>{{ $documento->tipoPago->nombre }}</strong>
 </div>
-@endif
+@endif -->
 
 {{-- ==================== INFORMACIÓN DE PAGO ==================== --}}
-<div class="center bold" style="font-size: 12px;">
+<!-- <div class="center bold" style="font-size: 12px;">
     Politica Pago: {{ $documento->politica_pago ?? 'CONTRA_ENTREGA' }}
 </div>
-
+ -->
 {{-- ✅ NUEVO: Tipo de Pago --}}
 
-<div class="center" style="margin-top: 5px; font-weight: bold; font-size: 13px;">
+<!-- <div class="center" style="margin-top: 5px; font-weight: bold; font-size: 13px;">
     @if($documento->estado_pago === 'PAGADA')
     <span>PAGADA</span>
     @elseif($documento->estado_pago === 'PARCIAL')
@@ -132,7 +135,7 @@
     @else
     <span>{{ $documento->estado_pago ?? 'SIN ESTADO' }}</span>
     @endif
-</div>
+</div> -->
 
 <div class="separador"></div>
 {{-- ✅ NUEVO: Mostrar observaciones cuando la venta está ANULADA --}}
@@ -150,7 +153,7 @@
 {{-- ✅ NUEVO: Mostrar última confirmación de entrega si existe --}}
 @if($documento->confirmaciones && $documento->confirmaciones->count() > 0)
 @php
-    $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
+$ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
 @endphp
 @if($ultimaConfirmacion)
 <div class="documento-info" style="font-size:12px; background-color: #f5f5f5; padding: 3px 5px; margin: 3px 0;">
@@ -160,7 +163,7 @@
     @endif
     @if($ultimaConfirmacion->tipo_confirmacion)
     <p style="margin: 2px 0;"><strong>Estado:</strong> {{ ucfirst(str_replace('_', ' ', strtolower($ultimaConfirmacion->tipo_confirmacion))) }}</p>
-    @endif    
+    @endif
     @if($ultimaConfirmacion->total_dinero_recibido)
     <p style="margin: 2px 0;"><strong>Dinero Recibido:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->total_dinero_recibido, 2) }}</p>
     @endif

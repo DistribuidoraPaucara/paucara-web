@@ -58,20 +58,17 @@ class AuthenticatedSessionController extends Controller
         // ✅ Guardar el token en sesión para pasarlo al dashboard via Inertia
         $request->session()->put('sanctum_token', $token);
 
-        // 🔍 DEBUG: Verificar que se guardó en sesión ANTES de redirigir
-        $sessionToken = $request->session()->get('sanctum_token');
-        \Illuminate\Support\Facades\Log::info('🔍 [AuthenticatedSessionController] Token guardado en sesión:', [
-            'session_token_preview' => substr($sessionToken, 0, 20) . '...',
-            'matches_created_token' => $sessionToken === $token,
-            'session_id' => $sessionId,
-            'session_data' => array_keys($request->session()->all()),
-        ]);
+        // ✅ NUEVO: Guardar también el token ID en sesión (para referencia)
+        $tokenParts = explode('|', $token);
+        $request->session()->put('sanctum_token_id', $tokenParts[0] ?? null);
 
-        // ✅ Verificar que todas las claves están en sesión antes de redirigir
-        \Illuminate\Support\Facades\Log::info('🔍 [AuthenticatedSessionController] Estado de sesión completo:', [
-            'session_has_sanctum_token' => $request->session()->has('sanctum_token'),
-            'session_sanctum_token_is_null' => $request->session()->get('sanctum_token') === null,
+        // ✅ Hacer que la sesión persista inmediatamente
+        $request->session()->save();
+
+        \Illuminate\Support\Facades\Log::info('✅ [AuthenticatedSessionController] Token guardado en sesión y guardado:', [
+            'token_preview' => substr($token, 0, 20) . '...',
             'session_id' => $sessionId,
+            'has_sanctum_token' => $request->session()->has('sanctum_token'),
         ]);
 
         // ✅ CAMBIO IMPORTANTE: Redirigir a dashboard-redirect en lugar de dashboard

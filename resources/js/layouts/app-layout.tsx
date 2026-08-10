@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
-import { WebSocketProvider, useWebSocketContext } from '@/application/contexts/WebSocketContext';
+import { useWebSocketContext } from '@/application/contexts/WebSocketContext';
 import { useAuth } from '@/application/hooks/use-auth';
 import { type BreadcrumbItem } from '@/types';
 import { type ReactNode } from 'react';
@@ -66,15 +66,13 @@ function AppLayoutContent({ children, breadcrumbs, ...props }: AppLayoutProps) {
 }
 
 /**
- * Layout principal que envuelve la aplicación con WebSocketProvider
- * Esto asegura una única conexión WebSocket global
+ * Layout principal
+ * El WebSocketProvider está en app.tsx (punto de entrada global)
  */
 export default function AppLayout({ children, breadcrumbs, ...props }: AppLayoutProps) {
     return (
-        <WebSocketProvider autoConnect={true}>
-            <AppLayoutContent breadcrumbs={breadcrumbs} {...props}>
-                {children}
-            </AppLayoutContent>
-        </WebSocketProvider>
+        <AppLayoutContent breadcrumbs={breadcrumbs} {...props}>
+            {children}
+        </AppLayoutContent>
     );
 }

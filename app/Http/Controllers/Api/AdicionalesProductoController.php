@@ -97,8 +97,14 @@ class AdicionalesProductoController extends Controller
      */
     public function productosComida(): JsonResponse
     {
-        $productos = Producto::where('permite_venta_sin_stock', true)
-            ->where('activo', true)
+        $productos = Producto::where('activo', true)
+            ->whereHas('precios', function($q) {
+                // Solo productos que tienen un precio activo de tipo VENTA
+                $q->where('activo', true)
+                    ->whereHas('tipoPrecio', function($subQ) {
+                        $subQ->where('codigo', 'VENTA');
+                    });
+            })
             ->with([
                 'adicionales' => function($q) {
                     $q->activos()->ordenados();
@@ -111,11 +117,23 @@ class AdicionalesProductoController extends Controller
                 'imagenes' => function($q) {
                     // Cargar imagen principal (es_principal = true) o la primera si no existe
                     $q->orderBy('es_principal', 'desc')->orderBy('orden');
+                },
+                'stock' => function($q) {
+                    // Cargar stock disponible (cantidad_disponible = cantidad para venta, sin las reservadas)
+                    $q->select('id', 'producto_id', 'cantidad_disponible');
                 }
             ])
-            ->get(['id', 'nombre', 'descripcion', 'precio_venta', 'permite_venta_sin_stock']); // ✨ Incluir precio_venta como fallback
+            ->orderBy('id', 'desc')
+            ->get(['id', 'nombre', 'sku', 'descripcion', 'precio_venta', 'permite_venta_sin_stock', 'es_producto_comida'])
+            ->filter(function($producto) {
+                // ✅ FILTRO: Solo mostrar productos que cumplan al menos una condición:
+                // 1. Permiten venta sin stock (permite_venta_sin_stock = true)
+                // 2. Tienen stock disponible (cantidad > 0)
+                $disponibilidad = $producto->stock->sum('cantidad_disponible') ?? 0;
+                return $producto->permite_venta_sin_stock || $disponibilidad > 0;
+            });
 
-        // Mapear productos para incluir el precio de VENTA correcto
+        // Mapear productos para incluir el precio de VENTA correcto y disponibilidad
         $productosFormatted = $productos->map(function($producto) {
             // Buscar el precio de tipo VENTA (el que NO es precio base)
             $precioVenta = $producto->precios
@@ -136,12 +154,18 @@ class AdicionalesProductoController extends Controller
             // Obtener imagen principal o primera disponible
             $imagenPrincipal = $producto->imagenes->isNotEmpty() ? $producto->imagenes[0]->url : null;
 
+            // Calcular disponibilidad sumando todos los stock_productos (cantidad_disponible = sin reservadas)
+            $disponibilidad = $producto->stock->sum('cantidad_disponible') ?? 0;
+
             return [
                 'id' => $producto->id,
                 'nombre' => $producto->nombre,
+                'sku' => $producto->sku, // ✅ NUEVO: Incluir SKU
                 'descripcion' => $producto->descripcion,
                 'precio_venta' => $montoVenta,
                 'es_producto_comida' => $producto->es_producto_comida,
+                'permite_venta_sin_stock' => (bool) $producto->permite_venta_sin_stock, // ✅ NUEVO: Incluir permite_venta_sin_stock
+                'disponibilidad' => (int) $disponibilidad, // ✅ NUEVO: Incluir disponibilidad total
                 'imagen_url' => $imagenPrincipal,
                 'adicionales' => $producto->adicionales,
             ];
@@ -149,7 +173,7 @@ class AdicionalesProductoController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $productosFormatted,
+            'data' => $productosFormatted->values()->toArray(), // ✅ Convertir a array y reindexar
         ]);
     }
 }

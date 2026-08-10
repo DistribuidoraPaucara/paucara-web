@@ -1,83 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-index.definition = {
-    methods: ["get","head"],
-    url: '/api/notificaciones',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-index.url = (options?: RouteQueryOptions) => {
-    return index.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: index.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:29
- * @route '/api/notificaciones'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
-/**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
  * @route '/api/notificaciones/no-leidas'
@@ -799,6 +721,6 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
         })
     
     destroy.form = destroyForm
-const NotificationController = { index, unread, stats, byType, markAllAsRead, destroyAll, show, markAsRead, markAsUnread, destroy }
+const NotificationController = { unread, stats, byType, markAllAsRead, destroyAll, show, markAsRead, markAsUnread, destroy }
 
 export default NotificationController

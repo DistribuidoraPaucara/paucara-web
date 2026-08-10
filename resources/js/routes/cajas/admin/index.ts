@@ -5,7 +5,7 @@ import gastos from './gastos'
 import auditoria from './auditoria'
 /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -20,7 +20,7 @@ dashboard.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -38,7 +38,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -48,7 +48,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
     const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +58,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
         dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -67,7 +67,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CajaController::dashboard
- * @see app/Http/Controllers/CajaController.php:926
+ * @see app/Http/Controllers/CajaController.php:983
  * @route '/cajas/admin/dashboard'
  */
         dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +83,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     dashboard.form = dashboardForm
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiario
- * @see app/Http/Controllers/CajaController.php:1501
+ * @see app/Http/Controllers/CajaController.php:1639
  * @route '/cajas/admin/cierre-diario'
  */
 export const cierreDiario = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -98,7 +98,7 @@ cierreDiario.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiario
- * @see app/Http/Controllers/CajaController.php:1501
+ * @see app/Http/Controllers/CajaController.php:1639
  * @route '/cajas/admin/cierre-diario'
  */
 cierreDiario.url = (options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ cierreDiario.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiario
- * @see app/Http/Controllers/CajaController.php:1501
+ * @see app/Http/Controllers/CajaController.php:1639
  * @route '/cajas/admin/cierre-diario'
  */
 cierreDiario.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -117,7 +117,7 @@ cierreDiario.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\CajaController::cierreDiario
- * @see app/Http/Controllers/CajaController.php:1501
+ * @see app/Http/Controllers/CajaController.php:1639
  * @route '/cajas/admin/cierre-diario'
  */
     const cierreDiarioForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -127,7 +127,7 @@ cierreDiario.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\CajaController::cierreDiario
- * @see app/Http/Controllers/CajaController.php:1501
+ * @see app/Http/Controllers/CajaController.php:1639
  * @route '/cajas/admin/cierre-diario'
  */
         cierreDiarioForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ cierreDiario.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     cierreDiario.form = cierreDiarioForm
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiarioJson
- * @see app/Http/Controllers/CajaController.php:1321
+ * @see app/Http/Controllers/CajaController.php:1459
  * @route '/cajas/admin/cierre-diario-json'
  */
 export const cierreDiarioJson = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ cierreDiarioJson.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiarioJson
- * @see app/Http/Controllers/CajaController.php:1321
+ * @see app/Http/Controllers/CajaController.php:1459
  * @route '/cajas/admin/cierre-diario-json'
  */
 cierreDiarioJson.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ cierreDiarioJson.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::cierreDiarioJson
- * @see app/Http/Controllers/CajaController.php:1321
+ * @see app/Http/Controllers/CajaController.php:1459
  * @route '/cajas/admin/cierre-diario-json'
  */
 cierreDiarioJson.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ cierreDiarioJson.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
 
     /**
 * @see \App\Http\Controllers\CajaController::cierreDiarioJson
- * @see app/Http/Controllers/CajaController.php:1321
+ * @see app/Http/Controllers/CajaController.php:1459
  * @route '/cajas/admin/cierre-diario-json'
  */
     const cierreDiarioJsonForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ cierreDiarioJson.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
 
             /**
 * @see \App\Http\Controllers\CajaController::cierreDiarioJson
- * @see app/Http/Controllers/CajaController.php:1321
+ * @see app/Http/Controllers/CajaController.php:1459
  * @route '/cajas/admin/cierre-diario-json'
  */
         cierreDiarioJsonForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -193,7 +193,7 @@ cierreDiarioJson.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
     cierreDiarioJson.form = cierreDiarioJsonForm
 /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
 export const reportes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -208,7 +208,7 @@ reportes.definition = {
 
 /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
 reportes.url = (options?: RouteQueryOptions) => {
@@ -217,7 +217,7 @@ reportes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
 reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -226,7 +226,7 @@ reportes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
 reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -236,7 +236,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
     const reportesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -246,7 +246,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
         reportesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -255,7 +255,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\CajaController::reportes
- * @see app/Http/Controllers/CajaController.php:1119
+ * @see app/Http/Controllers/CajaController.php:1257
  * @route '/cajas/admin/reportes'
  */
         reportesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -270,7 +270,7 @@ reportes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     reportes.form = reportesForm
 /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
 export const conciliacion = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -284,7 +284,7 @@ conciliacion.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.url = (options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ conciliacion.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -300,7 +300,7 @@ conciliacion.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
 conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -309,7 +309,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
     const conciliacionForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -318,7 +318,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
         conciliacionForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -326,7 +326,7 @@ conciliacion.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:731
+ * @see routes/web.php:734
  * @route '/cajas/admin/conciliacion'
  */
         conciliacionForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

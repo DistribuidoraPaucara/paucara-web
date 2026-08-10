@@ -26,7 +26,8 @@ interface Props {
 export default function AperturaCajaModal({ show, onClose, cajas, cajaUsuarioId }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         caja_id: cajaUsuarioId?.toString() || '',
-        monto_apertura: '',
+        monto_apertura_efectivo: '',
+        monto_apertura_transferencia: '',
         observaciones: ''
     });
 
@@ -95,24 +96,56 @@ export default function AperturaCajaModal({ show, onClose, cajas, cajaUsuarioId 
                         )}
                     </div>
 
+                    {/* Monto en Efectivo */}
                     <div className="space-y-2">
-                        <Label htmlFor="monto_apertura">Monto Inicial (Bs) *</Label>
+                        <Label htmlFor="monto_apertura_efectivo">💵 Monto Efectivo (Bs)</Label>
                         <Input
-                            id="monto_apertura"
+                            id="monto_apertura_efectivo"
                             type="number"
                             step="0.01"
                             min="0"
-                            value={data.monto_apertura}
-                            onChange={(e) => setData('monto_apertura', e.target.value)}
+                            value={data.monto_apertura_efectivo}
+                            onChange={(e) => setData('monto_apertura_efectivo', e.target.value)}
                             placeholder="0.00"
                             className="text-right"
                         />
-                        {errors.monto_apertura && (
-                            <p className="text-sm text-red-600">{errors.monto_apertura}</p>
+                        {errors.monto_apertura_efectivo && (
+                            <p className="text-sm text-red-600">{errors.monto_apertura_efectivo}</p>
                         )}
-                        <p className="text-xs text-gray-500">
-                            Ingresa el dinero físico que tienes al abrir la caja
-                        </p>
+                    </div>
+
+                    {/* Monto en Transferencia/QR */}
+                    <div className="space-y-2">
+                        <Label htmlFor="monto_apertura_transferencia">💳 Monto Transferencia/QR (Bs)</Label>
+                        <Input
+                            id="monto_apertura_transferencia"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={data.monto_apertura_transferencia}
+                            onChange={(e) => setData('monto_apertura_transferencia', e.target.value)}
+                            placeholder="0.00"
+                            className="text-right"
+                        />
+                        {errors.monto_apertura_transferencia && (
+                            <p className="text-sm text-red-600">{errors.monto_apertura_transferencia}</p>
+                        )}
+                    </div>
+
+                    {/* Resumen de montos */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                            <span className="font-semibold">{formatCurrency(parseFloat(data.monto_apertura_efectivo) || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Transferencia:</span>
+                            <span className="font-semibold">{formatCurrency(parseFloat(data.monto_apertura_transferencia) || 0)}</span>
+                        </div>
+                        <div className="border-t pt-1 mt-1 flex justify-between text-sm font-bold">
+                            <span>Total:</span>
+                            <span>{formatCurrency((parseFloat(data.monto_apertura_efectivo) || 0) + (parseFloat(data.monto_apertura_transferencia) || 0))}</span>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -140,7 +173,7 @@ export default function AperturaCajaModal({ show, onClose, cajas, cajaUsuarioId 
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing || !data.caja_id || !data.monto_apertura}
+                            disabled={processing || !data.caja_id}
                             className="bg-green-600 hover:bg-green-700"
                         >
                             {processing ? (

@@ -375,6 +375,84 @@ refreshPermissions.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
         })
     
     refreshPermissions.form = refreshPermissionsForm
-const AuthController = { login, register, logout, user, refresh, refreshPermissions }
+/**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+export const getSanctumToken = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getSanctumToken.url(options),
+    method: 'get',
+})
+
+getSanctumToken.definition = {
+    methods: ["get","head"],
+    url: '/api/auth/sanctum-token',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+getSanctumToken.url = (options?: RouteQueryOptions) => {
+    return getSanctumToken.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+getSanctumToken.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getSanctumToken.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+getSanctumToken.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: getSanctumToken.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+    const getSanctumTokenForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: getSanctumToken.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+        getSanctumTokenForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getSanctumToken.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AuthController::getSanctumToken
+ * @see app/Http/Controllers/Api/AuthController.php:362
+ * @route '/api/auth/sanctum-token'
+ */
+        getSanctumTokenForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getSanctumToken.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    getSanctumToken.form = getSanctumTokenForm
+const AuthController = { login, register, logout, user, refresh, refreshPermissions, getSanctumToken }
 
 export default AuthController

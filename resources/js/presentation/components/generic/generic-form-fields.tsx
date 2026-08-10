@@ -88,6 +88,7 @@ export default function GenericFormFields<F extends BaseFormData>({
         value,
         onChange: (v: unknown) => onChange(field.key, v),
         setFieldValue: (v: unknown) => onChange(field.key, v), // 🆕 Alias para onChange para componentes que necesiten setFieldValue
+        updateField: (fieldKey: keyof F, fieldValue: unknown) => onChange(fieldKey, fieldValue), // 🆕 Permitir actualizar otros campos
         label: field.label,
         error,
         disabled: fieldDisabled,
@@ -413,6 +414,28 @@ export default function GenericFormFields<F extends BaseFormData>({
             error={error}
           />
         );
+      }
+
+      case 'email': {
+        const placeholderValue = typeof field.placeholder === 'function' ? field.placeholder(data) : field.placeholder;
+        const emailInput = (
+          <input
+            id={String(field.key)}
+            type="email"
+            value={value ? String(value) : ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(field.key, e.target.value)}
+            placeholder={placeholderValue}
+            disabled={fieldDisabled}
+            autoComplete="off"
+            spellCheck={false}
+            data-form-type="other"
+            data-lpignore="true"
+            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ${error ? 'border-2 border-red-500 focus-visible:ring-red-500 dark:border-red-500 bg-red-50 dark:bg-red-950/30' : ''}`}
+            minLength={field.validation?.minLength}
+            maxLength={field.validation?.maxLength}
+          />
+        );
+        return withPrefixSuffix(emailInput);
       }
 
       default: { // text

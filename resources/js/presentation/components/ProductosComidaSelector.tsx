@@ -23,10 +23,13 @@ interface Adicional {
 interface ProductoComida {
     id: number;
     nombre: string;
+    sku: string; // ✅ NUEVO: Agregar SKU
     descripcion: string;
     precio_venta: number;
     es_producto_comida: boolean;
     imagen_url?: string | null;
+    permite_venta_sin_stock?: boolean;
+    disponibilidad?: number;
     adicionales?: Adicional[];
 }
 
@@ -70,13 +73,14 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
         return productosEnCarrito.find(p => p.producto_id === productoId)?.cantidad || 0;
     };
 
-    // Filtrar productos según el término de búsqueda
+    // Filtrar productos según el término de búsqueda (nombre, SKU, descripción)
     const productosFiltrados = useMemo(() => {
         if (!busqueda.trim()) return productos;
 
         const termino = busqueda.toLowerCase();
         return productos.filter(producto =>
             producto.nombre.toLowerCase().includes(termino) ||
+            producto.sku.toLowerCase().includes(termino) || // ✅ NUEVO: Buscar por SKU
             (producto.descripcion && producto.descripcion.toLowerCase().includes(termino))
         );
     }, [productos, busqueda]);
@@ -244,10 +248,10 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
                                     productosFiltrados.map(producto => {
                                     const cantidadEnCarrito = getCantidadEnCarrito(producto.id);
                                     return (
-                                        <button
+                                        <div
                                             key={producto.id}
                                             onClick={() => handleSeleccionarProducto(producto)}
-                                            className="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg dark:hover:shadow-blue-900/30 transition-all relative"
+                                            className="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg dark:hover:shadow-blue-900/30 transition-all relative cursor-pointer"
                                         >
                                             {/* Badge con cantidad en carrito */}
                                             {cantidadEnCarrito > 0 && (
@@ -288,26 +292,50 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
 
                                             {/* Contenido */}
                                             <div className="p-4 text-left">
-                                                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                                                    {producto.nombre}
-                                                </h3>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                                                        {producto.nombre}
+                                                    </h3>
+                                                    <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded font-mono">
+                                                        {producto.sku}
+                                                    </span>
+                                                </div>
                                                 {producto.descripcion && (
                                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                                                         {producto.descripcion}
                                                     </p>
                                                 )}
-                                                <div className="mt-3 flex justify-between items-center">
+                                                <div className="mt-3 flex justify-between items-center gap-2">
                                                     <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">
                                                         {formatCurrency(producto.precio_venta)}
                                                     </span>
                                                     {producto.adicionales && producto.adicionales.length > 0 && (
-                                                        <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-2 py-1 rounded">
+                                                        <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-2 py-1 rounded whitespace-nowrap">
                                                             +{producto.adicionales.length} extras
                                                         </span>
                                                     )}
                                                 </div>
+                                                {/* Stock availability */}
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {producto.permite_venta_sin_stock ? (
+                                                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded font-medium">
+                                                            ✅ Venta sin stock
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded font-medium">
+                                                                📦 Stock disponible
+                                                            </span>
+                                                            {producto.disponibilidad !== undefined && (
+                                                                <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
+                                                                    {producto.disponibilidad} unid.
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </button>
+                                        </div>
                                     );
                                     })
                                 )}
@@ -334,15 +362,45 @@ export function ProductosComidaSelector({ onAgregar, onActualizar, onActualizarP
                             {/* Encabezado con producto seleccionado */}
                             <div className="p-4 space-y-2">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                            {productoSeleccionado.nombre}
-                                        </h3>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                                {productoSeleccionado.nombre}
+                                            </h3>
+                                            <span className="text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded font-mono">
+                                                SKU: {productoSeleccionado.sku}
+                                            </span>
+                                        </div>
                                         {productoSeleccionado.descripcion && (
                                             <p className="text-gray-600 dark:text-gray-400 mt-1">
                                                 {productoSeleccionado.descripcion}
                                             </p>
                                         )}
+                                        {/* Stock availability info */}
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {productoSeleccionado.permite_venta_sin_stock ? (
+                                                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1.5 rounded-full font-medium">
+                                                    ✅ Se puede vender sin stock
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-full font-medium">
+                                                        📦 Se requiere stock disponible
+                                                    </span>
+                                                    {productoSeleccionado.disponibilidad !== undefined && (
+                                                        <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+                                                            productoSeleccionado.disponibilidad > 0
+                                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                                        }`}>
+                                                            {productoSeleccionado.disponibilidad > 0
+                                                                ? `✓ ${productoSeleccionado.disponibilidad} unid. disponibles`
+                                                                : '⚠️ Sin stock'}
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => setProductoSeleccionado(null)}

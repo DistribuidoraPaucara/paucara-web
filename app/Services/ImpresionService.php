@@ -457,6 +457,11 @@ class ImpresionService
                 'TICKET_80' => 'impresion.cuentas_por_pagar.ticket-80',
                 'TICKET_58' => 'impresion.cuentas_por_pagar.ticket-58',
             ],
+            'egreso' => [
+                'A4' => 'impresion.egresos.hoja-completa',
+                'TICKET_80' => 'impresion.egresos.ticket-80',
+                'TICKET_58' => 'impresion.egresos.ticket-58',
+            ],
         ];
 
         $vistaEncontrada = $fallbacks[$tipoDocumento][$formato] ?? null;
@@ -905,6 +910,54 @@ class ImpresionService
         } catch (\Exception $e) {
             \Log::error('❌ [ImpresionService::imprimirCuentaPorPagar] ERROR', [
                 'cuenta_id' => $cuentaPorPagar->id,
+                'formato' => $formato,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Imprimir Egreso
+     *
+     * @param \App\Models\Egreso $egreso
+     * @param string|null $formato
+     * @param array $opciones
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function imprimirEgreso($egreso, ?string $formato = 'A4', array $opciones = [])
+    {
+        \Log::info('📝 [ImpresionService::imprimirEgreso] INICIANDO', [
+            'egreso_id' => $egreso->id,
+            'formato' => $formato,
+            'opciones' => $opciones,
+        ]);
+
+        try {
+            // Cargar relaciones necesarias
+            \Log::info('📝 [ImpresionService::imprimirEgreso] Cargando relaciones', [
+                'egreso_id' => $egreso->id,
+            ]);
+
+            $egreso->load([
+                'tipoOperacion',
+                'usuario',
+                'detalles.tipoOperacion',
+                'detallesPago.tipoPago'
+            ]);
+
+            \Log::info('✅ [ImpresionService::imprimirEgreso] Relaciones cargadas exitosamente', [
+                'egreso_id' => $egreso->id,
+                'tiene_tipo_operacion' => !!$egreso->tipoOperacion,
+                'tiene_usuario' => !!$egreso->usuario,
+                'cantidad_detalles' => $egreso->detalles->count(),
+            ]);
+
+            return $this->generarPDF('egreso', $egreso, $formato, $opciones);
+        } catch (\Exception $e) {
+            \Log::error('❌ [ImpresionService::imprimirEgreso] ERROR', [
+                'egreso_id' => $egreso->id,
                 'formato' => $formato,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

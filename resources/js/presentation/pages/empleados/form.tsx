@@ -15,8 +15,11 @@ interface EmpleadosFormProps {
         permissions?: Record<string, string[]>;
         rolesAsignados?: Array<{ id: number; name: string; permissions: string[] }>;
         rolesDisponibles?: Array<{ id: number; name: string; permissions: string[] }>;
+        rolesDisponiblesDetallados?: Array<{ id: number; name: string; permissions: string[] }>;
         permisosAsignados?: string[];
+        permisosAsignadosMap?: Record<string, string>;
         permisosHeredados?: string[];
+        permisosHeredadosMap?: Record<string, string>;
         permisosDisponibles?: Record<string, string[]>;
         cargoRoleMapping?: Record<string, string>;
         camposRol?: Record<string, any>;
@@ -68,9 +71,18 @@ export default function EmpleadosForm({ empleado, extraData }: EmpleadosFormProp
             initialData.usernick = empleado.user.usernick;
         }
 
-        // Mapear roles desde entity.roles (array de strings)
-        if (empleado.roles && Array.isArray(empleado.roles)) {
-            initialData.roles = empleado.roles as unknown as string[];
+        // Mapear roles desde entity.user.roles (array de role objects con name)
+        if (empleado.user?.roles && Array.isArray(empleado.user.roles)) {
+            initialData.roles = empleado.user.roles
+                .map((role: any) => typeof role === 'string' ? role : role.name)
+                .filter(Boolean);
+        }
+
+        // Inicializar permisos solo con los permisos directos asignados (no heredados)
+        // Los permisos heredados se calculan dinámicamente a partir de los roles
+        const permisosDirectos = (extraData as any)?.permisosAsignados || [];
+        if (permisosDirectos.length > 0) {
+            initialData.permissions = permisosDirectos;
         }
     }
 
@@ -96,8 +108,12 @@ export default function EmpleadosForm({ empleado, extraData }: EmpleadosFormProp
                     }
 
                     if (fieldKey === 'roles') {
-                        // Los roles ya vienen en el formato correcto desde el backend
-                        return extraData?.roles || [];
+                        // Usa rolesDisponibles que está disponible tanto en create como en edit
+                        const roles = (extraData as any)?.rolesDisponibles || [];
+                        return roles.map((role: any) => ({
+                            value: typeof role === 'string' ? role : role.name,
+                            label: typeof role === 'string' ? role : role.name
+                        }));
                     }
 
                     return [];

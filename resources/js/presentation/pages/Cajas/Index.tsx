@@ -85,36 +85,47 @@ export default function Index(props: CajasIndexProps) {
 
     const { movimientosHoy, totalMovimientos, esVistaAdmin = false, usuarioDestino, historicoAperturas, ventasCreditoTotales } = props;
 
-    // ✅ NUEVO: Callback cuando se registra exitosamente un movimiento
+    // ✅ NUEVO: Callback cuando se registra exitosamente un movimiento (puede ser 1 o múltiples)
     const handleMovimientoRegistrado = (movimiento: any) => {
-        console.log('✅ [Cajas/Index] Movimiento registrado:', {
-            movimientoId: movimiento?.id,
+        console.log('✅ [Cajas/Index] Movimiento(s) registrado(s):', {
+            movimientosIds: movimiento?.ids,
+            movimientosCount: movimiento?.movimientos_count,
             tipo: movimiento?.tipo_operacion?.nombre || movimiento?.tipo_operacion?.codigo,
-            monto: movimiento?.monto,
+            montoTotal: movimiento?.monto_total,
         });
 
-        const movimientoId = movimiento?.id;
+        // ✅ Obtener array de IDs (nuevo formato multi-pago)
+        const movimientosIds = movimiento?.ids || [];
 
-        if (!movimientoId) {
-            console.error('❌ [Cajas/Index] No se pudo obtener el ID del movimiento');
-            toast.error('Error: No se pudo obtener el ID del movimiento');
+        if (!movimientosIds || movimientosIds.length === 0) {
+            console.error('❌ [Cajas/Index] No se pudo obtener IDs de movimiento(s)');
+            toast.error('Error: No se pudo obtener ID de movimiento');
             return;
         }
 
+        // ✅ Usar el primer ID para impresión (todos son del mismo tipo de operación)
+        const primerMovimientoId = movimientosIds[0];
+
         // ✅ VALIDAR que el ID es válido (número razonable)
-        if (movimientoId > 1000000) {
-            console.error('❌ [Cajas/Index] ID inválido (demasiado grande):', movimientoId);
+        if (primerMovimientoId > 1000000) {
+            console.error('❌ [Cajas/Index] ID inválido (demasiado grande):', primerMovimientoId);
             toast.error('Error: ID de movimiento inválido');
             return;
         }
 
-        console.log('🖨️ [Cajas/Index] Abriendo OutputSelectionModal para movimiento:', movimientoId);
+        // ✅ Mostrar notificación según cantidad de movimientos
+        const mensaje = movimiento?.movimientos_count > 1
+            ? `${movimiento.movimientos_count} movimientos registrados (Efectivo + Transferencia)`
+            : 'Movimiento registrado';
+        toast.success(mensaje);
+
+        console.log('🖨️ [Cajas/Index] Abriendo OutputSelectionModal para movimiento:', primerMovimientoId);
 
         // ✅ NUEVO: Abrir OutputSelectionModal para que el usuario seleccione formato
         setOutputModal({
             isOpen: true,
             printType: 'movimientos',
-            movimientoId: movimientoId,
+            movimientoId: primerMovimientoId,
         });
     };
 

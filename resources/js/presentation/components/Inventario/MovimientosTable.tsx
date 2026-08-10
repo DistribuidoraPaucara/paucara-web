@@ -205,7 +205,6 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
                                 movimientos.map((movimiento) => (
                                     <TableRow
                                         key={movimiento.id}
-                                        className={movimiento.tiene_inconsistencia ? 'border-l-4 border-red-500 bg-red-50 dark:bg-red-950/30' : ''}
                                         title={movimiento.inconsistencias?.length ? 'Inconsistencias: ' + movimiento.inconsistencias.join(', ') : ''}
                                     >
                                         <TableCell className="font-medium">

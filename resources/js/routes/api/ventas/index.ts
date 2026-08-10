@@ -77,7 +77,7 @@ registrarPago.post = (args: { venta: string | number } | [venta: string | number
     registrarPago.form = registrarPagoForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
 export const obtenerEntrega = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -92,7 +92,7 @@ obtenerEntrega.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
 obtenerEntrega.url = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -120,7 +120,7 @@ obtenerEntrega.url = (args: { ventaId: string | number } | [ventaId: string | nu
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
 obtenerEntrega.get = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -129,7 +129,7 @@ obtenerEntrega.get = (args: { ventaId: string | number } | [ventaId: string | nu
 })
 /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
 obtenerEntrega.head = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -139,7 +139,7 @@ obtenerEntrega.head = (args: { ventaId: string | number } | [ventaId: string | n
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
     const obtenerEntregaForm = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -149,7 +149,7 @@ obtenerEntrega.head = (args: { ventaId: string | number } | [ventaId: string | n
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
         obtenerEntregaForm.get = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -158,7 +158,7 @@ obtenerEntrega.head = (args: { ventaId: string | number } | [ventaId: string | n
         })
             /**
 * @see \App\Http\Controllers\Api\EntregaController::obtenerEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3550
+ * @see app/Http/Controllers/Api/EntregaController.php:3564
  * @route '/api/app/ventas/{ventaId}/entrega'
  */
         obtenerEntregaForm.head = (args: { ventaId: string | number } | [ventaId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -174,7 +174,7 @@ obtenerEntrega.head = (args: { ventaId: string | number } | [ventaId: string | n
     obtenerEntrega.form = obtenerEntregaForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
 export const entregasConfirmaciones = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -189,7 +189,7 @@ entregasConfirmaciones.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
 entregasConfirmaciones.url = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -217,7 +217,7 @@ entregasConfirmaciones.url = (args: { venta_id: string | number } | [venta_id: s
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
 entregasConfirmaciones.get = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -226,7 +226,7 @@ entregasConfirmaciones.get = (args: { venta_id: string | number } | [venta_id: s
 })
 /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
 entregasConfirmaciones.head = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -236,7 +236,7 @@ entregasConfirmaciones.head = (args: { venta_id: string | number } | [venta_id: 
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
     const entregasConfirmacionesForm = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -246,7 +246,7 @@ entregasConfirmaciones.head = (args: { venta_id: string | number } | [venta_id: 
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
         entregasConfirmacionesForm.get = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -255,7 +255,7 @@ entregasConfirmaciones.head = (args: { venta_id: string | number } | [venta_id: 
         })
             /**
 * @see \App\Http\Controllers\Api\EntregaController::entregasConfirmaciones
- * @see app/Http/Controllers/Api/EntregaController.php:4090
+ * @see app/Http/Controllers/Api/EntregaController.php:4104
  * @route '/api/ventas/{venta_id}/entregas-confirmaciones'
  */
         entregasConfirmacionesForm.head = (args: { venta_id: string | number } | [venta_id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

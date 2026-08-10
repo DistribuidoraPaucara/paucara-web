@@ -4,6 +4,7 @@ import InventarioController from './InventarioController'
 import ModuloSidebarController from './ModuloSidebarController'
 import Auth from './Auth'
 import PermissionController from './PermissionController'
+import NotificacionRecurrenteController from './NotificacionRecurrenteController'
 import TipoOperacionCajaController from './TipoOperacionCajaController'
 import ProductoController from './ProductoController'
 import ComboController from './ComboController'
@@ -41,7 +42,7 @@ import PrestamoEventoController from './PrestamoEventoController'
 import PrestamoProveedorController from './PrestamoProveedorController'
 import ReportesController from './ReportesController'
 import Prestamos from './Prestamos'
-import NotificacionRecurrenteController from './NotificacionRecurrenteController'
+import ActualizarStockMasivoController from './ActualizarStockMasivoController'
 import FaviconController from './FaviconController'
 import VentaPublicController from './VentaPublicController'
 import PublicStockController from './PublicStockController'
@@ -117,6 +118,7 @@ InventarioController,
 ModuloSidebarController,
 Auth,
 PermissionController,
+NotificacionRecurrenteController,
 TipoOperacionCajaController,
 ProductoController,
 ComboController,
@@ -154,7 +156,7 @@ PrestamoEventoController,
 PrestamoProveedorController,
 ReportesController,
 Prestamos,
-NotificacionRecurrenteController,
+ActualizarStockMasivoController,
 FaviconController,
 VentaPublicController,
 PublicStockController,

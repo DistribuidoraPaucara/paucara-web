@@ -17,6 +17,8 @@ class LogisticaController extends Controller
      */
     public function dashboard()
     {
+        $user = auth()->user();
+
         // ✅ NUEVO 2026-03-06: Log para verificar parámetros de entrada
         Log::info('LogisticaController::dashboard - Parámetros recibidos:', [
             'fecha_entrega_solicitada_desde' => request('fecha_entrega_solicitada_desde'),
@@ -374,6 +376,10 @@ class LogisticaController extends Controller
             'localidades'         => $localidades,
             'usuariosAprobadores' => $usuariosAprobadores,
             'estadosLogistica'    => $estadosLogistica,
+            'auth' => [
+                'user' => $user,
+                'roles' => $user->roles->pluck('name')->toArray(),
+            ],
         ]);
     }
 

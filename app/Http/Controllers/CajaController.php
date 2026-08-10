@@ -9,6 +9,7 @@ use App\Models\CierreDiarioGeneral;
 use App\Models\ComprobanteMovimiento;
 use App\Models\EstadoCierre;
 use App\Models\MovimientoCaja;
+use App\Models\TipoPago;
 use App\Models\TipoOperacionCaja;
 use App\Services\CierreCajaService;
 use App\Services\DesgloseMovimientoCajaService;
@@ -112,7 +113,9 @@ class CajaController extends Controller
                 ->where('fecha', '>=', $cajaAbiertaHoy->fecha)
                 ->with(['tipoOperacion', 'tipoPago', 'comprobantes', 'usuario', 'venta' => function($q) {
                     $q->select('id', 'numero', 'estado_documento_id', 'tipo_entrega', 'total', 'monto_pagado', 'monto_pendiente', 'requiere_envio'); // ✅ Agregar requiere_envio
-                }, 'venta.estadoDocumento', 'pago:id,estado']) // ✅ Cargar estado del pago (2026-07-24)
+                }, 'venta.estadoDocumento', 'pago:id,estado', 'egreso' => function($q) {
+                    $q->select('id', 'numero', 'estado_documento_id'); // ✅ Cargar egreso con estado_documento_id
+                }, 'egreso.estadoDocumento']) // ✅ Cargar estado_documento del egreso (2026-08-08)
                 ->orderBy('id', 'desc')  // ✅ ACTUALIZADO: Ordenar por ID descendente
                 ->get()
                 // ✅ ACTUALIZADO (2026-03-09): Filtrar movimientos - Incluir VENTA APROBADA y ANULADA
@@ -1089,11 +1092,17 @@ class CajaController extends Controller
         });
 
         // ✅ NUEVO (2026-08-07): Usar CierreCajaService para calcular ingresos/egresos (IGUAL que endpoint cajas/user/{userId})
+        // ✅ CORREGIDO (2026-08-08): Evitar doble-conteo de trasferencias entre turnos
         $aperturasAbiertas = $aperturasColleccion->filter(fn($a) => !$a->cierre);
 
         $totalIngresos = (float) 0;
         $totalEgresos = (float) 0;
         $montosApertura = (float) 0;
+
+        // ✅ NUEVO: Obtener PRIMERA apertura abierta para evitar doble-conteo
+        $primeraAperturaAbierta = $aperturasAbiertas
+            ->sortBy('fecha')
+            ->first();
 
         foreach ($aperturasAbiertas as $apertura) {
             // Usar el mismo servicio que en index() para consistencia
@@ -1102,18 +1111,25 @@ class CajaController extends Controller
             $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
             $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
 
+            // ✅ CORREGIDO: Solo contar monto_apertura de la PRIMERA apertura
+            if ($apertura->id === $primeraAperturaAbierta?->id) {
+                $montosApertura += (float) $apertura->monto_apertura;
+            }
+
+            // Sumar ingresos y egresos de TODAS las aperturas
             $totalIngresos += $ingresosApertura;
             $totalEgresos += $egresosApertura;
-            $montosApertura += $apertura->monto_apertura;
         }
 
         $efectivoEsperado = $montosApertura + $totalIngresos - $totalEgresos;
 
         // ✅ NUEVO (2026-08-07): Calcular RESUMEN DIARIO consolidado
+        // ✅ CORREGIDO (2026-08-08): Evitar doble-conteo de trasferencias entre turnos
         // CONSIDERA:
         // - Cajas ABIERTAS (sin cierre) hace días + hoy
         // - Cajas CERRADAS hoy (con cierre, fecha = hoy)
-        // Usar misma lógica que tabla: $aperturasParaTabla
+        // IMPORTANTE: Solo contar monto_apertura de la PRIMERA apertura del día
+        // Las aperturas posteriores usan dinero del turno anterior (ya contado como ingreso)
         $resumenDiarioTotal = [
             'total_montos_apertura' => (float) 0,
             'total_ingresos'        => (float) 0,
@@ -1124,12 +1140,24 @@ class CajaController extends Controller
             'turnos_cerrados'       => 0,
         ];
 
+        // ✅ NUEVO: Obtener PRIMERA apertura del día para evitar doble-conteo
+        $primeraAperturaDelDia = $aperturasParaTabla
+            ->sortBy('fecha')
+            ->first();
+        $primerMontoDia = $primeraAperturaDelDia ? (float) $primeraAperturaDelDia->monto_apertura : 0;
+
         foreach ($aperturasParaTabla as $apertura) {
             $datosCalculados = $this->cierreCajaService->calcularDatos($apertura);
             $ingresosApertura = (float) ($datosCalculados['totalIngresos'] ?? 0);
             $egresosApertura = (float) ($datosCalculados['totalEgresos'] ?? 0);
 
-            $resumenDiarioTotal['total_montos_apertura'] += (float) $apertura->monto_apertura;
+            // ✅ CORREGIDO: Solo contar monto_apertura de la PRIMERA apertura
+            // Las aperturas posteriores no se cuentan porque su monto viene del turno anterior
+            if ($apertura->id === $primeraAperturaDelDia?->id) {
+                $resumenDiarioTotal['total_montos_apertura'] += $primerMontoDia;
+            }
+
+            // Sumar ingresos y egresos de TODOS los turnos
             $resumenDiarioTotal['total_ingresos'] += $ingresosApertura;
             $resumenDiarioTotal['total_egresos'] += $egresosApertura;
             $resumenDiarioTotal['turnos_count']++;
@@ -1895,15 +1923,40 @@ class CajaController extends Controller
      */
     public function registrarMovimientoJson(Request $request)
     {
-        $request->validate([
-            'tipo_operacion_id' => 'required|exists:tipo_operacion_caja,id',
-            'tipo_pago_id'      => 'nullable|exists:tipos_pago,id',
-            'monto'             => 'required|numeric|min:0.01',
-            'numero_documento'  => 'nullable|string|max:50',
-            'categoria'         => 'nullable|in:TRANSPORTE,LIMPIEZA,MANTENIMIENTO,SERVICIOS,ALIMENTACION_DESAYUNO,ALIMENTACION_ALMUERZO,ALIMENTACION_CENA,ALIMENTACION_REFRIGERIO,ALIMENTACION_OTROS,VARIOS,SUELDO,BONO,COMISIÓN,LIQUIDACIÓN,ADELANTO,PRÉSTAMO,OTROS',
-            'observaciones'     => 'nullable|string|max:500',
-            'comprobante'       => 'nullable|file|mimes:jpeg,png,webp,pdf|max:10240', // 10MB
-        ]);
+        Log::info('📝 [registrarMovimientoJson] Inicio del método');
+
+        try {
+            $validated = $request->validate([
+                'tipo_operacion_id'   => 'required|exists:tipo_operacion_caja,id',
+                'monto_efectivo'      => 'nullable|numeric|min:0',
+                'monto_transferencia' => 'nullable|numeric|min:0',
+                'numero_documento'    => 'nullable|string|max:50',
+                'categoria'           => 'nullable|in:INSUMOS,TRANSPORTE,LIMPIEZA,MANTENIMIENTO,SERVICIOS,ALIMENTACION_DESAYUNO,ALIMENTACION_ALMUERZO,ALIMENTACION_CENA,ALIMENTACION_REFRIGERIO,ALIMENTACION_OTROS,VARIOS,QUINCENA,HORAS_EXTRA,SABADO_DOMINGO,SUELDO,BONO,COMISIÓN,LIQUIDACIÓN,ADELANTO,PRÉSTAMO,OTROS',
+                'observaciones'       => 'nullable|string|max:500',
+                'comprobante'         => 'nullable|file|mimes:jpeg,png,webp,pdf|max:10240', // 10MB
+            ]);
+
+            Log::info('✅ Validación completada', $validated);
+
+            // ✅ Validar que al menos un monto sea mayor a 0
+            $montoEfectivo = (float) ($request->monto_efectivo ?? 0);
+            $montoTransferencia = (float) ($request->monto_transferencia ?? 0);
+
+            Log::info('💰 Montos obtenidos', ['efectivo' => $montoEfectivo, 'transferencia' => $montoTransferencia]);
+
+            if ($montoEfectivo <= 0 && $montoTransferencia <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debe ingresar al menos un monto (Efectivo o Transferencia)',
+                ], 422);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('❌ Error de validación', ['errors' => $e->errors()]);
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('❌ Error antes del try principal', ['error' => $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]);
+            throw $e;
+        }
 
         try {
             DB::beginTransaction();
@@ -1925,36 +1978,61 @@ class CajaController extends Controller
 
             $tipoOperacion = TipoOperacionCaja::findOrFail($request->tipo_operacion_id);
 
-            // ✅ Determinar el signo del monto según la DIRECCIÓN del tipo de operación
-            // ENTRADA = ingreso (positivo) | SALIDA/AJUSTE = egreso (negativo)
-            $monto = $request->monto;
-            if ($tipoOperacion->direccion === 'SALIDA') {
-                $monto = -abs($monto); // Egresos son negativos
-            } else {
-                $monto = abs($monto); // Ingresos (ENTRADA) y ajustes son positivos
-            }
-
             // ✅ Construir observaciones con categoría según tipo de operación
             $observaciones = $request->observaciones ?? '';
             if (in_array($tipoOperacion->codigo, ['GASTOS', 'PAGO_SUELDO', 'ANTICIPO']) && $request->categoria) {
                 $observaciones = "[{$request->categoria}] {$observaciones}";
             }
 
-            // Crear movimiento
-            $movimiento = MovimientoCaja::create([
-                'apertura_caja_id'  => $cajaAbierta->id,  // ✅ NUEVO (2026-06-20): Relación con apertura
-                'caja_id'           => $cajaAbierta->caja_id,
-                'tipo_operacion_id' => $request->tipo_operacion_id,
-                'tipo_pago_id'      => $request->tipo_pago_id,
-                'numero_documento'  => $request->numero_documento,
-                'descripcion'       => $tipoOperacion->nombre,
-                'monto'             => $monto,
-                'fecha'             => now(),
-                'user_id'           => $user->id,
-                'observaciones'     => $observaciones,
-            ]);
+            $movimientosCreados = [];
 
-            // Guardar comprobante si se proporcionó
+            // ✅ EFECTIVO: Registrar movimiento si monto_efectivo > 0
+            if ($montoEfectivo > 0) {
+                $montoFinal = $tipoOperacion->direccion === 'SALIDA' ? -$montoEfectivo : $montoEfectivo;
+
+                // Obtener tipo de pago EFECTIVO
+                $tipoPagoEfectivo = TipoPago::where('codigo', 'EFECTIVO')->first();
+
+                $movimiento = MovimientoCaja::create([
+                    'apertura_caja_id'  => $cajaAbierta->id,
+                    'caja_id'           => $cajaAbierta->caja_id,
+                    'tipo_operacion_id' => $request->tipo_operacion_id,
+                    'tipo_pago_id'      => $tipoPagoEfectivo?->id,
+                    'numero_documento'  => $request->numero_documento,
+                    'descripcion'       => $tipoOperacion->nombre,
+                    'monto'             => $montoFinal,
+                    'fecha'             => now(),
+                    'user_id'           => $user->id,
+                    'observaciones'     => $observaciones,
+                ]);
+
+                $movimientosCreados[] = $movimiento->id;
+            }
+
+            // ✅ TRANSFERENCIA/QR: Registrar movimiento si monto_transferencia > 0
+            if ($montoTransferencia > 0) {
+                $montoFinal = $tipoOperacion->direccion === 'SALIDA' ? -$montoTransferencia : $montoTransferencia;
+
+                // Obtener tipo de pago TRANSFERENCIA/QR (código específico)
+                $tipoPagoTransferencia = TipoPago::where('codigo', 'TRANSFERENCIA/QR')->first();
+
+                $movimiento = MovimientoCaja::create([
+                    'apertura_caja_id'  => $cajaAbierta->id,
+                    'caja_id'           => $cajaAbierta->caja_id,
+                    'tipo_operacion_id' => $request->tipo_operacion_id,
+                    'tipo_pago_id'      => $tipoPagoTransferencia?->id,
+                    'numero_documento'  => $request->numero_documento,
+                    'descripcion'       => $tipoOperacion->nombre,
+                    'monto'             => $montoFinal,
+                    'fecha'             => now(),
+                    'user_id'           => $user->id,
+                    'observaciones'     => $observaciones,
+                ]);
+
+                $movimientosCreados[] = $movimiento->id;
+            }
+
+            // Guardar comprobante si se proporcionó (se asocia a los movimientos)
             if ($request->hasFile('comprobante')) {
                 $archivo = $request->file('comprobante');
                 $hash    = hash_file('sha256', $archivo->getRealPath());
@@ -1962,32 +2040,37 @@ class CajaController extends Controller
                 $nombreArchivo = $hash . '.' . $archivo->getClientOriginalExtension();
                 $ruta = Storage::disk('public')->putFileAs($directorio, $archivo, $nombreArchivo);
 
-                ComprobanteMovimiento::create([
-                    'movimiento_caja_id' => $movimiento->id,
-                    'user_id'            => $user->id,
-                    'ruta_archivo'       => $ruta,
-                    'nombre_original'    => $archivo->getClientOriginalName(),
-                    'tipo_archivo'       => $archivo->getClientMimeType(),
-                    'tamaño'             => $archivo->getSize(),
-                    'hash'               => $hash,
-                ]);
+                // Asociar comprobante a todos los movimientos creados
+                foreach ($movimientosCreados as $movimientoId) {
+                    ComprobanteMovimiento::create([
+                        'movimiento_caja_id' => $movimientoId,
+                        'user_id'            => $user->id,
+                        'ruta_archivo'       => $ruta,
+                        'nombre_original'    => $archivo->getClientOriginalName(),
+                        'tipo_archivo'       => $archivo->getClientMimeType(),
+                        'tamaño'             => $archivo->getSize(),
+                        'hash'               => $hash,
+                    ]);
+                }
             }
 
             DB::commit();
 
-            Log::info("✅ Movimiento registrado (JSON)", [
-                'movimiento_id'   => $movimiento->id,
-                'tipo'            => $tipoOperacion->codigo,
-                'monto'           => $monto,
-                'usuario'         => $user->name,
+            Log::info("✅ Movimientos registrados (JSON - Multi-pago)", [
+                'movimientos_ids'   => $movimientosCreados,
+                'tipo'              => $tipoOperacion->codigo,
+                'monto_efectivo'    => $montoEfectivo,
+                'monto_transferencia' => $montoTransferencia,
+                'usuario'           => $user->name,
             ]);
 
-            // ✅ NUEVO: Retornar JSON con el ID del movimiento para impresión inmediata
+            // ✅ NUEVO: Retornar JSON con los IDs de los movimientos registrados
             return response()->json([
-                'success'       => true,
-                'message'       => "Movimiento de {$tipoOperacion->nombre} registrado correctamente",
-                'movimiento_id' => $movimiento->id,
-                'tipo_operacion' => [
+                'success'            => true,
+                'message'            => "Movimiento(s) de {$tipoOperacion->nombre} registrado(s) correctamente",
+                'movimientos_ids'    => $movimientosCreados,
+                'movimientos_count'  => count($movimientosCreados),
+                'tipo_operacion'     => [
                     'id'     => $tipoOperacion->id,
                     'nombre' => $tipoOperacion->nombre,
                     'codigo' => $tipoOperacion->codigo,

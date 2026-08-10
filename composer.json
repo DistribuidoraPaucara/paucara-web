@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "laraveles/spanish": "^1.5",
+        "league/csv": "^9.28",
         "maatwebsite/excel": "^1.1",
         "mike42/escpos-php": "^2.1",
         "milon/barcode": "^12.0",

@@ -13,6 +13,7 @@ use App\Events\EntregaConfirmada;
 use App\Events\EntregaCreada;
 use App\Events\EntregaEnCamino;
 use App\Events\EntregaEstadoCambiado;
+use App\Events\EntregaListoParaEntrega;
 use App\Events\EntregaRechazada;
 use App\Events\MarcarLlegadaConfirmada;
 use App\Events\NovedadEntregaReportada;
@@ -24,8 +25,11 @@ use App\Events\ProformaCreada;
 use App\Events\ProformaRechazada;
 use App\Events\RutaPlanificada;
 use App\Events\UbicacionActualizada;
+use App\Events\VentaConfirmadaEntregada;
+use App\Events\VentaConfirmadaEntrega;
 use App\Events\VentaEstadoCambiado;
 use App\Listeners\BroadcastDashboardMetrics;
+use App\Listeners\SendVentaConfirmadaEntregadaNotification;
 use App\Listeners\SendVentaEstadoCambiadoNotification;
 use App\Listeners\SincronizarWebSocketEstadoEntrega;
 use App\Listeners\SincronizarWebSocketUbicacion;
@@ -42,7 +46,11 @@ use App\Listeners\SendProformaCreatedNotification;
 use App\Listeners\SendProformaRejectedNotification;
 use App\Listeners\SendProformaUpdatedNotification;
 use App\Listeners\SendEntregaAsignadaNotification;
+use App\Listeners\SendEntregaListoParaEntregaNotification;
+use App\Listeners\SendVentaConfirmadaEntregaNotification;
 use App\Listeners\Venta\BroadcastProformaCreada;
+use App\Events\NotificacionRecurrenteEmitida;
+use App\Listeners\Notificaciones\BroadcastNotificacionRecurrente;
 use App\Events\CreditoCreado;
 use App\Events\CreditoPagoRegistrado;
 use App\Events\CreditoVencido;
@@ -123,6 +131,14 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         // ══════════════════════════════════════════════════════════
+        // NOTIFICACIONES RECURRENTES EVENTS
+        // ══════════════════════════════════════════════════════════
+
+        NotificacionRecurrenteEmitida::class => [
+            BroadcastNotificacionRecurrente::class,
+        ],
+
+        // ══════════════════════════════════════════════════════════
         // CREDITO EVENTS
         // ══════════════════════════════════════════════════════════
 
@@ -155,6 +171,15 @@ class EventServiceProvider extends ServiceProvider
             SendEntregaAsignadaNotification::class, // ✅ Notifica a cliente y preventista cuando venta es asignada a entrega
         ],
 
+        EntregaListoParaEntrega::class => [
+            SendEntregaListoParaEntregaNotification::class, // ✅ Notifica al creador y clientes cuando entrega está lista
+        ],
+
+        // ✅ NUEVO: Evento cuando se confirma una venta como entregada
+        VentaConfirmadaEntrega::class => [
+            SendVentaConfirmadaEntregaNotification::class, // Notifica al creador de entrega y al cliente
+        ],
+
         EntregaEnCamino::class => [
             // Broadcast cuando entrega está en camino
         ],
@@ -177,6 +202,12 @@ class EventServiceProvider extends ServiceProvider
 
         EntregaRechazada::class => [
             // Broadcast cuando entrega es rechazada
+        ],
+
+        // ✅ NUEVO: Evento cuando chofer confirma venta como entregada
+        // Notifica a cliente, preventista, admins y cajeros
+        VentaConfirmadaEntregada::class => [
+            SendVentaConfirmadaEntregadaNotification::class,
         ],
 
         // ══════════════════════════════════════════════════════════

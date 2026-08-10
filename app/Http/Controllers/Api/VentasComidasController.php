@@ -9,10 +9,10 @@ use App\Models\DetallePagoVenta;
 use App\Models\EstadoDocumento;
 use App\Models\EstadoLogistica;
 use App\Models\Moneda;
-use App\Models\Producto;
 use App\Models\MovimientoCaja;
 use App\Models\TipoOperacionCaja;
 use App\Models\AperturaCaja;
+use App\Services\Venta\VentasComidasService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\Log;
 
 class VentasComidasController extends Controller
 {
+    protected $ventasComidasService;
+
+    public function __construct(VentasComidasService $ventasComidasService)
+    {
+        $this->ventasComidasService = $ventasComidasService;
+    }
+
     /**
      * Crear una venta de comidas/helados
      *
@@ -109,18 +116,6 @@ class VentasComidasController extends Controller
                 'total' => $validated['total'],
             ]);
 
-            // Validar que todos los productos son de comida
-            $productosIds = collect($validated['productos_comida'])->pluck('producto_id')->unique();
-            $productosValidar = Producto::whereIn('id', $productosIds)->get();
-
-            foreach ($productosValidar as $producto) {
-                if (!$producto->es_producto_comida) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Producto '{$producto->nombre}' no es un producto de comida",
-                    ], 422);
-                }
-            }
 
             // Obtener caja del usuario actual (para comidas PRESENCIAL)
             $cajaUsuario = AperturaCaja::where('user_id', Auth::id())
@@ -180,8 +175,9 @@ class VentasComidasController extends Controller
                 ]);
 
                 // Crear DetalleVenta para cada producto
+                $detallesConIds = [];
                 foreach ($validated['productos_comida'] as $producto) {
-                    DetalleVenta::create([
+                    $detalle = DetalleVenta::create([
                         'venta_id'       => $venta->id,
                         'producto_id'    => $producto['producto_id'],
                         'cantidad'       => $producto['cantidad'],
@@ -189,12 +185,38 @@ class VentasComidasController extends Controller
                         'descuento'      => 0,
                         'subtotal'       => $producto['subtotal'],
                     ]);
+
+                    // ✅ NUEVO: Guardar detalles con su ID para registrar movimientos
+                    $detallesConIds[] = array_merge($producto, [
+                        'detalle_venta_id' => $detalle->id,
+                    ]);
                 }
 
                 Log::info('✅ [VentasComidasController::store] Detalles de venta creados', [
                     'venta_id' => $venta->id,
                     'cantidad_detalles' => count($validated['productos_comida']),
                 ]);
+
+                // ✅ NUEVO: Registrar movimientos de comida (sin descuento de stock)
+                Log::debug('🍦 [VentasComidasController::store] Registrando movimientos de comida', [
+                    'venta_id' => $venta->id,
+                    'cantidad_productos' => count($detallesConIds),
+                ]);
+
+                try {
+                    $this->ventasComidasService->registrarMovimientosComidas($venta, $detallesConIds);
+
+                    Log::info('✅ [VentasComidasController::store] Movimientos de comida registrados exitosamente', [
+                        'venta_id' => $venta->id,
+                        'numero_venta' => $venta->numero,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('❌ [VentasComidasController::store] Error registrando movimientos de comida', [
+                        'venta_id' => $venta->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
 
                 // 💰 Crear DetallePagoVenta para EFECTIVO (si tiene monto)
                 if ($montoEfectivo > 0) {

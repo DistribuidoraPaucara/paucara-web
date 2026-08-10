@@ -5,8 +5,9 @@ import { Button } from '@/presentation/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X, Printer } from 'lucide-react';
 import { useState } from 'react';
+import { OutputSelectionModal, type TipoDocumento } from '@/presentation/components/impresion/OutputSelectionModal';
 
 interface Egreso {
     id: number;
@@ -40,6 +41,8 @@ export default function EgresosIndex() {
         tipo_operacion_id: '',
         usuario_id: '',
     });
+
+    const [printModal, setPrintModal] = useState<{ isOpen: boolean; egresoId?: number; egresoNumero?: string }>({ isOpen: false });
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -203,7 +206,7 @@ export default function EgresosIndex() {
                                                 {egreso.estado_documento.nombre}
                                             </span>
                                         </td>
-                                        <td className="px-2 py-2 text-xs text-center">
+                                        <td className="px-2 py-2 text-xs text-center flex gap-1 justify-center">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -211,6 +214,15 @@ export default function EgresosIndex() {
                                                 className="bg-transparent text-xs hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-white transition-colors duration-200"
                                             >
                                                 Ver
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setPrintModal({ isOpen: true, egresoId: egreso.id, egresoNumero: egreso.numero })}
+                                                className="bg-transparent text-xs hover:bg-blue-100 dark:hover:bg-blue-900 dark:text-blue-400 transition-colors duration-200"
+                                                title="Imprimir egreso"
+                                            >
+                                                <Printer className="h-4 w-4" />
                                             </Button>
                                         </td>
                                     </tr>
@@ -252,6 +264,20 @@ export default function EgresosIndex() {
                     </div>
                 )}
             </div>
+
+            {/* ✅ Modal de selección de formato/acción para impresión */}
+            {printModal.egresoId && (
+                <OutputSelectionModal
+                    isOpen={printModal.isOpen}
+                    onClose={() => setPrintModal({ isOpen: false })}
+                    documentoId={printModal.egresoId}
+                    tipoDocumento="egreso"
+                    documentoInfo={{
+                        numero: printModal.egresoNumero || `Egreso #${printModal.egresoId}`,
+                        fecha: new Date().toLocaleDateString('es-BO'),
+                    }}
+                />
+            )}
         </AppLayout>
     );
 }
