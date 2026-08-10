@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 import logs from './logs'
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,7 +15,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -23,7 +23,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
     const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +49,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
         logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -57,7 +57,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1449
  * @route '/api/debug/logs'
  */
         logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

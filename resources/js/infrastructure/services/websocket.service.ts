@@ -70,9 +70,9 @@ class WebSocketService {
 
           // 🔐 Autenticar inmediatamente después de conectarse
           if (config.auth?.token) {
-            /* console.log('🔐 Enviando autenticación al servidor WebSocket...');
-            console.log(`🔐 Token: ${config.auth.token.substring(0, 20)}...`);
-            console.log(`🔐 User ID: ${config.auth.userId}`); */
+            console.log('🔐 Enviando autenticación con token al servidor WebSocket...');
+            console.log(`   Token: ${config.auth.token.substring(0, 20)}...`);
+            console.log(`   User ID: ${config.auth.userId}`);
             this.socket!.emit('authenticate', {
               token: config.auth.token,
               userId: config.auth.userId,

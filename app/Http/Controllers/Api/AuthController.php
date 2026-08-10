@@ -378,20 +378,40 @@ class AuthController extends Controller
             $token = $user->currentAccessToken();
             if (!$token) {
                 // Si no hay token actual, crear uno nuevo
-                $sanctumToken = $user->createToken('web-session')->plainTextToken;
+                \Log::debug('🔐 [SanctumToken] Creando nuevo token web-session...');
+
+                // Crear token y GUARDAR EXPLÍCITAMENTE en BD
+                $tokenModel = $user->createToken('web-session');
+                $sanctumToken = $tokenModel->plainTextToken;
+
+                \Log::debug('🔐 [SanctumToken] Token creado', [
+                    'token_id' => $tokenModel->accessToken->id,
+                    'token_preview' => substr($sanctumToken, 0, 20) . '...',
+                ]);
+
                 // Guardar en sesión para que el middleware lo encuentre
                 $request->session()->put('sanctum_token', $sanctumToken);
             } else {
                 // No podemos recuperar el plainText de un token existente
                 // Crear uno nuevo en su lugar
+                \Log::debug('🔐 [SanctumToken] Revocar tokens anteriores y crear nuevo...');
+
                 $user->tokens()->where('name', '!=', 'web-session')->delete();
-                $sanctumToken = $user->createToken('web-session')->plainTextToken;
+                $tokenModel = $user->createToken('web-session');
+                $sanctumToken = $tokenModel->plainTextToken;
+
+                \Log::debug('🔐 [SanctumToken] Token creado (sin tokens anteriores)', [
+                    'token_id' => $tokenModel->accessToken->id,
+                    'token_preview' => substr($sanctumToken, 0, 20) . '...',
+                ]);
+
                 $request->session()->put('sanctum_token', $sanctumToken);
             }
         }
 
-        \Illuminate\Support\Facades\Log::info('✅ [AuthController] Token Sanctum recuperado para frontend', [
+        \Log::info('✅ [AuthController] Token Sanctum devuelto al frontend', [
             'user_id' => $user->id,
+            'token_id' => explode('|', $sanctumToken)[0],
             'token_preview' => substr($sanctumToken, 0, 20) . '...',
         ]);
 
