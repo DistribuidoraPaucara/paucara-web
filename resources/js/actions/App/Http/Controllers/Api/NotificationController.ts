@@ -1,8 +1,86 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: index.url(options),
+    method: 'get',
+})
+
+index.definition = {
+    methods: ["get","head"],
+    url: '/api/mis-notificaciones',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+index.url = (options?: RouteQueryOptions) => {
+    return index.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: index.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: index.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\NotificationController::index
+ * @see app/Http/Controllers/Api/NotificationController.php:29
+ * @route '/api/mis-notificaciones'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
+/**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
 export const unread = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: unread.url(options),
@@ -11,13 +89,13 @@ export const unread = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 
 unread.definition = {
     methods: ["get","head"],
-    url: '/api/notificaciones/no-leidas',
+    url: '/api/mis-notificaciones/no-leidas',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
 unread.url = (options?: RouteQueryOptions) => {
     return unread.definition.url + queryParams(options)
@@ -26,7 +104,7 @@ unread.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
 unread.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: unread.url(options),
@@ -35,7 +113,7 @@ unread.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
 unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: unread.url(options),
@@ -45,7 +123,7 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
     const unreadForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: unread.url(options),
@@ -55,7 +133,7 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
         unreadForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: unread.url(options),
@@ -64,7 +142,7 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\Api\NotificationController::unread
  * @see app/Http/Controllers/Api/NotificationController.php:64
- * @route '/api/notificaciones/no-leidas'
+ * @route '/api/mis-notificaciones/no-leidas'
  */
         unreadForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: unread.url({
@@ -80,7 +158,7 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
 export const stats = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: stats.url(options),
@@ -89,13 +167,13 @@ export const stats = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 stats.definition = {
     methods: ["get","head"],
-    url: '/api/notificaciones/estadisticas',
+    url: '/api/mis-notificaciones/estadisticas',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
 stats.url = (options?: RouteQueryOptions) => {
     return stats.definition.url + queryParams(options)
@@ -104,7 +182,7 @@ stats.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
 stats.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: stats.url(options),
@@ -113,7 +191,7 @@ stats.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
 stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: stats.url(options),
@@ -123,7 +201,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
     const statsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: stats.url(options),
@@ -133,7 +211,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
         statsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: stats.url(options),
@@ -142,7 +220,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\Api\NotificationController::stats
  * @see app/Http/Controllers/Api/NotificationController.php:270
- * @route '/api/notificaciones/estadisticas'
+ * @route '/api/mis-notificaciones/estadisticas'
  */
         statsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: stats.url({
@@ -158,7 +236,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 export const byType = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: byType.url(args, options),
@@ -167,13 +245,13 @@ export const byType = (args: { type: string | number } | [type: string | number 
 
 byType.definition = {
     methods: ["get","head"],
-    url: '/api/notificaciones/por-tipo/{type}',
+    url: '/api/mis-notificaciones/por-tipo/{type}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.url = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -201,7 +279,7 @@ byType.url = (args: { type: string | number } | [type: string | number ] | strin
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: byType.url(args, options),
@@ -210,7 +288,7 @@ byType.get = (args: { type: string | number } | [type: string | number ] | strin
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: byType.url(args, options),
@@ -220,7 +298,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
     /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
     const byTypeForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: byType.url(args, options),
@@ -230,7 +308,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
             /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
         byTypeForm.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: byType.url(args, options),
@@ -239,7 +317,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
             /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
  * @see app/Http/Controllers/Api/NotificationController.php:299
- * @route '/api/notificaciones/por-tipo/{type}'
+ * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
         byTypeForm.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: byType.url(args, {
@@ -255,7 +333,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
- * @route '/api/notificaciones/marcar-todas-leidas'
+ * @route '/api/mis-notificaciones/marcar-todas-leidas'
  */
 export const markAllAsRead = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAllAsRead.url(options),
@@ -264,13 +342,13 @@ export const markAllAsRead = (options?: RouteQueryOptions): RouteDefinition<'pos
 
 markAllAsRead.definition = {
     methods: ["post"],
-    url: '/api/notificaciones/marcar-todas-leidas',
+    url: '/api/mis-notificaciones/marcar-todas-leidas',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
- * @route '/api/notificaciones/marcar-todas-leidas'
+ * @route '/api/mis-notificaciones/marcar-todas-leidas'
  */
 markAllAsRead.url = (options?: RouteQueryOptions) => {
     return markAllAsRead.definition.url + queryParams(options)
@@ -279,7 +357,7 @@ markAllAsRead.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
- * @route '/api/notificaciones/marcar-todas-leidas'
+ * @route '/api/mis-notificaciones/marcar-todas-leidas'
  */
 markAllAsRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAllAsRead.url(options),
@@ -289,7 +367,7 @@ markAllAsRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
- * @route '/api/notificaciones/marcar-todas-leidas'
+ * @route '/api/mis-notificaciones/marcar-todas-leidas'
  */
     const markAllAsReadForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: markAllAsRead.url(options),
@@ -299,7 +377,7 @@ markAllAsRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
             /**
 * @see \App\Http\Controllers\Api\NotificationController::markAllAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:172
- * @route '/api/notificaciones/marcar-todas-leidas'
+ * @route '/api/mis-notificaciones/marcar-todas-leidas'
  */
         markAllAsReadForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: markAllAsRead.url(options),
@@ -310,7 +388,7 @@ markAllAsRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
- * @route '/api/notificaciones/eliminar-todas'
+ * @route '/api/mis-notificaciones/eliminar-todas'
  */
 export const destroyAll = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyAll.url(options),
@@ -319,13 +397,13 @@ export const destroyAll = (options?: RouteQueryOptions): RouteDefinition<'delete
 
 destroyAll.definition = {
     methods: ["delete"],
-    url: '/api/notificaciones/eliminar-todas',
+    url: '/api/mis-notificaciones/eliminar-todas',
 } satisfies RouteDefinition<["delete"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
- * @route '/api/notificaciones/eliminar-todas'
+ * @route '/api/mis-notificaciones/eliminar-todas'
  */
 destroyAll.url = (options?: RouteQueryOptions) => {
     return destroyAll.definition.url + queryParams(options)
@@ -334,7 +412,7 @@ destroyAll.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
- * @route '/api/notificaciones/eliminar-todas'
+ * @route '/api/mis-notificaciones/eliminar-todas'
  */
 destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyAll.url(options),
@@ -344,7 +422,7 @@ destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
- * @route '/api/notificaciones/eliminar-todas'
+ * @route '/api/mis-notificaciones/eliminar-todas'
  */
     const destroyAllForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroyAll.url({
@@ -359,7 +437,7 @@ destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::destroyAll
  * @see app/Http/Controllers/Api/NotificationController.php:238
- * @route '/api/notificaciones/eliminar-todas'
+ * @route '/api/mis-notificaciones/eliminar-todas'
  */
         destroyAllForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroyAll.url({
@@ -375,7 +453,7 @@ destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 export const show = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
@@ -384,13 +462,13 @@ export const show = (args: { notification: number | { id: number } } | [notifica
 
 show.definition = {
     methods: ["get","head"],
-    url: '/api/notificaciones/{notification}',
+    url: '/api/mis-notificaciones/{notification}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 show.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -423,7 +501,7 @@ show.url = (args: { notification: number | { id: number } } | [notification: num
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 show.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
@@ -432,7 +510,7 @@ show.get = (args: { notification: number | { id: number } } | [notification: num
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 show.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
@@ -442,7 +520,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
     /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
     const showForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: show.url(args, options),
@@ -452,7 +530,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
         showForm.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, options),
@@ -461,7 +539,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
  * @see app/Http/Controllers/Api/NotificationController.php:340
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
         showForm.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: show.url(args, {
@@ -477,7 +555,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
- * @route '/api/notificaciones/{notification}/marcar-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-leida'
  */
 export const markAsRead = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAsRead.url(args, options),
@@ -486,13 +564,13 @@ export const markAsRead = (args: { notification: number | { id: number } } | [no
 
 markAsRead.definition = {
     methods: ["post"],
-    url: '/api/notificaciones/{notification}/marcar-leida',
+    url: '/api/mis-notificaciones/{notification}/marcar-leida',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
- * @route '/api/notificaciones/{notification}/marcar-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-leida'
  */
 markAsRead.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -525,7 +603,7 @@ markAsRead.url = (args: { notification: number | { id: number } } | [notificatio
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
- * @route '/api/notificaciones/{notification}/marcar-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-leida'
  */
 markAsRead.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAsRead.url(args, options),
@@ -535,7 +613,7 @@ markAsRead.post = (args: { notification: number | { id: number } } | [notificati
     /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
- * @route '/api/notificaciones/{notification}/marcar-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-leida'
  */
     const markAsReadForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: markAsRead.url(args, options),
@@ -545,7 +623,7 @@ markAsRead.post = (args: { notification: number | { id: number } } | [notificati
             /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsRead
  * @see app/Http/Controllers/Api/NotificationController.php:96
- * @route '/api/notificaciones/{notification}/marcar-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-leida'
  */
         markAsReadForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: markAsRead.url(args, options),
@@ -556,7 +634,7 @@ markAsRead.post = (args: { notification: number | { id: number } } | [notificati
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
- * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-no-leida'
  */
 export const markAsUnread = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAsUnread.url(args, options),
@@ -565,13 +643,13 @@ export const markAsUnread = (args: { notification: number | { id: number } } | [
 
 markAsUnread.definition = {
     methods: ["post"],
-    url: '/api/notificaciones/{notification}/marcar-no-leida',
+    url: '/api/mis-notificaciones/{notification}/marcar-no-leida',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
- * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-no-leida'
  */
 markAsUnread.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -604,7 +682,7 @@ markAsUnread.url = (args: { notification: number | { id: number } } | [notificat
 /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
- * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-no-leida'
  */
 markAsUnread.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: markAsUnread.url(args, options),
@@ -614,7 +692,7 @@ markAsUnread.post = (args: { notification: number | { id: number } } | [notifica
     /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
- * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-no-leida'
  */
     const markAsUnreadForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: markAsUnread.url(args, options),
@@ -624,7 +702,7 @@ markAsUnread.post = (args: { notification: number | { id: number } } | [notifica
             /**
 * @see \App\Http\Controllers\Api\NotificationController::markAsUnread
  * @see app/Http/Controllers/Api/NotificationController.php:134
- * @route '/api/notificaciones/{notification}/marcar-no-leida'
+ * @route '/api/mis-notificaciones/{notification}/marcar-no-leida'
  */
         markAsUnreadForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: markAsUnread.url(args, options),
@@ -635,7 +713,7 @@ markAsUnread.post = (args: { notification: number | { id: number } } | [notifica
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 export const destroy = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
@@ -644,13 +722,13 @@ export const destroy = (args: { notification: number | { id: number } } | [notif
 
 destroy.definition = {
     methods: ["delete"],
-    url: '/api/notificaciones/{notification}',
+    url: '/api/mis-notificaciones/{notification}',
 } satisfies RouteDefinition<["delete"]>
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 destroy.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -683,7 +761,7 @@ destroy.url = (args: { notification: number | { id: number } } | [notification: 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
 destroy.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
@@ -693,7 +771,7 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
     /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
     const destroyForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroy.url(args, {
@@ -708,7 +786,7 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
             /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
  * @see app/Http/Controllers/Api/NotificationController.php:201
- * @route '/api/notificaciones/{notification}'
+ * @route '/api/mis-notificaciones/{notification}'
  */
         destroyForm.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroy.url(args, {
@@ -721,6 +799,6 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
         })
     
     destroy.form = destroyForm
-const NotificationController = { unread, stats, byType, markAllAsRead, destroyAll, show, markAsRead, markAsUnread, destroy }
+const NotificationController = { index, unread, stats, byType, markAllAsRead, destroyAll, show, markAsRead, markAsUnread, destroy }
 
 export default NotificationController

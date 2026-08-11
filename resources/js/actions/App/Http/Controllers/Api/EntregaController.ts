@@ -368,6 +368,61 @@ export const actualizarConfirmacionPorId = {
 }
 
 /**
+* @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmadoPorMasivo
+ * @see app/Http/Controllers/Api/EntregaController.php:5241
+ * @route '/api/entregas/actualizar-confirmado-por'
+ */
+export const actualizarConfirmadoPorMasivo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: actualizarConfirmadoPorMasivo.url(options),
+    method: 'post',
+})
+
+actualizarConfirmadoPorMasivo.definition = {
+    methods: ["post"],
+    url: '/api/entregas/actualizar-confirmado-por',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmadoPorMasivo
+ * @see app/Http/Controllers/Api/EntregaController.php:5241
+ * @route '/api/entregas/actualizar-confirmado-por'
+ */
+actualizarConfirmadoPorMasivo.url = (options?: RouteQueryOptions) => {
+    return actualizarConfirmadoPorMasivo.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmadoPorMasivo
+ * @see app/Http/Controllers/Api/EntregaController.php:5241
+ * @route '/api/entregas/actualizar-confirmado-por'
+ */
+actualizarConfirmadoPorMasivo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: actualizarConfirmadoPorMasivo.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmadoPorMasivo
+ * @see app/Http/Controllers/Api/EntregaController.php:5241
+ * @route '/api/entregas/actualizar-confirmado-por'
+ */
+    const actualizarConfirmadoPorMasivoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: actualizarConfirmadoPorMasivo.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\EntregaController::actualizarConfirmadoPorMasivo
+ * @see app/Http/Controllers/Api/EntregaController.php:5241
+ * @route '/api/entregas/actualizar-confirmado-por'
+ */
+        actualizarConfirmadoPorMasivoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: actualizarConfirmadoPorMasivo.url(options),
+            method: 'post',
+        })
+    
+    actualizarConfirmadoPorMasivo.form = actualizarConfirmadoPorMasivoForm
+/**
 * @see \App\Http\Controllers\Api\EntregaController::estadisticasChofer
  * @see app/Http/Controllers/Api/EntregaController.php:445
  * @route '/api/chofer/estadisticas'
@@ -3919,6 +3974,6 @@ ventasResumidas.head = (args: { id: string | number } | [id: string | number ] |
         })
     
     ventasResumidas.form = ventasResumidasForm
-const EntregaController = { obtenerEntregaPorVenta, obtenerConfirmacionesVenta, actualizarConfirmacionPorId, estadisticasChofer, misTrabjos, entregasAsignadas, showEntrega, iniciarRuta, actualizarEstado, marcarLlegada, confirmarVentaEntregada, crearConfirmacion, actualizarConfirmacion, actualizarConfirmacionVenta, finalizarEntrega, confirmarEntrega, reportarNovedad, registrarUbicacion, historialEntregas, obtenerResumenPagos, entregasDisponiblesParaReasignar, reasignarVenta, quitarVentaDeEntrega, obtenerTracking, indexAdmin, asignarEntrega, entregasActivas, obtenerUbicaciones, testVentaNotificacion, confirmarCarga, marcarListoParaEntrega, iniciarTransito, actualizarUbicacionGPS, consolidarAutomatico, crearEntregaConsolidada, actualizarEntregaConsolidada, cancelarEntrega, confirmarVentaCargada, desmarcarVentaCargada, obtenerDetalles, obtenerProgreso, obtenerLocalidades, corregirPagoConfirmacion, cambiarTipoEntrega, ventasResumidas }
+const EntregaController = { obtenerEntregaPorVenta, obtenerConfirmacionesVenta, actualizarConfirmacionPorId, actualizarConfirmadoPorMasivo, estadisticasChofer, misTrabjos, entregasAsignadas, showEntrega, iniciarRuta, actualizarEstado, marcarLlegada, confirmarVentaEntregada, crearConfirmacion, actualizarConfirmacion, actualizarConfirmacionVenta, finalizarEntrega, confirmarEntrega, reportarNovedad, registrarUbicacion, historialEntregas, obtenerResumenPagos, entregasDisponiblesParaReasignar, reasignarVenta, quitarVentaDeEntrega, obtenerTracking, indexAdmin, asignarEntrega, entregasActivas, obtenerUbicaciones, testVentaNotificacion, confirmarCarga, marcarListoParaEntrega, iniciarTransito, actualizarUbicacionGPS, consolidarAutomatico, crearEntregaConsolidada, actualizarEntregaConsolidada, cancelarEntrega, confirmarVentaCargada, desmarcarVentaCargada, obtenerDetalles, obtenerProgreso, obtenerLocalidades, corregirPagoConfirmacion, cambiarTipoEntrega, ventasResumidas }
 
 export default EntregaController

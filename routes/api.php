@@ -272,7 +272,7 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
     // ==========================================
     // 🔔 GESTIÓN DE NOTIFICACIONES
     // ==========================================
-    Route::prefix('notificaciones')->group(function () {
+    Route::prefix('mis-notificaciones')->group(function () {
         // Listar todas las notificaciones del usuario
         Route::get('/', [NotificationController::class, 'index']);
 
@@ -860,6 +860,9 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
 
     // ✅ NUEVO (2026-06-14): Reporte de entregas por chofer
     Route::get('/choferes/{chofer}/entregas-reporte', [\App\Http\Controllers\EntregaReporteController::class, 'choferEntregas']);
+
+    // ✅ NUEVO (2026-08-10): Actualizar confirmado_por masivamente por chofer y fecha
+    Route::post('/entregas/actualizar-confirmado-por', [\App\Http\Controllers\Api\EntregaController::class, 'actualizarConfirmadoPorMasivo']);
 });
 
 // CHOFER - Entregas y tracking

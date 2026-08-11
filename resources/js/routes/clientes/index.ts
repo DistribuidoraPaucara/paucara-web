@@ -524,7 +524,7 @@ update.patch = (args: { cliente: number | { id: number } } | [cliente: number | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:688
+ * @see app/Http/Controllers/ClienteController.php:692
  * @route '/clientes/{cliente}'
  */
 export const destroy = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -539,7 +539,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:688
+ * @see app/Http/Controllers/ClienteController.php:692
  * @route '/clientes/{cliente}'
  */
 destroy.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -572,7 +572,7 @@ destroy.url = (args: { cliente: number | { id: number } } | [cliente: number | {
 
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:688
+ * @see app/Http/Controllers/ClienteController.php:692
  * @route '/clientes/{cliente}'
  */
 destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -582,7 +582,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
 
     /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:688
+ * @see app/Http/Controllers/ClienteController.php:692
  * @route '/clientes/{cliente}'
  */
     const destroyForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -597,7 +597,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
 
             /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:688
+ * @see app/Http/Controllers/ClienteController.php:692
  * @route '/clientes/{cliente}'
  */
         destroyForm.delete = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

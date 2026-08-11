@@ -376,8 +376,10 @@ class ClienteController extends Controller
         try {
             $user = null;
 
-            // Manejar usuario
-            if ($request->crear_usuario) {
+            // ✅ ARREGLADO (2026-08-10): Procesar tanto crear_usuario como cambiar_credenciales
+            $shouldProcessUser = $request->boolean('crear_usuario') || $request->boolean('cambiar_credenciales');
+
+            if ($shouldProcessUser) {
                 if ($cliente->user) {
                     // Actualizar usuario existente
                     $userUpdates = [
@@ -392,12 +394,14 @@ class ClienteController extends Controller
                     Log::info('🔐 VERIFICACIÓN DE PASSWORD EN REQUEST', [
                         'cliente_id' => $cliente->id,
                         'user_id' => $cliente->user->id,
+                        'crear_usuario' => $request->boolean('crear_usuario'),
+                        'cambiar_credenciales' => $request->boolean('cambiar_credenciales'),
                         'password_value' => $passwordProveniente ? '***[presente]***' : 'null',
                         'password_filled' => $passwordLlenado,
                         'has_password_key' => $request->has('password'),
                     ]);
 
-                    // NUEVO: Cambiar password si se proporciona
+                    // ✅ ARREGLADO: Cambiar password si se proporciona (funciona con cambiar_credenciales)
                     if ($request->filled('password')) {
                         $hashedPassword = Hash::make($request->password);
                         $userUpdates['password'] = $hashedPassword;

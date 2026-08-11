@@ -5224,4 +5224,107 @@ class EntregaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ✅ NUEVO (2026-08-10): Actualizar confirmado_por de entregas_venta_confirmaciones masivamente
+     * Actualiza todas las confirmaciones de un chofer en un rango de fechas
+     * POST /api/entregas/actualizar-confirmado-por
+     *
+     * Body:
+     * {
+     *   "chofer_id": 4,
+     *   "fecha_desde": "2026-07-01",
+     *   "fecha_hasta": "2026-08-10",
+     *   "confirmado_por": 4
+     * }
+     */
+    public function actualizarConfirmadoPorMasivo(Request $request)
+    {
+        try {
+            // Validar entrada
+            $validated = $request->validate([
+                'chofer_id' => 'required|integer|min:1',
+                'confirmado_por' => 'required|integer|min:1',
+                'fecha_desde' => 'required|date_format:Y-m-d',
+                'fecha_hasta' => 'required|date_format:Y-m-d|after_or_equal:fecha_desde',
+            ]);
+
+            $chofer_id = $validated['chofer_id'];
+            $confirmado_por = $validated['confirmado_por'];
+            $fecha_desde = Carbon::createFromFormat('Y-m-d', $validated['fecha_desde'])->startOfDay();
+            $fecha_hasta = Carbon::createFromFormat('Y-m-d', $validated['fecha_hasta'])->endOfDay();
+
+            \Log::info('🔍 Iniciando actualización masiva de confirmado_por', [
+                'chofer_id' => $chofer_id,
+                'confirmado_por' => $confirmado_por,
+                'fecha_desde' => $fecha_desde,
+                'fecha_hasta' => $fecha_hasta,
+            ]);
+
+            // Buscar entregas del chofer en el rango
+            $entregas = Entrega::where('chofer_id', $chofer_id)
+                ->whereBetween('created_at', [$fecha_desde, $fecha_hasta])
+                ->select('id', 'numero_entrega')
+                ->get();
+
+            if ($entregas->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No se encontraron entregas para chofer {$chofer_id} en el rango especificado",
+                    'entregas_encontradas' => 0,
+                    'confirmaciones_actualizadas' => 0,
+                ], 404);
+            }
+
+            $entrega_ids = $entregas->pluck('id');
+
+            // Contar confirmaciones que se actualizarán
+            $confirmacionesTotales = EntregaVentaConfirmacion::whereIn('entrega_id', $entrega_ids)
+                ->count();
+
+            $confirmacionesAActualizar = EntregaVentaConfirmacion::whereIn('entrega_id', $entrega_ids)
+                ->where('confirmado_por', '!=', $confirmado_por)
+                ->count();
+
+            // Actualizar
+            $actualizadas = EntregaVentaConfirmacion::whereIn('entrega_id', $entrega_ids)
+                ->where('confirmado_por', '!=', $confirmado_por)
+                ->update(['confirmado_por' => $confirmado_por]);
+
+            \Log::info('✅ Actualización masiva completada', [
+                'entregas_procesadas' => $entregas->count(),
+                'confirmaciones_totales' => $confirmacionesTotales,
+                'confirmaciones_actualizadas' => $actualizadas,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Actualización completada exitosamente',
+                'entregas_procesadas' => $entregas->count(),
+                'confirmaciones_totales' => $confirmacionesTotales,
+                'confirmaciones_actualizadas' => $actualizadas,
+                'entregas' => $entregas->map(fn($e) => [
+                    'id' => $e->id,
+                    'numero_entrega' => $e->numero_entrega,
+                ]),
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validación fallida',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('❌ Error en actualización masiva de confirmado_por', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar actualización',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

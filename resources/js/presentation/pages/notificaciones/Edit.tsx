@@ -41,20 +41,68 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
     const [roles, setRoles] = useState<Role[]>([]);
     const [formData, setFormData] = useState<Partial<NotificacionRecurrente> & { roles?: number[] }>(initialNotif);
 
+    // 🔍 DEBUG: Mostrar datos que llegan del backend
     useEffect(() => {
+        console.log('📋 [Edit Notificaciones] Datos recibidos del backend:', {
+            notificacion_id: initialNotif.id,
+            titulo: initialNotif.titulo,
+            descripcion: initialNotif.descripcion,
+            tipo: initialNotif.tipo,
+            frecuencia: initialNotif.frecuencia,
+            activo: initialNotif.activo,
+            hora_envio: initialNotif.hora_envio,
+            fecha_inicio: initialNotif.fecha_inicio,
+            fecha_fin: initialNotif.fecha_fin,
+            dias_semana: initialNotif.dias_semana,
+            dia_mes: initialNotif.dia_mes,
+            total_enviadas: initialNotif.total_enviadas,
+            vistas: initialNotif.vistas,
+            ultimo_envio: initialNotif.ultimo_envio,
+            roles_count: initialNotif.roles?.length || 0,
+            roles_ids: initialNotif.roles?.map(r => r.id) || [],
+            roles_data: initialNotif.roles,
+            usuario: initialNotif.usuario,
+            full_object: initialNotif,
+        });
+    }, [initialNotif]);
+
+    useEffect(() => {
+        // ✅ Convertir fechas ISO al formato YYYY-MM-DD para inputs type="date"
+        const formatDateForInput = (dateString?: string | null) => {
+            if (!dateString) return '';
+            // Si ya está en formato YYYY-MM-DD, devolver como está
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                return dateString;
+            }
+            // Si es ISO string, extraer solo la fecha
+            return dateString.split('T')[0];
+        };
+
         const formattedData = {
             ...initialNotif,
+            fecha_inicio: formatDateForInput(initialNotif.fecha_inicio as string),
+            fecha_fin: formatDateForInput(initialNotif.fecha_fin as string),
             roles: initialNotif.roles?.map(r => r.id) || [],
         } as unknown as Partial<NotificacionRecurrente> & { roles?: number[] };
         setFormData(formattedData);
+        console.log('✅ [Edit Notificaciones] FormData formateado:', formattedData);
     }, [initialNotif]);
 
     useEffect(() => {
         // Cargar roles disponibles
-        notificacionesService.obtenerRoles().then(setRoles).catch(error => {
-            console.error('Error cargando roles:', error);
-            toast.error('Error al cargar los roles');
-        });
+        console.log('🔄 [Edit Notificaciones] Cargando roles disponibles...');
+        notificacionesService.obtenerRoles()
+            .then(rolesData => {
+                console.log('✅ [Edit Notificaciones] Roles cargados exitosamente:', {
+                    total_roles: rolesData.length,
+                    roles: rolesData,
+                });
+                setRoles(rolesData);
+            })
+            .catch(error => {
+                console.error('❌ [Edit Notificaciones] Error cargando roles:', error);
+                toast.error('Error al cargar los roles');
+            });
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -133,15 +181,36 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
             return;
         }
 
+        console.log('📤 [Edit Notificaciones] Enviando datos al backend:', {
+            id: formData.id,
+            titulo: formData.titulo,
+            descripcion: formData.descripcion,
+            tipo: formData.tipo,
+            frecuencia: formData.frecuencia,
+            activo: formData.activo,
+            hora_envio: formData.hora_envio,
+            fecha_inicio: formData.fecha_inicio,
+            fecha_fin: formData.fecha_fin,
+            dias_semana: formData.dias_semana,
+            dia_mes: formData.dia_mes,
+            roles: formData.roles,
+            full_formData: formData,
+        });
+
         setLoading(true);
         try {
             await notificacionesService.actualizar(formData.id!, formData);
+            console.log('✅ [Edit Notificaciones] Notificación actualizada exitosamente');
             toast.success('Notificación actualizada exitosamente');
             router.push('/notificaciones');
         } catch (error: any) {
+            console.error('❌ [Edit Notificaciones] Error al actualizar:', {
+                error: error,
+                response: error.response?.data,
+                message: error.message,
+            });
             const message = error.response?.data?.message || 'Error al actualizar notificación';
             toast.error(message);
-            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -151,14 +220,14 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
         <AppLayout>
             <Head title={`Editar: ${initialNotif.titulo}`} />
 
-            <div className="space-y-6">
+            <div className="space-y-6 p-4">
                 {/* Header */}
-                <Link href="/notificaciones">
+                {/* <Link href="/notificaciones">
                     <Button variant="ghost" className="gap-2">
                         <ArrowLeft className="w-4 h-4" />
                         Volver
                     </Button>
-                </Link>
+                </Link> */}
 
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

@@ -188,34 +188,47 @@ class NotificacionRecurrenteController extends Controller
     /**
      * Mostrar detalle de notificación
      */
-    public function show(NotificacionRecurrente $notificacion): JsonResponse
+    public function show(string $notificacion): JsonResponse
     {
+        $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
         return response()->json([
             "success" => true,
-            "data" => $notificacion->load("usuario"),
+            "data" => $notificacionModel->load("usuario"),
         ]);
     }
 
     /**
      * Editar notificación
      */
-    public function edit(NotificacionRecurrente $notificacion): InertiaResponse
+    public function edit(Request $request, string $notificacion): InertiaResponse
     {
+        // ✅ Cargar manualmente desde el parámetro (workaround para route model binding)
+        $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
+
+        // ✅ Cargar relaciones necesarias para el formulario
+        $notificacionModel->load(['roles', 'usuario']);
+
+        // ✅ Convertir a array explícitamente y volver a formar el objeto con relaciones
+        $notificacionData = $notificacionModel->toArray();
+        $notificacionData['roles'] = $notificacionModel->roles;
+        $notificacionData['usuario'] = $notificacionModel->usuario;
+
         return Inertia::render("notificaciones/Edit", [
-            "notificacion" => $notificacion,
+            "notificacion" => $notificacionData,
         ]);
     }
 
     /**
      * Actualizar notificación
      */
-    public function update(StoreNotificacionRequest $request, NotificacionRecurrente $notificacion): JsonResponse
+    public function update(StoreNotificacionRequest $request, string $notificacion): JsonResponse
     {
         try {
+            $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
             $dto = CrearNotificacionDTO::fromRequest($request);
             $dto->validar();
 
-            $notificacion->update([
+            $notificacionModel->update([
                 "titulo" => $dto->titulo,
                 "descripcion" => $dto->descripcion,
                 "tipo" => $dto->tipo,
@@ -230,20 +243,20 @@ class NotificacionRecurrenteController extends Controller
 
             // ✅ Actualizar roles si fueron enviados
             if ($request->has('roles') && is_array($request->roles)) {
-                $notificacion->roles()->sync($request->roles);
+                $notificacionModel->roles()->sync($request->roles);
             }
 
-            $notificacion->load('roles');
+            $notificacionModel->load('roles');
 
             Log::info("✅ Notificación actualizada", [
-                "notificacion_id" => $notificacion->id,
-                "roles" => $notificacion->roles->pluck('name'),
+                "notificacion_id" => $notificacionModel->id,
+                "roles" => $notificacionModel->roles->pluck('name'),
             ]);
 
             return response()->json([
                 "success" => true,
                 "message" => "Notificación actualizada exitosamente",
-                "data" => $notificacion,
+                "data" => $notificacionModel,
             ]);
         } catch (\Exception $e) {
             Log::error("Error al actualizar notificación", ["error" => $e->getMessage()]);
@@ -257,13 +270,14 @@ class NotificacionRecurrenteController extends Controller
     /**
      * Eliminar notificación (soft delete)
      */
-    public function destroy(NotificacionRecurrente $notificacion): JsonResponse
+    public function destroy(string $notificacion): JsonResponse
     {
         try {
-            $notificacion->delete();
+            $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
+            $notificacionModel->delete();
 
             Log::info("✅ Notificación eliminada", [
-                "notificacion_id" => $notificacion->id,
+                "notificacion_id" => $notificacionModel->id,
             ]);
 
             return response()->json([
@@ -312,15 +326,16 @@ class NotificacionRecurrenteController extends Controller
     /**
      * Enviar notificación manualmente (botón postal en admin)
      */
-    public function enviarManual(NotificacionRecurrente $notificacion): JsonResponse
+    public function enviarManual(string $notificacion): JsonResponse
     {
         try {
-            $this->service->enviar($notificacion);
+            $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
+            $this->service->enviar($notificacionModel);
 
             return response()->json([
                 "success" => true,
                 "message" => "Notificación enviada exitosamente",
-                "data" => $notificacion,
+                "data" => $notificacionModel,
             ]);
         } catch (\Exception $e) {
             Log::error("Error al enviar notificación manualmente", ["error" => $e->getMessage()]);

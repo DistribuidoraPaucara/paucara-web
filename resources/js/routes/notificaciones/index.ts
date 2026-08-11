@@ -309,7 +309,7 @@ show.head = (args: { notificacione: string | number } | [notificacione: string |
     show.form = showForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
 export const edit = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -324,7 +324,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -352,7 +352,7 @@ edit.url = (args: { notificacione: string | number } | [notificacione: string | 
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -361,7 +361,7 @@ edit.get = (args: { notificacione: string | number } | [notificacione: string | 
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -371,7 +371,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
     const editForm = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -381,7 +381,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
         editForm.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -390,7 +390,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:202
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
  * @route '/notificaciones/{notificacione}/edit'
  */
         editForm.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -406,7 +406,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
 export const update = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -421,7 +421,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
 update.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -449,7 +449,7 @@ update.url = (args: { notificacione: string | number } | [notificacione: string 
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
 update.put = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -458,7 +458,7 @@ update.put = (args: { notificacione: string | number } | [notificacione: string 
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
 update.patch = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -468,7 +468,7 @@ update.patch = (args: { notificacione: string | number } | [notificacione: strin
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
     const updateForm = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -483,7 +483,7 @@ update.patch = (args: { notificacione: string | number } | [notificacione: strin
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
         updateForm.put = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -497,7 +497,7 @@ update.patch = (args: { notificacione: string | number } | [notificacione: strin
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:212
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
  * @route '/notificaciones/{notificacione}'
  */
         updateForm.patch = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -513,7 +513,7 @@ update.patch = (args: { notificacione: string | number } | [notificacione: strin
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:260
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
  * @route '/notificaciones/{notificacione}'
  */
 export const destroy = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -528,7 +528,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:260
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
  * @route '/notificaciones/{notificacione}'
  */
 destroy.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -556,7 +556,7 @@ destroy.url = (args: { notificacione: string | number } | [notificacione: string
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:260
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
  * @route '/notificaciones/{notificacione}'
  */
 destroy.delete = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -566,7 +566,7 @@ destroy.delete = (args: { notificacione: string | number } | [notificacione: str
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:260
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
  * @route '/notificaciones/{notificacione}'
  */
     const destroyForm = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -581,7 +581,7 @@ destroy.delete = (args: { notificacione: string | number } | [notificacione: str
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:260
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
  * @route '/notificaciones/{notificacione}'
  */
         destroyForm.delete = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -597,10 +597,10 @@ destroy.delete = (args: { notificacione: string | number } | [notificacione: str
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviar
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:315
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
  * @route '/notificaciones/{notificacion}/enviar'
  */
-export const enviar = (args: { notificacion: number | { id: number } } | [notificacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const enviar = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: enviar.url(args, options),
     method: 'post',
 })
@@ -612,17 +612,14 @@ enviar.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviar
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:315
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
  * @route '/notificaciones/{notificacion}/enviar'
  */
-enviar.url = (args: { notificacion: number | { id: number } } | [notificacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+enviar.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { notificacion: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { notificacion: args.id }
-        }
     
     if (Array.isArray(args)) {
         args = {
@@ -633,9 +630,7 @@ enviar.url = (args: { notificacion: number | { id: number } } | [notificacion: n
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        notificacion: typeof args.notificacion === 'object'
-                ? args.notificacion.id
-                : args.notificacion,
+                        notificacion: args.notificacion,
                 }
 
     return enviar.definition.url
@@ -645,30 +640,30 @@ enviar.url = (args: { notificacion: number | { id: number } } | [notificacion: n
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviar
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:315
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
  * @route '/notificaciones/{notificacion}/enviar'
  */
-enviar.post = (args: { notificacion: number | { id: number } } | [notificacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+enviar.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: enviar.url(args, options),
     method: 'post',
 })
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviar
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:315
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
  * @route '/notificaciones/{notificacion}/enviar'
  */
-    const enviarForm = (args: { notificacion: number | { id: number } } | [notificacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const enviarForm = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: enviar.url(args, options),
         method: 'post',
     })
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviar
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:315
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
  * @route '/notificaciones/{notificacion}/enviar'
  */
-        enviarForm.post = (args: { notificacion: number | { id: number } } | [notificacion: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        enviarForm.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: enviar.url(args, options),
             method: 'post',
         })

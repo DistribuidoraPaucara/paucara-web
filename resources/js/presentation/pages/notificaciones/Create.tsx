@@ -151,14 +151,14 @@ export default function NotificacionesCreate() {
         <AppLayout>
             <Head title="Crear Notificación" />
 
-            <div className="space-y-6">
+            <div className="space-y-6 p-4">
                 {/* Header */}
-                <Link href="/notificaciones">
+                {/* <Link href="/notificaciones">
                     <Button variant="ghost" className="gap-2">
                         <ArrowLeft className="w-4 h-4" />
                         Volver
                     </Button>
-                </Link>
+                </Link> */}
 
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
