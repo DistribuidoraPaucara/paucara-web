@@ -123,8 +123,8 @@ class PrestableController extends Controller
                 $cantidadDisponibleProducto = 0;
                 if ($prestable->productos && count($prestable->productos) > 0) {
                     foreach ($prestable->productos as $producto) {
-                        if ($producto->stocks) {
-                            foreach ($producto->stocks as $stock) {
+                        if ($producto->stock) {
+                            foreach ($producto->stock as $stock) {
                                 $cantidadDisponibleProducto += $stock->cantidad_disponible;
                             }
                         }
@@ -454,7 +454,7 @@ class PrestableController extends Controller
                 'embaseAsociado:id,nombre,codigo,capacidad',
                 'embasesRelacionados',
                 'productos:id,nombre,sku',
-                'productos.stocks:id,producto_id,cantidad_disponible,almacen_id',
+                'productos.stock:id,producto_id,cantidad_disponible,almacen_id',
             ]);
 
             // Calcular totales de stock
@@ -481,8 +481,8 @@ class PrestableController extends Controller
             $cantidadDisponibleProducto = 0;
             if ($prestable->productos && count($prestable->productos) > 0) {
                 foreach ($prestable->productos as $producto) {
-                    if ($producto->stocks) {
-                        foreach ($producto->stocks as $stock) {
+                    if ($producto->stock) {
+                        foreach ($producto->stock as $stock) {
                             $cantidadDisponibleProducto += $stock->cantidad_disponible;
                         }
                     }
