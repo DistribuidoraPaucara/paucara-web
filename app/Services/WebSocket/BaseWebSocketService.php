@@ -26,7 +26,19 @@ abstract class BaseWebSocketService
     public function __construct()
     {
         try {
-            $this->wsUrl       = config('websocket.url', 'http://localhost:3001') ?? 'http://localhost:3001';
+            $wsUrl = config('websocket.url', 'http://localhost:3001') ?? 'http://localhost:3001';
+
+            // Convertir wss:// a https:// para peticiones HTTP (cURL no soporta wss://)
+            // WSS es para clientes WebSocket, pero Laravel hace peticiones HTTP POST
+            if (str_starts_with($wsUrl, 'wss://')) {
+                $wsUrl = 'https://' . substr($wsUrl, 6);
+                Log::info('🔄 Convertido WebSocket URL de wss:// a https:// para HTTP requests', [
+                    'original' => config('websocket.url'),
+                    'converted' => $wsUrl,
+                ]);
+            }
+
+            $this->wsUrl       = $wsUrl;
             $this->enabled     = (bool) (config('websocket.enabled') !== false);
             $this->debug       = (bool) config('websocket.debug', false);
             $this->timeout     = (int) config('websocket.timeout', 5);
