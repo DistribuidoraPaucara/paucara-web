@@ -1926,3 +1926,9 @@ Route::prefix('actualizar-stock-masivo')->middleware('auth')->group(function () 
     Route::get('descargar-plantilla', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'descargarPlantilla'])->name('api.actualizar-stock-masivo.descargar-plantilla');
     Route::post('procesar-csv', [\App\Http\Controllers\ActualizarStockMasivoController::class, 'procesarCSV'])->name('api.actualizar-stock-masivo.procesar-csv');
 });
+
+// ✅ NUEVO (2026-08-12): API para Descargar Logs
+Route::middleware(['auth:sanctum', 'permission:admin'])->group(function () {
+    Route::get('admin/logs/download', [\App\Http\Controllers\Api\LogsController::class, 'download'])->name('api.logs.download');
+    Route::get('admin/logs/view', [\App\Http\Controllers\Api\LogsController::class, 'view'])->name('api.logs.view');
+});
