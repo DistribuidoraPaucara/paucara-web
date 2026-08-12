@@ -38,6 +38,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Excluir rutas de logs de Inertia
+        if ($request->path() === 'api/admin/logs/view' || $request->path() === 'api/admin/logs/download') {
+            return [];
+        }
+
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         // ✅ Obtener estado de caja del usuario para mostrar en NavHeader
