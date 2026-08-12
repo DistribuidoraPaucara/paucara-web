@@ -504,19 +504,94 @@ export default function PrestablesSelectionTable({
                                                         </span>
                                                     </td>
                                                     <td className="px-2 py-2 text-center">
-                                                        <input
-                                                            type="text"
-                                                            inputMode="numeric"
-                                                            value={embaseItem.cantidad}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                if (val === '' || /^\d+$/.test(val)) {
-                                                                    onUpdateCantidad?.(Number(embasePrestable.id), val === '' ? 0 : parseInt(val));
-                                                                }
-                                                            }}
-                                                            onFocus={(e) => e.target.select()}
-                                                            className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
-                                                        />
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                                            {(() => {
+                                                                const capacidadCanastilla = prestable.capacidad || 1;
+                                                                return `${embaseItem.cantidad} (${item.cantidad}×${capacidadCanastilla})`;
+                                                            })()}
+                                                        </div>
+                                                    </td>
+                                                    {/* Columnas Con Líquido y Sin Líquido para embases */}
+                                                    <td className="px-2 py-2 text-center">
+                                                        {(() => {
+                                                            const capacidadCanastilla = prestable.capacidad || 1;
+                                                            const canastillaConLiqKey = `${item.prestable_id}-con`;
+                                                            const defaultCanastillaConLiq = prestable.tipo === 'CANASTILLA'
+                                                                ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                                : 0;
+                                                            const canastillaConLiq = conLiquidoMap[canastillaConLiqKey] !== undefined
+                                                                ? conLiquidoMap[canastillaConLiqKey]
+                                                                : defaultCanastillaConLiq;
+                                                            const embaseConLiq = canastillaConLiq * capacidadCanastilla;
+                                                            const itemKey = `${item.prestable_id}-embase-con`;
+
+                                                            return (
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    value={conLiquidoMap[itemKey] ?? embaseConLiq}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (val === '' || /^\d+$/.test(val)) {
+                                                                            const num = val === '' ? 0 : parseInt(val);
+                                                                            setConLiquidoMap(prev => ({
+                                                                                ...prev,
+                                                                                [itemKey]: Math.min(num, embaseItem.cantidad)
+                                                                            }));
+                                                                            const sinLiqKey = `${item.prestable_id}-embase-sin`;
+                                                                            setSinLiquidoMap(prev => ({
+                                                                                ...prev,
+                                                                                [sinLiqKey]: Math.max(0, embaseItem.cantidad - Math.min(num, embaseItem.cantidad))
+                                                                            }));
+                                                                        }
+                                                                    }}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    className="w-16 px-2 py-1 border border-blue-300 dark:border-blue-600 rounded text-center bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                                />
+                                                            );
+                                                        })()}
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center">
+                                                        {(() => {
+                                                            const capacidadCanastilla = prestable.capacidad || 1;
+                                                            const canastillaConLiqKey = `${item.prestable_id}-con`;
+                                                            const defaultCanastillaConLiq = prestable.tipo === 'CANASTILLA'
+                                                                ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                                : 0;
+                                                            const canastillaConLiq = conLiquidoMap[canastillaConLiqKey] !== undefined
+                                                                ? conLiquidoMap[canastillaConLiqKey]
+                                                                : defaultCanastillaConLiq;
+                                                            const embaseConLiq = canastillaConLiq * capacidadCanastilla;
+                                                            const sinLiqKey = `${item.prestable_id}-embase-sin`;
+                                                            const embaseSinLiq = sinLiquidoMap[sinLiqKey] !== undefined
+                                                                ? sinLiquidoMap[sinLiqKey]
+                                                                : Math.max(0, embaseItem.cantidad - embaseConLiq);
+
+                                                            return (
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    value={embaseSinLiq}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (val === '' || /^\d+$/.test(val)) {
+                                                                            const num = val === '' ? 0 : parseInt(val);
+                                                                            setSinLiquidoMap(prev => ({
+                                                                                ...prev,
+                                                                                [sinLiqKey]: Math.min(num, embaseItem.cantidad)
+                                                                            }));
+                                                                            const conLiqKey = `${item.prestable_id}-embase-con`;
+                                                                            setConLiquidoMap(prev => ({
+                                                                                ...prev,
+                                                                                [conLiqKey]: Math.max(0, embaseItem.cantidad - Math.min(num, embaseItem.cantidad))
+                                                                            }));
+                                                                        }
+                                                                    }}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    className="w-16 px-2 py-1 border border-green-300 dark:border-green-600 rounded text-center bg-green-50 dark:bg-green-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                                />
+                                                            );
+                                                        })()}
                                                     </td>
                                                     {!esPrestamoProveedor && (
                                                         <td></td>
