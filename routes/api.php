@@ -1928,7 +1928,7 @@ Route::prefix('actualizar-stock-masivo')->middleware('auth')->group(function () 
 });
 
 // ✅ NUEVO (2026-08-12): API para Descargar Logs
-Route::middleware(['auth:sanctum', 'permission:admin'])->group(function () {
+Route::middleware(['auth:sanctum,web'])->group(function () {
     Route::get('admin/logs/download', [\App\Http\Controllers\Api\LogsController::class, 'download'])->name('api.logs.download');
     Route::get('admin/logs/view', [\App\Http\Controllers\Api\LogsController::class, 'view'])->name('api.logs.view');
 });

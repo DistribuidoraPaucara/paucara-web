@@ -15,6 +15,10 @@ class LogsController extends Controller
      */
     public function download()
     {
+        Log::info('📋 [LogsController::download] Solicitando descarga de logs', [
+            'user_id' => auth()->id(),
+        ]);
+
         try {
             $logFile = storage_path('logs/laravel.log');
 
@@ -49,6 +53,11 @@ class LogsController extends Controller
      */
     public function view()
     {
+        Log::info('📋 [LogsController::view] Solicitando ver logs', [
+            'user_id' => auth()->id(),
+            'lines' => request()->input('lines', 500),
+        ]);
+
         try {
             $logFile = storage_path('logs/laravel.log');
             $lines = request()->input('lines', 500);
