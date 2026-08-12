@@ -82,7 +82,7 @@ class PrestamosInertiaController extends Controller
         $prestables = Prestable::where('activo', true)
             ->with([
                 'productos:id,nombre,sku',
-                'productos.stock:id,producto_id,cantidad_disponible,almacen_id',
+                'productos.stocks:id,producto_id,cantidad_disponible,almacen_id',
                 'stocks' => function ($query) {
                     $query->select('id', 'prestable_id', 'almacenes_prestables_id', 'cantidad_disponible', 'created_at');
                 }
@@ -97,8 +97,8 @@ class PrestamosInertiaController extends Controller
                 if ($prestable->productos && count($prestable->productos) > 0) {
                     // Sumar cantidad_disponible de TODOS los stocks de TODOS los productos relacionados
                     foreach ($prestable->productos as $producto) {
-                        if ($producto->stock) {
-                            foreach ($producto->stock as $stock) {
+                        if ($producto->stocks) {
+                            foreach ($producto->stocks as $stock) {
                                 $cantidadDisponibleProducto += $stock->cantidad_disponible;
                             }
                         }
