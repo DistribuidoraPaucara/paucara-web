@@ -1263,6 +1263,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✨ NUEVO: Notificaciones Recurrentes
     Route::resource('notificaciones', \App\Http\Controllers\NotificacionRecurrenteController::class);
     Route::post('notificaciones/{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviarManual'])->name('notificaciones.enviar');
+
+    // ✅ NUEVO (2026-08-12): Rutas para descargar/ver logs
+    Route::get('logs/view', [\App\Http\Controllers\Api\LogsController::class, 'view'])->name('logs.view');
+    Route::get('logs/download', [\App\Http\Controllers\Api\LogsController::class, 'download'])->name('logs.download');
 });
 
 require __DIR__ . '/settings.php';
