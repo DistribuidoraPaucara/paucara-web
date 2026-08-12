@@ -504,12 +504,19 @@ export default function PrestablesSelectionTable({
                                                         </span>
                                                     </td>
                                                     <td className="px-2 py-2 text-center">
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                                            {(() => {
-                                                                const capacidadCanastilla = prestable.capacidad || 1;
-                                                                return `${embaseItem.cantidad} (${item.cantidad}×${capacidadCanastilla})`;
-                                                            })()}
-                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={embaseItem.cantidad}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || /^\d+$/.test(val)) {
+                                                                    onUpdateCantidad?.(Number(embasePrestable.id), val === '' ? 0 : parseInt(val));
+                                                                }
+                                                            }}
+                                                            onFocus={(e) => e.target.select()}
+                                                            className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                        />
                                                     </td>
                                                     {/* Columnas Con Líquido y Sin Líquido para embases */}
                                                     <td className="px-2 py-2 text-center">
