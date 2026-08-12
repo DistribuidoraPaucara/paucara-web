@@ -360,6 +360,47 @@ class PrestamoClienteService
                                 'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
                             ]);
                         }
+
+                        // ✅ NUEVO: Registrar cantidad_sin_liquido si existe
+                        $cantidadSinLiquido = (int) ($detalle['sin_liquido'] ?? 0);
+                        if ($cantidadSinLiquido > 0) {
+                            // Para cada almacén en este detalle, incrementar cantidad_sin_liquido
+                            foreach ($almacenesAConsumir as $almacenDataSinLiq) {
+                                $almacenIdSinLiq = (int) $almacenDataSinLiq['almacenes_prestables_id'];
+                                $stock = PrestableStock::where('prestable_id', (int) $detalle['prestable_id'])
+                                    ->where('almacenes_prestables_id', $almacenIdSinLiq)
+                                    ->firstOrFail();
+
+                                $sinLiquidoAnterior = $stock->cantidad_sin_liquido;
+                                $stock->increment('cantidad_sin_liquido', $cantidadSinLiquido);
+                                $stock->refresh();
+
+                                // Registrar movimiento para sin_liquido
+                                $this->movimientoService->registrarMovimiento([
+                                    'prestable_stock_id' => $stock->id,
+                                    'almacenes_prestables_id' => $almacenIdSinLiq,
+                                    'usuario_id' => auth()->id(),
+                                    'tipo' => 'INGRESO_SIN_LIQUIDO',
+                                    'cantidad' => $cantidadSinLiquido,
+                                    'disponible_anterior' => $stock->cantidad_disponible,
+                                    'sin_liquido_anterior' => $sinLiquidoAnterior,
+                                    'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                    'categoria_afectada' => 'sin_liquido',
+                                    'motivo' => 'Canastillas/embases sin líquido en préstamo a cliente',
+                                    'numero_referencia' => $prestamo->id,
+                                    'referencia_tipo' => 'PRESTAMO_CLIENTE',
+                                    'referencia_id' => $prestamo->id,
+                                    'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
+                                ]);
+
+                                Log::info('✅ Cantidad sin líquido registrada', [
+                                    'prestable_id' => $detalle['prestable_id'],
+                                    'almacen_id' => $almacenIdSinLiq,
+                                    'cantidad_sin_liquido' => $cantidadSinLiquido,
+                                    'prestamo_id' => $prestamo->id,
+                                ]);
+                            }
+                        }
                     }
                 }
 
