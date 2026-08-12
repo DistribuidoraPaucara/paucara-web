@@ -94,10 +94,33 @@ export default function PrestablesSelectionTable({
 
     // Helper: Obtener stock total de almacenes seleccionados en el item
     const getStockDisponibleDelItem = (prestable: Prestable, item: PrestamoItem) => {
-        // ✅ MODIFICADO: Usar cantidad_disponible_producto (basada en productos, no prestables)
-        // Ahora retorna la cantidad TOTAL del producto relacionado, sin considerar almacén específico
-        // porque la cantidad está calculada como suma de TODOS los almacenes
-        return (prestable as any).cantidad_disponible_producto || 0;
+        // Si el item tiene almacenes seleccionados, calcular stock de esos almacenes
+        const almacenesDelItem = (item.almacenes && item.almacenes.length > 0)
+            ? item.almacenes
+            : [];
+
+        if (almacenesDelItem.length > 0) {
+            // Calcular stock total de los almacenes seleccionados
+            let stockTotal = 0;
+            almacenesDelItem.forEach(almData => {
+                const stock = prestable.stocks?.find(
+                    s => Number(s.almacenes_prestables_id) === almData.almacenes_prestables_id
+                );
+                stockTotal += stock ? Number(stock.cantidad_disponible || 0) : 0;
+            });
+            return stockTotal;
+        }
+
+        // Si no hay almacenes en el item y hay almacén de cabecera, usar ese
+        if (almacen_prestable_id) {
+            const stock = prestable.stocks?.find(
+                s => Number(s.almacenes_prestables_id) === almacen_prestable_id
+            );
+            return stock ? Number(stock.cantidad_disponible || 0) : 0;
+        }
+
+        // Si no hay nada, retornar 0
+        return 0;
     };
 
     const handleSearchChange = (query: string) => {
