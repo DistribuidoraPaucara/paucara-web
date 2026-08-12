@@ -30,6 +30,8 @@ interface PrestablesSelectionTableProps {
     almacen_prestable_id?: number;
     esPrestamoProveedor?: boolean;
     canastillasUsadasEnVenta?: Map<number, number>;
+    onConLiquidoMapChange?: (map: Record<string, number>) => void;
+    onSinLiquidoMapChange?: (map: Record<string, number>) => void;
 }
 
 export default function PrestablesSelectionTable({
@@ -48,6 +50,8 @@ export default function PrestablesSelectionTable({
     almacen_prestable_id,
     esPrestamoProveedor = false,
     canastillasUsadasEnVenta,
+    onConLiquidoMapChange,
+    onSinLiquidoMapChange,
 }: PrestablesSelectionTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -55,6 +59,15 @@ export default function PrestablesSelectionTable({
     const [sinLiquidoMap, setSinLiquidoMap] = useState<Record<string, number>>({});
     const searchRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
+
+    // ✅ Notificar cambios de maps al padre
+    useEffect(() => {
+        onConLiquidoMapChange?.(conLiquidoMap);
+    }, [conLiquidoMap, onConLiquidoMapChange]);
+
+    useEffect(() => {
+        onSinLiquidoMapChange?.(sinLiquidoMap);
+    }, [sinLiquidoMap, onSinLiquidoMapChange]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -238,11 +251,11 @@ export default function PrestablesSelectionTable({
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 🗂️ Sin Líquido
                             </th>
-                            {!esPrestamoProveedor && (
+                            {/* {!esPrestamoProveedor && (
                                 <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     🏭 Almacenes
                                 </th>
-                            )}
+                            )} */}
                             {almacen_prestable_id && (
                                 <th className="px-2 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     📦 Disponibilidad
@@ -413,7 +426,7 @@ export default function PrestablesSelectionTable({
                                                         );
                                                     })()}
                                                 </td>
-                                                {!esPrestamoProveedor && (
+                                                {/* {!esPrestamoProveedor && (
                                                     <td className="px-2 py-2 text-center">
                                                         <button
                                                             type="button"
@@ -426,7 +439,7 @@ export default function PrestablesSelectionTable({
                                                             {getAlmacenesDisplay(item)}
                                                         </button>
                                                     </td>
-                                                )}
+                                                )} */}
                                                 {almacen_prestable_id && (
                                                     <td className="px-2 py-2 text-right">
                                                         <div className="space-y-1">
@@ -600,9 +613,9 @@ export default function PrestablesSelectionTable({
                                                             );
                                                         })()}
                                                     </td>
-                                                    {!esPrestamoProveedor && (
+                                                    {/* {!esPrestamoProveedor && (
                                                         <td></td>
-                                                    )}
+                                                    )} */}
                                                     {almacen_prestable_id && (
                                                         <td className="px-2 py-2 text-right">
                                                             <div className="space-y-1">
@@ -771,7 +784,7 @@ export default function PrestablesSelectionTable({
                                                         );
                                                     })()}
                                                 </td>
-                                                {!esPrestamoProveedor && (
+                                                {/* {!esPrestamoProveedor && (
                                                     <td className="px-2 py-2 text-center">
                                                         <button
                                                             type="button"
@@ -784,7 +797,7 @@ export default function PrestablesSelectionTable({
                                                             {getAlmacenesDisplay(item)}
                                                         </button>
                                                     </td>
-                                                )}
+                                                )} */}
                                                 {almacen_prestable_id && (
                                                     <td className="px-2 py-2 text-right">
                                                         <div className="space-y-1">

@@ -113,6 +113,10 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     // Lista de prestables agregados
     const [prestablesAgregados, setPrestablesAgregados] = useState<PrestamoItem[]>([]);
 
+    // ✅ NUEVO: Mapas de con_liquido y sin_liquido desde PrestablesSelectionTable
+    const [conLiquidoMap, setConLiquidoMap] = useState<Record<string, number>>({});
+    const [sinLiquidoMap, setSinLiquidoMap] = useState<Record<string, number>>({});
+
     // Estados para búsquedas dinámicas
     const [ventasSearch, setVentasSearch] = useState('');
     const [ventasResults, setVentasResults] = useState<any[]>([]);
@@ -941,6 +945,20 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         detallePayload.almacenes_ids = item.almacenes_ids;
                     }
 
+                    // ✅ NUEVO: Agregar con_liquido y sin_liquido
+                    const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
+                    if (prestable) {
+                        const conLiqKey = prestable.tipo === 'EMBASES' && prestable.prestable_relacionado_id
+                            ? `${prestable.prestable_relacionado_id}-embase-con`
+                            : `${item.prestable_id}-con`;
+                        const sinLiqKey = prestable.tipo === 'EMBASES' && prestable.prestable_relacionado_id
+                            ? `${prestable.prestable_relacionado_id}-embase-sin`
+                            : `${item.prestable_id}-sin`;
+
+                        detallePayload.con_liquido = conLiquidoMap[conLiqKey] ?? 0;
+                        detallePayload.sin_liquido = sinLiquidoMap[sinLiqKey] ?? 0;
+                    }
+
                     return detallePayload;
                 }),
             };
@@ -1297,6 +1315,8 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             loading={loadingPrestables}
                             almacen_prestable_id={formData.almacenes_prestables_id}
                             canastillasUsadasEnVenta={canastillasUsadasEnVenta}
+                            onConLiquidoMapChange={setConLiquidoMap}
+                            onSinLiquidoMapChange={setSinLiquidoMap}
                         />
                     </div>
 
