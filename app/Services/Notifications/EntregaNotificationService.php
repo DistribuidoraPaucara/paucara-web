@@ -732,6 +732,8 @@ class EntregaNotificationService
                     'cliente_id' => $venta->cliente_id,
                     'user_id_cliente' => $cliente->user_id,
                 ]);
+                // Enviar al WebSocket de todos modos (mejor experiencia)
+                $this->wsService->notifyClienteEntregaListo($venta, $entrega);
                 return true;
             }
 
@@ -739,7 +741,7 @@ class EntregaNotificationService
             $choferNombre = $entrega->chofer?->name ?? 'Chofer';
             $mensaje = "📤 Tu pedido #{$venta->numero} está en el camión y será entregado pronto. Vehículo: {$vehiculoPlaca}";
 
-            // Guardar en BD
+            // Guardar en BD (con validación ya hecha)
             $this->dbNotificationService->create([$cliente->user_id], 'cliente.entrega_listo', [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
@@ -983,6 +985,19 @@ class EntregaNotificationService
     {
         try {
             if (!$user || !$user->id) {
+                return true;
+            }
+
+            // Validar que user->id es un user_id válido en tabla users
+            $userExists = User::where('id', $user->id)->exists();
+            if (!$userExists) {
+                Log::warning('notifyVentaEnTransito: user_id no existe en tabla users', [
+                    'venta_id' => $venta->id,
+                    'user_id' => $user->id,
+                    'tipo' => $tipo,
+                ]);
+                // Enviar al WebSocket de todos modos (mejor experiencia)
+                $this->wsService->notifyVentaEnTransito($venta, $entrega, $user, $tipo);
                 return true;
             }
 
