@@ -229,6 +229,13 @@ export default function PrestablesSelectionTable({
                             <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 Cantidad
                             </th>
+                            {/* ✅ NUEVO: Columnas para Con Líquido y Sin Líquido */}
+                            <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                💧 Con Líquido
+                            </th>
+                            <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                🗂️ Sin Líquido
+                            </th>
                             {!esPrestamoProveedor && (
                                 <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     🏭 Almacenes
@@ -325,6 +332,33 @@ export default function PrestablesSelectionTable({
                                                         onFocus={(e) => e.target.select()}
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
+                                                </td>
+                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                {conLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                                                {sinLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </td>
                                                 {!esPrestamoProveedor && (
                                                     <td className="px-2 py-2 text-center">
@@ -524,6 +558,33 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
+                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                {conLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                                                {sinLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
                                                 {!esPrestamoProveedor && (
                                                     <td className="px-2 py-2 text-center">
                                                         <button
@@ -625,6 +686,33 @@ export default function PrestablesSelectionTable({
                                                         onFocus={(e) => e.target.select()}
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
+                                                </td>
+                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                {conLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                <td className="px-2 py-2 text-center">
+                                                    {(() => {
+                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                            ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
+                                                            : 0;
+                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        return (
+                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                                                {sinLiquido}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </td>
                                                 {!esPrestamoProveedor && (
                                                     <td className="px-2 py-2 text-center">
