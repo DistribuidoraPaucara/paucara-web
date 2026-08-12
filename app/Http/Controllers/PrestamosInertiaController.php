@@ -105,8 +105,6 @@ class PrestamosInertiaController extends Controller
                     }
                 }
 
-                $prestable->cantidad_disponible_producto = $cantidadDisponibleProducto;
-
                 \Log::info('📦 Prestable cargado con cantidad de producto', [
                     'prestable_id' => $prestable->id,
                     'prestable_nombre' => $prestable->nombre,
@@ -114,7 +112,10 @@ class PrestamosInertiaController extends Controller
                     'cantidad_disponible_producto' => $cantidadDisponibleProducto,
                 ]);
 
-                return $prestable;
+                // ✅ CONVERTIR A ARRAY E INCLUIR cantidad_disponible_producto EXPLÍCITAMENTE
+                return array_merge($prestable->toArray(), [
+                    'cantidad_disponible_producto' => $cantidadDisponibleProducto,
+                ]);
             });
 
         // ✅ Nuevo: Traer localidades para selección de ubicación
