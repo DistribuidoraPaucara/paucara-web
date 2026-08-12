@@ -120,6 +120,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     const [ventaSeleccionada, setVentaSeleccionada] = useState<any>(null);
     const [direccionSeleccionada, setDireccionSeleccionada] = useState<any>(null);
 
+    // ✅ NUEVO: Rastrear canastillas usadas en la venta para ajustar disponibilidad
+    const [canastillasUsadasEnVenta, setCanastillasUsadasEnVenta] = useState<Map<number, number>>(new Map());
+
     const [clientesSearch, setClientesSearch] = useState('');
     const [clientesFiltered, setClientesFiltered] = useState(clientes);
     const [clienteSeleccionado, setClienteSeleccionado] = useState<any>(null);
@@ -542,8 +545,26 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 });
             }
 
+            // ✅ NUEVO: Calcular canastillas usadas en la venta por prestable
+            const canastillasUsadas = new Map<number, number>();
+            ventaData.detalles?.forEach((detalle: any) => {
+                const cantidad = detalle.cantidad || 0;
+                detalle.producto?.prestables?.forEach((p: any) => {
+                    if (p.tipo === 'CANASTILLA') {
+                        const prestableId = Number(p.id || p.prestable_id);
+                        canastillasUsadas.set(prestableId, (canastillasUsadas.get(prestableId) || 0) + cantidad);
+                    }
+                });
+            });
+
+            console.log('📦 Canastillas usadas en esta venta:', {
+                venta_numero: ventaData.numero,
+                canastillasUsadas: Array.from(canastillasUsadas.entries()),
+            });
+
             // ✅ CRÍTICO (2026-07-16): Actualizar ventaSeleccionada con datos completos del API
             setVentaSeleccionada(ventaData);
+            setCanastillasUsadasEnVenta(canastillasUsadas);
 
             setFormData({
                 ...formData,
@@ -1275,6 +1296,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             getStockDisponibleTotal={getStockDisponibleTotal}
                             loading={loadingPrestables}
                             almacen_prestable_id={formData.almacenes_prestables_id}
+                            canastillasUsadasEnVenta={canastillasUsadasEnVenta}
                         />
                     </div>
 

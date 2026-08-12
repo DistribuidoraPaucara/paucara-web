@@ -29,6 +29,7 @@ interface PrestablesSelectionTableProps {
     emptyMessage?: string;
     almacen_prestable_id?: number;
     esPrestamoProveedor?: boolean;
+    canastillasUsadasEnVenta?: Map<number, number>;
 }
 
 export default function PrestablesSelectionTable({
@@ -46,6 +47,7 @@ export default function PrestablesSelectionTable({
     emptyMessage = 'Busca arriba para agregar prestables',
     almacen_prestable_id,
     esPrestamoProveedor = false,
+    canastillasUsadasEnVenta,
 }: PrestablesSelectionTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -99,28 +101,31 @@ export default function PrestablesSelectionTable({
             ? item.almacenes
             : [];
 
+        let stockTotal = 0;
+
         if (almacenesDelItem.length > 0) {
             // Calcular stock total de los almacenes seleccionados
-            let stockTotal = 0;
             almacenesDelItem.forEach(almData => {
                 const stock = prestable.stocks?.find(
                     s => Number(s.almacenes_prestables_id) === almData.almacenes_prestables_id
                 );
                 stockTotal += stock ? Number(stock.cantidad_disponible || 0) : 0;
             });
-            return stockTotal;
-        }
-
-        // Si no hay almacenes en el item y hay almacén de cabecera, usar ese
-        if (almacen_prestable_id) {
+        } else if (almacen_prestable_id) {
+            // Si no hay almacenes en el item y hay almacén de cabecera, usar ese
             const stock = prestable.stocks?.find(
                 s => Number(s.almacenes_prestables_id) === almacen_prestable_id
             );
-            return stock ? Number(stock.cantidad_disponible || 0) : 0;
+            stockTotal = stock ? Number(stock.cantidad_disponible || 0) : 0;
         }
 
-        // Si no hay nada, retornar 0
-        return 0;
+        // ✅ NUEVO: Restar canastillas usadas en la venta (si aplica)
+        if (canastillasUsadasEnVenta && prestable.tipo === 'CANASTILLA') {
+            const canastillasUsadas = canastillasUsadasEnVenta.get(prestable.id) || 0;
+            stockTotal = Math.max(0, stockTotal - canastillasUsadas);
+        }
+
+        return stockTotal;
     };
 
     const handleSearchChange = (query: string) => {
