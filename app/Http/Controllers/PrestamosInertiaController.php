@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\Prestable;
 use App\Models\PrestableStock;
 use App\Models\Proveedor;
+use App\Models\StockProducto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -77,16 +78,44 @@ class PrestamosInertiaController extends Controller
             ->limit(100)
             ->get();
 
-        // Traer prestables con stocks actualizados
-        $prestables = \App\Models\Prestable::where('activo', true)
+        // ✅ MODIFICADO: Traer prestables con cantidad basada en PRODUCTOS relacionados, no en stock de prestables
+        $prestables = Prestable::where('activo', true)
             ->with([
+                'productos:id,nombre,sku',
+                'productos.stocks:id,producto_id,cantidad_disponible,almacen_id',
                 'stocks' => function ($query) {
                     $query->select('id', 'prestable_id', 'almacenes_prestables_id', 'cantidad_disponible', 'created_at');
                 }
             ])
             ->select('id', 'tipo', 'nombre', 'codigo', 'capacidad', 'prestable_relacionado_id', 'producto_id', 'proveedor_id', 'activo')
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->map(function ($prestable) {
+                // 🔢 NUEVO: Calcular cantidad disponible basada en PRODUCTOS relacionados
+                $cantidadDisponibleProducto = 0;
+
+                if ($prestable->productos && count($prestable->productos) > 0) {
+                    // Sumar cantidad_disponible de TODOS los stocks de TODOS los productos relacionados
+                    foreach ($prestable->productos as $producto) {
+                        if ($producto->stocks) {
+                            foreach ($producto->stocks as $stock) {
+                                $cantidadDisponibleProducto += $stock->cantidad_disponible;
+                            }
+                        }
+                    }
+                }
+
+                $prestable->cantidad_disponible_producto = $cantidadDisponibleProducto;
+
+                \Log::info('📦 Prestable cargado con cantidad de producto', [
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'productos_relacionados' => $prestable->productos->count(),
+                    'cantidad_disponible_producto' => $cantidadDisponibleProducto,
+                ]);
+
+                return $prestable;
+            });
 
         // ✅ Nuevo: Traer localidades para selección de ubicación
         $localidades = \App\Models\Localidad::select('id', 'nombre')
