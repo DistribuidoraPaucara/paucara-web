@@ -13,6 +13,7 @@ class PrestableStock extends Model
         'prestable_id',
         'almacenes_prestables_id',
         'cantidad_disponible',
+        'cantidad_sin_liquido',              // ✅ NUEVO: Cantidad de unidades sin líquido (vacías)
         // Préstamos a Clientes (salientes)
         'cantidad_cliente_deudor',           // Clientes que me deben devoluciones
         'cantidad_cliente_devuelto',         // Historial de devoluciones
@@ -29,6 +30,7 @@ class PrestableStock extends Model
 
     protected $casts = [
         'cantidad_disponible' => 'integer',
+        'cantidad_sin_liquido' => 'integer',
         'cantidad_cliente_deudor' => 'integer',
         'cantidad_cliente_devuelto' => 'integer',
         'cantidad_cliente_dañada' => 'integer',
@@ -135,6 +137,32 @@ class PrestableStock extends Model
     }
 
     /**
+     * ✅ NUEVO: Cantidad de unidades sin líquido (vacías)
+     */
+    public function getCantidadSinLiquidoAttribute(): int
+    {
+        return $this->cantidad_sin_liquido ?? 0;
+    }
+
+    /**
+     * ✅ NUEVO: Cantidad de unidades con líquido (llenas)
+     */
+    public function getCantidadConLiquidoAttribute(): int
+    {
+        return $this->cantidad_disponible - ($this->cantidad_sin_liquido ?? 0);
+    }
+
+    /**
+     * ✅ NUEVO: Porcentaje de unidades sin líquido
+     */
+    public function getPorcentajeSinLiquidoAttribute(): float
+    {
+        return $this->cantidad_disponible > 0
+            ? round((($this->cantidad_sin_liquido ?? 0) / $this->cantidad_disponible) * 100, 2)
+            : 0;
+    }
+
+    /**
      * Total unidades disponibles para prestar o vender
      */
     public function getDisponibleParaPrestamosAttribute(): int
@@ -173,6 +201,9 @@ class PrestableStock extends Model
     {
         return [
             'total_disponible' => $this->cantidad_disponible,
+            'cantidad_sin_liquido' => $this->cantidad_sin_liquido ?? 0,
+            'cantidad_con_liquido' => $this->getCantidadConLiquidoAttribute(),
+            'porcentaje_sin_liquido' => $this->getPorcentajeSinLiquidoAttribute(),
             'total_en_campo' => $this->getTotalEnCampoAttribute(),
             'total_deuda_proveedores' => $this->getDeudaProveedorAttribute(),
             'total_general' => $this->getTotalGeneralAttribute(),
@@ -195,5 +226,40 @@ class PrestableStock extends Model
                 'porcentaje_devolucion' => $this->getPorcentajeDevolucionProveedoresAttribute(),
             ],
         ];
+    }
+
+    // ==================== MÉTODOS PARA MODIFICAR CANTIDAD_SIN_LIQUIDO ====================
+
+    /**
+     * ✅ NUEVO: Incrementar cantidad de unidades sin líquido
+     */
+    public function incrementarSinLiquido(int $cantidad = 1): bool
+    {
+        $this->increment('cantidad_sin_liquido', $cantidad);
+        return true;
+    }
+
+    /**
+     * ✅ NUEVO: Decrementar cantidad de unidades sin líquido
+     */
+    public function decrementarSinLiquido(int $cantidad = 1): bool
+    {
+        if ($this->cantidad_sin_liquido >= $cantidad) {
+            $this->decrement('cantidad_sin_liquido', $cantidad);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ✅ NUEVO: Establecer cantidad sin líquido
+     */
+    public function setSinLiquido(int $cantidad): bool
+    {
+        if ($cantidad >= 0 && $cantidad <= $this->cantidad_disponible) {
+            $this->update(['cantidad_sin_liquido' => $cantidad]);
+            return true;
+        }
+        return false;
     }
 }

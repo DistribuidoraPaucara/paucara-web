@@ -239,10 +239,14 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: '📊 Dashboard Actualizado',
         message: () => 'Métricas de negocio actualizadas',
       },
+      'notificacion-recurrente-emitida': {
+        title: (d) => d.titulo || '📢 Notificación',
+        message: (d) => d.descripcion || 'Nueva notificación recibida',
+      },
     };
 
     const config = notificationMap[eventName];
-    const title = config?.title || `Evento: ${eventName}`;
+    const title = typeof config?.title === 'function' ? config.title(data) : (config?.title || `Evento: ${eventName}`);
     const message = config?.message(data) || JSON.stringify(data).substring(0, 100);
 
     return {
@@ -403,6 +407,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'credito.critico',
       'credito.pago-registrado',
       'dashboard.metrics-updated',
+      'notificacion-recurrente-emitida',
     ];
 
     events.forEach(setupListener);

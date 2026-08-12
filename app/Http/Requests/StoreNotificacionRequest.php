@@ -25,6 +25,9 @@ class StoreNotificacionRequest extends FormRequest
             "dias_semana.*" => "string",
             "dia_mes" => "nullable|integer|min:1|max:31",
             "activo" => "boolean",
+            // ✅ NUEVO: Validación de roles
+            "roles" => "nullable|array",
+            "roles.*" => "integer|exists:roles,id",
         ];
     }
 
@@ -37,6 +40,10 @@ class StoreNotificacionRequest extends FormRequest
             "frecuencia.required" => "La frecuencia es requerida",
             "hora_envio.required" => "La hora de envío es requerida",
             "fecha_inicio.required" => "La fecha de inicio es requerida",
+            // ✅ NUEVO: Mensajes de validación de roles
+            "roles.array" => "Los roles deben ser un array",
+            "roles.*.integer" => "Cada rol debe ser un número válido",
+            "roles.*.exists" => "Uno o más roles seleccionados no existen",
         ];
     }
 }

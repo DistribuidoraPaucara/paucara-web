@@ -24,6 +24,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // Importar componente de filtros y modal
 import { CancelarEntregaModal } from './CancelarEntregaModal';
 import { EntregasFilters, type FiltrosEntregas } from './EntregasFilters';
+import { EstadisticasEntregas } from './EstadisticasEntregas';
 import { UbicacionesMultiplesModal } from './UbicacionesMultiplesModal';
 
 interface Props {
@@ -323,6 +324,17 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                 isLoading={estadosLoading}
             />
 
+            {/* ✅ NUEVO: Tarjetas de estadísticas por estado */}
+            {/* <EstadisticasEntregas
+                entregas={entregas.data}
+                estadosLogisticos={estadosLogisticos}
+                estadoActual={filtros.estado !== 'TODOS' ? filtros.estado : undefined}
+                onSelectEstado={(estadoCodigo) => {
+                    handleFilterChange('estado', estadoCodigo);
+                    handleAplicarFiltros({ ...filtros, estado: estadoCodigo });
+                }}
+            /> */}
+
             <div>
                 <div className="flex items-center gap-2">
                     <Truck className="h-5 w-5" />
@@ -343,7 +355,8 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                     <TableHead></TableHead>
                                     <TableHead className="text-center">Folio</TableHead>
                                     <TableHead className="text-center">Estado</TableHead>
-                                    <TableHead className="text-center">Vehículo / Chofer</TableHead>
+                                    <TableHead className="text-center">Vehículo</TableHead>
+                                    <TableHead className="text-center">Chofer</TableHead>
                                     <TableHead className="text-center">Entregador</TableHead>
                                     <TableHead className="text-center">Peso</TableHead>
                                     <TableHead className="text-center">Folios Ventas</TableHead>
@@ -383,7 +396,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                 <TableCell className="text-xs">
                                                     {entrega.vehiculo ? (
                                                         <div className="flex items-center gap-2 text-xs">
-                                                            <Truck className="h-4 w-4 text-muted-foreground" />
+                                                            {/* <Truck className="h-4 w-4 text-muted-foreground" /> */}
                                                             <div>
                                                                 <div className="font-medium">{entrega.vehiculo.placa}</div>
                                                                 <div className="text-sm text-xs text-muted-foreground">
@@ -394,9 +407,12 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                     ) : (
                                                         <span className="text-muted-foreground">-</span>
                                                     )}
+                                                    
+                                                </TableCell>
+                                                <TableCell>
                                                     {entrega.chofer ? (
                                                         <div className="flex items-center gap-2 text-xs">
-                                                            <User className="h-4 w-4 text-muted-foreground" />
+                                                            {/* <User className="h-4 w-4 text-muted-foreground" /> */}
                                                             {entrega.chofer.name || entrega.chofer.nombre}
                                                         </div>
                                                     ) : (
@@ -544,7 +560,7 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                             {/* ✅ NUEVO: Fila expandible con detalles de ventas */}
                                             {estaExpandida && entrega.ventas && entrega.ventas.length > 0 && (
                                                 <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                                    <TableCell colSpan={11} className="p-4">
+                                                    <TableCell colSpan={12} className="p-4">
                                                         <div className="space-y-3">
                                                             <h4 className="mb-3 text-sm font-semibold">
                                                                 📦 Ventas en esta entrega ({entrega.ventas.length}):

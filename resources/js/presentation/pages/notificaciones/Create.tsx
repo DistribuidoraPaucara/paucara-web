@@ -135,7 +135,12 @@ export default function NotificacionesCreate() {
 
         setLoading(true);
         try {
-            await notificacionesService.crear(formData);
+            // ✅ Formatear hora_envio: quitar segundos si existen (H:i:s -> H:i)
+            const dataToSend = {
+                ...formData,
+                hora_envio: formData.hora_envio?.substring(0, 5) || formData.hora_envio,
+            };
+            await notificacionesService.crear(dataToSend);
             toast.success('Notificación creada exitosamente');
             router.push('/notificaciones');
         } catch (error: any) {

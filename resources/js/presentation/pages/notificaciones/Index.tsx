@@ -88,13 +88,13 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
     };
 
     const handleFiltroTipo = (value: string) => {
-        setFiltros({ ...filtros, tipo: value || '', page: 1 });
+        setFiltros({ ...filtros, tipo: value === 'all' ? '' : value, page: 1 });
     };
 
     const handleFiltroActivo = (value: string) => {
         setFiltros({
             ...filtros,
-            activo: value === '' ? undefined : value === 'true',
+            activo: value === 'all' ? undefined : value === 'true',
             page: 1,
         });
     };
@@ -177,34 +177,26 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
-                        </CardHeader>
                         <CardContent>
+                            <div className="text-sm font-medium text-gray-600">Total</div>
                             <div className="text-2xl font-bold">{estadisticas.total}</div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-green-600">Activas</CardTitle>
-                        </CardHeader>
                         <CardContent>
+                            <div className="text-sm font-medium text-green-600">Activas</div>
                             <div className="text-2xl font-bold">{estadisticas.activas}</div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600">Inactivas</CardTitle>
-                        </CardHeader>
                         <CardContent>
+                            <CardTitle className="text-sm font-medium text-gray-600">Inactivas</CardTitle>
                             <div className="text-2xl font-bold">{estadisticas.inactivas}</div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-blue-600">Próximas</CardTitle>
-                        </CardHeader>
                         <CardContent>
+                            <CardTitle className="text-sm font-medium text-blue-600">Próximas</CardTitle>
                             <div className="text-2xl font-bold">{estadisticas.proximas}</div>
                         </CardContent>
                     </Card>
@@ -239,12 +231,12 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium mb-2 block">Tipo</label>
-                                    <Select value={filtros.tipo || ''} onValueChange={handleFiltroTipo}>
+                                    <Select value={filtros.tipo || 'all'} onValueChange={handleFiltroTipo}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Todos" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Todos</SelectItem>
+                                            <SelectItem value="all">Todos</SelectItem>
                                             <SelectItem value="promocion">Promoción</SelectItem>
                                             <SelectItem value="evento">Evento</SelectItem>
                                             <SelectItem value="informativo">Informativo</SelectItem>
@@ -255,14 +247,14 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                 <div>
                                     <label className="text-sm font-medium mb-2 block">Estado</label>
                                     <Select
-                                        value={filtros.activo === undefined ? '' : String(filtros.activo)}
+                                        value={filtros.activo === undefined ? 'all' : String(filtros.activo)}
                                         onValueChange={handleFiltroActivo}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Todos" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Todos</SelectItem>
+                                            <SelectItem value="all">Todos</SelectItem>
                                             <SelectItem value="true">Activas</SelectItem>
                                             <SelectItem value="false">Inactivas</SelectItem>
                                         </SelectContent>
@@ -290,12 +282,13 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-4">-</TableHead>
                                             <TableHead>Título</TableHead>
                                             <TableHead>Tipo</TableHead>
                                             <TableHead>Frecuencia</TableHead>
                                             <TableHead>Hora</TableHead>
                                             <TableHead className="text-center">Enviadas</TableHead>
-                                            <TableHead className="text-center">Estado</TableHead>
+                                            {/* <TableHead className="text-center">Estado</TableHead> */}
                                             <TableHead>Roles</TableHead>
                                             <TableHead>Último envío</TableHead>
                                             <TableHead className="text-right">Acciones</TableHead>
@@ -304,6 +297,21 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                     <TableBody>
                                         {notificaciones.map((notif) => (
                                             <TableRow key={notif.id}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        {notif.activo ? (
+                                                            <Badge className="bg-green-100 text-green-800">
+                                                                <Check className="w-3 h-3" />
+                                                                #{notif.id}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge className="bg-gray-100 text-gray-800">
+                                                                <span className="text-xs">X</span>
+                                                                #{notif.id}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell className="font-medium truncate max-w-xs">
                                                     {notif.titulo}
                                                 </TableCell>
@@ -320,7 +328,7 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                                         </span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                {/* <TableCell className="text-center">
                                                     {notif.activo ? (
                                                         <Badge className="bg-green-100 text-green-800">
                                                             <Check className="w-3 h-3 mr-1" />
@@ -331,7 +339,7 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                                             Inactiva
                                                         </Badge>
                                                     )}
-                                                </TableCell>
+                                                </TableCell> */}
                                                 <TableCell>
                                                     <div className="flex flex-wrap gap-1">
                                                         {notif.roles && notif.roles.length > 0 ? (

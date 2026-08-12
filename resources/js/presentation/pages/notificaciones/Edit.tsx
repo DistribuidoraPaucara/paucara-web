@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from '@/presentation/components/ui/select';
 import { toast } from 'react-toastify';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Send } from 'lucide-react';
 import notificacionesService, { type NotificacionRecurrente, type Role } from '@/infrastructure/services/notificaciones.service';
 
 const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
@@ -37,6 +37,7 @@ interface Props {
 
 export default function NotificacionesEdit({ notificacion: initialNotif }: Props) {
     const [loading, setLoading] = useState(false);
+    const [enviando, setEnviando] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [roles, setRoles] = useState<Role[]>([]);
     const [formData, setFormData] = useState<Partial<NotificacionRecurrente> & { roles?: number[] }>(initialNotif);
@@ -199,7 +200,12 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
 
         setLoading(true);
         try {
-            await notificacionesService.actualizar(formData.id!, formData);
+            // ✅ Formatear hora_envio: quitar segundos si existen (H:i:s -> H:i)
+            const dataToSend = {
+                ...formData,
+                hora_envio: formData.hora_envio?.substring(0, 5) || formData.hora_envio,
+            };
+            await notificacionesService.actualizar(formData.id!, dataToSend);
             console.log('✅ [Edit Notificaciones] Notificación actualizada exitosamente');
             toast.success('Notificación actualizada exitosamente');
             router.push('/notificaciones');
@@ -213,6 +219,24 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
             toast.error(message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const enviarNotificacion = async () => {
+        if (!formData.id) {
+            toast.error('Error: notificación no válida');
+            return;
+        }
+
+        setEnviando(true);
+        try {
+            await notificacionesService.enviar(formData.id);
+            toast.success('✅ Notificación enviada exitosamente');
+        } catch (error) {
+            toast.error('❌ Error al enviar notificación');
+            console.error(error);
+        } finally {
+            setEnviando(false);
         }
     };
 
@@ -500,6 +524,16 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
                                         Cancelar
                                     </Button>
                                 </Link>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={enviarNotificacion}
+                                    disabled={enviando}
+                                    className="gap-2"
+                                >
+                                    <Send className="w-4 h-4" />
+                                    {enviando ? 'Enviando...' : 'Enviar Ahora'}
+                                </Button>
                                 <Button type="submit" disabled={loading} className="gap-2">
                                     {loading ? '...' : '✓'} Guardar Cambios
                                 </Button>

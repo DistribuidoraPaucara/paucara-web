@@ -91,7 +91,7 @@ class NotificacionRecurrenteController extends Controller
                 $query->where("activo", $request->activo === "true" ? true : false);
             }
 
-            $notificaciones = $query->with("usuario")
+            $notificaciones = $query->with(["usuario", "roles"])
                 ->orderBy("created_at", "desc")
                 ->paginate($request->input("per_page", 15));
 
@@ -159,10 +159,15 @@ class NotificacionRecurrenteController extends Controller
             $dto = CrearNotificacionDTO::fromRequest($request);
             $notificacion = $this->service->crear($dto);
 
-            // ✅ Asignar roles si fueron enviados
-            if ($request->has('roles') && is_array($request->roles)) {
-                $notificacion->roles()->sync($request->roles);
-            }
+            // ✅ Asignar roles (siempre sincronizar, incluso si está vacío)
+            $rolesArray = is_array($request->roles) ? $request->roles : [];
+            $notificacion->roles()->sync($rolesArray);
+
+            Log::debug("✅ Roles asignados a nueva notificación", [
+                "notificacion_id" => $notificacion->id,
+                "roles_enviados" => $request->roles,
+                "roles_asignados" => $rolesArray,
+            ]);
 
             $notificacion->load('roles');
 
@@ -208,10 +213,31 @@ class NotificacionRecurrenteController extends Controller
         // ✅ Cargar relaciones necesarias para el formulario
         $notificacionModel->load(['roles', 'usuario']);
 
-        // ✅ Convertir a array explícitamente y volver a formar el objeto con relaciones
-        $notificacionData = $notificacionModel->toArray();
-        $notificacionData['roles'] = $notificacionModel->roles;
-        $notificacionData['usuario'] = $notificacionModel->usuario;
+        // ✅ Serializar explícitamente con relaciones incluidas
+        $notificacionData = [
+            'id' => $notificacionModel->id,
+            'titulo' => $notificacionModel->titulo,
+            'descripcion' => $notificacionModel->descripcion,
+            'tipo' => $notificacionModel->tipo,
+            'frecuencia' => $notificacionModel->frecuencia,
+            'activo' => $notificacionModel->activo,
+            'hora_envio' => $notificacionModel->hora_envio,
+            'fecha_inicio' => $notificacionModel->fecha_inicio,
+            'fecha_fin' => $notificacionModel->fecha_fin,
+            'dias_semana' => $notificacionModel->dias_semana ? json_decode($notificacionModel->dias_semana, true) : [],
+            'dia_mes' => $notificacionModel->dia_mes,
+            'total_enviadas' => $notificacionModel->total_enviadas,
+            'vistas' => $notificacionModel->vistas,
+            'ultimo_envio' => $notificacionModel->ultimo_envio,
+            'roles' => $notificacionModel->roles->map(fn($r) => [
+                'id' => $r->id,
+                'name' => $r->name,
+            ])->toArray(),
+            'usuario' => $notificacionModel->usuario ? [
+                'id' => $notificacionModel->usuario->id,
+                'name' => $notificacionModel->usuario->name,
+            ] : null,
+        ];
 
         return Inertia::render("notificaciones/Edit", [
             "notificacion" => $notificacionData,
@@ -241,10 +267,16 @@ class NotificacionRecurrenteController extends Controller
                 "activo" => $dto->activo,
             ]);
 
-            // ✅ Actualizar roles si fueron enviados
-            if ($request->has('roles') && is_array($request->roles)) {
-                $notificacionModel->roles()->sync($request->roles);
-            }
+            // ✅ Actualizar roles (siempre sincronizar, incluso si está vacío)
+            // Esto asegura que se desasocien todos si el array está vacío
+            $rolesArray = is_array($request->roles) ? $request->roles : [];
+            $notificacionModel->roles()->sync($rolesArray);
+
+            Log::debug("✅ Roles sincronizados para notificación", [
+                "notificacion_id" => $notificacionModel->id,
+                "roles_enviados" => $request->roles,
+                "roles_sincronizados" => $rolesArray,
+            ]);
 
             $notificacionModel->load('roles');
 

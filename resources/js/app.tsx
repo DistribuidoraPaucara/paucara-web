@@ -68,6 +68,15 @@ createInertiaApp({
         const userId = authData.user?.id || undefined;
         const userRoles = authData.roles || [];
 
+        // ✅ NUEVO: Si no hay usuario pero hay token guardado, LIMPIAR (logout detectado)
+        if (!userId && typeof window !== 'undefined') {
+            const oldToken = sessionStorage.getItem('auth_token');
+            if (oldToken) {
+                sessionStorage.removeItem('auth_token');
+                console.log('✅ [app.tsx] Token limpiado: Logout detectado (no hay usuario)');
+            }
+        }
+
         // ✅ NUEVO: Intentar obtener token SINCRONAMENTE
         // 1. Primero desde props de Inertia
         let sanctumToken = authData.sanctumToken;

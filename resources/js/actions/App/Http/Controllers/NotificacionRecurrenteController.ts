@@ -357,7 +357,7 @@ export const store = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
 export const getRoles = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -372,7 +372,7 @@ getRoles.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
 getRoles.url = (options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ getRoles.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
 getRoles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -390,7 +390,7 @@ getRoles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
 getRoles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -400,7 +400,7 @@ getRoles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
     const getRolesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -410,7 +410,7 @@ getRoles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
         getRolesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -419,7 +419,7 @@ getRoles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::getRoles
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:299
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:331
  * @route '/api/notificaciones/roles/list'
  */
         getRolesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -435,7 +435,7 @@ getRoles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     getRoles.form = getRolesForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
 const show5ec7f86f729e78e97a08fbb4405a3bc1 = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -450,7 +450,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
 show5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -478,7 +478,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | numbe
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
 show5ec7f86f729e78e97a08fbb4405a3bc1.get = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -487,7 +487,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.get = (args: { notificacion: string | numbe
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
 show5ec7f86f729e78e97a08fbb4405a3bc1.head = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -497,7 +497,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.head = (args: { notificacion: string | numb
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
     const show5ec7f86f729e78e97a08fbb4405a3bc1Form = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -507,7 +507,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.head = (args: { notificacion: string | numb
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
         show5ec7f86f729e78e97a08fbb4405a3bc1Form.get = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -516,7 +516,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.head = (args: { notificacion: string | numb
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/api/notificaciones/{notificacion}'
  */
         show5ec7f86f729e78e97a08fbb4405a3bc1Form.head = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -532,7 +532,7 @@ show5ec7f86f729e78e97a08fbb4405a3bc1.head = (args: { notificacion: string | numb
     show5ec7f86f729e78e97a08fbb4405a3bc1.form = show5ec7f86f729e78e97a08fbb4405a3bc1Form
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
 const show8aa5fa18e1ca0d501594f82288c514e8 = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -547,7 +547,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
 show8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -575,7 +575,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | numb
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
 show8aa5fa18e1ca0d501594f82288c514e8.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -584,7 +584,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.get = (args: { notificacione: string | numb
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
 show8aa5fa18e1ca0d501594f82288c514e8.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -594,7 +594,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.head = (args: { notificacione: string | num
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
     const show8aa5fa18e1ca0d501594f82288c514e8Form = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -604,7 +604,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.head = (args: { notificacione: string | num
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
         show8aa5fa18e1ca0d501594f82288c514e8Form.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -613,7 +613,7 @@ show8aa5fa18e1ca0d501594f82288c514e8.head = (args: { notificacione: string | num
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::show
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:191
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:196
  * @route '/notificaciones/{notificacione}'
  */
         show8aa5fa18e1ca0d501594f82288c514e8Form.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -635,7 +635,7 @@ export const show = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/api/notificaciones/{notificacion}'
  */
 const update5ec7f86f729e78e97a08fbb4405a3bc1 = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -650,7 +650,7 @@ update5ec7f86f729e78e97a08fbb4405a3bc1.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/api/notificaciones/{notificacion}'
  */
 update5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -678,7 +678,7 @@ update5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | num
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/api/notificaciones/{notificacion}'
  */
 update5ec7f86f729e78e97a08fbb4405a3bc1.put = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -688,7 +688,7 @@ update5ec7f86f729e78e97a08fbb4405a3bc1.put = (args: { notificacion: string | num
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/api/notificaciones/{notificacion}'
  */
     const update5ec7f86f729e78e97a08fbb4405a3bc1Form = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -703,7 +703,7 @@ update5ec7f86f729e78e97a08fbb4405a3bc1.put = (args: { notificacion: string | num
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/api/notificaciones/{notificacion}'
  */
         update5ec7f86f729e78e97a08fbb4405a3bc1Form.put = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -719,7 +719,7 @@ update5ec7f86f729e78e97a08fbb4405a3bc1.put = (args: { notificacion: string | num
     update5ec7f86f729e78e97a08fbb4405a3bc1.form = update5ec7f86f729e78e97a08fbb4405a3bc1Form
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
 const update8aa5fa18e1ca0d501594f82288c514e8 = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -734,7 +734,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
 update8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -762,7 +762,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | nu
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
 update8aa5fa18e1ca0d501594f82288c514e8.put = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -771,7 +771,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.put = (args: { notificacione: string | nu
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
 update8aa5fa18e1ca0d501594f82288c514e8.patch = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -781,7 +781,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.patch = (args: { notificacione: string | 
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
     const update8aa5fa18e1ca0d501594f82288c514e8Form = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -796,7 +796,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.patch = (args: { notificacione: string | 
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
         update8aa5fa18e1ca0d501594f82288c514e8Form.put = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -810,7 +810,7 @@ update8aa5fa18e1ca0d501594f82288c514e8.patch = (args: { notificacione: string | 
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::update
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:224
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:250
  * @route '/notificaciones/{notificacione}'
  */
         update8aa5fa18e1ca0d501594f82288c514e8Form.patch = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -832,7 +832,7 @@ export const update = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/api/notificaciones/{notificacion}'
  */
 const destroy5ec7f86f729e78e97a08fbb4405a3bc1 = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -847,7 +847,7 @@ destroy5ec7f86f729e78e97a08fbb4405a3bc1.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/api/notificaciones/{notificacion}'
  */
 destroy5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -875,7 +875,7 @@ destroy5ec7f86f729e78e97a08fbb4405a3bc1.url = (args: { notificacion: string | nu
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/api/notificaciones/{notificacion}'
  */
 destroy5ec7f86f729e78e97a08fbb4405a3bc1.delete = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -885,7 +885,7 @@ destroy5ec7f86f729e78e97a08fbb4405a3bc1.delete = (args: { notificacion: string |
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/api/notificaciones/{notificacion}'
  */
     const destroy5ec7f86f729e78e97a08fbb4405a3bc1Form = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -900,7 +900,7 @@ destroy5ec7f86f729e78e97a08fbb4405a3bc1.delete = (args: { notificacion: string |
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/api/notificaciones/{notificacion}'
  */
         destroy5ec7f86f729e78e97a08fbb4405a3bc1Form.delete = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -916,7 +916,7 @@ destroy5ec7f86f729e78e97a08fbb4405a3bc1.delete = (args: { notificacion: string |
     destroy5ec7f86f729e78e97a08fbb4405a3bc1.form = destroy5ec7f86f729e78e97a08fbb4405a3bc1Form
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/notificaciones/{notificacione}'
  */
 const destroy8aa5fa18e1ca0d501594f82288c514e8 = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -931,7 +931,7 @@ destroy8aa5fa18e1ca0d501594f82288c514e8.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/notificaciones/{notificacione}'
  */
 destroy8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -959,7 +959,7 @@ destroy8aa5fa18e1ca0d501594f82288c514e8.url = (args: { notificacione: string | n
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/notificaciones/{notificacione}'
  */
 destroy8aa5fa18e1ca0d501594f82288c514e8.delete = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -969,7 +969,7 @@ destroy8aa5fa18e1ca0d501594f82288c514e8.delete = (args: { notificacione: string 
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/notificaciones/{notificacione}'
  */
     const destroy8aa5fa18e1ca0d501594f82288c514e8Form = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -984,7 +984,7 @@ destroy8aa5fa18e1ca0d501594f82288c514e8.delete = (args: { notificacione: string 
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::destroy
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:273
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:305
  * @route '/notificaciones/{notificacione}'
  */
         destroy8aa5fa18e1ca0d501594f82288c514e8Form.delete = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1006,7 +1006,7 @@ export const destroy = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/api/notificaciones/{notificacion}/enviar'
  */
 const enviarManual662a6437ff13c9d2a79569ce57de03f4 = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1021,7 +1021,7 @@ enviarManual662a6437ff13c9d2a79569ce57de03f4.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/api/notificaciones/{notificacion}/enviar'
  */
 enviarManual662a6437ff13c9d2a79569ce57de03f4.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -1049,7 +1049,7 @@ enviarManual662a6437ff13c9d2a79569ce57de03f4.url = (args: { notificacion: string
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/api/notificaciones/{notificacion}/enviar'
  */
 enviarManual662a6437ff13c9d2a79569ce57de03f4.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1059,7 +1059,7 @@ enviarManual662a6437ff13c9d2a79569ce57de03f4.post = (args: { notificacion: strin
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/api/notificaciones/{notificacion}/enviar'
  */
     const enviarManual662a6437ff13c9d2a79569ce57de03f4Form = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1069,7 +1069,7 @@ enviarManual662a6437ff13c9d2a79569ce57de03f4.post = (args: { notificacion: strin
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/api/notificaciones/{notificacion}/enviar'
  */
         enviarManual662a6437ff13c9d2a79569ce57de03f4Form.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1080,7 +1080,7 @@ enviarManual662a6437ff13c9d2a79569ce57de03f4.post = (args: { notificacion: strin
     enviarManual662a6437ff13c9d2a79569ce57de03f4.form = enviarManual662a6437ff13c9d2a79569ce57de03f4Form
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/notificaciones/{notificacion}/enviar'
  */
 const enviarManual3b1a1576a97e9463165c4263333bf2ae = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1095,7 +1095,7 @@ enviarManual3b1a1576a97e9463165c4263333bf2ae.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/notificaciones/{notificacion}/enviar'
  */
 enviarManual3b1a1576a97e9463165c4263333bf2ae.url = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -1123,7 +1123,7 @@ enviarManual3b1a1576a97e9463165c4263333bf2ae.url = (args: { notificacion: string
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/notificaciones/{notificacion}/enviar'
  */
 enviarManual3b1a1576a97e9463165c4263333bf2ae.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1133,7 +1133,7 @@ enviarManual3b1a1576a97e9463165c4263333bf2ae.post = (args: { notificacion: strin
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/notificaciones/{notificacion}/enviar'
  */
     const enviarManual3b1a1576a97e9463165c4263333bf2aeForm = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1143,7 +1143,7 @@ enviarManual3b1a1576a97e9463165c4263333bf2ae.post = (args: { notificacion: strin
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::enviarManual
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:329
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:361
  * @route '/notificaciones/{notificacion}/enviar'
  */
         enviarManual3b1a1576a97e9463165c4263333bf2aeForm.post = (args: { notificacion: string | number } | [notificacion: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1238,7 +1238,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     create.form = createForm
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
 export const edit = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1253,7 +1253,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.url = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -1281,7 +1281,7 @@ edit.url = (args: { notificacione: string | number } | [notificacione: string | 
 
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1290,7 +1290,7 @@ edit.get = (args: { notificacione: string | number } | [notificacione: string | 
 })
 /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
 edit.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1300,7 +1300,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
 
     /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
     const editForm = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1310,7 +1310,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
 
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
         editForm.get = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1319,7 +1319,7 @@ edit.head = (args: { notificacione: string | number } | [notificacione: string |
         })
             /**
 * @see \App\Http\Controllers\NotificacionRecurrenteController::edit
- * @see app/Http/Controllers/NotificacionRecurrenteController.php:203
+ * @see app/Http/Controllers/NotificacionRecurrenteController.php:208
  * @route '/notificaciones/{notificacione}/edit'
  */
         editForm.head = (args: { notificacione: string | number } | [notificacione: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
