@@ -74,7 +74,7 @@ class SendEntregaListoParaEntregaNotification implements ShouldQueue
                     }
 
                     // Notificar a managers y admins
-                    $managerAdminUsers = \App\Models\User::role(['manager', 'Manager', 'admin', 'Admin'])->get();
+                    $managerAdminUsers = \App\Models\User::role(['manager', 'admin'])->get();
                     foreach ($managerAdminUsers as $user) {
                         $this->notificationService->notifyVentaEnTransito($venta, $entrega, $user, 'manager_admin');
                     }

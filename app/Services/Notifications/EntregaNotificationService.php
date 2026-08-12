@@ -724,6 +724,17 @@ class EntregaNotificationService
                 return true;
             }
 
+            // Validar que el user_id existe en tabla users
+            $userExists = User::where('id', $cliente->user_id)->exists();
+            if (!$userExists) {
+                Log::warning('notifyClienteEntregaListo: user_id no existe en tabla users', [
+                    'venta_id' => $venta->id,
+                    'cliente_id' => $venta->cliente_id,
+                    'user_id_cliente' => $cliente->user_id,
+                ]);
+                return true;
+            }
+
             $vehiculoPlaca = $entrega->vehiculo?->placa ?? 'Vehículo';
             $choferNombre = $entrega->chofer?->name ?? 'Chofer';
             $mensaje = "📤 Tu pedido #{$venta->numero} está en el camión y será entregado pronto. Vehículo: {$vehiculoPlaca}";
@@ -1029,6 +1040,21 @@ class EntregaNotificationService
             $cliente = $venta->cliente;
 
             if (!$cliente || !$cliente->user_id) {
+                Log::warning('notifyClienteEntregaSalidoAEntrega: Cliente sin user_id válido', [
+                    'venta_id' => $venta->id,
+                    'cliente_id' => $venta->cliente_id,
+                ]);
+                return true;
+            }
+
+            // Validar que el user_id existe en tabla users
+            $userExists = User::where('id', $cliente->user_id)->exists();
+            if (!$userExists) {
+                Log::warning('notifyClienteEntregaSalidoAEntrega: user_id no existe en tabla users', [
+                    'venta_id' => $venta->id,
+                    'cliente_id' => $venta->cliente_id,
+                    'user_id_cliente' => $cliente->user_id,
+                ]);
                 return true;
             }
 
