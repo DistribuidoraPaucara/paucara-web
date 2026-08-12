@@ -40,6 +40,7 @@ import VentasComidasController from './VentasComidasController'
 import CuentaPorCobrarController from './CuentaPorCobrarController'
 import EgresosAnalisisController from './EgresosAnalisisController'
 import EgresosController from './EgresosController'
+import LogsController from './LogsController'
 const Api = {
     AuthController,
 EmpleadoApiController,
@@ -83,6 +84,7 @@ VentasComidasController,
 CuentaPorCobrarController,
 EgresosAnalisisController,
 EgresosController,
+LogsController,
 }
 
 export default Api

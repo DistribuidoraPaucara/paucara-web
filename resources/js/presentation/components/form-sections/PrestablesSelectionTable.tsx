@@ -1033,9 +1033,9 @@ export default function PrestablesSelectionTable({
                             })()
                         ) : (
                             <tr>
-                                <td colSpan={almacen_prestable_id ? 6 : 5} className="py-12 text-center">
+                                <td colSpan={almacen_prestable_id ? 8 : 5} className="py-12 text-center">
                                     <div className="flex flex-col items-center gap-2 text-slate-400">
-                                        <AlertCircle size={24} />
+                                        <AlertCircle size={20} />
                                         <p>{emptyMessage}</p>
                                     </div>
                                 </td>
