@@ -281,6 +281,8 @@ class PrestamoClienteService
                         'prestamo_cliente_id' => $prestamo->id,
                         'prestable_id' => $detalle['prestable_id'],
                         'cantidad_prestada' => $detalle['cantidad'],
+                        'con_liquido' => $detalle['con_liquido'] ?? 0,
+                        'sin_liquido' => $detalle['sin_liquido'] ?? 0,
                         'precio_unitario' => $detalle['precio_unitario'] ?? null,
                         'precio_prestamo' => $detalle['precio_prestamo'] ?? null,
                         'estado' => 'ACTIVO',
