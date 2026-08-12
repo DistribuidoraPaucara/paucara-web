@@ -51,6 +51,8 @@ export default function PrestablesSelectionTable({
 }: PrestablesSelectionTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [conLiquidoMap, setConLiquidoMap] = useState<Record<string, number>>({});
+    const [sinLiquidoMap, setSinLiquidoMap] = useState<Record<string, number>>({});
     const searchRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -333,30 +335,81 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                {/* ✅ NUEVO: Columna Con Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const itemKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
+                                                        const conLiquido = conLiquidoMap[itemKey] !== undefined
+                                                            ? conLiquidoMap[itemKey]
+                                                            : defaultConLiquido;
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                                {conLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={conLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [itemKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-blue-300 dark:border-blue-600 rounded text-center bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                {/* ✅ NUEVO: Columna Sin Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
-                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        const conLiquido = conLiquidoMap[conLiqKey] !== undefined
+                                                            ? conLiquidoMap[conLiqKey]
+                                                            : defaultConLiquido;
+                                                        const sinLiquido = sinLiquidoMap[sinLiqKey] !== undefined
+                                                            ? sinLiquidoMap[sinLiqKey]
+                                                            : Math.max(0, item.cantidad - conLiquido);
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                                                                {sinLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={sinLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [conLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-green-300 dark:border-green-600 rounded text-center bg-green-50 dark:bg-green-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
@@ -558,30 +611,81 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                {/* ✅ NUEVO: Columna Con Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const itemKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
+                                                        const conLiquido = conLiquidoMap[itemKey] !== undefined
+                                                            ? conLiquidoMap[itemKey]
+                                                            : defaultConLiquido;
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                                {conLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={conLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [itemKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-blue-300 dark:border-blue-600 rounded text-center bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                {/* ✅ NUEVO: Columna Sin Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
-                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        const conLiquido = conLiquidoMap[conLiqKey] !== undefined
+                                                            ? conLiquidoMap[conLiqKey]
+                                                            : defaultConLiquido;
+                                                        const sinLiquido = sinLiquidoMap[sinLiqKey] !== undefined
+                                                            ? sinLiquidoMap[sinLiqKey]
+                                                            : Math.max(0, item.cantidad - conLiquido);
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                                                                {sinLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={sinLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [conLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-green-300 dark:border-green-600 rounded text-center bg-green-50 dark:bg-green-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
@@ -687,30 +791,81 @@ export default function PrestablesSelectionTable({
                                                         className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
                                                     />
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Con Líquido */}
+                                                {/* ✅ NUEVO: Columna Con Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const itemKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
+                                                        const conLiquido = conLiquidoMap[itemKey] !== undefined
+                                                            ? conLiquidoMap[itemKey]
+                                                            : defaultConLiquido;
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                                {conLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={conLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [itemKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-blue-300 dark:border-blue-600 rounded text-center bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
-                                                {/* ✅ NUEVO: Columna Sin Líquido */}
+                                                {/* ✅ NUEVO: Columna Sin Líquido (editable) */}
                                                 <td className="px-2 py-2 text-center">
                                                     {(() => {
-                                                        const conLiquido = prestable.tipo === 'CANASTILLA'
+                                                        const sinLiqKey = `${item.prestable_id}-sin`;
+                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                        const defaultConLiquido = prestable.tipo === 'CANASTILLA'
                                                             ? (canastillasUsadasEnVenta?.get(prestable.id) || 0)
                                                             : 0;
-                                                        const sinLiquido = Math.max(0, item.cantidad - conLiquido);
+                                                        const conLiquido = conLiquidoMap[conLiqKey] !== undefined
+                                                            ? conLiquidoMap[conLiqKey]
+                                                            : defaultConLiquido;
+                                                        const sinLiquido = sinLiquidoMap[sinLiqKey] !== undefined
+                                                            ? sinLiquidoMap[sinLiqKey]
+                                                            : Math.max(0, item.cantidad - conLiquido);
+
                                                         return (
-                                                            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                                                                {sinLiquido}
-                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                value={sinLiquido}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                                        const num = val === '' ? 0 : parseInt(val);
+                                                                        setSinLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [sinLiqKey]: Math.min(num, item.cantidad)
+                                                                        }));
+                                                                        const conLiqKey = `${item.prestable_id}-con`;
+                                                                        setConLiquidoMap(prev => ({
+                                                                            ...prev,
+                                                                            [conLiqKey]: Math.max(0, item.cantidad - Math.min(num, item.cantidad))
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onFocus={(e) => e.target.select()}
+                                                                className="w-16 px-2 py-1 border border-green-300 dark:border-green-600 rounded text-center bg-green-50 dark:bg-green-900/20 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                                                            />
                                                         );
                                                     })()}
                                                 </td>
