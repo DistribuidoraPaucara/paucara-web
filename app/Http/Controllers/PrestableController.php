@@ -119,23 +119,10 @@ class PrestableController extends Controller
                     }
                 }
 
-                // ✅ NUEVO: Calcular cantidad disponible basada en PRODUCTOS relacionados
-                $cantidadDisponibleProducto = 0;
-                if ($prestable->productos && count($prestable->productos) > 0) {
-                    foreach ($prestable->productos as $producto) {
-                        if ($producto->stocks) {
-                            foreach ($producto->stocks as $stock) {
-                                $cantidadDisponibleProducto += $stock->cantidad_disponible;
-                            }
-                        }
-                    }
-                }
-
                 // Retornar array con todas las propiedades y relaciones
                 return array_merge($prestable->toArray(), [
                     'total_canastillas' => $totalCanastillas,
                     'total_embases' => $totalEmbases,
-                    'cantidad_disponible_producto' => $cantidadDisponibleProducto,
                     'embasesRelacionados' => $prestable->embasesRelacionados->toArray(), // Explícitamente incluir embases
                     'prestablePadre' => $prestable->prestablePadre ? $prestable->prestablePadre->toArray() : null, // Explícitamente incluir canastilla relacionada
                     'productos' => $prestable->productos->map(function ($p) {
@@ -454,7 +441,6 @@ class PrestableController extends Controller
                 'embaseAsociado:id,nombre,codigo,capacidad',
                 'embasesRelacionados',
                 'productos:id,nombre,sku',
-                'productos.stocks:id,producto_id,cantidad_disponible,almacen_id',
             ]);
 
             // Calcular totales de stock
@@ -477,25 +463,6 @@ class PrestableController extends Controller
             $prestable->total_canastillas = $totalCanastillas;
             $prestable->total_embases = $totalEmbases;
 
-            // ✅ NUEVO: Calcular cantidad disponible basada en PRODUCTOS relacionados
-            $cantidadDisponibleProducto = 0;
-            if ($prestable->productos && count($prestable->productos) > 0) {
-                foreach ($prestable->productos as $producto) {
-                    if ($producto->stocks) {
-                        foreach ($producto->stocks as $stock) {
-                            $cantidadDisponibleProducto += $stock->cantidad_disponible;
-                        }
-                    }
-                }
-            }
-            $prestable->cantidad_disponible_producto = $cantidadDisponibleProducto;
-
-            \Log::info('📦 Prestable show: cantidad_disponible_producto calculada', [
-                'prestable_id' => $prestable->id,
-                'prestable_nombre' => $prestable->nombre,
-                'cantidad_disponible_producto' => $cantidadDisponibleProducto,
-            ]);
-
             // Convertir a array y transformar relaciones a snake_case para el frontend
             $data = $prestable->toArray();
             $data['embases_relacionados'] = $prestable->embasesRelacionados->toArray();
@@ -506,7 +473,7 @@ class PrestableController extends Controller
                 ]);
             })->toArray();
 
-            // ✅ Stock resumido ya está calculado arriba (total_canastillas, total_embases, cantidad_disponible_producto)
+            // ✅ Stock resumido ya está calculado arriba (total_canastillas, total_embases)
             return response()->json([
                 'success' => true,
                 'data' => $data,

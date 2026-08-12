@@ -250,11 +250,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     };
 
     const getStockDisponibleTotal = (prestable: Prestable) => {
-        // ✅ MODIFICADO: Usar cantidad_disponible_producto (basada en productos relacionados, no en stock de prestables)
-        if ((prestable as any).cantidad_disponible_producto !== undefined) {
-            return (prestable as any).cantidad_disponible_producto;
-        }
-        // Fallback a la lógica anterior para compatibilidad
         return (prestable.stocks || []).reduce((sum, stock) => sum + Number(stock.cantidad_disponible || 0), 0);
     };
 
@@ -737,7 +732,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     const data = await response.json();
                     const prestableActualizado = data.data || data;
 
-                    // ✅ MODIFICADO: Actualizar el item con datos frescos del API, incluyendo cantidad_disponible_producto
+                    // Actualizar el item con datos frescos del API
                     const itemConDatosActuales = {
                         ...item,
                         prestable: prestableActualizado,
@@ -746,7 +741,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                     setPrestamoItemEnEdicion(itemConDatosActuales);
                     console.log('✅ Stock refrescado del API:', {
                         prestable: prestableActualizado.nombre,
-                        cantidad_disponible_producto: prestableActualizado.cantidad_disponible_producto,
                         stocks: prestableActualizado.stocks,
                     });
                 } else {
@@ -866,19 +860,28 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 return;
             }
 
-            // ✅ MODIFICADO: Validar stock basado en cantidad total del PRODUCTO, no del prestable
-            const cantidadDisponibleProducto = (prestable as any).cantidad_disponible_producto || 0;
-            const cantidadSolicitada = item.cantidad;
+            // Validar stock en cada almacén
+            let cantidadValidadaTotal = 0;
+            for (const almacenData of almacenesAUsar) {
+                const stock = prestable.stocks?.find((s) => Number(s.almacenes_prestables_id) === almacenData.almacenes_prestables_id);
+                const cantidadDisponible = stock ? Number(stock.cantidad_disponible || 0) : 0;
+                const cantidadSolicitada = almacenData.cantidad;
 
-            console.log('📊 Validación de stock:', {
-                prestable_nombre: prestable.nombre,
-                cantidad_disponible_producto: cantidadDisponibleProducto,
-                cantidad_solicitada: cantidadSolicitada,
-                esValido: cantidadSolicitada <= cantidadDisponibleProducto,
-            });
+                if (cantidadSolicitada > cantidadDisponible) {
+                    const almacenNombre =
+                        almacenes.find((a) => a.id === almacenData.almacenes_prestables_id)?.nombre ||
+                        `Almacén #${almacenData.almacenes_prestables_id}`;
+                    const msg = `${prestable.nombre} en ${almacenNombre}: Stock insuficiente. Disponible: ${cantidadDisponible}, solicitado: ${cantidadSolicitada}`;
+                    setError(msg);
+                    toastError(msg);
+                    return;
+                }
 
-            if (cantidadSolicitada > cantidadDisponibleProducto) {
-                const msg = `${prestable.nombre}: Stock de producto insuficiente. Disponible: ${cantidadDisponibleProducto}, solicitado: ${cantidadSolicitada}`;
+                cantidadValidadaTotal += cantidadSolicitada;
+            }
+
+            if (cantidadValidadaTotal !== item.cantidad) {
+                const msg = `${prestable.nombre}: Suma de cantidades en almacenes (${cantidadValidadaTotal}) no coincide con cantidad total (${item.cantidad})`;
                 setError(msg);
                 toastError(msg);
                 return;
@@ -964,7 +967,7 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Crear Préstamo a Clientess" />
+            <Head title="Crear Préstamo a Cliente" />
             <div className="min-h-screen bg-white p-2 dark:bg-gray-950">
                 {/* <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">👥 Nuevo Préstamo a Cliente</h1> */}
 
