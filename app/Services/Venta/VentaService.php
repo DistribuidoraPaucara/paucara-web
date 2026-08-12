@@ -606,6 +606,31 @@ class VentaService
     public function listar(int $perPage = 15, array $filtros = [], string $sortBy = 'id', string $sortOrder = 'desc'): LengthAwarePaginator
     {
         return $this->read(function () use ($perPage, $filtros, $sortBy, $sortOrder) {
+            // ✅ OPTIMIZACIÓN (2026-08-12): Detectar si hay filtros de búsqueda
+            // Si NO hay filtros, limitar a últimas 200 ventas para evitar cargar 4000+ registros
+            $tieneFiltrosBusqueda = !empty(array_filter([
+                $filtros['id'] ?? null,
+                $filtros['id_desde'] ?? null,
+                $filtros['id_hasta'] ?? null,
+                $filtros['estado'] ?? null,
+                $filtros['estado_documento_id'] ?? null,
+                $filtros['cliente_id'] ?? null,
+                $filtros['busqueda_cliente'] ?? null,
+                $filtros['usuario_id'] ?? null,
+                $filtros['tipo_pago_id'] ?? null,
+                $filtros['preventista_id'] ?? null,
+                $filtros['fecha_desde'] ?? null,
+                $filtros['fecha_hasta'] ?? null,
+                $filtros['numero'] ?? null,
+                $filtros['search'] ?? null,
+                $filtros['monto_min'] ?? null,
+                $filtros['monto_max'] ?? null,
+                $filtros['moneda_id'] ?? null,
+                $filtros['tipo_venta'] ?? null,
+                $filtros['estado_pago'] ?? null,
+                $filtros['estado_logistico'] ?? null,
+            ]));
+
             // ✅ ACTUALIZADO: Cargar todas las relaciones necesarias para el frontend
             // Incluye estadoLogistica para mostrar estado de entregas en tabla
             $query = Venta::with([
@@ -722,6 +747,23 @@ class VentaService
                         $subQ->where('codigo', $estadoLogistico)
                     )
                 );
+
+            // ✅ OPTIMIZACIÓN (2026-08-12): Si NO hay filtros de búsqueda, limitar a últimas 200 ventas
+            // Esto acelera significativamente el listado inicial sin afectar búsquedas filtradas
+            if (!$tieneFiltrosBusqueda) {
+                // Obtener el ID mínimo de las últimas 200 ventas ordenadas DESC
+                $idMinimoDe200 = Venta::orderBy('id', 'desc')
+                    ->limit(200)
+                    ->min('id');
+
+                if ($idMinimoDe200) {
+                    $query->where('id', '>=', $idMinimoDe200);
+                    Log::debug('⚡ [VentaService::listar] Listado sin filtros → Limitando a últimas 200 ventas', [
+                        'id_minimo' => $idMinimoDe200,
+                        'razon' => 'Sin filtros de búsqueda, para optimizar rendimiento con 4000+ registros',
+                    ]);
+                }
+            }
 
             // ✅ NUEVO: Aplicar ordenamiento dinámico con validación
             // Campos permitidos para ordenamiento: id, created_at, updated_at, fecha, numero, total, estado
