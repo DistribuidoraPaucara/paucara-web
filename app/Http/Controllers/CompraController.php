@@ -643,8 +643,27 @@ class CompraController extends Controller
             $numeroGenerado = $compra->numero;
             $mensaje        = "Compra {$numeroGenerado} creada exitosamente";
 
-            return redirect()->route('compras.index')
-                ->with('success', $mensaje);
+            // ✅ MODIFICADO: Retornar la compra completa con Inertia en lugar de redirigir
+            // Esto permite que el frontend maneje la apertura del modal y la pantalla de préstamo
+            return Inertia::render('compras/create', [
+                'compra' => $compra->load([
+                    'proveedor',
+                    'usuario',
+                    'estadoDocumento',
+                    'moneda',
+                    'tipoPago',
+                    'detalles.producto.prestables',
+                    'almacen'
+                ]),
+                'success' => $mensaje,
+                // Mantener los props originales para el formulario
+                'proveedores' => Proveedor::all(),
+                'monedas' => Moneda::all(),
+                'estados' => EstadoDocumento::all(),
+                'productos' => [],
+                'tipos_pago' => TipoPago::all(),
+                'almacenes' => Almacen::all(),
+            ])->with('success', $mensaje);
 
         } catch (\Exception $e) {
             DB::rollback();
