@@ -1014,6 +1014,8 @@ export default function CompraForm() {
       router.post('/compras', transformedData, {
         onSuccess: async (page: any) => {
           console.log('✅ CompraForm::submit() - onSuccess: Solicitud exitosa');
+          console.log('📦 CompraForm::submit() - page.props disponibles:', Object.keys(page.props || {}));
+
           if (loadingToast) {
             NotificationService.dismiss(loadingToast);
           }
@@ -1022,18 +1024,49 @@ export default function CompraForm() {
 
           // ✅ NUEVO: Obtener datos completos de la compra creada y detectar prestables
           try {
-            // Extraer ID de la compra de la respuesta
-            const compraCreada = page.props?.compra;
-            if (compraCreada?.id) {
-              const compraId = compraCreada.id;
-              console.log('🔄 Obteniendo datos completos de compra para detectar prestables...');
+            // Extraer ID de la compra de la respuesta - intentar varias ubicaciones
+            let compraId: number | undefined;
+
+            // Intentar obtener desde page.props.compra
+            if (page.props?.compra?.id) {
+              compraId = page.props.compra.id;
+              console.log('📍 Compra ID obtenido desde page.props.compra:', compraId);
+            }
+            // Intentar obtener desde flash data
+            else if (page.props?.flash?.compra_id) {
+              compraId = page.props.flash.compra_id;
+              console.log('📍 Compra ID obtenido desde flash.compra_id:', compraId);
+            }
+            // Intentar obtener desde URL redirect (si está en el path)
+            else if (window.location.pathname.includes('/compras/')) {
+              const pathMatch = window.location.pathname.match(/\/compras\/(\d+)/);
+              if (pathMatch?.[1]) {
+                compraId = parseInt(pathMatch[1]);
+                console.log('📍 Compra ID obtenido desde URL:', compraId);
+              }
+            }
+
+            if (compraId) {
+              console.log('🔄 Obteniendo datos completos de compra para detectar prestables...', { compraId });
 
               // Fetch de la compra completa con detalles
               const response = await fetch(`/api/compras/${compraId}`, {
                 headers: { Accept: 'application/json' },
               });
-              const data = await response.json();
-              const compraCompleta = data.data || data;
+
+              if (!response.ok) {
+                console.error('❌ Error al obtener compra del API:', response.status, response.statusText);
+                return;
+              }
+
+              const responseData = await response.json();
+              const compraCompleta = responseData.data || responseData;
+
+              console.log('📦 Compra completa obtenida del API:', {
+                compra_id: compraCompleta.id,
+                detalles_count: compraCompleta.detalles?.length || 0,
+                primer_detalle: compraCompleta.detalles?.[0],
+              });
 
               // Verificar si hay productos con prestables
               if (tieneProductosPrestables(compraCompleta.detalles)) {
@@ -1042,13 +1075,19 @@ export default function CompraForm() {
                 // Calcular prestables para la compra
                 const prestables = calcularPrestamesParaVenta(compraCompleta.detalles);
 
+                console.log('🎁 Prestables calculados:', prestables);
+
                 // Abrir pantalla de préstamo a proveedor en nueva ventana
                 abrirPantallaPrestamoProveedorEnNuevaVentana(
                   compraCompleta.proveedor_id,
                   compraId,
                   prestables
                 );
+              } else {
+                console.log('ℹ️ No se detectaron productos con prestables en la compra');
               }
+            } else {
+              console.warn('⚠️ No se pudo obtener el ID de la compra creada');
             }
           } catch (error) {
             console.error('⚠️ Error al procesar prestables después de crear compra:', error);
