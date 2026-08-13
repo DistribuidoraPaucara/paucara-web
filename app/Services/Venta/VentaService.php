@@ -885,12 +885,13 @@ class VentaService
                     $disponibleAnterior = $stockPrestable->cantidad_disponible;
                     $sinLiquidoAnterior = $stockPrestable->cantidad_sin_liquido ?? 0;
 
-                    // Actualizar stock:
+                    // Actualizar stock explícitamente:
                     // - Disminuir disponible (se prestan canastillas nuevas)
                     // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
-                    $stockPrestable->decrement('cantidad_disponible', $detalle->cantidad);
-                    $stockPrestable->increment('cantidad_sin_liquido', $detalle->cantidad);
-                    $stockPrestable->refresh();
+                    $stockPrestable->update([
+                        'cantidad_disponible' => $stockPrestable->cantidad_disponible - $detalle->cantidad,
+                        'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $detalle->cantidad,
+                    ]);
 
                     // Registrar movimiento
                     $this->movimientoPrestableService->registrarMovimiento([
