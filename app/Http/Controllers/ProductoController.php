@@ -2644,6 +2644,21 @@ class ProductoController extends Controller
                             'producto_sku'    => $item->producto?->sku,
                         ])->toArray(),
                     ] : null,
+                    // ✅ NUEVO: Prestables relacionados (para detectar en ventas/compras)
+                    'prestables'                     => $producto->prestables ? $producto->prestables->map(fn($p) => [
+                        'id'                  => $p->id,
+                        'prestable_id'        => $p->id,
+                        'nombre'              => $p->nombre,
+                        'codigo'              => $p->codigo,
+                        'tipo'                => $p->tipo,
+                        'capacidad'           => $p->capacidad,
+                        'embase_asociado_id'  => $p->embase_asociado_id,
+                        'embaseAsociado'      => $p->embaseAsociado ? [
+                            'id'        => $p->embaseAsociado->id,
+                            'nombre'    => $p->embaseAsociado->nombre,
+                            'capacidad' => $p->embaseAsociado->capacidad,
+                        ] : null,
+                    ])->all() : [],
                 ];
             });
 
