@@ -902,12 +902,18 @@ class VentaService
                     // Actualizar stock explícitamente:
                     // - Disminuir disponible (se prestan canastillas nuevas)
                     // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
-                    // Cantidad = cantidad_vendida * capacidad_canastilla
                     $stockPrestable->update([
                         'cantidad_disponible' => $stockPrestable->cantidad_disponible - $cantidadPrestable,
                         'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $cantidadPrestable,
                     ]);
                     $stockPrestable->refresh();
+
+                    // Determinar cantidad para movimiento según tipo de prestable
+                    // Canastillas: cantidad_vendida
+                    // Embases: cantidad_vendida * capacidad_canastilla
+                    $cantidadMovimiento = ($prestable->id === $canastilla->id)
+                        ? $detalle->cantidad
+                        : $cantidadPrestable;
 
                     // Registrar movimiento
                     $this->movimientoPrestableService->registrarMovimiento([
@@ -915,7 +921,7 @@ class VentaService
                         'almacenes_prestables_id' => $almacenId,
                         'usuario_id' => Auth::id(),
                         'tipo' => 'VENTA_PRODUCTO',
-                        'cantidad' => 0, // El cambio neto es 0 (baja disponible, sube sin_liquido)
+                        'cantidad' => $cantidadMovimiento,
                         'disponible_anterior' => $disponibleAnterior,
                         'disponible_posterior' => $stockPrestable->cantidad_disponible,
                         'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
