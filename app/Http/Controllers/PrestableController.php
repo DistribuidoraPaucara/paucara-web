@@ -1264,4 +1264,36 @@ class PrestableController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * POST /api/prestables/{id}/sincronizar-stock-disponible
+     * Sincroniza cantidad_disponible en prestable_stock con la suma total de productos
+     */
+    public function sincronizarStockDisponible(Prestable $prestable): JsonResponse
+    {
+        try {
+            $cantidadTotal = $prestable->obtenerCantidadTotalStock();
+            $actualizados = $prestable->sincronizarStockDisponible();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'cantidad_total_stock' => $cantidadTotal,
+                    'registros_prestable_stock_actualizados' => $actualizados,
+                    'mensaje' => "Se sincronizó cantidad_disponible con el total de stock ({$cantidadTotal})",
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error sincronizando stock disponible', [
+                'prestable_id' => $prestable->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

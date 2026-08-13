@@ -162,4 +162,26 @@ class Prestable extends Model
             ->where('productos_relacionado_prestables.prestable_id', $this->id)
             ->sum('stock_productos.cantidad');
     }
+
+    /**
+     * Sincroniza la cantidad disponible en prestable_stock con la suma total de productos.
+     * Actualiza cantidad_disponible en todos los registros de prestable_stock para este prestable.
+     */
+    public function sincronizarStockDisponible(): int
+    {
+        $cantidadTotal = $this->obtenerCantidadTotalStock();
+
+        $actualizados = DB::table('prestable_stock')
+            ->where('prestable_id', $this->id)
+            ->update(['cantidad_disponible' => $cantidadTotal]);
+
+        \Illuminate\Support\Facades\Log::info('✅ Stock disponible sincronizado', [
+            'prestable_id' => $this->id,
+            'prestable_nombre' => $this->nombre,
+            'cantidad_total_stock' => $cantidadTotal,
+            'registros_actualizados' => $actualizados,
+        ]);
+
+        return $actualizados;
+    }
 }
