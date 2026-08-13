@@ -137,19 +137,11 @@ class PrestableStock extends Model
     }
 
     /**
-     * ✅ NUEVO: Cantidad de unidades sin líquido (vacías)
-     */
-    public function getCantidadSinLiquidoAttribute(): int
-    {
-        return $this->cantidad_sin_liquido ?? 0;
-    }
-
-    /**
      * ✅ NUEVO: Cantidad de unidades con líquido (llenas)
      */
     public function getCantidadConLiquidoAttribute(): int
     {
-        return $this->cantidad_disponible - ($this->cantidad_sin_liquido ?? 0);
+        return $this->cantidad_disponible - ($this->attributes['cantidad_sin_liquido'] ?? 0);
     }
 
     /**
@@ -157,8 +149,9 @@ class PrestableStock extends Model
      */
     public function getPorcentajeSinLiquidoAttribute(): float
     {
+        $sinLiquido = $this->attributes['cantidad_sin_liquido'] ?? 0;
         return $this->cantidad_disponible > 0
-            ? round((($this->cantidad_sin_liquido ?? 0) / $this->cantidad_disponible) * 100, 2)
+            ? round(($sinLiquido / $this->cantidad_disponible) * 100, 2)
             : 0;
     }
 
@@ -201,7 +194,7 @@ class PrestableStock extends Model
     {
         return [
             'total_disponible' => $this->cantidad_disponible,
-            'cantidad_sin_liquido' => $this->cantidad_sin_liquido ?? 0,
+            'cantidad_sin_liquido' => $this->attributes['cantidad_sin_liquido'] ?? 0,
             'cantidad_con_liquido' => $this->getCantidadConLiquidoAttribute(),
             'porcentaje_sin_liquido' => $this->getPorcentajeSinLiquidoAttribute(),
             'total_en_campo' => $this->getTotalEnCampoAttribute(),
