@@ -144,6 +144,7 @@ class StockController extends Controller
                     'almacen_nombre' => $almacen->nombre,
                     'almacenes_prestables_id' => $almacen->id,
                     'cantidad_disponible' => $stock?->cantidad_disponible ?? 0,
+                    'cantidad_sin_liquido' => $stock?->cantidad_sin_liquido ?? 0,
                     'cantidad_cliente_deudor' => $cantidadClienteDeudor,
                     'cantidad_cliente_devuelto' => $stock?->cantidad_cliente_devuelto ?? 0,
                     'cantidad_cliente_dañada' => $cantidadClienteDañada,
