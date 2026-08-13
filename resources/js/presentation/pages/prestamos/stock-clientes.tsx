@@ -104,10 +104,22 @@ export default function StockClientesPage({
     } | null>(null);
     const [syncLoading, setSyncLoading] = useState(false);
     const [syncResult, setSyncResult] = useState<{
-        prestable_id: number;
-        prestable_nombre: string;
-        cantidad_total_stock: number;
-        registros_prestable_stock_actualizados: number;
+        canastilla: {
+            prestable_id: number;
+            prestable_nombre: string;
+            tipo: string;
+            cantidad_total_stock: number;
+            registros_actualizados: number;
+        };
+        embase: {
+            prestable_id: number;
+            prestable_nombre: string;
+            tipo: string;
+            cantidad_total_stock: number;
+            registros_actualizados: number;
+            capacidad_canastilla: number;
+            formula: string;
+        } | null;
         mensaje: string;
     } | null>(null);
 
@@ -776,12 +788,43 @@ export default function StockClientesPage({
                         {syncResult ? (
                             <div className="space-y-4 mb-6">
                                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                                    <p className="text-sm text-green-600 dark:text-green-300 mb-2">✅ Sincronización Exitosa</p>
-                                    <p className="text-lg font-semibold text-green-700 dark:text-green-200 mb-2">
+                                    <p className="text-sm text-green-600 dark:text-green-300 mb-3">✅ Sincronización Exitosa</p>
+
+                                    {/* Canastilla */}
+                                    <div className="bg-white dark:bg-slate-800 p-3 rounded mb-3">
+                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">📦 Canastilla</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                            {syncResult.canastilla.prestable_nombre}
+                                        </p>
+                                        <p className="text-lg font-bold text-green-700 dark:text-green-200">
+                                            {syncResult.canastilla.cantidad_total_stock.toLocaleString()} unidades
+                                        </p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                            {syncResult.canastilla.registros_actualizados} registros actualizados
+                                        </p>
+                                    </div>
+
+                                    {/* Embase (si existe) */}
+                                    {syncResult.embase && (
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                                            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">🔖 Embase Asociado</p>
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                                {syncResult.embase.prestable_nombre}
+                                            </p>
+                                            <p className="text-lg font-bold text-blue-700 dark:text-blue-200">
+                                                {syncResult.embase.cantidad_total_stock.toLocaleString()} unidades
+                                            </p>
+                                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-mono">
+                                                Fórmula: {syncResult.embase.formula}
+                                            </p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                                {syncResult.embase.registros_actualizados} registros actualizados
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <p className="text-xs text-green-600 dark:text-green-400 mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                                         {syncResult.mensaje}
-                                    </p>
-                                    <p className="text-xs text-green-600 dark:text-green-400">
-                                        Registros actualizados: {syncResult.registros_prestable_stock_actualizados}
                                     </p>
                                 </div>
                             </div>
