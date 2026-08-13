@@ -892,6 +892,7 @@ class VentaService
                         'cantidad_disponible' => $stockPrestable->cantidad_disponible - $detalle->cantidad,
                         'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $detalle->cantidad,
                     ]);
+                    $stockPrestable->refresh();
 
                     // Registrar movimiento
                     $this->movimientoPrestableService->registrarMovimiento([
