@@ -2332,6 +2332,11 @@ class ProductoController extends Controller
                     $q->select('id', 'producto_id', 'almacen_id', 'cantidad', 'cantidad_disponible', 'cantidad_reservada')
                         ->with('almacen:id,nombre');
                 },
+                // ✅ NUEVO: Cargar prestables relacionados (para detectar en ventas/compras)
+                'prestables' => function ($q) {
+                    $q->select('prestables.id', 'prestables.nombre', 'prestables.codigo', 'prestables.tipo', 'prestables.capacidad', 'prestables.embase_asociado_id')
+                        ->with('embaseAsociado:id,nombre,capacidad');
+                },
                 'comboItems'   => function ($q) use ($almacenId) {
                     $q->select('id', 'combo_id', 'producto_id', 'cantidad', 'precio_unitario', 'tipo_precio_id', 'es_obligatorio') // ✅ AGREGADO: es_obligatorio
                         ->with([
