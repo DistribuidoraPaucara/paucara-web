@@ -125,6 +125,71 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         }
     }, [almacenes_proveedor]);
 
+    // ✅ NUEVO: Leer query params y cargar compra automáticamente
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const compraId = params.get('compra_id');
+        const proveedorId = params.get('proveedor_id');
+        const prestablesParam = params.get('prestables');
+
+        if (compraId) {
+            (async () => {
+                try {
+                    console.log('✅ Detectado compra_id en URL, cargando detalles desde compra...');
+
+                    // Fetch de la compra completa
+                    const response = await fetch(`/api/compras/${compraId}`, {
+                        headers: { Accept: 'application/json' },
+                    });
+                    const data = await response.json();
+                    const compraData = data.data || data;
+
+                    // Crear objeto compra compatible con handleSelectCompra
+                    const compra = {
+                        id: compraData.id,
+                        numero: compraData.numero,
+                    };
+
+                    // Usar la función existente handleSelectCompra para cargar todo correctamente
+                    await handleSelectCompra(compra);
+
+                    toastSuccess('✅ Compra cargada desde URL automáticamente');
+                } catch (error) {
+                    console.error('⚠️ Error al cargar compra desde URL:', error);
+                }
+            })();
+        } else if (proveedorId) {
+            // Si viene solo proveedor_id pero no compra_id, pre-seleccionar el proveedor
+            const proveedor = proveedores.find((p) => p.id === Number(proveedorId));
+            if (proveedor) {
+                setFormData((prev) => ({
+                    ...prev,
+                    proveedor_id: proveedor.id,
+                }));
+                setProveedorSeleccionado(proveedor);
+                console.log('✅ Proveedor pre-seleccionado desde URL:', proveedor.nombre);
+            }
+        }
+
+        // Si vienen prestables en params (respaldo), cargarlos también
+        if (prestablesParam) {
+            try {
+                const prestablesData = JSON.parse(prestablesParam);
+                console.log('✅ Prestables pre-cargados desde URL:', prestablesData);
+
+                // Mapear prestables del parámetro a PrestamoItem[]
+                const prestablesItems = prestablesData.map((p: any) => ({
+                    prestable_id: p.prestable_id,
+                    cantidad: p.cantidad,
+                }));
+
+                setPrestablesAgregados(prestablesItems);
+            } catch (error) {
+                console.error('⚠️ Error al parsear prestables desde URL:', error);
+            }
+        }
+    }, []); // Solo ejecutar una vez al montar
+
     function getDateAdd7Days() {
         const date = new Date();
         date.setDate(date.getDate() + 7);
