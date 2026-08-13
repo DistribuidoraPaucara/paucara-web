@@ -1678,6 +1678,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{prestable}', [PrestableController::class, 'destroy']);
         Route::get('/{prestable}/stock', [PrestableController::class, 'obtenerStock']);
         Route::get('/{prestable}/disponibilidad', [PrestableController::class, 'obtenerDisponibilidad']);
+        Route::get('/{prestable}/cantidad-stock-total', [PrestableController::class, 'cantidadStockTotal']);
         Route::post('/{prestable}/stock/incrementar', [PrestableController::class, 'incrementarStock']);
         Route::post('/{prestable}/stock/ajustar', [PrestableController::class, 'ajustarStock']);
         Route::get('/{prestable}/ajuste-documento', [PrestableController::class, 'ajusteDocumento']);

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 class Prestable extends Model
 {
@@ -148,5 +149,17 @@ class Prestable extends Model
                 $q->where('estado', 'CONFIRMADA');
             })
             ->latestOfMany('id');
+    }
+
+    /**
+     * Obtiene la cantidad total de stock de todos los productos asociados a este prestable.
+     * Suma la cantidad de stock_productos para todos los productos relacionados via ProductoRelacionadoPrestable.
+     */
+    public function obtenerCantidadTotalStock(): int
+    {
+        return (int) DB::table('productos_relacionado_prestables')
+            ->join('stock_productos', 'productos_relacionado_prestables.producto_id', '=', 'stock_productos.producto_id')
+            ->where('productos_relacionado_prestables.prestable_id', $this->id)
+            ->sum('stock_productos.cantidad');
     }
 }

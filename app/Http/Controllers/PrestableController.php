@@ -1235,4 +1235,33 @@ class PrestableController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * GET /api/prestables/{id}/cantidad-stock-total
+     * Obtiene la cantidad total de stock de todos los productos asociados a un prestable
+     */
+    public function cantidadStockTotal(Prestable $prestable): JsonResponse
+    {
+        try {
+            $cantidadTotal = $prestable->obtenerCantidadTotalStock();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'prestable_id' => $prestable->id,
+                    'prestable_nombre' => $prestable->nombre,
+                    'cantidad_total_stock' => $cantidadTotal,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error obteniendo cantidad total de stock', [
+                'prestable_id' => $prestable->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
