@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCompraRequest;
 use App\Http\Requests\UpdateCompraRequest;
+use App\Models\Almacen;
 use App\Models\Compra;
 use App\Models\DetalleCompra;
 use App\Models\CuentaPorPagar;
