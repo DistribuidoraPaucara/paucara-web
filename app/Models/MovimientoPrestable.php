@@ -37,6 +37,8 @@ class MovimientoPrestable extends Model
         'cantidad_proveedor_dañada_posterior',
         'cantidad_evento_dañada_anterior',
         'cantidad_evento_dañada_posterior',
+        'cantidad_sin_liquido_anterior',
+        'cantidad_sin_liquido_posterior',
         'categoria_afectada',
         'motivo',
         'observaciones',

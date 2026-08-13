@@ -10,7 +10,9 @@ use App\Models\Venta;
 use App\Services\Stock\StockService;
 use App\Services\Traits\LogsOperations;
 use App\Services\Traits\ManagesTransactions;
+use App\Services\MovimientoPrestableService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 /**
@@ -37,6 +39,7 @@ class VentaService
         private StockService $stockService,
         private ContabilidadService $contabilidadService,
         private VentaDistribucionService $ventaDistribucionService,
+        private MovimientoPrestableService $movimientoPrestableService,
     ) {}
 
     /**
@@ -603,7 +606,7 @@ class VentaService
      * @param int $perPage
      * @param array $filtros Puede incluir: estado, estado_documento_id, cliente_id, usuario_id, fecha_desde, fecha_hasta, numero, search, monto_min, monto_max, moneda_id
      */
-    public function listar(int $perPage = 15, array $filtros = [], string $sortBy = 'id', string $sortOrder = 'desc'): LengthAwarePaginator
+    public function listar(int $perPage = 15, array $filtros = [], string $sortBy = 'id', string $sortOrder = 'desc'): Paginator | LengthAwarePaginator
     {
         return $this->read(function () use ($perPage, $filtros, $sortBy, $sortOrder) {
             // ✅ OPTIMIZACIÓN (2026-08-12): Detectar si hay filtros de búsqueda
@@ -631,25 +634,9 @@ class VentaService
                 $filtros['estado_logistico'] ?? null,
             ]));
 
-            // ✅ ACTUALIZADO: Cargar todas las relaciones necesarias para el frontend
-            // Incluye estadoLogistica para mostrar estado de entregas en tabla
-            $query = Venta::with([
-                'cliente.localidad',          // ✅ ACTUALIZADO: Cargar localidad del cliente
-                'cliente.direcciones',        // ✅ ACTUALIZADO: Cargar direcciones del cliente
-                'cliente.user',               // ✅ ACTUALIZADO: Cargar usuario asociado al cliente
-                'cliente.categorias',         // ✅ ACTUALIZADO: Cargar categorías del cliente
-                'estadoDocumento',
-                'usuario',
-                'moneda',
-                'direccionCliente.localidad', // ✅ Cargar localidad de la dirección para mapas
-                'estadoLogistica',            // ✅ Estado logístico de la VENTA (via estado_logistico_id, NO de la entrega)
-                'detalles.producto',          // ✅ RECOMENDADO: Para verificar peso_total_estimado si es necesario
-                'proforma',                   // ✅ NUEVO: Cargar relación de proforma (si existe)
-                'confirmaciones',             // ✅ NUEVO: Cargar confirmación de entrega (entregas_venta_confirmaciones)
-                'preventista',                // ✅ NUEVO (2026-03-01): Cargar preventista responsable
-                'entrega.chofer',             // ✅ NUEVO (2026-03-03): Cargar entrega asignada y su chofer
-                'entrega.vehiculo',           // ✅ NUEVO (2026-03-03): Cargar vehículo de la entrega
-            ])
+            // ✅ ACTUALIZADO: Crear query SIN with() para que paginate() cuente correctamente
+            // Las relaciones se cargarán DESPUÉS de paginar
+            $query = Venta::query()
                 ->when($filtros['id'] ?? null, fn($q, $id) =>
                     $q->where('id', $id)
                 )
@@ -771,9 +758,34 @@ class VentaService
             $sortBy = in_array(strtolower($sortBy), $camposPermitidos) ? $sortBy : 'id';
             $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'asc' : 'desc';
 
+            // ✅ CORREGIDO (2026-08-13): Usar simplePaginate() cuando NO hay filtros
+            // Esto evita el count() de todos los registros
+            $paginationMethod = $tieneFiltrosBusqueda ? 'paginate' : 'simplePaginate';
+
             $resultado = $query
                 ->orderBy($sortBy, $sortOrder)
-                ->paginate($perPage);
+                ->{$paginationMethod}($perPage);
+
+            // ✅ Cargar relaciones DESPUÉS de paginar (para cada item en la colección)
+            $resultado->getCollection()->transform(function ($venta) {
+                return $venta->load([
+                    'cliente.localidad',
+                    'cliente.direcciones',
+                    'cliente.user',
+                    'cliente.categorias',
+                    'estadoDocumento',
+                    'usuario',
+                    'moneda',
+                    'direccionCliente.localidad',
+                    'estadoLogistica',
+                    'detalles.producto',
+                    'proforma',
+                    'confirmaciones',
+                    'preventista',
+                    'entrega.chofer',
+                    'entrega.vehiculo',
+                ]);
+            });
 
             return $resultado;
         });
@@ -825,5 +837,97 @@ class VentaService
         ]);
 
         return VentaResponseDTO::fromModel($venta);
+    }
+
+    /**
+     * Procesar prestables cuando se vende un producto relacionado
+     *
+     * Si el producto vendido está relacionado con prestables:
+     * - Disminuye cantidad_disponible (se prestan canastillas nuevas)
+     * - Aumenta cantidad_sin_liquido (cliente devuelve canastillas vacías)
+     * - Registra movimiento en movimientos_prestables
+     */
+    public function procesarPrestablesEnVenta(Venta $venta): void
+    {
+        try {
+            $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
+
+            foreach ($venta->detalles as $detalle) {
+                // Obtener prestables relacionados con este producto
+                $prestables = \App\Models\Prestable::whereHas('productosRelacionados', function ($query) use ($detalle) {
+                    $query->where('producto_id', $detalle->producto_id);
+                })->get();
+
+                // Procesar cada prestable relacionado
+                foreach ($prestables as $prestable) {
+                    // Obtener o crear registro de stock para este prestable en el almacén
+                    $stockPrestable = \App\Models\PrestableStock::firstOrCreate(
+                        [
+                            'prestable_id' => $prestable->id,
+                            'almacenes_prestables_id' => $almacenId,
+                        ],
+                        [
+                            'cantidad_disponible' => 0,
+                            'cantidad_sin_liquido' => 0,
+                            'cantidad_cliente_deudor' => 0,
+                            'cantidad_cliente_devuelto' => 0,
+                            'cantidad_cliente_dañada' => 0,
+                            'cantidad_evento_deudor' => 0,
+                            'cantidad_evento_devuelto' => 0,
+                            'cantidad_evento_dañada' => 0,
+                            'cantidad_proveedor_acreedor' => 0,
+                            'cantidad_proveedor_devuelto' => 0,
+                            'cantidad_proveedor_dañada' => 0,
+                        ]
+                    );
+
+                    // Guardar valores anteriores
+                    $disponibleAnterior = $stockPrestable->cantidad_disponible;
+                    $sinLiquidoAnterior = $stockPrestable->cantidad_sin_liquido ?? 0;
+
+                    // Actualizar stock:
+                    // - Disminuir disponible (se prestan canastillas nuevas)
+                    // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
+                    $stockPrestable->decrement('cantidad_disponible', $detalle->cantidad);
+                    $stockPrestable->increment('cantidad_sin_liquido', $detalle->cantidad);
+                    $stockPrestable->refresh();
+
+                    // Registrar movimiento
+                    $this->movimientoPrestableService->registrarMovimiento([
+                        'prestable_stock_id' => $stockPrestable->id,
+                        'almacenes_prestables_id' => $almacenId,
+                        'usuario_id' => Auth::id(),
+                        'tipo' => 'VENTA_PRODUCTOS',
+                        'cantidad' => 0, // El cambio neto es 0 (baja disponible, sube sin_liquido)
+                        'disponible_anterior' => $disponibleAnterior,
+                        'disponible_posterior' => $stockPrestable->cantidad_disponible,
+                        'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
+                        'cantidad_sin_liquido_posterior' => $stockPrestable->cantidad_sin_liquido,
+                        'motivo' => 'Venta de productos relacionados',
+                        'numero_referencia' => $venta->numero,
+                        'referencia_tipo' => 'VENTA',
+                        'referencia_id' => $venta->id,
+                        'observaciones' => "Cliente compró {$detalle->cantidad} unidades de {$detalle->producto->nombre}. Devuelve {$detalle->cantidad} canastillas vacías (sin_liquido+) y se le prestan {$detalle->cantidad} canastillas nuevas (disponible-)",
+                    ]);
+
+                    Log::info('✅ Prestable procesado en venta', [
+                        'venta_id' => $venta->id,
+                        'prestable_id' => $prestable->id,
+                        'producto_id' => $detalle->producto_id,
+                        'cantidad' => $detalle->cantidad,
+                        'disponible_antes' => $disponibleAnterior,
+                        'disponible_despues' => $stockPrestable->cantidad_disponible,
+                        'sin_liquido_antes' => $sinLiquidoAnterior,
+                        'sin_liquido_despues' => $stockPrestable->cantidad_sin_liquido,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('❌ Error procesando prestables en venta', [
+                'venta_id' => $venta->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }
