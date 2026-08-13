@@ -860,6 +860,20 @@ class VentaService
 
                 // Procesar cada prestable relacionado
                 foreach ($prestables as $prestable) {
+                    // Obtener capacidad de la canastilla
+                    // Si el prestable es una canastilla, usar su capacidad
+                    // Si es un embase, buscar la canastilla asociada
+                    $canastilla = null;
+                    if ($prestable->capacidad) {
+                        $canastilla = $prestable;
+                    } else {
+                        // Es un embase, buscar la canastilla donde embase_asociado_id = prestable->id
+                        $canastilla = \App\Models\Prestable::where('embase_asociado_id', $prestable->id)->first();
+                    }
+
+                    $capacidadCanastilla = $canastilla?->capacidad ?? 1;
+                    $cantidadPrestable = $detalle->cantidad * $capacidadCanastilla;
+
                     // Obtener o crear registro de stock para este prestable en el almacén
                     $stockPrestable = \App\Models\PrestableStock::firstOrCreate(
                         [
@@ -888,9 +902,10 @@ class VentaService
                     // Actualizar stock explícitamente:
                     // - Disminuir disponible (se prestan canastillas nuevas)
                     // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
+                    // Cantidad = cantidad_vendida * capacidad_canastilla
                     $stockPrestable->update([
-                        'cantidad_disponible' => $stockPrestable->cantidad_disponible - $detalle->cantidad,
-                        'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $detalle->cantidad,
+                        'cantidad_disponible' => $stockPrestable->cantidad_disponible - $cantidadPrestable,
+                        'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $cantidadPrestable,
                     ]);
                     $stockPrestable->refresh();
 
@@ -909,14 +924,17 @@ class VentaService
                         'numero_referencia' => $venta->numero,
                         'referencia_tipo' => 'VENTA',
                         'referencia_id' => $venta->id,
-                        'observaciones' => "Cliente compró {$detalle->cantidad} unidades de {$detalle->producto->nombre}. Devuelve {$detalle->cantidad} canastillas vacías (sin_liquido+) y se le prestan {$detalle->cantidad} canastillas nuevas (disponible-)",
+                        'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Devuelve {$cantidadPrestable} {$prestable->nombre} vacíos (sin_liquido+) y se le prestan {$cantidadPrestable} nuevos (disponible-)",
                     ]);
 
                     Log::info('✅ Prestable procesado en venta', [
                         'venta_id' => $venta->id,
                         'prestable_id' => $prestable->id,
+                        'prestable_nombre' => $prestable->nombre,
                         'producto_id' => $detalle->producto_id,
-                        'cantidad' => $detalle->cantidad,
+                        'producto_cantidad' => $detalle->cantidad,
+                        'capacidad_canastilla' => $capacidadCanastilla,
+                        'cantidad_prestable' => $cantidadPrestable,
                         'disponible_antes' => $disponibleAnterior,
                         'disponible_despues' => $stockPrestable->cantidad_disponible,
                         'sin_liquido_antes' => $sinLiquidoAnterior,
