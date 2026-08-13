@@ -10,6 +10,7 @@ import { NotificationService } from '@/infrastructure/services/notification.serv
 import SearchSelect, { SelectOption } from '@/presentation/components/ui/search-select';
 import InputSearch from '@/presentation/components/ui/input-search';
 import ModalCrearProveedor from '@/presentation/components/ui/modal-crear-proveedor';
+import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import ProductosTable from '@/presentation/components/ProductosTable';
 import { useProveedorSearch } from '@/infrastructure/hooks/use-api-search';
 import { abrirPantallaPrestamoProveedorEnNuevaVentana, calcularPrestamesParaVenta, tieneProductosPrestables } from '@/infrastructure/helpers/prestables.helper';
@@ -278,6 +279,10 @@ export default function CompraForm() {
   // Estado para el modal de crear proveedor
   const [showCreateProveedorModal, setShowCreateProveedorModal] = useState(false);
   const [proveedorSearchQuery, setProveedorSearchQuery] = useState('');
+
+  // Estado para modal de impresión y compra creada
+  const [showOutputModal, setShowOutputModal] = useState(false);
+  const [compraCreada, setCompraCreada] = useState<{ id: number; numero: string; fecha: string } | null>(null);
 
   // Sincronizar el estado del InputSearch con los datos del formulario
   useEffect(() => {
@@ -1012,9 +1017,8 @@ export default function CompraForm() {
     } else {
       console.log('📤 CompraForm::submit() - Enviando POST a /compras con detalles');
       router.post('/compras', transformedData, {
-        onSuccess: async (page: any) => {
+        onSuccess: (page: any) => {
           console.log('✅ CompraForm::submit() - onSuccess: Solicitud exitosa');
-          console.log('📦 CompraForm::submit() - page.props disponibles:', Object.keys(page.props || {}));
 
           if (loadingToast) {
             NotificationService.dismiss(loadingToast);
@@ -1022,76 +1026,58 @@ export default function CompraForm() {
           localStorage.removeItem('compra-create-draft');
           NotificationService.success('Compra creada exitosamente');
 
-          // ✅ NUEVO: Obtener datos completos de la compra creada y detectar prestables
-          try {
-            // Extraer ID de la compra de la respuesta - intentar varias ubicaciones
-            let compraId: number | undefined;
+          // ✅ Extraer ID de la compra de la respuesta
+          const compraId = page.props?.compra?.id;
 
-            // Intentar obtener desde page.props.compra
-            if (page.props?.compra?.id) {
-              compraId = page.props.compra.id;
-              console.log('📍 Compra ID obtenido desde page.props.compra:', compraId);
-            }
-            // Intentar obtener desde flash data
-            else if (page.props?.flash?.compra_id) {
-              compraId = page.props.flash.compra_id;
-              console.log('📍 Compra ID obtenido desde flash.compra_id:', compraId);
-            }
-            // Intentar obtener desde URL redirect (si está en el path)
-            else if (window.location.pathname.includes('/compras/')) {
-              const pathMatch = window.location.pathname.match(/\/compras\/(\d+)/);
-              if (pathMatch?.[1]) {
-                compraId = parseInt(pathMatch[1]);
-                console.log('📍 Compra ID obtenido desde URL:', compraId);
+          if (compraId) {
+            // Guardar datos de la compra y mostrar modal de selección de salida
+            setCompraCreada({
+              id: compraId,
+              numero: page.props?.compra?.numero || `COMP-${compraId}`,
+              fecha: page.props?.compra?.fecha || new Date().toISOString().split('T')[0],
+            });
+
+            // ✅ NUEVO: Detectar si hay prestables y abrir pantalla de préstamo (en paralelo)
+            (async () => {
+              try {
+                console.log('🔄 Detectando prestables en compra...');
+
+                // Obtener detalles completos de la compra (incluyendo prestables)
+                const compraCompleta = await fetch(`/api/compras/${compraId}`, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                  },
+                }).then((res) => res.json());
+
+                if (compraCompleta.data?.detalles) {
+                  // Verificar si hay productos con prestables
+                  if (tieneProductosPrestables(compraCompleta.data.detalles)) {
+                    console.log('✅ Detectados productos con prestables, abriendo pantalla de préstamo...');
+
+                    // Calcular prestables para la compra
+                    const prestables = calcularPrestamesParaVenta(compraCompleta.data.detalles);
+
+                    console.log('🎁 Prestables calculados:', prestables);
+
+                    // Abrir pantalla de préstamo a proveedor en nueva ventana
+                    abrirPantallaPrestamoProveedorEnNuevaVentana(
+                      compraCompleta.data.proveedor_id,
+                      compraId,
+                      prestables
+                    );
+                  } else {
+                    console.log('ℹ️ No se detectaron productos con prestables en la compra');
+                  }
+                }
+              } catch (error) {
+                console.error('⚠️ Error al detectar prestables:', error);
+                // No fallar el flujo si hay error al obtener detalles de prestables
               }
-            }
+            })();
 
-            if (compraId) {
-              console.log('🔄 Obteniendo datos completos de compra para detectar prestables...', { compraId });
-
-              // Fetch de la compra completa con detalles
-              const response = await fetch(`/api/compras/${compraId}`, {
-                headers: { Accept: 'application/json' },
-              });
-
-              if (!response.ok) {
-                console.error('❌ Error al obtener compra del API:', response.status, response.statusText);
-                return;
-              }
-
-              const responseData = await response.json();
-              const compraCompleta = responseData.data || responseData;
-
-              console.log('📦 Compra completa obtenida del API:', {
-                compra_id: compraCompleta.id,
-                detalles_count: compraCompleta.detalles?.length || 0,
-                primer_detalle: compraCompleta.detalles?.[0],
-              });
-
-              // Verificar si hay productos con prestables
-              if (tieneProductosPrestables(compraCompleta.detalles)) {
-                console.log('✅ Detectados productos con prestables en compra, abriendo pantalla de préstamo...');
-
-                // Calcular prestables para la compra
-                const prestables = calcularPrestamesParaVenta(compraCompleta.detalles);
-
-                console.log('🎁 Prestables calculados:', prestables);
-
-                // Abrir pantalla de préstamo a proveedor en nueva ventana
-                abrirPantallaPrestamoProveedorEnNuevaVentana(
-                  compraCompleta.proveedor_id,
-                  compraId,
-                  prestables
-                );
-              } else {
-                console.log('ℹ️ No se detectaron productos con prestables en la compra');
-              }
-            } else {
-              console.warn('⚠️ No se pudo obtener el ID de la compra creada');
-            }
-          } catch (error) {
-            console.error('⚠️ Error al procesar prestables después de crear compra:', error);
-            // No lanzar error, solo registrar
+            // Mostrar modal de impresión
+            setShowOutputModal(true);
           }
         },
         onError: (errors: Record<string, string | string[]>) => {
@@ -1505,6 +1491,23 @@ export default function CompraForm() {
         onProveedorCreated={handleProveedorCreated}
         searchQuery={proveedorSearchQuery}
       />
+
+      {/* Modal para seleccionar salida de impresión */}
+      {compraCreada && (
+        <OutputSelectionModal
+          isOpen={showOutputModal}
+          onClose={() => {
+            setShowOutputModal(false);
+            setCompraCreada(null);
+          }}
+          documentoId={compraCreada.id}
+          tipoDocumento="compra"
+          documentoInfo={{
+            numero: compraCreada.numero,
+            fecha: compraCreada.fecha,
+          }}
+        />
+      )}
     </AppLayout>
   );
 }
