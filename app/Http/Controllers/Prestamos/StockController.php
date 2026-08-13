@@ -130,6 +130,10 @@ class StockController extends Controller
                 $cantidadEventoDañada = $stock?->cantidad_evento_dañada ?? 0;
                 $cantidadEventoTotal = $cantidadEventoDeudor + $cantidadEventoDañada;
 
+                $cantidadProveedorAcreedor = $stock?->cantidad_proveedor_acreedor ?? 0;
+                $cantidadProveedorDañada = $stock?->cantidad_proveedor_dañada ?? 0;
+                $cantidadProveedorTotal = $cantidadProveedorAcreedor + $cantidadProveedorDañada;
+
                 // Calcular cantidad con líquido
                 $cantidadConLiquido = $prestableStockService->calcularCantidadConLiquido($prestable, $almacen->id);
 
@@ -153,6 +157,8 @@ class StockController extends Controller
                     'cantidad_evento_devuelto' => $stock?->cantidad_evento_devuelto ?? 0,
                     'cantidad_evento_dañada' => $cantidadEventoDañada,
                     'cantidad_evento_total' => $cantidadEventoTotal,
+                    'cantidad_proveedor_acreedor' => $cantidadProveedorAcreedor,
+                    'cantidad_proveedor_dañada' => $cantidadProveedorDañada,
                     'cantidad_con_liquido' => $cantidadConLiquido,
                     'cantidad_total' => ($stock?->cantidad_disponible ?? 0) + $cantidadClienteTotal,
                 ];
