@@ -12,6 +12,7 @@ import InputSearch from '@/presentation/components/ui/input-search';
 import ModalCrearProveedor from '@/presentation/components/ui/modal-crear-proveedor';
 import ProductosTable from '@/presentation/components/ProductosTable';
 import { useProveedorSearch } from '@/infrastructure/hooks/use-api-search';
+import { abrirPantallaPrestamoProveedorEnNuevaVentana, calcularPrestamesParaVenta, tieneProductosPrestables } from '@/infrastructure/helpers/prestables.helper';
 
 // Importar tipos del domain
 import type { Compra } from '@/domain/entities/compras';
@@ -1011,13 +1012,48 @@ export default function CompraForm() {
     } else {
       console.log('📤 CompraForm::submit() - Enviando POST a /compras con detalles');
       router.post('/compras', transformedData, {
-        onSuccess: () => {
+        onSuccess: async (page: any) => {
           console.log('✅ CompraForm::submit() - onSuccess: Solicitud exitosa');
           if (loadingToast) {
             NotificationService.dismiss(loadingToast);
           }
           localStorage.removeItem('compra-create-draft');
           NotificationService.success('Compra creada exitosamente');
+
+          // ✅ NUEVO: Obtener datos completos de la compra creada y detectar prestables
+          try {
+            // Extraer ID de la compra de la respuesta
+            const compraCreada = page.props?.compra;
+            if (compraCreada?.id) {
+              const compraId = compraCreada.id;
+              console.log('🔄 Obteniendo datos completos de compra para detectar prestables...');
+
+              // Fetch de la compra completa con detalles
+              const response = await fetch(`/api/compras/${compraId}`, {
+                headers: { Accept: 'application/json' },
+              });
+              const data = await response.json();
+              const compraCompleta = data.data || data;
+
+              // Verificar si hay productos con prestables
+              if (tieneProductosPrestables(compraCompleta.detalles)) {
+                console.log('✅ Detectados productos con prestables en compra, abriendo pantalla de préstamo...');
+
+                // Calcular prestables para la compra
+                const prestables = calcularPrestamesParaVenta(compraCompleta.detalles);
+
+                // Abrir pantalla de préstamo a proveedor en nueva ventana
+                abrirPantallaPrestamoProveedorEnNuevaVentana(
+                  compraCompleta.proveedor_id,
+                  compraId,
+                  prestables
+                );
+              }
+            }
+          } catch (error) {
+            console.error('⚠️ Error al procesar prestables después de crear compra:', error);
+            // No lanzar error, solo registrar
+          }
         },
         onError: (errors: Record<string, string | string[]>) => {
           console.error('❌ CompraForm::submit() - onError: Error en respuesta', errors);

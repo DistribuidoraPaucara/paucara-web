@@ -136,3 +136,32 @@ export function abrirPantallaPrestamoEnNuevaVentana(
     const url = `${rutaBase}?${params.toString()}`;
     window.open(url, '_blank');
 }
+
+/**
+ * Abre la pantalla de crear préstamo a proveedor en una nueva pestaña del navegador
+ * Usado cuando se crea una compra con productos que tienen prestables relacionados
+ */
+export function abrirPantallaPrestamoProveedorEnNuevaVentana(
+    proveedorId: number,
+    compraId: number,
+    prestables: Array<{ prestable_id: number; cantidad: number; tipo: string; nombre: string }>
+): void {
+    // ✅ DEBUG: Mostrar información de apertura
+    console.group('%c🎯 ABRIENDO PRÉSTAMO A PROVEEDOR', 'color: #ff6b6b; font-weight: bold; font-size: 13px');
+    console.log('Proveedor ID:', proveedorId);
+    console.log('Compra ID:', compraId);
+    console.log('Total prestables:', prestables.length);
+    console.log('Prestables:', prestables);
+    console.groupEnd();
+
+    // Preparar query params
+    const params = new URLSearchParams({
+        compra_id: String(compraId),
+        proveedor_id: String(proveedorId),
+        prestables: JSON.stringify(prestables),
+    });
+
+    // Abrir en nueva pestaña
+    const url = `/prestamos/proveedores/crear?${params.toString()}`;
+    window.open(url, '_blank');
+}
