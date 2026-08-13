@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, RefreshCw, Download } from 'lucide-react';
+import { Search, Filter, Download } from 'lucide-react';
 import { Input } from '@/presentation/components/ui/input';
 import { Button } from '@/presentation/components/ui/button';
 import {
@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/presentation/components/ui/select';
+import axios from 'axios';
 
 interface StockItem {
     id: number;
@@ -94,8 +95,13 @@ export default function StockClientesPage({
     const [searchTerm, setSearchTerm] = useState('');
     const [almacenFilter, setAlmacenFilter] = useState('');
     const [tipoFilter, setTipoFilter] = useState('');
-    const [loading, setLoading] = useState(false);
     const [sortBy, setSortBy] = useState<'nombre' | 'disponible' | 'prestamo'>('nombre');
+    const [stockTotalLoading, setStockTotalLoading] = useState<number | null>(null);
+    const [stockTotalResult, setStockTotalResult] = useState<{
+        prestable_id: number;
+        prestable_nombre: string;
+        cantidad_total_stock: number;
+    } | null>(null);
 
     // Log en consola (datos ya calculados en backend)
     console.log('📊 Stock Clientes Resumen (Backend):', {
@@ -283,12 +289,6 @@ export default function StockClientesPage({
         return filtered;
     }, [initialItems, searchTerm, almacenFilter, tipoFilter, sortBy]);
 
-    const handleRefresh = () => {
-        setLoading(true);
-        router.reload({
-            onFinish: () => setLoading(false),
-        });
-    };
 
     const handleExport = () => {
         // Preparar CSV
@@ -320,6 +320,22 @@ export default function StockClientesPage({
         link.href = url;
         link.download = `stock-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
+    };
+
+    const handleObtenerStockTotal = async (prestableId: number) => {
+        setStockTotalLoading(prestableId);
+        try {
+            const response = await axios.get(`/api/prestables/${prestableId}/cantidad-stock-total`);
+            if (response.data.success) {
+                setStockTotalResult(response.data.data);
+                console.log('📊 Stock Total obtenido:', response.data.data);
+            }
+        } catch (error) {
+            console.error('❌ Error obteniendo stock total:', error);
+            alert('Error al obtener el stock total');
+        } finally {
+            setStockTotalLoading(null);
+        }
     };
 
     return (
@@ -672,6 +688,16 @@ export default function StockClientesPage({
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
+                                                                onClick={() => handleObtenerStockTotal(item.prestable_id)}
+                                                                disabled={stockTotalLoading === item.prestable_id}
+                                                                className="gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                                                title="Ver cantidad total de stock de productos asociados"
+                                                            >
+                                                                {stockTotalLoading === item.prestable_id ? '⏳' : '📊'}
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
                                                                 onClick={() => router.visit(`/prestamos/stock/clientes/ajuste/${item.prestable_id}/${item.almacenes_prestables_id}`)}
                                                                 className="gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                                                             >
@@ -699,6 +725,53 @@ export default function StockClientesPage({
                     Mostrando {filteredItems.length} de {initialItems.length} registros
                 </div>
             </div>
+
+            {/* Modal: Stock Total Resultado */}
+            {stockTotalResult && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                📊 Stock Total
+                            </h2>
+                            <button
+                                onClick={() => setStockTotalResult(null)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl leading-none"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Prestable</p>
+                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                    {stockTotalResult.prestable_nombre}
+                                </p>
+                            </div>
+
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm text-blue-600 dark:text-blue-300 mb-2">Cantidad Total de Stock</p>
+                                <p className="text-4xl font-bold text-blue-700 dark:text-blue-200">
+                                    {stockTotalResult.cantidad_total_stock.toLocaleString()}
+                                </p>
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                    Suma de stock_productos.cantidad de todos los productos asociados
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={() => setStockTotalResult(null)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                Cerrar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
