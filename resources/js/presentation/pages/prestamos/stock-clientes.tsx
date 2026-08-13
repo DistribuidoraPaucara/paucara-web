@@ -102,6 +102,14 @@ export default function StockClientesPage({
         prestable_nombre: string;
         cantidad_total_stock: number;
     } | null>(null);
+    const [syncLoading, setSyncLoading] = useState(false);
+    const [syncResult, setSyncResult] = useState<{
+        prestable_id: number;
+        prestable_nombre: string;
+        cantidad_total_stock: number;
+        registros_prestable_stock_actualizados: number;
+        mensaje: string;
+    } | null>(null);
 
     // Log en consola (datos ya calculados en backend)
     console.log('📊 Stock Clientes Resumen (Backend):', {
@@ -335,6 +343,26 @@ export default function StockClientesPage({
             alert('Error al obtener el stock total');
         } finally {
             setStockTotalLoading(null);
+        }
+    };
+
+    const handleSincronizarStockDisponible = async (prestableId: number) => {
+        setSyncLoading(true);
+        try {
+            const response = await axios.post(`/api/prestables/${prestableId}/sincronizar-stock-disponible`);
+            if (response.data.success) {
+                setSyncResult(response.data.data);
+                console.log('✅ Stock sincronizado:', response.data.data);
+                // Mostrar notificación de éxito
+                setTimeout(() => {
+                    alert(`✅ ${response.data.data.mensaje}`);
+                }, 300);
+            }
+        } catch (error) {
+            console.error('❌ Error sincronizando stock:', error);
+            alert('Error al sincronizar el stock disponible');
+        } finally {
+            setSyncLoading(false);
         }
     };
 
@@ -735,35 +763,64 @@ export default function StockClientesPage({
                                 📊 Stock Total
                             </h2>
                             <button
-                                onClick={() => setStockTotalResult(null)}
+                                onClick={() => {
+                                    setStockTotalResult(null);
+                                    setSyncResult(null);
+                                }}
                                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl leading-none"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <div className="space-y-4 mb-6">
-                            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Prestable</p>
-                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                                    {stockTotalResult.prestable_nombre}
-                                </p>
+                        {syncResult ? (
+                            <div className="space-y-4 mb-6">
+                                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                    <p className="text-sm text-green-600 dark:text-green-300 mb-2">✅ Sincronización Exitosa</p>
+                                    <p className="text-lg font-semibold text-green-700 dark:text-green-200 mb-2">
+                                        {syncResult.mensaje}
+                                    </p>
+                                    <p className="text-xs text-green-600 dark:text-green-400">
+                                        Registros actualizados: {syncResult.registros_prestable_stock_actualizados}
+                                    </p>
+                                </div>
                             </div>
+                        ) : (
+                            <div className="space-y-4 mb-6">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Prestable</p>
+                                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                        {stockTotalResult.prestable_nombre}
+                                    </p>
+                                </div>
 
-                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <p className="text-sm text-blue-600 dark:text-blue-300 mb-2">Cantidad Total de Stock</p>
-                                <p className="text-4xl font-bold text-blue-700 dark:text-blue-200">
-                                    {stockTotalResult.cantidad_total_stock.toLocaleString()}
-                                </p>
-                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                                    Suma de stock_productos.cantidad de todos los productos asociados
-                                </p>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm text-blue-600 dark:text-blue-300 mb-2">Cantidad Total de Stock</p>
+                                    <p className="text-4xl font-bold text-blue-700 dark:text-blue-200">
+                                        {stockTotalResult.cantidad_total_stock.toLocaleString()}
+                                    </p>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                        Suma de stock_productos.cantidad de todos los productos asociados
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="flex gap-2">
+                            {!syncResult && (
+                                <Button
+                                    onClick={() => handleSincronizarStockDisponible(stockTotalResult.prestable_id)}
+                                    disabled={syncLoading}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    {syncLoading ? '⏳ Sincronizando...' : '✅ Sincronizar'}
+                                </Button>
+                            )}
                             <Button
-                                onClick={() => setStockTotalResult(null)}
+                                onClick={() => {
+                                    setStockTotalResult(null);
+                                    setSyncResult(null);
+                                }}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                             >
                                 Cerrar
