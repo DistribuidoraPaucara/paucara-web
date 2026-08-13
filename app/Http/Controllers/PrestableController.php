@@ -1268,21 +1268,26 @@ class PrestableController extends Controller
     /**
      * POST /api/prestables/{id}/sincronizar-stock-disponible
      * Sincroniza cantidad_disponible en prestable_stock con la suma total de productos
+     * Si es una CANASTILLA, también sincroniza su EMBASE ASOCIADO
      */
     public function sincronizarStockDisponible(Prestable $prestable): JsonResponse
     {
         try {
-            $cantidadTotal = $prestable->obtenerCantidadTotalStock();
-            $actualizados = $prestable->sincronizarStockDisponible();
+            $resultado = $prestable->sincronizarStockDisponible();
+
+            // Construir mensaje dependiendo si se sincronizó embase
+            if ($resultado['embase']) {
+                $mensaje = "Se sincronizó la canastilla ({$resultado['canastilla']['cantidad_total_stock']}) y su embase asociado ({$resultado['embase']['cantidad_total_stock']}) usando fórmula: {$resultado['embase']['formula']}";
+            } else {
+                $mensaje = "Se sincronizó cantidad_disponible con el total de stock ({$resultado['canastilla']['cantidad_total_stock']})";
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'prestable_id' => $prestable->id,
-                    'prestable_nombre' => $prestable->nombre,
-                    'cantidad_total_stock' => $cantidadTotal,
-                    'registros_prestable_stock_actualizados' => $actualizados,
-                    'mensaje' => "Se sincronizó cantidad_disponible con el total de stock ({$cantidadTotal})",
+                    'canastilla' => $resultado['canastilla'],
+                    'embase' => $resultado['embase'],
+                    'mensaje' => $mensaje,
                 ],
             ]);
         } catch (\Exception $e) {

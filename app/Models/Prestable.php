@@ -166,22 +166,70 @@ class Prestable extends Model
     /**
      * Sincroniza la cantidad disponible en prestable_stock con la suma total de productos.
      * Actualiza cantidad_disponible en todos los registros de prestable_stock para este prestable.
+     * Si es una CANASTILLA, también sincroniza su EMBASE ASOCIADO multiplicando por capacidad.
+     *
+     * @return array Array con info de sincronizaciones (canastilla + embase si aplica)
      */
-    public function sincronizarStockDisponible(): int
+    public function sincronizarStockDisponible(): array
     {
         $cantidadTotal = $this->obtenerCantidadTotalStock();
+        $resultado = [
+            'canastilla' => [
+                'prestable_id' => $this->id,
+                'prestable_nombre' => $this->nombre,
+                'tipo' => $this->tipo,
+                'cantidad_total_stock' => $cantidadTotal,
+                'registros_actualizados' => 0,
+            ],
+            'embase' => null,
+        ];
 
-        $actualizados = DB::table('prestable_stock')
+        // Sincronizar la canastilla/prestable actual
+        $resultado['canastilla']['registros_actualizados'] = DB::table('prestable_stock')
             ->where('prestable_id', $this->id)
             ->update(['cantidad_disponible' => $cantidadTotal]);
 
-        \Illuminate\Support\Facades\Log::info('✅ Stock disponible sincronizado', [
-            'prestable_id' => $this->id,
-            'prestable_nombre' => $this->nombre,
-            'cantidad_total_stock' => $cantidadTotal,
-            'registros_actualizados' => $actualizados,
-        ]);
+        // Si es una CANASTILLA, sincronizar su EMBASE ASOCIADO
+        if ($this->tipo === 'CANASTILLA' && $this->embase_asociado_id && $this->capacidad) {
+            $embaseAsociado = Prestable::find($this->embase_asociado_id);
 
-        return $actualizados;
+            if ($embaseAsociado) {
+                // Fórmula: embase.cantidad_disponible = canastilla.cantidad * canastilla.capacidad
+                $cantidadEmbaseTotal = $cantidadTotal * $this->capacidad;
+
+                $registrosEmbaseActualizados = DB::table('prestable_stock')
+                    ->where('prestable_id', $embaseAsociado->id)
+                    ->update(['cantidad_disponible' => $cantidadEmbaseTotal]);
+
+                $resultado['embase'] = [
+                    'prestable_id' => $embaseAsociado->id,
+                    'prestable_nombre' => $embaseAsociado->nombre,
+                    'tipo' => $embaseAsociado->tipo,
+                    'cantidad_total_stock' => $cantidadEmbaseTotal,
+                    'registros_actualizados' => $registrosEmbaseActualizados,
+                    'capacidad_canastilla' => $this->capacidad,
+                    'formula' => "{$cantidadTotal} × {$this->capacidad} = {$cantidadEmbaseTotal}",
+                ];
+
+                \Illuminate\Support\Facades\Log::info('✅ Stock disponible sincronizado (Canastilla + Embase)', [
+                    'canastilla_id' => $this->id,
+                    'canastilla_nombre' => $this->nombre,
+                    'canastilla_cantidad' => $cantidadTotal,
+                    'embase_id' => $embaseAsociado->id,
+                    'embase_nombre' => $embaseAsociado->nombre,
+                    'embase_cantidad' => $cantidadEmbaseTotal,
+                    'capacidad' => $this->capacidad,
+                ]);
+            }
+        } else {
+            \Illuminate\Support\Facades\Log::info('✅ Stock disponible sincronizado (solo Prestable)', [
+                'prestable_id' => $this->id,
+                'prestable_nombre' => $this->nombre,
+                'prestable_tipo' => $this->tipo,
+                'cantidad_total_stock' => $cantidadTotal,
+            ]);
+        }
+
+        return $resultado;
     }
 }
