@@ -741,12 +741,13 @@ export default function CompraForm() {
 
       if (confirmed) {
         localStorage.removeItem('compra-create-draft');
-
-        // ✅ NUEVO: También resetear el formulario en memoria
-        reset();
-
         NotificationService.success('Borrador eliminado correctamente');
-        console.log('✅ Borrador de compra eliminado y formulario reseteado');
+        console.log('✅ Borrador de compra eliminado');
+
+        // ✅ NUEVO: Recargar la página para resetear el formulario
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     } catch (err) {
       console.error('Error al limpiar el borrador:', err);
