@@ -38,6 +38,8 @@ class MovimientoPrestableService
                 'cantidad_evento_dañada_anterior' => $data['cantidad_evento_dañada_anterior'] ?? 0,
                 'cantidad_evento_dañada_posterior' => $data['cantidad_evento_dañada_posterior'] ?? 0,
                 'cantidad_dañada_registrada' => $data['cantidad_dañada_registrada'] ?? 0,
+                'cantidad_sin_liquido_anterior' => $data['cantidad_sin_liquido_anterior'] ?? 0,
+                'cantidad_sin_liquido_posterior' => $data['cantidad_sin_liquido_posterior'] ?? 0,
                 'categoria_afectada' => $data['categoria_afectada'] ?? null,
                 'motivo' => $data['motivo'] ?? null,
                 'observaciones' => $data['observaciones'] ?? null,
