@@ -161,7 +161,7 @@ export function abrirPantallaPrestamoProveedorEnNuevaVentana(
         prestables: JSON.stringify(prestables),
     });
 
-    // Abrir en nueva pestaña
-    const url = `/prestamos/proveedores/crear?${params.toString()}`;
+    // ✅ CORREGIDO: Usar ruta correcta /prestamos/proveedores/prestamos/crear
+    const url = `/prestamos/proveedores/prestamos/crear?${params.toString()}`;
     window.open(url, '_blank');
 }
