@@ -315,25 +315,36 @@ export default function StockClientesPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Con Líquido', 'Sin Líquido', 'Deudor (Evento)', 'Dañada (Evento)', 'Acreedor (Proveedor)', 'Dañada (Proveedor)', 'Deudor (Cliente)', 'Devuelto', 'Dañada (Cliente)', 'Total Préstamo Cliente', 'Total General'];
-        const rows = filteredItems.map((item) => [
-            item.prestable_codigo,
-            item.prestable_nombre,
-            item.prestable_tipo,
-            item.almacen_nombre,
-            item.cantidad_disponible,
-            item.cantidad_con_liquido,
-            item.cantidad_sin_liquido,
-            item.cantidad_evento_deudor,
-            item.cantidad_evento_dañada,
-            item.cantidad_proveedor_acreedor,
-            item.cantidad_proveedor_dañada,
-            item.cantidad_cliente_deudor,
-            item.cantidad_cliente_devuelto,
-            item.cantidad_cliente_dañada,
-            item.cantidad_cliente_total,
-            item.cantidad_total,
-        ]);
+        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Con Líquido', 'Sin Líquido', 'Deudor (Evento)', 'Dañada (Evento)', 'Acreedor (Proveedor)', 'Dañada (Proveedor)', 'Deudor (Cliente)', 'Devuelto', 'Dañada (Cliente)', 'Total (Suma Completa)'];
+        const rows = filteredItems.map((item) => {
+            const totalCompleto =
+                item.cantidad_sin_liquido +
+                item.cantidad_disponible +
+                item.cantidad_cliente_deudor +
+                item.cantidad_cliente_dañada +
+                item.cantidad_evento_deudor +
+                item.cantidad_evento_dañada +
+                item.cantidad_proveedor_acreedor +
+                item.cantidad_proveedor_dañada;
+
+            return [
+                item.prestable_codigo,
+                item.prestable_nombre,
+                item.prestable_tipo,
+                item.almacen_nombre,
+                item.cantidad_disponible,
+                item.cantidad_con_liquido,
+                item.cantidad_sin_liquido,
+                item.cantidad_evento_deudor,
+                item.cantidad_evento_dañada,
+                item.cantidad_proveedor_acreedor,
+                item.cantidad_proveedor_dañada,
+                item.cantidad_cliente_deudor,
+                item.cantidad_cliente_devuelto,
+                item.cantidad_cliente_dañada,
+                totalCompleto,
+            ];
+        });
 
         const csv = [
             headers.join(','),
@@ -656,6 +667,9 @@ export default function StockClientesPage({
                                     <th className="px-4 py-3 text-center font-semibold bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200">
                                         🔴 Dañada (Proveedor)
                                     </th>
+                                    <th className="px-4 py-3 text-center font-semibold bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100">
+                                        📦 Total
+                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Acciones
                                     </th>
@@ -752,6 +766,20 @@ export default function StockClientesPage({
                                                         <td className="px-4 py-3 text-center bg-red-50 dark:bg-red-900/10">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-200 font-semibold">
                                                                 {item.cantidad_proveedor_dañada}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center bg-slate-100 dark:bg-slate-800 font-bold">
+                                                            <span className="inline-block px-3 py-1 rounded-md bg-slate-300 dark:bg-slate-600 text-slate-900 dark:text-slate-100">
+                                                                {(
+                                                                    item.cantidad_sin_liquido +
+                                                                    item.cantidad_disponible +
+                                                                    item.cantidad_cliente_deudor +
+                                                                    item.cantidad_cliente_dañada +
+                                                                    item.cantidad_evento_deudor +
+                                                                    item.cantidad_evento_dañada +
+                                                                    item.cantidad_proveedor_acreedor +
+                                                                    item.cantidad_proveedor_dañada
+                                                                ).toLocaleString()}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center flex gap-2 justify-center flex-wrap">
