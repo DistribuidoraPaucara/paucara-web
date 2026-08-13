@@ -897,7 +897,7 @@ class VentaService
                         'prestable_stock_id' => $stockPrestable->id,
                         'almacenes_prestables_id' => $almacenId,
                         'usuario_id' => Auth::id(),
-                        'tipo' => 'VENTA_PRODUCTOS',
+                        'tipo' => 'VENTA_PRODUCTO',
                         'cantidad' => 0, // El cambio neto es 0 (baja disponible, sube sin_liquido)
                         'disponible_anterior' => $disponibleAnterior,
                         'disponible_posterior' => $stockPrestable->cantidad_disponible,
