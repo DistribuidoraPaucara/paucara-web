@@ -24,6 +24,7 @@ interface StockItem {
     embase_asociado_id?: number | null;
     almacen_nombre: string;
     cantidad_disponible: number;
+    cantidad_sin_liquido: number;
     cantidad_cliente_deudor: number;
     cantidad_cliente_devuelto: number;
     cantidad_cliente_dañada: number;
@@ -312,7 +313,7 @@ export default function StockClientesPage({
 
     const handleExport = () => {
         // Preparar CSV
-        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Con Líquido', 'Deudor (Evento)', 'Dañada (Evento)', 'Deudor (Cliente)', 'Devuelto', 'Dañada (Cliente)', 'Total Préstamo Cliente', 'Total General'];
+        const headers = ['Código', 'Nombre', 'Tipo', 'Almacén', 'Disponible', 'Con Líquido', 'Sin Líquido', 'Deudor (Evento)', 'Dañada (Evento)', 'Deudor (Cliente)', 'Devuelto', 'Dañada (Cliente)', 'Total Préstamo Cliente', 'Total General'];
         const rows = filteredItems.map((item) => [
             item.prestable_codigo,
             item.prestable_nombre,
@@ -320,6 +321,7 @@ export default function StockClientesPage({
             item.almacen_nombre,
             item.cantidad_disponible,
             item.cantidad_con_liquido,
+            item.cantidad_sin_liquido,
             item.cantidad_evento_deudor,
             item.cantidad_evento_dañada,
             item.cantidad_cliente_deudor,
@@ -625,6 +627,9 @@ export default function StockClientesPage({
                                     <th className="px-4 py-3 text-center font-semibold bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200">
                                         💧 Con Líquido
                                     </th>
+                                    <th className="px-4 py-3 text-center font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200">
+                                        🏜️ Sin Líquido
+                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
                                         Disponible
                                     </th>
@@ -697,6 +702,11 @@ export default function StockClientesPage({
                                                         <td className="px-4 py-3 text-center bg-green-50 dark:bg-green-900/10">
                                                             <span className="inline-block px-2 py-1 rounded-md bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-200 font-semibold">
                                                                 {item.cantidad_con_liquido}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center bg-orange-50 dark:bg-orange-900/10">
+                                                            <span className="inline-block px-2 py-1 rounded-md bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-200 font-semibold">
+                                                                {item.cantidad_sin_liquido}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
