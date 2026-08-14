@@ -287,6 +287,8 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 ...formData,
                 compra_id: compra.id,
                 proveedor_id: proveedorId,
+                // ✅ Preservar almacenes_prestables_id (NO sobrescribir)
+                almacenes_prestables_id: formData.almacenes_prestables_id,
             });
             setProveedorSeleccionado(proveedores.find((p) => p.id === proveedorId));
 
