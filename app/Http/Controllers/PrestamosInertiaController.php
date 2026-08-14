@@ -141,13 +141,18 @@ class PrestamosInertiaController extends Controller
             ->limit(100)
             ->get();
 
-        // Cargar todos los prestables activos (canastillas y embases), aunque no tengan stock.
-        // El stock se suma solo desde almacenes marcados como proveedor.
-        $almacenesProveedor = \App\Models\AlmacenPrestable::query()
-            ->where('es_proveedor', true)
+        // ✅ ACTUALIZADO: Cargar TODOS los almacenes_prestables activos
+        $almacenesActivos = \App\Models\AlmacenPrestable::query()
+            ->where('activo', true)
             ->select('id', 'nombre', 'es_proveedor')
             ->orderBy('nombre')
             ->get();
+
+        // Cargar todos los prestables activos (canastillas y embases), aunque no tengan stock.
+        // El stock se suma solo desde almacenes marcados como proveedor.
+        $almacenesProveedor = $almacenesActivos
+            ->where('es_proveedor', true)
+            ->values();
 
         $stocksPorPrestable = PrestableStock::with([
                 'almacenPrestable:id,nombre,es_proveedor',
@@ -214,14 +219,23 @@ class PrestamosInertiaController extends Controller
             ->get()
             ->map(fn($v) => ['id' => $v->id, 'placa' => $v->placa, 'marca' => $v->marca, 'modelo' => $v->modelo]);
 
+        // ✅ NUEVO: Buscar el almacén 'Distribuidora' para preseleccionar
+        $almacenSeleccionado = $almacenesActivos->firstWhere('nombre', 'Distribuidora');
+
         return Inertia::render('prestamos/proveedores/crear', [
             'proveedores' => $proveedores,
             'compras' => $compras,
+            'almacenes_prestables' => $almacenesActivos->map(fn($a) => [
+                'id' => $a->id,
+                'nombre' => $a->nombre,
+                'es_proveedor' => $a->es_proveedor,
+            ])->values(), // ✅ NUEVO: Todos los almacenes
             'almacenes_proveedor' => $almacenesProveedor->map(fn($a) => [
                 'id' => $a->id,
                 'nombre' => $a->nombre,
                 'es_proveedor' => $a->es_proveedor,
             ])->values(),
+            'almacen_seleccionado_id' => $almacenSeleccionado?->id, // ✅ NUEVO: ID de Distribuidora
             'choferes' => $choferes,
             'vehiculos' => $vehiculos,
             'prestables_proveedor' => $prestables,

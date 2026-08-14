@@ -16,7 +16,9 @@ import { type BreadcrumbItem } from '@/types';
 interface Props {
     proveedores: Array<{ id: number; nombre: string; razon_social?: string }>;
     compras: Array<{ id: number; numero: string; proveedor_id: number; proveedor?: { id: number; nombre: string; razon_social?: string } }>;
+    almacenes_prestables: Array<{ id: number; nombre: string; es_proveedor?: boolean }>; // ✅ NUEVO: Todos los almacenes
     almacenes_proveedor: Array<{ id: number; nombre: string; es_proveedor?: boolean }>;
+    almacen_seleccionado_id?: number; // ✅ NUEVO: ID del almacén pre-seleccionado
     choferes?: Array<{ id: number; nombre: string }>;
     vehiculos?: Array<{ id: number; placa: string; marca?: string; modelo?: string }>;
 }
@@ -33,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Crear Préstamo a Proveedor', href: '/prestamos/proveedores/crear' },
 ];
 
-export default function CrearPrestamoProveedor({ proveedores, compras, almacenes_proveedor, choferes, vehiculos }: Props) {
+export default function CrearPrestamoProveedor({ proveedores, compras, almacenes_prestables, almacenes_proveedor, almacen_seleccionado_id, choferes, vehiculos }: Props) {
     const { prestables, loading: loadingPrestables, fetchPrestables } = usePrestables();
     const { toasts, removeToast, error: toastError, warning: toastWarning, success: toastSuccess } = useToast();
 
@@ -82,8 +84,10 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         console.log('%c📡 DATOS DEL BACKEND - Props', 'color: #0066cc; font-weight: bold; font-size: 14px');
         console.log('%c👥 Proveedores:', 'color: #ff6b6b; font-weight: bold');
         console.table(proveedores);
-        console.log('%c🏢 Almacenes Proveedor:', 'color: #4ecdc4; font-weight: bold');
-        console.table(almacenes_proveedor);
+        console.log('%c🏢 Almacenes (Todos):', 'color: #4ecdc4; font-weight: bold');
+        console.table(almacenes_prestables);
+        console.log('%c✅ Almacén Pre-seleccionado:', 'color: #00b894; font-weight: bold');
+        console.log('ID:', almacen_seleccionado_id);
         console.log('%c🚗 Choferes:', 'color: #ffa502; font-weight: bold');
         console.table(choferes);
         console.log('%c🚙 Vehículos:', 'color: #a29bfe; font-weight: bold');
@@ -106,12 +110,21 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         }
     }, [prestables]);
 
-    // ✅ NUEVO: Seleccionar automáticamente el primer almacén con es_proveedor=true
+    // ✅ NUEVO: Seleccionar automáticamente el almacén 'Distribuidora' si viene preseleccionado
     useEffect(() => {
-        if (almacenes_proveedor && almacenes_proveedor.length > 0) {
-            // Buscar primer almacén con es_proveedor=true
-            const almacenProveedor = almacenes_proveedor.find((a: any) => a.es_proveedor === true);
-
+        if (almacen_seleccionado_id) {
+            setFormData((prev) => ({
+                ...prev,
+                almacenes_prestables_id: almacen_seleccionado_id,
+            }));
+            const almacen = almacenes_prestables?.find((a: any) => a.id === almacen_seleccionado_id);
+            console.log('%c✅ Almacén pre-seleccionado (Distribuidora)', 'color: #00b894; font-weight: bold', {
+                almacen_id: almacen_seleccionado_id,
+                almacen_nombre: almacen?.nombre,
+            });
+        } else if (almacenes_prestables && almacenes_prestables.length > 0) {
+            // Fallback: Buscar primer almacén con es_proveedor=true
+            const almacenProveedor = almacenes_prestables.find((a: any) => a.es_proveedor === true);
             if (almacenProveedor) {
                 setFormData((prev) => ({
                     ...prev,
@@ -123,7 +136,7 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                 });
             }
         }
-    }, [almacenes_proveedor]);
+    }, [almacen_seleccionado_id, almacenes_prestables]);
 
     // ✅ NUEVO: Leer query params y cargar compra automáticamente
     useEffect(() => {
@@ -605,8 +618,8 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
                                     className="w-full text-xs rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                 >
                                     <option value="">Selecciona almacén...</option>
-                                    {almacenes_proveedor &&
-                                        almacenes_proveedor.map((almacen) => (
+                                    {almacenes_prestables &&
+                                        almacenes_prestables.map((almacen) => (
                                             <option key={almacen.id} value={almacen.id}>
                                                 {almacen.nombre}
                                             </option>
