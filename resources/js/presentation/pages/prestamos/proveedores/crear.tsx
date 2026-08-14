@@ -110,33 +110,48 @@ export default function CrearPrestamoProveedor({ proveedores, compras, almacenes
         }
     }, [prestables]);
 
-    // ✅ NUEVO: Seleccionar automáticamente el almacén 'Distribuidora' si viene preseleccionado
+    // ✅ NUEVO: Seleccionar automáticamente el almacén 'Distribuidora'
     useEffect(() => {
-        if (almacen_seleccionado_id) {
-            setFormData((prev) => ({
-                ...prev,
-                almacenes_prestables_id: almacen_seleccionado_id,
-            }));
-            const almacen = almacenes_prestables?.find((a: any) => a.id === almacen_seleccionado_id);
-            console.log('%c✅ Almacén pre-seleccionado (Distribuidora)', 'color: #00b894; font-weight: bold', {
-                almacen_id: almacen_seleccionado_id,
-                almacen_nombre: almacen?.nombre,
-            });
-        } else if (almacenes_prestables && almacenes_prestables.length > 0) {
-            // Fallback: Buscar primer almacén con es_proveedor=true
-            const almacenProveedor = almacenes_prestables.find((a: any) => a.es_proveedor === true);
-            if (almacenProveedor) {
+        if (almacenes_prestables && almacenes_prestables.length > 0) {
+            // Buscar "Distribuidora" por nombre exacto
+            const distribuidora = almacenes_prestables.find((a: any) => a.nombre === 'Distribuidora');
+
+            if (distribuidora) {
                 setFormData((prev) => ({
                     ...prev,
-                    almacenes_prestables_id: almacenProveedor.id,
+                    almacenes_prestables_id: distribuidora.id,
                 }));
-                console.log('%c✅ Almacén de proveedor seleccionado por defecto', 'color: #00b894; font-weight: bold', {
-                    almacen_id: almacenProveedor.id,
-                    almacen_nombre: almacenProveedor.nombre,
+                console.log('%c✅ Almacén "Distribuidora" preseleccionado automáticamente', 'color: #00b894; font-weight: bold', {
+                    almacen_id: distribuidora.id,
+                    almacen_nombre: distribuidora.nombre,
                 });
+            } else if (almacen_seleccionado_id) {
+                // Fallback si viene almacen_seleccionado_id
+                setFormData((prev) => ({
+                    ...prev,
+                    almacenes_prestables_id: almacen_seleccionado_id,
+                }));
+                const almacen = almacenes_prestables.find((a: any) => a.id === almacen_seleccionado_id);
+                console.log('%c✅ Almacén pre-seleccionado', 'color: #00b894; font-weight: bold', {
+                    almacen_id: almacen_seleccionado_id,
+                    almacen_nombre: almacen?.nombre,
+                });
+            } else {
+                // Último fallback: Buscar primer almacén con es_proveedor=true
+                const almacenProveedor = almacenes_prestables.find((a: any) => a.es_proveedor === true);
+                if (almacenProveedor) {
+                    setFormData((prev) => ({
+                        ...prev,
+                        almacenes_prestables_id: almacenProveedor.id,
+                    }));
+                    console.log('%c✅ Almacén de proveedor seleccionado por defecto', 'color: #00b894; font-weight: bold', {
+                        almacen_id: almacenProveedor.id,
+                        almacen_nombre: almacenProveedor.nombre,
+                    });
+                }
             }
         }
-    }, [almacen_seleccionado_id, almacenes_prestables]);
+    }, [almacenes_prestables, almacen_seleccionado_id]);
 
     // ✅ NUEVO: Leer query params y cargar compra automáticamente
     useEffect(() => {
