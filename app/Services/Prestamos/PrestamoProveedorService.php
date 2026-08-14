@@ -359,16 +359,15 @@ class PrestamoProveedorService
                         $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                         $vendidaAntes = 0;
 
-                        // Actualizar stock según tipo de operación
-                        if ($stock) {
-                            $updateData = [
-                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidad,
-                            ];
-                            if (!$datos['es_compra']) {
-                                // PRÉSTAMO: incrementa deuda activa con proveedor
-                                $updateData['cantidad_proveedor_acreedor'] = $stock->cantidad_proveedor_acreedor + $cantidad;
-                            }
-                            $stock->update($updateData);
+                        // ✅ MODIFICADO: Solo incrementar cantidad_proveedor_acreedor
+                        // cantidad_disponible ya se incrementa en la compra normal
+                        if ($stock && !$datos['es_compra']) {
+                            // PRÉSTAMO: solo incrementa deuda activa con proveedor
+                            $stock->update([
+                                'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidad,
+                            ]);
+                            // Recargar para obtener valores posteriores actualizados
+                            $stock->refresh();
                         }
 
                         // Crear registro en PrestamoProveedorAlmacen
@@ -390,7 +389,7 @@ class PrestamoProveedorService
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
-                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'disponible_posterior' => $disponibleAntes, // ✅ No cambia
                             'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                             'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
