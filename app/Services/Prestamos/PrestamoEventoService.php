@@ -372,10 +372,12 @@ class PrestamoEventoService
                         $sinLiquidoAntes = $stock->cantidad_sin_liquido ?? 0;
 
                         // Actualizar stock
+                        // ✅ NO disminuir disponible (ya disminuyó en venta)
+                        // ✅ DISMINUIR sin_liquido (vienen llenos del proveedor)
+                        // ✅ INCREMENTAR evento_deudor (evento me debe)
                         $stock->update([
-                            'cantidad_disponible' => $stock->cantidad_disponible - $cantidadAlmacen,
                             'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantidadAlmacen,
-                            'cantidad_sin_liquido' => ($stock->cantidad_sin_liquido ?? 0) + $cantidadAlmacen,
+                            'cantidad_sin_liquido' => max(0, ($stock->cantidad_sin_liquido ?? 0) - $cantidadAlmacen),
                         ]);
 
                         $stock->refresh();
@@ -388,7 +390,7 @@ class PrestamoEventoService
                             'tipo' => 'CONSUMO_RESERVA',
                             'cantidad' => -$cantidadAlmacen,
                             'disponible_anterior' => $disponibleAntes,
-                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
                             'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                             'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                             'prestamo_evento_anterior' => $stock->cantidad_evento_deudor - $cantidadAlmacen,
@@ -406,9 +408,10 @@ class PrestamoEventoService
                             'almacen_id' => $almacenId,
                             'cantidad' => $cantidadAlmacen,
                             'disponible_anterior' => $disponibleAntes,
-                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'disponible_posterior' => $disponibleAntes,
                             'sin_liquido_anterior' => $sinLiquidoAntes,
                             'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                            'evento_deudor_anterior' => $stock->cantidad_evento_deudor - $cantidadAlmacen,
                             'evento_deudor_posterior' => $stock->cantidad_evento_deudor,
                         ]);
                     }
@@ -805,9 +808,9 @@ class PrestamoEventoService
                             $sinLiquidoAntes = $stock->cantidad_sin_liquido;
                             $eventoDeudorAntes = $stock->cantidad_evento_deudor;
 
-                            // Devolver
+                            // Devolver (inverso de crear: incrementa sin_liquido, disminuye deudor)
+                            // ✅ NO cambiar disponible (histórico)
                             $stock->update([
-                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendienteDelAlmacen,
                                 'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantidadPendienteDelAlmacen,
                                 'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $cantidadPendienteDelAlmacen),
                             ]);
@@ -820,10 +823,10 @@ class PrestamoEventoService
                                 'tipo' => 'ENTRADA',
                                 'cantidad' => $cantidadPendienteDelAlmacen,
                                 'disponible_anterior' => $disponibleAntes,
+                                'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
                                 'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
-                                'prestamo_evento_anterior' => $eventoDeudorAntes,
-                                'disponible_posterior' => $stock->cantidad_disponible,
                                 'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                'prestamo_evento_anterior' => $eventoDeudorAntes,
                                 'prestamo_evento_posterior' => $stock->cantidad_evento_deudor,
                                 'categoria_afectada' => 'prestamo_evento',
                                 'motivo' => 'Devolución por anulación de préstamo a evento',
@@ -929,10 +932,12 @@ class PrestamoEventoService
                         $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
 
                         // Invertir cambios de stock (deshacer la devolución)
+                        // ✅ NO cambiar disponible (histórico)
+                        // ✅ DISMINUIR sin_liquido (inverso de incrementar)
+                        // ✅ INCREMENTAR evento_deudor (inverso de disminuir)
                         $stock->update([
-                            'cantidad_disponible' => max(0, $stock->cantidad_disponible - $cantDevuelta),
                             'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantDevuelta),
-                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantDevuelta, // Vuelve a estar deudor
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantDevuelta,
                             'cantidad_evento_dañada' => max(0, $stock->cantidad_evento_dañada - $cantDañada),
                         ]);
 
@@ -949,7 +954,7 @@ class PrestamoEventoService
                             'cantidad' => $cantDevuelta,
                             'cantidad_dañada_registrada' => $cantDañada,
                             'disponible_anterior' => $disponibleAntes,
-                            'disponible_posterior' => $stock->cantidad_disponible,
+                            'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
                             'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                             'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                             'prestamo_evento_anterior' => $eventoDeudorAntes,
