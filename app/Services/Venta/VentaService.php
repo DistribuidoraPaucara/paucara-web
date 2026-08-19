@@ -912,11 +912,11 @@ class VentaService
                     $sinLiquidoAnterior = $stockPrestable->cantidad_sin_liquido ?? 0;
 
                     // Actualizar stock explícitamente:
-                    // - NO disminuir disponible (ya se disminuye al vender)
-                    // - Disminuir sin_liquido (cliente devuelve canastillas vacías)
-                    // ✅ CORREGIDO: Solo afectar sin_liquido, no disponible
+                    // - Disminuir disponible (se entregan canastillas nuevas)
+                    // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
                     $stockPrestable->update([
-                        'cantidad_sin_liquido' => max(0, ($stockPrestable->cantidad_sin_liquido ?? 0) - $cantidadPrestable),
+                        'cantidad_disponible' => $stockPrestable->cantidad_disponible - $cantidadPrestable,
+                        'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $cantidadPrestable,
                     ]);
                     $stockPrestable->refresh();
 
@@ -935,14 +935,14 @@ class VentaService
                         'tipo' => 'VENTA_PRODUCTO',
                         'cantidad' => $cantidadMovimiento,
                         'disponible_anterior' => $disponibleAnterior,
-                        'disponible_posterior' => $disponibleAnterior, // ✅ NO cambia
+                        'disponible_posterior' => $stockPrestable->cantidad_disponible,
                         'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
                         'cantidad_sin_liquido_posterior' => $stockPrestable->cantidad_sin_liquido,
                         'motivo' => 'Venta de productos relacionados',
                         'numero_referencia' => $venta->numero,
                         'referencia_tipo' => 'VENTA',
                         'referencia_id' => $venta->id,
-                        'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Devuelve {$cantidadPrestable} {$prestable->nombre} vacíos (sin_liquido-)",
+                        'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Entrega {$cantidadPrestable} {$prestable->nombre} llenas (disponible-) y recibe {$cantidadPrestable} vacías (sin_liquido+)",
                     ]);
 
                     Log::info('✅ Prestable procesado en venta', [
