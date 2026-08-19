@@ -339,29 +339,60 @@ class PrestamoClienteService
                             $disponiblePosterior = $stock->cantidad_disponible;
                             $sinLiquidoPosterior = $stock->cantidad_sin_liquido;
                             $prestamoClientePosterior = $stock->cantidad_cliente_deudor;
+                            $prestamoEventoPosterior = $stock->cantidad_evento_deudor ?? 0;
                             $prestamoProveedorPosterior = $stock->cantidad_proveedor_acreedor;
 
-                            $this->movimientoService->registrarMovimiento([
-                                'prestable_stock_id' => $stock->id,
-                                'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
-                                'usuario_id' => auth()->id(),
-                                'tipo' => $datos['es_venta'] ? 'SALIDA' : 'CONSUMO_RESERVA',
-                                'cantidad' => -$cantidadMovida,
-                                'disponible_anterior' => $disponiblePosterior + $cantidadMovida,
-                                'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior + ($datos['es_venta'] ? 0 : $cantidadMovida),
-                                'prestamo_cliente_anterior' => $prestamoClientePosterior - ($datos['es_venta'] ? 0 : $cantidadMovida),
-                                'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
-                                'disponible_posterior' => $disponiblePosterior,
-                                'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
-                                'prestamo_cliente_posterior' => $prestamoClientePosterior,
-                                'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
-                                'categoria_afectada' => $datos['es_venta'] ? 'vendida' : 'prestamo_cliente',
-                                'motivo' => $datos['es_venta'] ? 'Venta a cliente' : 'Préstamo a cliente',
-                                'numero_referencia' => $prestamo->id,
-                                'referencia_tipo' => 'PRESTAMO_CLIENTE',
-                                'referencia_id' => $prestamo->id,
-                                'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
-                            ]);
+                            if ($datos['es_venta']) {
+                                // Para ventas: disponible disminuye
+                                $this->movimientoService->registrarMovimiento([
+                                    'prestable_stock_id' => $stock->id,
+                                    'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
+                                    'usuario_id' => auth()->id(),
+                                    'tipo' => 'SALIDA',
+                                    'cantidad' => -$cantidadMovida,
+                                    'disponible_anterior' => $disponiblePosterior + $cantidadMovida,
+                                    'disponible_posterior' => $disponiblePosterior,
+                                    'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior,
+                                    'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
+                                    'prestamo_cliente_anterior' => $prestamoClientePosterior,
+                                    'prestamo_cliente_posterior' => $prestamoClientePosterior,
+                                    'prestamo_evento_anterior' => $prestamoEventoPosterior,
+                                    'prestamo_evento_posterior' => $prestamoEventoPosterior,
+                                    'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
+                                    'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
+                                    'categoria_afectada' => 'vendida',
+                                    'motivo' => 'Venta a cliente',
+                                    'numero_referencia' => $prestamo->id,
+                                    'referencia_tipo' => 'PRESTAMO_CLIENTE',
+                                    'referencia_id' => $prestamo->id,
+                                    'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
+                                ]);
+                            } else {
+                                // Para préstamos: sin_liquido disminuye, cliente_deudor incrementa, disponible NO cambia
+                                $this->movimientoService->registrarMovimiento([
+                                    'prestable_stock_id' => $stock->id,
+                                    'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
+                                    'usuario_id' => auth()->id(),
+                                    'tipo' => 'CONSUMO_RESERVA',
+                                    'cantidad' => -$cantidadMovida,
+                                    'disponible_anterior' => $disponiblePosterior,
+                                    'disponible_posterior' => $disponiblePosterior,
+                                    'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior + $cantidadMovida,
+                                    'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
+                                    'prestamo_cliente_anterior' => $prestamoClientePosterior - $cantidadMovida,
+                                    'prestamo_cliente_posterior' => $prestamoClientePosterior,
+                                    'prestamo_evento_anterior' => $prestamoEventoPosterior,
+                                    'prestamo_evento_posterior' => $prestamoEventoPosterior,
+                                    'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
+                                    'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
+                                    'categoria_afectada' => 'prestamo_cliente',
+                                    'motivo' => 'Préstamo a cliente',
+                                    'numero_referencia' => $prestamo->id,
+                                    'referencia_tipo' => 'PRESTAMO_CLIENTE',
+                                    'referencia_id' => $prestamo->id,
+                                    'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
+                                ]);
+                            }
                         }
                     }
                 }
@@ -631,11 +662,13 @@ class PrestamoClienteService
                                 ->where('almacenes_prestables_id', $almacenId)
                                 ->firstOrFail();
                             $disponibleAntes = $stock->cantidad_disponible;
+                            $sinLiquidoAntes = $stock->cantidad_sin_liquido;
                             $prestamoClienteActivoAntes = $stock->cantidad_cliente_deudor;
                             $prestamoProveedorActivoAntes = $stock->cantidad_proveedor_acreedor;
                             $prestamoEventoActivoAntes = $stock->cantidad_evento_deudor;
                             $clienteDañadaAntes = $stock->cantidad_cliente_dañada;
                             $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada;
+                            $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
 
                             // ✅ Actualizar stock con cantidad devuelta Y dañada
                             if ($cantDevAlmacen > 0 || $cantDanAlmacen > 0) {
@@ -663,17 +696,21 @@ class PrestamoClienteService
                                     'cantidad' => $cantDevAlmacen,
                                     'cantidad_dañada_registrada' => $cantDanAlmacen,
                                     'disponible_anterior' => $disponibleAntes,
-                                    'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
-                                    'prestamo_proveedor_anterior' => $prestamoProveedorActivoAntes,
                                     'disponible_posterior' => $stock->cantidad_disponible,
+                                    'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
+                                    'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                    'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
                                     'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                                    'prestamo_evento_anterior' => $prestamoEventoActivoAntes,
+                                    'prestamo_evento_posterior' => $stock->cantidad_evento_deudor,
+                                    'prestamo_proveedor_anterior' => $prestamoProveedorActivoAntes,
                                     'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                     'cantidad_cliente_dañada_anterior' => $clienteDañadaAntes,
                                     'cantidad_cliente_dañada_posterior' => $stock->cantidad_cliente_dañada,
                                     'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
                                     'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada,
-                                    'cantidad_evento_dañada_anterior' => $stock->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
-                                    'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
+                                    'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
+                                    'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada ?? 0,
                                     'categoria_afectada' => 'prestamo_cliente',
                                     'motivo' => 'Devolución de préstamo a cliente (Almacén especificado)',
                                     'numero_referencia' => $prestamo->id,
