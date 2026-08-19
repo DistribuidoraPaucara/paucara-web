@@ -119,4 +119,61 @@ class PrestamoWebSocketService extends BaseWebSocketService
         // ✅ Enviar a múltiples canales en un solo evento
         return $this->notifyMultiChannel('prestamo.evento.creado', $eventData, array_unique($userIds), $roles);
     }
+
+    /**
+     * ✅ Notificar creación de préstamo a proveedor a MÚLTIPLES CANALES
+     * Notifica simultáneamente a:
+     * - Usuario creador
+     * - Admins (web)
+     * - Cajeros (web)
+     * - Proveedor propietario (si tiene user_id)
+     */
+    public function notifyPrestamoProveedorCreated($prestamo): bool
+    {
+        // Calcular cantidad total prestada
+        $cantidadTotal = ($prestamo->detalles ?? collect())
+            ->sum('cantidad_prestada');
+
+        $eventData = [
+            'id' => $prestamo->id,
+            'proveedor_id' => $prestamo->proveedor_id,
+            'proveedor_nombre' => $prestamo->proveedor?->nombre ?? 'Proveedor',
+            'proveedor' => [
+                'id' => $prestamo->proveedor_id,
+                'nombre' => $prestamo->proveedor?->nombre ?? 'Proveedor',
+            ],
+            'cantidad' => (int) $cantidadTotal,
+            'estado' => $prestamo->estado,
+            'items' => ($prestamo->detalles ?? collect())->map(function ($item) {
+                return [
+                    'prestable_id' => $item->prestable_id,
+                    'prestable_nombre' => $item->prestable?->nombre ?? 'Prestable',
+                    'cantidad_prestada' => (int) $item->cantidad_prestada,
+                ];
+            })->toArray(),
+            'creador' => [
+                'id' => $prestamo->created_by,
+                'name' => $prestamo->creador?->name ?? 'Sistema',
+            ],
+            'fecha_creacion' => $prestamo->created_at?->toIso8601String(),
+            'tipo' => 'prestamo_proveedor',
+        ];
+
+        // 🎯 Recopilar usuarios y roles a notificar
+        $userIds = [];
+        $roles = ['admin', 'cajero', 'manager'];
+
+        // 👤 Agregar usuario creador
+        if ($prestamo->created_by) {
+            $userIds[] = $prestamo->created_by;
+        }
+
+        // 📱 Agregar proveedor si tiene user_id
+        if ($prestamo->proveedor?->user_id) {
+            $userIds[] = $prestamo->proveedor->user_id;
+        }
+
+        // ✅ Enviar a múltiples canales en un solo evento
+        return $this->notifyMultiChannel('prestamo.proveedor.creado', $eventData, array_unique($userIds), $roles);
+    }
 }

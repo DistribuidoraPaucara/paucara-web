@@ -7,6 +7,7 @@ use App\Models\MovimientoPrestable;
 use App\Models\PrestamoProveedor;
 use App\Services\ImpresionService;
 use App\Services\Prestamos\PrestamoProveedorService;
+use App\Events\PrestamoProveedorCreado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -122,6 +123,9 @@ class PrestamoProveedorController extends Controller
                     'message' => 'Error creando préstamo',
                 ], 500);
             }
+
+            // ✅ Disparar evento para notificar a múltiples canales (usuario creador, admins, cajeros, proveedor)
+            event(new PrestamoProveedorCreado($prestamo));
 
             return response()->json([
                 'success' => true,

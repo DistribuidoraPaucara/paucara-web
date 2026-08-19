@@ -69,8 +69,10 @@ use App\Listeners\SendCreditoVencidoNotification;
 use App\Listeners\SendCreditoCriticoNotification;
 use App\Events\PrestamoClienteCreado;
 use App\Events\PrestamoEventoCreado;
+use App\Events\PrestamoProveedorCreado;
 use App\Listeners\SendPrestamoClienteCreatedNotification;
 use App\Listeners\SendPrestamoEventoCreatedNotification;
+use App\Listeners\SendPrestamoProveedorCreatedNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 /**
@@ -283,6 +285,12 @@ class EventServiceProvider extends ServiceProvider
         // Listeners notifican a: usuario creador, admins, cajeros, cliente eventos
         PrestamoEventoCreado::class => [
             SendPrestamoEventoCreatedNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se crea un préstamo a proveedor
+        // Listeners notifican a: usuario creador, admins, cajeros, proveedor
+        PrestamoProveedorCreado::class => [
+            SendPrestamoProveedorCreatedNotification::class,
         ],
     ];
 

@@ -251,6 +251,10 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: '🎁 Nuevo Préstamo a Evento',
         message: (d) => `${d.nombre_evento || 'Evento'} - ${d.cantidad} artículos`,
       },
+      'prestamo.proveedor.creado': {
+        title: '🎁 Nuevo Préstamo a Proveedor',
+        message: (d) => `${d.proveedor_nombre || 'Proveedor'} - ${d.cantidad} artículos`,
+      },
     };
 
     const config = notificationMap[eventName];
@@ -418,6 +422,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'notificacion-recurrente-emitida',
       'prestamo.cliente.creado',
       'prestamo.evento.creado',
+      'prestamo.proveedor.creado',
     ];
 
     events.forEach(setupListener);
