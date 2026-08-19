@@ -382,19 +382,19 @@ class PrestamoProveedorService
                         ]);
 
                         // Registrar movimiento de entrada
-                        $this->movimientoService->registrarMovimiento([
+                        $movimiento = $this->movimientoService->registrarMovimiento([
                             'prestable_stock_id' => $stock->id,
                             'almacenes_prestables_id' => $almacenId,
                             'usuario_id' => Auth::id(),
                             'tipo' => 'ENTRADA',
                             'cantidad' => $cantidad,
                             'disponible_anterior' => $disponibleAntes,
-                            'sin_liquido_anterior' => $sinLiquidoAntes,
+                            'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
                             'disponible_posterior' => $disponibleAntes, // ✅ No cambia
-                            'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                            'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                             'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                             'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
@@ -405,11 +405,18 @@ class PrestamoProveedorService
                             'referencia_id' => $prestamo->id,
                         ]);
 
-                        Log::info('✅ Movimiento de stock registrado para proveedor', [
+                        Log::info('✅ Movimiento de prestable PROVEEDOR registrado', [
+                            'movimiento_id' => $movimiento->id,
                             'prestamo_id' => $prestamo->id,
                             'prestable_id' => $detalle['prestable_id'],
                             'almacen_id' => $almacenId,
-                            'cantidad' => $cantidad,
+                            'cantidad_prestable' => $cantidad,
+                            'disponible_anterior' => $disponibleAntes,
+                            'disponible_posterior' => $disponibleAntes,
+                            'sin_liquido_anterior' => $sinLiquidoAntes,
+                            'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                            'proveedor_acreedor_anterior' => $prestamoProveedorAntes,
+                            'proveedor_acreedor_posterior' => $stock->cantidad_proveedor_acreedor,
                         ]);
                     }
 
