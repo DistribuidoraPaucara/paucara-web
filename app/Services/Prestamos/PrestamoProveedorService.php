@@ -545,7 +545,7 @@ class PrestamoProveedorService
                         }
 
                         // Registrar movimiento
-                        $this->movimientoService->registrarMovimiento([
+                        $movimiento = $this->movimientoService->registrarMovimiento([
                             'prestable_stock_id' => $stockAntes->id,
                             'almacenes_prestables_id' => $almacenId,
                             'usuario_id' => Auth::id(),
@@ -554,12 +554,12 @@ class PrestamoProveedorService
                             'cantidad_dañada_registrada' => $cantidadDañadaTotal,
                             'cantidad_dañada_total' => $cantidadDañadaTotal,
                             'disponible_anterior' => $disponibleAntes,
-                            'sin_liquido_anterior' => $sinLiquidoAntes, // ✅ Registro anterior de sin_liquido
+                            'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
-                            'disponible_posterior' => $stockAntes->cantidad_disponible,
-                            'sin_liquido_posterior' => $stockAntes->cantidad_sin_liquido,  // ✅ Registro posterior
+                            'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
+                            'cantidad_sin_liquido_posterior' => $stockAntes->cantidad_sin_liquido,
                             'prestamo_cliente_posterior' => $stockAntes->cantidad_cliente_deudor,
                             'prestamo_proveedor_posterior' => $stockAntes->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
@@ -577,11 +577,18 @@ class PrestamoProveedorService
                             ),
                         ]);
 
-                        Log::info('✅ Movimiento de devolución registrado', [
+                        Log::info('✅ Movimiento de DEVOLUCIÓN PROVEEDOR registrado', [
+                            'movimiento_id' => $movimiento->id,
                             'prestamo_id' => $prestamo->id,
                             'prestable_id' => $detalle->prestable_id,
-                            'cantidad_devuelta_total' => $cantidadDevuelta,
-                            'cantidad_dañada_total' => $cantidadDañadaTotal,  // ✅ Nombre correcto
+                            'cantidad_devuelta' => $cantidadDevuelta,
+                            'cantidad_dañada' => $cantidadDañadaTotal,
+                            'disponible_anterior' => $disponibleAntes,
+                            'disponible_posterior' => $disponibleAntes,
+                            'sin_liquido_anterior' => $sinLiquidoAntes,
+                            'sin_liquido_posterior' => $stockAntes->cantidad_sin_liquido,
+                            'proveedor_acreedor_anterior' => $prestamoProveedorAntes,
+                            'proveedor_acreedor_posterior' => $stockAntes->cantidad_proveedor_acreedor,
                         ]);
                     }
 
@@ -778,17 +785,17 @@ class PrestamoProveedorService
                             ]);
 
                             // ✅ 1 MOVIMIENTO POR ALMACÉN (espejo del proceso de creación)
-                            $this->movimientoService->registrarMovimiento([
+                            $movimiento = $this->movimientoService->registrarMovimiento([
                                 'prestable_stock_id' => $stock->id,
                                 'almacenes_prestables_id' => $almacenDetalle->almacenes_prestables_id,
                                 'usuario_id' => Auth::id(),
                                 'tipo' => 'ENTRADA',
                                 'cantidad' => $cantidadPendienteDelAlmacen,
                                 'disponible_anterior' => $disponibleAntes,
-                                'sin_liquido_anterior' => $sinLiquidoAntes,
+                                'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                                 'prestamo_proveedor_anterior' => $proveedorAcreedorAntes,
-                                'disponible_posterior' => $stock->cantidad_disponible,
-                                'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
+                                'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                                 'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'categoria_afectada' => 'prestamo_proveedor',
                                 'motivo' => 'Devolución por anulación de préstamo',
@@ -798,12 +805,18 @@ class PrestamoProveedorService
                                 'observaciones' => $razonAnulacion,
                             ]);
 
-                            Log::info('✅ Stock devuelto por anulación de proveedor (almacén específico)', [
+                            Log::info('✅ Movimiento de ANULACIÓN PRÉSTAMO PROVEEDOR registrado', [
+                                'movimiento_id' => $movimiento->id,
                                 'prestamo_id' => $prestamo->id,
                                 'detalle_id' => $detalle->id,
                                 'almacen_id' => $almacenDetalle->almacenes_prestables_id,
-                                'cantidad_pendiente_almacen' => $cantidadPendienteDelAlmacen,
-                                'disponible_posterior' => $stock->cantidad_disponible,
+                                'cantidad_anulada' => $cantidadPendienteDelAlmacen,
+                                'disponible_anterior' => $disponibleAntes,
+                                'disponible_posterior' => $disponibleAntes,
+                                'sin_liquido_anterior' => $sinLiquidoAntes,
+                                'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                'proveedor_acreedor_anterior' => $proveedorAcreedorAntes,
+                                'proveedor_acreedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             ]);
                         }
                     }
@@ -898,7 +911,7 @@ class PrestamoProveedorService
                     ]);
 
                     // Registrar movimiento INVERSO por anulación
-                    $this->movimientoService->registrarMovimiento([
+                    $movimiento = $this->movimientoService->registrarMovimiento([
                         'prestable_stock_id' => $stock->id,
                         'almacenes_prestables_id' => $almacenId,
                         'usuario_id' => auth()->id(),
@@ -907,10 +920,10 @@ class PrestamoProveedorService
                         'cantidad_dañada_registrada' => -$cantidadDañada,
                         'cantidad_dañada_total' => -$cantidadDañada,
                         'disponible_anterior' => $disponibleAntes,
-                        'sin_liquido_anterior' => $sinLiquidoAntes,
+                        'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                         'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
-                        'disponible_posterior' => $stock->cantidad_disponible,
-                        'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                        'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
+                        'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                         'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                         'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
                         'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada ?? 0,
@@ -922,11 +935,18 @@ class PrestamoProveedorService
                         'observaciones' => "Proveedor: {$prestamo->proveedor?->nombre}, Razón: {$razonAnulacion}",
                     ]);
 
-                    Log::info('✅ Movimiento inverso registrado para anulación', [
+                    Log::info('✅ Movimiento de ANULACIÓN DEVOLUCIÓN PROVEEDOR registrado', [
+                        'movimiento_id' => $movimiento->id,
                         'prestable_id' => $detallePrestamoProveedor->prestable_id,
                         'almacen_id' => $almacenId,
                         'cantidad_devuelta_anulada' => $cantidadDevuelta,
                         'cantidad_dañada_anulada' => $cantidadDañada,
+                        'disponible_anterior' => $disponibleAntes,
+                        'disponible_posterior' => $disponibleAntes,
+                        'sin_liquido_anterior' => $sinLiquidoAntes,
+                        'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                        'proveedor_acreedor_anterior' => $prestamoProveedorAntes,
+                        'proveedor_acreedor_posterior' => $stock->cantidad_proveedor_acreedor,
                     ]);
                 }
 
