@@ -432,11 +432,18 @@ class EntregaPdfController extends Controller
 
     /**
      * Configurar PDF para formato TICKET 80mm
+     *
+     * ✅ UNIFICADO (2026-08-13): Configuración estándar para todos los documentos TICKET_80
+     * - Ancho: 227pt (80mm exacto)
+     * - Alto: 1000pt (permite contenido variable)
+     * - Márgenes: 5mm en todos lados
+     *
+     * Esta configuración también se usa en ImpresionService::aplicarConfiguracionFormato()
      */
     private function configurarTicket80($pdf)
     {
         return $pdf
-            ->setPaper([0, 0, 227, 1000], 'portrait')  // 80mm = 227pt
+            ->setPaper([0, 0, 227, 1000], 'portrait')  // 80mm = 227pt, altura 1000pt
             ->setOption('margin-top', 5)
             ->setOption('margin-bottom', 5)
             ->setOption('margin-left', 5)

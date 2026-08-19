@@ -49,30 +49,31 @@
     @if($documento->direccionCliente)
     <p style="center"><strong>Dir:</strong> {{ strtoupper($documento->direccionCliente->observaciones ?? 'Sin direccion') }}</p>
     @endif
+    @php
+    $preventista = null;
+    // Prioridad 1: Usuario creador de la proforma (si existe)
+    if ($documento->proforma_id && $documento->proforma && $documento->proforma->usuarioCreador) {
+    $preventista = $documento->proforma->usuarioCreador;
+    }
+    // Prioridad 2: Preventista directo (preventista_id)
+    elseif ($documento->preventista_id && $documento->preventista) {
+    $preventista = $documento->preventista;
+    }
+    @endphp
+    @if($documento->usuario || $preventista)
     <table style="width: 100%; border-collapse: collapse;">
         <tr>
             @if($documento->usuario)
             <td style="width: 50%; padding: 2px 5px 2px 0;"><strong>Vendedor:</strong> {{ $documento->usuario->name }}</td>
             @endif
+            @if($preventista)
             <td style="width: 50%; padding: 2px 0;">
-                {{-- ✅ NUEVO: Mostrar preventista (desde proforma O directamente de preventista_id) --}}
-                @php
-                $preventista = null;
-                // Prioridad 1: Usuario creador de la proforma (si existe)
-                if ($documento->proforma_id && $documento->proforma && $documento->proforma->usuarioCreador) {
-                $preventista = $documento->proforma->usuarioCreador;
-                }
-                // Prioridad 2: Preventista directo (preventista_id)
-                elseif ($documento->preventista_id && $documento->preventista) {
-                $preventista = $documento->preventista;
-                }
-                @endphp
-                @if($preventista)
                 <p><strong>Prev.:</strong> {{ $preventista->name }}</p>
-                @endif
             </td>
+            @endif
         </tr>
     </table>
+    @endif
 
 </div>
 

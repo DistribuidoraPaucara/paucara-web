@@ -773,6 +773,187 @@ obtenerDisponibilidad.head = (args: { prestable: number | { id: number } } | [pr
     
     obtenerDisponibilidad.form = obtenerDisponibilidadForm
 /**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+export const cantidadStockTotal = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: cantidadStockTotal.url(args, options),
+    method: 'get',
+})
+
+cantidadStockTotal.definition = {
+    methods: ["get","head"],
+    url: '/api/prestables/{prestable}/cantidad-stock-total',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+cantidadStockTotal.url = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { prestable: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { prestable: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    prestable: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        prestable: typeof args.prestable === 'object'
+                ? args.prestable.id
+                : args.prestable,
+                }
+
+    return cantidadStockTotal.definition.url
+            .replace('{prestable}', parsedArgs.prestable.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+cantidadStockTotal.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: cantidadStockTotal.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+cantidadStockTotal.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: cantidadStockTotal.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+    const cantidadStockTotalForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: cantidadStockTotal.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+        cantidadStockTotalForm.get = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: cantidadStockTotal.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestableController::cantidadStockTotal
+ * @see app/Http/Controllers/PrestableController.php:1243
+ * @route '/api/prestables/{prestable}/cantidad-stock-total'
+ */
+        cantidadStockTotalForm.head = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: cantidadStockTotal.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    cantidadStockTotal.form = cantidadStockTotalForm
+/**
+* @see \App\Http\Controllers\PrestableController::sincronizarStockDisponible
+ * @see app/Http/Controllers/PrestableController.php:1273
+ * @route '/api/prestables/{prestable}/sincronizar-stock-disponible'
+ */
+export const sincronizarStockDisponible = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sincronizarStockDisponible.url(args, options),
+    method: 'post',
+})
+
+sincronizarStockDisponible.definition = {
+    methods: ["post"],
+    url: '/api/prestables/{prestable}/sincronizar-stock-disponible',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\PrestableController::sincronizarStockDisponible
+ * @see app/Http/Controllers/PrestableController.php:1273
+ * @route '/api/prestables/{prestable}/sincronizar-stock-disponible'
+ */
+sincronizarStockDisponible.url = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { prestable: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { prestable: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    prestable: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        prestable: typeof args.prestable === 'object'
+                ? args.prestable.id
+                : args.prestable,
+                }
+
+    return sincronizarStockDisponible.definition.url
+            .replace('{prestable}', parsedArgs.prestable.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PrestableController::sincronizarStockDisponible
+ * @see app/Http/Controllers/PrestableController.php:1273
+ * @route '/api/prestables/{prestable}/sincronizar-stock-disponible'
+ */
+sincronizarStockDisponible.post = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sincronizarStockDisponible.url(args, options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\PrestableController::sincronizarStockDisponible
+ * @see app/Http/Controllers/PrestableController.php:1273
+ * @route '/api/prestables/{prestable}/sincronizar-stock-disponible'
+ */
+    const sincronizarStockDisponibleForm = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: sincronizarStockDisponible.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestableController::sincronizarStockDisponible
+ * @see app/Http/Controllers/PrestableController.php:1273
+ * @route '/api/prestables/{prestable}/sincronizar-stock-disponible'
+ */
+        sincronizarStockDisponibleForm.post = (args: { prestable: number | { id: number } } | [prestable: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: sincronizarStockDisponible.url(args, options),
+            method: 'post',
+        })
+    
+    sincronizarStockDisponible.form = sincronizarStockDisponibleForm
+/**
 * @see \App\Http\Controllers\PrestableController::incrementarStock
  * @see app/Http/Controllers/PrestableController.php:752
  * @route '/api/prestables/{prestable}/stock/incrementar'
@@ -1032,6 +1213,6 @@ ajusteDocumento.head = (args: { prestable: number | { id: number } } | [prestabl
         })
     
     ajusteDocumento.form = ajusteDocumentoForm
-const PrestableController = { index, historialAjustes, movimientos, store, show, update, destroy, obtenerStock, obtenerDisponibilidad, incrementarStock, ajustarStock, ajusteDocumento }
+const PrestableController = { index, historialAjustes, movimientos, store, show, update, destroy, obtenerStock, obtenerDisponibilidad, cantidadStockTotal, sincronizarStockDisponible, incrementarStock, ajustarStock, ajusteDocumento }
 
 export default PrestableController

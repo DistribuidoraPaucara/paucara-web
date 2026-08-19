@@ -628,9 +628,6 @@ export default function StockClientesPage({
                                         #
                                     </th>
                                     <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                        Código
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
                                         Nombre
                                     </th>
                                     <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
@@ -705,10 +702,6 @@ export default function StockClientesPage({
                                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                                             {item.id}
                                                         </td>
-                                                        <td className={`px-4 py-3 font-mono text-slate-600 dark:text-slate-400 ${isEmbaseRelacionado ? 'pl-8' : ''}`}>
-                                                            {isEmbaseRelacionado && <span className="text-slate-400">↳ </span>}
-                                                            {item.prestable_codigo}
-                                                        </td>
                                                         <td className={`px-4 py-3 font-medium text-slate-900 dark:text-slate-100 ${isEmbaseRelacionado ? 'text-slate-700 dark:text-slate-300' : ''}`}>
                                                             {item.prestable_nombre}
                                                         </td>
@@ -719,6 +712,8 @@ export default function StockClientesPage({
                                                                 }`}>
                                                                 {item.prestable_tipo === 'EMBASES' ? '🔖 Embase' : '📦 Canastilla'}
                                                             </span>
+                                                            {isEmbaseRelacionado && <span className="text-slate-400">↳ </span>}
+                                                            {item.prestable_codigo}
                                                         </td>
                                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                                             {item.almacen_nombre}

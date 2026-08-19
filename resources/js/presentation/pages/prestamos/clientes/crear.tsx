@@ -113,9 +113,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     // Lista de prestables agregados
     const [prestablesAgregados, setPrestablesAgregados] = useState<PrestamoItem[]>([]);
 
-    // ✅ NUEVO: Mapas de con_liquido y sin_liquido desde PrestablesSelectionTable
-    const [conLiquidoMap, setConLiquidoMap] = useState<Record<string, number>>({});
-    const [sinLiquidoMap, setSinLiquidoMap] = useState<Record<string, number>>({});
 
     // Estados para búsquedas dinámicas
     const [ventasSearch, setVentasSearch] = useState('');
@@ -570,12 +567,23 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
             setVentaSeleccionada(ventaData);
             setCanastillasUsadasEnVenta(canastillasUsadas);
 
-            setFormData({
-                ...formData,
+            console.log('%c🏭 handleSelectVenta - Almacén ANTES de actualizar', 'color: #FF5722; font-weight: bold; font-size: 12px', {
+                almacen_actual: formData.almacenes_prestables_id,
+                formData_keys: Object.keys(formData),
+            });
+
+            setFormData((prev) => ({
+                ...prev,
                 venta_id: venta.id,
                 cliente_id: clienteId,
                 telefono_cliente_1: telefonoCliente,
                 direccion_cliente_id: ventaData.direccion_cliente_id,
+                // ✅ CRÍTICO: Asegurar que almacenes_prestables_id se preserva (no es undefined)
+                almacenes_prestables_id: prev.almacenes_prestables_id || almacenSeleccionado?.id,
+            }));
+
+            console.log('%c🏭 handleSelectVenta - Almacén DESPUÉS de actualizar', 'color: #FF5722; font-weight: bold; font-size: 12px', {
+                'será almacen_actual': almacenSeleccionado?.id || formData.almacenes_prestables_id,
             });
             setClienteSeleccionado(clientes.find((c) => c.id === clienteId));
             setDireccionSeleccionada(direccion);
@@ -789,16 +797,19 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
     };
 
     const handleAgregarCanastilla = (prestable: Prestable) => {
-        // ✅ MODIFICADO: NO cargar con almacén de cabecera
-        // Los prestables se cargan VACÍOS en almacenes
-        // El almacén de cabecera es solo referencia si el usuario no abre el modal
+        // ✅ MODIFICADO: Asignar almacén de cabecera por defecto
+        // Si el usuario no especifica almacenes en el modal, usa el de cabecera
+
+        const almacenesDefault = formData.almacenes_prestables_id
+            ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: 1 }]
+            : [];
 
         const nuevosItems: PrestamoItem[] = [
             {
                 prestable_id: Number(prestable.id),
                 cantidad: 1,
-                almacenes_ids: [], // ✅ VACÍO - el usuario debe especificar
-                almacenes: undefined, // SIN almacenes pre-seleccionados
+                almacenes_ids: formData.almacenes_prestables_id ? [formData.almacenes_prestables_id] : [],
+                almacenes: almacenesDefault.length > 0 ? almacenesDefault : undefined,
                 prestable,
             },
         ];
@@ -814,10 +825,12 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 nuevosItems.push({
                     prestable_id: Number(embase.id),
                     cantidad: cantidadEmbasesAutomatica,
-                    almacenes_ids: [], // ✅ VACÍO
-                    almacenes: undefined, // SIN almacenes
+                    almacenes_ids: formData.almacenes_prestables_id ? [formData.almacenes_prestables_id] : [],
+                    almacenes: almacenesDefault.length > 0
+                        ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: cantidadEmbasesAutomatica }]
+                        : undefined,
                     prestable: embase,
-                    isAutomaticEmbase: true, // Marca que fue cargado automáticamente con la canastilla
+                    isAutomaticEmbase: true,
                 });
             });
         }
@@ -831,11 +844,9 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                 nombre: i.prestable?.nombre,
                 tipo: i.prestable?.tipo,
                 isAutomaticEmbase: i.isAutomaticEmbase,
-                almacenes_ids: i.almacenes_ids, // ✅ Mostrar almacenes vacíos
+                almacenes_ids: i.almacenes_ids,
             })),
         );
-        console.log('   ⚠️ USUARIO DEBE ESPECIFICAR ALMACENES en el modal');
-        toastWarning('⚠️ Especifica los almacenes para este prestable en el modal');
         setPrestablesAgregados(actualizado);
     };
 
@@ -865,10 +876,19 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
         }
 
         // Validar que cada prestable tiene almacenes especificados
+        console.log('%c🔍 VALIDACIÓN DE ALMACENES', 'color: #2196F3; font-weight: bold; font-size: 14px');
+        console.log('📦 Prestables a validar:', prestablesAgregados.length);
+        console.log('🏭 Almacén de cabecera:', formData.almacenes_prestables_id);
+
         for (let i = 0; i < prestablesAgregados.length; i++) {
             const item = prestablesAgregados[i];
             const prestable = prestables.find((p) => Number(p.id) === item.prestable_id);
             if (!prestable) continue;
+
+            console.log(`\n📍 Item ${i + 1}: ${prestable.nombre}`);
+            console.log('  - item.almacenes:', item.almacenes);
+            console.log('  - item.almacenes_ids:', item.almacenes_ids);
+            console.log('  - formData.almacenes_prestables_id:', formData.almacenes_prestables_id);
 
             // Usar almacenes del detalle si existen, sino almacén de cabecera
             const almacenesAUsar =
@@ -878,8 +898,11 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                       ? [{ almacenes_prestables_id: formData.almacenes_prestables_id, cantidad: item.cantidad }]
                       : [];
 
+            console.log('  - almacenesAUsar:', almacenesAUsar);
+
             if (almacenesAUsar.length === 0) {
                 const msg = `${prestable.nombre}: Debes especificar almacenes (en cabecera o en el detalle)`;
+                console.log('❌ ERROR:', msg);
                 setError(msg);
                 toastError(msg);
                 return;
@@ -943,20 +966,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                         detallePayload.almacenes = item.almacenes;
                     } else if (item.almacenes_ids && item.almacenes_ids.length > 0) {
                         detallePayload.almacenes_ids = item.almacenes_ids;
-                    }
-
-                    // ✅ NUEVO: Agregar con_liquido y sin_liquido
-                    const prestable = prestables.find(p => Number(p.id) === item.prestable_id);
-                    if (prestable) {
-                        const conLiqKey = prestable.tipo === 'EMBASES' && prestable.prestable_relacionado_id
-                            ? `${prestable.prestable_relacionado_id}-embase-con`
-                            : `${item.prestable_id}-con`;
-                        const sinLiqKey = prestable.tipo === 'EMBASES' && prestable.prestable_relacionado_id
-                            ? `${prestable.prestable_relacionado_id}-embase-sin`
-                            : `${item.prestable_id}-sin`;
-
-                        detallePayload.con_liquido = conLiquidoMap[conLiqKey] ?? 0;
-                        detallePayload.sin_liquido = sinLiquidoMap[sinLiqKey] ?? 0;
                     }
 
                     return detallePayload;
@@ -1315,8 +1324,6 @@ export default function CrearPrestamoCliente({ clientes, choferes, almacenes, ve
                             loading={loadingPrestables}
                             almacen_prestable_id={formData.almacenes_prestables_id}
                             canastillasUsadasEnVenta={canastillasUsadasEnVenta}
-                            onConLiquidoMapChange={setConLiquidoMap}
-                            onSinLiquidoMapChange={setSinLiquidoMap}
                         />
                     </div>
 

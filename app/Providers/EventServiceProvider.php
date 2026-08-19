@@ -67,6 +67,10 @@ use App\Listeners\CreateCajaMovementFromDetallePagoVenta;
 use App\Listeners\SendCreditoPagoRegistradoNotification;
 use App\Listeners\SendCreditoVencidoNotification;
 use App\Listeners\SendCreditoCriticoNotification;
+use App\Events\PrestamoClienteCreado;
+use App\Events\PrestamoEventoCreado;
+use App\Listeners\SendPrestamoClienteCreatedNotification;
+use App\Listeners\SendPrestamoEventoCreatedNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 /**
@@ -263,6 +267,22 @@ class EventServiceProvider extends ServiceProvider
 
         RutaPlanificada::class => [
             BroadcastRutaPlanificada::class,
+        ],
+
+        // ══════════════════════════════════════════════════════════
+        // PRÉSTAMO EVENTS
+        // ══════════════════════════════════════════════════════════
+
+        // ✅ NUEVO: Notificar cuando se crea un préstamo a cliente
+        // Listeners notifican a: usuario creador, admins, cajeros, cliente
+        PrestamoClienteCreado::class => [
+            SendPrestamoClienteCreatedNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se crea un préstamo a evento
+        // Listeners notifican a: usuario creador, admins, cajeros, cliente eventos
+        PrestamoEventoCreado::class => [
+            SendPrestamoEventoCreatedNotification::class,
         ],
     ];
 

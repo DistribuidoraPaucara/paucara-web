@@ -596,39 +596,61 @@ class ImpresionService
                 'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor', 'prestamo_evento'])
                     ? 'landscape'
                     : 'portrait',
+                'margins' => null,
             ],
             'A4_COPIA' => [
                 'paper' => 'A4',
                 'orientation' => in_array($tipoDocumento, ['envio', 'prestamo_cliente', 'prestamo_proveedor', 'prestamo_evento'])
                     ? 'landscape'
                     : 'portrait',
+                'margins' => null,
             ],
             'A4_PORTRAIT' => [
                 'paper' => 'A4',
                 'orientation' => 'portrait',
+                'margins' => null,
             ],
             'TICKET_80' => [
-                // 80mm de ancho, altura automática (muy largo para permitir contenido variable)
-                'paper' => [0, 0, 226.77, 841.89], // 80mm x 297mm en puntos
+                // ✅ UNIFICADO (2026-08-13): Usar configuración de EntregaPdfController que imprime mejor
+                // 80mm = 227pt, altura 1000pt (más contenido que 841.89pt), márgenes 5mm
+                'paper' => [0, 0, 227, 1000],
                 'orientation' => 'portrait',
+                'margins' => [
+                    'top' => 5,
+                    'bottom' => 5,
+                    'left' => 5,
+                    'right' => 5,
+                ],
             ],
             'TICKET_58' => [
                 // 58mm de ancho, altura automática
-                'paper' => [0, 0, 164.41, 841.89], // 58mm x 297mm en puntos
+                'paper' => [0, 0, 164.41, 841.89],
                 'orientation' => 'portrait',
+                'margins' => null,
             ],
             'CUSTOM' => [
                 // Tamaño personalizado desde configuración de empresa
                 'paper' => $this->obtenerTamañoCustom(),
                 'orientation' => 'portrait',
+                'margins' => null,
             ],
             default => [
                 'paper' => 'A4',
                 'orientation' => 'portrait',
+                'margins' => null,
             ]
         };
 
         $pdf->setPaper($config['paper'], $config['orientation']);
+
+        // ✅ Aplicar márgenes si están configurados
+        if (!empty($config['margins'])) {
+            $pdf
+                ->setOption('margin-top', $config['margins']['top'])
+                ->setOption('margin-bottom', $config['margins']['bottom'])
+                ->setOption('margin-left', $config['margins']['left'])
+                ->setOption('margin-right', $config['margins']['right']);
+        }
     }
 
     /**

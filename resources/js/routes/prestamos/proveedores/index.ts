@@ -271,7 +271,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @see app/Http/Controllers/PrestamosInertiaController.php:279
  * @route '/prestamos/proveedores'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -286,7 +286,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @see app/Http/Controllers/PrestamosInertiaController.php:279
  * @route '/prestamos/proveedores'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -295,7 +295,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @see app/Http/Controllers/PrestamosInertiaController.php:279
  * @route '/prestamos/proveedores'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -305,7 +305,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @see app/Http/Controllers/PrestamosInertiaController.php:279
  * @route '/prestamos/proveedores'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +315,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\PrestamosInertiaController::store
- * @see app/Http/Controllers/PrestamosInertiaController.php:265
+ * @see app/Http/Controllers/PrestamosInertiaController.php:279
  * @route '/prestamos/proveedores'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

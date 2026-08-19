@@ -22,10 +22,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     React.useEffect(() => {
         console.log('📝 [FiltrosVentas] Filtros iniciales recibidos:', {
             filtrosIniciales,
-            tiene_valores: Object.values(filtrosIniciales).some(v => v !== undefined && v !== null && v !== ''),
-            valores_activos: Object.fromEntries(
-                Object.entries(filtrosIniciales).filter(([_, v]) => v !== undefined && v !== null && v !== '')
-            ),
+            tiene_valores: Object.values(filtrosIniciales).some((v) => v !== undefined && v !== null && v !== ''),
+            valores_activos: Object.fromEntries(Object.entries(filtrosIniciales).filter(([_, v]) => v !== undefined && v !== null && v !== '')),
         });
     }, []);
 
@@ -304,18 +302,35 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                         icon={<Search className="h-4 w-4" />}
                     />
                 </div>
-                <ToggleGroup
-                    options={datosSeguros.estados_documento
-                        .filter((est) => [3, 5].includes(Number(est.id))) // Solo Aprobadas (3) y Anuladas (5)
-                        .map((est) => ({
-                            value: est.id.toString(),
-                            label: est.nombre,
-                            icon: est.icono,
-                            color: est.color,
-                        }))}
-                    value={filtros.estado_documento_id?.toString() || ''}
-                    onChange={(value) => handleFiltroChange('estado_documento_id', value ? parseInt(value) : null)}
-                />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <ToggleGroup
+                        options={datosSeguros.estados_documento
+                            .filter((est) => [3, 5].includes(Number(est.id))) // Solo Aprobadas (3) y Anuladas (5)
+                            .map((est) => ({
+                                value: est.id.toString(),
+                                label: est.nombre,
+                                icon: est.icono,
+                                color: est.color,
+                            }))}
+                        value={filtros.estado_documento_id?.toString() || ''}
+                        onChange={(value) => handleFiltroChange('estado_documento_id', value ? parseInt(value) : null)}
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
+                        }}
+                        className={`font-small rounded-md p-1 text-sm transition-colors ${
+                            filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
+                                ? 'bg-blue-600 text-white'
+                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                        }`}
+                    >
+                        📅 Hoy
+                    </button>
+                </div>
             </div>
 
             {/* Filtros avanzados */}
@@ -452,21 +467,6 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
             )}
             {/* Botones de acción */}
             <div className="mt-2 flex flex-wrap items-end justify-between gap-4 border-t border-gray-200 p-2 dark:border-zinc-700">
-                <button
-                    type="button"
-                    onClick={() => {
-                        const today = new Date().toISOString().split('T')[0];
-                        handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
-                    }}
-                    className={`font-small rounded-md p-1 text-sm transition-colors ${
-                        filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
-                    }`}
-                >
-                    📅 Hoy
-                </button>
-
                 {/* Controles de Ordenamiento - Columna 1 */}
                 <div className="flex items-center gap-2">
                     <div>
@@ -539,8 +539,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
             </div>
             {/* ✅ NUEVO: Mostrar filtros seleccionados activos */}
             {obtenerFiltrosActivos().length > 0 && (
-                <div className="border-t border-gray-200 dark:border-zinc-700 mt-2">
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                <div className="mt-2 border-t border-gray-200 dark:border-zinc-700">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros activos:</span>
                         {obtenerFiltrosActivos().map((filtroActivo) => (
                             <div

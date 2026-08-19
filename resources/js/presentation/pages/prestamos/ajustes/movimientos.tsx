@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Badge } from '@/presentation/components/ui/badge';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Movimiento {
     id: number;
@@ -34,6 +35,8 @@ interface Movimiento {
     cantidad_proveedor_dañada_posterior: number;
     cantidad_evento_dañada_anterior?: number;
     cantidad_evento_dañada_posterior?: number;
+    cantidad_sin_liquido_anterior?: number;
+    cantidad_sin_liquido_posterior?: number;
     categoria_afectada: string | null;
     motivo: string | null;
     observaciones: string | null;
@@ -88,38 +91,140 @@ const getTipoLabel = (tipo: string) => {
     return labels[tipo] || tipo;
 };
 
-// Determinar qué columnas mostrar basado en los datos disponibles
-const obtenerColumnasAMostrar = (movimientos: Movimiento[]): string[] => {
-    const columnas = ['disponible'];
+interface DetalleValor {
+    label: string;
+    icon: string;
+    anterior: number;
+    posterior: number;
+}
 
-    // Verificar si hay datos de dañadas por tipo
-    const tieneClienteDañada = movimientos.some(
-        m => (m.cantidad_cliente_dañada_anterior ?? 0) > 0 || (m.cantidad_cliente_dañada_posterior ?? 0) > 0
-    );
-    const tieneProveedorDañada = movimientos.some(
-        m => (m.cantidad_proveedor_dañada_anterior ?? 0) > 0 || (m.cantidad_proveedor_dañada_posterior ?? 0) > 0
-    );
-    const tieneEventoDañada = movimientos.some(
-        m => (m.cantidad_evento_dañada_anterior ?? 0) > 0 || (m.cantidad_evento_dañada_posterior ?? 0) > 0
-    );
-
-    if (tieneClienteDañada) columnas.push('dañada_cliente');
-    if (tieneProveedorDañada) columnas.push('dañada_proveedor');
-    if (tieneEventoDañada) columnas.push('dañada_evento');
-
-    return columnas;
-};
-
-const getIconoColumna = (columna: string): string => {
-    const iconos: Record<string, string> = {
-        disponible: '📦',
-        dañada_cliente: '❌',
-        dañada_proveedor: '⚠️',
-        dañada_evento: '🎉❌',
+const obtenerDetalles = (movimiento: Movimiento): { cliente: DetalleValor[]; evento: DetalleValor[]; proveedor: DetalleValor[]; disponible: DetalleValor[]; vendida: DetalleValor[] } => {
+    return {
+        cliente: [
+            {
+                label: 'Prestado a Cliente',
+                icon: '👥',
+                anterior: movimiento.prestamo_cliente_anterior,
+                posterior: movimiento.prestamo_cliente_posterior,
+            },
+            {
+                label: 'Dañadas (Cliente)',
+                icon: '❌',
+                anterior: movimiento.cantidad_cliente_dañada_anterior,
+                posterior: movimiento.cantidad_cliente_dañada_posterior,
+            },
+        ],
+        evento: [
+            {
+                label: 'Prestado a Evento',
+                icon: '🎉',
+                anterior: movimiento.prestamo_evento_anterior ?? 0,
+                posterior: movimiento.prestamo_evento_posterior ?? 0,
+            },
+            {
+                label: 'Dañadas (Evento)',
+                icon: '🎉❌',
+                anterior: movimiento.cantidad_evento_dañada_anterior ?? 0,
+                posterior: movimiento.cantidad_evento_dañada_posterior ?? 0,
+            },
+        ],
+        proveedor: [
+            {
+                label: 'Deudor a Proveedor',
+                icon: '🚚',
+                anterior: movimiento.prestamo_proveedor_anterior,
+                posterior: movimiento.prestamo_proveedor_posterior,
+            },
+            {
+                label: 'Dañadas (Proveedor)',
+                icon: '⚠️',
+                anterior: movimiento.cantidad_proveedor_dañada_anterior,
+                posterior: movimiento.cantidad_proveedor_dañada_posterior,
+            },
+        ],
+        disponible: [
+            {
+                label: 'Disponible',
+                icon: '📦',
+                anterior: movimiento.disponible_anterior,
+                posterior: movimiento.disponible_posterior,
+            },
+            {
+                label: 'Sin Líquido',
+                icon: '🏜️',
+                anterior: movimiento.cantidad_sin_liquido_anterior ?? 0,
+                posterior: movimiento.cantidad_sin_liquido_posterior ?? 0,
+            },
+        ],
+        // vendida: [
+        //     {
+        //         label: 'Vendidas',
+        //         icon: '💰',
+        //         anterior: movimiento.vendida_anterior,
+        //         posterior: movimiento.vendida_posterior,
+        //     },
+        //     {
+        //         label: 'En Compra',
+        //         icon: '📥',
+        //         anterior: movimiento.compra_anterior ?? 0,
+        //         posterior: movimiento.compra_posterior ?? 0,
+        //     },
+        // ],
     };
-    return iconos[columna] || '📊';
 };
 
+const TablaDetalles = ({ titulo, icon, items }: { titulo: string; icon: string; items: DetalleValor[] }) => (
+    <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 dark:bg-slate-800">
+            <span className="text-lg">{icon}</span>
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">{titulo}</h4>
+        </div>
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+                    <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-300">Concepto</th>
+                    <th className="px-3 py-2 text-center font-semibold text-blue-700 dark:text-blue-400">Antes</th>
+                    <th className="px-3 py-2 text-center font-semibold text-amber-700 dark:text-amber-400">Después</th>
+                    <th className="px-3 py-2 text-center font-semibold text-slate-700 dark:text-slate-300">Diferencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items.map((item) => {
+                    const diferencia = item.posterior - item.anterior;
+                    return (
+                        <tr key={item.label} className="border-b border-slate-100 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/30">
+                            <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                    <span>{item.icon}</span>
+                                    <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
+                                </div>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                                <span className={`font-semibold ${item.anterior > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>
+                                    {item.anterior}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                                <span className={`font-semibold ${item.posterior > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                                    {item.posterior}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                                <span className={`inline-block rounded px-2 py-1 text-xs font-bold ${
+                                    diferencia > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                    diferencia < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                    'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                    {diferencia > 0 ? '+' : ''}{diferencia}
+                                </span>
+                            </td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+        </table>
+    </div>
+);
 
 export default function MovimientosPrestables() {
     const [movimientos, setMovimientos] = useState<PaginationData | null>(null);
@@ -127,8 +232,8 @@ export default function MovimientosPrestables() {
     const [buscar, setBuscar] = useState('');
     const [tipoFiltro, setTipoFiltro] = useState('');
     const [page, setPage] = useState(1);
-    const [columnasAMostrar, setColumnasAMostrar] = useState<string[]>(['disponible']);
     const [soloActivos, setSoloActivos] = useState(false);
+    const [expandidoId, setExpandidoId] = useState<number | null>(null);
 
     const cargarMovimientos = useCallback(async () => {
         setLoading(true);
@@ -153,7 +258,6 @@ export default function MovimientosPrestables() {
                 console.log('%c✅ MOVIMIENTOS CARGADOS', 'color: #00aa00; font-weight: bold; font-size: 12px');
                 console.log(`Total: ${result.data.total} movimientos`);
 
-                // Mostrar detalles de cada movimiento
                 if (result.data.data && result.data.data.length > 0) {
                     console.log('%c📊 DETALLES DE MOVIMIENTOS', 'color: #ff6600; font-weight: bold; font-size: 12px');
                     result.data.data.forEach((mov: Movimiento, idx: number) => {
@@ -163,27 +267,13 @@ export default function MovimientosPrestables() {
                             Tipo: mov.tipo,
                             Cantidad: mov.cantidad,
                             'Dañada Registrada': mov.cantidad_dañada_registrada,
-                            'Referencia Tipo': mov.referencia_tipo,
-                            'Referencia ID': mov.referencia_id,
-                            Motivo: mov.motivo,
-                            Observaciones: mov.observaciones,
-                            'Cliente Dañada Anterior': mov.cantidad_cliente_dañada_anterior,
-                            'Cliente Dañada Posterior': mov.cantidad_cliente_dañada_posterior,
-                            'Proveedor Dañada Anterior': mov.cantidad_proveedor_dañada_anterior,
-                            'Proveedor Dañada Posterior': mov.cantidad_proveedor_dañada_posterior,
-                            'Evento Dañada Anterior': mov.cantidad_evento_dañada_anterior,
-                            'Evento Dañada Posterior': mov.cantidad_evento_dañada_posterior,
                         });
                     });
                 }
 
                 setMovimientos(result.data);
-                // Actualizar columnas a mostrar basadas en los datos
-                const columnas = obtenerColumnasAMostrar(result.data.data || []);
-                setColumnasAMostrar(columnas);
             } else {
                 console.error('%c❌ ERROR EN RESPUESTA', 'color: #cc0000; font-weight: bold; font-size: 12px');
-                console.log(result);
             }
         } catch (error) {
             console.error('Error cargando movimientos:', error);
@@ -196,21 +286,11 @@ export default function MovimientosPrestables() {
         cargarMovimientos();
     }, [cargarMovimientos]);
 
-    const calcularTotalAntes = (m: Movimiento) => {
-        return m.disponible_anterior;
-    };
-
-    const calcularTotalDespues = (m: Movimiento) => {
-        return m.disponible_posterior;
-    };
-
-
     return (
         <AppLayout breadcrumbs={[{ title: 'Préstamos', href: '/prestamos' }, { title: 'Movimientos de Stock', href: '/prestamos/ajustes/movimientos' }]}>
-            <Head title="Movimientos de Stock de Prestables" />
+            <Head title="Movimientos de Stock" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-2">
-                {/* Header */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">📈 Movimientos de Stock</h1>
@@ -220,7 +300,6 @@ export default function MovimientosPrestables() {
                     </div>
                 </div>
 
-                {/* Filtros */}
                 <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900/50">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                         <div>
@@ -262,7 +341,6 @@ export default function MovimientosPrestables() {
                         </div>
                     </div>
 
-                    {/* Checkbox Solo Activos */}
                     <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
                         <label className="flex items-center gap-2">
                             <input
@@ -281,201 +359,144 @@ export default function MovimientosPrestables() {
                     </div>
                 </div>
 
-                {/* Leyenda de Columnas */}
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-900/30 dark:bg-blue-900/10">
-                    <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-300">📋 Leyenda de Columnas (Estados Antes/Después):</h3>
-                    <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 lg:grid-cols-5">
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">📦</span>
-                            <p className="text-blue-700 dark:text-blue-400">Disponible</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">❌</span>
-                            <p className="text-blue-700 dark:text-blue-400">Dañada Cliente</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">⚠️</span>
-                            <p className="text-blue-700 dark:text-blue-400">Dañada Proveedor</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">🎉❌</span>
-                            <p className="text-blue-700 dark:text-blue-400">Dañada Evento</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">📊</span>
-                            <p className="text-blue-700 dark:text-blue-400">Cantidad Movida</p>
-                        </div>
-                    </div>
+                    <h3 className="mb-3 font-semibold text-blue-900 dark:text-blue-300">📋 Haz click en cualquier fila para ver detalles completos</h3>
                 </div>
 
-                {/* Tabla de Movimientos */}
                 <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    ID
-                                </th>
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Fecha
-                                </th>
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Prestable
-                                </th>
-                                {/* <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Tipo
-                                </th> */}
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Almacén
-                                </th>
-                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">
-                                    Referencia
-                                </th>
-                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                    Antes
-                                </th>
-                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                    Cantidad
-                                </th>
-                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                    ❌ Dañada Registrada
-                                </th>
-                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">
-                                    Después
-                                </th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">ID</th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Fecha</th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Prestable</th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Almacén</th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Tipo</th>
+                                <th className="px-2 py-3 text-left font-semibold text-slate-900 dark:text-slate-100">Referencia</th>
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">Cantidad</th>
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100">❌ Dañada</th>
+                                <th className="px-2 py-3 text-center font-semibold text-slate-900 dark:text-slate-100"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-8 text-center">
+                                    <td colSpan={9} className="px-4 py-8 text-center">
                                         <span className="text-slate-500 dark:text-slate-400">Cargando...</span>
                                     </td>
                                 </tr>
                             ) : movimientos?.data && movimientos.data.length > 0 ? (
                                 movimientos.data.map((movimiento) => {
-                                    const totalAntes = calcularTotalAntes(movimiento);
-                                    const totalDespues = calcularTotalDespues(movimiento);
                                     const estilo = getTipoBadgeStyle(movimiento.tipo);
+                                    const expandido = expandidoId === movimiento.id;
+                                    const detalles = obtenerDetalles(movimiento);
 
                                     return (
-                                        <tr
-                                            key={movimiento.id}
-                                            className={`border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50 ${movimiento.anulado ? 'bg-red-50 opacity-60 dark:bg-red-900/10' : ''
-                                                }`}
-                                        >
-                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300">
-                                                <div className="text-sm font-medium">{movimiento.id}</div>
-                                            </td>
-                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300">
-                                                <div className="text-xs">{new Date(movimiento.created_at).toLocaleString('es-ES')}</div>
-                                                <div className="text-xs text-slate-500">{movimiento.usuario?.name || 'Sin usuario'}</div>
-                                            </td>
-                                            <td className="px-2 py-3">
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                                        {movimiento.prestable_stock?.prestable?.nombre || 'Sin prestable'}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {movimiento.prestable_stock?.prestable?.codigo || '-'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            {/* <td className="px-2 py-3 text-xs">
-                                                <Badge className={`${estilo.bg} ${estilo.text}`}>
-                                                    {getTipoLabel(movimiento.tipo)}
-                                                </Badge>
-                                                
-                                            </td> */}
-                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300 text-xs">
-                                                {movimiento.prestable_stock?.almacen_prestable?.nombre || '-'}
-                                            </td>
-                                            <td className="px-2 py-3 text-slate-700 dark:text-slate-300 text-xs">
-                                                {movimiento.referencia_id ? (
+                                        <React.Fragment key={movimiento.id}>
+                                            <tr
+                                                onClick={() => setExpandidoId(expandido ? null : movimiento.id)}
+                                                className={`cursor-pointer border-b border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50 ${expandido ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${movimiento.anulado ? 'opacity-60' : ''}`}
+                                            >
+                                                <td className="px-2 py-3 text-sm font-medium text-slate-700 dark:text-slate-300">{movimiento.id}</td>
+                                                <td className="px-2 py-3 text-slate-700 dark:text-slate-300">
+                                                    <div className="text-xs">{new Date(movimiento.created_at).toLocaleString('es-ES')}</div>
+                                                    <div className="text-xs text-slate-500">{movimiento.usuario?.name || 'Sin usuario'}</div>
+                                                </td>
+                                                <td className="px-2 py-3">
                                                     <div className="flex flex-col">
-                                                        <span className="font-xs text-slate-900 dark:text-slate-100">
-                                                            Folio #{movimiento.referencia_id}
+                                                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                                            {movimiento.prestable_stock?.prestable?.nombre || 'Sin prestable'}
                                                         </span>
                                                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                            {movimiento.referencia_tipo || '-'}
+                                                            {movimiento.prestable_stock?.prestable?.codigo || '-'}
                                                         </span>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-slate-400 dark:text-slate-500">-</span>
-                                                )}
-                                                {movimiento.anulado && (
-                                                    <Badge className="mt-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs">
-                                                        ⛔ Anulado
+                                                </td>
+                                                <td className="px-2 py-3 text-xs text-slate-700 dark:text-slate-300">
+                                                    {movimiento.prestable_stock?.almacen_prestable?.nombre || '-'}
+                                                </td>
+                                                <td className="px-2 py-3 text-xs">
+                                                    <Badge className={`${estilo.bg} ${estilo.text}`}>
+                                                        {getTipoLabel(movimiento.tipo)}
                                                     </Badge>
-                                                )}
-                                            </td>
-                                            <td className="px-2 py-3 text-center bg-blue-50 dark:bg-blue-900/10">
-                                                <div className="text-xs space-y-1 text-slate-700 dark:text-slate-300">
-                                                    {columnasAMostrar.map(col => {
-                                                        let valor = 0;
-                                                        if (col === 'dañada_cliente') {
-                                                            valor = movimiento.cantidad_cliente_dañada_anterior ?? 0;
-                                                        } else if (col === 'dañada_proveedor') {
-                                                            valor = movimiento.cantidad_proveedor_dañada_anterior ?? 0;
-                                                        } else if (col === 'dañada_evento') {
-                                                            valor = movimiento.cantidad_evento_dañada_anterior ?? 0;
-                                                        } else {
-                                                            valor = movimiento[`${col}_anterior` as keyof Movimiento] ?? 0;
-                                                        }
-                                                        return (
-                                                            <div key={col}>
-                                                                <span className="font-xs">{getIconoColumna(col)}</span> {valor}
+                                                </td>
+                                                <td className="px-2 py-3 text-xs text-slate-700 dark:text-slate-300">
+                                                    {movimiento.referencia_id ? (
+                                                        <div>
+                                                            <span className="font-xs text-slate-900 dark:text-slate-100">Folio #{movimiento.referencia_id}</span>
+                                                            <span className="block text-slate-500 dark:text-slate-400">{movimiento.referencia_tipo || '-'}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-slate-400 dark:text-slate-500">-</span>
+                                                    )}
+                                                    {movimiento.anulado && (
+                                                        <Badge className="mt-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs">
+                                                            ⛔ Anulado
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-3 text-center">
+                                                    <span
+                                                        className={`inline-block rounded-full px-3 py-1 text-sm font-bold ${movimiento.cantidad >= 0
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                            }`}
+                                                    >
+                                                        {movimiento.cantidad >= 0 ? '✓' : ''}{movimiento.cantidad}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-3 text-center">
+                                                    <span className={`inline-block rounded-full px-3 py-1 text-sm font-bold ${movimiento.cantidad_dañada_registrada > 0
+                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                                                        }`}>
+                                                        ❌ {movimiento.cantidad_dañada_registrada}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-3 text-center">
+                                                    <button className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                                                        {expandido ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {expandido && (
+                                                <tr className="border-b border-slate-200 bg-blue-50 dark:border-slate-700 dark:bg-blue-900/10">
+                                                    <td colSpan={9} className="px-4 py-4">
+                                                        <div className="space-y-4">
+                                                            <div className="grid gap-4 lg:grid-cols-2">
+                                                                <TablaDetalles titulo="Préstamo a Cliente" icon="👥" items={detalles.cliente} />
+                                                                <TablaDetalles titulo="Préstamo a Evento" icon="🎉" items={detalles.evento} />
+                                                                <TablaDetalles titulo="Adeudo a Proveedor" icon="🚚" items={detalles.proveedor} />
+                                                                <TablaDetalles titulo="Disponibilidad" icon="📦" items={detalles.disponible} />
+                                                                {/* <TablaDetalles titulo="Vendidas" icon="💰" items={detalles.vendida} /> */}
                                                             </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </td>
-                                            <td className="px-2 py-3 text-center">
-                                                <span
-                                                    className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${movimiento.cantidad >= 0
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        }`}
-                                                >
-                                                    {movimiento.cantidad >= 0 ? '✓' : ''}
-                                                    {movimiento.cantidad}
-                                                </span>
-                                            </td>
-                                            <td className="px-2 py-3 text-center bg-red-50 dark:bg-red-900/10">
-                                                <span className={`inline-block rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap ${movimiento.cantidad_dañada_registrada > 0
-                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                                                    }`}>
-                                                    ❌ {movimiento.cantidad_dañada_registrada}
-                                                </span>
-                                            </td>
-                                            <td className="px-2 py-3 text-center bg-amber-50 dark:bg-amber-900/10">
-                                                <div className="text-xs space-y-1 text-slate-700 dark:text-slate-300">
-                                                    {columnasAMostrar.map(col => {
-                                                        let valor = 0;
-                                                        if (col === 'dañada_cliente') {
-                                                            valor = movimiento.cantidad_cliente_dañada_posterior ?? 0;
-                                                        } else if (col === 'dañada_proveedor') {
-                                                            valor = movimiento.cantidad_proveedor_dañada_posterior ?? 0;
-                                                        } else if (col === 'dañada_evento') {
-                                                            valor = movimiento.cantidad_evento_dañada_posterior ?? 0;
-                                                        } else {
-                                                            valor = movimiento[`${col}_posterior` as keyof Movimiento] ?? 0;
-                                                        }
-                                                        return (
-                                                            <div key={col}>
-                                                                <span className="font-medium">{getIconoColumna(col)}</span> {valor}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </td>
-                                        </tr>
+
+                                                            {(movimiento.motivo || movimiento.observaciones) && (
+                                                                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-900/30 dark:bg-yellow-900/10">
+                                                                    {movimiento.motivo && (
+                                                                        <div className="mb-2">
+                                                                            <span className="text-xs font-semibold text-yellow-900 dark:text-yellow-300">Motivo:</span>
+                                                                            <p className="text-sm text-yellow-800 dark:text-yellow-200">{movimiento.motivo}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {movimiento.observaciones && (
+                                                                        <div>
+                                                                            <span className="text-xs font-semibold text-yellow-900 dark:text-yellow-300">Observaciones:</span>
+                                                                            <p className="text-sm text-yellow-800 dark:text-yellow-200">{movimiento.observaciones}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-8 text-center">
+                                    <td colSpan={9} className="px-4 py-8 text-center">
                                         <span className="text-slate-500 dark:text-slate-400">No hay movimientos registrados</span>
                                     </td>
                                 </tr>
@@ -484,12 +505,10 @@ export default function MovimientosPrestables() {
                     </table>
                 </div>
 
-                {/* Paginación */}
                 {movimientos && movimientos.last_page > 1 && (
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-slate-600 dark:text-slate-400">
-                            Mostrando página {movimientos.current_page} de {movimientos.last_page}
-                            {' '} ({movimientos.total} movimientos totales)
+                            Mostrando página {movimientos.current_page} de {movimientos.last_page} ({movimientos.total} movimientos totales)
                         </div>
                         <div className="flex gap-2">
                             <Button

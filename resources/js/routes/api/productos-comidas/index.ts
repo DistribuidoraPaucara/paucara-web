@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
 export const buscar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ buscar.definition = {
 
 /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
 buscar.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ buscar.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
 buscar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ buscar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
 buscar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ buscar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
     const buscarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ buscar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
         buscarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ buscar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\ProductoController::buscar
- * @see app/Http/Controllers/ProductoController.php:4115
+ * @see app/Http/Controllers/ProductoController.php:4135
  * @route '/api/productos-comidas/buscar'
  */
         buscarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

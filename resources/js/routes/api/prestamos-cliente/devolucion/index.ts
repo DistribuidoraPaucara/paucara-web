@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
 export const imprimir = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ imprimir.definition = {
 
 /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
 imprimir.url = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ imprimir.url = (args: { prestamo: number | { id: number }, devolucion: string | 
 
 /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
 imprimir.get = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ imprimir.get = (args: { prestamo: number | { id: number }, devolucion: string | 
 })
 /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
 imprimir.head = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ imprimir.head = (args: { prestamo: number | { id: number }, devolucion: string |
 
     /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
     const imprimirForm = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ imprimir.head = (args: { prestamo: number | { id: number }, devolucion: string |
 
             /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
         imprimirForm.get = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ imprimir.head = (args: { prestamo: number | { id: number }, devolucion: string |
         })
             /**
 * @see \App\Http\Controllers\PrestamoClienteController::imprimir
- * @see app/Http/Controllers/PrestamoClienteController.php:609
+ * @see app/Http/Controllers/PrestamoClienteController.php:613
  * @route '/api/prestamos-cliente/{prestamo}/devoluciones/{devolucion}/imprimir'
  */
         imprimirForm.head = (args: { prestamo: number | { id: number }, devolucion: string | number } | [prestamo: number | { id: number }, devolucion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

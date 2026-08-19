@@ -62,7 +62,7 @@ export function WebSocketProvider({
 
     // Si ya se intentó conectar, no volver a intentar
     if (connectionInitializedRef.current && status !== 'error') {
-      console.log('⏸️ Conexión ya fue inicializada.');
+      // console.log('⏸️ Conexión ya fue inicializada.');
       return;
     }
 
@@ -165,14 +165,14 @@ export function WebSocketProvider({
     };
 
     const handleDisconnected = () => {
-      console.log('📡 Evento: WebSocket desconectado');
+      // console.log('📡 Evento: WebSocket desconectado');
       setStatus('disconnected');
       setSocketId(null);
       connectionInitializedRef.current = false;
     };
 
     const handleError = (data: any) => {
-      console.log('📡 Evento: Error en WebSocket', data);
+      // console.log('📡 Evento: Error en WebSocket', data);
       setStatus('error');
       setError(data.error);
     };

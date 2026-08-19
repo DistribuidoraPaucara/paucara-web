@@ -641,6 +641,17 @@ class CompraController extends Controller
 
             DB::commit();
 
+            // ✅ NUEVO: Procesar prestables cuando se crea compra (entrada de stock al almacén)
+            try {
+                $this->procesarPrestablesEnCompra($compra);
+            } catch (\Exception $e) {
+                Log::error('Error procesando prestables en compra', [
+                    'compra_id' => $compra->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // No fallar la compra si hay error en prestables
+            }
+
             $numeroGenerado = $compra->numero;
             $mensaje        = "Compra {$numeroGenerado} creada exitosamente";
 
@@ -2841,6 +2852,138 @@ class CompraController extends Controller
                 'success' => false,
                 'message' => 'Error al asignar lotes: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Procesar prestables cuando se crea una compra
+     * En una compra (entrada de productos al almacén):
+     * - cantidad_disponible aumenta (se reciben prestables nuevos)
+     * - cantidad_sin_liquido disminuye (se reciben llenos, no vacíos)
+     */
+    private function procesarPrestablesEnCompra(Compra $compra): void
+    {
+        try {
+            // ✅ CORREGIDO: Usar AlmacenPrestable con nombre='Distribuidora' (no el almacén general)
+            $almacenPrestable = \App\Models\AlmacenPrestable::where('nombre', 'Distribuidora')->first();
+            $almacenPrestableId = $almacenPrestable->id ?? 1;
+
+            $movimientoPrestableService = app(\App\Services\MovimientoPrestableService::class);
+
+            foreach ($compra->detalles as $detalle) {
+                // Obtener prestables relacionados con este producto
+                $prestables = \App\Models\Prestable::whereHas('productosRelacionados', function ($query) use ($detalle) {
+                    $query->where('producto_id', $detalle->producto_id);
+                })->get();
+
+                // Procesar cada prestable relacionado
+                foreach ($prestables as $prestable) {
+                    // Obtener o crear registro de stock para este prestable en el almacén
+                    $stockPrestable = \App\Models\PrestableStock::firstOrCreate(
+                        [
+                            'prestable_id' => $prestable->id,
+                            'almacenes_prestables_id' => $almacenPrestableId,
+                        ],
+                        [
+                            'cantidad_disponible' => 0,
+                            'cantidad_sin_liquido' => 0,
+                            'cantidad_cliente_deudor' => 0,
+                            'cantidad_cliente_devuelto' => 0,
+                            'cantidad_cliente_dañada' => 0,
+                            'cantidad_evento_deudor' => 0,
+                            'cantidad_evento_devuelto' => 0,
+                            'cantidad_evento_dañada' => 0,
+                            'cantidad_proveedor_acreedor' => 0,
+                            'cantidad_proveedor_devuelto' => 0,
+                            'cantidad_proveedor_dañada' => 0,
+                        ]
+                    );
+
+                    // Obtener capacidad de la canastilla
+                    $canastilla = null;
+                    if ($prestable->capacidad) {
+                        $canastilla = $prestable;
+                    } else {
+                        $canastilla = \App\Models\Prestable::where('embase_asociado_id', $prestable->id)->first();
+                    }
+
+                    $capacidadCanastilla = $canastilla?->capacidad ?? 1;
+
+                    // ✅ CORREGIDO: Calcular cantidad según tipo de prestable
+                    // Canastillas: usar cantidad directa (sin multiplicar)
+                    // Embases: multiplicar por capacidad de la canastilla
+                    if ($prestable->id === $canastilla->id) {
+                        // Es canastilla
+                        $cantidadPrestable = $detalle->cantidad;
+                    } else {
+                        // Es embase
+                        $cantidadPrestable = $detalle->cantidad * $capacidadCanastilla;
+                    }
+
+                    // Guardar valores anteriores
+                    $disponibleAnterior = $stockPrestable->cantidad_disponible;
+                    $sinLiquidoAnterior = $stockPrestable->cantidad_sin_liquido ?? 0;
+
+                    // ✅ LÓGICA DE COMPRA (inversa a venta):
+                    // - cantidad_disponible AUMENTA (se reciben prestables nuevos del proveedor)
+                    // - cantidad_sin_liquido DISMINUYE (se reciben llenos, no vacíos)
+                    $nuevosSinLiquido = max(0, $sinLiquidoAnterior - $cantidadPrestable);
+
+                    $stockPrestable->update([
+                        'cantidad_disponible' => $stockPrestable->cantidad_disponible + $cantidadPrestable,
+                        'cantidad_sin_liquido' => $nuevosSinLiquido,
+                    ]);
+                    $stockPrestable->refresh();
+
+                    // Determinar cantidad para movimiento según tipo de prestable
+                    $cantidadMovimiento = ($prestable->id === $canastilla->id)
+                        ? $detalle->cantidad
+                        : $cantidadPrestable;
+
+                    // Registrar movimiento
+                    $movimientoPrestableService->registrarMovimiento([
+                        'prestable_stock_id' => $stockPrestable->id,
+                        'almacenes_prestables_id' => $almacenPrestableId,
+                        'usuario_id' => Auth::id(),
+                        'tipo' => 'ENTRADA_COMPRA_PRODUCTO',
+                        'cantidad' => $cantidadMovimiento,
+                        'disponible_anterior' => $disponibleAnterior,
+                        'disponible_posterior' => $stockPrestable->cantidad_disponible,
+                        'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
+                        'cantidad_sin_liquido_posterior' => $stockPrestable->cantidad_sin_liquido,
+                        'motivo' => 'Compra de productos relacionados',
+                        'numero_referencia' => $compra->numero,
+                        'referencia_tipo' => 'COMPRA',
+                        'referencia_id' => $compra->id,
+                        'observaciones' => "Se compraron {$detalle->cantidad}x{$detalle->producto->nombre}. Se incrementan {$cantidadPrestable} {$prestable->nombre} disponibles (compra_disponible+) y se decrementan sin_liquido (los nuevos no son vacíos).",
+                    ]);
+
+                    Log::info('✅ Prestable procesado en compra', [
+                        'compra_id' => $compra->id,
+                        'prestable_id' => $prestable->id,
+                        'prestable_nombre' => $prestable->nombre,
+                        'producto_id' => $detalle->producto_id,
+                        'producto_cantidad' => $detalle->cantidad,
+                        'capacidad_canastilla' => $capacidadCanastilla,
+                        'cantidad_prestable' => $cantidadPrestable,
+                        'disponible_antes' => $disponibleAnterior,
+                        'disponible_despues' => $stockPrestable->cantidad_disponible,
+                        'sin_liquido_antes' => $sinLiquidoAnterior,
+                        'sin_liquido_despues' => $stockPrestable->cantidad_sin_liquido,
+                    ]);
+                }
+            }
+
+            Log::info('✅ Prestables procesados en compra', [
+                'compra_id' => $compra->id,
+                'compra_numero' => $compra->numero,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error procesando prestables en compra', [
+                'compra_id' => $compra->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
         }
     }
 }

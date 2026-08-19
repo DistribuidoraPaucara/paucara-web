@@ -7,6 +7,7 @@ use App\Services\ImpresionService;
 use App\Services\Prestamos\PrestableStockAdvancedService;
 use App\Services\Prestamos\PrestamoClienteService;
 use App\Services\Prestamos\ValidacionPrestamosService;
+use App\Events\PrestamoClienteCreado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -177,13 +178,13 @@ class PrestamoClienteController extends Controller
                 ], 422);
             }
 
-            Log::info('🏭 Validando stock' . ($usaFormatoNuevo ? ' (múltiples almacenes)' : ' (almacén de cabecera)'), [
+            Log::info('🏭 Validando stock sin líquido' . ($usaFormatoNuevo ? ' (múltiples almacenes)' : ' (almacén de cabecera)'), [
                 'almacen_cabecera' => $almacenCabecera,
                 'formato_nuevo' => $usaFormatoNuevo,
                 'cantidad_detalles' => count($detalles),
             ]);
 
-            // Validar stock de cada almacén
+            // ✅ MODIFICADO: Validar cantidad_sin_liquido en lugar de cantidad_disponible
             foreach ($detalles as $i => $detalle) {
                 $prestableId = (int) $detalle['prestable_id'];
                 $cantidadTotal = (int) $detalle['cantidad'];
@@ -206,23 +207,23 @@ class PrestamoClienteController extends Controller
                     ];
                 }
 
-                // Validar stock en cada almacén
+                // ✅ Validar cantidad_sin_liquido en cada almacén (no cantidad_disponible)
                 $cantidadValidadaTotal = 0;
                 foreach ($almacenesAValidar as $almacenValidar) {
-                    $cantidadDisponible = (int) PrestableStock::where('prestable_id', $prestableId)
+                    $cantidadSinLiquido = (int) PrestableStock::where('prestable_id', $prestableId)
                         ->where('almacenes_prestables_id', $almacenValidar['id'])
-                        ->value('cantidad_disponible') ?? 0;
+                        ->value('cantidad_sin_liquido') ?? 0;
 
-                    if ($cantidadDisponible < $almacenValidar['cantidad']) {
-                        Log::warning('⚠️ Stock insuficiente en detalle ' . $i, [
+                    if ($cantidadSinLiquido < $almacenValidar['cantidad']) {
+                        Log::warning('⚠️ Cantidad sin líquido insuficiente en detalle ' . $i, [
                             'prestable_id' => $prestableId,
                             'almacen_id' => $almacenValidar['id'],
-                            'cantidad_disponible' => $cantidadDisponible,
+                            'cantidad_sin_liquido' => $cantidadSinLiquido,
                             'solicitado' => $almacenValidar['cantidad'],
                         ]);
                         return response()->json([
                             'success' => false,
-                            'message' => "Detalle {$i}: Stock insuficiente en almacén {$almacenValidar['id']}. Disponible: {$cantidadDisponible}, solicitado: {$almacenValidar['cantidad']}",
+                            'message' => "Detalle {$i}: Stock sin líquido insuficiente en almacén {$almacenValidar['id']}. Disponible: {$cantidadSinLiquido}, solicitado: {$almacenValidar['cantidad']}",
                         ], 422);
                     }
 
@@ -249,6 +250,9 @@ class PrestamoClienteController extends Controller
                     'message' => 'Error creando préstamo',
                 ], 500);
             }
+
+            // ✅ Disparar evento para notificar a múltiples canales (usuario creador, admins, cajeros, cliente)
+            event(new PrestamoClienteCreado($prestamo));
 
             return response()->json([
                 'success' => true,
