@@ -370,6 +370,11 @@ class PrestamoEventoService
 
                         $disponibleAntes = $stock->cantidad_disponible;
                         $sinLiquidoAntes = $stock->cantidad_sin_liquido ?? 0;
+                        $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
+                        $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
+                        $clienteDañadaAntes = $stock->cantidad_cliente_dañada;
+                        $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada;
+                        $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
 
                         // Actualizar stock
                         // ✅ NO disminuir disponible (ya disminuyó en venta)
@@ -387,14 +392,25 @@ class PrestamoEventoService
                         $this->movimientoService->registrarMovimiento([
                             'prestable_stock_id' => $stock->id,
                             'almacenes_prestables_id' => $almacenId,
+                            'usuario_id' => auth()->id(),
                             'tipo' => 'CONSUMO_RESERVA',
                             'cantidad' => -$cantidadAlmacen,
                             'disponible_anterior' => $disponibleAntes,
-                            'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
+                            'disponible_posterior' => $disponibleAntes,
                             'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                             'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                            'prestamo_cliente_anterior' => $prestamoClienteAntes,
+                            'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                             'prestamo_evento_anterior' => $stock->cantidad_evento_deudor - $cantidadAlmacen,
                             'prestamo_evento_posterior' => $stock->cantidad_evento_deudor,
+                            'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                            'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                            'cantidad_cliente_dañada_anterior' => $clienteDañadaAntes,
+                            'cantidad_cliente_dañada_posterior' => $stock->cantidad_cliente_dañada,
+                            'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
+                            'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada ?? 0,
+                            'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
+                            'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada,
                             'categoria_afectada' => 'prestamo_evento',
                             'motivo' => 'Préstamo a evento',
                             'observaciones' => "Evento: {$datos['nombre_evento']}",
@@ -580,7 +596,11 @@ class PrestamoEventoService
                                     ->first();
                                 $disponibleAntes = $stock->cantidad_disponible ?? 0;
                                 $sinLiquidoAntes = $stock->cantidad_sin_liquido ?? 0;
+                                $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
+                                $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                                 $eventoDeudorAntes = $stock->cantidad_evento_deudor ?? 0;
+                                $clienteDañadaAntes = $stock->cantidad_cliente_dañada ?? 0;
+                                $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada ?? 0;
                                 $eventoDañadaAntes = $stock->cantidad_evento_dañada ?? 0;
 
                                 // ✅ Actualizar stock con devolución de evento
@@ -605,10 +625,18 @@ class PrestamoEventoService
                                     'disponible_posterior' => $stock->cantidad_disponible,
                                     'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                                     'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                    'prestamo_cliente_anterior' => $prestamoClienteAntes,
+                                    'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                                     'prestamo_evento_anterior' => $eventoDeudorAntes,
                                     'prestamo_evento_posterior' => $stock->cantidad_evento_deudor,
+                                    'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
+                                    'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
+                                    'cantidad_cliente_dañada_anterior' => $clienteDañadaAntes,
+                                    'cantidad_cliente_dañada_posterior' => $stock->cantidad_cliente_dañada,
                                     'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
                                     'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada,
+                                    'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
+                                    'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada,
                                     'categoria_afectada' => 'evento_devolucion',
                                     'motivo' => 'Devolución de evento',
                                     'observaciones' => "Evento: {$prestamo->nombre_evento}, Almacén: {$almacenNombre}",
