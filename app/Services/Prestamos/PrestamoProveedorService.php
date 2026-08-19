@@ -355,16 +355,19 @@ class PrestamoProveedorService
                             ->where('almacenes_prestables_id', $almacenId)
                             ->first();
                         $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                        $sinLiquidoAntes = $stock->cantidad_sin_liquido ?? 0;
                         $prestamoClienteAntes = $stock->cantidad_cliente_deudor ?? 0;
                         $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                         $vendidaAntes = 0;
 
-                        // ✅ MODIFICADO: Solo incrementar cantidad_proveedor_acreedor
-                        // cantidad_disponible ya se incrementa en la compra normal
+                        // ✅ MODIFICADO:
+                        // - Incrementar cantidad_proveedor_acreedor (deuda)
+                        // - Decrementar cantidad_sin_liquido (vienen llenos del proveedor)
                         if ($stock && !$datos['es_compra']) {
-                            // PRÉSTAMO: solo incrementa deuda activa con proveedor
+                            // PRÉSTAMO: incrementa deuda + disminuye sin_liquido
                             $stock->update([
                                 'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidad,
+                                'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidad),
                             ]);
                             // Recargar para obtener valores posteriores actualizados
                             $stock->refresh();
@@ -386,10 +389,12 @@ class PrestamoProveedorService
                             'tipo' => 'ENTRADA',
                             'cantidad' => $cantidad,
                             'disponible_anterior' => $disponibleAntes,
+                            'sin_liquido_anterior' => $sinLiquidoAntes,
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
                             'disponible_posterior' => $disponibleAntes, // ✅ No cambia
+                            'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                             'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                             'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
@@ -516,6 +521,7 @@ class PrestamoProveedorService
                             ->where('almacenes_prestables_id', $almacenId)
                             ->first();
                         $disponibleAntes = $stockAntes->cantidad_disponible ?? 0;
+                        $sinLiquidoAntes = $stockAntes->cantidad_sin_liquido ?? 0;
                         $prestamoClienteAntes = $stockAntes->cantidad_cliente_deudor ?? 0;
                         $prestamoProveedorAntes = $stockAntes->cantidad_proveedor_acreedor ?? 0;
                         $proveedorDañadaAntes = $stockAntes->cantidad_proveedor_dañada ?? 0;
@@ -524,7 +530,8 @@ class PrestamoProveedorService
                         // Procesar devolución en stock
                         if ($stockAntes) {
                             $stockAntes->update([
-                                'cantidad_disponible' => $stockAntes->cantidad_disponible + $cantidadDevuelta,
+                                'cantidad_disponible' => $stockAntes->cantidad_disponible, // ✅ No cambia
+                                'cantidad_sin_liquido' => $stockAntes->cantidad_sin_liquido + $cantidadDevuelta,  // ✅ Devueltos llegan vacíos
                                 'cantidad_proveedor_acreedor' => max(0, $stockAntes->cantidad_proveedor_acreedor - $cantidadDevuelta),
                                 'cantidad_proveedor_dañada' => $stockAntes->cantidad_proveedor_dañada + $cantidadDañadaTotal,
                             ]);
@@ -540,10 +547,12 @@ class PrestamoProveedorService
                             'cantidad_dañada_registrada' => $cantidadDañadaTotal,
                             'cantidad_dañada_total' => $cantidadDañadaTotal,
                             'disponible_anterior' => $disponibleAntes,
+                            'sin_liquido_anterior' => $sinLiquidoAntes, // ✅ Registro anterior de sin_liquido
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                             'vendida_anterior' => $vendidaAntes,
                             'disponible_posterior' => $stockAntes->cantidad_disponible,
+                            'sin_liquido_posterior' => $stockAntes->cantidad_sin_liquido,  // ✅ Registro posterior
                             'prestamo_cliente_posterior' => $stockAntes->cantidad_cliente_deudor,
                             'prestamo_proveedor_posterior' => $stockAntes->cantidad_proveedor_acreedor,
                             'vendida_posterior' => 0,
@@ -751,11 +760,13 @@ class PrestamoProveedorService
                                 ->firstOrFail();
 
                             $disponibleAntes = $stock->cantidad_disponible;
+                            $sinLiquidoAntes = $stock->cantidad_sin_liquido;
                             $proveedorAcreedorAntes = $stock->cantidad_proveedor_acreedor;
 
-                            // Devolver
+                            // Devolver (inverso de crear: incrementa sin_liquido, disminuye acreedor)
                             $stock->update([
-                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendienteDelAlmacen,
+                                'cantidad_disponible' => $stock->cantidad_disponible, // ✅ No cambia
+                                'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantidadPendienteDelAlmacen,
                                 'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidadPendienteDelAlmacen),
                             ]);
 
@@ -767,8 +778,10 @@ class PrestamoProveedorService
                                 'tipo' => 'ENTRADA',
                                 'cantidad' => $cantidadPendienteDelAlmacen,
                                 'disponible_anterior' => $disponibleAntes,
+                                'sin_liquido_anterior' => $sinLiquidoAntes,
                                 'prestamo_proveedor_anterior' => $proveedorAcreedorAntes,
                                 'disponible_posterior' => $stock->cantidad_disponible,
+                                'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                                 'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'categoria_afectada' => 'prestamo_proveedor',
                                 'motivo' => 'Devolución por anulación de préstamo',
@@ -864,12 +877,15 @@ class PrestamoProveedorService
                     }
 
                     $disponibleAntes = $stock->cantidad_disponible ?? 0;
+                    $sinLiquidoAntes = $stock->cantidad_sin_liquido ?? 0;
                     $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor ?? 0;
                     $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada ?? 0;
 
                     // Invertir cambios de stock (deshacer la devolución)
+                    // Inverso: cantidad_disponible no cambia, sin_liquido disminuye, acreedor aumenta
                     $stock->update([
-                        'cantidad_disponible' => max(0, $stock->cantidad_disponible - $cantidadDevuelta),
+                        'cantidad_disponible' => $stock->cantidad_disponible, // ✅ No cambia
+                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadDevuelta), // ✅ Vuelven a estar en préstamo
                         'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta, // Vuelve a estar acreedor
                         'cantidad_proveedor_dañada' => max(0, $stock->cantidad_proveedor_dañada - $cantidadDañada),
                     ]);
@@ -884,8 +900,10 @@ class PrestamoProveedorService
                         'cantidad_dañada_registrada' => -$cantidadDañada,
                         'cantidad_dañada_total' => -$cantidadDañada,
                         'disponible_anterior' => $disponibleAntes,
+                        'sin_liquido_anterior' => $sinLiquidoAntes,
                         'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                         'disponible_posterior' => $stock->cantidad_disponible,
+                        'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                         'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                         'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
                         'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada ?? 0,
