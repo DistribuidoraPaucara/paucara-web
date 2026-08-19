@@ -850,7 +850,9 @@ class VentaService
     public function procesarPrestablesEnVenta(Venta $venta): void
     {
         try {
-            $almacenId = auth()->user()?->empresa?->almacen_id ?? 1;
+            // ✅ CORREGIDO: Usar AlmacenPrestable con nombre='Distribuidora' (no el almacén general)
+            $almacenPrestable = \App\Models\AlmacenPrestable::where('nombre', 'Distribuidora')->first();
+            $almacenPrestableId = $almacenPrestable->id ?? 1;
 
             foreach ($venta->detalles as $detalle) {
                 // Obtener prestables relacionados con este producto
@@ -872,13 +874,23 @@ class VentaService
                     }
 
                     $capacidadCanastilla = $canastilla?->capacidad ?? 1;
-                    $cantidadPrestable = $detalle->cantidad * $capacidadCanastilla;
+
+                    // ✅ CORREGIDO: Calcular cantidad según tipo de prestable
+                    // Canastillas: usar cantidad directa (sin multiplicar)
+                    // Embases: multiplicar por capacidad de la canastilla
+                    if ($prestable->id === $canastilla->id) {
+                        // Es canastilla
+                        $cantidadPrestable = $detalle->cantidad;
+                    } else {
+                        // Es embase
+                        $cantidadPrestable = $detalle->cantidad * $capacidadCanastilla;
+                    }
 
                     // Obtener o crear registro de stock para este prestable en el almacén
                     $stockPrestable = \App\Models\PrestableStock::firstOrCreate(
                         [
                             'prestable_id' => $prestable->id,
-                            'almacenes_prestables_id' => $almacenId,
+                            'almacenes_prestables_id' => $almacenPrestableId,
                         ],
                         [
                             'cantidad_disponible' => 0,
@@ -900,11 +912,11 @@ class VentaService
                     $sinLiquidoAnterior = $stockPrestable->cantidad_sin_liquido ?? 0;
 
                     // Actualizar stock explícitamente:
-                    // - Disminuir disponible (se prestan canastillas nuevas)
-                    // - Aumentar sin_liquido (cliente devuelve canastillas vacías)
+                    // - NO disminuir disponible (ya se disminuye al vender)
+                    // - Disminuir sin_liquido (cliente devuelve canastillas vacías)
+                    // ✅ CORREGIDO: Solo afectar sin_liquido, no disponible
                     $stockPrestable->update([
-                        'cantidad_disponible' => $stockPrestable->cantidad_disponible - $cantidadPrestable,
-                        'cantidad_sin_liquido' => ($stockPrestable->cantidad_sin_liquido ?? 0) + $cantidadPrestable,
+                        'cantidad_sin_liquido' => max(0, ($stockPrestable->cantidad_sin_liquido ?? 0) - $cantidadPrestable),
                     ]);
                     $stockPrestable->refresh();
 
@@ -918,19 +930,19 @@ class VentaService
                     // Registrar movimiento
                     $this->movimientoPrestableService->registrarMovimiento([
                         'prestable_stock_id' => $stockPrestable->id,
-                        'almacenes_prestables_id' => $almacenId,
+                        'almacenes_prestables_id' => $almacenPrestableId,
                         'usuario_id' => Auth::id(),
                         'tipo' => 'VENTA_PRODUCTO',
                         'cantidad' => $cantidadMovimiento,
                         'disponible_anterior' => $disponibleAnterior,
-                        'disponible_posterior' => $stockPrestable->cantidad_disponible,
+                        'disponible_posterior' => $disponibleAnterior, // ✅ NO cambia
                         'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
                         'cantidad_sin_liquido_posterior' => $stockPrestable->cantidad_sin_liquido,
                         'motivo' => 'Venta de productos relacionados',
                         'numero_referencia' => $venta->numero,
                         'referencia_tipo' => 'VENTA',
                         'referencia_id' => $venta->id,
-                        'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Devuelve {$cantidadPrestable} {$prestable->nombre} vacíos (sin_liquido+) y se le prestan {$cantidadPrestable} nuevos (disponible-)",
+                        'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Devuelve {$cantidadPrestable} {$prestable->nombre} vacíos (sin_liquido-)",
                     ]);
 
                     Log::info('✅ Prestable procesado en venta', [
