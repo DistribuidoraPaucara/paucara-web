@@ -122,6 +122,35 @@ Route::get('/almacenes-prestables', function () {
     ]);
 });
 
+// ✅ NUEVO: Endpoint para listar choferes (público)
+Route::get('/choferes/lista', function () {
+    try {
+        $choferes = \App\Models\User::with('roles')
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'like', '%chofer%');
+            })
+            ->where('activo', true)
+            ->select('id', 'name', 'email')
+            ->get()
+            ->map(fn($u) => [
+                'id' => $u->id,
+                'nombre' => $u->name,
+                'apellido' => '',
+                'email' => $u->email,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $choferes
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al cargar choferes: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // ✅ NUEVO: Endpoints para Políticas de Pago
 Route::get('/politicas-pago', [ApiPoliticaPagoController::class, 'index']);
 Route::get('/politicas-pago/disponibles/{clienteId}', [ApiPoliticaPagoController::class, 'disponibles']);
