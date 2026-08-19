@@ -19,6 +19,10 @@ class PrestamoWebSocketService extends BaseWebSocketService
      */
     public function notifyPrestamoClienteCreated($prestamo): bool
     {
+        // Calcular cantidad total prestada
+        $cantidadTotal = ($prestamo->detalles ?? collect())
+            ->sum('cantidad_prestada');
+
         $eventData = [
             'id' => $prestamo->id,
             'cliente_id' => $prestamo->cliente_id,
@@ -28,7 +32,7 @@ class PrestamoWebSocketService extends BaseWebSocketService
                 'nombre' => $prestamo->cliente?->nombre ?? 'Cliente',
                 'apellido' => $prestamo->cliente?->apellido ?? '',
             ],
-            'cantidad' => (int) $prestamo->cantidad,
+            'cantidad' => (int) $cantidadTotal,
             'estado' => $prestamo->estado,
             'items' => ($prestamo->detalles ?? collect())->map(function ($item) {
                 return [
@@ -73,10 +77,14 @@ class PrestamoWebSocketService extends BaseWebSocketService
      */
     public function notifyPrestamoEventoCreated($prestamo): bool
     {
+        // Calcular cantidad total prestada
+        $cantidadTotal = ($prestamo->detalles ?? collect())
+            ->sum('cantidad_prestada');
+
         $eventData = [
             'id' => $prestamo->id,
             'nombre_evento' => $prestamo->nombre_evento,
-            'cantidad' => (int) $prestamo->cantidad,
+            'cantidad' => (int) $cantidadTotal,
             'estado' => $prestamo->estado,
             'encargado_evento' => $prestamo->encargado_evento,
             'items' => ($prestamo->detalles ?? collect())->map(function ($item) {
