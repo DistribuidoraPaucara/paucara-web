@@ -243,6 +243,14 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: (d) => d.titulo || '📢 Notificación',
         message: (d) => d.descripcion || 'Nueva notificación recibida',
       },
+      'prestamo.cliente.creado': {
+        title: '🎁 Nuevo Préstamo a Cliente',
+        message: (d) => `${d.cliente_nombre || d.cliente?.nombre || 'Cliente'} - ${d.cantidad} artículos`,
+      },
+      'prestamo.evento.creado': {
+        title: '🎁 Nuevo Préstamo a Evento',
+        message: (d) => `${d.nombre_evento || 'Evento'} - ${d.cantidad} artículos`,
+      },
     };
 
     const config = notificationMap[eventName];
@@ -408,6 +416,8 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'credito.pago-registrado',
       'dashboard.metrics-updated',
       'notificacion-recurrente-emitida',
+      'prestamo.cliente.creado',
+      'prestamo.evento.creado',
     ];
 
     events.forEach(setupListener);
