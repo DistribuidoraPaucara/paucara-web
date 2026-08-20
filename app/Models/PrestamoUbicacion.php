@@ -17,6 +17,7 @@ class PrestamoUbicacion extends Model
         'localidad_id',
         'es_ubicacion_manual',
         'direccion',
+        'observaciones', // ✅ Observaciones de la dirección del cliente
         'longitud',
         'latitud',
     ];
