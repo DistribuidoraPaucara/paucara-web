@@ -269,7 +269,7 @@ class PrestamoClienteService
 
                     // ✅ Agregar observaciones de la dirección principal del cliente
                     if (!isset($datosUbicacion['observaciones'])) {
-                        $cliente = Cliente::find($clienteId);
+                        $cliente = Cliente::find($datos['cliente_id']);
                         if ($cliente && $cliente->direcciones) {
                             $direccionPrincipal = $cliente->direcciones->firstWhere('es_principal', true)
                                 ?? $cliente->direcciones->first();
