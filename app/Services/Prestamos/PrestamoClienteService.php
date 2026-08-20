@@ -266,6 +266,18 @@ class PrestamoClienteService
                         }
                     }
 
+                    // ✅ Agregar observaciones de la dirección principal del cliente
+                    if (!isset($datosUbicacion['observaciones'])) {
+                        $cliente = Cliente::find($clienteId);
+                        if ($cliente && $cliente->direcciones) {
+                            $direccionPrincipal = $cliente->direcciones->firstWhere('es_principal', true)
+                                ?? $cliente->direcciones->first();
+                            if ($direccionPrincipal && isset($direccionPrincipal->observaciones)) {
+                                $datosUbicacion['observaciones'] = $direccionPrincipal->observaciones;
+                            }
+                        }
+                    }
+
                     $prestamo->ubicacion()->create($datosUbicacion);
 
                     Log::info('✅ Ubicación del préstamo creada', [
