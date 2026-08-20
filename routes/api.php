@@ -127,7 +127,8 @@ Route::get('/choferes/lista', function () {
     try {
         $choferes = \App\Models\User::with('roles')
             ->whereHas('roles', function ($query) {
-                $query->where('name', 'like', '%chofer%');
+                // Case-insensitive search for chofer role
+                $query->whereRaw("LOWER(name) LIKE LOWER(?)", ['%chofer%']);
             })
             ->where('activo', true)
             ->select('id', 'name', 'email')
