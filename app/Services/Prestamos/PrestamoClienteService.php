@@ -11,6 +11,7 @@ use App\Models\DevolucionClienteDetalleAlmacen;
 use App\Models\PrestableCondicion;
 use App\Models\PrestableStock;
 use App\Models\AlmacenPrestable;
+use App\Models\Cliente;
 use App\Services\Prestamos\PrestableStockAdvancedService;
 use App\Services\MovimientoPrestableService;
 use Illuminate\Support\Facades\DB;
