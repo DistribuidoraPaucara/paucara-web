@@ -194,8 +194,10 @@ class PrestamoEventoController extends Controller
                 if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
                     if (!isset($datosUbicacion['localidad_id']) || empty($datosUbicacion['localidad_id'])) {
                         // Asignar localidad por defecto (Puerto Suárez = ID 1)
-                        $datosUbicacion['localidad_id'] = 1;
-                        $request->merge(['ubicacion' => $datosUbicacion]);
+                        if (!isset($validated['ubicacion'])) {
+                            $validated['ubicacion'] = [];
+                        }
+                        $validated['ubicacion']['localidad_id'] = 1;
                         Log::info('📍 Ubicación manual sin localidad_id, asignada por defecto: 1 (Puerto Suárez)');
                     }
                 }
@@ -390,8 +392,10 @@ class PrestamoEventoController extends Controller
                 if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
                     if (!isset($datosUbicacion['localidad_id']) || empty($datosUbicacion['localidad_id'])) {
                         // Asignar localidad por defecto (Puerto Suárez = ID 1)
-                        $datosUbicacion['localidad_id'] = 1;
-                        $request->merge(['ubicacion' => $datosUbicacion]);
+                        if (!isset($validated['ubicacion'])) {
+                            $validated['ubicacion'] = [];
+                        }
+                        $validated['ubicacion']['localidad_id'] = 1;
                         Log::info('📍 Ubicación manual sin localidad_id, asignada por defecto: 1 (Puerto Suárez)');
                     }
                 }
