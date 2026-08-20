@@ -148,7 +148,8 @@ class VehiculoController extends Controller
     // API
     public function apiIndex()
     {
-        $vehiculos = Vehiculo::activos()->get();
+        // ✅ Usar where('activo', true) directamente porque el trait activos() filtra por 'estado'
+        $vehiculos = Vehiculo::where('activo', true)->select('id', 'placa', 'marca', 'modelo', 'capacidad_kg')->get();
 
         return ApiResponse::success($vehiculos);
     }

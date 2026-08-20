@@ -79,7 +79,7 @@ apiIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     apiIndex.form = apiIndexForm
 /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
 export const apiShow = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ apiShow.definition = {
 
 /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
 apiShow.url = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -127,7 +127,7 @@ apiShow.url = (args: { vehiculo: number | { id: number } } | [vehiculo: number |
 
 /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
 apiShow.get = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -136,7 +136,7 @@ apiShow.get = (args: { vehiculo: number | { id: number } } | [vehiculo: number |
 })
 /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
 apiShow.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -146,7 +146,7 @@ apiShow.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number 
 
     /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
     const apiShowForm = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -156,7 +156,7 @@ apiShow.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number 
 
             /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
         apiShowForm.get = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -165,7 +165,7 @@ apiShow.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number 
         })
             /**
 * @see \App\Http\Controllers\VehiculoController::apiShow
- * @see app/Http/Controllers/VehiculoController.php:156
+ * @see app/Http/Controllers/VehiculoController.php:157
  * @route '/api/vehiculos/{vehiculo}'
  */
         apiShowForm.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ apiShow.head = (args: { vehiculo: number | { id: number } } | [vehiculo: number 
     apiShow.form = apiShowForm
 /**
 * @see \App\Http\Controllers\VehiculoController::apiSugerir
- * @see app/Http/Controllers/VehiculoController.php:172
+ * @see app/Http/Controllers/VehiculoController.php:173
  * @route '/api/vehiculos/sugerir'
  */
 export const apiSugerir = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +196,7 @@ apiSugerir.definition = {
 
 /**
 * @see \App\Http\Controllers\VehiculoController::apiSugerir
- * @see app/Http/Controllers/VehiculoController.php:172
+ * @see app/Http/Controllers/VehiculoController.php:173
  * @route '/api/vehiculos/sugerir'
  */
 apiSugerir.url = (options?: RouteQueryOptions) => {
@@ -205,7 +205,7 @@ apiSugerir.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\VehiculoController::apiSugerir
- * @see app/Http/Controllers/VehiculoController.php:172
+ * @see app/Http/Controllers/VehiculoController.php:173
  * @route '/api/vehiculos/sugerir'
  */
 apiSugerir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -215,7 +215,7 @@ apiSugerir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\VehiculoController::apiSugerir
- * @see app/Http/Controllers/VehiculoController.php:172
+ * @see app/Http/Controllers/VehiculoController.php:173
  * @route '/api/vehiculos/sugerir'
  */
     const apiSugerirForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -225,7 +225,7 @@ apiSugerir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\VehiculoController::apiSugerir
- * @see app/Http/Controllers/VehiculoController.php:172
+ * @see app/Http/Controllers/VehiculoController.php:173
  * @route '/api/vehiculos/sugerir'
  */
         apiSugerirForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
