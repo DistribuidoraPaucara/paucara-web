@@ -190,13 +190,13 @@ class PrestamoEventoController extends Controller
             if ($request->has('ubicacion')) {
                 $datosUbicacion = $request->input('ubicacion');
 
-                // Si es ubicación manual, validar que tenga localidad_id
+                // Si es ubicación manual sin localidad_id, asignar localidad por defecto (Puerto Suárez)
                 if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
-                    if (!isset($datosUbicacion['localidad_id'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Ubicación manual requiere localidad_id',
-                        ], 422);
+                    if (!isset($datosUbicacion['localidad_id']) || empty($datosUbicacion['localidad_id'])) {
+                        // Asignar localidad por defecto (Puerto Suárez = ID 1)
+                        $datosUbicacion['localidad_id'] = 1;
+                        $request->merge(['ubicacion' => $datosUbicacion]);
+                        Log::info('📍 Ubicación manual sin localidad_id, asignada por defecto: 1 (Puerto Suárez)');
                     }
                 }
             }
@@ -386,13 +386,13 @@ class PrestamoEventoController extends Controller
             if ($request->has('ubicacion')) {
                 $datosUbicacion = $request->input('ubicacion');
 
-                // Si es ubicación manual, validar que tenga localidad_id
+                // Si es ubicación manual sin localidad_id, asignar localidad por defecto (Puerto Suárez)
                 if (isset($datosUbicacion['es_ubicacion_manual']) && $datosUbicacion['es_ubicacion_manual']) {
-                    if (!isset($datosUbicacion['localidad_id'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Ubicación manual requiere localidad_id',
-                        ], 422);
+                    if (!isset($datosUbicacion['localidad_id']) || empty($datosUbicacion['localidad_id'])) {
+                        // Asignar localidad por defecto (Puerto Suárez = ID 1)
+                        $datosUbicacion['localidad_id'] = 1;
+                        $request->merge(['ubicacion' => $datosUbicacion]);
+                        Log::info('📍 Ubicación manual sin localidad_id, asignada por defecto: 1 (Puerto Suárez)');
                     }
                 }
             }
