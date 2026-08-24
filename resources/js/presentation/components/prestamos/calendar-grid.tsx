@@ -82,7 +82,7 @@ export default function CalendarGrid({ prestamos, mes }: CalendarGridProps) {
 
             {/* Días del mes */}
             <div className="grid grid-cols-7 gap-2 auto-rows-max">
-                {diasCompletos.map((dia, idx) => {
+                {diasCompletos.map((dia) => {
                     const esDelMes = isSameMonth(dia, mesActualObj);
                     const esHoy = isToday(dia);
                     const fechaStr = format(dia, 'yyyy-MM-dd');
@@ -90,7 +90,7 @@ export default function CalendarGrid({ prestamos, mes }: CalendarGridProps) {
 
                     return (
                         <div
-                            key={idx}
+                            key={fechaStr}
                             className={`rounded-lg border-2 p-2 min-h-[200px] overflow-y-auto ${
                                 esDelMes
                                     ? esHoy
