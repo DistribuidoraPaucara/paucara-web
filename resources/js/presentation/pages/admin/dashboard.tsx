@@ -23,6 +23,7 @@ import { AlertasStock } from '@/presentation/components/dashboard/alertas-stock'
 import { ProductosMasVendidos } from '@/presentation/components/dashboard/productos-mas-vendidos';
 import { PeriodSelector } from '@/presentation/components/dashboard/period-selector';
 import { AlertCircle, TrendingDown } from 'lucide-react';
+import WidgetVencimientosProximos from '@/presentation/components/admin/widget-vencimientos-proximos';
 
 interface AdminDashboardProps {
     metricas: {
@@ -383,11 +384,20 @@ export default function AdminDashboard({
                     />
                 </div>
 
-                {/* Alertas de stock */}
-                <AlertasStock
-                    alertas={safeAlertasStock}
-                    loading={loading}
-                />
+                {/* Widget de Próximos Vencimientos */}
+                <div className="grid gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
+                        <WidgetVencimientosProximos />
+                    </div>
+
+                    {/* Alertas de stock */}
+                    <div>
+                        <AlertasStock
+                            alertas={safeAlertasStock}
+                            loading={loading}
+                        />
+                    </div>
+                </div>
 
 
             </div>
