@@ -240,20 +240,62 @@ export default function AdminDashboard({
             <Head title="Dashboard Administrativo" />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-                            {titulo}
-                        </h1>
-                        <p className="text-neutral-600 dark:text-neutral-400">
-                            {descripcion}
-                        </p>
+                {/* Calendario de Vencimientos */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                📅 Calendario de Vencimientos
+                            </h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Próximos vencimientos de Préstamos y Cuentas por Cobrar
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    const fecha = new Date(mesCalendario);
+                                    fecha.setMonth(fecha.getMonth() - 1);
+                                    handleMesChange(fecha.toISOString().slice(0, 7));
+                                }}
+                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
+                            >
+                                ← Anterior
+                            </button>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
+                                {new Date(mesCalendario).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    const fecha = new Date(mesCalendario);
+                                    fecha.setMonth(fecha.getMonth() + 1);
+                                    handleMesChange(fecha.toISOString().slice(0, 7));
+                                }}
+                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
                     </div>
-                    <PeriodSelector
-                        value={periodo}
-                        onChange={handlePeriodChange}
-                    />
+
+                    <div className="grid gap-6 lg:grid-cols-4">
+                        <div className="lg:col-span-3">
+                            {loadingVencimientos ? (
+                                <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+                                    <p className="text-gray-500 dark:text-gray-400">Cargando calendario...</p>
+                                </div>
+                            ) : (
+                                <CalendarioVencimientosGrid vencimientos={vencimientos} mes={mesCalendario} />
+                            )}
+                        </div>
+                        <div className="space-y-4">
+                            <FiltrosVencimientos filtros={filtros} onFiltrosChange={handleFiltrosChange} />
+                            <AlertasStock
+                                alertas={safeAlertasStock}
+                                loading={loading}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Cuentas por Cobrar Vencidas */}
@@ -341,71 +383,6 @@ export default function AdminDashboard({
                     </div>
                 )}
 
-                {/* Métricas principales */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <MetricCard
-                        title="Ventas Totales"
-                        value={safeMetricas.ventas.total}
-                        subtitle={`${safeMetricas.ventas.cantidad} ventas`}
-                        change={safeMetricas.ventas.cambio_porcentual}
-                        icon={DollarSign}
-                        loading={loading}
-                    />
-                    <MetricCard
-                        title="Compras Totales"
-                        value={safeMetricas.compras.total}
-                        subtitle={`${safeMetricas.compras.cantidad} compras`}
-                        change={safeMetricas.compras.cambio_porcentual}
-                        icon={ShoppingCart}
-                        loading={loading}
-                    />
-                    <MetricCard
-                        title="Valor Inventario"
-                        value={safeMetricas.inventario.valor_inventario}
-                        subtitle={`${safeMetricas.inventario.total_productos} productos`}
-                        icon={Package}
-                        loading={loading}
-                    />
-                    <MetricCard
-                        title="Saldo en Caja"
-                        value={safeMetricas.caja.saldo}
-                        subtitle={`${safeMetricas.caja.total_movimientos} movimientos`}
-                        change={
-                            safeMetricas.caja.ingresos === 0 && safeMetricas.caja.egresos === 0 ? 0 :
-                                safeMetricas.caja.ingresos > safeMetricas.caja.egresos ?
-                                    safeMetricas.caja.ingresos > 0 ? ((safeMetricas.caja.ingresos - safeMetricas.caja.egresos) / safeMetricas.caja.ingresos) * 100 : 0 :
-                                    safeMetricas.caja.egresos > 0 ? -((safeMetricas.caja.egresos - safeMetricas.caja.ingresos) / safeMetricas.caja.egresos) * 100 : 0
-                        }
-                        icon={Wallet}
-                        loading={loading}
-                    />
-                </div>
-
-                {/* Métricas secundarias */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <MetricCard
-                        title="Clientes Activos"
-                        value={safeMetricas.clientes.activos}
-                        subtitle={`${safeMetricas.clientes.nuevos} nuevos`}
-                        icon={Users}
-                        loading={loading}
-                    />
-                    <MetricCard
-                        title="Proformas Aprobadas"
-                        value={`${safeMetricas.proformas.tasa_aprobacion}%`}
-                        subtitle={`${safeMetricas.proformas.aprobadas}/${safeMetricas.proformas.total} total`}
-                        icon={FileText}
-                        loading={loading}
-                    />
-                    <MetricCard
-                        title="Stock Total"
-                        value={safeMetricas.inventario.stock_total}
-                        subtitle={`${safeMetricas.inventario.productos_sin_stock} sin stock`}
-                        icon={Activity}
-                        loading={loading}
-                    />
-                </div>
-
                 {/* Gráficos y datos detallados */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Gráfico de ventas */}
@@ -432,66 +409,6 @@ export default function AdminDashboard({
                         loading={loading}
                     />
                 </div>
-
-                {/* Calendario de Vencimientos */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                📅 Calendario de Vencimientos
-                            </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Próximos vencimientos de Préstamos y Cuentas por Cobrar
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => {
-                                    const fecha = new Date(mesCalendario);
-                                    fecha.setMonth(fecha.getMonth() - 1);
-                                    handleMesChange(fecha.toISOString().slice(0, 7));
-                                }}
-                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
-                            >
-                                ← Anterior
-                            </button>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
-                                {new Date(mesCalendario).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button
-                                onClick={() => {
-                                    const fecha = new Date(mesCalendario);
-                                    fecha.setMonth(fecha.getMonth() + 1);
-                                    handleMesChange(fecha.toISOString().slice(0, 7));
-                                }}
-                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
-                            >
-                                Siguiente →
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-6 lg:grid-cols-4">
-                        <div className="lg:col-span-3">
-                            {loadingVencimientos ? (
-                                <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
-                                    <p className="text-gray-500 dark:text-gray-400">Cargando calendario...</p>
-                                </div>
-                            ) : (
-                                <CalendarioVencimientosGrid vencimientos={vencimientos} mes={mesCalendario} />
-                            )}
-                        </div>
-                        <div className="space-y-4">
-                            <FiltrosVencimientos filtros={filtros} onFiltrosChange={handleFiltrosChange} />
-                            <AlertasStock
-                                alertas={safeAlertasStock}
-                                loading={loading}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-
             </div>
         </AppLayout>
     );

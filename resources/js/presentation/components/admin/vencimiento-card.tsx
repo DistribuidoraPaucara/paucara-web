@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { differenceInDays, parseISO } from 'date-fns';
+import TooltipVencimiento from './tooltip-vencimiento';
 
 interface Vencimiento {
     id: number;
@@ -83,70 +84,88 @@ export default function VencimientoCard({ vencimiento, compact = false }: Vencim
 
     if (compact) {
         return (
-            <Link href={vencimiento.link}>
-                <div className={`rounded border-2 p-1.5 text-xs transition-all cursor-pointer hover:shadow-md ${colorClase}`}>
-                    {badge.texto && (
-                        <div className={`${badge.color} rounded px-2 py-0.5 mb-1 text-center font-bold`}>
-                            {badge.texto}
-                        </div>
-                    )}
+            <TooltipVencimiento
+                nombre={vencimiento.nombre}
+                monto={vencimiento.monto}
+                referencia={vencimiento.referencia}
+                estado={vencimiento.estado}
+                fecha={vencimiento.fecha}
+                observaciones={vencimiento.observaciones}
+            >
+                <Link href={vencimiento.link}>
+                    <div className={`rounded border-2 p-1.5 text-xs transition-all cursor-pointer hover:shadow-md ${colorClase}`}>
+                        {badge.texto && (
+                            <div className={`${badge.color} rounded px-2 py-0.5 mb-1 text-center font-bold`}>
+                                {badge.texto}
+                            </div>
+                        )}
 
-                    <div className="flex items-start justify-between gap-1">
-                        <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate text-xs">
-                                {vencimiento.categoria}
-                            </p>
-                            <p className="text-gray-700 dark:text-gray-300 truncate text-xs">
-                                {vencimiento.nombre}
-                            </p>
+                        <div className="flex items-start justify-between gap-1">
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-900 dark:text-white truncate text-xs">
+                                    {vencimiento.categoria}
+                                </p>
+                                <p className="text-gray-700 dark:text-gray-300 truncate text-xs">
+                                    {vencimiento.nombre}
+                                </p>
+                            </div>
                         </div>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                            Bs {Number(vencimiento.monto).toFixed(2)}
+                        </p>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                        Bs {Number(vencimiento.monto).toFixed(2)}
-                    </p>
-                </div>
-            </Link>
+                </Link>
+            </TooltipVencimiento>
         );
     }
 
     return (
-        <Link href={vencimiento.link}>
-            <div className={`rounded-lg border-2 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer ${colorClase}`}>
-                {badge.texto && (
-                    <div className={`${badge.color} rounded px-3 py-2 text-sm font-bold mb-3 text-center`}>
-                        {badge.texto}
-                    </div>
-                )}
-
-                <div className="flex items-start justify-between mb-2">
-                    <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {vencimiento.categoria}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {vencimiento.nombre}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Monto:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                            Bs {Number(vencimiento.monto).toFixed(2)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Referencia:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{vencimiento.referencia}</span>
-                    </div>
-                    {vencimiento.observaciones && (
-                        <p className="text-gray-600 dark:text-gray-400 italic mt-2">
-                            "{vencimiento.observaciones}"
-                        </p>
+        <TooltipVencimiento
+            nombre={vencimiento.nombre}
+            monto={vencimiento.monto}
+            referencia={vencimiento.referencia}
+            estado={vencimiento.estado}
+            fecha={vencimiento.fecha}
+            observaciones={vencimiento.observaciones}
+        >
+            <Link href={vencimiento.link}>
+                <div className={`rounded-lg border-2 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer ${colorClase}`}>
+                    {badge.texto && (
+                        <div className={`${badge.color} rounded px-3 py-2 text-sm font-bold mb-3 text-center`}>
+                            {badge.texto}
+                        </div>
                     )}
+
+                    <div className="flex items-start justify-between mb-2">
+                        <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                                {vencimiento.categoria}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {vencimiento.nombre}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-gray-500 dark:text-gray-400">Monto:</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                                Bs {Number(vencimiento.monto).toFixed(2)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-500 dark:text-gray-400">Referencia:</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">{vencimiento.referencia}</span>
+                        </div>
+                        {vencimiento.observaciones && (
+                            <p className="text-gray-600 dark:text-gray-400 italic mt-2">
+                                "{vencimiento.observaciones}"
+                            </p>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </Link>
+            </Link>
+        </TooltipVencimiento>
     );
 }
