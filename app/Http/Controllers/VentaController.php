@@ -244,6 +244,18 @@ class VentaController extends Controller
                 'estado_logistico'    => $request->input('estado_logistico'), // ✅ NUEVO: Para filtro de estado logístico
             ];
 
+            // ✅ NUEVO (2026-08-23): Si NO hay filtros de fecha, usar fecha de HOY por defecto
+            // Esto evita cargar 4000+ registros cuando se abre la página sin filtros
+            if (empty($filtros['fecha_desde']) && empty($filtros['fecha_hasta'])) {
+                $hoy = now()->toDateString();
+                $filtros['fecha_desde'] = $hoy;
+                $filtros['fecha_hasta'] = $hoy;
+                Log::info('📅 [VentaController::index] Aplicando filtro de fecha por defecto: HOY', [
+                    'fecha' => $hoy,
+                    'razon' => 'Evitar cargar 4000+ registros sin filtros',
+                ]);
+            }
+
             // ✅ CORREGIDO (2026-08-13): sort_by/sort_order NO van en $filtros
             // Ir en el array de filtros los rompe la optimización de 200 registros
             // Ya se pasan directamente a listar()
