@@ -1,4 +1,4 @@
-import { Badge } from '@/presentation/components/ui/badge';
+import { Link } from '@inertiajs/react';
 
 interface Prestamo {
     id: number;
@@ -29,6 +29,15 @@ const estadoColores: Record<string, string> = {
     parcial: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
 };
 
+const obtenerUrlPrestamo = (tipo: 'cliente' | 'evento' | 'proveedor', id: number): string => {
+    const rutas = {
+        cliente: `/prestamos/clientes/${id}`,
+        evento: `/prestamos/eventos/${id}`,
+        proveedor: `/prestamos/proveedores/${id}`,
+    };
+    return rutas[tipo];
+};
+
 export default function PrestamoCard({ prestamo, compact = false }: PrestamoCardProps) {
     const tipoLabel = {
         cliente: 'Cliente',
@@ -38,7 +47,8 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
 
     if (compact) {
         return (
-            <div className="rounded border border-gray-300 bg-white p-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-800 hover:shadow-md transition-shadow cursor-pointer">
+            <Link href={obtenerUrlPrestamo(prestamo.tipo, prestamo.id)}>
+                <div className="rounded border border-gray-300 bg-white p-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-800 hover:shadow-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all cursor-pointer">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-white truncate">
@@ -60,13 +70,15 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
                 <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
                     {prestamo.cantidad_items} items • Bs {Number(prestamo.monto_garantia).toFixed(2)}
                 </p>
-            </div>
+                </div>
+            </Link>
         );
     }
 
     // Vista expandida
     return (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow dark:border-zinc-700 dark:bg-zinc-800">
+        <Link href={obtenerUrlPrestamo(prestamo.tipo, prestamo.id)}>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all cursor-pointer dark:border-zinc-700 dark:bg-zinc-800">
             {/* Encabezado */}
             <div className="flex items-start justify-between mb-2">
                 <div>
@@ -114,6 +126,7 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
                     </p>
                 )}
             </div>
-        </div>
+            </div>
+        </Link>
     );
 }
