@@ -2950,4 +2950,32 @@ class VentaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ✅ NUEVO: Obtener lista de choferes para confirmación de entrega
+     * GET /api/ventas/choferes
+     */
+    public function obtenerChoferes(): JsonResponse
+    {
+        try {
+            $choferes = User::role('Chofer')
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $choferes,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al obtener choferes', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener la lista de choferes',
+            ], 500);
+        }
+    }
 }

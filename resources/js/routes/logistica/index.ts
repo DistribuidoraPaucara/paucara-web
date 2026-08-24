@@ -214,7 +214,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dashboard.form = dashboardForm
 /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
 export const proformasPendientes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -228,7 +228,7 @@ proformasPendientes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.url = (options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ proformasPendientes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -244,7 +244,7 @@ proformasPendientes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> 
     method: 'get',
 })
 /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
 proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -253,7 +253,7 @@ proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'
 })
 
     /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
     const proformasPendientesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -262,7 +262,7 @@ proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'
     })
 
             /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
         proformasPendientesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -270,7 +270,7 @@ proformasPendientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'
             method: 'get',
         })
             /**
- * @see routes/web.php:990
+ * @see routes/web.php:994
  * @route '/logistica/proformas-pendientes'
  */
         proformasPendientesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

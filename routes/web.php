@@ -534,6 +534,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     Route::delete('ventas/{venta}/confirmaciones/{confirmacion}', [\App\Http\Controllers\VentaController::class, 'destroyConfirmacion'])
         ->name('ventas.confirmaciones.destroy');
 
+    // ✅ NUEVO: Obtener lista de choferes para confirmación
+    Route::get('api/ventas/choferes', [\App\Http\Controllers\VentaController::class, 'obtenerChoferes'])
+        ->name('api.ventas.choferes');
+
     // ==========================================
     // SERVICIOS - MÓDULO DE SERVICIOS (INYECCIONES, CONSULTAS, ETC.)
     // ==========================================

@@ -91,14 +91,14 @@ export default function RegistrarConfirmacionModal({
         }
     }, [isOpen, ventaId, politicaPago]);
 
-    // Cargar lista de usuarios
+    // Cargar lista de choferes
     const cargarUsuarios = async () => {
         try {
             setLoadingUsuarios(true);
-            const response = await fetch('/api/usuarios');
+            const response = await fetch('/api/ventas/choferes');
             const data = await response.json();
 
-            if (data.data) {
+            if (data.data && data.success) {
                 setUsuarios(data.data);
                 // Si no hay usuario seleccionado, seleccionar el primero
                 if (!usuarioSeleccionado && data.data.length > 0) {
@@ -106,7 +106,7 @@ export default function RegistrarConfirmacionModal({
                 }
             }
         } catch (error) {
-            console.error('Error cargando usuarios:', error);
+            console.error('Error cargando choferes:', error);
         } finally {
             setLoadingUsuarios(false);
         }
@@ -338,10 +338,10 @@ export default function RegistrarConfirmacionModal({
 
                     {/* Content */}
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                        {/* ✅ NUEVO: Seleccionar Usuario que Confirma */}
+                        {/* ✅ NUEVO: Seleccionar Chofer que Confirma */}
                         <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
                             <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-2">
-                                👤 Usuario que Confirma
+                                🚗 Chofer que Confirma Entrega
                             </label>
                             <select
                                 value={usuarioSeleccionado || ''}
@@ -350,12 +350,12 @@ export default function RegistrarConfirmacionModal({
                                 className="block w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                             >
                                 {loadingUsuarios ? (
-                                    <option>Cargando usuarios...</option>
+                                    <option>Cargando choferes...</option>
                                 ) : usuarios.length === 0 ? (
-                                    <option>No hay usuarios disponibles</option>
+                                    <option>No hay choferes disponibles</option>
                                 ) : (
                                     <>
-                                        <option value="">Selecciona un usuario</option>
+                                        <option value="">Selecciona un chofer</option>
                                         {usuarios.map((usuario) => (
                                             <option key={usuario.id} value={usuario.id}>
                                                 {usuario.name}
