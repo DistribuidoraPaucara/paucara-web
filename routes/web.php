@@ -499,6 +499,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('{venta}/exportar-excel', [\App\Http\Controllers\VentaController::class, 'exportarExcel'])->name('exportar-excel')->where('venta', '[0-9]+');
         Route::get('{venta}/exportar-pdf', [\App\Http\Controllers\VentaController::class, 'exportarPdf'])->name('exportar-pdf')->where('venta', '[0-9]+');
 
+        // ✅ Rutas específicas (texto) ANTES de {id} (números)
+        Route::get('api/choferes', [\App\Http\Controllers\VentaController::class, 'obtenerChoferes'])->name('api.choferes');
+
         // Show debe ir AL FINAL para no capturar otras rutas
         Route::get('{id}', [\App\Http\Controllers\VentaController::class, 'show'])->name('show')->where('id', '[0-9]+');
     });
@@ -533,10 +536,6 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         ->name('ventas.confirmaciones.store');
     Route::delete('ventas/{venta}/confirmaciones/{confirmacion}', [\App\Http\Controllers\VentaController::class, 'destroyConfirmacion'])
         ->name('ventas.confirmaciones.destroy');
-
-    // ✅ NUEVO: Obtener lista de choferes para confirmación
-    Route::get('api/ventas/choferes', [\App\Http\Controllers\VentaController::class, 'obtenerChoferes'])
-        ->name('api.ventas.choferes');
 
     // ==========================================
     // SERVICIOS - MÓDULO DE SERVICIOS (INYECCIONES, CONSULTAS, ETC.)

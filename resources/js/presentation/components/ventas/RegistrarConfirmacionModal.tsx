@@ -95,7 +95,7 @@ export default function RegistrarConfirmacionModal({
     const cargarUsuarios = async () => {
         try {
             setLoadingUsuarios(true);
-            const response = await fetch('/api/ventas/choferes');
+            const response = await fetch('/ventas/api/choferes');
             const data = await response.json();
 
             if (data.data && data.success) {

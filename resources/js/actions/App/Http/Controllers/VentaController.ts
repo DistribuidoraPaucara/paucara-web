@@ -3552,6 +3552,84 @@ exportarPdf.head = (args: { venta: number | { id: number } } | [venta: number | 
     
     exportarPdf.form = exportarPdfForm
 /**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+export const obtenerChoferes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: obtenerChoferes.url(options),
+    method: 'get',
+})
+
+obtenerChoferes.definition = {
+    methods: ["get","head"],
+    url: '/ventas/api/choferes',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+obtenerChoferes.url = (options?: RouteQueryOptions) => {
+    return obtenerChoferes.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+obtenerChoferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: obtenerChoferes.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: obtenerChoferes.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+    const obtenerChoferesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: obtenerChoferes.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+        obtenerChoferesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerChoferes.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\VentaController::obtenerChoferes
+ * @see app/Http/Controllers/VentaController.php:2958
+ * @route '/ventas/api/choferes'
+ */
+        obtenerChoferesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: obtenerChoferes.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    obtenerChoferes.form = obtenerChoferesForm
+/**
 * @see \App\Http\Controllers\VentaController::storeConfirmacion
  * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
@@ -3707,84 +3785,6 @@ destroyConfirmacion.delete = (args: { venta: string | number, confirmacion: stri
         })
     
     destroyConfirmacion.form = destroyConfirmacionForm
-/**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-export const obtenerChoferes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: obtenerChoferes.url(options),
-    method: 'get',
-})
-
-obtenerChoferes.definition = {
-    methods: ["get","head"],
-    url: '/api/ventas/choferes',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-obtenerChoferes.url = (options?: RouteQueryOptions) => {
-    return obtenerChoferes.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-obtenerChoferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: obtenerChoferes.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: obtenerChoferes.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-    const obtenerChoferesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: obtenerChoferes.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-        obtenerChoferesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerChoferes.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-        obtenerChoferesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: obtenerChoferes.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    obtenerChoferes.form = obtenerChoferesForm
-const VentaController = { ventasCliente, registrarPago, imprimir, preview, ventasParaImpresion, search, searchWithPrestables, show, verificarStock, productosStockBajo, obtenerStockProducto, obtenerResumenStock, anular, verificarReversionStock, ejecutarReversionStock, index, store, update, destroy, checkCajaAbierta, create, edit, formatosDisponibles, aprobar, rechazar, exportarExcel, exportarPdf, storeConfirmacion, destroyConfirmacion, obtenerChoferes }
+const VentaController = { ventasCliente, registrarPago, imprimir, preview, ventasParaImpresion, search, searchWithPrestables, show, verificarStock, productosStockBajo, obtenerStockProducto, obtenerResumenStock, anular, verificarReversionStock, ejecutarReversionStock, index, store, update, destroy, checkCajaAbierta, create, edit, formatosDisponibles, aprobar, rechazar, exportarExcel, exportarPdf, obtenerChoferes, storeConfirmacion, destroyConfirmacion }
 
 export default VentaController
