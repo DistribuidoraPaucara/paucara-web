@@ -2736,6 +2736,7 @@ class VentaController extends Controller
                 'monto_pendiente' => 'nullable|numeric|min:0',
                 'observaciones_logistica' => 'nullable|string|max:1000',
                 'observaciones' => 'nullable|string|max:500',
+                'confirmado_por' => 'nullable|integer|exists:users,id', // ✅ NUEVO: Usuario que confirma
                 'pagos' => 'nullable|array',
                 'pagos.*.tipo_pago_id' => 'required_with:pagos|integer|exists:tipos_pago,id',
                 'pagos.*.monto' => 'required_with:pagos|numeric|min:0',
@@ -2790,8 +2791,8 @@ class VentaController extends Controller
                     ? json_encode($validated['productos_devueltos'])
                     : null,
                 'usuario_id' => Auth::id(),
-                // ✅ NUEVO: Registrar quién confirmó y cuándo
-                'confirmado_por' => Auth::id(),
+                // ✅ NUEVO: Registrar quién confirmó y cuándo (puede ser pasado en request o el usuario actual)
+                'confirmado_por' => $validated['confirmado_por'] ?? Auth::id(),
                 'confirmado_en' => now(),
             ]);
 

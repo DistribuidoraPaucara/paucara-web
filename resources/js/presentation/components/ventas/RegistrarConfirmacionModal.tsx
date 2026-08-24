@@ -64,6 +64,11 @@ export default function RegistrarConfirmacionModal({
         subtotal: number;
     }>>([]);
 
+    // Usuarios disponibles
+    const [usuarios, setUsuarios] = useState<Array<{ id: number; name: string }>>([]);
+    const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<number | null>(null);
+    const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+
     // Determinar si es CREDITO
     const esCredito = politicaPago?.toUpperCase() === 'CREDITO';
 
@@ -80,8 +85,32 @@ export default function RegistrarConfirmacionModal({
                 tipoConfirmacion,
                 detallesCount: detalles.length,
             });
+
+            // Cargar usuarios disponibles
+            cargarUsuarios();
         }
     }, [isOpen, ventaId, politicaPago]);
+
+    // Cargar lista de usuarios
+    const cargarUsuarios = async () => {
+        try {
+            setLoadingUsuarios(true);
+            const response = await fetch('/api/usuarios');
+            const data = await response.json();
+
+            if (data.data) {
+                setUsuarios(data.data);
+                // Si no hay usuario seleccionado, seleccionar el primero
+                if (!usuarioSeleccionado && data.data.length > 0) {
+                    setUsuarioSeleccionado(data.data[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando usuarios:', error);
+        } finally {
+            setLoadingUsuarios(false);
+        }
+    };
 
     // Lógica para determinar tipos según tipo_entrega
     const tiposConfirmacionDisponibles = useMemo(() => {
@@ -187,6 +216,11 @@ export default function RegistrarConfirmacionModal({
             // ✅ Agregar entrega_id si existe
             if (entregaId) {
                 body.entrega_id = entregaId;
+            }
+
+            // ✅ NUEVO: Agregar usuario que confirma
+            if (usuarioSeleccionado) {
+                body.confirmado_por = usuarioSeleccionado;
             }
 
             console.log('📤 [RegistrarConfirmacion] Body a enviar:', {
@@ -304,6 +338,34 @@ export default function RegistrarConfirmacionModal({
 
                     {/* Content */}
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        {/* ✅ NUEVO: Seleccionar Usuario que Confirma */}
+                        <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
+                            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50 mb-2">
+                                👤 Usuario que Confirma
+                            </label>
+                            <select
+                                value={usuarioSeleccionado || ''}
+                                onChange={(e) => setUsuarioSeleccionado(parseInt(e.target.value))}
+                                disabled={loadingUsuarios || usuarios.length === 0}
+                                className="block w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            >
+                                {loadingUsuarios ? (
+                                    <option>Cargando usuarios...</option>
+                                ) : usuarios.length === 0 ? (
+                                    <option>No hay usuarios disponibles</option>
+                                ) : (
+                                    <>
+                                        <option value="">Selecciona un usuario</option>
+                                        {usuarios.map((usuario) => (
+                                            <option key={usuario.id} value={usuario.id}>
+                                                {usuario.name}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
+                            </select>
+                        </div>
+
                         {/* Tipo de Entrega */}
                         <div className="border-b border-gray-200 dark:border-slate-800 pb-2">
                             <label className="block text-sm font-semibold text-gray-900 dark:text-slate-50">

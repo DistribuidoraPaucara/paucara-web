@@ -3627,7 +3627,7 @@ storeConfirmacion.post = (args: { venta: string | number } | [venta: string | nu
     storeConfirmacion.form = storeConfirmacionForm
 /**
 * @see \App\Http\Controllers\VentaController::destroyConfirmacion
- * @see app/Http/Controllers/VentaController.php:2872
+ * @see app/Http/Controllers/VentaController.php:2873
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 export const destroyConfirmacion = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -3642,7 +3642,7 @@ destroyConfirmacion.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::destroyConfirmacion
- * @see app/Http/Controllers/VentaController.php:2872
+ * @see app/Http/Controllers/VentaController.php:2873
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 destroyConfirmacion.url = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions) => {
@@ -3668,7 +3668,7 @@ destroyConfirmacion.url = (args: { venta: string | number, confirmacion: string 
 
 /**
 * @see \App\Http\Controllers\VentaController::destroyConfirmacion
- * @see app/Http/Controllers/VentaController.php:2872
+ * @see app/Http/Controllers/VentaController.php:2873
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 destroyConfirmacion.delete = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -3678,7 +3678,7 @@ destroyConfirmacion.delete = (args: { venta: string | number, confirmacion: stri
 
     /**
 * @see \App\Http\Controllers\VentaController::destroyConfirmacion
- * @see app/Http/Controllers/VentaController.php:2872
+ * @see app/Http/Controllers/VentaController.php:2873
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
     const destroyConfirmacionForm = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -3693,7 +3693,7 @@ destroyConfirmacion.delete = (args: { venta: string | number, confirmacion: stri
 
             /**
 * @see \App\Http\Controllers\VentaController::destroyConfirmacion
- * @see app/Http/Controllers/VentaController.php:2872
+ * @see app/Http/Controllers/VentaController.php:2873
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
         destroyConfirmacionForm.delete = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
