@@ -685,14 +685,15 @@ class PrestamoClienteService
 
                             // ✅ Actualizar stock con cantidad devuelta Y dañada
                             if ($cantDevAlmacen > 0 || $cantDanAlmacen > 0) {
-                                // ✅ CORRECTO: SIEMPRE devolverDelCliente()
-                                // porque este servicio es EXCLUSIVAMENTE para devoluciones de CLIENTES
-                                // sin importar el tipo de almacén
-                                // ✅ Actualizar stock directamente
+                                // ✅ NUEVO FLUJO:
+                                // - cantidad_disponible NO cambia (se mantiene igual)
+                                // - cantidad_cliente_deudor disminuye (buenas + dañadas)
+                                // - cantidad_sin_liquido incrementa (cliente devuelve canastillas VACÍAS)
+                                $totalDevueltoAlmacen = $cantDevAlmacen + $cantDanAlmacen;
                                 $stock->update([
-                                    'cantidad_disponible' => $stock->cantidad_disponible + $cantDevAlmacen,
-                                    'cantidad_cliente_deudor' => max(0, $stock->cantidad_cliente_deudor - $cantDevAlmacen - $cantDanAlmacen),
-                                    'cantidad_cliente_dañada' => $stock->cantidad_cliente_dañada + $cantDanAlmacen,
+                                    'cantidad_disponible' => $stock->cantidad_disponible,
+                                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $totalDevueltoAlmacen,
+                                    'cantidad_cliente_deudor' => max(0, $stock->cantidad_cliente_deudor - $totalDevueltoAlmacen),
                                 ]);
                             }
 
@@ -701,6 +702,7 @@ class PrestamoClienteService
 
                             // Registrar movimiento de devolución POR ALMACÉN
                             if ($cantDevAlmacen > 0 || $cantDanAlmacen > 0) {
+                                $totalDevueltoMovimiento = $cantDevAlmacen + $cantDanAlmacen;
                                 $this->movimientoService->registrarMovimiento([
                                     'prestable_stock_id' => $stock->id,
                                     'almacenes_prestables_id' => $almacenId,
@@ -709,9 +711,9 @@ class PrestamoClienteService
                                     'cantidad' => $cantDevAlmacen,
                                     'cantidad_dañada_registrada' => $cantDanAlmacen,
                                     'disponible_anterior' => $disponibleAntes,
-                                    'disponible_posterior' => $stock->cantidad_disponible,
+                                    'disponible_posterior' => $disponibleAntes,  // ✅ NO CAMBIA
                                     'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
-                                    'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                    'cantidad_sin_liquido_posterior' => $sinLiquidoAntes + $totalDevueltoMovimiento,  // ✅ INCREMENTA con buenas + dañadas
                                     'prestamo_cliente_anterior' => $prestamoClienteActivoAntes,
                                     'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                                     'prestamo_evento_anterior' => $prestamoEventoActivoAntes,
@@ -725,7 +727,7 @@ class PrestamoClienteService
                                     'cantidad_evento_dañada_anterior' => $eventoDañadaAntes,
                                     'cantidad_evento_dañada_posterior' => $stock->cantidad_evento_dañada ?? 0,
                                     'categoria_afectada' => 'prestamo_cliente',
-                                    'motivo' => 'Devolución de préstamo a cliente (Almacén especificado)',
+                                    'motivo' => 'Devolución de préstamo a cliente - canastillas vacías (sin líquido)',
                                     'numero_referencia' => $prestamo->id,
                                     'referencia_tipo' => 'DEVOLUCIO_CLIENTE',
                                     'referencia_id' => $devolucion->id,
@@ -815,42 +817,46 @@ class PrestamoClienteService
                             $clienteDañadaEmbaseAntes = $stockEmbase->cantidad_cliente_dañada ?? 0;
                             $proveedorDañadaEmbaseAntes = $stockEmbase->cantidad_proveedor_dañada ?? 0;
 
-                            // ✅ Actualizar stock del embase (con dañados)
+                            // ✅ Actualizar stock del embase (con dañados separados)
                             if (($embasesADevolver > 0 || $embasesDanados > 0) && $stockEmbase) {
+                                $totalEmbasesDevueltos = $embasesADevolver + $embasesDanados;
                                 $stockEmbase->update([
-                                    'cantidad_disponible' => $stockEmbase->cantidad_disponible + $embasesADevolver,
-                                    'cantidad_cliente_deudor' => max(0, $stockEmbase->cantidad_cliente_deudor - $embasesADevolver),
-                                    'cantidad_cliente_dañada' => $stockEmbase->cantidad_cliente_dañada + $embasesDanados,
+                                    'cantidad_disponible' => $stockEmbase->cantidad_disponible,  // NO cambia
+                                    'cantidad_sin_liquido' => $stockEmbase->cantidad_sin_liquido + $embasesADevolver,  // Solo los buenos
+                                    'cantidad_cliente_dañada' => $stockEmbase->cantidad_cliente_dañada + $embasesDanados,  // Los dañados aquí
+                                    'cantidad_cliente_deudor' => max(0, $stockEmbase->cantidad_cliente_deudor - $totalEmbasesDevueltos),  // Descuenta todos
                                 ]);
                             }
 
-                            // Registrar movimiento del embase (devueltos en buen estado)
+                            // Registrar movimiento del embase (entrada de buenos + dañados)
                             if ($embasesADevolver > 0 || $embasesDanados > 0) {
                                 $this->movimientoService->registrarMovimiento([
                                     'prestable_stock_id' => $stockEmbase->id,
                                     'almacenes_prestables_id' => $almacenIdEmbase,
                                     'usuario_id' => auth()->id(),
                                     'tipo' => 'ENTRADA',
-                                    'cantidad' => $embasesADevolver,
+                                    'cantidad' => $embasesADevolver,  // Solo los buenos
                                     'cantidad_dañada_registrada' => $embasesDanados,
                                     'disponible_anterior' => $disponibleEmbaseAntes,
                                     'prestamo_cliente_anterior' => $prestamoClienteEmbaseAntes,
                                     'prestamo_proveedor_anterior' => $prestamoProveedorEmbaseAntes,
-                                    'disponible_posterior' => $stockEmbase->cantidad_disponible,
+                                    'disponible_posterior' => $disponibleEmbaseAntes,  // NO cambia
+                                    'cantidad_sin_liquido_anterior' => $stockEmbase->cantidad_sin_liquido ?? 0,
+                                    'cantidad_sin_liquido_posterior' => ($stockEmbase->cantidad_sin_liquido ?? 0) + $embasesADevolver,  // Solo buenos
                                     'prestamo_cliente_posterior' => $stockEmbase->cantidad_cliente_deudor,
                                     'prestamo_proveedor_posterior' => $stockEmbase->cantidad_proveedor_acreedor,
                                     'cantidad_cliente_dañada_anterior' => $clienteDañadaEmbaseAntes,
-                                    'cantidad_cliente_dañada_posterior' => $stockEmbase->cantidad_cliente_dañada,
+                                    'cantidad_cliente_dañada_posterior' => $stockEmbase->cantidad_cliente_dañada + $embasesDanados,  // Suma los dañados
                                     'cantidad_proveedor_dañada_anterior' => $proveedorDañadaEmbaseAntes,
                                     'cantidad_proveedor_dañada_posterior' => $stockEmbase->cantidad_proveedor_dañada,
-                                    'cantidad_evento_dañada_anterior' => $stockEmbase->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
-                                    'cantidad_evento_dañada_posterior' => $stockEmbase->cantidad_evento_dañada ?? 0,  // ✅ AGREGADO
+                                    'cantidad_evento_dañada_anterior' => $stockEmbase->cantidad_evento_dañada ?? 0,
+                                    'cantidad_evento_dañada_posterior' => $stockEmbase->cantidad_evento_dañada ?? 0,
                                     'categoria_afectada' => 'prestamo_cliente',
-                                    'motivo' => 'Devolución de embase (asociado a canastilla)',
+                                    'motivo' => 'Devolución de embase (buenos: vacíos + dañados)',
                                     'numero_referencia' => $prestamo->id,
                                     'referencia_tipo' => 'DEVOLUCIO_CLIENTE_EMBASE',
                                     'referencia_id' => $devolucion->id,
-                                    'observaciones' => "Embase: {$embase->nombre}. Devueltos: {$embasesADevolver}/{$cambioEmbasesTotal}. Dañados: {$embasesDanados}",
+                                    'observaciones' => "Embase: {$embase->nombre}. Devueltos buenos: {$embasesADevolver}/{$cambioEmbasesTotal}. Dañados: {$embasesDanados}",
                                 ]);
                             }
 
@@ -930,6 +936,9 @@ class PrestamoClienteService
                     'monto_cobrado_daño_total' => $datos['monto_cobrado_daño_total'] ?? 0,
                     'monto_garantia_devuelta_total' => $montoGarantiaTotal,
                 ]);
+
+                // ✅ NUEVO: Disparar evento para notificaciones en tiempo real
+                event(new \App\Events\DevolucionRegistrada($devolucion));
 
                 return $devolucion->load('detalles');
             });

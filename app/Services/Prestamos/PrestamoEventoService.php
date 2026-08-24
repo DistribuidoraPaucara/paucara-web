@@ -605,15 +605,22 @@ class PrestamoEventoService
 
                                 // ✅ Actualizar stock con devolución de evento
                                 if ($stock) {
+                                    // ✅ NUEVO FLUJO:
+                                    // - cantidad_disponible NO cambia
+                                    // - cantidad_sin_liquido incrementa (buenas + dañadas)
+                                    // - cantidad_evento_deudor disminuye (todo lo devuelto)
+                                    // - cantidad_evento_dañada incrementa (los dañados)
+                                    $totalDevueltoAlmacen = $cantDevAlmacen + $cantDanAlmacen;
                                     $stock->update([
-                                        'cantidad_disponible' => $stock->cantidad_disponible + $cantDevAlmacen,
-                                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantDevAlmacen),
-                                        'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $cantDevAlmacen),
+                                        'cantidad_disponible' => $stock->cantidad_disponible,
+                                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $totalDevueltoAlmacen,
+                                        'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $totalDevueltoAlmacen),
                                         'cantidad_evento_dañada' => $stock->cantidad_evento_dañada + $cantDanAlmacen,
                                     ]);
                                 }
 
                                 // Registrar movimiento de devolución POR ALMACÉN
+                                $totalDevueltoMovimiento = $cantDevAlmacen + $cantDanAlmacen;
                                 $this->movimientoService->registrarMovimiento([
                                     'prestable_stock_id' => $stock->id,
                                     'almacenes_prestables_id' => $almacenIdDev,
@@ -622,9 +629,9 @@ class PrestamoEventoService
                                     'cantidad' => $cantDevAlmacen,
                                     'cantidad_dañada_registrada' => $cantDanAlmacen,
                                     'disponible_anterior' => $disponibleAntes,
-                                    'disponible_posterior' => $stock->cantidad_disponible,
+                                    'disponible_posterior' => $disponibleAntes,  // NO CAMBIA
                                     'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
-                                    'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                                    'cantidad_sin_liquido_posterior' => $sinLiquidoAntes + $totalDevueltoMovimiento,  // Incrementa con buenas + dañadas
                                     'prestamo_cliente_anterior' => $prestamoClienteAntes,
                                     'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                                     'prestamo_evento_anterior' => $eventoDeudorAntes,
@@ -638,7 +645,7 @@ class PrestamoEventoService
                                     'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
                                     'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada,
                                     'categoria_afectada' => 'evento_devolucion',
-                                    'motivo' => 'Devolución de evento',
+                                    'motivo' => 'Devolución de evento - canastillas vacías (sin líquido)',
                                     'observaciones' => "Evento: {$prestamo->nombre_evento}, Almacén: {$almacenNombre}",
                                     'numero_referencia' => $prestamo->id,
                                     'referencia_tipo' => 'DEVOLUCION_EVENTO',
@@ -715,6 +722,17 @@ class PrestamoEventoService
                 } else {
                     $prestamo->update(['estado' => 'PARCIALMENTE_DEVUELTO']);
                 }
+
+                Log::info('✅ Devolución evento registrada', [
+                    'devolucion_id' => $devolucion->id,
+                    'prestamo_evento_id' => $prestamo->id,
+                    'cantidad_detalles' => count($datos['detalles'] ?? []),
+                    'cantidad_total_devuelta' => $cantidadDevueltaTotal,
+                    'monto_cobrado_daño_total' => $datos['monto_cobrado_daño_total'] ?? 0,
+                ]);
+
+                // ✅ NUEVO: Disparar evento para notificaciones en tiempo real
+                event(new \App\Events\DevolucionEventoRegistrada($devolucion));
 
                 return $devolucion;
             });

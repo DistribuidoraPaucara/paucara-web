@@ -88,6 +88,7 @@ class PrestamoNotificationService
      * - Usuario creador
      * - Admins
      * - Cajeros
+     * - Chofer (si está asignado)
      * - Cliente (si tiene user_id)
      */
     private function getUsersForPrestamoCliente(PrestamoCliente $prestamo)
@@ -110,6 +111,11 @@ class PrestamoNotificationService
 
         $userIds = array_merge($userIds, $staffUsers->toArray());
 
+        // Chofer asignado al préstamo
+        if ($prestamo->chofer_id) {
+            $userIds[] = $prestamo->chofer_id;
+        }
+
         // Cliente (si tiene user_id)
         if ($prestamo->cliente?->user_id) {
             $userIds[] = $prestamo->cliente->user_id;
@@ -124,6 +130,7 @@ class PrestamoNotificationService
      * - Usuario creador
      * - Admins
      * - Cajeros
+     * - Chofer (si está asignado)
      * - Cliente (si tiene user_id)
      */
     private function getUsersForPrestamoEvento(PrestamoEvento $prestamo)
@@ -145,6 +152,11 @@ class PrestamoNotificationService
             ->pluck('users.id');
 
         $userIds = array_merge($userIds, $staffUsers->toArray());
+
+        // Chofer asignado al préstamo
+        if ($prestamo->chofer_id) {
+            $userIds[] = $prestamo->chofer_id;
+        }
 
         // Cliente (si tiene user_id)
         if ($prestamo->cliente?->user_id) {

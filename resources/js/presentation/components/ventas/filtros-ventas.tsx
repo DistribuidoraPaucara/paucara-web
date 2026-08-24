@@ -335,7 +335,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
             {/* Filtros avanzados */}
             {mostrarFiltrosAvanzados && (
-                <div className="mt-4 border-t border-gray-200 pt-4 dark:border-zinc-700">
+                <div className="mt-4 pt-2">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {/* Rango de fechas */}
                         <div>
@@ -466,7 +466,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                 </div>
             )}
             {/* Botones de acción */}
-            <div className="mt-2 flex flex-wrap items-end justify-between gap-4 border-t border-gray-200 p-2 dark:border-zinc-700">
+            <div className="flex flex-wrap items-end justify-between gap-4 p-2">
                 {/* Controles de Ordenamiento - Columna 1 */}
                 <div className="flex items-center gap-2">
                     <div>

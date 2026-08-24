@@ -2,6 +2,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useWebSocket } from './use-websocket';
 import { useAuth } from './use-auth';
+import { useNotificationSound } from './use-notification-sound';
 import NotificationService from '@/infrastructure/services/notification.service';
 
 export interface RealtimeNotification {
@@ -55,6 +56,7 @@ export function useRealtimeNotifications(
   const { on, off, subscribeTo, isConnected } = useWebSocket({
     autoConnect: true,
   });
+  const { playSound } = useNotificationSound();
 
   const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
 
@@ -63,6 +65,9 @@ export function useRealtimeNotifications(
     (notification: RealtimeNotification) => {
       setNotifications(prev => [notification, ...prev].slice(0, 50)); // Mantener últimas 50
 
+      // ✅ NUEVO: Reproducir sonido de notificación
+      playSound();
+
       if (enableAutoNotify) {
         // Mostrar toast automático
         NotificationService.info(notification.message, {
@@ -70,7 +75,7 @@ export function useRealtimeNotifications(
         });
       }
     },
-    [enableAutoNotify]
+    [enableAutoNotify, playSound]
   );
 
   // Marcar como leído
@@ -214,6 +219,56 @@ export function useRealtimeNotifications(
       off('proforma.rechazada');
     };
   }, [isConnected, hasRole, on, off, addNotification]);
+
+  // Escuchar devoluciones de clientes registradas (admins, cajeros, managers)
+  useEffect(() => {
+    if (!isConnected) return;
+
+    on('devolucion.registrada', (data: any) => {
+      const clienteNombre = data.data?.cliente?.nombre || 'Cliente';
+      const prestamoId = data.data?.prestamo_id || 'N/A';
+      const cantidadItems = data.data?.cantidad_items || 0;
+
+      addNotification({
+        id: `devolucion-${data.data?.devolucion_id || Date.now()}`,
+        type: 'estado',
+        title: '🔄 Devolución Cliente Registrada',
+        message: `Folio #${prestamoId} | Cliente: ${clienteNombre} | Items: ${cantidadItems}`,
+        data: data.data,
+        timestamp: new Date().toISOString(),
+        read: false,
+      });
+    });
+
+    return () => {
+      off('devolucion.registrada');
+    };
+  }, [isConnected, on, off, addNotification]);
+
+  // Escuchar devoluciones de eventos registradas (admins, cajeros, managers)
+  useEffect(() => {
+    if (!isConnected) return;
+
+    on('devolucion_evento.registrada', (data: any) => {
+      const nombreEvento = data.data?.nombre_evento || 'Evento';
+      const prestamoId = data.data?.prestamo_id || 'N/A';
+      const cantidadItems = data.data?.cantidad_items || 0;
+
+      addNotification({
+        id: `devolucion-evento-${data.data?.devolucion_id || Date.now()}`,
+        type: 'estado',
+        title: '🔄 Devolución Evento Registrada',
+        message: `Folio #${prestamoId} | Evento: ${nombreEvento} | Items: ${cantidadItems}`,
+        data: data.data,
+        timestamp: new Date().toISOString(),
+        read: false,
+      });
+    });
+
+    return () => {
+      off('devolucion_evento.registrada');
+    };
+  }, [isConnected, on, off, addNotification]);
 
   // Suscribirse al canal admin si es necesario
   useEffect(() => {

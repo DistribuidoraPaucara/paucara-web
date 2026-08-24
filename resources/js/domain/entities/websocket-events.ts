@@ -422,6 +422,12 @@ export const EVENT_ROLE_MAPPING: Record<string, string[]> = {
   'credito.pago-registrado': ['cobrador', 'cajero', 'manager', 'admin', 'cliente'],
 
   'dashboard.metrics-updated': ['manager', 'admin'],
+
+  'prestamo.cliente.creado': ['admin', 'cajero', 'manager'],
+  'prestamo.evento.creado': ['admin', 'cajero', 'manager'],
+  'prestamo.proveedor.creado': ['admin', 'cajero', 'manager'],
+  'devolucion.registrada': ['admin', 'cajero', 'manager', 'chofer'],
+  'devolucion_evento.registrada': ['admin', 'cajero', 'manager', 'chofer'],
 };
 
 export const getEventCategory = (eventName: string): NotificationType => {
@@ -433,5 +439,6 @@ export const getEventCategory = (eventName: string): NotificationType => {
   if (eventName.startsWith('chofer')) return 'chofer';
   if (eventName.startsWith('credito')) return 'creditos';
   if (eventName.startsWith('dashboard')) return 'dashboard';
+  if (eventName.startsWith('prestamo') || eventName.startsWith('devolucion')) return 'general';
   return 'general';
 };

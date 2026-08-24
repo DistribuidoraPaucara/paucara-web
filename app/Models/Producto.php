@@ -41,6 +41,9 @@ class Producto extends Model
         'visible_app',
         'precio_compra',
         'precio_venta',
+        'tipo_producto', // 🏭 NUEVO - Tipo: comprado, elaborado_cafeteria, materia_prima
+        'requiere_receta', // 🏭 NUEVO - Si requiere receta
+        'unidad_medida', // 🏭 NUEVO - Unidad de medida para producción
     ];
 
     protected function casts(): array
@@ -57,6 +60,7 @@ class Producto extends Model
             'es_producto_comida' => 'boolean', // ✨ NUEVO
             'permite_venta_sin_stock' => 'boolean', // ✨ NUEVO
             'visible_app' => 'boolean',
+            'requiere_receta' => 'boolean', // 🏭 NUEVO
             'fecha_creacion' => 'datetime',
             'precio_compra' => 'decimal:2',
             'precio_venta' => 'decimal:2',

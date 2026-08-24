@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\VentaController::store
- * @see app/Http/Controllers/VentaController.php:2705
+ * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
  */
 export const store = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::store
- * @see app/Http/Controllers/VentaController.php:2705
+ * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
  */
 store.url = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ store.url = (args: { venta: string | number } | [venta: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\VentaController::store
- * @see app/Http/Controllers/VentaController.php:2705
+ * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
  */
 store.post = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -54,7 +54,7 @@ store.post = (args: { venta: string | number } | [venta: string | number ] | str
 
     /**
 * @see \App\Http\Controllers\VentaController::store
- * @see app/Http/Controllers/VentaController.php:2705
+ * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
  */
     const storeForm = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -64,7 +64,7 @@ store.post = (args: { venta: string | number } | [venta: string | number ] | str
 
             /**
 * @see \App\Http\Controllers\VentaController::store
- * @see app/Http/Controllers/VentaController.php:2705
+ * @see app/Http/Controllers/VentaController.php:2717
  * @route '/ventas/{venta}/confirmaciones'
  */
         storeForm.post = (args: { venta: string | number } | [venta: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -75,7 +75,7 @@ store.post = (args: { venta: string | number } | [venta: string | number ] | str
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\VentaController::destroy
- * @see app/Http/Controllers/VentaController.php:2860
+ * @see app/Http/Controllers/VentaController.php:2872
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 export const destroy = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -90,7 +90,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::destroy
- * @see app/Http/Controllers/VentaController.php:2860
+ * @see app/Http/Controllers/VentaController.php:2872
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 destroy.url = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions) => {
@@ -116,7 +116,7 @@ destroy.url = (args: { venta: string | number, confirmacion: string | number } |
 
 /**
 * @see \App\Http\Controllers\VentaController::destroy
- * @see app/Http/Controllers/VentaController.php:2860
+ * @see app/Http/Controllers/VentaController.php:2872
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
 destroy.delete = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -126,7 +126,7 @@ destroy.delete = (args: { venta: string | number, confirmacion: string | number 
 
     /**
 * @see \App\Http\Controllers\VentaController::destroy
- * @see app/Http/Controllers/VentaController.php:2860
+ * @see app/Http/Controllers/VentaController.php:2872
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
     const destroyForm = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -141,7 +141,7 @@ destroy.delete = (args: { venta: string | number, confirmacion: string | number 
 
             /**
 * @see \App\Http\Controllers\VentaController::destroy
- * @see app/Http/Controllers/VentaController.php:2860
+ * @see app/Http/Controllers/VentaController.php:2872
  * @route '/ventas/{venta}/confirmaciones/{confirmacion}'
  */
         destroyForm.delete = (args: { venta: string | number, confirmacion: string | number } | [venta: string | number, confirmacion: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

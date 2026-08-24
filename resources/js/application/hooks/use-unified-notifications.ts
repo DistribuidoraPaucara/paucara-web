@@ -255,6 +255,18 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: '🎁 Nuevo Préstamo a Proveedor',
         message: (d) => `${d.proveedor_nombre || 'Proveedor'} - ${d.cantidad} artículos`,
       },
+      'devolucion.registrada': {
+        title: '🔄 Devolución Cliente Registrada',
+        message: (d) => `Folio #${d.prestamo_id || 'N/A'} - ${d.cliente?.nombre || 'Cliente'} (${d.cantidad_items || 0} items)`,
+      },
+      'devolucion_evento.registrada': {
+        title: '🔄 Devolución Evento Registrada',
+        message: (d) => `Folio #${d.prestamo_id || 'N/A'} - ${d.nombre_evento || 'Evento'} (${d.cantidad_items || 0} items)`,
+      },
+      'devolucion_proveedor.registrada': {
+        title: '🔄 Devolución de Proveedor Registrada',
+        message: (d) => `${d.proveedor_nombre || d.prestamo?.proveedor?.nombre || 'Proveedor'} - ${d.total_devuelto || 0} items devueltos`,
+      },
     };
 
     const config = notificationMap[eventName];
@@ -423,6 +435,9 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'prestamo.cliente.creado',
       'prestamo.evento.creado',
       'prestamo.proveedor.creado',
+      'devolucion.registrada',
+      'devolucion_evento.registrada',
+      'devolucion_proveedor.registrada',
     ];
 
     events.forEach(setupListener);

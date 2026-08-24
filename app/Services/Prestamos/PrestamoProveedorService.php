@@ -642,6 +642,9 @@ class PrestamoProveedorService
                     'cantidad_detalles' => count($detalles),
                 ]);
 
+                // ✅ NUEVO: Disparar evento para notificaciones en tiempo real
+                event(new \App\Events\DevolucionProveedorRegistrada($devolucion));
+
                 return $devolucion->load('detalles');
             });
         } catch (\Exception $e) {

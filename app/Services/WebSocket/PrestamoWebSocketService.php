@@ -58,6 +58,11 @@ class PrestamoWebSocketService extends BaseWebSocketService
             $userIds[] = $prestamo->created_by;
         }
 
+        // 🚗 Agregar chofer si está asignado
+        if ($prestamo->chofer_id) {
+            $userIds[] = $prestamo->chofer_id;
+        }
+
         // 📱 Agregar cliente específico si tiene user_id
         if ($prestamo->cliente?->user_id) {
             $userIds[] = $prestamo->cliente->user_id;
@@ -109,6 +114,11 @@ class PrestamoWebSocketService extends BaseWebSocketService
         // 👤 Agregar usuario creador
         if ($prestamo->created_by) {
             $userIds[] = $prestamo->created_by;
+        }
+
+        // 🚗 Agregar chofer si está asignado
+        if ($prestamo->chofer_id) {
+            $userIds[] = $prestamo->chofer_id;
         }
 
         // 📱 Agregar cliente eventos si tiene user_id

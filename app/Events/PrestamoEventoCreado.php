@@ -23,6 +23,6 @@ class PrestamoEventoCreado
     public function __construct(PrestamoEvento $prestamo)
     {
         $this->prestamo = $prestamo;
-        $this->prestamo->load(['cliente', 'creador', 'detalles.prestable']);
+        $this->prestamo->load(['cliente', 'creador', 'chofer', 'detalles.prestable']);
     }
 }

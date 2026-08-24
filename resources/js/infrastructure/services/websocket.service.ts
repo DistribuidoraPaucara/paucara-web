@@ -448,6 +448,19 @@ class WebSocketService {
   // ==================== PEDIDO EVENTS ====================
   // Already has onPedidoEntregado above
 
+  // ==================== DEVOLUCIÓN EVENTS ====================
+  onDevolucionRegistrada(callback: (data: any) => void): void {
+    this.on('devolucion_cliente.registrada', callback);
+  }
+
+  onDevolucionEventoRegistrada(callback: (data: any) => void): void {
+    this.on('devolucion_evento.registrada', callback);
+  }
+
+  onDevolucionProveedorRegistrada(callback: (data: any) => void): void {
+    this.on('devolucion_proveedor.registrada', callback);
+  }
+
   // ==================== DASHBOARD EVENTS ====================
   onDashboardMetricsUpdated(callback: (data: any) => void): void {
     this.on('dashboard.metrics-updated', callback);

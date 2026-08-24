@@ -53,6 +53,9 @@ class SendPrestamoClienteCreatedNotification
             if (!$prestamo->relationLoaded('creador')) {
                 $prestamo->load('creador');
             }
+            if (!$prestamo->relationLoaded('chofer')) {
+                $prestamo->load('chofer');
+            }
 
             // ✅ Usar el servicio especializado de préstamos
             $result = $this->notificationService->notifyPrestamoClienteCreated($prestamo);
