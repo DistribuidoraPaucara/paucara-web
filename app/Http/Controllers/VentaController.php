@@ -570,8 +570,15 @@ class VentaController extends Controller
         // ✅ NUEVO: Obtener tipos de precio para asignar por defecto
         $tiposPrecio = TipoPrecio::activos()->select('id', 'codigo', 'nombre')->get();
 
+        // ✅ NUEVO (2026-08-24): Obtener cliente GENERAL para auto-seleccionar por defecto
+        $clienteGeneral = Cliente::where('activo', true)
+            ->where('codigo_cliente', 'GENERAL')
+            ->select('id', 'nombre', 'nit', 'codigo_cliente', 'email', 'telefono')
+            ->first();
+
         return Inertia::render('ventas/create', [
-            'clientes'             => collect([]), // ✅ OPTIMIZADO: Clientes se buscan lazy via /api/ventas/search/clientes
+            'clientes'             => collect($clienteGeneral ? [$clienteGeneral] : []), // ✅ OPTIMIZADO: Solo cliente GENERAL para auto-seleccionar
+            'cliente_general'      => $clienteGeneral, // ✅ NUEVO: Para referencia explícita en frontend
             'productos'            => $productos,                                                                                      // ✅ MODIFICADO: Solo productos con stock en almacén
             'almacenes'            => Almacen::activos()->select('id', 'nombre')->get(),
             'monedas'              => Moneda::activos()->select('id', 'codigo', 'nombre', 'simbolo')->get(),

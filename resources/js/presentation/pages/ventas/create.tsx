@@ -36,6 +36,7 @@ interface TipoPrecio {
 
 interface PageProps extends InertiaPageProps {
     clientes: Cliente[];
+    cliente_general?: Cliente; // ✅ NUEVO (2026-08-24): Cliente GENERAL para auto-seleccionar
     productos: Producto[]; // ✅ Ahora array vacío (búsqueda via API)
     almacenes: Array<{ id: number; nombre: string }>; // ✅ NUEVO: Lista de almacenes
     monedas: Moneda[];
@@ -57,6 +58,7 @@ interface PageProps extends InertiaPageProps {
 export default function VentaForm() {
     const {
         clientes,
+        cliente_general,
         productos,
         monedas,
         estados_documento,
@@ -432,6 +434,20 @@ export default function VentaForm() {
             }
         }
     }, []); // Solo ejecutar al montar el componente
+
+    // ✅ NUEVO (2026-08-24): Auto-seleccionar cliente GENERAL al montar si está disponible
+    useEffect(() => {
+        if (isEditing) return; // No aplicar si estamos editando
+        if (data.cliente_id && data.cliente_id !== 0) return; // No cambiar si ya hay uno seleccionado
+
+        if (cliente_general && cliente_general.id) {
+            console.log('✅ Auto-seleccionando cliente GENERAL:', cliente_general);
+            setData('cliente_id', cliente_general.id);
+            setClienteValue(cliente_general.id);
+            setClienteDisplay(cliente_general.nombre + (cliente_general.nit ? ` (${cliente_general.nit})` : ''));
+            setClienteSeleccionado(cliente_general as Cliente);
+        }
+    }, []); // Solo ejecutar al montar
 
     // Inicializar detalles con productos y combo items map
     useEffect(() => {
