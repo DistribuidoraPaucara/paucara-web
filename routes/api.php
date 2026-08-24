@@ -1797,6 +1797,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ->name('api.prestamos-proveedor.devolucion.imprimir');
     });
 
+    // ✅ NUEVO (2026-08-24): Calendario de entregas de préstamos
+    Route::group(['prefix' => 'prestamos'], function () {
+        Route::get('calendario', [\App\Http\Controllers\PrestamosCalendarioController::class, 'obtenerPrestamosDelMes'])
+            ->name('api.prestamos.calendario');
+    });
+
     // Préstamos a Clientes
     Route::prefix('prestamos-cliente')->group(function () {
         Route::get('/', [PrestamoClienteController::class, 'index']);

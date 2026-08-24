@@ -868,6 +868,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ PRÉSTAMOS DE CANASTILLAS Y EMBASES
     Route::prefix('prestamos')->name('prestamos.')->middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [\App\Http\Controllers\PrestamosInertiaController::class, 'index'])->name('index');
+
+        // ✅ NUEVO (2026-08-24): Calendario de entregas de préstamos
+        Route::get('calendario', [\App\Http\Controllers\PrestamosCalendarioController::class, 'index'])->name('calendario');
+
         // Prestables CRUD routes
         Route::get('prestables', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'index'])->name('prestables.index');
         Route::get('prestables/create', [\App\Http\Controllers\Presentacion\PrestablesController::class, 'create'])->name('prestables.create');
