@@ -1080,6 +1080,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ NUEVO: Dashboard para Admin
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+        // ✅ NUEVO (2026-08-24): Calendario unificado de vencimientos
+        Route::get('calendario-vencimientos', [\App\Http\Controllers\CalendarioVencimientosController::class, 'dashboard'])->name('calendario-vencimientos');
     });
 
     // Rutas para gestión de rutas (planificación y seguimiento)

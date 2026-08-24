@@ -1803,6 +1803,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ->name('api.prestamos.calendario');
     });
 
+    // ✅ NUEVO (2026-08-24): Calendario unificado de vencimientos (Préstamos + CxC)
+    Route::group(['prefix' => 'calendario-vencimientos'], function () {
+        Route::get('/', [\App\Http\Controllers\CalendarioVencimientosController::class, 'obtenerVencimientos'])
+            ->name('api.calendario-vencimientos');
+    });
+
     // Préstamos a Clientes
     Route::prefix('prestamos-cliente')->group(function () {
         Route::get('/', [PrestamoClienteController::class, 'index']);
