@@ -86,6 +86,84 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dashboard.form = dashboardForm
 /**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+export const calendario = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendario.url(options),
+    method: 'get',
+})
+
+calendario.definition = {
+    methods: ["get","head"],
+    url: '/prestamos/calendario',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+calendario.url = (options?: RouteQueryOptions) => {
+    return calendario.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+calendario.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendario.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+calendario.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: calendario.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+    const calendarioForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: calendario.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+        calendarioForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendario.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PrestamosCalendarioController::calendario
+ * @see app/Http/Controllers/PrestamosCalendarioController.php:20
+ * @route '/prestamos/calendario'
+ */
+        calendarioForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendario.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    calendario.form = calendarioForm
+/**
 * @see \App\Http\Controllers\Prestamos\StockController::stock
  * @see app/Http/Controllers/Prestamos/StockController.php:17
  * @route '/prestamos/stock'
@@ -399,6 +477,7 @@ alertas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     alertas.form = alertasForm
 const prestamos = {
     dashboard,
+calendario,
 prestables,
 stock,
 ajustes,

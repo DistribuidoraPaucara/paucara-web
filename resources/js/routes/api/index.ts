@@ -30,6 +30,7 @@ import alertas from './alertas'
 import prestamosCliente from './prestamos-cliente'
 import prestamosEvento from './prestamos-evento'
 import prestamosProveedor from './prestamos-proveedor'
+import prestamos from './prestamos'
 import cuentasPorCobrar from './cuentas-por-cobrar'
 import egresosAnalisis from './egresos-analisis'
 import egresos from './egresos'
@@ -195,7 +196,7 @@ dashboardRedirect.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     
     dashboardRedirect.form = dashboardRedirectForm
 /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
 export const preventistas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +210,7 @@ preventistas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
 preventistas.url = (options?: RouteQueryOptions) => {
@@ -217,7 +218,7 @@ preventistas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
 preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -225,7 +226,7 @@ preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
 preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -234,7 +235,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
     const preventistasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -243,7 +244,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
         preventistasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -251,7 +252,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/api.php:444
+ * @see [serialized-closure]:2
  * @route '/api/preventistas'
  */
         preventistasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -266,7 +267,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     preventistas.form = preventistasForm
 /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -280,7 +281,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -288,7 +289,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -296,7 +297,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -305,7 +306,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
     const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -314,7 +315,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
         logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -322,7 +323,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/api.php:1566
+ * @see [serialized-closure]:2
  * @route '/api/logs'
  */
         logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -370,6 +371,7 @@ alertas,
 prestamosCliente,
 prestamosEvento,
 prestamosProveedor,
+prestamos,
 cuentasPorCobrar,
 egresosAnalisis,
 egresos,
