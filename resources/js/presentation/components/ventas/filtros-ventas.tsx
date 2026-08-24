@@ -6,6 +6,7 @@ import ToggleGroup from '../ui/toggle-group';
 import FloatingInput from './floating-input';
 import FloatingSearchSelect from './floating-search-select';
 import FloatingSelect from './floating-select';
+import DynamicSearchSelect from '../form-sections/DynamicSearchSelect';
 
 interface FiltrosVentasProps {
     filtros: FiltrosVentas;
@@ -13,10 +14,43 @@ interface FiltrosVentasProps {
     onFiltrosChange?: (filtros: FiltrosVentas) => void;
 }
 
+interface Cliente {
+    id: number;
+    nombre: string;
+    nit: string;
+    label?: string;
+}
+
+interface Usuario {
+    id: number;
+    name: string;
+    label?: string;
+}
+
 export default function FiltrosVentasComponent({ filtros: filtrosIniciales, datosParaFiltros, onFiltrosChange }: FiltrosVentasProps) {
     const [filtros, setFiltros] = useState<FiltrosVentas>(filtrosIniciales);
     const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
     const [busquedaCombinada, setBusquedaCombinada] = useState<string>('');
+
+    // ✅ NUEVO: Estados para búsqueda dinámica de clientes
+    const [clientesBusqueda, setClientesBusqueda] = useState<Cliente[]>([]);
+    const [clienteSearching, setClienteSearching] = useState(false);
+    const [clienteSearch, setClienteSearch] = useState<string>('');
+    const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(
+        filtrosIniciales.cliente_id
+            ? { id: Number(filtrosIniciales.cliente_id), nombre: '', nit: '' }
+            : null
+    );
+
+    // ✅ NUEVO: Estados para búsqueda dinámica de usuarios
+    const [usuariosBusqueda, setUsuariosBusqueda] = useState<Usuario[]>([]);
+    const [usuarioSearching, setUsuarioSearching] = useState(false);
+    const [usuarioSearch, setUsuarioSearch] = useState<string>('');
+    const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(
+        filtrosIniciales.usuario_id
+            ? { id: Number(filtrosIniciales.usuario_id), name: '' }
+            : null
+    );
 
     // 🔍 DEBUG: Mostrar filtros iniciales
     React.useEffect(() => {
@@ -68,6 +102,50 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
             estados_aprobadas_anuladas: datosSeguros.estados_documento.filter((est) => [3, 5].includes(Number(est.id))),
         });
     }, [datosSeguros.estados_documento]);
+
+    // ✅ NUEVO: Buscar clientes en tiempo real
+    const handleSearchClientes = async (query: string) => {
+        setClienteSearch(query);
+        if (query.length < 2) {
+            setClientesBusqueda([]);
+            return;
+        }
+
+        setClienteSearching(true);
+        try {
+            const response = await fetch(`/api/ventas/search/clientes?q=${encodeURIComponent(query)}&limit=20`);
+            const data = await response.json();
+            if (data.success) {
+                setClientesBusqueda(data.data);
+            }
+        } catch (error) {
+            console.error('Error buscando clientes:', error);
+        } finally {
+            setClienteSearching(false);
+        }
+    };
+
+    // ✅ NUEVO: Buscar usuarios en tiempo real
+    const handleSearchUsuarios = async (query: string) => {
+        setUsuarioSearch(query);
+        if (query.length < 2) {
+            setUsuariosBusqueda([]);
+            return;
+        }
+
+        setUsuarioSearching(true);
+        try {
+            const response = await fetch(`/api/ventas/search/usuarios?q=${encodeURIComponent(query)}&limit=20`);
+            const data = await response.json();
+            if (data.success) {
+                setUsuariosBusqueda(data.data);
+            }
+        } catch (error) {
+            console.error('Error buscando usuarios:', error);
+        } finally {
+            setUsuarioSearching(false);
+        }
+    };
 
     const handleFiltroChange = (campo: keyof FiltrosVentas, valor: string | number | null | undefined) => {
         const nuevosFiltros = { ...filtros, [campo]: valor };
@@ -284,22 +362,28 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                     />
                 </div>
 
-                {/* Cliente - Búsqueda por múltiples campos */}
+                {/* Cliente - Búsqueda dinámica en tiempo real */}
                 <div>
-                    <FloatingInput
-                        id="cliente_id"
-                        label="👥Cliente"
-                        value={filtros.cliente_id || ''}
-                        onChange={(e) => handleFiltroChange('cliente_id', e.target.value || null)}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                                e.preventDefault();
-                                aplicarFiltros();
-                            }
+                    <DynamicSearchSelect<Cliente>
+                        label="👥 Cliente"
+                        placeholder="Buscar cliente..."
+                        selectedItem={clienteSeleccionado}
+                        items={clientesBusqueda}
+                        isLoading={clienteSearching}
+                        searchValue={clienteSearch}
+                        onSearch={handleSearchClientes}
+                        onSelect={(cliente) => {
+                            setClienteSeleccionado(cliente);
+                            handleFiltroChange('cliente_id', cliente.id);
                         }}
-                        placeholder="Cliente (ID, código, nombre, NIT, teléfono)"
-                        title="Buscar por ID, código cliente, nombre, NIT o teléfono"
-                        icon={<Search className="h-4 w-4" />}
+                        onClear={() => {
+                            setClienteSeleccionado(null);
+                            setClienteSearch('');
+                            handleFiltroChange('cliente_id', null);
+                        }}
+                        renderItem={(cliente) => `${cliente.nombre} (NIT: ${cliente.nit})`}
+                        getItemId={(cliente) => cliente.id}
+                        getDisplayValue={(cliente) => `${cliente.nombre} (NIT: ${cliente.nit})`}
                     />
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -432,19 +516,28 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                                 <option value="delivery">🚚 Delivery</option>
                             </FloatingSelect>
                         </div>
-                        {/* Usuario */}
+                        {/* Usuario - Búsqueda dinámica */}
                         <div className="w-full">
-                            <FloatingSearchSelect
-                                id="usuario_id"
+                            <DynamicSearchSelect<Usuario>
                                 label="👤 Usuario Creador"
-                                placeholder="Seleccionar usuario..."
-                                value={filtros.usuario_id || ''}
-                                options={datosSeguros.usuarios.map((usuario) => ({
-                                    value: usuario.id,
-                                    label: usuario.name,
-                                }))}
-                                onChange={(value) => handleFiltroChange('usuario_id', value ? Number(value) : null)}
-                                allowClear={true}
+                                placeholder="Buscar usuario..."
+                                selectedItem={usuarioSeleccionado}
+                                items={usuariosBusqueda}
+                                isLoading={usuarioSearching}
+                                searchValue={usuarioSearch}
+                                onSearch={handleSearchUsuarios}
+                                onSelect={(usuario) => {
+                                    setUsuarioSeleccionado(usuario);
+                                    handleFiltroChange('usuario_id', usuario.id);
+                                }}
+                                onClear={() => {
+                                    setUsuarioSeleccionado(null);
+                                    setUsuarioSearch('');
+                                    handleFiltroChange('usuario_id', null);
+                                }}
+                                renderItem={(usuario) => usuario.name}
+                                getItemId={(usuario) => usuario.id}
+                                getDisplayValue={(usuario) => usuario.name}
                             />
                         </div>
                         {/* ✅ NUEVO (2026-03-01): Preventista */}
