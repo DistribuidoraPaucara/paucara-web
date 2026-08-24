@@ -3002,11 +3002,12 @@ class VentaController extends Controller
                 ]);
             }
 
+            // ✅ CASE-INSENSITIVE: Usar LOWER() para garantizar búsqueda sin importar mayúsculas/minúsculas
             $clientes = Cliente::where('activo', true)
                 ->where(function ($query) use ($q) {
-                    $query->where('nombre', 'like', "%{$q}%")
-                        ->orWhere('nit', 'like', "%{$q}%")
-                        ->orWhere('codigo_cliente', 'like', "%{$q}%");
+                    $query->whereRaw('LOWER(nombre) LIKE ?', ["%".strtolower($q)."%"])
+                        ->orWhereRaw('LOWER(nit) LIKE ?', ["%".strtolower($q)."%"])
+                        ->orWhereRaw('LOWER(codigo_cliente) LIKE ?', ["%".strtolower($q)."%"]);
                 })
                 ->select('id', 'nombre', 'nit', 'codigo_cliente')
                 ->limit($limit)
@@ -3052,7 +3053,8 @@ class VentaController extends Controller
                 ]);
             }
 
-            $usuarios = User::where('name', 'like', "%{$q}%")
+            // ✅ CASE-INSENSITIVE: Usar LOWER() para garantizar búsqueda sin importar mayúsculas/minúsculas
+            $usuarios = User::whereRaw('LOWER(name) LIKE ?', ["%".strtolower($q)."%"])
                 ->select('id', 'name')
                 ->limit($limit)
                 ->orderBy('name')
