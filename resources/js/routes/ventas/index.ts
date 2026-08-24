@@ -3,6 +3,7 @@ import logistica from './logistica'
 import reporteProductosVendidos from './reporte-productos-vendidos'
 import reportes from './reportes'
 import cuentasPorCobrar from './cuentas-por-cobrar'
+import api from './api'
 import stock from './stock'
 import confirmaciones from './confirmaciones'
 import detalles from './detalles'
@@ -1832,6 +1833,7 @@ imprimirVenta,
 preview,
 exportarExcel,
 exportarPdf,
+api,
 show,
 stock,
 confirmaciones,

@@ -2953,12 +2953,16 @@ class VentaController extends Controller
 
     /**
      * ✅ NUEVO: Obtener lista de choferes para confirmación de entrega
-     * GET /api/ventas/choferes
+     * GET /ventas/api/choferes
+     * Busca usuarios con rol 'chofer' o 'Chofer' (case-insensitive)
      */
     public function obtenerChoferes(): JsonResponse
     {
         try {
-            $choferes = User::role('Chofer')
+            // ✅ Buscar usuarios con rol 'Chofer' o 'chofer' (case-insensitive)
+            $choferes = User::whereHas('roles', function ($query) {
+                $query->whereRaw('LOWER(name) = ?', ['chofer']);
+            })
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get();

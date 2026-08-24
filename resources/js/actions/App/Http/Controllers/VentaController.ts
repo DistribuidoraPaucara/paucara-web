@@ -3553,7 +3553,7 @@ exportarPdf.head = (args: { venta: number | { id: number } } | [venta: number | 
     exportarPdf.form = exportarPdfForm
 /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
 export const obtenerChoferes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -3568,7 +3568,7 @@ obtenerChoferes.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
 obtenerChoferes.url = (options?: RouteQueryOptions) => {
@@ -3577,7 +3577,7 @@ obtenerChoferes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
 obtenerChoferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -3586,7 +3586,7 @@ obtenerChoferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
 obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -3596,7 +3596,7 @@ obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
     /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
     const obtenerChoferesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -3606,7 +3606,7 @@ obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
             /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
         obtenerChoferesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -3615,7 +3615,7 @@ obtenerChoferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
         })
             /**
 * @see \App\Http\Controllers\VentaController::obtenerChoferes
- * @see app/Http/Controllers/VentaController.php:2958
+ * @see app/Http/Controllers/VentaController.php:2959
  * @route '/ventas/api/choferes'
  */
         obtenerChoferesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -1209,84 +1209,6 @@ destroy.delete = (args: { venta: string | number } | [venta: string | number ] |
         })
     
     destroy.form = destroyForm
-/**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-export const choferes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: choferes.url(options),
-    method: 'get',
-})
-
-choferes.definition = {
-    methods: ["get","head"],
-    url: '/api/ventas/choferes',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-choferes.url = (options?: RouteQueryOptions) => {
-    return choferes.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-choferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: choferes.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-choferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: choferes.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-    const choferesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: choferes.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-        choferesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferes.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2958
- * @route '/api/ventas/choferes'
- */
-        choferesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: choferes.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    choferes.form = choferesForm
 const ventas = {
     registrarPago,
 obtenerEntrega,
@@ -1304,7 +1226,6 @@ store,
 show,
 update,
 destroy,
-choferes,
 }
 
 export default ventas
