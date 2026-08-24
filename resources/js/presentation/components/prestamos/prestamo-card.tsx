@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { differenceInDays, parseISO } from 'date-fns';
 
 interface Prestamo {
     id: number;
@@ -9,6 +10,7 @@ interface Prestamo {
     cantidad_items: number;
     monto_garantia: number;
     observaciones: string;
+    fecha?: string;
 }
 
 interface PrestamoCardProps {
@@ -38,6 +40,85 @@ const obtenerUrlPrestamo = (tipo: 'cliente' | 'evento' | 'proveedor', id: number
     return rutas[tipo];
 };
 
+// Calcular color según proximidad a fecha de vencimiento
+const obtenerColorProximidad = (fecha?: string, estado?: string): string => {
+    if (!fecha) return 'border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-800';
+
+    // Si está devuelto, color azul
+    if (estado === 'devuelto') {
+        return 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900';
+    }
+
+    try {
+        const fechaVencimiento = parseISO(fecha);
+        const hoy = new Date();
+        const diasRestantes = differenceInDays(fechaVencimiento, hoy);
+
+        if (diasRestantes < 0) {
+            // Vencido
+            return 'border-red-500 bg-red-50 dark:border-red-700 dark:bg-red-900';
+        } else if (diasRestantes <= 3) {
+            // Crítico (vence en 3 días o menos)
+            return 'border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-900';
+        } else if (diasRestantes <= 7) {
+            // Urgente (vence en una semana)
+            return 'border-orange-400 bg-orange-50 dark:border-orange-600 dark:bg-orange-900';
+        } else if (diasRestantes <= 14) {
+            // Próximo (vence en dos semanas)
+            return 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900';
+        } else if (diasRestantes <= 30) {
+            // Normal
+            return 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900';
+        } else {
+            // Tranquilo (más de un mes)
+            return 'border-green-200 bg-white dark:border-green-800 dark:bg-zinc-800';
+        }
+    } catch {
+        return 'border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-800';
+    }
+};
+
+// Obtener badge de días restantes
+const obtenerBadgeDiasRestantes = (fecha?: string): { texto: string; color: string } => {
+    if (!fecha) return { texto: '', color: '' };
+
+    try {
+        const fechaVencimiento = parseISO(fecha);
+        const hoy = new Date();
+        const diasRestantes = differenceInDays(fechaVencimiento, hoy);
+
+        if (diasRestantes < 0) {
+            return {
+                texto: `⚠️ Vencido hace ${Math.abs(diasRestantes)} días`,
+                color: 'bg-red-600 text-white',
+            };
+        } else if (diasRestantes === 0) {
+            return {
+                texto: '🔴 Vence HOY',
+                color: 'bg-red-600 text-white',
+            };
+        } else if (diasRestantes === 1) {
+            return {
+                texto: '⚠️ Vence mañana',
+                color: 'bg-red-500 text-white',
+            };
+        } else if (diasRestantes <= 7) {
+            return {
+                texto: `⏰ ${diasRestantes} días`,
+                color: 'bg-orange-500 text-white',
+            };
+        } else if (diasRestantes <= 30) {
+            return {
+                texto: `📅 ${diasRestantes} días`,
+                color: 'bg-yellow-600 text-white',
+            };
+        }
+        return { texto: '', color: '' };
+    } catch {
+        return { texto: '', color: '' };
+    }
+};
+
 export default function PrestamoCard({ prestamo, compact = false }: PrestamoCardProps) {
     const tipoLabel = {
         cliente: 'Cliente',
@@ -46,9 +127,19 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
     }[prestamo.tipo];
 
     if (compact) {
+        const colorClase = obtenerColorProximidad(prestamo.fecha, prestamo.estado);
+        const badge = obtenerBadgeDiasRestantes(prestamo.fecha);
+
         return (
             <Link href={obtenerUrlPrestamo(prestamo.tipo, prestamo.id)}>
-                <div className="rounded border border-gray-300 bg-white p-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-800 hover:shadow-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all cursor-pointer">
+                <div className={`rounded border-2 p-1.5 text-xs transition-all cursor-pointer hover:shadow-md ${colorClase}`}>
+                {/* Badge de días restantes */}
+                {badge.texto && (
+                    <div className={`${badge.color} rounded px-2 py-1 text-xs font-bold mb-1 text-center`}>
+                        {badge.texto}
+                    </div>
+                )}
+
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-white truncate">
@@ -76,9 +167,19 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
     }
 
     // Vista expandida
+    const colorClaseExpanded = obtenerColorProximidad(prestamo.fecha, prestamo.estado);
+    const badgeExpanded = obtenerBadgeDiasRestantes(prestamo.fecha);
+
     return (
         <Link href={obtenerUrlPrestamo(prestamo.tipo, prestamo.id)}>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all cursor-pointer dark:border-zinc-700 dark:bg-zinc-800">
+            <div className={`rounded-lg border-2 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer ${colorClaseExpanded}`}>
+            {/* Badge de días restantes */}
+            {badgeExpanded.texto && (
+                <div className={`${badgeExpanded.color} rounded px-3 py-2 text-sm font-bold mb-3 text-center`}>
+                    {badgeExpanded.texto}
+                </div>
+            )}
+
             {/* Encabezado */}
             <div className="flex items-start justify-between mb-2">
                 <div>
