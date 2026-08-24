@@ -244,15 +244,33 @@ class VentaController extends Controller
                 'estado_logistico'    => $request->input('estado_logistico'), // ✅ NUEVO: Para filtro de estado logístico
             ];
 
-            // ✅ NUEVO (2026-08-23): Si NO hay filtros de fecha, usar fecha de HOY por defecto
-            // Esto evita cargar 4000+ registros cuando se abre la página sin filtros
-            if (empty($filtros['fecha_desde']) && empty($filtros['fecha_hasta'])) {
+            // ✅ ACTUALIZADO (2026-08-24): Solo agregar fecha de HOY si NO hay NINGÚN filtro activo
+            // Si el usuario está buscando por ID, número, cliente, búsqueda, etc., NO agregar fechas automáticamente
+            $hayFiltroActivo = !empty($filtros['id'])
+                || !empty($filtros['id_desde'])
+                || !empty($filtros['id_hasta'])
+                || !empty($filtros['numero'])
+                || !empty($filtros['search'])
+                || !empty($filtros['cliente_id'])
+                || !empty($filtros['usuario_id'])
+                || !empty($filtros['tipo_pago_id'])
+                || !empty($filtros['preventista_id'])
+                || !empty($filtros['monto_min'])
+                || !empty($filtros['monto_max'])
+                || !empty($filtros['moneda_id'])
+                || !empty($filtros['tipo_venta'])
+                || !empty($filtros['estado_pago'])
+                || !empty($filtros['estado_logistico'])
+                || !empty($filtros['busqueda_cliente'])
+                || !empty($filtros['estado_documento_id']);
+
+            if (!$hayFiltroActivo && empty($filtros['fecha_desde']) && empty($filtros['fecha_hasta'])) {
                 $hoy = now()->toDateString();
                 $filtros['fecha_desde'] = $hoy;
                 $filtros['fecha_hasta'] = $hoy;
                 Log::info('📅 [VentaController::index] Aplicando filtro de fecha por defecto: HOY', [
                     'fecha' => $hoy,
-                    'razon' => 'Evitar cargar 4000+ registros sin filtros',
+                    'razon' => 'Evitar cargar 4000+ registros cuando NO hay filtros',
                 ]);
             }
 
@@ -3056,6 +3074,55 @@ class VentaController extends Controller
     }
 
     /**
+     * ✅ NUEVO: Obtener cliente por ID
+     * GET /api/ventas/clientes/{id}
+     * Devuelve cliente exacto por ID
+     */
+    public function getClienteById($id): JsonResponse
+    {
+        try {
+            Log::info('🔍 [getClienteById] Buscando cliente por ID', ['id' => $id]);
+
+            $cliente = Cliente::where('id', $id)
+                ->where('activo', true)
+                ->select('id', 'nombre', 'nit', 'codigo_cliente')
+                ->first();
+
+            if (!$cliente) {
+                Log::info('⚠️ [getClienteById] Cliente no encontrado', ['id' => $id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cliente no encontrado',
+                ], 404);
+            }
+
+            $resultado = [
+                'id' => $cliente->id,
+                'name' => "{$cliente->nombre} (NIT: {$cliente->nit})",
+                'label' => $cliente->nombre,
+            ];
+
+            Log::info('✅ [getClienteById] Cliente encontrado', ['resultado' => $resultado]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $resultado,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al obtener cliente', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener cliente: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * ✅ NUEVO: Búsqueda en tiempo real de usuarios
      * GET /api/ventas/search/usuarios?q=texto
      * Busca por nombre
@@ -3117,6 +3184,54 @@ class VentaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al buscar usuarios: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Obtener usuario por ID
+     * GET /api/ventas/usuarios/{id}
+     * Devuelve usuario exacto por ID
+     */
+    public function getUsuarioById($id): JsonResponse
+    {
+        try {
+            Log::info('🔍 [getUsuarioById] Buscando usuario por ID', ['id' => $id]);
+
+            $usuario = User::where('id', $id)
+                ->select('id', 'name')
+                ->first();
+
+            if (!$usuario) {
+                Log::info('⚠️ [getUsuarioById] Usuario no encontrado', ['id' => $id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado',
+                ], 404);
+            }
+
+            $resultado = [
+                'id' => $usuario->id,
+                'name' => $usuario->name,
+                'label' => $usuario->name,
+            ];
+
+            Log::info('✅ [getUsuarioById] Usuario encontrado', ['resultado' => $resultado]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $resultado,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al obtener usuario', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener usuario: ' . $e->getMessage(),
             ], 500);
         }
     }

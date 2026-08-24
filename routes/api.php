@@ -1057,6 +1057,16 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
         Route::get('/search/usuarios', [VentaController::class, 'searchUsuarios'])
             ->name('ventas.search.usuarios');
 
+        // ✅ NUEVO: Obtener cliente por ID exacto
+        Route::get('/clientes/{id}', [VentaController::class, 'getClienteById'])
+            ->where('id', '[0-9]+')
+            ->name('ventas.clientes.get');
+
+        // ✅ NUEVO: Obtener usuario por ID exacto
+        Route::get('/usuarios/{id}', [VentaController::class, 'getUsuarioById'])
+            ->where('id', '[0-9]+')
+            ->name('ventas.usuarios.get');
+
         // ✅ NUEVO: Obtener lista de impresoras disponibles
         Route::get('/impresoras/disponibles', [\App\Http\Controllers\ReporteVentasController::class, 'obtenerImpresoras'])
             ->name('impresoras.disponibles');

@@ -62,13 +62,13 @@ export default function DynamicSearchSelect<T>({
             </label>
 
             {selectedItem && (
-                <div className="mb-2 flex items-center justify-between rounded-lg bg-blue-50 p-2 dark:bg-blue-900/20">
-                    <span className="text-xs text-blue-900 dark:text-blue-200">
+                <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-100 p-2 dark:bg-slate-700">
+                    <span className="text-xs text-slate-900 dark:text-slate-100">
                         {getDisplayValue(selectedItem)}
                     </span>
                     <button
                         onClick={handleClear}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                        className="text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100"
                     >
                         ✕
                     </button>

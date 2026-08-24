@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
 export const choferes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ choferes.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
 choferes.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ choferes.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
 choferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ choferes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
 choferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ choferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
     const choferesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ choferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
         choferesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ choferes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\VentaController::choferes
- * @see app/Http/Controllers/VentaController.php:2960
+ * @see app/Http/Controllers/VentaController.php:2978
  * @route '/ventas/api/choferes'
  */
         choferesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -2,11 +2,10 @@ import type { DatosParaFiltrosVentas, FiltrosVentas } from '@/domain/entities/ve
 import ventasService from '@/infrastructure/services/ventas.service';
 import { ArrowUpDown, Calendar, DollarSign, Filter, Hash, Search, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import ToggleGroup from '../ui/toggle-group';
+import DynamicSearchSelect from '../form-sections/DynamicSearchSelect';
 import FloatingInput from './floating-input';
 import FloatingSearchSelect from './floating-search-select';
 import FloatingSelect from './floating-select';
-import DynamicSearchSelect from '../form-sections/DynamicSearchSelect';
 
 interface FiltrosVentasProps {
     filtros: FiltrosVentas;
@@ -36,30 +35,13 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     const [clientesBusqueda, setClientesBusqueda] = useState<Cliente[]>([]);
     const [clienteSearching, setClienteSearching] = useState(false);
     const [clienteSearch, setClienteSearch] = useState<string>('');
-    const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(
-        filtrosIniciales.cliente_id
-            ? { id: Number(filtrosIniciales.cliente_id), nombre: '', nit: '' }
-            : null
-    );
+    const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
 
     // ✅ NUEVO: Estados para búsqueda dinámica de usuarios
     const [usuariosBusqueda, setUsuariosBusqueda] = useState<Usuario[]>([]);
     const [usuarioSearching, setUsuarioSearching] = useState(false);
     const [usuarioSearch, setUsuarioSearch] = useState<string>('');
-    const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(
-        filtrosIniciales.usuario_id
-            ? { id: Number(filtrosIniciales.usuario_id), name: '' }
-            : null
-    );
-
-    // 🔍 DEBUG: Mostrar filtros iniciales
-    React.useEffect(() => {
-        console.log('📝 [FiltrosVentas] Filtros iniciales recibidos:', {
-            filtrosIniciales,
-            tiene_valores: Object.values(filtrosIniciales).some((v) => v !== undefined && v !== null && v !== ''),
-            valores_activos: Object.fromEntries(Object.entries(filtrosIniciales).filter(([_, v]) => v !== undefined && v !== null && v !== '')),
-        });
-    }, []);
+    const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null);
 
     // Valores por defecto para datosParaFiltros
     const datosSeguros = {
@@ -70,6 +52,67 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         tipos_pago: datosParaFiltros?.tipos_pago || [], // ✅ NUEVO: Tipos de pago
         preventistas: datosParaFiltros?.preventistas || [], // ✅ NUEVO (2026-03-01): Preventistas
     };
+
+    // 🔍 DEBUG: Mostrar filtros iniciales
+    React.useEffect(() => {
+        console.log('📝 [FiltrosVentas] Filtros iniciales recibidos:', {
+            filtrosIniciales,
+            tiene_valores: Object.values(filtrosIniciales).some((v) => v !== undefined && v !== null && v !== ''),
+            valores_activos: Object.fromEntries(Object.entries(filtrosIniciales).filter(([_, v]) => v !== undefined && v !== null && v !== '')),
+        });
+    }, []);
+
+    // ✅ NUEVO: Pre-cargar cliente si viene en la URL
+    useEffect(() => {
+        if (filtrosIniciales.cliente_id && !clienteSeleccionado) {
+            const cargarCliente = async () => {
+                try {
+                    const clienteId = Number(filtrosIniciales.cliente_id);
+                    console.log('🔍 [FiltrosVentas] Cargando cliente por ID:', clienteId);
+
+                    // Buscar cliente por ID exacto
+                    const response = await fetch(`/api/ventas/clientes/${clienteId}`);
+                    const data = await response.json();
+
+                    if (data.success && data.data) {
+                        console.log('✅ [FiltrosVentas] Cliente cargado desde API:', data.data);
+                        setClienteSeleccionado(data.data);
+                    } else {
+                        console.warn('⚠️ [FiltrosVentas] Cliente no encontrado:', clienteId);
+                    }
+                } catch (error) {
+                    console.error('❌ [FiltrosVentas] Error cargando cliente:', error);
+                }
+            };
+            cargarCliente();
+        }
+    }, [filtrosIniciales.cliente_id, clienteSeleccionado]);
+
+    // ✅ NUEVO: Pre-cargar usuario si viene en la URL
+    useEffect(() => {
+        if (filtrosIniciales.usuario_id && !usuarioSeleccionado) {
+            const cargarUsuario = async () => {
+                try {
+                    const usuarioId = Number(filtrosIniciales.usuario_id);
+                    console.log('🔍 [FiltrosVentas] Cargando usuario por ID:', usuarioId);
+
+                    // Buscar usuario por ID exacto
+                    const response = await fetch(`/api/ventas/usuarios/${usuarioId}`);
+                    const data = await response.json();
+
+                    if (data.success && data.data) {
+                        console.log('✅ [FiltrosVentas] Usuario cargado desde API:', data.data);
+                        setUsuarioSeleccionado(data.data);
+                    } else {
+                        console.warn('⚠️ [FiltrosVentas] Usuario no encontrado:', usuarioId);
+                    }
+                } catch (error) {
+                    console.error('❌ [FiltrosVentas] Error cargando usuario:', error);
+                }
+            };
+            cargarUsuario();
+        }
+    }, [filtrosIniciales.usuario_id, usuarioSeleccionado]);
 
     // Detectar si hay filtros activos
     const hayFiltrosActivos = Object.values(filtros).some((value) => value !== undefined && value !== null && value !== '');
@@ -180,7 +223,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
         }
     };
 
-    // ✅ Handler para el botón Limpiar - limpia todos los filtros
+    // ✅ ACTUALIZADO (2026-08-24): Limpiar filtros SIN ejecutar búsqueda automática
     const handleLimpiarFiltros = () => {
         const filtrosLimpios = {
             cliente_id: undefined,
@@ -198,11 +241,15 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
             tipo_pago_id: undefined,
             preventista_id: undefined,
         };
-        console.log('🗑️ [filtros-ventas] Limpiando filtros');
+        console.log('🗑️ [filtros-ventas] Limpiando filtros (sin búsqueda automática)');
         setFiltros(filtrosLimpios);
-        if (onFiltrosChange) {
-            onFiltrosChange(filtrosLimpios);
-        }
+        setClienteSeleccionado(null);
+        setClienteSearch('');
+        setUsuarioSeleccionado(null);
+        setUsuarioSearch('');
+        setBusquedaCombinada('');
+        setMostrarFiltrosAvanzados(false);
+        // ⚠️ NO llamamos a onFiltrosChange() aquí - esperar a que usuario presione "Buscar"
     };
 
     // ✅ NUEVO: Cambiar múltiples filtros a la vez
@@ -243,13 +290,9 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     };
 
     const limpiarFiltros = () => {
-        const filtrosVacios: FiltrosVentas = {};
-        setFiltros(filtrosVacios);
-        setBusquedaCombinada('');
-        setMostrarFiltrosAvanzados(false);
-        ventasService.clearFilters();
-        // Aplicar los filtros vacíos al padre
+        console.log('🗑️ [FiltrosVentas] Botón Limpiar presionado');
         handleLimpiarFiltros();
+        ventasService.clearFilters();
     };
 
     // ✅ NUEVO: Función para obtener etiquetas de filtros activos
@@ -331,7 +374,7 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
     return (
         <div className="mb-2 rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             {/* Filtros básicos */}
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid grid-cols-1 items-end gap-2 md:grid-cols-2 lg:grid-cols-5">
                 {/* ID de venta o Número de venta (búsqueda combinada) */}
                 <div>
                     <FloatingInput
@@ -399,46 +442,58 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                             setClienteSearch('');
                             handleFiltroChange('cliente_id', null);
                         }}
-                        renderItem={(cliente) => `${cliente.nombre} (NIT: ${cliente.nit})`}
+                        renderItem={(cliente) => cliente.name}
                         getItemId={(cliente) => cliente.id}
-                        getDisplayValue={(cliente) => `${cliente.nombre} (NIT: ${cliente.nit})`}
+                        getDisplayValue={(cliente) => cliente.name}
                     />
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <ToggleGroup
-                        options={datosSeguros.estados_documento
-                            .filter((est) => [3, 5].includes(Number(est.id))) // Solo Aprobadas (3) y Anuladas (5)
-                            .map((est) => ({
-                                value: est.id.toString(),
-                                label: est.nombre,
-                                icon: est.icono,
-                                color: est.color,
-                            }))}
-                        value={filtros.estado_documento_id?.toString() || ''}
-                        onChange={(value) => handleFiltroChange('estado_documento_id', value ? parseInt(value) : null)}
-                    />
-
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* ✅ NUEVO: Botón toggle para Aprobadas */}
                     <button
                         type="button"
                         onClick={() => {
-                            const today = new Date().toISOString().split('T')[0];
-                            handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
+                            const estadoAprobadaId = 3;
+                            if (filtros.estado_documento_id === estadoAprobadaId) {
+                                handleFiltroChange('estado_documento_id', undefined);
+                            } else {
+                                handleFiltroChange('estado_documento_id', estadoAprobadaId);
+                            }
                         }}
-                        className={`font-small rounded-md p-1 text-sm transition-colors ${
-                            filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
-                                ? 'bg-blue-600 text-white'
-                                : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                            filtros.estado_documento_id === 3
+                                ? 'bg-green-600 text-white'
+                                : 'border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/40'
                         }`}
                     >
-                        📅 Hoy
+                        ✅ Aprobadas
+                    </button>
+
+                    {/* ❌ NUEVO: Botón toggle para Anuladas */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const estadoAnuladaId = 5;
+                            if (filtros.estado_documento_id === estadoAnuladaId) {
+                                handleFiltroChange('estado_documento_id', undefined);
+                            } else {
+                                handleFiltroChange('estado_documento_id', estadoAnuladaId);
+                            }
+                        }}
+                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                            filtros.estado_documento_id === 5
+                                ? 'bg-red-600 text-white'
+                                : 'border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40'
+                        }`}
+                    >
+                        ❌ Anuladas
                     </button>
                 </div>
             </div>
 
             {/* Filtros avanzados */}
             {mostrarFiltrosAvanzados && (
-                <div className="mt-4 pt-2">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-6 pt-2">
+                    <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3 lg:grid-cols-5">
                         {/* Rango de fechas */}
                         <div>
                             <FloatingInput
@@ -478,24 +533,8 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                                 ))}
                             </FloatingSelect>
                         </div>
-                        {/* Estado */}
-                        <div>
-                            <FloatingSelect
-                                id="estado_documento_id"
-                                label="📋 Estado"
-                                value={filtros.estado_documento_id || ''}
-                                onChange={(e) => handleFiltroChange('estado_documento_id', e.target.value ? Number(e.target.value) : null)}
-                            >
-                                <option value="">Todos los estados</option>
-                                {datosSeguros.estados_documento.map((estado) => (
-                                    <option key={estado.id} value={estado.id}>
-                                        {estado.nombre}
-                                    </option>
-                                ))}
-                            </FloatingSelect>
-                        </div>
                         {/* Rango de montos */}
-                        <div>
+                        {/* <div>
                             <FloatingInput
                                 id="monto_min"
                                 label="💰 Monto mínimo"
@@ -520,9 +559,9 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                                 min="0"
                                 icon={<DollarSign className="h-4 w-4" />}
                             />
-                        </div>
+                        </div> */}
                         {/* Tipo de Venta */}
-                        <div>
+                        {/* <div>
                             <FloatingSelect
                                 id="tipo_venta"
                                 label="🏪 Tipo de Venta"
@@ -533,9 +572,9 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                                 <option value="presencial">🏪 Presencial</option>
                                 <option value="delivery">🚚 Delivery</option>
                             </FloatingSelect>
-                        </div>
+                        </div> */}
                         {/* Usuario - Búsqueda dinámica */}
-                        <div className="w-full">
+                        <div>
                             <DynamicSearchSelect<Usuario>
                                 label="👤 Usuario Creador"
                                 placeholder="Buscar usuario..."
@@ -559,92 +598,98 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
                             />
                         </div>
                         {/* ✅ NUEVO (2026-03-01): Preventista */}
-                        <div>
-                            <FloatingSearchSelect
-                                id="preventista_id"
-                                label="👤 Preventista"
-                                placeholder="Seleccionar preventista..."
-                                value={filtros.preventista_id || ''}
-                                options={datosSeguros.preventistas.map((preventista) => ({
-                                    value: preventista.id,
-                                    label: preventista.name,
-                                }))}
-                                onChange={(value) => handleFiltroChange('preventista_id', value ? Number(value) : null)}
-                                allowClear={true}
-                            />
-                        </div>
+                        <FloatingSearchSelect
+                            id="preventista_id"
+                            label="👤 Preventista"
+                            placeholder="Seleccionar preventista..."
+                            value={filtros.preventista_id || ''}
+                            options={datosSeguros.preventistas.map((preventista) => ({
+                                value: preventista.id,
+                                label: preventista.name,
+                            }))}
+                            onChange={(value) => handleFiltroChange('preventista_id', value ? Number(value) : null)}
+                            allowClear={true}
+                        />
                     </div>
                 </div>
             )}
             {/* Botones de acción */}
-            <div className="flex flex-wrap items-end justify-between gap-4 p-2">
-                {/* Controles de Ordenamiento - Columna 1 */}
-                <div className="flex items-center gap-2">
-                    <div>
-                        <label className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
-                            <ArrowUpDown className="h-3 w-3" />
-                            Columna
-                        </label>
-                        <select
-                            value={filtros.sort_by || 'id'}
-                            onChange={(e) => handleFiltroChange('sort_by', e.target.value || 'id')}
-                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                        >
-                            <option value="id">Folio</option>
-                            <option value="created_at">Fecha de creación</option>
-                            <option value="updated_at">Fecha de actualización</option>
-                            <option value="fecha">Fecha de emisión</option>
-                            <option value="numero">Número de venta</option>
-                            <option value="total">Total</option>
-                            <option value="estado">Estado</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
-                            <ArrowUpDown className="h-3 w-3" />
-                            Ordenar por
-                        </label>
-                        <select
-                            value={filtros.sort_order || 'desc'}
-                            onChange={(e) => handleFiltroChange('sort_order', (e.target.value as 'asc' | 'desc') || 'desc')}
-                            className="rounded-md border border-gray-300 px-1 py-1 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                        >
-                            <option value="desc">↓ Descendente (más reciente)</option>
-                            <option value="asc">↑ Ascendente (más antiguo)</option>
-                        </select>
-                    </div>
+            {/* ✅ MEJORADO: Layout responsive con flex y mejor espaciado */}
+            <div className="flex flex-wrap items-start gap-2 p-2 lg:items-end">
+                {/* Botón Hoy - Ancho fijo */}
+                <button
+                    type="button"
+                    onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        handleMultipleFiltros({ fecha_desde: today, fecha_hasta: today });
+                    }}
+                    className={`h-fit rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        filtros.fecha_desde === filtros.fecha_hasta && filtros.fecha_desde
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                    }`}
+                >
+                    📅 Hoy
+                </button>
+
+                {/* ✅ COMPACTO: Selectores de Ordenamiento */}
+                <div className="flex flex-wrap items-center gap-1 rounded-md bg-gray-100 p-1 dark:bg-zinc-800">
+                    <label className="hidden items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-400 sm:flex lg:whitespace-nowrap">
+                        <ArrowUpDown className="h-3 w-3 text-blue-500" />
+                    </label>
+                    <select
+                        value={filtros.sort_by || 'id'}
+                        onChange={(e) => handleFiltroChange('sort_by', e.target.value || 'id')}
+                        className="flex-1 rounded px-1.5 py-0.5 text-xs border border-gray-300 bg-white shadow-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                    >
+                        <option value="id">Folio</option>
+                        <option value="created_at">F. creación</option>
+                        <option value="updated_at">F. actualización</option>
+                        <option value="fecha">F. emisión</option>
+                        <option value="numero">Nº Venta</option>
+                        <option value="total">Total</option>
+                        <option value="estado">Estado</option>
+                    </select>
+                    <select
+                        value={filtros.sort_order || 'desc'}
+                        onChange={(e) => handleFiltroChange('sort_order', (e.target.value as 'asc' | 'desc') || 'desc')}
+                        className="rounded px-1.5 py-0.5 text-xs border border-gray-300 bg-white shadow-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                    >
+                        <option value="desc">↓ Desc</option>
+                        <option value="asc">↑ Asc</option>
+                    </select>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Botones de Acción - Espacio flexible */}
+                <div className="flex gap-1 lg:ml-auto">
                     <button
                         type="button"
                         onClick={() => setMostrarFiltrosAvanzados(!mostrarFiltrosAvanzados)}
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                        className="flex items-center justify-center rounded-md border border-gray-300 bg-gray-100 p-2 transition-colors hover:bg-gray-200 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                        title={mostrarFiltrosAvanzados ? 'Ocultar filtros avanzados' : 'Mostrar filtros avanzados'}
                     >
-                        <Filter className="mr-1 h-4 w-4" />
-                        {mostrarFiltrosAvanzados ? 'Ocultar filtros' : 'Más filtros'}
+                        <Filter className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                     </button>
                     {hayFiltrosActivos && (
                         <button
                             type="button"
                             onClick={limpiarFiltros}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:bg-zinc-700"
+                            className="flex items-center justify-center rounded-md border border-gray-300 bg-white p-2 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                            title="Limpiar todos los filtros"
                         >
-                            <X className="mr-1 h-4 w-4" />
-                            Limpiar
+                            <X className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                         </button>
                     )}
-
                     <button
                         type="button"
                         onClick={() => {
                             console.log('🔘 [filtros-ventas] Botón Buscar clickeado');
                             handleBuscar();
                         }}
-                        className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-2 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                        className="flex items-center justify-center gap-1 rounded-md border border-transparent bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:hover:bg-blue-800"
                     >
-                        <Search className="mr-1 h-4 w-4" />
-                        Buscar
+                        <Search className="h-4 w-4" />
+                        <span className="hidden sm:inline">Buscar</span>
                     </button>
                 </div>
             </div>
