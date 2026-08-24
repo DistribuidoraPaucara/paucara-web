@@ -6,7 +6,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     DollarSign,
     ShoppingCart,
@@ -22,8 +22,9 @@ import { ChartWrapper } from '@/presentation/components/dashboard/chart-wrapper'
 import { AlertasStock } from '@/presentation/components/dashboard/alertas-stock';
 import { ProductosMasVendidos } from '@/presentation/components/dashboard/productos-mas-vendidos';
 import { PeriodSelector } from '@/presentation/components/dashboard/period-selector';
-import { AlertCircle, TrendingDown } from 'lucide-react';
-import WidgetVencimientosProximos from '@/presentation/components/admin/widget-vencimientos-proximos';
+import { AlertCircle } from 'lucide-react';
+import CalendarioVencimientosGrid from '@/presentation/components/admin/calendario-vencimientos-grid';
+import FiltrosVencimientos from '@/presentation/components/admin/filtros-vencimientos';
 
 interface AdminDashboardProps {
     metricas: {
@@ -136,6 +137,14 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
     const [periodo, setPeriodo] = useState(initialPeriodo);
     const [loading, setLoading] = useState(false);
+    const [vencimientos, setVencimientos] = useState<any[]>([]);
+    const [mesCalendario, setMesCalendario] = useState(new Date().toISOString().slice(0, 7));
+    const [filtros, setFiltros] = useState<{ tipo: string[]; estado: string[]; busqueda: string }>({
+        tipo: ['prestamos', 'cuentas'],
+        estado: [],
+        busqueda: '',
+    });
+    const [loadingVencimientos, setLoadingVencimientos] = useState(true);
 
     const defaultMetricas = {
         ventas: { total: 0, cantidad: 0, promedio: 0, cambio_porcentual: 0 },
@@ -169,6 +178,46 @@ export default function AdminDashboard({
             preserveScroll: true,
             onFinish: () => setLoading(false),
         });
+    };
+
+    useEffect(() => {
+        cargarVencimientos();
+    }, [mesCalendario, filtros]);
+
+    const cargarVencimientos = async () => {
+        try {
+            setLoadingVencimientos(true);
+            const params = new URLSearchParams();
+            params.append('mes', mesCalendario);
+            if (filtros.tipo.length > 0) {
+                params.append('tipo', filtros.tipo.join(','));
+            }
+            if (filtros.estado.length > 0) {
+                params.append('estado', filtros.estado.join(','));
+            }
+            if (filtros.busqueda) {
+                params.append('busqueda', filtros.busqueda);
+            }
+
+            const response = await fetch(`/api/calendario-vencimientos?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                setVencimientos(data.data);
+            }
+        } catch (error) {
+            console.error('Error cargando vencimientos:', error);
+        } finally {
+            setLoadingVencimientos(false);
+        }
+    };
+
+    const handleMesChange = (nuevomes: string) => {
+        setMesCalendario(nuevomes);
+    };
+
+    const handleFiltrosChange = (nuevosFiltros: { tipo: string[]; estado: string[]; busqueda: string }) => {
+        setFiltros(nuevosFiltros);
     };
 
     const ventasPorCanalData = {
@@ -384,18 +433,61 @@ export default function AdminDashboard({
                     />
                 </div>
 
-                {/* Widget de Próximos Vencimientos */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                        <WidgetVencimientosProximos />
+                {/* Calendario de Vencimientos */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                📅 Calendario de Vencimientos
+                            </h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Próximos vencimientos de Préstamos y Cuentas por Cobrar
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    const fecha = new Date(mesCalendario);
+                                    fecha.setMonth(fecha.getMonth() - 1);
+                                    handleMesChange(fecha.toISOString().slice(0, 7));
+                                }}
+                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
+                            >
+                                ← Anterior
+                            </button>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
+                                {new Date(mesCalendario).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    const fecha = new Date(mesCalendario);
+                                    fecha.setMonth(fecha.getMonth() + 1);
+                                    handleMesChange(fecha.toISOString().slice(0, 7));
+                                }}
+                                className="px-3 py-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-sm font-medium"
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Alertas de stock */}
-                    <div>
-                        <AlertasStock
-                            alertas={safeAlertasStock}
-                            loading={loading}
-                        />
+                    <div className="grid gap-6 lg:grid-cols-4">
+                        <div className="lg:col-span-3">
+                            {loadingVencimientos ? (
+                                <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+                                    <p className="text-gray-500 dark:text-gray-400">Cargando calendario...</p>
+                                </div>
+                            ) : (
+                                <CalendarioVencimientosGrid vencimientos={vencimientos} mes={mesCalendario} />
+                            )}
+                        </div>
+                        <div className="space-y-4">
+                            <FiltrosVencimientos filtros={filtros} onFiltrosChange={handleFiltrosChange} />
+                            <AlertasStock
+                                alertas={safeAlertasStock}
+                                loading={loading}
+                            />
+                        </div>
                     </div>
                 </div>
 

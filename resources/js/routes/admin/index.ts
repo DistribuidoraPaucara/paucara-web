@@ -4,7 +4,7 @@ import reportesProductosDanados from './reportes-productos-danados'
 import bannersPublicitarios from './banners-publicitarios'
 import categoriasCliente from './categorias-cliente'
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
 export const imageBackup = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -18,7 +18,7 @@ imageBackup.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
 imageBackup.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ imageBackup.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
 imageBackup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ imageBackup.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
 imageBackup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -43,7 +43,7 @@ imageBackup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
     const imageBackupForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -52,7 +52,7 @@ imageBackup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
         imageBackupForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -60,7 +60,7 @@ imageBackup.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:252
  * @route '/admin/image-backup'
  */
         imageBackupForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -152,6 +152,84 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     dashboard.form = dashboardForm
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+export const calendarioVencimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'get',
+})
+
+calendarioVencimientos.definition = {
+    methods: ["get","head"],
+    url: '/admin/calendario-vencimientos',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+calendarioVencimientos.url = (options?: RouteQueryOptions) => {
+    return calendarioVencimientos.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+calendarioVencimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+calendarioVencimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+    const calendarioVencimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: calendarioVencimientos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+        calendarioVencimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendarioVencimientos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:28
+ * @route '/admin/calendario-vencimientos'
+ */
+        calendarioVencimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendarioVencimientos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    calendarioVencimientos.form = calendarioVencimientosForm
 const admin = {
     creditos,
 imageBackup,
@@ -159,6 +237,7 @@ reportesProductosDanados,
 bannersPublicitarios,
 categoriasCliente,
 dashboard,
+calendarioVencimientos,
 }
 
 export default admin

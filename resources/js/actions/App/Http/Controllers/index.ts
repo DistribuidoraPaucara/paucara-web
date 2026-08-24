@@ -40,6 +40,7 @@ import PrestamoClienteController from './PrestamoClienteController'
 import PrestamoEventoController from './PrestamoEventoController'
 import PrestamoProveedorController from './PrestamoProveedorController'
 import PrestamosCalendarioController from './PrestamosCalendarioController'
+import CalendarioVencimientosController from './CalendarioVencimientosController'
 import ReportesController from './ReportesController'
 import Prestamos from './Prestamos'
 import NotificacionRecurrenteController from './NotificacionRecurrenteController'
@@ -155,6 +156,7 @@ PrestamoClienteController,
 PrestamoEventoController,
 PrestamoProveedorController,
 PrestamosCalendarioController,
+CalendarioVencimientosController,
 ReportesController,
 Prestamos,
 NotificacionRecurrenteController,

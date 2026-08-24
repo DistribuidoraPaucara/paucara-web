@@ -196,7 +196,7 @@ dashboardRedirect.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     
     dashboardRedirect.form = dashboardRedirectForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
 export const preventistas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -210,7 +210,7 @@ preventistas.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
 preventistas.url = (options?: RouteQueryOptions) => {
@@ -218,7 +218,7 @@ preventistas.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
 preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -226,7 +226,7 @@ preventistas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
 preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -235,7 +235,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
     const preventistasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +244,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
         preventistasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -252,7 +252,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:444
  * @route '/api/preventistas'
  */
         preventistasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -267,7 +267,7 @@ preventistas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     preventistas.form = preventistasForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
 export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -281,7 +281,7 @@ logs.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
 logs.url = (options?: RouteQueryOptions) => {
@@ -289,7 +289,7 @@ logs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
 logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -297,7 +297,7 @@ logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
 logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -306,7 +306,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
     const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -315,7 +315,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
         logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -323,7 +323,7 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/api.php:1566
  * @route '/api/logs'
  */
         logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -337,6 +337,84 @@ logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     logs.form = logsForm
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+export const calendarioVencimientos = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'get',
+})
+
+calendarioVencimientos.definition = {
+    methods: ["get","head"],
+    url: '/api/calendario-vencimientos',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+calendarioVencimientos.url = (options?: RouteQueryOptions) => {
+    return calendarioVencimientos.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+calendarioVencimientos.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+calendarioVencimientos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: calendarioVencimientos.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+    const calendarioVencimientosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: calendarioVencimientos.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+        calendarioVencimientosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendarioVencimientos.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
+ * @see app/Http/Controllers/CalendarioVencimientosController.php:40
+ * @route '/api/calendario-vencimientos'
+ */
+        calendarioVencimientosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: calendarioVencimientos.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    calendarioVencimientos.form = calendarioVencimientosForm
 const api = {
     proformas,
 tiposPago,
@@ -372,6 +450,7 @@ prestamosCliente,
 prestamosEvento,
 prestamosProveedor,
 prestamos,
+calendarioVencimientos,
 cuentasPorCobrar,
 egresosAnalisis,
 egresos,
