@@ -58,7 +58,7 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
                     </span>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                    {prestamo.cantidad_items} items • Bs {prestamo.monto_garantia.toFixed(2)}
+                    {prestamo.cantidad_items} items • Bs {Number(prestamo.monto_garantia).toFixed(2)}
                 </p>
             </div>
         );
@@ -104,7 +104,7 @@ export default function PrestamoCard({ prestamo, compact = false }: PrestamoCard
                     <div>
                         <p className="text-gray-500 dark:text-gray-400">Monto garantía</p>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                            Bs {prestamo.monto_garantia.toFixed(2)}
+                            Bs {Number(prestamo.monto_garantia).toFixed(2)}
                         </p>
                     </div>
                 </div>
