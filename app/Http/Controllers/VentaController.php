@@ -296,10 +296,10 @@ class VentaController extends Controller
             }
 
             // Delegar al Service
-            // ✅ ACTUALIZADO (2026-08-13): por defecto 200 registros (últimas 200 con optimización)
-            // ✅ NUEVO: Pasar parámetros de ordenamiento
+            // ✅ ACTUALIZADO (2026-08-23): por defecto 50 registros (más rápido)
+            // ✅ NUEVO (2026-08-23): Reducir carga inicial para performance máxima
             $ventasPaginadas = $this->ventaService->listar(
-                perPage: $request->input('per_page', 200),
+                perPage: $request->input('per_page', 50),
                 filtros: array_filter($filtros), // Solo filtros no vacíos
                 sortBy: $sortBy,
                 sortOrder: $sortOrder
