@@ -490,75 +490,13 @@ export default function VentaForm() {
         }
     }, [venta?.cliente, clienteDisplay]);
 
-    // ✅ NUEVO: Cargar direcciones del cliente cuando se selecciona
-    // Se carga SIEMPRE (independientemente de requiere_envio) para poder auto-seleccionar
+    // ✅ OPTIMIZADO (2026-08-24): Combinar en UN SOLO useEffect para evitar petición duplicada
+    // Antes: 2 peticiones GET /api/clientes/{id} simultáneas (race condition)
+    // Ahora: 1 sola petición que carga direcciones + datos del cliente
     useEffect(() => {
         if (data.cliente_id && data.cliente_id !== 0 && typeof data.cliente_id === 'number') {
             setCargandoDirecciones(true);
-            const cargarDirecciones = async () => {
-                try {
-                    const response = await fetch(`/api/clientes/${data.cliente_id}`, {
-                        headers: {
-                            Accept: 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
-                    if (response.ok) {
-                        const result = await response.json();
-                        if (result.success && result.data?.direcciones) {
-                            const direccionesActivas = result.data.direcciones.filter((d: any) => d.activa !== false);
-                            console.log('📍 [DIRECCIONES CARGADAS] Estructura completa:', direccionesActivas);
-                            console.log('📍 [DIRECCIONES] Primera dirección keys:', Object.keys(direccionesActivas[0] || {}));
-                            direccionesActivas.forEach((dir: any, idx: number) => {
-                                console.log(`📍 Dirección ${idx + 1}:`, {
-                                    id: dir.id,
-                                    direccion: dir.direccion,
-                                    localidad: dir.localidad,
-                                    localidad_nombre: typeof dir.localidad === 'object' ? dir.localidad?.nombre : dir.localidad,
-                                    observaciones: dir.observaciones,
-                                    es_principal: dir.es_principal,
-                                    activa: dir.activa,
-                                    keys: Object.keys(dir),
-                                });
-                            });
-                            setDireccionesDisponibles(direccionesActivas);
-
-                            // ✅ MEJORADO: Auto-seleccionar dirección automáticamente
-                            if (!data.direccion_cliente_id && direccionesActivas.length > 0) {
-                                // Prioridad 1: Seleccionar la dirección principal
-                                const direccionPrincipal = direccionesActivas.find((d: any) => d.es_principal);
-                                if (direccionPrincipal) {
-                                    console.log('✅ Auto-seleccionando dirección principal:', direccionPrincipal);
-                                    setData('direccion_cliente_id', direccionPrincipal.id);
-                                } else if (direccionesActivas.length === 1) {
-                                    // Prioridad 2: Si solo hay una, seleccionarla
-                                    const unica = direccionesActivas[0];
-                                    console.log('✅ Auto-seleccionando única dirección:', unica);
-                                    setData('direccion_cliente_id', unica.id);
-                                }
-                            }
-                        } else {
-                            setDireccionesDisponibles([]);
-                        }
-                    }
-                } catch (error) {
-                    console.error('❌ Error cargando direcciones:', error);
-                    setDireccionesDisponibles([]);
-                } finally {
-                    setCargandoDirecciones(false);
-                }
-            };
-            cargarDirecciones();
-        } else {
-            setDireccionesDisponibles([]);
-        }
-    }, [data.cliente_id]);
-
-    // ✅ NUEVO: Cargar datos completos del cliente cuando se selecciona
-    useEffect(() => {
-        // ✅ VALIDACIÓN: Solo hacer fetch si cliente_id es un número válido
-        if (data.cliente_id && data.cliente_id !== 0 && typeof data.cliente_id === 'number') {
-            const cargarClienteCompleto = async () => {
+            const cargarClienteYDirecciones = async () => {
                 try {
                     const response = await fetch(`/api/clientes/${data.cliente_id}`, {
                         headers: {
@@ -569,67 +507,50 @@ export default function VentaForm() {
                     if (response.ok) {
                         const result = await response.json();
                         if (result.success && result.data) {
+                            // ✅ Guardar cliente completo
                             setClienteSeleccionado(result.data);
+
+                            // ✅ Procesar direcciones
+                            if (result.data?.direcciones) {
+                                const direccionesActivas = result.data.direcciones.filter((d: any) => d.activa !== false);
+                                console.log('📍 [DIRECCIONES CARGADAS] Estructura completa:', direccionesActivas);
+                                setDireccionesDisponibles(direccionesActivas);
+
+                                // ✅ Auto-seleccionar dirección si no hay una seleccionada
+                                if (!data.direccion_cliente_id && direccionesActivas.length > 0) {
+                                    const direccionPrincipal = direccionesActivas.find((d: any) => d.es_principal);
+                                    if (direccionPrincipal) {
+                                        console.log('✅ Auto-seleccionando dirección principal:', direccionPrincipal);
+                                        setData('direccion_cliente_id', direccionPrincipal.id);
+                                    } else if (direccionesActivas.length === 1) {
+                                        const unica = direccionesActivas[0];
+                                        console.log('✅ Auto-seleccionando única dirección:', unica);
+                                        setData('direccion_cliente_id', unica.id);
+                                    }
+                                }
+                            } else {
+                                setDireccionesDisponibles([]);
+                            }
                         }
                     }
                 } catch (error) {
-                    console.error('Error cargando cliente:', error);
+                    console.error('❌ Error cargando cliente y direcciones:', error);
+                    setDireccionesDisponibles([]);
+                } finally {
+                    setCargandoDirecciones(false);
                 }
             };
-            cargarClienteCompleto();
+            cargarClienteYDirecciones();
+        } else {
+            setDireccionesDisponibles([]);
+            setCargandoDirecciones(false);
         }
     }, [data.cliente_id]);
 
-    // ✅ NUEVO: Buscar y seleccionar automáticamente cliente GENERAL al cargar el componente
-    useEffect(() => {
-        // console.group('🔍 [useEffect] Buscando cliente GENERAL automáticamente');
-
-        // Solo al cargar por primera vez y sin edición
-        if (isEditing) {
-            console.log('❌ Modo edición activo - Saltando selección automática');
-            console.groupEnd();
-            return;
-        }
-
-        if (data.cliente_id && data.cliente_id !== 0) {
-            console.log('❌ Cliente ya seleccionado (ID:', data.cliente_id, ') - No cambiar');
-            console.groupEnd();
-            return;
-        }
-
-        if (!clientesSeguro || clientesSeguro.length === 0) {
-            console.log('❌ No hay clientes disponibles', { clientesSeguro });
-            console.groupEnd();
-            return;
-        }
-
-        /* console.log('📋 Clientes disponibles:', {
-            cantidad: clientesSeguro.length,
-            clientes: clientesSeguro.map((c: Cliente) => ({
-                id: c.id,
-                nombre: c.nombre,
-                codigo_cliente: c.codigo_cliente
-            }))
-        }); */
-
-        // Buscar cliente con código_cliente === 'GENERAL'
-        const clienteGeneral = clientesSeguro.find((c: Cliente) => c.codigo_cliente === 'GENERAL');
-
-        if (clienteGeneral) {
-            setData('cliente_id', clienteGeneral.id);
-            setClienteValue(clienteGeneral.id);
-            setClienteDisplay(clienteGeneral.nombre + (clienteGeneral.nit ? ` (${clienteGeneral.nit})` : ''));
-            setClienteSeleccionado(clienteGeneral);
-        } else {
-            console.log('❌ Cliente GENERAL NO ENCONTRADO en la lista de clientes');
-            console.log(
-                '   Códigos disponibles:',
-                clientesSeguro.map((c: Cliente) => c.codigo_cliente),
-            );
-        }
-
-        console.groupEnd();
-    }, [isEditing, clientesSeguro.length]); // Ejecutar cuando clientes se cargan o cambia edición
+    // ✅ REMOVIDO (2026-08-24): Búsqueda automática de cliente GENERAL
+    // Optimización: Los clientes se buscan lazy via /api/ventas/search/clientes
+    // El usuario debe buscar y seleccionar el cliente manualmente
+    // Esto reduce tamaño inicial de página en ~10-20 KB
 
     // ✅ NUEVO: Sincronizar política de pago cuando se selecciona tipo de pago CREDITO
     useEffect(() => {

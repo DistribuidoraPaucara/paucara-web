@@ -571,7 +571,7 @@ class VentaController extends Controller
         $tiposPrecio = TipoPrecio::activos()->select('id', 'codigo', 'nombre')->get();
 
         return Inertia::render('ventas/create', [
-            'clientes'             => Cliente::activos()->select('id', 'nombre', 'nit', 'codigo_cliente', 'email', 'telefono')->get(), // ✅ AGREGADO: codigo_cliente para búsqueda automática de GENERAL
+            'clientes'             => collect([]), // ✅ OPTIMIZADO: Clientes se buscan lazy via /api/ventas/search/clientes
             'productos'            => $productos,                                                                                      // ✅ MODIFICADO: Solo productos con stock en almacén
             'almacenes'            => Almacen::activos()->select('id', 'nombre')->get(),
             'monedas'              => Moneda::activos()->select('id', 'codigo', 'nombre', 'simbolo')->get(),
