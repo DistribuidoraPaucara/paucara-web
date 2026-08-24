@@ -479,17 +479,18 @@ class VentaController extends Controller
             }
 
             // Web Response - Inertia para navegador
+            // ✅ OPTIMIZADO (2026-08-24): Lazy-load clientes y usuarios via API
+            // Reducir tamaño inicial de la petición principal
             return Inertia::render('ventas/Index', [
                 'ventas'           => $ventasPaginadas,
                 'filtros'          => $filtros,
                 'estadisticas'     => null, // TODO: Implementar estadísticas completas cuando sea necesario
                 'datosParaFiltros' => [
-                    'clientes'          => Cliente::activos()->select('id', 'nombre', 'nit')->get(),
+                    'clientes'          => collect([]), // ✅ REMOVIDO: Se cargan via /api/ventas/search/clientes
                     'estados_documento' => EstadoDocumento::select('id', 'nombre', 'codigo', 'color', 'icono')->get(),
-                    'usuarios'          => User::select('id', 'name')->orderBy('name')->get(),
+                    'usuarios'          => collect([]), // ✅ REMOVIDO: Se cargan via /api/ventas/search/usuarios
                     'monedas'           => Moneda::activos()->select('id', 'codigo', 'nombre')->get(),
-                    'tipos_pago'        => TipoPago::activos()->select('id', 'nombre')->get(), // ✅ NUEVO: Tipos de pago
-                                                                                               // ✅ NUEVO (2026-03-01): Preventistas (usuarios con rol preventista)
+                    'tipos_pago'        => TipoPago::activos()->select('id', 'nombre')->get(),
                     'preventistas'      => User::role('preventista')->select('id', 'name')->orderBy('name')->get(),
                 ],
             ]);
@@ -2979,6 +2980,101 @@ class VentaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener la lista de choferes',
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Búsqueda en tiempo real de clientes
+     * GET /api/ventas/search/clientes?q=texto
+     * Busca por nombre, NIT o código cliente
+     */
+    public function searchClientes(Request $request): JsonResponse
+    {
+        try {
+            $q = $request->input('q', '');
+            $limit = $request->input('limit', 20);
+
+            if (strlen($q) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
+            $clientes = Cliente::where('activo', true)
+                ->where(function ($query) use ($q) {
+                    $query->where('nombre', 'like', "%{$q}%")
+                        ->orWhere('nit', 'like', "%{$q}%")
+                        ->orWhere('codigo_cliente', 'like', "%{$q}%");
+                })
+                ->select('id', 'nombre', 'nit', 'codigo_cliente')
+                ->limit($limit)
+                ->orderBy('nombre')
+                ->get()
+                ->map(fn($c) => [
+                    'id' => $c->id,
+                    'name' => "{$c->nombre} (NIT: {$c->nit})",
+                    'label' => $c->nombre,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $clientes,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en búsqueda de clientes', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar clientes',
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Búsqueda en tiempo real de usuarios
+     * GET /api/ventas/search/usuarios?q=texto
+     * Busca por nombre
+     */
+    public function searchUsuarios(Request $request): JsonResponse
+    {
+        try {
+            $q = $request->input('q', '');
+            $limit = $request->input('limit', 20);
+
+            if (strlen($q) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
+            $usuarios = User::where('name', 'like', "%{$q}%")
+                ->select('id', 'name')
+                ->limit($limit)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'label' => $u->name,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $usuarios,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error en búsqueda de usuarios', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar usuarios',
             ], 500);
         }
     }

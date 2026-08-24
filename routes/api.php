@@ -1049,6 +1049,14 @@ Route::middleware(['auth:sanctum', 'platform'])->group(function () {
 
     // ✅ LOGÍSTICA: Seguimiento de Ventas y Entregas
     Route::prefix('ventas')->group(function () {
+        // ✅ NUEVO: Búsqueda en tiempo real de clientes
+        Route::get('/search/clientes', [VentaController::class, 'searchClientes'])
+            ->name('ventas.search.clientes');
+
+        // ✅ NUEVO: Búsqueda en tiempo real de usuarios
+        Route::get('/search/usuarios', [VentaController::class, 'searchUsuarios'])
+            ->name('ventas.search.usuarios');
+
         // ✅ NUEVO: Obtener lista de impresoras disponibles
         Route::get('/impresoras/disponibles', [\App\Http\Controllers\ReporteVentasController::class, 'obtenerImpresoras'])
             ->name('impresoras.disponibles');
