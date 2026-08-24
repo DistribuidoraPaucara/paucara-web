@@ -2995,7 +2995,13 @@ class VentaController extends Controller
             $q = $request->input('q', '');
             $limit = $request->input('limit', 20);
 
+            Log::info('🔍 [searchClientes] Iniciando búsqueda', [
+                'query' => $q,
+                'limit' => $limit,
+            ]);
+
             if (strlen($q) < 2) {
+                Log::info('⚠️ [searchClientes] Query muy corta', ['length' => strlen($q)]);
                 return response()->json([
                     'success' => true,
                     'data' => [],
@@ -3003,34 +3009,48 @@ class VentaController extends Controller
             }
 
             // ✅ CASE-INSENSITIVE: Usar LOWER() para garantizar búsqueda sin importar mayúsculas/minúsculas
+            $query = strtolower($q);
+            Log::info('📝 [searchClientes] Query lowercase:', ['query' => $query]);
+
             $clientes = Cliente::where('activo', true)
-                ->where(function ($query) use ($q) {
-                    $query->whereRaw('LOWER(nombre) LIKE ?', ["%".strtolower($q)."%"])
-                        ->orWhereRaw('LOWER(nit) LIKE ?', ["%".strtolower($q)."%"])
-                        ->orWhereRaw('LOWER(codigo_cliente) LIKE ?', ["%".strtolower($q)."%"]);
+                ->where(function ($queryBuilder) use ($query) {
+                    $queryBuilder->whereRaw('LOWER(nombre) LIKE ?', ["%{$query}%"])
+                        ->orWhereRaw('LOWER(nit) LIKE ?', ["%{$query}%"])
+                        ->orWhereRaw('LOWER(codigo_cliente) LIKE ?', ["%{$query}%"]);
                 })
                 ->select('id', 'nombre', 'nit', 'codigo_cliente')
                 ->limit($limit)
                 ->orderBy('nombre')
-                ->get()
-                ->map(fn($c) => [
-                    'id' => $c->id,
-                    'name' => "{$c->nombre} (NIT: {$c->nit})",
-                    'label' => $c->nombre,
-                ]);
+                ->get();
+
+            Log::info('📊 [searchClientes] Clientes encontrados', [
+                'count' => $clientes->count(),
+                'clientes' => $clientes->toArray(),
+            ]);
+
+            $resultado = $clientes->map(fn($c) => [
+                'id' => $c->id,
+                'name' => "{$c->nombre} (NIT: {$c->nit})",
+                'label' => $c->nombre,
+            ]);
+
+            Log::info('✅ [searchClientes] Resultado final', [
+                'data' => $resultado->toArray(),
+            ]);
 
             return response()->json([
                 'success' => true,
-                'data' => $clientes,
+                'data' => $resultado,
             ]);
         } catch (\Exception $e) {
             Log::error('❌ Error en búsqueda de clientes', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al buscar clientes',
+                'message' => 'Error al buscar clientes: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3046,7 +3066,13 @@ class VentaController extends Controller
             $q = $request->input('q', '');
             $limit = $request->input('limit', 20);
 
+            Log::info('🔍 [searchUsuarios] Iniciando búsqueda', [
+                'query' => $q,
+                'limit' => $limit,
+            ]);
+
             if (strlen($q) < 2) {
+                Log::info('⚠️ [searchUsuarios] Query muy corta', ['length' => strlen($q)]);
                 return response()->json([
                     'success' => true,
                     'data' => [],
@@ -3054,29 +3080,43 @@ class VentaController extends Controller
             }
 
             // ✅ CASE-INSENSITIVE: Usar LOWER() para garantizar búsqueda sin importar mayúsculas/minúsculas
-            $usuarios = User::whereRaw('LOWER(name) LIKE ?', ["%".strtolower($q)."%"])
+            $query = strtolower($q);
+            Log::info('📝 [searchUsuarios] Query lowercase:', ['query' => $query]);
+
+            $usuarios = User::whereRaw('LOWER(name) LIKE ?', ["%{$query}%"])
                 ->select('id', 'name')
                 ->limit($limit)
                 ->orderBy('name')
-                ->get()
-                ->map(fn($u) => [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'label' => $u->name,
-                ]);
+                ->get();
+
+            Log::info('📊 [searchUsuarios] Usuarios encontrados', [
+                'count' => $usuarios->count(),
+                'usuarios' => $usuarios->toArray(),
+            ]);
+
+            $resultado = $usuarios->map(fn($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'label' => $u->name,
+            ]);
+
+            Log::info('✅ [searchUsuarios] Resultado final', [
+                'data' => $resultado->toArray(),
+            ]);
 
             return response()->json([
                 'success' => true,
-                'data' => $usuarios,
+                'data' => $resultado,
             ]);
         } catch (\Exception $e) {
             Log::error('❌ Error en búsqueda de usuarios', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al buscar usuarios',
+                'message' => 'Error al buscar usuarios: ' . $e->getMessage(),
             ], 500);
         }
     }

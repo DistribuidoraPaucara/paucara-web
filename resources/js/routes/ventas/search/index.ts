@@ -79,7 +79,7 @@ clientes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     clientes.form = clientesForm
 /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
 export const usuarios = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ usuarios.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
 usuarios.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ usuarios.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
 usuarios.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ usuarios.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
 usuarios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ usuarios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
     const usuariosForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ usuarios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
         usuariosForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ usuarios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\VentaController::usuarios
- * @see app/Http/Controllers/VentaController.php:3042
+ * @see app/Http/Controllers/VentaController.php:3063
  * @route '/api/ventas/search/usuarios'
  */
         usuariosForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

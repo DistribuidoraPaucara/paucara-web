@@ -105,21 +105,30 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
     // ✅ NUEVO: Buscar clientes en tiempo real
     const handleSearchClientes = async (query: string) => {
+        console.log('🔍 [handleSearchClientes] Query:', query);
         setClienteSearch(query);
         if (query.length < 2) {
+            console.log('⚠️ [handleSearchClientes] Query muy corta (<2 caracteres)');
             setClientesBusqueda([]);
             return;
         }
 
         setClienteSearching(true);
         try {
-            const response = await fetch(`/api/ventas/search/clientes?q=${encodeURIComponent(query)}&limit=20`);
+            const url = `/api/ventas/search/clientes?q=${encodeURIComponent(query)}&limit=20`;
+            console.log('📡 [handleSearchClientes] Fetching URL:', url);
+            const response = await fetch(url);
+            console.log('📥 [handleSearchClientes] Response status:', response.status);
             const data = await response.json();
+            console.log('✅ [handleSearchClientes] Data recibida:', data);
             if (data.success) {
+                console.log('📋 [handleSearchClientes] Clientes encontrados:', data.data);
                 setClientesBusqueda(data.data);
+            } else {
+                console.error('❌ [handleSearchClientes] Error en respuesta:', data.message);
             }
         } catch (error) {
-            console.error('Error buscando clientes:', error);
+            console.error('💥 [handleSearchClientes] Error buscando clientes:', error);
         } finally {
             setClienteSearching(false);
         }
@@ -127,21 +136,30 @@ export default function FiltrosVentasComponent({ filtros: filtrosIniciales, dato
 
     // ✅ NUEVO: Buscar usuarios en tiempo real
     const handleSearchUsuarios = async (query: string) => {
+        console.log('🔍 [handleSearchUsuarios] Query:', query);
         setUsuarioSearch(query);
         if (query.length < 2) {
+            console.log('⚠️ [handleSearchUsuarios] Query muy corta (<2 caracteres)');
             setUsuariosBusqueda([]);
             return;
         }
 
         setUsuarioSearching(true);
         try {
-            const response = await fetch(`/api/ventas/search/usuarios?q=${encodeURIComponent(query)}&limit=20`);
+            const url = `/api/ventas/search/usuarios?q=${encodeURIComponent(query)}&limit=20`;
+            console.log('📡 [handleSearchUsuarios] Fetching URL:', url);
+            const response = await fetch(url);
+            console.log('📥 [handleSearchUsuarios] Response status:', response.status);
             const data = await response.json();
+            console.log('✅ [handleSearchUsuarios] Data recibida:', data);
             if (data.success) {
+                console.log('📋 [handleSearchUsuarios] Usuarios encontrados:', data.data);
                 setUsuariosBusqueda(data.data);
+            } else {
+                console.error('❌ [handleSearchUsuarios] Error en respuesta:', data.message);
             }
         } catch (error) {
-            console.error('Error buscando usuarios:', error);
+            console.error('💥 [handleSearchUsuarios] Error buscando usuarios:', error);
         } finally {
             setUsuarioSearching(false);
         }
