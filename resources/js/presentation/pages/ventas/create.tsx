@@ -2118,17 +2118,19 @@ export default function VentaForm() {
                         ? direccionesDisponibles
                               .filter((d) => d.id === data.direccion_cliente_id)
                               .map((dir) => {
-                                  // ✅ Usar clienteRaw (datos frescos de búsqueda) o clienteSeleccionado (fallback)
-                                  const cliente = clienteRaw || clienteSeleccionado;
+                                  // ✅ clienteRaw viene de SearchOption (tiene label, no nombre)
+                                  // ✅ clienteSeleccionado viene del fetch de API (tiene nombre)
+                                  const clienteNombre = clienteRaw?.label || clienteSeleccionado?.nombre || 'Cliente desconocido';
+                                  const clienteTelefono = clienteRaw?.['cliente_telefono'] || clienteSeleccionado?.telefono || undefined;
+                                  const clienteFoto = clienteRaw?.['cliente_foto'] || clienteSeleccionado?.foto_perfil;
+
                                   return {
                                       id: dir.id,
                                       venta_id: 0,
                                       venta_numero: 'Nueva',
-                                      cliente_nombre: cliente?.nombre || 'Cliente desconocido',
-                                      cliente_telefono: cliente?.telefono || undefined,
-                                      cliente_foto: cliente?.foto_perfil
-                                          ? `/storage/${cliente.foto_perfil}`
-                                          : undefined,
+                                      cliente_nombre: clienteNombre,
+                                      cliente_telefono: clienteTelefono,
+                                      cliente_foto: clienteFoto ? `/storage/${clienteFoto}` : undefined,
                                       direccion: dir.direccion || 'Sin dirección',
                                       observaciones: (dir as any).observaciones,
                                       latitud: (dir as any).latitud,
