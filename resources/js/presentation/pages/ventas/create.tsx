@@ -357,7 +357,32 @@ export default function VentaForm() {
         }
     }, [isFarmacia, montoEfectivo, montoTransferencia, data.monto_pagado_inicial]);
 
-    useEffect(() => {}, [data.requiere_envio, data.direccion_cliente_id]);
+    // ✅ NUEVO (2026-08-26): Auto-seleccionar CONTRA_ENTREGA cuando requiere_envio = true
+    const tipoPagoContraEntregaId = useMemo(() => {
+        const contraEntrega = tiposPagoSeguro.find((t) => t.codigo === 'CONTRA_ENTREGA');
+        return contraEntrega?.id || null;
+    }, [tiposPagoSeguro]);
+
+    const tipoPagoAnteriorRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (!tipoPagoContraEntregaId) {
+            console.warn('⚠️ Tipo de pago CONTRA_ENTREGA no encontrado');
+            return;
+        }
+
+        if (data.requiere_envio) {
+            // Guardar el tipo de pago anterior para poder revertir
+            tipoPagoAnteriorRef.current = data.tipo_pago_id;
+            // Auto-seleccionar CONTRA_ENTREGA
+            setData('tipo_pago_id', tipoPagoContraEntregaId);
+            console.log('✅ [requiere_envio=true] Auto-seleccionando CONTRA_ENTREGA');
+        } else if (tipoPagoAnteriorRef.current !== null) {
+            // Si desactiva requiere_envio, revertir al tipo de pago anterior
+            setData('tipo_pago_id', tipoPagoAnteriorRef.current);
+            console.log('✅ [requiere_envio=false] Revertiendo a tipo de pago anterior');
+        }
+    }, [data.requiere_envio, tipoPagoContraEntregaId]);
 
     // ✅ NUEVO: Guardar automáticamente en localStorage con debounce
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
