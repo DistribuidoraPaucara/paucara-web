@@ -589,11 +589,7 @@ class VentaController extends Controller
             'almacen_id_empresa'   => $almacenIdEmpresa,                                                               // ✅ NUEVO: Almacén de la empresa
             'es_farmacia'          => (bool) $empresaPrincipal?->es_farmacia,                                          // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
             'logistica_envios'     => (bool) $empresaPrincipal?->logistica_envios,                                     // ✅ NUEVO: Indicador para mostrar/ocultar logística de envíos
-                                                                                                                       // ✅ NUEVO (2026-03-03): Direcciones de clientes con observaciones para mostrar en formulario
-            'direcciones_clientes' => \App\Models\DireccionCliente::where('activa', true)
-                ->with('cliente:id,nombre')
-                ->select('id', 'cliente_id', 'direccion', 'observaciones', 'localidad_id', 'latitud', 'longitud', 'es_principal')
-                ->get(),
+            // ✅ REMOVIDO (2026-08-26): direcciones_clientes innecesarias - Se cargan bajo demanda desde /api/clientes/buscar
         ]);
     }
 
