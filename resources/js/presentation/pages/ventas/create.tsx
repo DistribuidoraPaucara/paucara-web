@@ -2114,26 +2114,30 @@ export default function VentaForm() {
                 isOpen={showMapaUbicacion}
                 onClose={() => setShowMapaUbicacion(false)}
                 ubicaciones={
-                    data.direccion_cliente_id && clienteSeleccionado
+                    data.direccion_cliente_id && (clienteRaw || clienteSeleccionado)
                         ? direccionesDisponibles
                               .filter((d) => d.id === data.direccion_cliente_id)
-                              .map((dir) => ({
-                                  id: dir.id,
-                                  venta_id: 0, // No existe venta aún
-                                  venta_numero: 'Nueva', // Venta en creación
-                                  cliente_nombre: clienteSeleccionado.nombre || 'Cliente desconocido',
-                                  cliente_telefono: clienteSeleccionado.telefono,
-                                  cliente_foto: clienteSeleccionado.foto_perfil
-                                      ? `/storage/${clienteSeleccionado.foto_perfil}`
-                                      : undefined,
-                                  direccion: dir.direccion || 'Sin dirección',
-                                  observaciones: dir.observaciones,
-                                  latitud: (dir as any).latitud,
-                                  longitud: (dir as any).longitud,
-                                  estado: undefined,
-                                  tipo_entrega: 'COMPLETA' as const,
-                                  confirmacion_entrega: undefined,
-                              }))
+                              .map((dir) => {
+                                  // ✅ Usar clienteRaw (datos frescos de búsqueda) o clienteSeleccionado (fallback)
+                                  const cliente = clienteRaw || clienteSeleccionado;
+                                  return {
+                                      id: dir.id,
+                                      venta_id: 0,
+                                      venta_numero: 'Nueva',
+                                      cliente_nombre: cliente?.nombre || 'Cliente desconocido',
+                                      cliente_telefono: cliente?.telefono || undefined,
+                                      cliente_foto: cliente?.foto_perfil
+                                          ? `/storage/${cliente.foto_perfil}`
+                                          : undefined,
+                                      direccion: dir.direccion || 'Sin dirección',
+                                      observaciones: (dir as any).observaciones,
+                                      latitud: (dir as any).latitud,
+                                      longitud: (dir as any).longitud,
+                                      estado: undefined,
+                                      tipo_entrega: 'COMPLETA' as const,
+                                      confirmacion_entrega: undefined,
+                                  };
+                              })
                         : []
                 }
                 titulo={`Ubicación de Entrega - Venta Nueva`}
