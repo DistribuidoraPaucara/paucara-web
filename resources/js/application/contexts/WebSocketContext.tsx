@@ -71,7 +71,7 @@ export function WebSocketProvider({
       setError(null);
 
       // 🔍 DEBUG: Verificar dónde viene el token
-      // console.log('🔍 [WebSocketContext Debug] Token recibido como parámetro:', token ? `${token.substring(0, 20)}...` : 'undefined');
+      console.log('🔍 [WebSocketContext Debug] Token recibido como parámetro:', token ? `${token.substring(0, 20)}...` : 'undefined');
 
       // Obtener el token del sessionStorage si no se proporciona
       const authToken = token || sessionStorage.getItem('auth_token');
@@ -80,8 +80,8 @@ export function WebSocketProvider({
         throw new Error('No authentication token found. Por favor inicia sesión nuevamente.');
       }
 
-      // console.log('✅ [WebSocketContext] Token seleccionado:', `${authToken.substring(0, 20)}...`);
-      // console.log('✅ [WebSocketContext] Usando token de:', token ? 'parámetro directo' : 'localStorage');
+      console.log('✅ [WebSocketContext] Token seleccionado:', `${authToken.substring(0, 20)}...`);
+      console.log('✅ [WebSocketContext] Usando token de:', token ? 'parámetro directo' : 'sessionStorage');
 
       // ✅ CORREGIDO (2026-06-29): NO pasar url explícitamente si es fallback
       // Dejar que websocket.service.ts use el orden correcto de prioridad:
@@ -145,11 +145,11 @@ export function WebSocketProvider({
       return;
     }
 
-    // console.log('🔍 [WebSocketContext] Token disponible:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
-    // console.log('🔍 [WebSocketContext] User ID:', userId);
+    console.log('🔍 [WebSocketContext] Token disponible:', sanctumToken ? `${sanctumToken.substring(0, 20)}...` : 'null');
+    console.log('🔍 [WebSocketContext] User ID:', userId);
 
     if (sanctumToken && !connectionInitializedRef.current) {
-      // console.log('🚀 Iniciando conexión automática del WebSocket Context con token...');
+      console.log('🚀 Iniciando conexión automática del WebSocket Context con token...');
       connect(sanctumToken, userId);
     }
   }, [autoConnect, connect, sanctumToken, userId]);

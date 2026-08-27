@@ -70,6 +70,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // ✅ NUEVO: Verificar acceso a plataforma web
+        if (isset($user->can_access_web) && !$user->can_access_web) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'No tienes acceso a la plataforma web. Contacta al administrador.',
+            ]);
+        }
+
         // 2. Si es un cliente, verificar que el Cliente también esté activo
         if ($user->cliente) {
             if (!$user->cliente->activo) {

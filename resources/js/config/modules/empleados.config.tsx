@@ -263,6 +263,34 @@ export const empleadosConfig: ModuleConfig<Empleado, EmpleadoFormData> = {
             section: 'Acceso al Sistema',
             description: 'Habilitar para crear un usuario de sistema con roles y permisos',
         },
+        // ✅ NUEVO: Control de acceso
+        {
+            key: 'activo',
+            label: '🔒 Bloquear/Desbloquear Usuario',
+            type: 'boolean',
+            colSpan: 1,
+            section: 'Acceso al Sistema',
+            description: 'Desactiva completamente el acceso a la plataforma',
+            visible: (data) => !!data.puede_acceder_sistema,
+        },
+        {
+            key: 'can_access_web',
+            label: '🌐 Acceso Web',
+            type: 'boolean',
+            colSpan: 1,
+            section: 'Acceso al Sistema',
+            description: 'Permitir acceso desde navegador web',
+            visible: (data) => !!data.puede_acceder_sistema,
+        },
+        {
+            key: 'can_access_mobile',
+            label: '📱 Acceso Mobile',
+            type: 'boolean',
+            colSpan: 1,
+            section: 'Acceso al Sistema',
+            description: 'Permitir acceso desde aplicación mobile',
+            visible: (data) => !!data.puede_acceder_sistema,
+        },
         // Componente integrado de Acceso al Sistema (roles, permisos y credenciales)
         {
             key: 'acceso_sistema_config',

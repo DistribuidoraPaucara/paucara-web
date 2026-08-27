@@ -43,6 +43,13 @@ class AuthController extends Controller
             ]);
         }
 
+        // ✅ NUEVO: Verificar acceso a plataforma web
+        if (! $user->can_access_web) {
+            throw ValidationException::withMessages([
+                'login' => ['No tienes acceso a la plataforma web. Contacta al administrador.'],
+            ]);
+        }
+
         // ✅ NUEVO: Verificar acceso a plataforma móvil
         if (! $user->can_access_mobile) {
             throw ValidationException::withMessages([

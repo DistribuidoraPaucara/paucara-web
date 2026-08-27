@@ -12,6 +12,9 @@ export interface Empleado extends BaseEntity {
     fecha_ingreso: string;
     estado: string;
     puede_acceder_sistema: boolean;
+    activo?: boolean; // ✅ NUEVO: Bloquear/desbloquear acceso
+    can_access_web?: boolean; // ✅ NUEVO: Bloquear/desbloquear acceso web
+    can_access_mobile?: boolean; // ✅ NUEVO: Bloquear/desbloquear acceso mobile
     created_at: string;
     updated_at: string;
 
@@ -27,6 +30,9 @@ export interface Empleado extends BaseEntity {
         name: string;
         email: string;
         usernick?: string | null;
+        activo?: boolean;
+        can_access_web?: boolean;
+        can_access_mobile?: boolean;
         roles: Array<{
             id: Id;
             name: string;
@@ -54,6 +60,11 @@ export interface EmpleadoFormData extends BaseFormData {
     usernick?: string | null;
     email?: string | null;
     roles?: (string | number)[];
+
+    // Control de acceso ✅ NUEVO
+    activo?: boolean;
+    can_access_web?: boolean;
+    can_access_mobile?: boolean;
 
     // Cambio de contraseña (solo para edición)
     password?: string | null;

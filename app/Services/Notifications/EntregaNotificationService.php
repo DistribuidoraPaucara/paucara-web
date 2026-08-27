@@ -799,6 +799,7 @@ class EntregaNotificationService
             $tipoConfirmacion = $confirmacion->tipo_confirmacion;
             $clienteNombre = $venta->cliente?->nombre ?? 'Cliente';
             $ventaNumero = $venta->numero;
+            $choferNombre = $entrega->chofer?->name ?? 'Chofer';
 
             $mensaje = match ($tipoConfirmacion) {
                 'COMPLETA' => "✅ Venta {$ventaNumero} entregada a {$clienteNombre}",
@@ -824,13 +825,35 @@ class EntregaNotificationService
                 'entrega_id' => $entrega->id,
             ]);
 
-            // Enviar WebSocket
-            $this->wsService->notifyVentaConfirmadaEntrega($venta, $entrega, $confirmacion);
+            // ✅ NUEVO: Enviar WebSocket a ROLES (admin, preventista, chofer) + usuario creador
+            // Estructura de datos para todas las notificaciones
+            $notificationData = [
+                'venta_id' => $venta->id,
+                'venta_numero' => $ventaNumero,
+                'entrega_id' => $entrega->id,
+                'entrega_numero' => $entrega->numero_entrega,
+                'cliente_nombre' => $clienteNombre,
+                'cliente_id' => $venta->cliente_id,
+                'tipo_confirmacion' => $tipoConfirmacion,
+                'chofer_nombre' => $choferNombre,
+                'total' => $venta->total,
+                'timestamp' => now()->toIso8601String(),
+            ];
 
-            Log::info('✅ EntregaNotificationService::notifyVentaConfirmadaEntrega enviado', [
+            // Enviar a través del método notifyMultiChannel (más eficiente)
+            $this->wsService->notifyMultiChannel(
+                'venta.confirmada.entrega',
+                $notificationData,
+                userIds: [$usuario->id], // Notificar al creador (chofer/usuario que confirmó)
+                roles: ['admin', 'preventista', 'chofer'] // ✅ NUEVO: Notificar a estos roles
+            );
+
+            Log::info('✅ EntregaNotificationService::notifyVentaConfirmadaEntrega enviado a roles', [
                 'entrega_id' => $entrega->id,
                 'venta_id' => $venta->id,
                 'tipo_confirmacion' => $tipoConfirmacion,
+                'roles' => ['admin', 'preventista', 'chofer'],
+                'user_id' => $usuario->id,
             ]);
 
             return true;

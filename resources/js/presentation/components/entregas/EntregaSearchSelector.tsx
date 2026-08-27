@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, X, Loader } from 'lucide-react';
+import { Loader, Search, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface Entrega {
     id: number;
@@ -18,7 +18,7 @@ interface EntregaSearchSelectorProps {
 export default function EntregaSearchSelector({
     value,
     onValueChange,
-    placeholder = 'Busca por ID, chofer, vehículo, estado...'
+    placeholder = 'Busca por ID, chofer, vehículo, estado...',
 }: EntregaSearchSelectorProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [entregas, setEntregas] = useState<Entrega[]>([]);
@@ -34,23 +34,32 @@ export default function EntregaSearchSelector({
 
         setIsLoading(true);
         try {
-            const response = await fetch(
-                `/logistica/entregas/search?q=${encodeURIComponent(searchTerm)}`,
-                {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    }
-                }
-            );
+            const response = await fetch(`/logistica/entregas/search?q=${encodeURIComponent(searchTerm)}`, {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
 
             if (!response.ok) {
                 throw new Error('Error en búsqueda de entregas');
             }
 
             const data = await response.json();
-            setEntregas(data.data || []);
-            setIsOpen(true);
+            const resultados = data.data || [];
+            setEntregas(resultados);
+
+            // ✅ NUEVO (2026-08-26): Auto-seleccionar si hay un único resultado
+            if (resultados.length === 1) {
+                console.log('✅ [EntregaSearchSelector] Auto-seleccionando único resultado:', resultados[0]);
+                setSelectedEntrega(resultados[0]);
+                onValueChange(resultados[0].id);
+                setSearchTerm('');
+                setEntregas([]);
+                setIsOpen(false);
+            } else if (resultados.length > 1) {
+                setIsOpen(true);
+            }
         } catch (error) {
             console.error('Error buscando entregas:', error);
             setEntregas([]);
@@ -77,68 +86,54 @@ export default function EntregaSearchSelector({
     return (
         <div className="space-y-3">
             {/* Buscador */}
-            <div className="flex gap-2">
+            <div className="flex gap-1">
                 <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && buscarEntregas()}
                     placeholder={placeholder}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:outline-none dark:border-gray-600 dark:bg-zinc-800 dark:text-white dark:placeholder-gray-400"
                 />
                 <button
                     onClick={buscarEntregas}
                     disabled={isLoading}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg flex items-center gap-2 transition-colors"
+                    className="flex items-center gap-2 rounded-lg bg-green-600 px-2 py-2 text-white transition-colors hover:bg-green-700 disabled:bg-green-400"
                 >
-                    {isLoading ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                        <Search className="w-4 h-4" />
-                    )}
-                    Buscar
+                    {isLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </button>
             </div>
 
             {/* Entrega seleccionada */}
             {selectedEntrega && (
-                <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-900/20">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium text-green-900 dark:text-green-200">
-                            #{selectedEntrega.numero_entrega}
+                        <span className="font-small text-xs text-green-900 dark:text-green-200">
+                            #{selectedEntrega.id} - {selectedEntrega.estado || 'N/A'}
                         </span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
-                            {selectedEntrega.estado || 'N/A'}
-                        </span>
-                        <span className="text-sm text-green-700 dark:text-green-300">
+                        <span className="text-xs text-green-700 dark:text-green-300">
                             {selectedEntrega.chofer?.name || 'Sin chofer'} / {selectedEntrega.vehiculo?.placa || 'Sin vehículo'}
                         </span>
                     </div>
-                    <button
-                        onClick={handleClear}
-                        className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                    >
-                        <X className="w-4 h-4" />
+                    <button onClick={handleClear} className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300">
+                        <X className="h-4 w-4" />
                     </button>
                 </div>
             )}
 
             {/* Resultados de búsqueda */}
             {isOpen && entregas.length > 0 && (
-                <div className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-300 bg-white dark:border-gray-600 dark:bg-zinc-800">
                     {entregas.map((entrega) => (
                         <button
                             key={entrega.id}
                             onClick={() => handleSelectEntrega(entrega)}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-zinc-700 border-b dark:border-gray-700 last:border-b-0 transition-colors flex items-center gap-2"
+                            className="flex w-full items-center gap-2 border-b px-2 py-2 text-left transition-colors last:border-b-0 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-zinc-700"
                         >
-                            <span className="font-medium text-gray-900 dark:text-white">
-                                #{entrega.numero_entrega}
+                            <span className="text-xs text-gray-900 dark:text-white">
+                                #{entrega.id} -{entrega.estado || 'N/A'}
                             </span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                                {entrega.estado || 'N/A'}
-                            </span>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
                                 {entrega.chofer?.name || 'Sin chofer'} / {entrega.vehiculo?.placa || 'Sin vehículo'}
                             </span>
                         </button>
@@ -148,7 +143,7 @@ export default function EntregaSearchSelector({
 
             {/* Sin resultados */}
             {isOpen && entregas.length === 0 && searchTerm && !isLoading && (
-                <div className="text-sm text-amber-600 dark:text-amber-400 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
                     ℹ️ No se encontraron entregas con esa búsqueda
                 </div>
             )}

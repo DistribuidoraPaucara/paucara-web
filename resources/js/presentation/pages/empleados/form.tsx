@@ -84,6 +84,11 @@ export default function EmpleadosForm({ empleado, extraData }: EmpleadosFormProp
         if (permisosDirectos.length > 0) {
             initialData.permissions = permisosDirectos;
         }
+
+        // ✅ NUEVO: Cargar campos de control de acceso
+        initialData.activo = (empleado as any)?.activo ?? true;
+        initialData.can_access_web = (empleado as any)?.can_access_web ?? true;
+        initialData.can_access_mobile = (empleado as any)?.can_access_mobile ?? false;
     }
 
     return (

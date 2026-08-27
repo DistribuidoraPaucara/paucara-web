@@ -25,9 +25,13 @@ import type { TipoDocumento } from '@/domain/entities/tipos-documento';
 import type { TipoPago } from '@/domain/entities/tipos-pago';
 import type { DetalleVentaFormData, EstadoDocumento, Moneda, Producto, Venta } from '@/domain/entities/ventas';
 
+import {
+    abrirPantallaPrestamoEnNuevaVentana,
+    calcularPrestamesParaVenta,
+    tieneProductosPrestables,
+} from '@/infrastructure/helpers/prestables.helper';
 import ventasService from '@/infrastructure/services/ventas.service';
 import { formatCurrencyMinimalDecimals } from '@/lib/utils';
-import { abrirPantallaPrestamoEnNuevaVentana, calcularPrestamesParaVenta, tieneProductosPrestables } from '@/infrastructure/helpers/prestables.helper';
 
 interface TipoPrecio {
     id: number;
@@ -1395,7 +1399,7 @@ export default function VentaForm() {
                                     clienteCodigo,
                                     ventaId,
                                     prestables,
-                                    ventaCompleta.data.direccion_cliente_id
+                                    ventaCompleta.data.direccion_cliente_id,
                                 );
                             }
                         }
@@ -1543,7 +1547,7 @@ export default function VentaForm() {
 
                 {/* Información básica */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 items-start">
+                    <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {/* Campo número oculto - se genera automáticamente */}
                         <input type="hidden" value={data.numero} onChange={(e) => setData('numero', e.target.value)} />
                         <div>
@@ -1654,12 +1658,12 @@ export default function VentaForm() {
                             <h3 className="text-md mb-2 font-medium text-gray-900 dark:text-white">🚚 Detalles de Envío</h3>
 
                             {/* Campos de envío */}
-                            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                            <div className="space-y-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {/* ✅ NUEVO: Selector de política de pago para envíos - Moderno */}
                                     {/* <div> */}
-                                        {/* <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">💳 Política de Pago</label> */}
-                                        {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
+                                    {/* <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">💳 Política de Pago</label> */}
+                                    {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
                                             <button
                                                 type="button"
                                                 onClick={() => setData('politica_pago', 'CONTRA_ENTREGA')}
@@ -1712,48 +1716,50 @@ export default function VentaForm() {
                                         const mostrar = logistica_envios;
                                         return (
                                             mostrar && (
-                                                <div className="grid grid-cols-1 gap-3 rounded-lg border border-green-200 bg-green-50 p-3 sm:grid-cols-1 dark:border-green-800 dark:bg-green-900/20">
-                                                    {/* ✅ NUEVO: Selector de Preventista */}
-                                                    <div className="dark:border-green-800">
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                            👤 Preventista (Opcional)
-                                                        </label>
-                                                        {cargandoPrevenstitas ? (
-                                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
-                                                                <span className="text-sm">Cargando preventistas...</span>
-                                                            </div>
-                                                        ) : preventistas.length > 0 ? (
-                                                            <select
-                                                                value={data.preventista_id || ''}
-                                                                onChange={(e) =>
-                                                                    setData('preventista_id', e.target.value ? Number(e.target.value) : null)
-                                                                }
-                                                                className="w-full rounded-md border border-gray-300 px-2 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                                                            >
-                                                                <option value="">-- Selecciona un preventista --</option>
-                                                                {preventistas.map((prev) => (
-                                                                    <option key={prev.id} value={prev.id}>
-                                                                        {prev.name}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        ) : (
-                                                            <p className="text-sm text-amber-600 dark:text-amber-400">
-                                                                ⚠️ No hay preventistas disponibles
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                <div>
+                                                    <div className="grid grid-cols-1 gap-3 p-2 sm:grid-cols-5">
+                                                        {/* ✅ NUEVO: Selector de Preventista */}
+                                                        <div className="sm:col-span-2 dark:border-green-800">
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                👤 Preventista (Opcional)
+                                                            </label>
+                                                            {cargandoPrevenstitas ? (
+                                                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+                                                                    <span className="text-sm">Cargando preventistas...</span>
+                                                                </div>
+                                                            ) : preventistas.length > 0 ? (
+                                                                <select
+                                                                    value={data.preventista_id || ''}
+                                                                    onChange={(e) =>
+                                                                        setData('preventista_id', e.target.value ? Number(e.target.value) : null)
+                                                                    }
+                                                                    className="w-full rounded-md border border-gray-300 px-2 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                                                >
+                                                                    <option value="">-- Selecciona un preventista --</option>
+                                                                    {preventistas.map((prev) => (
+                                                                        <option key={prev.id} value={prev.id}>
+                                                                            {prev.name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            ) : (
+                                                                <p className="text-sm text-amber-600 dark:text-amber-400">
+                                                                    ⚠️ No hay preventistas disponibles
+                                                                </p>
+                                                            )}
+                                                        </div>
 
-                                                    {/* ✅ NUEVO: Selector de Entrega con Búsqueda */}
-                                                    <div className="dark:border-green-800">
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                            🚚 Asignar a Entrega (Opcional)
-                                                        </label>
-                                                        <EntregaSearchSelector
-                                                            value={data.entrega_id}
-                                                            onValueChange={(value) => setData('entrega_id', value ? Number(value) : null)}
-                                                        />
+                                                        {/* ✅ NUEVO: Selector de Entrega con Búsqueda */}
+                                                        <div className="sm:col-span-3 dark:border-green-800">
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                🚚 Asignar a Entrega (Opcional)
+                                                            </label>
+                                                            <EntregaSearchSelector
+                                                                value={data.entrega_id}
+                                                                onValueChange={(value) => setData('entrega_id', value ? Number(value) : null)}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )
@@ -1762,10 +1768,10 @@ export default function VentaForm() {
 
                                     {/* ✅ NUEVO: Card de información del cliente */}
                                     {clienteSeleccionado && (
-                                        <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
+                                        <div className="space-y-4 p-2 border-l border-gray-200 dark:border-zinc-700">
                                             {/* Selector de direcciones */}
                                             <div className="dark:border-amber-800">
-                                                <div className="flex items-center justify-between mb-2">
+                                                <div className="mb-2 flex items-center justify-between">
                                                     <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                                                         📍 Direcciones Disponibles
                                                     </label>
@@ -1803,7 +1809,7 @@ export default function VentaForm() {
                                                                 {dir.observaciones ? (
                                                                     <>
                                                                         <div className="flex items-center justify-between">
-                                                                            <p className="text-sm font-semibold text-gray-900 dark:text-white uppercase">
+                                                                            <p className="text-sm font-semibold text-gray-900 uppercase dark:text-white">
                                                                                 🏷️ {dir.observaciones}
                                                                             </p>
                                                                             {dir.es_principal && (
@@ -1835,6 +1841,11 @@ export default function VentaForm() {
                                                                                     Principal
                                                                                 </span>
                                                                             )}
+                                                                            {data.direccion_cliente_id === dir.id && (
+                                                                                <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                                                    ✅ Seleccionada
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                         {dir.localidad && (
                                                                             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -1845,11 +1856,6 @@ export default function VentaForm() {
                                                                             </p>
                                                                         )}
                                                                     </>
-                                                                )}
-                                                                {data.direccion_cliente_id === dir.id && (
-                                                                    <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                                                                        ✅ Seleccionada
-                                                                    </div>
                                                                 )}
                                                             </button>
                                                         ))}
@@ -1863,8 +1869,6 @@ export default function VentaForm() {
                                             </div>
                                         </div>
                                     )}
-
-                                    
                                 </div>
                             </div>
                         </div>

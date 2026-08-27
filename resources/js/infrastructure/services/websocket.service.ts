@@ -41,12 +41,12 @@ class WebSocketService {
                         import.meta.env.VITE_WEBSOCKET_URL ||
                         fallbackUrl;
 
-        /* console.log('🔌 WebSocket URL (resolved):', baseUrl);
+        console.log('🔌 WebSocket URL (resolved):', baseUrl);
         console.log('🔍 Debug info:');
         console.log('  - config.url:', config.url);
         console.log('  - window.__APP_CONFIG__:', appConfig);
         console.log('  - appConfig.websocketUrl:', appConfig.websocketUrl);
-        console.log('  - import.meta.env.VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL); */
+        console.log('  - import.meta.env.VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL);
         if (!config.url && !appConfig.websocketUrl && !import.meta.env.VITE_WEBSOCKET_URL) {
           console.warn('⚠️  WARNING: No WebSocket URL configured, falling back to localhost:3001');
         }
@@ -65,7 +65,7 @@ class WebSocketService {
 
         // Connection events
         this.socket.on('connect', () => {
-          // console.log('✅ WebSocket conectado:', this.socket?.id);
+          console.log('✅ WebSocket conectado:', this.socket?.id);
           this.isConnected = true;
 
           // 🔐 Autenticar inmediatamente después de conectarse
@@ -89,7 +89,7 @@ class WebSocketService {
 
         // Auth success event
         this.socket.on('authenticated', (data) => {
-          // console.log('✅ Autenticación exitosa en WebSocket:', data);
+          console.log('✅ Autenticación exitosa en WebSocket:', data);
           this.emitLocal('websocket:authenticated', data);
         });
 

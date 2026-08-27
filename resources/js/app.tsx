@@ -142,15 +142,27 @@ createInertiaApp({
         if (userRoles.includes('admin') || userRoles.includes('Admin')) {
             channels.push('admin.proformas');
             channels.push('admin.entregas');
+            // ✅ NUEVO: Suscribirse a canal de rol para notificaciones multi-canal
+            channels.push('admins');
         }
         if (userRoles.includes('manager') || userRoles.includes('Manager')) {
             channels.push('admin.proformas'); // Managers ven proformas también
+            // ✅ NUEVO: Managers también reciben notificaciones como admins
+            channels.push('admins');
         }
         if (userRoles.includes('cajero') || userRoles.includes('Cajero')) {
             channels.push('admin.proformas'); // Cajeros ven proformas también
+            // ✅ NUEVO: Cajeros también reciben notificaciones como admins
+            channels.push('admins');
         }
         if (userRoles.includes('preventista') || userRoles.includes('Preventista')) {
             channels.push('preventista.proformas');
+            // ✅ NUEVO: Suscribirse a canal de rol para notificaciones multi-canal
+            channels.push('preventistas');
+        }
+        // ✅ NUEVO: Suscribirse a canal de choferes
+        if (userRoles.includes('chofer') || userRoles.includes('Chofer') || userRoles.includes('driver') || userRoles.includes('Driver')) {
+            channels.push('choferes');
         }
 
         root.render(

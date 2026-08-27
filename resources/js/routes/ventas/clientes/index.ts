@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
 export const get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ get.definition = {
 
 /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
 get.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ get.url = (args: { id: string | number } | [id: string | number ] | string | num
 
 /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
 get.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ get.get = (args: { id: string | number } | [id: string | number ] | string | num
 })
 /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
 get.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ get.head = (args: { id: string | number } | [id: string | number ] | string | nu
 
     /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
     const getForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ get.head = (args: { id: string | number } | [id: string | number ] | string | nu
 
             /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
         getForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ get.head = (args: { id: string | number } | [id: string | number ] | string | nu
         })
             /**
 * @see \App\Http\Controllers\VentaController::get
- * @see app/Http/Controllers/VentaController.php:3081
+ * @see app/Http/Controllers/VentaController.php:3084
  * @route '/api/ventas/clientes/{id}'
  */
         getForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

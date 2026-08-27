@@ -338,8 +338,15 @@ class EmpleadoController extends Controller
 
     public function edit(Empleado $empleado)
     {
-        // Cargar roles y permisos del usuario asociado
+        // Cargar roles y permisos del usuario asociado (+ campos de acceso)
         $empleado->load(['user.roles.permissions', 'user.permissions']);
+
+        // ✅ NUEVO: Asignar campos de acceso al usuario de Inertia
+        if ($empleado->user) {
+            $empleado->activo = $empleado->user->activo ?? true;
+            $empleado->can_access_web = $empleado->user->can_access_web ?? true;
+            $empleado->can_access_mobile = $empleado->user->can_access_mobile ?? false;
+        }
 
         $supervisores = Empleado::with('user')
             ->activos()
@@ -533,6 +540,19 @@ class EmpleadoController extends Controller
             $rules['permissions.*'] = 'exists:permissions,name';
         }
 
+        // ✅ NUEVO: Validación para control de acceso
+        if ($request->has('activo')) {
+            $rules['activo'] = 'required|boolean';
+        }
+
+        if ($request->has('can_access_web')) {
+            $rules['can_access_web'] = 'required|boolean';
+        }
+
+        if ($request->has('can_access_mobile')) {
+            $rules['can_access_mobile'] = 'required|boolean';
+        }
+
         // Validar solo los campos presentes
         $request->validate($rules);
 
@@ -582,7 +602,7 @@ class EmpleadoController extends Controller
 
         DB::transaction(function () use ($request, $empleado) {
             // Actualizar usuario solo si existe y vienen datos del usuario
-            if ($empleado->user && $request->has('nombre')) {
+            if ($empleado->user) {
                 $user = $empleado->user;
 
                 if ($request->has('nombre')) {
@@ -606,6 +626,19 @@ class EmpleadoController extends Controller
                 // Actualizar contraseña si se proporcionó
                 if ($request->has('password') && $request->password) {
                     $user->password = Hash::make($request->password);
+                }
+
+                // ✅ NUEVO: Actualizar control de acceso
+                if ($request->has('activo')) {
+                    $user->activo = $request->activo;
+                }
+
+                if ($request->has('can_access_web')) {
+                    $user->can_access_web = $request->can_access_web;
+                }
+
+                if ($request->has('can_access_mobile')) {
+                    $user->can_access_mobile = $request->can_access_mobile;
                 }
 
                 $user->save();
