@@ -364,6 +364,7 @@ export default function VentaForm() {
     }, [tiposPagoSeguro]);
 
     const tipoPagoAnteriorRef = useRef<number | null>(null);
+    const politicaPagoAnteriorRef = useRef<string | null>(null);
 
     useEffect(() => {
         if (!tipoPagoContraEntregaId) {
@@ -372,15 +373,24 @@ export default function VentaForm() {
         }
 
         if (data.requiere_envio) {
-            // Guardar el tipo de pago anterior para poder revertir
+            // Guardar valores anteriores para poder revertir
             tipoPagoAnteriorRef.current = data.tipo_pago_id;
-            // Auto-seleccionar CONTRA_ENTREGA
-            setData('tipo_pago_id', tipoPagoContraEntregaId);
-            console.log('✅ [requiere_envio=true] Auto-seleccionando CONTRA_ENTREGA');
-        } else if (tipoPagoAnteriorRef.current !== null) {
-            // Si desactiva requiere_envio, revertir al tipo de pago anterior
-            setData('tipo_pago_id', tipoPagoAnteriorRef.current);
-            console.log('✅ [requiere_envio=false] Revertiendo a tipo de pago anterior');
+            politicaPagoAnteriorRef.current = data.politica_pago || 'ANTICIPADO_100';
+            // Auto-seleccionar CONTRA_ENTREGA y politica CONTRA_ENTREGA
+            setData((prev) => ({
+                ...prev,
+                tipo_pago_id: tipoPagoContraEntregaId,
+                politica_pago: 'CONTRA_ENTREGA',
+            }));
+            console.log('✅ [requiere_envio=true] Auto-seleccionando CONTRA_ENTREGA (tipo_pago + politica_pago)');
+        } else if (tipoPagoAnteriorRef.current !== null && politicaPagoAnteriorRef.current !== null) {
+            // Si desactiva requiere_envio, revertir valores anteriores
+            setData((prev) => ({
+                ...prev,
+                tipo_pago_id: tipoPagoAnteriorRef.current!,
+                politica_pago: politicaPagoAnteriorRef.current!,
+            }));
+            console.log('✅ [requiere_envio=false] Revertiendo a valores anteriores');
         }
     }, [data.requiere_envio, tipoPagoContraEntregaId]);
 
