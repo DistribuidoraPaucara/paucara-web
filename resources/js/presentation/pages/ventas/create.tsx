@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import VentaPreviewModal from '@/presentation/components/VentaPreviewModal';
 import { AlertSinCaja } from '@/presentation/components/cajas/alert-sin-caja';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import { UbicacionesMultiplesModal } from '@/presentation/pages/logistica/entregas/components/UbicacionesMultiplesModal'; // ✅ NUEVO (2026-08-26): Modal de mapa
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -169,6 +170,9 @@ export default function VentaForm() {
 
     const [cajaInfo, setCajaInfo] = useState<CajaInfo | null>(null);
     const [cargandoCaja, setCargandoCaja] = useState(true);
+
+    // ✅ NUEVO (2026-08-26): Estado para modal de mapa de ubicación
+    const [showMapaUbicacion, setShowMapaUbicacion] = useState(false);
 
     // ✅ NUEVO: Rastrear qué tipos de precio han sido seleccionados manualmente por el usuario
     const [manuallySelectedTipoPrecio, setManuallySelectedTipoPrecio] = useState<Record<number, boolean>>({});
@@ -1651,11 +1655,11 @@ export default function VentaForm() {
 
                             {/* Campos de envío */}
                             <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {/* ✅ NUEVO: Selector de política de pago para envíos - Moderno */}
-                                    <div>
+                                    {/* <div> */}
                                         {/* <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">💳 Política de Pago</label> */}
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
+                                        {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
                                             <button
                                                 type="button"
                                                 onClick={() => setData('politica_pago', 'CONTRA_ENTREGA')}
@@ -1700,8 +1704,8 @@ export default function VentaForm() {
                                                     Antes de enviar
                                                 </p>
                                             </button>
-                                        </div>
-                                    </div>
+                                        </div> */}
+                                    {/* </div> */}
 
                                     {/* ✅ NUEVO: Campo de Logística de Envíos - mostrar solo si logistica_envios (prop global) = true */}
                                     {(() => {
@@ -1761,9 +1765,22 @@ export default function VentaForm() {
                                         <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
                                             {/* Selector de direcciones */}
                                             <div className="dark:border-amber-800">
-                                                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                                                    📍 Direcciones Disponibles
-                                                </label>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                                                        📍 Direcciones Disponibles
+                                                    </label>
+                                                    {/* ✅ NUEVO (2026-08-26): Botón para ver ubicación en mapa */}
+                                                    {data.direccion_cliente_id && direccionesDisponibles.length > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowMapaUbicacion(true)}
+                                                            className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                                                            title="Ver ubicación del cliente en el mapa"
+                                                        >
+                                                            🗺️ Ver en Mapa
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 {cargandoDirecciones ? (
                                                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                                                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent"></div>
@@ -2091,6 +2108,36 @@ export default function VentaForm() {
                     })()}
                 </div>
             </form>
+
+            {/* ✅ NUEVO (2026-08-26): Modal de Ubicación de Entrega con Mapa */}
+            <UbicacionesMultiplesModal
+                isOpen={showMapaUbicacion}
+                onClose={() => setShowMapaUbicacion(false)}
+                ubicaciones={
+                    data.direccion_cliente_id && clienteSeleccionado
+                        ? direccionesDisponibles
+                              .filter((d) => d.id === data.direccion_cliente_id)
+                              .map((dir) => ({
+                                  id: dir.id,
+                                  venta_id: 0, // No existe venta aún
+                                  venta_numero: 'Nueva', // Venta en creación
+                                  cliente_nombre: clienteSeleccionado.nombre || 'Cliente desconocido',
+                                  cliente_telefono: clienteSeleccionado.telefono,
+                                  cliente_foto: clienteSeleccionado.foto_perfil
+                                      ? `/storage/${clienteSeleccionado.foto_perfil}`
+                                      : undefined,
+                                  direccion: dir.direccion || 'Sin dirección',
+                                  observaciones: dir.observaciones,
+                                  latitud: (dir as any).latitud,
+                                  longitud: (dir as any).longitud,
+                                  estado: undefined,
+                                  tipo_entrega: 'COMPLETA' as const,
+                                  confirmacion_entrega: undefined,
+                              }))
+                        : []
+                }
+                titulo={`Ubicación de Entrega - Venta Nueva`}
+            />
 
             {/* Modal de Vista Previa */}
             <VentaPreviewModal
