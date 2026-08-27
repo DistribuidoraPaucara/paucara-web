@@ -357,36 +357,22 @@ export default function VentaForm() {
         }
     }, [isFarmacia, montoEfectivo, montoTransferencia, data.monto_pagado_inicial]);
 
-    // ✅ NUEVO (2026-08-26): Auto-seleccionar CONTRA_ENTREGA cuando requiere_envio = true
-    const tipoPagoContraEntregaId = useMemo(() => {
-        const contraEntrega = tiposPagoSeguro.find((t) => t.codigo === 'CONTRA_ENTREGA');
-        return contraEntrega?.id || null;
-    }, [tiposPagoSeguro]);
-
-    const tipoPagoAnteriorRef = useRef<number | null>(null);
+    // ✅ NUEVO (2026-08-26): Setear politica_pago = CONTRA_ENTREGA cuando requiere_envio = true
     const politicaPagoAnteriorRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (!tipoPagoContraEntregaId) {
-            console.warn('⚠️ Tipo de pago CONTRA_ENTREGA no encontrado');
-            return;
-        }
-
         if (data.requiere_envio) {
-            // Guardar valores anteriores para poder revertir
-            tipoPagoAnteriorRef.current = data.tipo_pago_id as any;
+            // Guardar política anterior para poder revertir
             politicaPagoAnteriorRef.current = data.politica_pago || 'ANTICIPADO_100';
-            // Auto-seleccionar CONTRA_ENTREGA
-            setData('tipo_pago_id', tipoPagoContraEntregaId as any);
+            // Auto-setear política a CONTRA_ENTREGA (sin cambiar tipo_pago_id)
             setData('politica_pago', 'CONTRA_ENTREGA' as any);
-            console.log('✅ [requiere_envio=true] Auto-seleccionando CONTRA_ENTREGA (tipo_pago + politica_pago)');
-        } else if (tipoPagoAnteriorRef.current !== null && politicaPagoAnteriorRef.current !== null) {
-            // Si desactiva requiere_envio, revertir valores anteriores
-            setData('tipo_pago_id', tipoPagoAnteriorRef.current);
+            console.log('✅ [requiere_envio=true] Auto-seleccionando politica_pago = CONTRA_ENTREGA');
+        } else if (politicaPagoAnteriorRef.current !== null) {
+            // Si desactiva requiere_envio, revertir política anterior
             setData('politica_pago', politicaPagoAnteriorRef.current as any);
-            console.log('✅ [requiere_envio=false] Revertiendo a valores anteriores');
+            console.log('✅ [requiere_envio=false] Revertiendo politica_pago a:', politicaPagoAnteriorRef.current);
         }
-    }, [data.requiere_envio, tipoPagoContraEntregaId]);
+    }, [data.requiere_envio]);
 
     // ✅ NUEVO: Guardar automáticamente en localStorage con debounce
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
