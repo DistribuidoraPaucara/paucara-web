@@ -374,22 +374,16 @@ export default function VentaForm() {
 
         if (data.requiere_envio) {
             // Guardar valores anteriores para poder revertir
-            tipoPagoAnteriorRef.current = data.tipo_pago_id;
+            tipoPagoAnteriorRef.current = data.tipo_pago_id as any;
             politicaPagoAnteriorRef.current = data.politica_pago || 'ANTICIPADO_100';
-            // Auto-seleccionar CONTRA_ENTREGA y politica CONTRA_ENTREGA
-            setData((prev) => ({
-                ...prev,
-                tipo_pago_id: tipoPagoContraEntregaId,
-                politica_pago: 'CONTRA_ENTREGA',
-            }));
+            // Auto-seleccionar CONTRA_ENTREGA
+            setData('tipo_pago_id', tipoPagoContraEntregaId as any);
+            setData('politica_pago', 'CONTRA_ENTREGA' as any);
             console.log('✅ [requiere_envio=true] Auto-seleccionando CONTRA_ENTREGA (tipo_pago + politica_pago)');
         } else if (tipoPagoAnteriorRef.current !== null && politicaPagoAnteriorRef.current !== null) {
             // Si desactiva requiere_envio, revertir valores anteriores
-            setData((prev) => ({
-                ...prev,
-                tipo_pago_id: tipoPagoAnteriorRef.current!,
-                politica_pago: politicaPagoAnteriorRef.current!,
-            }));
+            setData('tipo_pago_id', tipoPagoAnteriorRef.current);
+            setData('politica_pago', politicaPagoAnteriorRef.current as any);
             console.log('✅ [requiere_envio=false] Revertiendo a valores anteriores');
         }
     }, [data.requiere_envio, tipoPagoContraEntregaId]);
