@@ -7,6 +7,13 @@ interface SearchOption {
     codigos_barras?: string;
     precio_base?: number;
     stock_total?: number;
+    direcciones?: Array<{
+        id: number;
+        direccion: string;
+        localidad?: { nombre?: string };
+        es_principal?: boolean;
+        activa?: boolean;
+    }>;
 }
 
 interface ApiItem {
@@ -22,6 +29,13 @@ interface ClienteItem extends ApiItem {
     razon_social?: string;
     tipo_cliente?: { nombre: string };
     activo?: boolean;
+    direcciones?: Array<{
+        id: number;
+        direccion: string;
+        localidad?: { nombre?: string };
+        es_principal?: boolean;
+        activa?: boolean;
+    }>;
 }
 
 interface ProductoItem extends ApiItem {
@@ -218,6 +232,7 @@ export function useClienteSearch() {
                 value: cli.id,
                 label: cli.nombre,
                 description: descriptionParts.join(' | '),
+                direcciones: cli.direcciones, // ✅ NUEVO: Incluir direcciones en la respuesta
             };
         },
     });

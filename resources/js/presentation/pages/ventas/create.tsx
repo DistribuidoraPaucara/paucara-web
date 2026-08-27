@@ -233,6 +233,7 @@ export default function VentaForm() {
     const [clienteValue, setClienteValue] = useState<string | number | null>(null);
     const [clienteDisplay, setClienteDisplay] = useState<string>('');
     const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null); // ✅ NUEVO: Guardar cliente completo
+    const [clienteRaw, setClienteRaw] = useState<any>(null); // ✅ NUEVO (2026-08-26): Guardar datos raw de búsqueda con direcciones
 
     // Hook para búsqueda de clientes
     const { search: searchClientes } = useClienteSearch();
@@ -506,12 +507,37 @@ export default function VentaForm() {
         }
     }, [venta?.cliente, clienteDisplay]);
 
-    // ✅ OPTIMIZADO (2026-08-24): Combinar en UN SOLO useEffect para evitar petición duplicada
-    // Antes: 2 peticiones GET /api/clientes/{id} simultáneas (race condition)
-    // Ahora: 1 sola petición que carga direcciones + datos del cliente
+    // ✅ OPTIMIZADO (2026-08-26): Usar direcciones de búsqueda si están disponibles, sino fetch separado
+    // Antes: Siempre hacía fetch a /api/clientes/{id}
+    // Ahora: Primero intenta usar direcciones que vinieron en la búsqueda (clienteRaw)
+    //        Solo si no están disponibles, hace fetch como fallback
     useEffect(() => {
         if (data.cliente_id && data.cliente_id !== 0 && typeof data.cliente_id === 'number') {
             setCargandoDirecciones(true);
+
+            // ✅ PRIMER INTENTO: Usar direcciones que ya vienen de la búsqueda
+            if (clienteRaw?.direcciones && Array.isArray(clienteRaw.direcciones)) {
+                console.log('✅ [DIRECCIONES] Usando direcciones de búsqueda (NO fetch separado):', clienteRaw.direcciones);
+                const direccionesActivas = clienteRaw.direcciones.filter((d: any) => d.activa !== false);
+                setDireccionesDisponibles(direccionesActivas);
+                setCargandoDirecciones(false);
+
+                // Auto-seleccionar dirección si no hay una seleccionada
+                if (!data.direccion_cliente_id && direccionesActivas.length > 0) {
+                    const direccionPrincipal = direccionesActivas.find((d: any) => d.es_principal);
+                    if (direccionPrincipal) {
+                        console.log('✅ Auto-seleccionando dirección principal:', direccionPrincipal);
+                        setData('direccion_cliente_id', direccionPrincipal.id);
+                    } else if (direccionesActivas.length === 1) {
+                        console.log('✅ Auto-seleccionando única dirección:', direccionesActivas[0]);
+                        setData('direccion_cliente_id', direccionesActivas[0].id);
+                    }
+                }
+                return;
+            }
+
+            // ✅ FALLBACK: Si no vienen direcciones en búsqueda, hacer fetch separado
+            console.log('⚠️ [DIRECCIONES] clienteRaw no tiene direcciones, haciendo fetch...');
             const cargarClienteYDirecciones = async () => {
                 try {
                     const response = await fetch(`/api/clientes/${data.cliente_id}`, {
@@ -561,7 +587,7 @@ export default function VentaForm() {
             setDireccionesDisponibles([]);
             setCargandoDirecciones(false);
         }
-    }, [data.cliente_id]);
+    }, [data.cliente_id, clienteRaw]);
 
     // ✅ REMOVIDO (2026-08-24): Búsqueda automática de cliente GENERAL
     // Optimización: Los clientes se buscan lazy via /api/ventas/search/clientes
@@ -1513,8 +1539,11 @@ export default function VentaForm() {
                                     setClienteValue(value);
                                     if (option) {
                                         setClienteDisplay(option.label);
+                                        // ✅ NUEVO (2026-08-26): Guardar datos completos del cliente incluyendo direcciones
+                                        setClienteRaw(option as any);
                                     } else {
                                         setClienteDisplay('');
+                                        setClienteRaw(null);
                                     }
                                 }}
                                 placeholder="Buscar cliente por nombre, NIT/CI o teléfono..."

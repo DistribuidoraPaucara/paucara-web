@@ -1043,6 +1043,9 @@ class ClienteController extends Controller
         $searchLower = strtolower($q);
         $clientes    = ClienteModel::query()
             ->select(['id', 'nombre', 'razon_social', 'nit', 'telefono', 'email'])
+            ->with(['direcciones' => function ($query) {
+                $query->where('activa', true)->with('localidad');
+            }])
             ->where('activo', true)
             ->where(function ($query) use ($searchLower) {
                 $query->whereRaw('LOWER(nombre) like ?', ["%$searchLower%"])
