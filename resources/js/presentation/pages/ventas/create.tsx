@@ -190,6 +190,12 @@ export default function VentaForm() {
         return licoreria?.id || null;
     }, [tipos_precio]);
 
+    // ✅ NUEVO: Obtener ID del tipo de precio VENTA desde props
+    const tipoPrecioVentaId = useMemo(() => {
+        const venta = tipos_precio?.find((tp) => tp.codigo === 'VENTA' || tp.nombre?.toUpperCase() === 'VENTA');
+        return venta?.id || null;
+    }, [tipos_precio]);
+
     // Verificar si hay caja abierta (de cualquier día)
     useEffect(() => {
         const verificarCaja = async () => {
@@ -473,6 +479,28 @@ export default function VentaForm() {
         }
     }, []); // Solo ejecutar al montar
 
+    // ✅ NUEVO (2026-08-28): Auto-actualizar tipo_precio_id de todos los productos cuando cambia el cliente
+    useEffect(() => {
+        if (!clienteSeleccionado || detallesWithProducts.length === 0) return;
+
+        const isClienteGeneralNew = clienteSeleccionado?.codigo_cliente === 'GENERAL';
+        const nuevoTipoPrecioId = isClienteGeneralNew ? tipoPrecioLicoreriId : tipoPrecioVentaId;
+
+        // Solo actualizar si hay un tipo de precio válido
+        if (!nuevoTipoPrecioId) return;
+
+        setDetallesWithProducts((prevDetalles) =>
+            prevDetalles.map((item) => ({
+                ...item,
+                tipo_precio_id: nuevoTipoPrecioId,
+            }))
+        );
+
+        console.log(
+            `✅ [Cliente cambiado] Actualizando ${detallesWithProducts.length} productos a tipo_precio = ${isClienteGeneralNew ? 'LICORERIA' : 'VENTA'}`
+        );
+    }, [clienteSeleccionado, tipoPrecioLicoreriId, tipoPrecioVentaId, detallesWithProducts.length]);
+
     // Inicializar detalles con productos y combo items map
     useEffect(() => {
         if (venta?.detalles) {
@@ -725,10 +753,16 @@ export default function VentaForm() {
         const esProductoFraccionado = (producto as any).es_fraccionado && conversiones.length > 0;
         const unidadVentaInicial = esProductoFraccionado ? conversiones[0].unidad_destino_id : (producto as any).unidad_medida_id;
 
-        // ✅ MODIFICADO (2026-02-17): Usar tipo_precio_id que viene del backend PRIMERO
-        // El backend devuelve tipo_precio_id_recomendado basado en el código VENTA
-        const tipoPrecioIdRecomendado = (producto as any).tipo_precio_id_recomendado || tipoPrecioLicoreriId;
-        const tipoPrecioNombreRecomendado = (producto as any).tipo_precio_nombre_recomendado || 'LICORERIA';
+        // ✅ MODIFICADO (2026-08-28): Seleccionar tipo de precio según cliente
+        // Si cliente.codigo = GENERAL → usar LICORERIA
+        // Si otro cliente → usar VENTA o lo recomendado por backend
+        const isClienteGeneral = clienteSeleccionado?.codigo_cliente === 'GENERAL';
+        const tipoPrecioIdRecomendado = isClienteGeneral
+            ? tipoPrecioLicoreriId
+            : (producto as any).tipo_precio_id_recomendado || tipoPrecioVentaId;
+        const tipoPrecioNombreRecomendado = isClienteGeneral
+            ? 'LICORERIA'
+            : (producto as any).tipo_precio_nombre_recomendado || 'VENTA';
 
         // ✅ NUEVO (2026-02-17): Obtener el precio específico del tipo_precio_recomendado ANTES de usarlo
         // En lugar de usar precio_venta genérico, buscar el precio específico del tipo_precio_id
@@ -818,12 +852,6 @@ export default function VentaForm() {
             subtotal: updatedDetalles[index].cantidad * nuevoPrecio - (updatedDetalles[index].descuento || 0),
         };
 
-        console.log(`🔄 [updateDetailUnidadConPrecio] Detalle #${index}:`, {
-            unidad_venta_id: unidadDestinoId,
-            precio_unitario: nuevoPrecio,
-            subtotal: updatedDetalles[index].subtotal,
-        });
-
         setDetallesWithProducts(updatedDetalles);
         calculateTotals(updatedDetalles);
         calculatePeso(updatedDetalles);
@@ -892,53 +920,7 @@ export default function VentaForm() {
             updatedDetalles[index].subtotal = Number(cantidad) * Number(precio) - Number(descuento);
         }
 
-        // ✅ DEBUG: Loguear cambios en detalles
-        /* if (field === 'unidad_venta_id') {
-            console.log(`🔄 [updateDetail] Cambio de unidad_venta_id para detalle #${index}:`, {
-                anterior: detallesWithProducts[index].unidad_venta_id,
-                nuevo: numericValue,
-                precio_unitario: updatedDetalles[index].precio_unitario,
-                es_fraccionado: (updatedDetalles[index] as any).es_fraccionado,
-                detalle_antes: detallesWithProducts[index],
-                detalle_despues: updatedDetalles[index]
-            });
-        } */
-
-        // ✅ CRÍTICO: Log del estado actual antes de actualizar
-        if (field === 'precio_unitario') {
-            console.log(`💰 [updateDetail] ANTES - Precio #${index}:`, {
-                precio_anterior: detallesWithProducts[index].precio_unitario,
-                precio_nuevo: numericValue,
-                tipo_precio_id: updatedDetalles[index].tipo_precio_id,
-                tipo_precio_nombre: updatedDetalles[index].tipo_precio_nombre,
-                detalles_array: detallesWithProducts.map((d, i) => (i === index ? '🎯 THIS' : '✓')),
-            });
-        }
-
         setDetallesWithProducts(updatedDetalles);
-
-        // ✅ CRÍTICO: Log del estado después de actualizar
-        if (field === 'precio_unitario') {
-            console.log(`💰 [updateDetail] DESPUÉS - Precio #${index}:`, {
-                precio_guardado: updatedDetalles[index].precio_unitario,
-                tipo_precio_id: updatedDetalles[index].tipo_precio_id,
-                tipo_precio_nombre: updatedDetalles[index].tipo_precio_nombre,
-            });
-        }
-
-        console.log(`📊 [updateDetail] Estado ANTES de setDetallesWithProducts, detalle #${index}:`, {
-            field,
-            valor_nuevo: numericValue,
-            unidad_venta_id: updatedDetalles[index].unidad_venta_id,
-            es_fraccionado: (updatedDetalles[index] as any).es_fraccionado,
-            all_detalles: updatedDetalles,
-        });
-
-        console.log(`📊 [updateDetail] Estado DESPUÉS de setDetallesWithProducts, detalle #${index}:`, {
-            field,
-            valor_nuevo: numericValue,
-            unidad_venta_id_guardado: updatedDetalles[index].unidad_venta_id,
-        });
 
         // ✅ MODIFICADO: Si cambió la cantidad O unidad de venta, recalcular precios por rango
         // PERO: No recalcular si cambió precio_unitario (es cambio manual del usuario)
@@ -1564,9 +1546,12 @@ export default function VentaForm() {
                                         setClienteDisplay(option.label);
                                         // ✅ NUEVO (2026-08-26): Guardar datos completos del cliente incluyendo direcciones
                                         setClienteRaw(option as any);
+                                        // ✅ CRÍTICO (2026-08-28): Actualizar clienteSeleccionado para que se use en isClienteGeneral
+                                        setClienteSeleccionado(option as Cliente);
                                     } else {
                                         setClienteDisplay('');
                                         setClienteRaw(null);
+                                        setClienteSeleccionado(null);
                                     }
                                 }}
                                 placeholder="Buscar cliente por nombre, NIT/CI o teléfono..."

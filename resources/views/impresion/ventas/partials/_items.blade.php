@@ -84,19 +84,19 @@
 
             {{-- FILA DE PRODUCTO --}}
             <tr style="border-bottom: 1px dotted #ccc;">
-                <td style="width: 12%; text-align: center; padding: 2px 0; font-size: 12px;">
+                <td style="width: 12%; text-align: center; padding: 2px 0; font-size: 13px;">
                     {{ number_format($detalle->cantidad, 0) }}
                 </td>
-                <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 12px;">
+                <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 13px;">
                     <strong>{{ $detalle->producto->nombre }}</strong>
                     @if($detalle->producto->codigo)
                         <br><small style="color: #999; font-size: 8px;">{{ $detalle->producto->codigo }}</small>
                     @endif
                 </td>
-                <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 12px;">
+                <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 13px;">
                     {{ number_format($detalle->precio_unitario, 2) }}
                 </td>
-                <td style="width: 20%; text-align: right; padding: 2px 2px; font-size: 12px; font-weight: bold;">
+                <td style="width: 20%; text-align: right; padding: 2px 2px; font-size: 13px; font-weight: bold;">
                     {{ number_format($detalle->subtotal, 2) }}
                 </td>
             </tr>
@@ -110,16 +110,16 @@
                         $subtotalComponente = $cantidadComponente * $precioUnitarioComponente;
                     @endphp
                     <tr style="background-color: #f9f9f9;">
-                        <td style="width: 12%; text-align: center; padding: 2px 0; font-size: 11px;">
+                        <td style="width: 12%; text-align: center; padding: 2px 0; font-size: 13px;">
                             {{ number_format($cantidadComponente, 0) }}
                         </td>
-                        <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 11px;">
+                        <td style="width: 50%; text-align: left; padding: 2px 4px; font-size: 13px;">
                             ->{{ $comboItem->producto->nombre }}
                         </td>
-                        <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 11px;">
+                        <td style="width: 18%; text-align: right; padding: 2px 0; font-size: 13px;">
                             {{ number_format($precioUnitarioComponente, 2) }}
                         </td>
-                        <td style="width: 20%; text-align: right; padding: 2px 2px; font-size: 11px;">
+                        <td style="width: 20%; text-align: right; padding: 2px 2px; font-size: 13px;">
                             {{ number_format($subtotalComponente, 2) }}
                         </td>
                     </tr>

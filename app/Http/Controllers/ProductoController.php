@@ -2140,6 +2140,7 @@ class ProductoController extends Controller
         $tipoBusqueda     = $request->string('tipo_busqueda', 'parcial');   // ✅ exacta o parcial
         $tipo             = $request->string('tipo', 'venta');              // ✅ 'venta' o 'compra'
         $clienteId        = $request->integer('cliente_id', null);          // ✅ NUEVO: Cliente para filtrar tipos_precio
+        $clienteGeneral   = $request->boolean('cliente_general', false);    // ✅ NUEVO (2026-08-28): Indicar si es cliente GENERAL
         $permitirSinStock = $request->boolean('permitir_sin_stock', false); // ✅ NUEVO (2026-05-26): Permitir sin stock
 
         // Obtener almacén: desde request > empresa autenticada > empresa principal > config
@@ -2162,6 +2163,7 @@ class ProductoController extends Controller
             'tipo'               => $tipo,
             'almacen_id'         => $almacenId,
             'cliente_id'         => $clienteId ?? 'sin especificar', // ✅ NUEVO: Log cliente_id
+            'cliente_general'    => $clienteGeneral,                 // ✅ NUEVO (2026-08-28): Log cliente_general
             'permitir_sin_stock' => $permitirSinStock,               // ✅ NUEVO (2026-05-26): Log permitir_sin_stock
             'limite'             => $limite,
         ]);
@@ -2180,7 +2182,7 @@ class ProductoController extends Controller
 
         // ✅ Función auxiliar para construir la query base
         // Incluye es_combo para permitir búsqueda automática sin parámetro adicional
-        $construirQueryBase = function ($query) use ($userEmpresaId, $almacenId, $tipo, $clienteId, $permitirProductosSinStock) {
+        $construirQueryBase = function ($query) use ($userEmpresaId, $almacenId, $tipo, $clienteId, $clienteGeneral, $permitirProductosSinStock) {
             return $query
                 ->select([
                     'id', 'nombre', 'codigo_barras', 'sku', 'categoria_id', 'marca_id',
@@ -2202,12 +2204,12 @@ class ProductoController extends Controller
                             ->orWhere('permite_venta_sin_stock', true);
                     });
                 })
-                ->when($tipo === 'venta', function ($q) use ($clienteId) {
-                    return $q->whereHas('precios', function ($pq) use ($clienteId) {
-                        // ✅ NUEVO: Filtrar por tipo_precio según el cliente
-                        // Si cliente_id = 32 (CLIENTE GENERAL) → mostrar LICORERIA
-                        // Si es otro cliente → mostrar VENTA
-                        $tipoPrecioCode = ($clienteId == 32) ? 'LICORERIA' : 'VENTA';
+                ->when($tipo === 'venta', function ($q) use ($clienteGeneral) {
+                    return $q->whereHas('precios', function ($pq) use ($clienteGeneral) {
+                        // ✅ MODIFICADO (2026-08-28): Usar parámetro cliente_general explícito
+                        // Si cliente_general = true → mostrar LICORERIA
+                        // Si cliente_general = false → mostrar VENTA
+                        $tipoPrecioCode = $clienteGeneral ? 'LICORERIA' : 'VENTA';
 
                         $pq->where('activo', true)->whereHas('tipoPrecio', function ($tq) use ($tipoPrecioCode) {
                             $tq->where('codigo', $tipoPrecioCode);
@@ -2228,7 +2230,7 @@ class ProductoController extends Controller
         // Si encontró por ID, retornar inmediatamente
         if ($productoPorId && $productoPorId->count() > 0) {
             Log::info('✅ Producto encontrado por ID: ' . $q);
-            return $this->mapearProductos($productoPorId, $almacenId, $tipo, $clienteId);
+            return $this->mapearProductos($productoPorId, $almacenId, $tipo, $clienteId, $clienteGeneral);
         }
 
         // ✅ PRIORIDAD 2 - Buscar por SKU exacto (case-insensitive)
@@ -2272,7 +2274,7 @@ class ProductoController extends Controller
 
         if ($productoPorSku && $productoPorSku->count() > 0) {
             Log::info('✅ Producto encontrado por SKU: ' . $q);
-            return $this->mapearProductos($productoPorSku, $almacenId, $tipo, $clienteId);
+            return $this->mapearProductos($productoPorSku, $almacenId, $tipo, $clienteId, $clienteGeneral);
         }
 
         // ✅ PRIORIDAD 3 - Búsqueda normal (por nombre, código_barras, descripción, etc)
@@ -2300,13 +2302,13 @@ class ProductoController extends Controller
             ->limit($limite)
             ->get();
 
-        return $this->mapearProductos($productos, $almacenId, $tipo, $clienteId);
+        return $this->mapearProductos($productos, $almacenId, $tipo, $clienteId, $clienteGeneral);
     }
 
     /**
      * ✅ NUEVO: Método auxiliar para mapear productos con todas sus relaciones
      */
-    private function mapearProductos($productos, $almacenId, $tipo, $clienteId = null): JsonResponse
+    private function mapearProductos($productos, $almacenId, $tipo, $clienteId = null, $clienteGeneral = false): JsonResponse
     {
         // Cargar relaciones necesarias
         $productosConRelaciones = $productos
@@ -2357,7 +2359,7 @@ class ProductoController extends Controller
                         ->with('items.producto:id,nombre,sku');
                 },
             ])
-            ->map(function ($producto) use ($almacenId, $tipo, $clienteId) {
+            ->map(function ($producto) use ($almacenId, $tipo, $clienteId, $clienteGeneral) {
                 $codigosTexto = $producto->codigosBarra->pluck('codigo')->toArray();
 
                 // ✅ MEJORADO: Calcular stock consolidado considerando múltiples lotes
@@ -2475,10 +2477,10 @@ class ProductoController extends Controller
                 $tipoPrecioIdRecomendado     = null;
                 $tipoPrecioNombreRecomendado = null;
 
-                // ✅ NUEVO (2026-02-17): Determinar qué tipo de precio buscar según cliente_id
-                // Si cliente_id = 32 (CLIENTE GENERAL) → buscar LICORERIA
-                // Si otro cliente → buscar VENTA
-                $tipoPrecioPrincipal = ($clienteId == 32) ? 'LICORERIA' : 'VENTA';
+                // ✅ MODIFICADO (2026-08-28): Usar parámetro cliente_general explícito
+                // Si cliente_general = true → buscar LICORERIA
+                // Si cliente_general = false → buscar VENTA
+                $tipoPrecioPrincipal = $clienteGeneral ? 'LICORERIA' : 'VENTA';
 
                 // Estrategia 1: Buscar por tipoPrecio->codigo === $tipoPrecioPrincipal
                 foreach ($producto->precios as $precio) {
@@ -2492,7 +2494,7 @@ class ProductoController extends Controller
 
                 // Estrategia 2: Si no encontró por código, buscar por nombre que contenga el tipo principal (case-insensitive)
                 if (! $tipoPrecioIdRecomendado) {
-                    $buscarEnNombre = ($clienteId == 32) ? 'LICORERIA' : 'VENTA';
+                    $buscarEnNombre = $clienteGeneral ? 'LICORERIA' : 'VENTA';
                     foreach ($producto->precios as $precio) {
                         $nombre = strtoupper($precio->nombre ?? '');
                         if (strpos($nombre, $buscarEnNombre) !== false && strpos($nombre, 'COSTO') === false) {
@@ -4059,7 +4061,7 @@ class ProductoController extends Controller
         ]);
 
         // ✅ Mapear productos con todas las relaciones
-        return $this->mapearProductos($query, $almacenId, $tipo, $clienteId);
+        return $this->mapearProductos($query, $almacenId, $tipo, $clienteId, false);
     }
 
     /**
@@ -4195,7 +4197,7 @@ class ProductoController extends Controller
 
             if ($productoPorId && $productoPorId->count() > 0) {
                 Log::info('✅ Producto comida encontrado por ID: ' . $q);
-                return $this->mapearProductos($productoPorId, $almacenId, 'venta', $clienteId);
+                return $this->mapearProductos($productoPorId, $almacenId, 'venta', $clienteId, false);
             }
         }
 
@@ -4215,7 +4217,7 @@ class ProductoController extends Controller
 
         if ($productoPorSku && $productoPorSku->count() > 0) {
             Log::info('✅ Producto comida encontrado por SKU: ' . $q);
-            return $this->mapearProductos($productoPorSku, $almacenId, 'venta', $clienteId);
+            return $this->mapearProductos($productoPorSku, $almacenId, 'venta', $clienteId, false);
         }
 
         // PRIORIDAD 3: Búsqueda normal por nombre, código, descripción
@@ -4241,6 +4243,6 @@ class ProductoController extends Controller
             'almacen_id' => $almacenId,
         ]);
 
-        return $this->mapearProductos($productos, $almacenId, 'venta', $clienteId);
+        return $this->mapearProductos($productos, $almacenId, 'venta', $clienteId, false);
     }
 }

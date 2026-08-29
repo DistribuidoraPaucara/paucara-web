@@ -3,7 +3,6 @@ import type { CoordinacionData } from '@/application/hooks/use-proforma-actions'
 import type { PaymentData, Proforma } from '@/domain/entities/proformas';
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import { Button } from '@/presentation/components/ui/button';
-import { Card, CardContent } from '@/presentation/components/ui/card';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
@@ -274,8 +273,18 @@ export function ApprovalPaymentForm({
 
             // Si el tipo de pago seleccionado es CREDITO, sincronizar politica_pago a CREDITO
             if (tipoSeleccionado?.codigo === 'CREDITO') {
-                console.log('%c🔄 Tipo de pago cambiado a CREDITO, sincronizando política de pago:', 'color: green;');
+                console.log('%c🔄 Tipo de pago cambiado a CREDITO, sincronizando política de pago a CREDITO:', 'color: green;');
                 nuevoPayment.politica_pago = 'CREDITO' as any;
+                nuevoPayment.monto_pagado = 0;
+            } else {
+                // Si se selecciona cualquier otro método de pago, cambiar política a CONTRA_ENTREGA
+                console.log(
+                    '%c🔄 Tipo de pago cambiado a',
+                    'color: blue;',
+                    tipoSeleccionado?.nombre,
+                    '- sincronizando política de pago a CONTRA_ENTREGA',
+                );
+                nuevoPayment.politica_pago = 'CONTRA_ENTREGA' as any;
                 nuevoPayment.monto_pagado = 0;
             }
 
@@ -379,7 +388,7 @@ export function ApprovalPaymentForm({
     };
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 border-t border-t-slate-200 pt-4 dark:border-t-slate-700">
             {/* ⚠️ ADVERTENCIA: Reservas Expiradas */}
             {errorState?.code === 'RESERVAS_EXPIRADAS' && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
@@ -414,21 +423,6 @@ export function ApprovalPaymentForm({
                 </div>
             )}
 
-            {/* ✅ NUEVO: Advertencia si la fecha comprometida es diferente a la solicitada */}
-            {/* {fechasDiferentes && !userConfirmedDateWarning && (
-                <Alert className="border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-                    <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    <AlertDescription className="text-orange-800 dark:text-orange-200">
-                        <div className="mb-1 font-semibold">⚠️ Atención: Fecha de Entrega Comprometida Diferente</div>
-                        <p className="text-sm">
-                            Estás aprobando una proforma con una fecha de entrega comprometida (<strong>{fechaComprometida}</strong>) diferente a la
-                            solicitada por el cliente (<strong>{fechaSolicitada}</strong>).
-                        </p>
-                        <p className="mt-2 text-sm">Haz clic en el botón "Aprobar" nuevamente para confirmar esta acción.</p>
-                    </AlertDescription>
-                </Alert>
-            )} */}
-
             {/* ✅ NUEVO: Confirmación después de la primera advertencia */}
             {fechasDiferentes && userConfirmedDateWarning && (
                 <Alert className="border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950">
@@ -442,133 +436,10 @@ export function ApprovalPaymentForm({
                 </Alert>
             )}
 
-            <div className="flex flex-wrap justify-center gap-2">
+            <div>
                 {/* ✅ NUEVO: Fechas y Horas de Entrega (Solicitada vs Comprometida) */}
-                <Card>
-                    <CardContent className="space-y-2">
-                        <h3 className="text-sm font-medium">📅 Coordinación de Entrega</h3>
-                        {/* Advertencia si son diferentes */}
-                        {fechasDiferentes && (
-                            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-1 dark:border-amber-800 dark:bg-amber-950/20">
-                                <p className="text-xs font-small text-amber-900 dark:text-amber-200">
-                                    ⚠️ La fecha comprometida es diferente a la solicitada
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Sección 1: Datos Solicitados (Solo Lectura) */}
-                        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 dark:border-blue-800 dark:bg-blue-950/20">
-                            <h4 className="text-xs font-semibold uppercase text-blue-900 dark:text-blue-200">
-                                📋 Lo que el cliente solicitó
-                            </h4>
-                            <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <Label className="text-xs text-blue-700 dark:text-blue-300">Fecha Solicitada</Label>
-                                        <div className="mt-1 rounded bg-white px-3 py-2 text-sm font-medium dark:bg-slate-800">
-                                            {proforma.fecha_entrega_solicitada ? (
-                                                new Date(proforma.fecha_entrega_solicitada).toLocaleDateString('es-BO', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })
-                                            ) : (
-                                                <span className="text-muted-foreground">No especificada</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label className="text-xs text-blue-700 dark:text-blue-300">Hora Solicitada</Label>
-                                        <div className="mt-1 rounded bg-white px-3 py-2 text-sm font-medium dark:bg-slate-800">
-                                            {proforma.hora_entrega_solicitada ? (
-                                                proforma.hora_entrega_solicitada.substring(0, 5)
-                                            ) : (
-                                                <span className="text-muted-foreground">No especificada</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Sección 2: Datos Comprometidos (Editables) */}
-                        <div className="rounded-lg border border-green-200 bg-green-50/50 p-2 dark:border-green-800 dark:bg-green-950/20">
-                            <h4 className="text-xs font-semibold uppercase text-green-900 dark:text-green-200">
-                                ✓ Lo que comprometemos entregar (EDITABLE)
-                            </h4>
-                            <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <Label htmlFor="fecha_entrega_comprometida" className="text-xs text-green-700 dark:text-green-300">
-                                            Fecha Comprometida *
-                                        </Label>
-                                        <Input
-                                            type="date"
-                                            id="fecha_entrega_comprometida"
-                                            value={coordinacion.fecha_entrega_confirmada}
-                                            onChange={(e) => {
-                                                onCoordinacionChange({
-                                                    ...coordinacion,
-                                                    fecha_entrega_confirmada: e.target.value
-                                                });
-                                            }}
-                                            disabled={isSubmitting}
-                                            className="mt-1 h-9 text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="hora_entrega_comprometida" className="text-xs text-green-700 dark:text-green-300">
-                                            Hora Inicio *
-                                        </Label>
-                                        <Input
-                                            type="time"
-                                            id="hora_entrega_comprometida"
-                                            value={coordinacion.hora_entrega_confirmada}
-                                            onChange={(e) => {
-                                                onCoordinacionChange({
-                                                    ...coordinacion,
-                                                    hora_entrega_confirmada: e.target.value
-                                                });
-                                            }}
-                                            disabled={isSubmitting}
-                                            className="mt-1 h-9 text-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label htmlFor="hora_entrega_fin" className="text-xs text-green-700 dark:text-green-300">
-                                        Hora Fin (opcional)
-                                    </Label>
-                                    <Input
-                                        type="time"
-                                        id="hora_entrega_fin"
-                                        value={coordinacion.hora_entrega_confirmada_fin}
-                                        onChange={(e) => {
-                                            onCoordinacionChange({
-                                                ...coordinacion,
-                                                hora_entrega_confirmada_fin: e.target.value
-                                            });
-                                        }}
-                                        disabled={isSubmitting}
-                                        className="mt-1 h-9 text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Comentario adicional */}
-                        {coordinacion.comentario_coordinacion && (
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/20">
-                                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Comentario</Label>
-                                <p className="mt-2 text-sm text-foreground">{coordinacion.comentario_coordinacion}</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Sección de Verificación de Pago */}
-                <Card>
-                    <CardContent className="space-y-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 space-y-2">
+                    <div className="flex flex-col gap-2">
                         {/* Método de Pago */}
                         <div className="space-y-2">
                             <h3 className="text-sm font-medium">Verificación de Pago</h3>
@@ -607,235 +478,177 @@ export function ApprovalPaymentForm({
                             </Select>
                         </div>
 
-                        {/* ✅ MEJORADO: Política de Pago Dinámica */}
-                        <div className="space-y-3">
-                            <Label className="text-sm font-medium">Política de Pago *</Label>
-                            {loadingPoliticas ? (
-                                <div className="flex items-center justify-center p-4">
-                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
-                                    <span className="ml-2 text-sm text-muted-foreground">Cargando políticas...</span>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {politicasDisponibles
-                                        // ✅ Filtrar CRÉDITO solo si el cliente puede tener crédito
-                                        .filter((p) => p.codigo !== 'CREDITO' || clienteConCredito?.puede_tener_credito === true)
-                                        .map((politica) => {
-                                            const isSelected = payment.politica_pago === politica.codigo;
-                                            const isDisabled = !puedeUsarPolitica(politica.codigo);
-                                            const creditoMsg = politica.codigo === 'CREDITO' ? getMensajeCreditoNoDisponible() : null;
+                        {/* ✅ NUEVO: Resumen de Política Solicitada */}
+                        {proforma.politica_pago === 'CREDITO' ||
+                            (payment.politica_pago === 'CREDITO' && (
+                                <div className="rounded-lg border-blue-200">
+                                    <div className="text-sm">
+                                        <div className="space-y-2 rounded bg-gradient-to-br from-blue-50 to-indigo-50 p-3 dark:from-slate-800 dark:to-slate-900">
+                                            {/* Límite de crédito */}
+                                            <div className="flex items-center justify-between border-b border-blue-200 pb-2 dark:border-slate-700">
+                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Límite de crédito:</p>
+                                                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                                    Bs. {(parseFloat(clienteConCredito?.limite_credito || '0') || 0).toFixed(2)}
+                                                </p>
+                                            </div>
 
-                                            return (
-                                                <label
-                                                    key={politica.codigo}
-                                                    htmlFor={`politica_${politica.codigo}`}
-                                                    className={`flex cursor-pointer items-center rounded-lg border-2 p-3 transition-all ${
-                                                        isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-accent/5 dark:hover:bg-accent/10'
-                                                    } ${isSelected ? 'border-accent bg-accent/5 dark:bg-accent/10' : 'border-input'}`}
+                                            {/* Crédito utilizado */}
+                                            <div className="flex items-center justify-between border-b border-orange-200 pb-2 dark:border-orange-900/30">
+                                                <p className="text-xs font-medium text-orange-700 dark:text-orange-300">Crédito utilizado:</p>
+                                                <p className="font-semibold text-orange-900 dark:text-orange-100">
+                                                    Bs. {(clienteConCredito?.credito_utilizado ?? 0).toFixed(2)}
+                                                </p>
+                                            </div>
+
+                                            {/* Crédito disponible (calculado) */}
+                                            <div className="flex items-center justify-between rounded bg-white p-2 dark:bg-slate-800">
+                                                <p className="text-xs font-bold font-medium text-green-700 dark:text-green-300">
+                                                    Crédito disponible:
+                                                </p>
+                                                <p
+                                                    className={`font-bold ${
+                                                        (clienteConCredito?.saldo_credito ?? 0) >= proforma.total
+                                                            ? 'text-green-900 dark:text-green-100'
+                                                            : 'text-red-900 dark:text-red-100'
+                                                    }`}
                                                 >
-                                                    <input
-                                                        type="radio"
-                                                        id={`politica_${politica.codigo}`}
-                                                        name="politica_pago"
-                                                        value={politica.codigo}
-                                                        checked={isSelected}
-                                                        onChange={(e) => handlePolicyChange(e.target.value)}
-                                                        disabled={isSubmitting || isDisabled}
-                                                        className="h-4 w-4 cursor-pointer"
-                                                    />
-                                                    <div className="ml-3 flex-1">
-                                                        <div className="flex items-center gap-2 text-sm font-medium">
-                                                            {getPolicyIcon(politica.codigo)}
-                                                            <span>{politica.nombre}</span>
-                                                            {politica.codigo === 'CREDITO' && isDisabled && (
-                                                                <AlertCircle className="h-4 w-4 text-amber-500" title={creditoMsg || ''} />
-                                                            )}
-                                                        </div>
-                                                        <p className="mt-1 text-xs text-muted-foreground">{politica.descripcion}</p>
-                                                        {creditoMsg && isDisabled && (
-                                                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{creditoMsg}</p>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            );
-                                        })}
+                                                    Bs. {(clienteConCredito?.saldo_credito ?? 0).toFixed(2)}
+                                                </p>
+                                            </div>
+
+                                            {/* Advertencia si no hay suficiente crédito */}
+                                            {(clienteConCredito?.saldo_credito ?? 0) < proforma.total && (
+                                                <div className="mt-2 rounded bg-red-50 p-2 dark:bg-red-950">
+                                                    <p className="text-xs text-red-700 dark:text-red-300">
+                                                        ⚠️ Crédito insuficiente. Necesita Bs.{' '}
+                                                        {(proforma.total - (clienteConCredito?.saldo_credito ?? 0)).toFixed(2)} adicional.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
+                            ))}
+                    </div>
+
+                    <div>
+                        <h3 className="text-sm font-medium">📅 Coordinación de Entrega</h3>
+                        {/* Advertencia si son diferentes */}
+                        {fechasDiferentes && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-1 dark:border-amber-800 dark:bg-amber-950/20">
+                                <p className="font-small text-xs text-amber-900 dark:text-amber-200">
+                                    ⚠️ La fecha comprometida es diferente a la solicitada
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Sección 1: Datos Solicitados (Solo Lectura) */}
+                        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 dark:border-blue-800 dark:bg-blue-950/20 mb-2">
+                            <h4 className="text-xs font-semibold text-blue-900 uppercase dark:text-blue-200">📋 Lo que el cliente solicitó</h4>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label className="text-xs text-blue-700 dark:text-blue-300">Fecha Solicitada</Label>
+                                        <div className="mt-1 rounded bg-white px-3 py-2 text-sm font-medium dark:bg-slate-800">
+                                            {proforma.fecha_entrega_solicitada ? (
+                                                new Date(proforma.fecha_entrega_solicitada).toLocaleDateString('es-BO', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                })
+                                            ) : (
+                                                <span className="text-muted-foreground">No especificada</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-blue-700 dark:text-blue-300">Hora Solicitada</Label>
+                                        <div className="mt-1 rounded bg-white px-3 py-2 text-sm font-medium dark:bg-slate-800">
+                                            {proforma.hora_entrega_solicitada ? (
+                                                proforma.hora_entrega_solicitada.substring(0, 5)
+                                            ) : (
+                                                <span className="text-muted-foreground">No especificada</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* ✅ MEJORADO: Monto Pagado (condicional) */}
-                        {payment.politica_pago !== 'CONTRA_ENTREGA' && payment.politica_pago !== 'CREDITO' && (
-                            <>
-                                <Alert>
-                                    <AlertDescription>
-                                        {(() => {
-                                            const minimo = getMinimumPayment();
-                                            if (minimo === 0) {
-                                                return 'No se requiere pago por adelantado';
-                                            }
-                                            return `Se requiere mínimo: ${formatCurrency(minimo)}`;
-                                        })()}
-                                    </AlertDescription>
-                                </Alert>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="monto_pagado" className="text-sm font-medium">
-                                        Monto Pagado (Bs.) *
-                                    </Label>
-                                    <Input
-                                        type="number"
-                                        id="monto_pagado"
-                                        step="0.01"
-                                        min="0"
-                                        max={proforma.total}
-                                        value={payment.monto_pagado || 0}
-                                        onChange={(e) =>
-                                            setPayment((prev) => ({
-                                                ...prev,
-                                                monto_pagado: parseFloat(e.target.value) || 0,
-                                            }))
-                                        }
-                                        disabled={isSubmitting}
-                                        className={
-                                            (payment.monto_pagado < getMinimumPayment() || payment.monto_pagado > proforma.total) &&
-                                            payment.monto_pagado > 0
-                                                ? 'border-red-500'
-                                                : ''
-                                        }
-                                    />
-                                    <p className="text-xs text-muted-foreground">Total de la proforma: {formatCurrency(proforma.total)}</p>
-                                </div>
-
-                                {/* Fecha de Pago */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="fecha_pago" className="text-sm font-medium">
-                                        Fecha de Pago
-                                    </Label>
-                                    <Input
-                                        type="date"
-                                        id="fecha_pago"
-                                        value={
-                                            payment.fecha_pago ||
-                                            (() => {
-                                                const hoy = new Date();
-                                                const year = hoy.getFullYear();
-                                                const month = String(hoy.getMonth() + 1).padStart(2, '0');
-                                                const day = String(hoy.getDate()).padStart(2, '0');
-                                                return `${year}-${month}-${day}`;
-                                            })()
-                                        }
-                                        onChange={(e) => setPayment((prev) => ({ ...prev, fecha_pago: e.target.value }))}
-                                        disabled={isSubmitting}
-                                    />
-                                </div>
-
-                                {/* Referencias de Pago */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="numero_recibo" className="text-sm font-medium">
-                                            Número de Recibo
+                        {/* Sección 2: Datos Comprometidos (Editables) */}
+                        <div className="rounded-lg border border-green-200 bg-green-50/50 p-2 dark:border-green-800 dark:bg-green-950/20">
+                            <h4 className="text-xs font-semibold text-green-900 uppercase dark:text-green-200">
+                                ✓ Lo que comprometemos entregar (EDITABLE)
+                            </h4>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor="fecha_entrega_comprometida" className="text-xs text-green-700 dark:text-green-300">
+                                            Fecha Comprometida *
                                         </Label>
                                         <Input
-                                            type="text"
-                                            id="numero_recibo"
-                                            placeholder="Ej: REC-001"
-                                            value={payment.numero_recibo || ''}
-                                            onChange={(e) => setPayment((prev) => ({ ...prev, numero_recibo: e.target.value }))}
+                                            type="date"
+                                            id="fecha_entrega_comprometida"
+                                            value={coordinacion.fecha_entrega_confirmada}
+                                            onChange={(e) => {
+                                                onCoordinacionChange({
+                                                    ...coordinacion,
+                                                    fecha_entrega_confirmada: e.target.value,
+                                                });
+                                            }}
                                             disabled={isSubmitting}
+                                            className="mt-1 h-9 text-sm"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="numero_transferencia" className="text-sm font-medium">
-                                            Número de Transferencia
+                                    <div>
+                                        <Label htmlFor="hora_entrega_comprometida" className="text-xs text-green-700 dark:text-green-300">
+                                            Hora Inicio *
                                         </Label>
                                         <Input
-                                            type="text"
-                                            id="numero_transferencia"
-                                            placeholder="Ej: TRANS-12345"
-                                            value={payment.numero_transferencia || ''}
-                                            onChange={(e) => setPayment((prev) => ({ ...prev, numero_transferencia: e.target.value }))}
+                                            type="time"
+                                            id="hora_entrega_comprometida"
+                                            value={coordinacion.hora_entrega_confirmada}
+                                            onChange={(e) => {
+                                                onCoordinacionChange({
+                                                    ...coordinacion,
+                                                    hora_entrega_confirmada: e.target.value,
+                                                });
+                                            }}
                                             disabled={isSubmitting}
+                                            className="mt-1 h-9 text-sm"
                                         />
                                     </div>
                                 </div>
-                            </>
-                        )}
-
-                        {/* ✅ NUEVO: Información especial para CREDITO */}
-                        {payment.politica_pago === 'CREDITO' && (
-                            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
-                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                <AlertDescription className="text-amber-800 dark:text-amber-200">
-                                    Esta venta se registrará como crédito. No requiere pago inmediato pero se generará una cuenta por cobrar. El
-                                    cliente tiene un límite de crédito de{' '}
-                                    <span className="font-semibold">{formatCurrency(proforma.cliente?.limite_credito ?? 0)}</span>
-                                </AlertDescription>
-                            </Alert>
-                        )}
-
-                        {/* Mensajes de Validación */}
-                        {payment.monto_pagado < getMinimumPayment() && payment.monto_pagado > 0 && (
-                            <Alert variant="destructive">
-                                <AlertDescription>El monto pagado es menor al mínimo requerido para la política seleccionada</AlertDescription>
-                            </Alert>
-                        )}
-
-                        {payment.monto_pagado > proforma.total && (
-                            <Alert variant="destructive">
-                                <AlertDescription>El monto pagado no puede exceder el total de la proforma</AlertDescription>
-                            </Alert>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* ✅ NUEVO: Resumen de Política Solicitada */}
-                {proforma.politica_pago === 'CREDITO' && (
-                    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-                        <CardContent className="text-sm">
-                            <div className="space-y-2 rounded bg-gradient-to-br from-blue-50 to-indigo-50 p-3 dark:from-slate-800 dark:to-slate-900">
-                                {/* Límite de crédito */}
-                                <div className="flex items-center justify-between border-b border-blue-200 pb-2 dark:border-slate-700">
-                                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Límite de crédito:</p>
-                                    <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                        Bs. {(parseFloat(clienteConCredito?.limite_credito || '0') || 0).toFixed(2)}
-                                    </p>
+                                <div>
+                                    <Label htmlFor="hora_entrega_fin" className="text-xs text-green-700 dark:text-green-300">
+                                        Hora Fin (opcional)
+                                    </Label>
+                                    <Input
+                                        type="time"
+                                        id="hora_entrega_fin"
+                                        value={coordinacion.hora_entrega_confirmada_fin}
+                                        onChange={(e) => {
+                                            onCoordinacionChange({
+                                                ...coordinacion,
+                                                hora_entrega_confirmada_fin: e.target.value,
+                                            });
+                                        }}
+                                        disabled={isSubmitting}
+                                        className="mt-1 h-9 text-sm"
+                                    />
                                 </div>
-
-                                {/* Crédito utilizado */}
-                                <div className="flex items-center justify-between border-b border-orange-200 pb-2 dark:border-orange-900/30">
-                                    <p className="text-xs font-medium text-orange-700 dark:text-orange-300">Crédito utilizado:</p>
-                                    <p className="font-semibold text-orange-900 dark:text-orange-100">
-                                        Bs. {(clienteConCredito?.credito_utilizado ?? 0).toFixed(2)}
-                                    </p>
-                                </div>
-
-                                {/* Crédito disponible (calculado) */}
-                                <div className="flex items-center justify-between rounded bg-white p-2 dark:bg-slate-800">
-                                    <p className="text-xs font-bold font-medium text-green-700 dark:text-green-300">Crédito disponible:</p>
-                                    <p
-                                        className={`font-bold ${
-                                            (clienteConCredito?.saldo_credito ?? 0) >= proforma.total
-                                                ? 'text-green-900 dark:text-green-100'
-                                                : 'text-red-900 dark:text-red-100'
-                                        }`}
-                                    >
-                                        Bs. {(clienteConCredito?.saldo_credito ?? 0).toFixed(2)}
-                                    </p>
-                                </div>
-
-                                {/* Advertencia si no hay suficiente crédito */}
-                                {(clienteConCredito?.saldo_credito ?? 0) < proforma.total && (
-                                    <div className="mt-2 rounded bg-red-50 p-2 dark:bg-red-950">
-                                        <p className="text-xs text-red-700 dark:text-red-300">
-                                            ⚠️ Crédito insuficiente. Necesita Bs.{' '}
-                                            {(proforma.total - (clienteConCredito?.saldo_credito ?? 0)).toFixed(2)} adicional.
-                                        </p>
-                                    </div>
-                                )}
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                        </div>
+                    </div>
+
+                    {/* Comentario adicional */}
+                    {coordinacion.comentario_coordinacion && (
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/20">
+                            <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Comentario</Label>
+                            <p className="mt-2 text-sm text-foreground">{coordinacion.comentario_coordinacion}</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Botones de Acción */}

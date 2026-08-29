@@ -36,10 +36,6 @@ const validarTipoPrecio = (producto: any, precioUnitario: number): { tipo_precio
     }
 
     // Si no hay coincidencia, retornar null (representa "OTROS")
-    console.log('📌 [validarTipoPrecio] Precio personalizado detectado:', {
-        producto: producto.nombre,
-        precio: precioUnitario
-    });
     return { tipo_precio_id: null, tipo_precio_nombre: null };
 };
 
@@ -145,17 +141,18 @@ export default function ProductosTable({
 
         // ✅ Inicializar select de tipo de precio (PRIORIDAD del backend)
         // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
-        if (tipo === 'venta' && !selectedTipoPrecio[ultimoDetalle.producto_id]) {
+        // ✅ MODIFICADO (2026-08-28): Forzar inicialización SIEMPRE en lugar de solo si no está establecido
+        if (tipo === 'venta') {
             // 1️⃣ PRIORIDAD: Si el detalle YA viene con tipo_precio_id del backend, usarlo
-            if (ultimoDetalle.tipo_precio_id) {
+            if (ultimoDetalle.tipo_precio_id && selectedTipoPrecio[ultimoDetalle.producto_id] !== String(ultimoDetalle.tipo_precio_id)) {
                 console.log(`✅ [ProductosTable] Inicializando selectedTipoPrecio con backend: ${ultimoDetalle.tipo_precio_id}`);
                 setSelectedTipoPrecio(prev => ({
                     ...prev,
                     [ultimoDetalle.producto_id]: String(ultimoDetalle.tipo_precio_id)
                 }));
             }
-            // 2️⃣ Si no, usar el recomendado
-            else if (ultimoDetalle.tipo_precio_id_recomendado) {
+            // 2️⃣ Si no, usar el recomendado (CRÍTICO para CLIENTE GENERAL)
+            else if (ultimoDetalle.tipo_precio_id_recomendado && selectedTipoPrecio[ultimoDetalle.producto_id] !== String(ultimoDetalle.tipo_precio_id_recomendado)) {
                 console.log(`ℹ️ [ProductosTable] Inicializando selectedTipoPrecio con recomendado: ${ultimoDetalle.tipo_precio_id_recomendado}`);
                 setSelectedTipoPrecio(prev => ({
                     ...prev,
@@ -163,7 +160,7 @@ export default function ProductosTable({
                 }));
             }
             // 3️⃣ Si no hay nada, buscar un precio de venta
-            else {
+            else if (!selectedTipoPrecio[ultimoDetalle.producto_id]) {
                 const precios = ultimoDetalle.producto?.precios || [];
                 const preciosVenta = precios.filter(p => {
                     const nombre = (p.nombre || '').toLowerCase();
@@ -184,6 +181,34 @@ export default function ProductosTable({
             }
         }
     }, [detalles.length, tipo]);
+
+    // ✅ NUEVO (2026-08-28): Sincronizar selectedTipoPrecio cuando tipo_precio_id cambia en detalles
+    useEffect(() => {
+        if (tipo !== 'venta' || detalles.length === 0) return;
+
+        let hasChanges = false;
+        const updatedSelectedTipoPrecio = { ...selectedTipoPrecio };
+
+        detalles.forEach((detalle) => {
+            const productoId = detalle.producto_id;
+
+            // Si el detalle tiene tipo_precio_id y es diferente al selectedTipoPrecio, actualizar
+            if (detalle.tipo_precio_id) {
+                const currentSelected = selectedTipoPrecio[productoId];
+                const newValue = String(detalle.tipo_precio_id);
+
+                if (currentSelected !== newValue) {
+                    updatedSelectedTipoPrecio[productoId] = newValue;
+                    hasChanges = true;
+                    console.log(`🔄 [ProductosTable] Sincronizando tipo_precio para producto ${productoId}: ${currentSelected} → ${newValue}`);
+                }
+            }
+        });
+
+        if (hasChanges) {
+            setSelectedTipoPrecio(updatedSelectedTipoPrecio);
+        }
+    }, [detalles.map(d => `${d.producto_id}:${d.tipo_precio_id}`).join(','), tipo]);
 
     // ✅ useEffect: Expandir combos pre-existentes del backend
     useEffect(() => {
@@ -352,12 +377,6 @@ export default function ProductosTable({
 
             // Si no hay coincidencia de tipo de precio, limpiar estos campos (marcará como "OTROS")
             if (tipo_precio_id === null) {
-                console.log('📌 [handleUpdateDetail] Precio personalizado - Marcando como "OTROS"', {
-                    detalle_index: index,
-                    producto: producto?.nombre,
-                    precio_nuevo: precioUnitario,
-                    accion: 'Limpiando tipo_precio_id y tipo_precio_nombre para que se muestren como "OTROS"'
-                });
 
                 // ✅ CRÍTICO (2026-07-03): Actualizar el detalle con el nuevo precio y limpiar tipo_precio
                 // Hacer esto en UNA SOLA actualización de estado para evitar "stale closure"
@@ -413,14 +432,6 @@ export default function ProductosTable({
                         cantidad: item.cantidad, // ✅ CANTIDAD ORIGINAL (ej: 10 o 1, no 30 o 3)
                         incluido: incluido
                     };
-                });
-
-                console.log('📦 [handleUpdateDetail] Combo items actualizados:', {
-                    combo_id: comboId,
-                    campo: field,
-                    valor: value,
-                    items_original: comboItems.map((i: any) => ({ id: i.id, cantidad: i.cantidad })),
-                    items_actualizado: comboItemsActualizados.map((i: any) => ({ id: i.id, cantidad: i.cantidad }))
                 });
 
                 if (comboId) {

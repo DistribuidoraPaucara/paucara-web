@@ -33,7 +33,7 @@
         @endif
 
         {{-- TOTAL (final a pagar) --}}
-        <tr class="total-final" style="font-size:12px;">
+        <tr class="total-final" style="font-size:13px;">
             <td><strong>Total:</strong></td>
             <td class="text-right">
                 <strong>{{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($documento->total, 2) }}</strong>

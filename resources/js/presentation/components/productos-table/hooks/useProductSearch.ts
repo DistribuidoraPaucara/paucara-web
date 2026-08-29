@@ -405,6 +405,7 @@ export function useProductSearch({
                     if (almacen_id) params.append('almacen_id', almacen_id.toString());
                     if (cliente_id) params.append('cliente_id', cliente_id.toString());
                     if (permitirProductosSinStock) params.append('permitir_sin_stock', 'true'); // ✅ NUEVO (2026-05-26)
+                    if (isClienteGeneral) params.append('cliente_general', 'true'); // ✅ NUEVO (2026-08-28): Indicar si es cliente GENERAL para que backend devuelva precios LICORERIA
 
                     const url = `/api/app/productos/buscar?${params.toString()}`;
                     console.log('📡 [useProductSearch] URL:', url);
@@ -548,6 +549,7 @@ export function useProductSearch({
                 if (almacen_id) params.append('almacen_id', almacen_id.toString());
                 if (cliente_id) params.append('cliente_id', cliente_id.toString());
                 if (permitirProductosSinStock) params.append('permitir_sin_stock', 'true'); // ✅ NUEVO (2026-05-26)
+                if (isClienteGeneral) params.append('cliente_general', 'true'); // ✅ NUEVO (2026-08-28): Indicar si es cliente GENERAL para que backend devuelva precios LICORERIA
 
                 const url = `/api/productos/buscar?${params.toString()}`;
                 console.log('📡 [Scanner] URL:', url);
