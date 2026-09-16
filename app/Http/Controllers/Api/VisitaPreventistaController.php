@@ -511,4 +511,82 @@ class VisitaPreventistaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ✅ NUEVO: GET /api/visitas/estadisticas-localidades
+     * Obtener estadísticas de visitas por localidad del día actual
+     * (Funciona como endpoint independiente, sin depender del login)
+     */
+    public function estadisticasLocalidades(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user || !$user->empleado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado',
+                ], 401);
+            }
+
+            $empleado = $user->empleado;
+            $hoy = now()->toDateString();
+
+            \Log::info('📊 Obteniendo estadísticas de visitas por localidad', [
+                'preventista_id' => $empleado->id,
+                'fecha' => $hoy,
+            ]);
+
+            // ✅ CORREGIDO: Contar clientes por localidad DEL PREVENTISTA AUTENTICADO (coherente con orden del día)
+            $visitasPorLocalidad = DB::table('clientes')
+                ->leftJoin('localidades', 'clientes.localidad_id', '=', 'localidades.id')
+                ->leftJoin('visitas_preventista_cliente', function ($join) use ($hoy) {
+                    $join->on('clientes.id', '=', 'visitas_preventista_cliente.cliente_id')
+                        ->whereDate('visitas_preventista_cliente.fecha_hora_visita', $hoy)
+                        ->where('visitas_preventista_cliente.estado_visita', 'completada');
+                })
+                ->where('clientes.preventista_id', $empleado->id)
+                ->select(
+                    DB::raw("COALESCE(localidades.nombre, 'Sin localidad') as localidad"),
+                    DB::raw('COUNT(DISTINCT clientes.id) as total'),
+                    DB::raw('COUNT(DISTINCT visitas_preventista_cliente.id) as completadas')
+                )
+                ->groupBy('localidad')
+                ->get()
+                ->mapWithKeys(function ($row) {
+                    return [
+                        $row->localidad => [
+                            'total' => $row->total,
+                            'completadas' => $row->completadas,
+                            'pendientes' => $row->total - $row->completadas,
+                        ],
+                    ];
+                })
+                ->toArray();
+
+            \Log::info('✅ Estadísticas por localidad: ' . json_encode($visitasPorLocalidad));
+
+            // Calcular total de clientes
+            $totalClientes = array_reduce($visitasPorLocalidad, function ($carry, $stats) {
+                return $carry + ($stats['total'] ?? 0);
+            }, 0);
+
+            return response()->json([
+                'success' => true,
+                'data' => $visitasPorLocalidad,
+                'fecha' => $hoy,
+                'total_visitas' => $totalClientes,
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en estadisticasLocalidades: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

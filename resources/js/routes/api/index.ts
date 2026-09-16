@@ -36,6 +36,7 @@ import egresosAnalisis from './egresos-analisis'
 import egresos from './egresos'
 import notificaciones from './notificaciones'
 import actualizarStockMasivo from './actualizar-stock-masivo'
+import fcm from './fcm'
 import dashboard from './dashboard'
 import codigosBarra from './codigos-barra'
 import productosComidas from './productos-comidas'
@@ -456,6 +457,7 @@ egresosAnalisis,
 egresos,
 notificaciones,
 actualizarStockMasivo,
+fcm,
 dashboard,
 codigosBarra,
 productosComidas,

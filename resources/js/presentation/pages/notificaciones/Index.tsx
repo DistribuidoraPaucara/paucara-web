@@ -318,7 +318,27 @@ export default function NotificacionesIndex({ estadisticas: initialStats }: Prop
                                                 <TableCell>{getTipoBadge(notif.tipo)}</TableCell>
                                                 <TableCell>{getFrecuenciaBadge(notif.frecuencia)}</TableCell>
                                                 <TableCell className="font-mono text-sm">
-                                                    {notif.hora_envio}
+                                                    {/* ✅ NUEVO: Mostrar múltiples horarios */}
+                                                    <div className="space-y-1">
+                                                        {notif.horarios && notif.horarios.length > 0 ? (
+                                                            notif.horarios.map((h, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    className={`text-xs px-2 py-1 rounded ${
+                                                                        h.activo
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : 'bg-gray-100 text-gray-600 line-through'
+                                                                    }`}
+                                                                >
+                                                                    {h.hora}
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-gray-500 text-xs">
+                                                                {notif.hora_envio || '-'}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     <div className="text-sm">

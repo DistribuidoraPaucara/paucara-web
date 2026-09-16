@@ -45,6 +45,7 @@ import ReportesController from './ReportesController'
 import Prestamos from './Prestamos'
 import NotificacionRecurrenteController from './NotificacionRecurrenteController'
 import ActualizarStockMasivoController from './ActualizarStockMasivoController'
+import DispositivoTokenFcmController from './DispositivoTokenFcmController'
 import FaviconController from './FaviconController'
 import VentaPublicController from './VentaPublicController'
 import PublicStockController from './PublicStockController'
@@ -161,6 +162,7 @@ ReportesController,
 Prestamos,
 NotificacionRecurrenteController,
 ActualizarStockMasivoController,
+DispositivoTokenFcmController,
 FaviconController,
 VentaPublicController,
 PublicStockController,

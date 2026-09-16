@@ -17,11 +17,17 @@ class Kernel extends ConsoleKernel
             ->dailyAt('02:00')
             ->appendOutputTo(storage_path('logs/reservas-cleanup.log'));
 
-        // Enviar notificaciones recurrentes cada minuto
+        // Enviar notificaciones recurrentes cada minuto (Socket.IO)
         $schedule->command('notificaciones:enviar')
             ->everyMinute()
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/notificaciones.log'));
+
+        // ✅ NUEVO: Enviar notificaciones recurrentes via Firebase Cloud Messaging cada minuto
+        $schedule->command('notificaciones:enviar-fcm')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/notificaciones-fcm.log'));
     }
 
     /**

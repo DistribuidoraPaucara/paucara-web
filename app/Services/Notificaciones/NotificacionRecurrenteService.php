@@ -3,6 +3,7 @@ namespace App\Services\Notificaciones;
 
 use App\DTOs\Notificaciones\CrearNotificacionDTO;
 use App\Models\NotificacionRecurrente;
+use App\Services\Firebase\FirebaseNotificationService;
 use App\Services\WebSocket\NotificacionRecurrenteWebSocketService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -10,10 +11,14 @@ use Illuminate\Support\Facades\Log;
 class NotificacionRecurrenteService
 {
     protected NotificacionRecurrenteWebSocketService $wsService;
+    protected FirebaseNotificationService $firebaseService;
 
-    public function __construct(NotificacionRecurrenteWebSocketService $wsService)
-    {
+    public function __construct(
+        NotificacionRecurrenteWebSocketService $wsService,
+        FirebaseNotificationService $firebaseService
+    ) {
         $this->wsService = $wsService;
+        $this->firebaseService = $firebaseService;
     }
 
     public function crear(CrearNotificacionDTO $dto): NotificacionRecurrente
@@ -60,14 +65,38 @@ class NotificacionRecurrenteService
 
         try {
             DB::transaction(function () use ($notificacion) {
-                $notificacion->incrementarEnvios();
-
+                // Enviar a WebSocket (tiempo real para web)
                 Log::debug('🎯 [NotificacionService::enviar] Enviando al WebSocket', [
                     'notificacion_id' => $notificacion->id,
-                    'total_enviadas' => $notificacion->total_enviadas,
+                ]);
+                $this->wsService->notifyEmitida($notificacion);
+
+                // ✅ NUEVO: Enviar a Firebase Cloud Messaging (para móviles)
+                Log::debug('🎯 [NotificacionService::enviar] Enviando a Firebase', [
+                    'notificacion_id' => $notificacion->id,
                 ]);
 
-                $this->wsService->notifyEmitida($notificacion);
+                try {
+                    $firebaseResult = $this->firebaseService->enviarADispositivos($notificacion);
+                    Log::info('✅ Firebase: notificación enviada', [
+                        'notificacion_id' => $notificacion->id,
+                        'enviados' => $firebaseResult['enviados'],
+                        'fallidos' => $firebaseResult['fallidos'],
+                    ]);
+                    // Actualizar total_enviadas con el número real enviado a Firebase
+                    if ($firebaseResult['enviados'] > 0) {
+                        $notificacion->increment('total_enviadas', $firebaseResult['enviados']);
+                    }
+                } catch (\Exception $fcmError) {
+                    Log::warning('⚠️  Error enviando a Firebase (continuando con WebSocket)', [
+                        'notificacion_id' => $notificacion->id,
+                        'error' => $fcmError->getMessage(),
+                    ]);
+                    // No lanzar la excepción, continuar con WebSocket
+                }
+
+                // Actualizar último envío
+                $notificacion->update(['ultimo_envio' => now()]);
             });
 
             Log::info('✅ [NotificacionService::enviar] Notificación enviada exitosamente', [

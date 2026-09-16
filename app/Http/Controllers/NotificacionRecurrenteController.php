@@ -9,6 +9,7 @@ use App\Services\Notificaciones\NotificacionRecurrenteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -91,7 +92,7 @@ class NotificacionRecurrenteController extends Controller
                 $query->where("activo", $request->activo === "true" ? true : false);
             }
 
-            $notificaciones = $query->with(["usuario", "roles"])
+            $notificaciones = $query->with(["usuario", "roles", "horarios"])
                 ->orderBy("created_at", "desc")
                 ->paginate($request->input("per_page", 15));
 
@@ -163,17 +164,28 @@ class NotificacionRecurrenteController extends Controller
             $rolesArray = is_array($request->roles) ? $request->roles : [];
             $notificacion->roles()->sync($rolesArray);
 
-            Log::debug("✅ Roles asignados a nueva notificación", [
-                "notificacion_id" => $notificacion->id,
-                "roles_enviados" => $request->roles,
-                "roles_asignados" => $rolesArray,
-            ]);
+            // ✅ NUEVO: Crear horarios asociados a la notificación
+            if (!empty($dto->horarios)) {
+                foreach ($dto->horarios as $horarioData) {
+                    $notificacion->horarios()->create([
+                        'hora' => $horarioData['hora'],
+                        'activo' => $horarioData['activo'] ?? true,
+                    ]);
+                }
 
-            $notificacion->load('roles');
+                Log::debug("✅ Horarios creados para nueva notificación", [
+                    "notificacion_id" => $notificacion->id,
+                    "total_horarios" => count($dto->horarios),
+                    "horarios" => array_column($dto->horarios, 'hora'),
+                ]);
+            }
+
+            $notificacion->load('roles', 'horarios');
 
             Log::info("✅ Notificación recurrente creada", [
                 "notificacion_id" => $notificacion->id,
                 "roles" => $notificacion->roles->pluck('name'),
+                "horarios" => $notificacion->horarios->pluck('hora'),
             ]);
 
             return response()->json([
@@ -211,7 +223,14 @@ class NotificacionRecurrenteController extends Controller
         $notificacionModel = NotificacionRecurrente::findOrFail($notificacion);
 
         // ✅ Cargar relaciones necesarias para el formulario
-        $notificacionModel->load(['roles', 'usuario']);
+        $notificacionModel->load(['roles', 'usuario', 'horarios']);
+
+        // ✅ NUEVO: Serializar horarios
+        $horariosData = $notificacionModel->horarios->map(fn($h) => [
+            'id' => $h->id,
+            'hora' => $h->hora,
+            'activo' => $h->activo,
+        ])->toArray();
 
         // ✅ Serializar explícitamente con relaciones incluidas
         $notificacionData = [
@@ -229,6 +248,10 @@ class NotificacionRecurrenteController extends Controller
             'total_enviadas' => $notificacionModel->total_enviadas,
             'vistas' => $notificacionModel->vistas,
             'ultimo_envio' => $notificacionModel->ultimo_envio,
+            // ✅ NUEVO: Horarios múltiples
+            'horarios' => $horariosData,
+            // ✅ NUEVO: Imagen URL
+            'imagen_url' => $notificacionModel->imagen_url,
             'roles' => $notificacionModel->roles->map(fn($r) => [
                 'id' => $r->id,
                 'name' => $r->name,
@@ -265,12 +288,32 @@ class NotificacionRecurrenteController extends Controller
                 "fecha_inicio" => $dto->fecha_inicio,
                 "fecha_fin" => $dto->fecha_fin,
                 "activo" => $dto->activo,
+                "imagen_url" => $dto->imagen_url, // ✅ NUEVO: Guardar imagen_url
             ]);
 
             // ✅ Actualizar roles (siempre sincronizar, incluso si está vacío)
-            // Esto asegura que se desasocien todos si el array está vacío
             $rolesArray = is_array($request->roles) ? $request->roles : [];
             $notificacionModel->roles()->sync($rolesArray);
+
+            // ✅ NUEVO: Actualizar horarios (reemplazar completamente)
+            if (!empty($dto->horarios)) {
+                // Eliminar horarios antiguos
+                $notificacionModel->horarios()->delete();
+
+                // Crear nuevos horarios
+                foreach ($dto->horarios as $horarioData) {
+                    $notificacionModel->horarios()->create([
+                        'hora' => $horarioData['hora'],
+                        'activo' => $horarioData['activo'] ?? true,
+                    ]);
+                }
+
+                Log::debug("✅ Horarios actualizados para notificación", [
+                    "notificacion_id" => $notificacionModel->id,
+                    "total_horarios" => count($dto->horarios),
+                    "horarios" => array_column($dto->horarios, 'hora'),
+                ]);
+            }
 
             Log::debug("✅ Roles sincronizados para notificación", [
                 "notificacion_id" => $notificacionModel->id,
@@ -278,11 +321,12 @@ class NotificacionRecurrenteController extends Controller
                 "roles_sincronizados" => $rolesArray,
             ]);
 
-            $notificacionModel->load('roles');
+            $notificacionModel->load('roles', 'horarios');
 
             Log::info("✅ Notificación actualizada", [
                 "notificacion_id" => $notificacionModel->id,
                 "roles" => $notificacionModel->roles->pluck('name'),
+                "horarios" => $notificacionModel->horarios->pluck('hora'),
             ]);
 
             return response()->json([
@@ -375,6 +419,73 @@ class NotificacionRecurrenteController extends Controller
                 "success" => false,
                 "message" => $e->getMessage(),
             ], 422);
+        }
+    }
+
+    /**
+     * ✅ Endpoint público para ejecutar notificaciones recurrentes vía cron externo
+     * Puede ser llamado por EasyCron, Cron-job.org, o cualquier servicio de scheduling
+     *
+     * GET /api/public/notificaciones/ejecutar-recurrentes?api_key=tu_clave_secreta
+     */
+    public function ejecutarRecurrentes(Request $request): JsonResponse
+    {
+        try {
+            // 🔐 Validar token/API key (leer directamente desde .env)
+            $apiKey = env('NOTIFICACIONES_API_KEY', 'cambiar_en_env');
+            $providedKey = $request->query('api_key');
+
+            // Debug log para verificar las claves
+            Log::debug('🔐 Validando acceso a ejecutarRecurrentes', [
+                'provided_key' => $providedKey,
+                'expected_key_prefix' => substr($apiKey, 0, 10) . '***',
+                'keys_match' => $providedKey === $apiKey,
+            ]);
+
+            if (empty($providedKey) || $providedKey !== $apiKey) {
+                Log::warning('🔒 Intento de acceso no autorizado a ejecutarRecurrentes', [
+                    'ip' => $request->ip(),
+                    'key_provided' => !empty($providedKey) ? 'yes' : 'no',
+                    'match' => $providedKey === $apiKey,
+                ]);
+                return response()->json([
+                    "success" => false,
+                    "message" => "Acceso no autorizado",
+                ], 403);
+            }
+
+            Log::info('🚀 Ejecutando notificaciones recurrentes vía endpoint público');
+
+            // Ejecutar el comando Artisan de forma sincrónica
+            $exitCode = Artisan::call('notificaciones:enviar-fcm', [
+                '--force' => false,
+            ]);
+
+            $output = Artisan::output();
+
+            Log::info('✅ Comando notificaciones:enviar-fcm ejecutado', [
+                'exit_code' => $exitCode,
+                'output_length' => strlen($output),
+            ]);
+
+            return response()->json([
+                "success" => true,
+                "message" => "Notificaciones recurrentes procesadas",
+                "timestamp" => now()->toIso8601String(),
+                "command_output" => $output, // Mostrar salida del comando para debugging
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error ejecutando notificaciones recurrentes', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                "success" => false,
+                "message" => "Error al ejecutar notificaciones",
+                "error" => $e->getMessage(),
+            ], 500);
         }
     }
 }

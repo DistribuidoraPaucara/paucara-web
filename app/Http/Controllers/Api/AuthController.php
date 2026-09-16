@@ -130,6 +130,22 @@ class AuthController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+
+            // ✅ NUEVO: Agregar estadísticas de visitas por localidad
+            try {
+                $visitasLocalidades = PreventistStatisticsService::getVisitasPorLocalidad($user->empleado);
+                $preventistStats['visitas_por_localidad'] = $visitasLocalidades;
+                \Log::info('📊 Visitas por localidad calculadas:', [
+                    'preventista_id' => $user->empleado->id,
+                    'count' => count($visitasLocalidades),
+                    'data' => $visitasLocalidades,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('❌ Excepción obteniendo visitas por localidad', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $responseData = [

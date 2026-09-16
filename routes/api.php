@@ -1666,6 +1666,7 @@ Route::middleware(['auth:sanctum'])->prefix('visitas')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'index']);
     Route::get('/estadisticas', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'estadisticas']);
     Route::get('/dashboard-stats', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'dashboardStats']); // ✅ NUEVO: Stats ligeras para dashboard
+    Route::get('/estadisticas-localidades', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'estadisticasLocalidades']); // ✅ NUEVO: Stats de visitas por localidad
     Route::get('/orden-del-dia', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'ordenDelDia']); // ✅ NUEVO
     Route::get('/validar-horario', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'validarHorario']);
     Route::get('/{visita}', [\App\Http\Controllers\Api\VisitaPreventistaController::class, 'show']);
@@ -1972,6 +1973,10 @@ Route::prefix('egresos')->group(function () {
 // ✅ RUTA PÚBLICA: Notificaciones para móviles (sin permisos)
 Route::get('notificaciones/public/list', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'indexPublic'])->name('api.notificaciones.public');
 
+// ✅ RUTA PÚBLICA: Ejecutar notificaciones recurrentes (para cron externo como EasyCron)
+// GET /api/public/notificaciones/ejecutar-recurrentes?api_key=tu_clave_secreta
+Route::get('public/notificaciones/ejecutar-recurrentes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'ejecutarRecurrentes'])->name('api.notificaciones.ejecutar-recurrentes');
+
 // ✅ RUTAS CON PERMISOS: Panel administrativo
 Route::prefix('notificaciones')->group(function () {
     Route::get('/', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'index'])->name('api.notificaciones.index');
@@ -1993,4 +1998,19 @@ Route::prefix('actualizar-stock-masivo')->middleware('auth')->group(function () 
 Route::middleware(['auth:sanctum,web'])->group(function () {
     Route::get('admin/logs/download', [\App\Http\Controllers\Api\LogsController::class, 'download'])->name('api.logs.download');
     Route::get('admin/logs/view', [\App\Http\Controllers\Api\LogsController::class, 'view'])->name('api.logs.view');
+});
+
+// ✅ NUEVO (2026-08-31): API para Firebase Cloud Messaging (FCM)
+// Rutas públicas - Sin autenticación requerida
+Route::prefix('fcm')->group(function () {
+    // Registrar o actualizar token FCM de un dispositivo
+    Route::post('/registrar-token', [\App\Http\Controllers\DispositivoTokenFcmController::class, 'registrar'])->name('api.fcm.registrar');
+
+    // Desactivar token (logout)
+    Route::post('/desactivar-token', [\App\Http\Controllers\DispositivoTokenFcmController::class, 'desactivar'])->name('api.fcm.desactivar');
+
+    // Enviar notificación de prueba (requiere admin)
+    Route::post('/enviar-prueba', [\App\Http\Controllers\DispositivoTokenFcmController::class, 'enviarPrueba'])
+        ->middleware('auth:sanctum,web')
+        ->name('api.fcm.enviar-prueba');
 });

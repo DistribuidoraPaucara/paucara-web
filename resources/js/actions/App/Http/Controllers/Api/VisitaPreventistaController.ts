@@ -289,6 +289,84 @@ dashboardStats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     
     dashboardStats.form = dashboardStatsForm
 /**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+export const estadisticasLocalidades = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: estadisticasLocalidades.url(options),
+    method: 'get',
+})
+
+estadisticasLocalidades.definition = {
+    methods: ["get","head"],
+    url: '/api/visitas/estadisticas-localidades',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+estadisticasLocalidades.url = (options?: RouteQueryOptions) => {
+    return estadisticasLocalidades.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+estadisticasLocalidades.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: estadisticasLocalidades.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+estadisticasLocalidades.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: estadisticasLocalidades.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+    const estadisticasLocalidadesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: estadisticasLocalidades.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+        estadisticasLocalidadesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasLocalidades.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\VisitaPreventistaController::estadisticasLocalidades
+ * @see app/Http/Controllers/Api/VisitaPreventistaController.php:520
+ * @route '/api/visitas/estadisticas-localidades'
+ */
+        estadisticasLocalidadesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: estadisticasLocalidades.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    estadisticasLocalidades.form = estadisticasLocalidadesForm
+/**
 * @see \App\Http\Controllers\Api\VisitaPreventistaController::ordenDelDia
  * @see app/Http/Controllers/Api/VisitaPreventistaController.php:318
  * @route '/api/visitas/orden-del-dia'
@@ -546,6 +624,6 @@ show.head = (args: { visita: number | { id: number } } | [visita: number | { id:
         })
     
     show.form = showForm
-const VisitaPreventistaController = { store, index, estadisticas, dashboardStats, ordenDelDia, validarHorario, show }
+const VisitaPreventistaController = { store, index, estadisticas, dashboardStats, estadisticasLocalidades, ordenDelDia, validarHorario, show }
 
 export default VisitaPreventistaController

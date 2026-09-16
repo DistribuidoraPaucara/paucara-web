@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Models\Role;
 
 class NotificacionRecurrente extends Model
@@ -28,6 +29,7 @@ class NotificacionRecurrente extends Model
         'vistas',
         'ultimo_envio',
         'usuario_id',
+        'imagen_url', // ✅ NUEVO: URL de imagen
     ];
 
     protected function casts(): array
@@ -54,6 +56,11 @@ class NotificacionRecurrente extends Model
         return $this->belongsToMany(Role::class, 'notificacion_recurrente_rol');
     }
 
+    public function horarios(): HasMany
+    {
+        return $this->hasMany(HorarioNotificacion::class, 'notificacion_recurrente_id');
+    }
+
     public function scopeActivas($query)
     {
         return $query->where('activo', true)
@@ -64,10 +71,17 @@ class NotificacionRecurrente extends Model
             });
     }
 
+    /**
+     * Obtener notificaciones que deben enviarse en la hora actual
+     * Verifica los horarios asociados en lugar de hora_envio directa
+     */
     public function scopeParaEstaHora($query)
     {
         $horaActual = now()->format('H:i');
-        return $query->where('hora_envio', '=', $horaActual);
+        return $query->whereHas('horarios', function ($q) use ($horaActual) {
+            $q->where('hora', '=', $horaActual)
+              ->where('activo', true);
+        });
     }
 
     public function debeEnviarsePorFrecuencia(): bool

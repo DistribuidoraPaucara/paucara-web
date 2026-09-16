@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cliente;
 use App\Models\Empleado;
+use App\Models\VisitaPreventistaCliente;
 
 class PreventistStatisticsService
 {
@@ -96,6 +97,50 @@ class PreventistStatisticsService
             'per_page' => $perPage,
             'last_page' => ceil($total / $perPage),
         ];
+    }
+
+    /**
+     * ✅ NUEVO: Obtener visitas por localidad del día actual
+     * Agrupa las visitas del preventista por localidad
+     */
+    public static function getVisitasPorLocalidad(Empleado $preventista): array
+    {
+        try {
+            \Log::info('🔍 Iniciando getVisitasPorLocalidad para preventista: ' . $preventista->id);
+
+            // Obtener visitas de hoy agrupadas por localidad
+            $visitasHoy = VisitaPreventistaCliente::whereDate('fecha_hora_visita', now()->toDateString())
+                ->whereHas('cliente', function ($q) use ($preventista) {
+                    $q->where('preventista_id', $preventista->id);
+                })
+                ->with(['cliente.localidad'])
+                ->get();
+
+            \Log::info('📊 Visitas encontradas hoy: ' . $visitasHoy->count());
+
+            // Agrupar por localidad
+            $visitasPorLocalidad = $visitasHoy->groupBy(function ($visita) {
+                return $visita->cliente->localidad?->nombre ?? 'Sin localidad';
+            })->map(function ($visitas) {
+                return [
+                    'total' => $visitas->count(),
+                    'completadas' => $visitas->where('estado_visita', 'completada')->count(),
+                    'pendientes' => $visitas->where('estado_visita', '!=', 'completada')->count(),
+                ];
+            });
+
+            \Log::info('✅ Visitas agrupadas por localidad: ' . json_encode($visitasPorLocalidad->toArray()));
+
+            return $visitasPorLocalidad->toArray();
+        } catch (\Exception $e) {
+            \Log::error('❌ Error obteniendo visitas por localidad', [
+                'preventista_id' => $preventista->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [];
+        }
     }
 
     /**

@@ -16,6 +16,9 @@ import {
 import { toast } from 'react-toastify';
 import { ArrowLeft, Send } from 'lucide-react';
 import notificacionesService, { type NotificacionRecurrente, type Role } from '@/infrastructure/services/notificaciones.service';
+import { HorariosNotificacionInput, type Horario } from '@/presentation/components/notificaciones/HorariosNotificacionInput';
+
+const DEFAULT_IMAGE_URL = `${window.location.origin}/storage/notificacion/ic_notification.png`;
 
 const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 const TIPOS = [
@@ -32,7 +35,7 @@ const FRECUENCIAS = [
 ];
 
 interface Props {
-    notificacion: NotificacionRecurrente;
+    notificacion: NotificacionRecurrente & { horarios?: Horario[] };
 }
 
 export default function NotificacionesEdit({ notificacion: initialNotif }: Props) {
@@ -40,7 +43,7 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
     const [enviando, setEnviando] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [roles, setRoles] = useState<Role[]>([]);
-    const [formData, setFormData] = useState<Partial<NotificacionRecurrente> & { roles?: number[] }>(initialNotif);
+    const [formData, setFormData] = useState<Partial<NotificacionRecurrente> & { roles?: number[]; horarios?: Horario[] }>(initialNotif);
 
     // 🔍 DEBUG: Mostrar datos que llegan del backend
     useEffect(() => {
@@ -79,12 +82,20 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
             return dateString.split('T')[0];
         };
 
+        // ✅ Limpiar horarios: remover segundos si existen (09:00:00 -> 09:00)
+        const horariosLimpios = (initialNotif.horarios || []).map((h: any) => ({
+            id: h.id,
+            hora: typeof h.hora === 'string' ? h.hora.substring(0, 5) : h.hora,
+            activo: h.activo ?? true,
+        }));
+
         const formattedData = {
             ...initialNotif,
             fecha_inicio: formatDateForInput(initialNotif.fecha_inicio as string),
             fecha_fin: formatDateForInput(initialNotif.fecha_fin as string),
             roles: initialNotif.roles?.map(r => r.id) || [],
-        } as unknown as Partial<NotificacionRecurrente> & { roles?: number[] };
+            horarios: horariosLimpios,
+        } as unknown as Partial<NotificacionRecurrente> & { roles?: number[]; horarios?: Horario[] };
         setFormData(formattedData);
         console.log('✅ [Edit Notificaciones] FormData formateado:', formattedData);
     }, [initialNotif]);
@@ -159,8 +170,17 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
 
         if (!formData.titulo) newErrors.titulo = 'El título es requerido';
         if (!formData.descripcion) newErrors.descripcion = 'La descripción es requerida';
-        if (!formData.hora_envio) newErrors.hora_envio = 'La hora es requerida';
         if (!formData.fecha_inicio) newErrors.fecha_inicio = 'La fecha de inicio es requerida';
+
+        // ✅ NUEVO: Validar horarios
+        if (!formData.horarios || formData.horarios.length === 0) {
+            newErrors.horarios = 'Debe agregar al menos un horario';
+        } else {
+            const horariosInvalidos = formData.horarios.some(h => !h.hora || !/^\d{2}:\d{2}$/.test(h.hora));
+            if (horariosInvalidos) {
+                newErrors.horarios = 'Todos los horarios deben estar en formato HH:mm';
+            }
+        }
 
         if (formData.frecuencia === 'semanal' && (!formData.dias_semana || formData.dias_semana.length === 0)) {
             newErrors.dias_semana = 'Selecciona al menos un día para frecuencia semanal';
@@ -200,11 +220,16 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
 
         setLoading(true);
         try {
-            // ✅ Formatear hora_envio: quitar segundos si existen (H:i:s -> H:i)
+            // ✅ NUEVO: Enviar múltiples horarios
             const dataToSend = {
                 ...formData,
-                hora_envio: formData.hora_envio?.substring(0, 5) || formData.hora_envio,
+                hora_envio: formData.horarios && formData.horarios.length > 0
+                    ? undefined
+                    : formData.hora_envio?.substring(0, 5),
+                horarios: formData.horarios || [],
             };
+
+            console.log('📤 [Edit Notificaciones] Enviando datos actualizados:', dataToSend);
             await notificacionesService.actualizar(formData.id!, dataToSend);
             console.log('✅ [Edit Notificaciones] Notificación actualizada exitosamente');
             toast.success('Notificación actualizada exitosamente');
@@ -359,44 +384,38 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
                             <div className="space-y-4 pb-6 border-b">
                                 <h2 className="text-lg font-semibold">Recurrencia</h2>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Frecuencia <span className="text-red-600">*</span>
-                                        </label>
-                                        <Select
-                                            value={formData.frecuencia || 'una_vez'}
-                                            onValueChange={(value) => handleSelectChange('frecuencia', value)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {FRECUENCIAS.map((freq) => (
-                                                    <SelectItem key={freq.value} value={freq.value}>
-                                                        {freq.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Hora de Envío <span className="text-red-600">*</span>
-                                        </label>
-                                        <Input
-                                            type="time"
-                                            name="hora_envio"
-                                            value={formData.hora_envio || '09:00'}
-                                            onChange={handleChange}
-                                            className={errors.hora_envio ? 'border-red-500' : ''}
-                                        />
-                                        {errors.hora_envio && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.hora_envio}</p>
-                                        )}
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Frecuencia <span className="text-red-600">*</span>
+                                    </label>
+                                    <Select
+                                        value={formData.frecuencia || 'una_vez'}
+                                        onValueChange={(value) => handleSelectChange('frecuencia', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {FRECUENCIAS.map((freq) => (
+                                                <SelectItem key={freq.value} value={freq.value}>
+                                                    {freq.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
+
+                                {/* ✅ NUEVO: Componente de múltiples horarios */}
+                                <HorariosNotificacionInput
+                                    horarios={formData.horarios || []}
+                                    onChange={(horarios) => {
+                                        setFormData({ ...formData, horarios });
+                                        if (errors.horarios) {
+                                            setErrors({ ...errors, horarios: '' });
+                                        }
+                                    }}
+                                    error={errors.horarios}
+                                />
 
                                 {/* Días de la semana (si es semanal) */}
                                 {formData.frecuencia === 'semanal' && (
@@ -500,7 +519,47 @@ export default function NotificacionesEdit({ notificacion: initialNotif }: Props
                                 </div>
                             </div>
 
-                            {/* Sección 5: Estado */}
+                            {/* ✅ NUEVO: Sección 5: Imagen */}
+                            <div className="space-y-4 pb-6 border-b">
+                                <h2 className="text-lg font-semibold">Imagen (Opcional)</h2>
+                                <p className="text-gray-600 text-sm">
+                                    Agrega una imagen que aparecerá en la notificación. Si no especificas una, se usará la imagen por defecto.
+                                </p>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        URL de la Imagen
+                                    </label>
+                                    <Input
+                                        type="url"
+                                        name="imagen_url"
+                                        value={formData.imagen_url || ''}
+                                        onChange={handleChange}
+                                        placeholder="ej: http://192.168.100.42:8000/storage/imagenes/promocion.png"
+                                    />
+                                    <p className="text-gray-500 text-xs mt-2">
+                                        Formatos: JPG, PNG, WEBP, GIF • Tamaño máximo: 5MB •
+                                        <a href="#" className="text-blue-600 hover:underline ml-1">Ver imágenes disponibles</a>
+                                    </p>
+                                </div>
+
+                                {/* Preview de imagen */}
+                                {formData.imagen_url && (
+                                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                        <p className="text-sm font-medium mb-2">Preview:</p>
+                                        <img
+                                            src={formData.imagen_url}
+                                            alt="Preview"
+                                            className="max-w-xs max-h-64 rounded-lg object-cover border"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sección 6: Estado */}
                             <div className="space-y-4 pb-6">
                                 <h2 className="text-lg font-semibold">Configuración</h2>
 
