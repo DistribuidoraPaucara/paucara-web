@@ -53,3 +53,11 @@ nul
 !/storage/app/public/backups/**
 !/storage/app/backups/
 !/storage/app/backups/**
+
+# Credenciales sensibles - Firebase y Google Cloud
+/storage/firebase/service-account.json
+/storage/firebase/*.json
+.env
+.env.local
+**/credentials/**
+**/secrets/**
