@@ -898,17 +898,6 @@ class VentaController extends Controller
                 'cuentaPorCobrar',                                 // ✅ NUEVO: Cargar cuenta por cobrar
             ])->findOrFail($id);
 
-            // ✅ DEBUG: Verificar estado logístico de la venta
-            \Log::debug('📦 VentaController::show - Cargando venta', [
-                'venta_id'                 => $venta->id,
-                'numero'                   => $venta->numero,
-                'estado_logistico_id'      => $venta->estado_logistico_id,
-                'estadoLogistica.id'       => $venta->estadoLogistica?->id,
-                'estadoLogistica.nombre'   => $venta->estadoLogistica?->nombre,
-                'entrega_id'               => $venta->entrega_id,
-                'entrega.estadoEntrega.id' => $venta->entrega?->estadoEntrega?->id,
-            ]);
-
             // Si es API, retornar JSON con datos completos
             if ($this->isApiRequest()) {
                 return response()->json([
