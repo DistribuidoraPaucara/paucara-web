@@ -100,7 +100,7 @@ export default function VentaShow() {
         >
             <Head title={`Venta ${venta.id}`} />
 
-            <div className="flex items-center justify-between px-6 pt-6">
+            <div className="flex items-center justify-between px-3 py-3">
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                     <p>{venta.numero}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Folio: #{venta.id}</p>
@@ -191,9 +191,9 @@ export default function VentaShow() {
                 </DropdownMenu>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 p-2">
+            <div className="grid grid-cols-1 gap-2 p-2">
                 {/* Información principal */}
-                <div className="space-y-6">
+                <div className="space-y-2">
                     {/* Información de la venta + Cliente */}
                     <div>
                         {/* Datos secundarios - Card unificado */}
@@ -411,41 +411,41 @@ export default function VentaShow() {
                     </div>
 
                     {/* Productos + Resumen */}
-                    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                        <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">Productos ({venta.detalles.length})</h2>
+                    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                        <h2 className="mb-1 text-lg font-medium text-gray-900 dark:text-white">Productos ({venta.detalles.length})</h2>
 
                         <div className="mb-1 overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
                                 <thead className="bg-gray-50 dark:bg-zinc-800">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Imagen
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             ID
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Producto
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Código
                                         </th>
                                         {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Códigos Barra
                                         </th> */}
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Marca
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Unidad
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Cantidad
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Precio unit.
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Subtotal
                                         </th>
                                     </tr>
@@ -469,7 +469,7 @@ export default function VentaShow() {
                                         return (
                                             <>
                                                 <tr key={detalle.id}>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-gray-900 dark:text-white">
                                                         {imagenPrincipal ? (
                                                             <div className="h-16 w-16 overflow-hidden rounded-lg bg-gray-100 dark:bg-zinc-800">
                                                                 <img
@@ -485,31 +485,31 @@ export default function VentaShow() {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                                                        #{detalle.producto_id}
+                                                    <td className="px-2 py-2 text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                        #{detalle.producto.id}
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2">
+                                                        <Link href={`/productos/${detalle.producto.id}/edit`} className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
                                                             {esCombo && <span className="mr-2">📦</span>}
                                                             {detalle.producto.nombre}
-                                                        </div>
+                                                        </Link>
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-gray-900 dark:text-white">
                                                         {(detalle.producto as any).sku || '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-gray-900 dark:text-white">
                                                         {(detalle.producto as any).marca?.nombre || '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-gray-900 dark:text-white uppercase">
                                                         {(detalle.producto as any).unidad ? `${(detalle.producto as any).unidad.nombre}` : '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                                                        {formatCurrencyWith2Decimals(detalle.cantidad)}
+                                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap text-gray-900 dark:text-white">
+                                                        {typeof detalle.cantidad === 'number' ? (detalle.cantidad % 1 === 0 ? detalle.cantidad : detalle.cantidad.toFixed(2)) : detalle.cantidad}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap text-gray-900 dark:text-white">
                                                         {formatCurrencyWith2Decimals(detalle.precio_unitario, venta.moneda.codigo)}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-sm text-center font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                                         {formatCurrencyWith2Decimals(detalle.subtotal, venta.moneda.codigo)}
                                                     </td>
                                                 </tr>
@@ -558,10 +558,10 @@ export default function VentaShow() {
                                                                     </td>
                                                                     <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">
                                                                         {item.producto ? (
-                                                                            <>
+                                                                            <Link href={`/productos/${item.producto.id}/edit`} className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
                                                                                 <span className="mr-2">└─</span>
-                                                                                <span className="font-medium">{item.producto.nombre}</span>
-                                                                            </>
+                                                                                {item.producto.nombre}
+                                                                            </Link>
                                                                         ) : (
                                                                             <>└─ Producto #{item.producto_id}</>
                                                                         )}
@@ -571,7 +571,7 @@ export default function VentaShow() {
                                                                     </td>
                                                                     <td colSpan={2}></td>
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                                                        {formatCurrencyWith2Decimals(cantidadTotal)}
+                                                                        {typeof cantidadTotal === 'number' ? (cantidadTotal % 1 === 0 ? cantidadTotal : cantidadTotal.toFixed(2)) : cantidadTotal}
                                                                     </td>
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                         {formatCurrencyWith2Decimals(precioUnitario, venta.moneda.codigo)}

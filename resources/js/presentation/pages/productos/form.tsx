@@ -637,6 +637,15 @@ export default function ProductoForm({
         }
     };
 
+    // ✨ Calcular stock total
+    const totalStockInfo = (() => {
+        const almacenes = data.almacenes || [];
+        const totalStock = almacenes.reduce((sum, a) => sum + (Number(a.cantidad ?? a.stock ?? 0)), 0);
+        const totalDisponible = almacenes.reduce((sum, a) => sum + (Number(a.cantidad_disponible ?? 0)), 0);
+        const totalReservada = almacenes.reduce((sum, a) => sum + (Number(a.cantidad_reservada ?? 0)), 0);
+        return { totalStock, totalDisponible, totalReservada };
+    })();
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -665,6 +674,26 @@ export default function ProductoForm({
                         )}
                     </div>
                 </div>
+
+                {/* ✨ NUEVO: Resumen de Stock Total */}
+                {(data.almacenes || []).length > 0 && (
+                    <div className="mx-2 mb-4 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-cyan-950/30">
+                        <div className="flex flex-wrap items-center gap-6 justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">📦 Stock Total</p>
+                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalStockInfo.totalStock.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">✅ Disponible</p>
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalStockInfo.totalDisponible.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">🔒 Reservado</p>
+                                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalStockInfo.totalReservada.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <Tabs defaultValue="datos" className="w-full">
                     <TabsList className={`flex flex-wrap items-center justify-center border-b border-border bg-background`}>

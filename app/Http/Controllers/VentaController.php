@@ -968,6 +968,7 @@ class VentaController extends Controller
                         ] : null,
                         'detalles'                      => $venta->detalles->map(fn($d) => [
                             'id'                          => $d->id,
+                            'producto_id'                 => $d->producto_id,
                             'cantidad'                    => $d->cantidad,
                             'precio_unitario'             => $d->precio_unitario,
                             'subtotal'                    => $d->subtotal,
@@ -1082,9 +1083,159 @@ class VentaController extends Controller
                 ]);
             }
 
-            // Si es web (Inertia), renderizar con el prop correcto
+            // Si es web (Inertia), renderizar con datos transformados igual que API
+            $ventaTransformada = [
+                'id'                            => $venta->id,
+                'numero'                        => $venta->numero,
+                'fecha'                         => $venta->fecha,
+                'entrega_id'                    => $venta->entrega_id,
+                'cliente_id'                    => $venta->cliente_id,
+                'direccion_cliente_id'          => $venta->direccion_cliente_id,
+                'subtotal'                      => $venta->subtotal,
+                'descuento'                     => $venta->descuento,
+                'total'                         => $venta->total,
+                'observaciones'                 => $venta->observaciones,
+                'canal_origen'                  => $venta->canal_origen,
+                'politica_pago'                 => $venta->politica_pago,
+                'proforma_id'                   => $venta->proforma_id,
+                'tipo_pago_id'                  => $venta->tipo_pago_id,
+                'tipoPago'                      => $venta->tipoPago?->toArray() ?? null,
+                'estado_documento'              => $venta->estadoDocumento?->toArray() ?? null,
+                'estado_logistica'              => $venta->estadoLogistica?->toArray() ?? null,
+                'preventista'                   => $venta->preventista ? [
+                    'id'    => $venta->preventista->id,
+                    'name'  => $venta->preventista->name,
+                    'email' => $venta->preventista->email,
+                    'foto'  => $venta->preventista->foto ?? null,
+                ] : null,
+                'usuario'                       => $venta->usuario ? [
+                    'id'    => $venta->usuario->id,
+                    'name'  => $venta->usuario->name,
+                    'email' => $venta->usuario->email,
+                ] : null,
+                'cliente'                       => $venta->cliente ? [
+                    'id'           => $venta->cliente->id,
+                    'nombre'       => $venta->cliente->nombre,
+                    'nit'          => $venta->cliente->nit,
+                    'codigo'       => $venta->cliente->codigo_cliente,
+                    'telefono'     => $venta->cliente->telefono,
+                    'foto_perfil'  => $venta->cliente->foto_perfil,
+                    'razon_social' => $venta->cliente->razon_social,
+                    'direcciones'  => $venta->cliente->direcciones ? $venta->cliente->direcciones->map(fn($d) => [
+                        'id'            => $d->id,
+                        'direccion'     => $d->direccion,
+                        'localidad'     => $d->localidad,
+                        'observaciones' => $d->observaciones,
+                        'latitud'       => (float) ($d->latitud ?? 0),
+                        'longitud'      => (float) ($d->longitud ?? 0),
+                        'es_principal'  => (bool) $d->es_principal,
+                    ])->toArray() : [],
+                ] : null,
+                'direccion_cliente'             => $venta->direccionCliente ? [
+                    'id'            => $venta->direccionCliente->id,
+                    'direccion'     => $venta->direccionCliente->direccion,
+                    'localidad'     => $venta->direccionCliente->localidad,
+                    'observaciones' => $venta->direccionCliente->observaciones,
+                    'latitud'       => (float) ($venta->direccionCliente->latitud ?? 0),
+                    'longitud'      => (float) ($venta->direccionCliente->longitud ?? 0),
+                    'es_principal'  => (bool) $venta->direccionCliente->es_principal,
+                ] : null,
+                'detalles'                      => $venta->detalles->map(fn($d) => [
+                    'id'                          => $d->id,
+                    'cantidad'                    => $d->cantidad, // ✅ Sin formatear - número puro
+                    'precio_unitario'             => $d->precio_unitario,
+                    'subtotal'                    => $d->subtotal,
+                    'tipo_precio_id'              => $d->tipo_precio_id,
+                    'tipo_precio_nombre'          => $d->tipo_precio_nombre,
+                    'combo_items_seleccionados'   => $d->combo_items_seleccionados ?? [],
+                    'producto'        => $d->producto ? [
+                        'id'         => $d->producto->id,
+                        'nombre'     => $d->producto->nombre,
+                        'sku'        => $d->producto->sku,
+                        'es_combo'   => (bool) $d->producto->es_combo,
+                        'prestables' => $d->producto->prestables ?? [],
+                        'marca'      => $d->producto->marca ? [
+                            'id'     => $d->producto->marca->id,
+                            'nombre' => $d->producto->marca->nombre,
+                        ] : null,
+                        'unidad'     => $d->producto->unidad ? [
+                            'id'          => $d->producto->unidad->id,
+                            'nombre'      => $d->producto->unidad->nombre,
+                            'simbolo'     => $d->producto->unidad->simbolo,
+                            'descripcion' => $d->producto->unidad->descripcion,
+                        ] : null,
+                        'imagenes'   => $d->producto->imagenes ?? [],
+                        'comboItems' => (bool) $d->producto->es_combo ? $d->producto->comboItems->map(function ($item) {
+                            return [
+                                'id'              => $item->id,
+                                'combo_id'        => $item->combo_id,
+                                'producto_id'     => $item->producto_id,
+                                'cantidad'        => (float) $item->cantidad,
+                                'precio_unitario' => (float) $item->precio_unitario,
+                                'tipo_precio_id'  => $item->tipo_precio_id,
+                                'es_obligatorio'  => (bool) $item->es_obligatorio,
+                                'grupo_opcional'  => $item->grupo_opcional,
+                                'created_at'      => $item->created_at,
+                                'updated_at'      => $item->updated_at,
+                                'producto'        => $item->producto ? [
+                                    'id'       => $item->producto->id,
+                                    'nombre'   => $item->producto->nombre,
+                                    'sku'      => $item->producto->sku,
+                                    'marca'    => $item->producto->marca ? [
+                                        'id'     => $item->producto->marca->id,
+                                        'nombre' => $item->producto->marca->nombre,
+                                    ] : null,
+                                    'unidad'   => $item->producto->unidad ? [
+                                        'id'          => $item->producto->unidad->id,
+                                        'nombre'      => $item->producto->unidad->nombre,
+                                        'simbolo'     => $item->producto->unidad->simbolo,
+                                        'descripcion' => $item->producto->unidad->descripcion,
+                                    ] : null,
+                                    'precio_venta' => $item->producto->precio_venta ?? 0,
+                                    'imagenes'     => $item->producto->imagenes ?? [],
+                                ] : null,
+                            ];
+                        })->toArray() : [],
+                    ] : null,
+                ])->toArray(),
+                'moneda'                        => $venta->moneda,
+                'monto_pagado'                  => $venta->monto_pagado,
+                'observaciones_logistica'       => $venta->observaciones_logistica,
+                'requiere_envio'                => (bool) $venta->requiere_envio,
+                'fecha_entrega_comprometida'    => $venta->fecha_entrega_comprometida,
+                'hora_entrega_comprometida'     => $venta->hora_entrega_comprometida,
+                'entrega'                       => $venta->entrega ? [
+                    'id'                => $venta->entrega->id,
+                    'numero'            => $venta->entrega->numero,
+                    'fecha'             => $venta->entrega->fecha?->format('Y-m-d'),
+                    'fecha_entrega'     => $venta->entrega->fecha_entrega?->format('Y-m-d H:i:s'),
+                    'estado_entrega'    => $venta->entrega->estadoEntrega ? [
+                        'id'     => $venta->entrega->estadoEntrega->id,
+                        'codigo' => $venta->entrega->estadoEntrega->codigo,
+                        'nombre' => $venta->entrega->estadoEntrega->nombre,
+                        'color'  => $venta->entrega->estadoEntrega->color ?? null,
+                    ] : null,
+                ] : null,
+                'proforma'                      => $venta->proforma?->toArray() ?? null,
+                'confirmaciones'                => $venta->confirmaciones ?? [],
+                'entregaConfirmacion'           => $venta->confirmaciones && count($venta->confirmaciones) > 0 ? $venta->confirmaciones[count($venta->confirmaciones) - 1] : null,
+                'detalles_pago_venta'           => $venta->detalles_pago_venta ?? [],
+                'cuenta_por_cobrar'             => $venta->cuentaPorCobrar ? [
+                    'id'                    => $venta->cuentaPorCobrar->id,
+                    'venta_id'              => $venta->cuentaPorCobrar->venta_id,
+                    'monto_original'        => (float) $venta->cuentaPorCobrar->monto,
+                    'saldo_pendiente'       => (float) $venta->cuentaPorCobrar->saldo,
+                    'fecha_vencimiento'     => $venta->cuentaPorCobrar->fecha_vencimiento,
+                    'estado'                => $venta->cuentaPorCobrar->estado,
+                    'dias_vencido'          => $venta->cuentaPorCobrar->dias_vencido ?? 0,
+                    'observaciones'         => $venta->cuentaPorCobrar->observaciones,
+                ] : null,
+                'created_at'                    => $venta->created_at,
+                'updated_at'                    => $venta->updated_at,
+            ];
+
             return \Inertia\Inertia::render('ventas/show', [
-                'venta' => $venta,
+                'venta' => $ventaTransformada,
             ]);
 
         } catch (\Exception $e) {

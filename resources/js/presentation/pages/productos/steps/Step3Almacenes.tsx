@@ -164,50 +164,7 @@ export default function Step3Almacenes({
 
     return (
         <div className="mt-2">
-            {/* ✨ RESUMEN TOTAL DE TODOS LOS ALMACENES */}
-            {(data.almacenes || []).length > 0 &&
-                (() => {
-                    const totalGeneral = {
-                        cantidad: 0,
-                        disponible: 0,
-                        reservada: 0,
-                    };
-
-                    (data.almacenes || []).forEach((a: StockAlmacen) => {
-                        totalGeneral.cantidad += Number(a.cantidad ?? a.stock ?? 0);
-                        totalGeneral.disponible += Number(a.cantidad_disponible ?? 0);
-                        totalGeneral.reservada += Number(a.cantidad_reservada ?? 0);
-                    });
-
-                    return (
-                        <div className="mt-2">
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                                {/* Total General */}
-                                <div className="justify-content items-center rounded-md border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/50">
-                                    <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">Total General: {totalGeneral.cantidad.toFixed(2)}</div>
-                                </div>
-
-                                {/* Total Disponible */}
-                                <div className="justify-content items-center rounded-md border border-emerald-200 bg-emerald-50 p-2 dark:border-emerald-800 dark:bg-emerald-950/50">
-                                    <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Disponible para vender: {totalGeneral.disponible.toFixed(2)}</div>
-                                </div>
-
-                                {/* Total Reservada */}
-                                <div className="justify-content items-center rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950/50">
-                                    <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">Reservado: {totalGeneral.reservada.toFixed(2)}</div>
-                                </div>
-                            </div>
-
-                            {/* Información adicional */}
-                            {/* <div className="mt-3 border-t border-slate-300 pt-3 dark:border-slate-700">
-                                <div className="text-xs text-slate-600 dark:text-slate-400">
-                                    📦 <span className="font-semibold">{(data.almacenes || []).length}</span> almacén
-                                    {(data.almacenes || []).length !== 1 ? 'es' : ''} asociado {(data.almacenes || []).length !== 1 ? 's' : ''}
-                                </div>
-                            </div> */}
-                        </div>
-                    );
-                })()}
+            
             <div className="w-full items-center justify-between gap-2 mt-4 space-y-6">
                 {/* SECCIÓN 1: SECTOR GLOBAL */}
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
@@ -302,103 +259,105 @@ export default function Step3Almacenes({
                             <div className="text-sm text-muted-foreground">No hay entradas. Añada al menos un almacén si desea controlar stock.</div>
                         )}
                         {expandedAlmacenes && (data.almacenes || []).map((a: StockAlmacen, i: number) => (
-                            <div key={i} className="mt-2 flex items-end gap-1 overflow-x-auto pb-1">
-                                {/* Almacén */}
-                                <div className="flex-shrink-0">
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <Label className="text-xs font-semibold text-foreground">Almacén* #{a.id}</Label>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                                    <HelpCircle size={12} />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top">
-                                                Selecciona el almacén donde se guarda este lote
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                    <SearchSelect
-                                        id={`almacen-select-${i}`}
-                                        placeholder="Sel."
-                                        value={a.almacen_id ? String(a.almacen_id) : ''}
-                                        options={almacenesOptions}
-                                        onChange={(value) => handleAlmacenChange(i, value ? Number(value) : undefined)}
-                                        allowClear={true}
-                                    />
-                                </div>
-
-                                {/* Lote */}
-                                <div className="flex-shrink-0 w-24">
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <Label className="text-xs font-semibold text-foreground">Lote</Label>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                                    <HelpCircle size={12} />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top">
-                                                Identificador del lote para trazabilidad
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                    <Input
-                                        size="sm"
-                                        value={a.lote || ''}
-                                        onChange={(e) => setAlmacen(i, 'lote', e.target.value)}
-                                        placeholder="Lote"
-                                        className="h-9 text-xs dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
-                                        aria-label={`Lote ${i + 1}`}
-                                    />
-                                </div>
-
-                                {/* Vencimiento */}
-                                <div className="flex-shrink-0 flex items-center gap-1">
-                                    <div className="flex items-center gap-1">
-                                        <Checkbox
-                                            id={`has-exp-${i}`}
-                                            checked={!!a.fecha_vencimiento}
-                                            onCheckedChange={(v) => {
-                                                const checked = !!v;
-                                                setAlmacen(i, 'fecha_vencimiento', checked ? (a.fecha_vencimiento || todayISO()) : '');
-                                            }}
-                                            className="h-4 w-4"
+                            <div key={i} className="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 relative">
+                                {/* Grid responsive con 2 columnas en mobile, 3+ en desktop */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Almacén */}
+                                    <div>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Label className="text-xs font-semibold text-foreground">Almacén* #{a.id}</Label>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                        <HelpCircle size={12} />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">
+                                                    Selecciona el almacén donde se guarda este lote
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <SearchSelect
+                                            id={`almacen-select-${i}`}
+                                            placeholder="Sel."
+                                            value={a.almacen_id ? String(a.almacen_id) : ''}
+                                            options={almacenesOptions}
+                                            onChange={(value) => handleAlmacenChange(i, value ? Number(value) : undefined)}
+                                            allowClear={true}
                                         />
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <label htmlFor={`has-exp-${i}`} className="text-xs cursor-pointer whitespace-nowrap flex items-center gap-1 hover:text-blue-600">
-                                                    Vto.
-                                                    <HelpCircle size={11} className="text-gray-400" />
-                                                </label>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top">
-                                                Fecha de vencimiento del lote (opcional)
-                                            </TooltipContent>
-                                        </Tooltip>
                                     </div>
-                                    <Input
-                                        type="date"
-                                        value={a.fecha_vencimiento || ''}
-                                        onChange={(e) => setAlmacen(i, 'fecha_vencimiento', e.target.value)}
-                                        disabled={!a.fecha_vencimiento}
-                                        className="h-9 text-xs w-48 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:opacity-50 disabled:dark:bg-zinc-900"
-                                    />
-                                </div>
 
-                                {/* Stock: Cantidad Total, Disponible, Reservada */}
-                                {(() => {
-                                    const totalStock = Number(a.cantidad ?? a.stock ?? 0);
-                                    const disponible = Number(a.cantidad_disponible ?? 0);
-                                    const reservada = Number(a.cantidad_reservada ?? 0);
-                                    const esValido = totalStock >= disponible + reservada;
-                                    const hasError = canEditStockQuantities && !esValido;
+                                    {/* Lote */}
+                                    <div>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Label className="text-xs font-semibold text-foreground">Lote</Label>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button type="button" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                        <HelpCircle size={12} />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">
+                                                    Identificador del lote para trazabilidad
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <Input
+                                            size="sm"
+                                            value={a.lote || ''}
+                                            onChange={(e) => setAlmacen(i, 'lote', e.target.value)}
+                                            placeholder="Lote"
+                                            className="h-9 text-xs dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                                            aria-label={`Lote ${i + 1}`}
+                                        />
+                                    </div>
 
-                                    return (
-                                        <>
-                                            {/* Cantidad Total */}
-                                            <div className="flex-shrink-0 w-20">
-                                                <div className="flex items-center gap-1 mb-1">
+                                    {/* Vencimiento */}
+                                    <div className="sm:col-span-2 lg:col-span-2">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Checkbox
+                                                id={`has-exp-${i}`}
+                                                checked={!!a.fecha_vencimiento}
+                                                onCheckedChange={(v) => {
+                                                    const checked = !!v;
+                                                    setAlmacen(i, 'fecha_vencimiento', checked ? (a.fecha_vencimiento || todayISO()) : '');
+                                                }}
+                                                className="h-4 w-4"
+                                            />
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <label htmlFor={`has-exp-${i}`} className="text-xs cursor-pointer flex items-center gap-1 hover:text-blue-600">
+                                                        Vencimiento
+                                                        <HelpCircle size={11} className="text-gray-400" />
+                                                    </label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">
+                                                    Fecha de vencimiento del lote (opcional)
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <Input
+                                            type="date"
+                                            value={a.fecha_vencimiento || ''}
+                                            onChange={(e) => setAlmacen(i, 'fecha_vencimiento', e.target.value)}
+                                            disabled={!a.fecha_vencimiento}
+                                            className="h-9 text-xs w-full dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:opacity-50 disabled:dark:bg-zinc-900"
+                                        />
+                                    </div>
+
+                                    {/* Stock: Cantidad Total, Disponible, Reservada - dentro del grid */}
+                                    {(() => {
+                                        const totalStock = Number(a.cantidad ?? a.stock ?? 0);
+                                        const disponible = Number(a.cantidad_disponible ?? 0);
+                                        const reservada = Number(a.cantidad_reservada ?? 0);
+                                        const esValido = totalStock >= disponible + reservada;
+                                        const hasError = canEditStockQuantities && !esValido;
+
+                                        return (
+                                            <>
+                                                {/* Cantidad Total */}
+                                                <div>
+                                                    <div className="flex items-center gap-1 mb-1">
                                                     <Label className="text-xs font-semibold text-foreground">Total</Label>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -515,14 +474,15 @@ export default function Step3Almacenes({
                                             </Button> */}
 
                                             {/* Error inline */}
-                                            {hasError && (
-                                                <div className="absolute top-full left-0 mt-1 text-xs text-red-600 bg-red-50 p-1 rounded whitespace-nowrap">
-                                                    ⚠️ Total debe ser ≥ Disp. + Res.
-                                                </div>
-                                            )}
-                                        </>
-                                    );
-                                })()}
+                                                {hasError && (
+                                                    <div className="col-span-full text-xs text-red-600 bg-red-50 p-2 rounded mt-2">
+                                                        ⚠️ Total debe ser ≥ Disponible + Reservado
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         ))}
                     </div>
