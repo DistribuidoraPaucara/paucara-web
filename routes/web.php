@@ -359,9 +359,13 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('pagos/export', [\App\Http\Controllers\PagoController::class, 'export'])->name('pagos.export');
 
         // Gestión de Lotes y Vencimientos
-        Route::get('lotes-vencimientos', [\App\Http\Controllers\LoteVencimientoController::class, 'index'])->name('lotes-vencimientos.index');
+        Route::get('lotes-vencimientos/duplicados', [\App\Http\Controllers\LoteVencimientoController::class, 'duplicados'])->middleware('permission:compras.lotes-vencimientos.index')->name('lotes-vencimientos.duplicados');
+        Route::get('lotes-vencimientos', [\App\Http\Controllers\LoteVencimientoController::class, 'index'])->middleware('permission:compras.lotes-vencimientos.index')->name('lotes-vencimientos.index');
         Route::patch('lotes-vencimientos/{lote}/actualizar-estado', [\App\Http\Controllers\LoteVencimientoController::class, 'actualizarEstado'])->name('lotes-vencimientos.actualizar-estado');
         Route::patch('lotes-vencimientos/{lote}/cantidad', [\App\Http\Controllers\LoteVencimientoController::class, 'actualizarCantidad'])->name('lotes-vencimientos.actualizar-cantidad');
+        Route::patch('lotes-vencimientos/{stock}/actualizar-lote', [\App\Http\Controllers\LoteVencimientoController::class, 'actualizarLote'])->middleware('permission:compras.lotes-vencimientos.index')->name('lotes-vencimientos.actualizar-lote');
+        Route::delete('lotes-vencimientos/{stock}/dar-de-baja', [\App\Http\Controllers\LoteVencimientoController::class, 'darDeBaja'])->middleware('permission:compras.lotes-vencimientos.index')->name('lotes-vencimientos.dar-de-baja');
+        Route::patch('lotes-vencimientos/{stock}/restaurar', [\App\Http\Controllers\LoteVencimientoController::class, 'restaurar'])->middleware('permission:compras.lotes-vencimientos.index')->name('lotes-vencimientos.restaurar');
         Route::get('lotes-vencimientos/export', [\App\Http\Controllers\LoteVencimientoController::class, 'export'])->name('lotes-vencimientos.export');
 
         // Reportes Específicos

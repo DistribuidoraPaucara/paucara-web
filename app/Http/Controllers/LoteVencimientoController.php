@@ -145,6 +145,143 @@ class LoteVencimientoController extends Controller
     }
 
     /**
+     * Mostrar lotes con detección de duplicados
+     */
+    public function duplicados(Request $request)
+    {
+        // Obtener lotes agrupados (incluye stocks con y sin lote)
+        $stocks = StockProducto::with(['producto.precios', 'almacen'])
+            ->when(!$request->mostrar_dados_de_baja, fn($q) => $q->whereNull('deleted_at'))
+            ->when($request->mostrar_dados_de_baja === 'true', fn($q) => $q->whereNotNull('deleted_at'))
+            ->when($request->q, function ($q) use ($request) {
+                $search = strtolower($request->q);
+                $q->where(function ($query) use ($search) {
+                    $query->whereHas('producto', function ($pq) use ($search) {
+                        $pq->whereRaw('LOWER(nombre) LIKE ?', ["%{$search}%"])
+                           ->orWhereRaw('LOWER(sku) LIKE ?', ["%{$search}%"]);
+                    })
+                    ->orWhereRaw('LOWER(lote) LIKE ?', ["%{$search}%"]);
+                });
+            })
+            ->when($request->sin_vencimiento === 'true', function ($q) {
+                $q->whereNull('fecha_vencimiento');
+            })
+            ->when($request->solo_vencidos === 'true', function ($q) {
+                $q->whereNotNull('fecha_vencimiento')
+                  ->where('fecha_vencimiento', '<', now()->toDateString());
+            })
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Contar duplicados
+        $lotesAgrupados = $stocks->groupBy(function ($item) {
+            return $item->producto_id . '|' . $item->lote;
+        });
+
+        $lotesDuplicados = [];
+        foreach ($lotesAgrupados as $key => $grupo) {
+            if ($grupo->count() > 1) {
+                $lotesDuplicados[$key] = true;
+            }
+        }
+
+        // Transformar
+        $datos = $stocks->map(function ($stock) use ($lotesDuplicados) {
+            $key = $stock->producto_id . '|' . $stock->lote;
+
+            // Obtener el precio de precios_productos
+            $precio = 0;
+            if ($stock->producto && $stock->producto->precios && $stock->producto->precios->count() > 0) {
+                $precio = (float) ($stock->producto->precios->first()->precio ?? 0);
+            }
+            $cantidad = (int) ($stock->cantidad ?? 0);
+
+            return [
+                'id' => $stock->id,
+                'producto_id' => $stock->producto_id,
+                'producto_nombre' => $stock->producto->nombre ?? 'N/A',
+                'producto_sku' => $stock->producto->sku ?? 'N/A',
+                'almacen_nombre' => $stock->almacen->nombre ?? 'N/A',
+                'lote' => $stock->lote,
+                'cantidad' => $cantidad,
+                'cantidad_disponible' => (int) $stock->cantidad_disponible,
+                'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
+                'precio_costo' => $precio,
+                'valor_total' => $cantidad * $precio,
+                'es_duplicado' => isset($lotesDuplicados[$key]),
+                'dado_de_baja' => $stock->deleted_at !== null,
+                'fecha_baja' => $stock->deleted_at?->format('Y-m-d H:i'),
+                'esta_vencido' => $stock->fecha_vencimiento && $stock->fecha_vencimiento < now()->toDateString(),
+            ];
+        });
+
+        return Inertia::render('compras/lotes-duplicados/index', [
+            'lotes' => $datos->values(),
+            'total' => $datos->count(),
+            'duplicados' => count($lotesDuplicados),
+            'filtro' => $request->q,
+        ]);
+    }
+
+    /**
+     * Actualizar lote y fecha de vencimiento
+     */
+    public function actualizarLote(Request $request, StockProducto $stock)
+    {
+        if (!auth()->user()->can('compras.lotes-vencimientos.index')) {
+            return response()->json(['error' => 'No tienes permiso'], 403);
+        }
+
+        $validated = $request->validate([
+            'lote' => 'nullable|string|max:255',
+            'fecha_vencimiento' => 'nullable|date',
+        ]);
+
+        $stock->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lote actualizado correctamente',
+            'lote' => $stock->lote,
+            'fecha_vencimiento' => $stock->fecha_vencimiento?->format('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * Dar de baja un lote (soft delete)
+     */
+    public function darDeBaja(StockProducto $stock)
+    {
+        if (!auth()->user()->can('compras.lotes-vencimientos.index')) {
+            return response()->json(['error' => 'No tienes permiso'], 403);
+        }
+
+        $stock->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Lote {$stock->lote} dado de baja correctamente",
+        ]);
+    }
+
+    /**
+     * Restaurar un lote dado de baja
+     */
+    public function restaurar(StockProducto $stock)
+    {
+        if (!auth()->user()->can('compras.lotes-vencimientos.index')) {
+            return response()->json(['error' => 'No tienes permiso'], 403);
+        }
+
+        $stock->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Lote {$stock->lote} restaurado correctamente",
+        ]);
+    }
+
+    /**
      * Exportar lotes a JSON (para testing)
      */
     public function export(Request $request)

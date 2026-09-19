@@ -235,7 +235,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     stats.form = statsForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 export const byType = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ byType.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.url = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -278,7 +278,7 @@ byType.url = (args: { type: string | number } | [type: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -287,7 +287,7 @@ byType.get = (args: { type: string | number } | [type: string | number ] | strin
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
 byType.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -297,7 +297,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
     const byTypeForm = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -307,7 +307,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
         byTypeForm.get = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -316,7 +316,7 @@ byType.head = (args: { type: string | number } | [type: string | number ] | stri
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::byType
- * @see app/Http/Controllers/Api/NotificationController.php:299
+ * @see app/Http/Controllers/Api/NotificationController.php:338
  * @route '/api/mis-notificaciones/por-tipo/{type}'
  */
         byTypeForm.head = (args: { type: string | number } | [type: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -452,7 +452,7 @@ destroyAll.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
     destroyAll.form = destroyAllForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
 export const show = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -467,7 +467,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
 show.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -500,7 +500,7 @@ show.url = (args: { notification: number | { id: number } } | [notification: num
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
 show.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -509,7 +509,7 @@ show.get = (args: { notification: number | { id: number } } | [notification: num
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
 show.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -519,7 +519,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
     const showForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -529,7 +529,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
         showForm.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -538,7 +538,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:340
+ * @see app/Http/Controllers/Api/NotificationController.php:379
  * @route '/api/mis-notificaciones/{notification}'
  */
         showForm.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

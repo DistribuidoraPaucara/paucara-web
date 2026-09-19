@@ -265,22 +265,61 @@ class NotificationController extends Controller
     /**
      * Obtener estadísticas de notificaciones
      *
-     * GET /api/notificaciones/estadisticas
+     * GET /api/mis-notificaciones/estadisticas
      */
     public function stats(Request $request): JsonResponse
     {
+        // Logs detallados para debugging
+        Log::info('📊 [NotificationController@stats] REQUEST RECIBIDO', [
+            'method' => $request->method(),
+            'path' => $request->path(),
+            'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+            'auth_header' => $request->header('Authorization') ? 'present' : 'missing',
+            'user' => $request->user() ? [
+                'id' => $request->user()->id,
+                'email' => $request->user()->email,
+                'roles' => $request->user()->roles->pluck('name')->toArray(),
+            ] : 'null',
+            'client_ip' => $request->ip(),
+        ]);
+
         try {
             $user = $request->user();
+
+            if (!$user) {
+                Log::warning('⚠️  [NotificationController@stats] Usuario no autenticado', [
+                    'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+                    'auth_header' => $request->header('Authorization') ? 'present' : 'missing',
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No autenticado',
+                ], 401);
+            }
+
+            Log::info('✅ [NotificationController@stats] Usuario autenticado', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+            ]);
+
             $stats = $this->notificationService->getNotificationStats($user);
+
+            Log::info('✅ [NotificationController@stats] RESPUESTA', [
+                'total_notificaciones' => $stats['total'] ?? 0,
+                'no_leidas' => $stats['no_leidas'] ?? 0,
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => $stats,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error obteniendo estadísticas de notificaciones', [
+            Log::error('❌ [NotificationController@stats] ERROR', [
                 'user_id' => $request->user()->id ?? null,
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([

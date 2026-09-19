@@ -259,7 +259,21 @@ export default function Step3Almacenes({
                             <div className="text-sm text-muted-foreground">No hay entradas. Añada al menos un almacén si desea controlar stock.</div>
                         )}
                         {expandedAlmacenes && (data.almacenes || []).map((a: StockAlmacen, i: number) => (
-                            <div key={i} className="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 relative">
+                            <div
+                                key={i}
+                                className={`mt-4 rounded-lg border p-4 relative ${
+                                    (a as any).is_deleted
+                                        ? 'border-gray-400 bg-gray-100 dark:border-gray-600 dark:bg-gray-800 opacity-60'
+                                        : 'border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-900'
+                                }`}
+                            >
+                                {/* Indicador de eliminado */}
+                                {(a as any).is_deleted && (
+                                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded font-semibold">
+                                        ELIMINADO
+                                    </div>
+                                )}
+
                                 {/* Grid responsive con 2 columnas en mobile, 3+ en desktop */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                     {/* Almacén */}

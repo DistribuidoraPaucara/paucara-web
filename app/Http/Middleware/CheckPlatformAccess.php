@@ -35,21 +35,62 @@ class CheckPlatformAccess
         $isMobileRequest = $this->isMobileRequest($request);
         $isWebRequest = !$isMobileRequest;
 
+        // Logs detallados
+        \Log::info('🔐 [CheckPlatformAccess] Validando acceso', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'is_mobile_request' => $isMobileRequest,
+            'is_web_request' => $isWebRequest,
+            'can_access_web' => $user->can_access_web ?? false,
+            'can_access_mobile' => $user->can_access_mobile ?? false,
+            'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+            'path' => $request->path(),
+            'method' => $request->method(),
+        ]);
+
         // Validar acceso a plataforma web
         if ($isWebRequest && !$user->can_access_web) {
+            \Log::warning('❌ [CheckPlatformAccess] Acceso denegado a plataforma WEB', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'can_access_web' => $user->can_access_web ?? false,
+                'path' => $request->path(),
+            ]);
+
             return response()->json([
+                'success' => false,
                 'message' => 'No tiene acceso a la plataforma web (admin)',
                 'platform' => 'web',
+                'user_id' => $user->id,
+                'can_access_web' => $user->can_access_web ?? false,
             ], 403);
         }
 
         // Validar acceso a plataforma móvil
         if ($isMobileRequest && !$user->can_access_mobile) {
+            \Log::warning('❌ [CheckPlatformAccess] Acceso denegado a plataforma MÓVIL', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'can_access_mobile' => $user->can_access_mobile ?? false,
+                'path' => $request->path(),
+                'bearer_token' => $request->bearerToken() ? 'present' : 'missing',
+            ]);
+
             return response()->json([
+                'success' => false,
                 'message' => 'No tiene acceso a la aplicación móvil',
                 'platform' => 'mobile',
+                'user_id' => $user->id,
+                'can_access_mobile' => $user->can_access_mobile ?? false,
+                'suggestion' => 'Contacta al administrador para habilitar acceso a la aplicación móvil',
             ], 403);
         }
+
+        \Log::info('✅ [CheckPlatformAccess] Acceso permitido', [
+            'user_id' => $user->id,
+            'platform' => $isMobileRequest ? 'mobile' : 'web',
+            'path' => $request->path(),
+        ]);
 
         return $next($request);
     }
