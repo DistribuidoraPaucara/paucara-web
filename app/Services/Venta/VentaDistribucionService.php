@@ -874,11 +874,10 @@ class VentaDistribucionService
                     // ✅ NUEVO VALOR: DECREMENTAR sin_liquido por lo que la venta agregó
                     $sinLiquidoPosterior = max(0, $sinLiquidoAnterior - $cantidadAgregada);
 
-                    // ✅ Si hay EXCESO (cantidad_agregada > sin_liquido_actual), ese exceso va a disponible
-                    // Ejemplo: venta agregó 10, pero préstamo consumió 5 → quedan 5 en sin_liquido
-                    // Al revertir: sin_liquido 5 - 10 = -5 → pero 5 va a disponible
-                    $exceso = max(0, $cantidadAgregada - $sinLiquidoAnterior);
-                    $disponiblePosterior = $disponibleAnterior + $exceso;
+                    // ✅ INCREMENTAR disponible por la cantidad completa decrementada de sin_liquido
+                    // Cuando se vende: disponible ↓ X, sin_liquido ↑ X
+                    // Cuando se anula: disponible ↑ X, sin_liquido ↓ X (reversión exacta)
+                    $disponiblePosterior = $disponibleAnterior + $cantidadAgregada;
 
                     Log::info('🔄 Revirtiendo sin_liquido (EXACTO)', [
                         'prestable_stock_id' => $stock->id,
