@@ -22,6 +22,7 @@ use App\Models\Venta;
 use App\Services\ComboStockService;
 use App\Services\PagoVentaService;
 use App\Services\Venta\VentaService;
+use App\Services\Venta\VentaPrestablesReverseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,6 +53,7 @@ class VentaController extends Controller
     public function __construct(
         private VentaService $ventaService,
         private \App\Services\Venta\VentaDistribucionService $ventaDistribucionService,
+        private VentaPrestablesReverseService $ventaPrestablesReverseService,
         private \App\Services\ImpresionService $impresionService,
         private \App\Services\PrinterService $printerService,
         private \App\Services\ExcelExportService $excelExportService,
@@ -1430,6 +1432,25 @@ class VentaController extends Controller
                             'error'    => $e->getMessage(),
                         ]);
                     }
+                }
+
+                // 1️⃣.5️⃣ ✅ NUEVO (2026-09-20): Revertir Prestables (canastillas/embases)
+                // Busca y anula PrestamoCliente o PrestamoEvento según el tipo de cliente
+                try {
+                    $this->ventaPrestablesReverseService->revertirPrestables($venta, $motivo);
+
+                    Log::info('✅ Prestables revertidos al anular venta', [
+                        'venta_id' => $venta->id,
+                        'venta_numero' => $venta->numero,
+                        'cliente_id' => $venta->cliente_id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('❌ Error revirtiendo prestables al anular venta', [
+                        'venta_id' => $venta->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // ⚠️ NO falla la anulación si hay error en prestables
+                    // Solo registra el error en log
                 }
 
                 // 2️⃣ Actualizar TODOS los movimientos de caja existentes si existen

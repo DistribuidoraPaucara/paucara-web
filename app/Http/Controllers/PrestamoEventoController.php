@@ -162,6 +162,7 @@ class PrestamoEventoController extends Controller
                 'direccion_evento' => 'nullable|string|max:255',
                 'telefono_uno' => 'nullable|string|max:25',
                 'telefono_dos' => 'nullable|string|max:25',
+                'venta_id' => 'nullable|integer|exists:ventas,id',
                 'ventas_ids' => 'nullable|array',
                 'ventas_ids.*' => 'integer|exists:ventas,id',
                 'almacenes_prestables_id' => 'nullable|integer|exists:almacenes_prestables,id', // ✅ OPCIONAL (puede venir en detalles)

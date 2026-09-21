@@ -50,6 +50,7 @@ class MovimientoPrestableService
                 'numero_referencia' => $data['numero_referencia'] ?? null,
                 'referencia_tipo' => $data['referencia_tipo'] ?? null,
                 'referencia_id' => $data['referencia_id'] ?? null,
+                'venta_id' => $data['venta_id'] ?? null,
                 'tipo_prestamo' => $data['tipo_prestamo'] ?? null,
                 'ip_usuario' => $data['ip_usuario'] ?? request()?->ip(),
                 'user_agent' => $data['user_agent'] ?? request()?->userAgent(),

@@ -253,11 +253,28 @@ class PrestamoEventoService
                 ]);
 
                 // ✅ Asociar múltiples ventas (relación many-to-many)
-                if (!empty($datos['ventas_ids']) && is_array($datos['ventas_ids'])) {
-                    $prestamo->ventas()->attach(array_filter($datos['ventas_ids']));
+                // Si viene venta_id singular, agregarla a ventas_ids
+                $ventasIds = $datos['ventas_ids'] ?? [];
+                if (!empty($datos['venta_id'])) {
+                    if (!is_array($ventasIds)) {
+                        $ventasIds = [];
+                    }
+                    $ventasIds[] = $datos['venta_id'];
+                }
+
+                // ✅ OPCIÓN 2: venta_id SOLO si hay UN ÚNICO venta_id
+                // Si hay múltiples ventas → NULL (ambiguo cuál corresponde)
+                $ventaIdUnica = null;
+                if (count($ventasIds) === 1) {
+                    $ventaIdUnica = $ventasIds[0];
+                }
+
+                if (!empty($ventasIds) && is_array($ventasIds)) {
+                    $prestamo->ventas()->attach(array_filter($ventasIds));
                     Log::info('✅ Ventas asociadas al préstamo', [
                         'prestamo_evento_id' => $prestamo->id,
-                        'ventas_ids' => $datos['ventas_ids'],
+                        'ventas_ids' => $ventasIds,
+                        'venta_id_unica' => $ventaIdUnica,
                     ]);
                 }
 
@@ -416,6 +433,7 @@ class PrestamoEventoService
                             'observaciones' => "Evento: {$datos['nombre_evento']}",
                             'referencia_tipo' => 'PRESTAMO_EVENTO',
                             'referencia_id' => $prestamo->id,
+                            'venta_id' => $ventaIdUnica,
                         ]);
 
                         Log::info('✅ Stock consumido para evento', [

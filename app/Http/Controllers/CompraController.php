@@ -34,12 +34,14 @@ class CompraController extends Controller
     public function __construct(
         ExcelExportService $excelExportService,
         ImpresionService $impresionService,
-        CompraDistribucionService $compraDistribucionService
+        CompraDistribucionService $compraDistribucionService,
+        \App\Services\Compra\CompraPrestablesReverseService $compraPrestablesReverseService
     )
     {
         $this->excelExportService = $excelExportService;
         $this->impresionService   = $impresionService;
         $this->compraDistribucionService = $compraDistribucionService;
+        $this->compraPrestablesReverseService = $compraPrestablesReverseService;
 
         $this->middleware('permission:compras.index')->only('index');
         $this->middleware('permission:compras.show')->only('show');
@@ -1441,6 +1443,15 @@ class CompraController extends Controller
                     }
                 }
 
+                // Revertir prestables (si existen préstamos a proveedores)
+                try {
+                    $this->compraPrestablesReverseService->revertirPrestables($compra, $motivo);
+                } catch (\Exception $e) {
+                    Log::warning('No se pudo revertir prestables al anular compra', [
+                        'compra_id' => $compra->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
                 // Actualizar observaciones
                 $usuarioNombre = auth()->user()->name ?? 'Sistema';

@@ -378,6 +378,7 @@ class PrestamoClienteService
                                     'numero_referencia' => $prestamo->id,
                                     'referencia_tipo' => 'PRESTAMO_CLIENTE',
                                     'referencia_id' => $prestamo->id,
+                                    'venta_id' => $datos['venta_id'] ?? null,
                                     'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
                                 ]);
                             } else {
@@ -403,6 +404,7 @@ class PrestamoClienteService
                                     'numero_referencia' => $prestamo->id,
                                     'referencia_tipo' => 'PRESTAMO_CLIENTE',
                                     'referencia_id' => $prestamo->id,
+                                    'venta_id' => $datos['venta_id'] ?? null,
                                     'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
                                 ]);
                             }

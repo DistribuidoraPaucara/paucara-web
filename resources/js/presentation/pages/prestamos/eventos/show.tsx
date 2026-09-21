@@ -232,30 +232,34 @@ export default function PrestamosEventosShow() {
                                 <p className="font-medium">{prestamo.telefono_dos}</p>
                             </div>
                         )}
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">Localidad</p>
-                            <p className="font-medium">{prestamo.ubicacion.localidad?.nombre || 'No especificada'}</p>
-                            {prestamo.ubicacion.es_ubicacion_manual && (
-                                <Badge variant="outline" className="w-fit">
-                                    📍 Ubicación Manual
-                                </Badge>
-                            )}
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">Dirección</p>
-                            <p className="font-medium">{prestamo.ubicacion.direccion || 'No especificada'}</p>
-                            {prestamo.ubicacion.latitud && prestamo.ubicacion.longitud && (
-                                <Button
-                                    onClick={() => setModalUbicacionOpen(true)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2 w-fit gap-2"
-                                >
-                                    <MapPin className="h-4 w-4" />
-                                    Ver en Mapa
-                                </Button>
-                            )}
-                        </div>
+                        {prestamo.ubicacion && (
+                            <>
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Localidad</p>
+                                    <p className="font-medium">{prestamo.ubicacion.localidad?.nombre || 'No especificada'}</p>
+                                    {prestamo.ubicacion.es_ubicacion_manual && (
+                                        <Badge variant="outline" className="w-fit">
+                                            📍 Ubicación Manual
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Dirección</p>
+                                    <p className="font-medium">{prestamo.ubicacion.direccion || 'No especificada'}</p>
+                                    {prestamo.ubicacion.latitud && prestamo.ubicacion.longitud && (
+                                        <Button
+                                            onClick={() => setModalUbicacionOpen(true)}
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-2 w-fit gap-2"
+                                        >
+                                            <MapPin className="h-4 w-4" />
+                                            Ver en Mapa
+                                        </Button>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </Card>
 

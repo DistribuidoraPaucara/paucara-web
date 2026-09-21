@@ -942,6 +942,7 @@ class VentaService
                         'numero_referencia' => $venta->numero,
                         'referencia_tipo' => 'VENTA',
                         'referencia_id' => $venta->id,
+                        'venta_id' => $venta->id,
                         'observaciones' => "Cliente compró {$detalle->cantidad}x{$detalle->producto->nombre}. Entrega {$cantidadPrestable} {$prestable->nombre} llenas (disponible-) y recibe {$cantidadPrestable} vacías (sin_liquido+)",
                     ]);
 

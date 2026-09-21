@@ -498,6 +498,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                     {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Numero</th> */}
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Cliente</th>
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Producto</th>
+                                    {/* <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">ID Lote</th> */}
                                     {/* ✅ NUEVO (2026-07-22): Columna de lote */}
                                     <th className="px-2 py-2 text-left font-medium text-gray-700 dark:text-gray-300">🏷️ Lote</th>
                                     <th className="px-2 py-2 text-right font-medium text-gray-700 dark:text-gray-300">Cantidad</th>
@@ -542,6 +543,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                         </td>
                                         {/* ✅ NUEVO (2026-07-22): Columna de lote */}
                                         <td className="px-2 py-2">
+                                            #{ reserva.stock_producto_id }
                                             <div className="text-xs font-mono text-gray-900 dark:text-white">
                                                 {reserva.lote ? `Lote: ${reserva.lote}` : '-'}
                                             </div>

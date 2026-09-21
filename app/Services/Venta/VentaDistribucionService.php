@@ -6,6 +6,8 @@ use App\Models\MovimientoInventario;
 use App\Models\Producto;
 use App\Models\StockProducto;
 use App\Models\Venta;  // ✅ NUEVO (2026-06-09): Para obtener venta_id en devoluciones
+use App\Models\PrestableStock;  // ✅ NUEVO: Para revertir sin_liquido
+use App\Models\MovimientoPrestable;  // ✅ NUEVO: Para auditoría
 use App\Services\Stock\MovimientoInventarioService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -575,6 +577,18 @@ class VentaDistribucionService
                     }
                 }
 
+                // ✅ NUEVO: Revertir sin_liquido de prestables cuando la venta los consumió
+                try {
+                    $this->revertirSinLiquidoPrestables($venta, $numeroVenta);
+                } catch (\Exception $e) {
+                    Log::warning('⚠️ Error revirtiendo sin_liquido de prestables (no bloquea devolución)', [
+                        'venta_id' => $ventaId,
+                        'numero_venta' => $numeroVenta,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // ⚠️ NO lanzar excepción, solo registrar warning
+                }
+
                 Log::info('✅ [VentaDistribucionService::devolverStock] Stock devuelto exitosamente', [
                     'venta_id' => $ventaId,
                     'numero_venta' => $numeroVenta,
@@ -794,5 +808,141 @@ class VentaDistribucionService
                 ];
             })
             ->toArray();
+    }
+
+    /**
+     * ✅ NUEVO: Revertir sin_liquido de prestables cuando se anula la venta
+     *
+     * FLUJO:
+     * 1. Obtener Venta con detalles y relaciones
+     * 2. Para cada detalle, obtener Producto
+     * 3. Para cada Producto, obtener sus Prestables relacionados
+     * 4. Para cada Prestable, DECREMENTAR sin_liquido (revierte lo que la venta agregó)
+     * 5. Registrar MovimientoPrestable para auditoría
+     *
+     * @param Venta $venta La venta que se anula
+     * @param string $numeroVenta Número de venta (para referencia)
+     * @throws Exception Si hay error en el proceso
+     */
+    private function revertirSinLiquidoPrestables(Venta $venta, string $numeroVenta): void
+    {
+        try {
+            Log::info('🔄 [VentaDistribucionService::revertirSinLiquidoPrestables] Iniciando reversión de sin_liquido', [
+                'venta_id' => $venta->id,
+                'numero_venta' => $numeroVenta,
+            ]);
+
+            // ✅ OBTENER los movimientos EXACTOS que la venta creó (tipo='VENTA_PRODUCTO')
+            $movimientosVenta = MovimientoPrestable::where('venta_id', $venta->id)
+                ->where('tipo', 'VENTA_PRODUCTO')
+                ->get();
+
+            if ($movimientosVenta->isEmpty()) {
+                Log::info('ℹ️ No hay movimientos VENTA_PRODUCTO para revertir', [
+                    'venta_id' => $venta->id,
+                ]);
+                return;
+            }
+
+            foreach ($movimientosVenta as $movimiento) {
+                // ✅ CALCULAR la cantidad EXACTA que la venta agregó a sin_liquido
+                $cantidadAgregada = $movimiento->cantidad_sin_liquido_posterior - $movimiento->cantidad_sin_liquido_anterior;
+
+                Log::info('🔄 Procesando movimiento VENTA_PRODUCTO', [
+                    'movimiento_id' => $movimiento->id,
+                    'prestable_stock_id' => $movimiento->prestable_stock_id,
+                    'prestable_id' => $movimiento->prestable_id,
+                    'sin_liquido_anterior' => $movimiento->cantidad_sin_liquido_anterior,
+                    'sin_liquido_posterior' => $movimiento->cantidad_sin_liquido_posterior,
+                    'cantidad_agregada' => $cantidadAgregada,
+                ]);
+
+                // Obtener el PrestableStock actual
+                $stock = PrestableStock::lockForUpdate()->find($movimiento->prestable_stock_id);
+                if (!$stock) {
+                    Log::warning('⚠️ PrestableStock no encontrado para revertir', [
+                        'prestable_stock_id' => $movimiento->prestable_stock_id,
+                        'venta_id' => $venta->id,
+                    ]);
+                    continue;
+                }
+
+                // VALORES ACTUALES EN EL STOCK
+                $sinLiquidoAnterior = $stock->cantidad_sin_liquido;
+                $disponibleAnterior = $stock->cantidad_disponible;
+
+                // ✅ NUEVO VALOR: DECREMENTAR sin_liquido por lo que la venta agregó
+                $sinLiquidoPosterior = max(0, $sinLiquidoAnterior - $cantidadAgregada);
+
+                // ✅ Si hay EXCESO (cantidad_agregada > sin_liquido_actual), ese exceso va a disponible
+                // Ejemplo: venta agregó 10, pero préstamo consumió 5 → quedan 5 en sin_liquido
+                // Al revertir: sin_liquido 5 - 10 = -5 → pero 5 va a disponible
+                $exceso = max(0, $cantidadAgregada - $sinLiquidoAnterior);
+                $disponiblePosterior = $disponibleAnterior + $exceso;
+
+                Log::info('🔄 Revirtiendo sin_liquido (EXACTO)', [
+                    'prestable_stock_id' => $stock->id,
+                    'prestable_id' => $stock->prestable_id,
+                    'almacen_id' => $stock->almacenes_prestables_id,
+                    'sin_liquido_actual' => $sinLiquidoAnterior,
+                    'sin_liquido_posterior' => $sinLiquidoPosterior,
+                    'cantidad_a_decrementar' => $cantidadAgregada,
+                    'exceso_a_disponible' => $exceso,
+                    'disponible_anterior' => $disponibleAnterior,
+                    'disponible_posterior' => $disponiblePosterior,
+                ]);
+
+                // ACTUALIZAR STOCK
+                $stock->update([
+                    'cantidad_sin_liquido' => $sinLiquidoPosterior,
+                    'cantidad_disponible' => $disponiblePosterior,
+                ]);
+
+                // REGISTRAR MOVIMIENTO DE AUDITORÍA
+                $request = request();
+
+                MovimientoPrestable::create([
+                    'prestable_stock_id' => $stock->id,
+                    'prestable_id' => $stock->prestable_id,
+                    'almacenes_prestables_id' => $stock->almacenes_prestables_id,
+                    'usuario_id' => Auth::user()->id ?? 1,
+                    'tipo' => 'SALIDA',
+                    'cantidad' => -$cantidadAgregada,
+                    'disponible_anterior' => $disponibleAnterior,
+                    'disponible_posterior' => $disponiblePosterior,
+                    'cantidad_sin_liquido_anterior' => $sinLiquidoAnterior,
+                    'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
+                    'categoria_afectada' => 'reversión_sin_liquido_venta',
+                    'motivo' => "Reversión de sin_liquido por anulación de venta #{$numeroVenta}",
+                    'numero_referencia' => $numeroVenta,
+                    'referencia_tipo' => 'venta_anulada',
+                    'referencia_id' => $venta->id,
+                    'ip_usuario' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'venta_id' => $venta->id,
+                ]);
+
+                Log::info('✅ sin_liquido revertido correctamente', [
+                    'prestable_stock_id' => $stock->id,
+                    'prestable_id' => $stock->prestable_id,
+                    'cantidad_revertida' => $cantidadAgregada,
+                    'sin_liquido_final' => $sinLiquidoPosterior,
+                ]);
+            }
+
+            Log::info('✅ sin_liquido de prestables revertido exitosamente', [
+                'venta_id' => $venta->id,
+                'numero_venta' => $numeroVenta,
+                'movimientos_procesados' => $movimientosVenta->count(),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Error revirtiendo sin_liquido de prestables', [
+                'venta_id' => $venta->id,
+                'numero_venta' => $numeroVenta,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }
