@@ -886,7 +886,6 @@ class VentaDistribucionService
                         'sin_liquido_actual' => $sinLiquidoAnterior,
                         'sin_liquido_posterior' => $sinLiquidoPosterior,
                         'cantidad_a_decrementar' => $cantidadAgregada,
-                        'exceso_a_disponible' => $exceso,
                         'disponible_anterior' => $disponibleAnterior,
                         'disponible_posterior' => $disponiblePosterior,
                     ]);
