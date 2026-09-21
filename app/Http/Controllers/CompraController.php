@@ -2966,6 +2966,7 @@ class CompraController extends Controller
                         'numero_referencia' => $compra->numero,
                         'referencia_tipo' => 'COMPRA',
                         'referencia_id' => $compra->id,
+                        'compra_id' => $compra->id,
                         'observaciones' => "Se compraron {$detalle->cantidad}x{$detalle->producto->nombre}. Se incrementan {$cantidadPrestable} {$prestable->nombre} disponibles (compra_disponible+) y se decrementan sin_liquido (los nuevos no son vacíos).",
                     ]);
 
