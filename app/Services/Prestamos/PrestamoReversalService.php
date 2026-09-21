@@ -307,6 +307,8 @@ class PrestamoReversalService
             'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
             'prestamo_cliente_anterior' => $clienteDeudorAnterior,
             'prestamo_cliente_posterior' => $clienteDeudorPosterior,
+            'prestamo_proveedor_anterior' => $proveedorAcreedorAnterior,
+            'prestamo_proveedor_posterior' => $proveedorAcreedorPosterior,
             'prestamo_evento_anterior' => $eventoDeudorAnterior,
             'prestamo_evento_posterior' => $eventoDeudorPosterior,
             'categoria_afectada' => $categoriaAfectada,
