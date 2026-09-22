@@ -1042,13 +1042,13 @@ class PrestamoClienteService
                                 ->where('almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
                                 ->firstOrFail();
 
-                            $disponibleAntes = $stock->cantidad_disponible;
+                            $sinLiquidoAntes = $stock->cantidad_sin_liquido;
                             $prestamoClienteAntes = $stock->cantidad_cliente_deudor;
                             $prestamoProveedorAntes = $stock->cantidad_proveedor_acreedor;
 
-                            // Devolver
+                            // ✅ CORREGIDO: Devolver a sin_liquido (no a disponible) porque la venta sigue siendo deuda
                             $stock->update([
-                                'cantidad_disponible' => $stock->cantidad_disponible + $cantidadPendienteDelAlmacen,
+                                'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantidadPendienteDelAlmacen,
                                 'cantidad_cliente_deudor' => max(0, $stock->cantidad_cliente_deudor - $cantidadPendienteDelAlmacen),
                             ]);
 
@@ -1059,11 +1059,11 @@ class PrestamoClienteService
                                 'usuario_id' => auth()->id(),
                                 'tipo' => 'ENTRADA',
                                 'cantidad' => $cantidadPendienteDelAlmacen,
-                                'disponible_anterior' => $disponibleAntes,
+                                'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
+                                'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                                 'prestamo_cliente_anterior' => $prestamoClienteAntes,
-                                'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
-                                'disponible_posterior' => $stock->cantidad_disponible,
                                 'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
+                                'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                                 'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'categoria_afectada' => 'prestamo_cliente',
                                 'motivo' => 'Devolución por anulación de préstamo',
