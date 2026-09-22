@@ -854,11 +854,13 @@ export function RegistrarDevolucionGenerico({
                                                     </td>
                                                     <td className="px-3 py-2 text-center">
                                                         <span className="inline-block rounded bg-green-100 px-2 py-1 font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                            {detalle[devolucionRelationKey]?.reduce(
-                                                                (sum: number, dev: any) =>
-                                                                    sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
-                                                                0,
-                                                            ) || 0}
+                                                            {detalle[devolucionRelationKey]
+                                                                ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                .reduce(
+                                                                    (sum: number, dev: any) =>
+                                                                        sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
+                                                                    0,
+                                                                ) || 0}
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2 text-center">
@@ -866,11 +868,13 @@ export function RegistrarDevolucionGenerico({
                                                             {Math.max(
                                                                 0,
                                                                 (detalle.cantidad_prestada || 0) -
-                                                                    (detalle[devolucionRelationKey]?.reduce(
-                                                                        (sum: number, dev: any) =>
-                                                                            sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
-                                                                        0,
-                                                                    ) || 0),
+                                                                    (detalle[devolucionRelationKey]
+                                                                        ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                        .reduce(
+                                                                            (sum: number, dev: any) =>
+                                                                                sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
+                                                                            0,
+                                                                        ) || 0),
                                                             )}
                                                         </span>
                                                     </td>
@@ -886,11 +890,13 @@ export function RegistrarDevolucionGenerico({
                                                                     const cantidadDaniadaActual = detalleAct?.cantidad_dañada_total || 0;
                                                                     const faltaDevolver =
                                                                         (detalle.cantidad_prestada || 0) -
-                                                                        (detalle[devolucionRelationKey]?.reduce(
-                                                                            (sum: number, dev: any) =>
-                                                                                sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
-                                                                            0,
-                                                                        ) || 0);
+                                                                        (detalle[devolucionRelationKey]
+                                                                            ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                            .reduce(
+                                                                                (sum: number, dev: any) =>
+                                                                                    sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
+                                                                                0,
+                                                                            ) || 0);
 
                                                                     // Si el total excede lo disponible, no permitir
                                                                     const totalAhora = cantidad + cantidadDaniadaActual;
