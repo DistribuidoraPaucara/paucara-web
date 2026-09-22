@@ -46,6 +46,19 @@ export default function PrestamosProveedoresShow() {
         }
     }, [prestamoId]);
 
+    // ✅ Usar useMemo para recalcular solo cuando prestamo cambia (DEBE estar antes de condicionales)
+    const resumenData = useMemo(() => {
+        if (!prestamo?.detalles) return { total: 0, devuelto: 0, faltante: 0, tasa: 0 };
+
+        const devolucionesActivas = prestamo.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
+        const total = prestamo.detalles.reduce((sum: number, d: any) => sum + (d.cantidad_prestada || 0), 0);
+        const devuelto = prestamo.detalles.reduce((sum: number, d: any) => sum + calcularTotalDevueltoDetalle(d.id, devolucionesActivas), 0);
+        const faltante = Math.max(0, total - devuelto);
+        const tasa = total > 0 ? Math.round((devuelto / total) * 100) : 0;
+
+        return { total, devuelto, faltante, tasa };
+    }, [prestamo]);
+
     const cargarPrestamo = async (id: string | number) => {
         try {
             setLoading(true);
@@ -129,20 +142,6 @@ export default function PrestamosProveedoresShow() {
         return total;
     };
 
-    const calcularResumenPrestamo = () => {
-        if (!prestamo?.detalles) return { total: 0, devuelto: 0, faltante: 0, tasa: 0 };
-
-        // Filtrar solo devoluciones activas (excluir anuladas)
-        const devolucionesActivas = prestamo.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
-
-        const total = prestamo.detalles.reduce((sum: number, d: any) => sum + (d.cantidad_prestada || 0), 0);
-        const devuelto = prestamo.detalles.reduce((sum: number, d: any) => sum + calcularTotalDevueltoDetalle(d.id, devolucionesActivas), 0);
-        const faltante = Math.max(0, total - devuelto);
-        const tasa = total > 0 ? Math.round((devuelto / total) * 100) : 0;
-
-        return { total, devuelto, faltante, tasa };
-    };
-
     if (loading) {
         return (
             <AppLayout>
@@ -160,9 +159,6 @@ export default function PrestamosProveedoresShow() {
             </AppLayout>
         );
     }
-
-    // ✅ Usar useMemo para recalcular solo cuando prestamo cambio
-    const resumen = useMemo(() => calcularResumenPrestamo(), [prestamo]);
 
     return (
         <AppLayout>
@@ -218,19 +214,19 @@ export default function PrestamosProveedoresShow() {
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                     <div className="rounded-md border-blue-200 bg-blue-50 p-2 dark:bg-blue-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Total Prestado</p>
-                        <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{resumen.total}</p>
+                        <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{resumenData.total}</p>
                     </div>
                     <div className="rounded-md border-green-200 bg-green-50 p-2 dark:bg-green-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Devuelto</p>
-                        <p className="text-3xl font-bold text-green-700 dark:text-green-300">{resumen.devuelto}</p>
+                        <p className="text-3xl font-bold text-green-700 dark:text-green-300">{resumenData.devuelto}</p>
                     </div>
                     <div className="rounded-md border-red-200 bg-red-50 p-2 dark:bg-red-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Faltante</p>
-                        <p className="text-3xl font-bold text-red-700 dark:text-red-300">{resumen.faltante}</p>
+                        <p className="text-3xl font-bold text-red-700 dark:text-red-300">{resumenData.faltante}</p>
                     </div>
                     <div className="rounded-md border-purple-200 bg-purple-50 p-2 dark:bg-purple-900/20">
                         <p className="text-sm text-gray-600 dark:text-gray-300">Tasa Devolución</p>
-                        <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{resumen.tasa}%</p>
+                        <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{resumenData.tasa}%</p>
                     </div>
                 </div>
 
