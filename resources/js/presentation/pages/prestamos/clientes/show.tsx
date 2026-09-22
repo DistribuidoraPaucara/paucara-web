@@ -52,6 +52,22 @@ export default function PrestamosClientesShow() {
         }
     }, [prestamoId]);
 
+    // ✅ Calcular totales devueltos por detalle (DEBE estar antes de useMemo que lo usa)
+    const calcularTotalDevueltoDetalle = (detalleId: number, activas?: any[]) => {
+        const devolucionesActivas = activas || prestamo?.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
+
+        let total = 0;
+        devolucionesActivas.forEach((dev: any) => {
+            dev.detalles?.forEach((det: any) => {
+                if (det.detalle_prestamo_cliente?.id === detalleId) {
+                    // ✅ cantidad_dañada_total es información DENTRO de cantidad_devuelta, no suma adicional
+                    total += (det.cantidad_devuelta || 0);
+                }
+            });
+        });
+        return total;
+    };
+
     // ✅ Usar useMemo para recalcular solo cuando prestamo cambia (DEBE estar antes de condicionales)
     const resumenData = useMemo(() => {
         if (!prestamo?.detalles) return { total: 0, devuelto: 0, faltante: 0, tasa: 0 };
@@ -152,21 +168,6 @@ export default function PrestamosClientesShow() {
         };
         const variant = variants[estado] || variants.ACTIVA;
         return <span className={`rounded px-2 py-1 text-xs font-medium ${variant.bg} ${variant.text}`}>{variant.label}</span>;
-    };
-
-    const calcularTotalDevueltoDetalle = (detalleId: number, activas?: any[]) => {
-        const devolucionesActivas = activas || prestamo?.devoluciones?.filter((d: any) => d.estado !== 'ANULADA') || [];
-
-        let total = 0;
-        devolucionesActivas.forEach((dev: any) => {
-            dev.detalles?.forEach((det: any) => {
-                if (det.detalle_prestamo_cliente?.id === detalleId) {
-                    // ✅ cantidad_dañada_total es información DENTRO de cantidad_devuelta, no suma adicional
-                    total += (det.cantidad_devuelta || 0);
-                }
-            });
-        });
-        return total;
     };
 
     if (loading) {
