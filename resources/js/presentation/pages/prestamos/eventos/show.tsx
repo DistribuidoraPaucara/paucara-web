@@ -63,7 +63,7 @@ export default function PrestamosEventosShow() {
         let total = 0;
         devolucionesActivas.forEach((dev: any) => {
             dev.detalles?.forEach((det: any) => {
-                if (det.prestamoEventoDetalle?.id === detalleId) {
+                if (det.prestamo_evento_detalle?.id === detalleId) {
                     // ✅ cantidad_dañada_total es información DENTRO de cantidad_devuelta, no suma adicional
                     total += (det.cantidad_devuelta || 0);
                 }
@@ -113,7 +113,7 @@ export default function PrestamosEventosShow() {
                     anulador: dev.anulador?.name,
                     detalles: dev.detalles?.length,
                     almacenes_por_detalle: dev.detalles?.map((det: any) => ({
-                        prestable: det.prestamoEventoDetalle?.prestable?.nombre,
+                        prestable: det.prestamo_evento_detalle?.prestable?.nombre,
                         almacenes: det.devolucionesAlmacenes?.length,
                     })),
                 })),
