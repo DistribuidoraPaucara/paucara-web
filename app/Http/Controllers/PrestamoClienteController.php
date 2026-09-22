@@ -290,6 +290,7 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable.precios',
                 // ✅ CORREGIDO: Cargar almacenes con sus datos completos
                 'detalles.almacenes.almacen',
+                'detalles.devolucionDetalles.devolucion',  // ✅ Cargar devolución padre con estado
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'cliente',
                 'almacen',

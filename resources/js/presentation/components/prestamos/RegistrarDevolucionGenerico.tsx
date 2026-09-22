@@ -176,7 +176,8 @@ export function RegistrarDevolucionGenerico({
         // ✅ NUEVO: Calcular cantidad PENDIENTE (no total)
         // ✅ Backend envía devolucionDetalles (camelCase) en la relación
         // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas) - case insensitive
-        const devolucionesActivas = detallePrestamo.devolucionDetalles?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA') || [];
+        // ✅ El estado está en dev.devolucion.estado (relación padre)
+        const devolucionesActivas = detallePrestamo.devolucionDetalles?.filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA') || [];
         const cantidadYaDevuelta =
             devolucionesActivas.reduce(
                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
@@ -855,7 +856,7 @@ export function RegistrarDevolucionGenerico({
                                                     <td className="px-3 py-2 text-center">
                                                         <span className="inline-block rounded bg-green-100 px-2 py-1 font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
                                                             {detalle[devolucionRelationKey]
-                                                                ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                ?.filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA')
                                                                 .reduce(
                                                                     (sum: number, dev: any) =>
                                                                         sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
@@ -869,7 +870,7 @@ export function RegistrarDevolucionGenerico({
                                                                 0,
                                                                 (detalle.cantidad_prestada || 0) -
                                                                     (detalle[devolucionRelationKey]
-                                                                        ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                        ?.filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA')
                                                                         .reduce(
                                                                             (sum: number, dev: any) =>
                                                                                 sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
@@ -891,7 +892,7 @@ export function RegistrarDevolucionGenerico({
                                                                     const faltaDevolver =
                                                                         (detalle.cantidad_prestada || 0) -
                                                                         (detalle[devolucionRelationKey]
-                                                                            ?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA')
+                                                                            ?.filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA')
                                                                             .reduce(
                                                                                 (sum: number, dev: any) =>
                                                                                     sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
@@ -1111,7 +1112,8 @@ export function RegistrarDevolucionGenerico({
                     (() => {
                         // ✅ Calcular cantidad PENDIENTE (para devoluciones parciales)
                         // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas) - case insensitive
-                        const devolucionesActivasModal = detalleEnEdicion.devolucionDetalles?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA') || [];
+                        // ✅ El estado está en dev.devolucion.estado (relación padre)
+                        const devolucionesActivasModal = detalleEnEdicion.devolucionDetalles?.filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA') || [];
                         const cantidadYaDevuelta =
                             devolucionesActivasModal.reduce(
                                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
