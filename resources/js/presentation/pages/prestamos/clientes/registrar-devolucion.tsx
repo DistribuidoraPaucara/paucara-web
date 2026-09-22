@@ -25,21 +25,30 @@ export default function RegistrarDevolucionCliente({ prestamoId }: Props) {
 
             // 🔍 DEBUG: Ver completo lo que retorna el endpoint
             console.group('📊 RESPUESTA DEL ENDPOINT GET /api/prestamos-cliente/{id}');
-            console.log('✅ Préstamo completo:', data);
-            console.log('📦 Detalles:', {
-                cantidad: data.detalles?.length,
-                detalles: data.detalles?.map((d: any) => ({
-                    id: d.id,
-                    prestable: d.prestable?.nombre,
-                    cantidad_prestada: d.cantidad_prestada,
-                    devolucionDetalles: d.devolucionDetalles?.map((dev: any) => ({
-                        id: dev.id,
-                        estado: dev.estado,
-                        cantidad_devuelta: dev.cantidad_devuelta,
-                        cantidad_dañada_total: dev.cantidad_dañada_total,
-                    })),
-                })),
+            console.log('✅ Préstamo:', {
+                id: data.id,
+                estado: data.estado,
+                cliente: data.cliente?.nombre,
             });
+
+            console.log('🔄 Devoluciones a nivel PRÉSTAMO:', data.devoluciones?.map((dev: any) => ({
+                id: dev.id,
+                estado: dev.estado,
+                fecha_devolucion: dev.fecha_devolucion,
+            })));
+
+            console.log('📦 Detalles con devolucionDetalles:', data.detalles?.map((d: any) => ({
+                id: d.id,
+                prestable: d.prestable?.nombre,
+                cantidad_prestada: d.cantidad_prestada,
+                devolucionDetalles_completo: d.devolucionDetalles,
+                devolucionDetalles_resumido: d.devolucionDetalles?.map((dev: any) => ({
+                    id: dev.id,
+                    estado: dev.estado,
+                    cantidad_devuelta: dev.cantidad_devuelta,
+                    cantidad_dañada_total: dev.cantidad_dañada_total,
+                })),
+            })));
             console.groupEnd();
 
             setPrestamo(data);
