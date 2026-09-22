@@ -175,8 +175,8 @@ export function RegistrarDevolucionGenerico({
 
         // ✅ NUEVO: Calcular cantidad PENDIENTE (no total)
         // ✅ Backend envía devolucionDetalles (camelCase) en la relación
-        // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas)
-        const devolucionesActivas = detallePrestamo.devolucionDetalles?.filter((dev: any) => dev.estado !== 'ANULADA') || [];
+        // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas) - case insensitive
+        const devolucionesActivas = detallePrestamo.devolucionDetalles?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA') || [];
         const cantidadYaDevuelta =
             devolucionesActivas.reduce(
                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
@@ -1104,8 +1104,8 @@ export function RegistrarDevolucionGenerico({
                     detalleEnEdicion &&
                     (() => {
                         // ✅ Calcular cantidad PENDIENTE (para devoluciones parciales)
-                        // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas)
-                        const devolucionesActivasModal = detalleEnEdicion.devolucionDetalles?.filter((dev: any) => dev.estado !== 'ANULADA') || [];
+                        // ✅ Filtrar SOLO devoluciones ACTIVAS (excluir anuladas) - case insensitive
+                        const devolucionesActivasModal = detalleEnEdicion.devolucionDetalles?.filter((dev: any) => dev.estado?.toUpperCase() !== 'ANULADA') || [];
                         const cantidadYaDevuelta =
                             devolucionesActivasModal.reduce(
                                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
