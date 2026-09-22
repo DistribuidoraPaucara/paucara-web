@@ -1,4 +1,5 @@
-import { TrendingUp, Package } from 'lucide-react';
+import { TrendingUp, Package, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProductosMasVendidosProps {
     productos: Array<{
@@ -11,6 +12,8 @@ interface ProductosMasVendidosProps {
 }
 
 export function ProductosMasVendidos({ productos, loading = false, className = '' }: ProductosMasVendidosProps) {
+    const [mostrarTodos, setMostrarTodos] = useState(false);
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-BO', {
             style: 'currency',
@@ -18,6 +21,8 @@ export function ProductosMasVendidos({ productos, loading = false, className = '
             minimumFractionDigits: 0,
         }).format(amount);
     };
+
+    const productosVisibles = mostrarTodos ? productos : productos.slice(0, 3);
 
     if (loading) {
         return (
@@ -72,7 +77,7 @@ export function ProductosMasVendidos({ productos, loading = false, className = '
             </div>
 
             <div className="space-y-4">
-                {productos.map((producto, index) => {
+                {productosVisibles.map((producto, index) => {
                     const porcentaje = (producto.total_vendido / maxVendido) * 100;
 
                     return (
@@ -109,6 +114,25 @@ export function ProductosMasVendidos({ productos, loading = false, className = '
                     );
                 })}
             </div>
+
+            {productos.length > 3 && (
+                <button
+                    onClick={() => setMostrarTodos(!mostrarTodos)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                >
+                    {mostrarTodos ? (
+                        <>
+                            <span>Ver menos</span>
+                            <ChevronDown className="h-4 w-4 rotate-180" />
+                        </>
+                    ) : (
+                        <>
+                            <span>Ver más productos ({productos.length - 3})</span>
+                            <ChevronDown className="h-4 w-4" />
+                        </>
+                    )}
+                </button>
+            )}
 
             <div className="mt-4 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800/50">
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">

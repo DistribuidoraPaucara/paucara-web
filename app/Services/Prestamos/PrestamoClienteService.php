@@ -638,12 +638,14 @@ class PrestamoClienteService
                                 // ✅ NUEVO FLUJO:
                                 // - cantidad_disponible NO cambia (se mantiene igual)
                                 // - cantidad_cliente_deudor disminuye (buenas + dañadas)
-                                // - cantidad_sin_liquido incrementa (cliente devuelve canastillas VACÍAS)
+                                // - cantidad_sin_liquido incrementa (cliente devuelve canastillas VACÍAS - solo buenas)
+                                // - cantidad_cliente_dañada incrementa (embases/canastillas dañadas)
                                 $totalDevueltoAlmacen = $cantDevAlmacen + $cantDanAlmacen;
                                 $stock->update([
                                     'cantidad_disponible' => $stock->cantidad_disponible,
-                                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $totalDevueltoAlmacen,
+                                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantDevAlmacen,
                                     'cantidad_cliente_deudor' => max(0, $stock->cantidad_cliente_deudor - $totalDevueltoAlmacen),
+                                    'cantidad_cliente_dañada' => $stock->cantidad_cliente_dañada + $cantDanAlmacen,
                                 ]);
                             }
 
@@ -1164,8 +1166,11 @@ class PrestamoClienteService
 
                         if ($cantidadDevuelta > 0 || $cantidadDañada > 0) {
                             // Revertir: lo que se devolvió vuelve a ser deuda, lo dañado se quita de dañada
+                            // ✅ CORREGIDO: NO tocar cantidad_disponible (nunca fue modificado al registrar)
+                            // Revertir: disminuir cantidad_sin_liquido + cantidad_cliente_dañada
+                            //          incrementar cantidad_cliente_deudor
                             $stock->update([
-                                'cantidad_disponible' => $stock->cantidad_disponible - $cantidadDevuelta,
+                                'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadDevuelta),
                                 'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidadDevuelta + $cantidadDañada,
                                 'cantidad_cliente_dañada' => max(0, $stock->cantidad_cliente_dañada - $cantidadDañada),
                             ]);

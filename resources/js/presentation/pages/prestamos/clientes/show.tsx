@@ -296,10 +296,10 @@ export default function PrestamosClientesShow() {
                 </div>
 
                 {/* TABS */}
-                <Tabs defaultValue="detalles" className="w-full">
+                <Tabs defaultValue="devoluciones" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="detalles">Artículos Prestados ({prestamo.detalles?.length || 0})</TabsTrigger>
                         <TabsTrigger value="devoluciones">Devoluciones ({prestamo.devoluciones?.length || 0})</TabsTrigger>
+                        <TabsTrigger value="detalles">Artículos Prestados ({prestamo.detalles?.length || 0})</TabsTrigger>
                     </TabsList>
 
                     {/* TAB: DETALLES */}

@@ -625,13 +625,13 @@ class PrestamoEventoService
                                 if ($stock) {
                                     // ✅ NUEVO FLUJO:
                                     // - cantidad_disponible NO cambia
-                                    // - cantidad_sin_liquido incrementa (buenas + dañadas)
-                                    // - cantidad_evento_deudor disminuye (todo lo devuelto)
-                                    // - cantidad_evento_dañada incrementa (los dañados)
+                                    // - cantidad_sin_liquido incrementa (solo buenas devueltas vacías)
+                                    // - cantidad_evento_deudor disminuye (todo lo devuelto: buenas + dañadas)
+                                    // - cantidad_evento_dañada incrementa (solo los dañados)
                                     $totalDevueltoAlmacen = $cantDevAlmacen + $cantDanAlmacen;
                                     $stock->update([
                                         'cantidad_disponible' => $stock->cantidad_disponible,
-                                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $totalDevueltoAlmacen,
+                                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantDevAlmacen,
                                         'cantidad_evento_deudor' => max(0, $stock->cantidad_evento_deudor - $totalDevueltoAlmacen),
                                         'cantidad_evento_dañada' => $stock->cantidad_evento_dañada + $cantDanAlmacen,
                                     ]);
@@ -649,7 +649,7 @@ class PrestamoEventoService
                                     'disponible_anterior' => $disponibleAntes,
                                     'disponible_posterior' => $disponibleAntes,  // NO CAMBIA
                                     'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
-                                    'cantidad_sin_liquido_posterior' => $sinLiquidoAntes + $totalDevueltoMovimiento,  // Incrementa con buenas + dañadas
+                                    'cantidad_sin_liquido_posterior' => $sinLiquidoAntes + $cantDevAlmacen,  // ✅ Solo buenas devueltas
                                     'prestamo_cliente_anterior' => $prestamoClienteAntes,
                                     'prestamo_cliente_posterior' => $stock->cantidad_cliente_deudor,
                                     'prestamo_evento_anterior' => $eventoDeudorAntes,

@@ -1,4 +1,5 @@
-import { AlertTriangle, Package, Warehouse } from 'lucide-react';
+import { AlertTriangle, Package, Warehouse, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface AlertasStockProps {
     alertas: {
@@ -16,6 +17,8 @@ interface AlertasStockProps {
 }
 
 export function AlertasStock({ alertas, loading = false, className = '' }: AlertasStockProps) {
+    const [mostrarDetalles, setMostrarDetalles] = useState(false);
+
     if (loading) {
         return (
             <div className={`rounded-lg border border-sidebar-border/70 bg-sidebar p-6 dark:border-sidebar-border ${className}`}>
@@ -37,78 +40,88 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
 
     return (
         <div className={`rounded-lg border border-sidebar-border/70 bg-sidebar p-6 dark:border-sidebar-border ${className}`}>
-            <div className="mb-4 flex items-center justify-between">
+            <button
+                onClick={() => setMostrarDetalles(!mostrarDetalles)}
+                className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
+            >
                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Alertas de Stock</h3>
-                <div className="flex gap-2">
-                    {alertas.stock_critico > 0 && (
-                        <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                            <AlertTriangle className="h-3 w-3" />
-                            {alertas.stock_critico} crítico
-                        </span>
-                    )}
-                    {alertas.stock_bajo > 0 && (
-                        <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                            <Package className="h-3 w-3" />
-                            {alertas.stock_bajo} bajo
-                        </span>
-                    )}
+                <div className="flex items-center gap-3">
+                    <div className="flex gap-2">
+                        {alertas.stock_critico > 0 && (
+                            <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                <AlertTriangle className="h-3 w-3" />
+                                {alertas.stock_critico} crítico
+                            </span>
+                        )}
+                        {alertas.stock_bajo > 0 && (
+                            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                <Package className="h-3 w-3" />
+                                {alertas.stock_bajo} bajo
+                            </span>
+                        )}
+                    </div>
+                    <ChevronDown className={`h-5 w-5 text-neutral-500 dark:text-neutral-400 transition-transform ${mostrarDetalles ? 'rotate-180' : ''}`} />
                 </div>
-            </div>
+            </button>
 
-            {alertas.productos_afectados && alertas.productos_afectados.length > 0 ? (
-                <div className="space-y-3">
-                    {alertas.productos_afectados.map((producto) => {
-                        const esCritico = producto.cantidad_actual <= producto.stock_minimo * 0.5;
+            {mostrarDetalles && (
+                <div className="mt-4">
+                    {alertas.productos_afectados && alertas.productos_afectados.length > 0 ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {alertas.productos_afectados.map((producto) => {
+                                const esCritico = producto.cantidad_actual <= producto.stock_minimo * 0.5;
 
-                        return (
-                            <div
-                                key={`${producto.producto}-${producto.almacen}`}
-                                className={`items-center gap-3 rounded-lg border p-1 ${
-                                    esCritico
-                                        ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                                        : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-                                }`}
-                            >
-                                <div className={`p-2 ${esCritico ? 'bg-red-100 dark:bg-red-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
-                                    {esCritico ? (
-                                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                    ) : (
-                                        <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                    )}
-                                    {producto.producto}
-                                </div>
-
-                                <div>
-                                    <p className="font-medium text-neutral-900 dark:text-neutral-100"></p>
-                                    <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-                                        <Warehouse className="h-3 w-3" />
-                                        <p>{producto.almacen}</p>
-                                        <p>•</p>
-                                        <p>
-                                            Stock: {producto.cantidad_actual} / Mín: {producto.stock_minimo}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <p
-                                        className={`text-sm font-medium ${
-                                            esCritico ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
+                                return (
+                                    <div
+                                        key={`${producto.producto}-${producto.almacen}`}
+                                        className={`flex flex-col gap-2 rounded-lg border p-3 ${
+                                            esCritico
+                                                ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                                                : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
                                         }`}
                                     >
-                                        {esCritico ? 'Crítico' : 'Bajo'}
-                                    </p>
-                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{producto.cantidad_actual} unidades</p>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center gap-2 py-8 text-center">
-                    <Package className="h-12 w-12 text-neutral-400 dark:text-neutral-500" />
-                    <p className="text-neutral-600 dark:text-neutral-400">No hay alertas de stock</p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Todos los productos tienen stock adecuado</p>
+                                        <div className="flex items-start gap-2">
+                                            <div className={`rounded p-1.5 ${esCritico ? 'bg-red-100 dark:bg-red-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
+                                                {esCritico ? (
+                                                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                ) : (
+                                                    <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">{producto.producto}</p>
+                                                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                                                    <Warehouse className="h-3 w-3" />
+                                                    <p>{producto.almacen}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-current border-opacity-10 pt-2">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                    Stock: <span className="font-medium text-neutral-900 dark:text-neutral-100">{producto.cantidad_actual}</span> / {producto.stock_minimo}
+                                                </p>
+                                                <span
+                                                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                                                        esCritico ? 'bg-red-200 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-amber-200 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                                                    }`}
+                                                >
+                                                    {esCritico ? 'Crítico' : 'Bajo'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-2 py-8 text-center">
+                            <Package className="h-12 w-12 text-neutral-400 dark:text-neutral-500" />
+                            <p className="text-neutral-600 dark:text-neutral-400">No hay alertas de stock</p>
+                            <p className="text-sm text-neutral-500 dark:text-neutral-400">Todos los productos tienen stock adecuado</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

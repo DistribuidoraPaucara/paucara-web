@@ -14,7 +14,8 @@ import {
     Wallet,
     Users,
     FileText,
-    Activity
+    Activity,
+    Filter
 } from 'lucide-react';
 
 import { MetricCard } from '@/presentation/components/dashboard/metric-card';
@@ -145,6 +146,8 @@ export default function AdminDashboard({
         busqueda: '',
     });
     const [loadingVencimientos, setLoadingVencimientos] = useState(true);
+    const [filtrosExpandidos, setFiltrosExpandidos] = useState(false);
+    const [mostrarTableVencidas, setMostrarTableVencidas] = useState(false);
 
     const defaultMetricas = {
         ventas: { total: 0, cantidad: 0, promedio: 0, cambio_porcentual: 0 },
@@ -220,10 +223,33 @@ export default function AdminDashboard({
         setFiltros(nuevosFiltros);
     };
 
+    const resumenVencimientos = {
+        cuentasPorCobrar: vencimientos.filter(v => v.tipo === 'cuenta_por_cobrar').length,
+        prestamosCliente: vencimientos.filter(v => v.tipo === 'prestamo_cliente').length,
+        prestamosEvento: vencimientos.filter(v => v.tipo === 'prestamo_evento').length,
+        prestamosProveedor: vencimientos.filter(v => v.tipo === 'prestamo_proveedor').length,
+        total: vencimientos.length,
+    };
+
+    const ventasPorCanalConsolidado = Object.entries(safeVentasPorCanal).reduce((acc, [canal, datos]) => {
+        const canalNorm = canal.toUpperCase().trim();
+        if (canalNorm === 'WEB' || canalNorm === 'PRESENCIAL' || canalNorm === 'DIRECTO') {
+            const clave = 'DIRECTO/PRESENCIAL';
+            if (!acc[clave]) {
+                acc[clave] = { total: 0, monto: 0 };
+            }
+            acc[clave].total += datos.total;
+            acc[clave].monto += datos.monto;
+        } else {
+            acc[canal] = datos;
+        }
+        return acc;
+    }, {} as Record<string, { total: number; monto: number }>);
+
     const ventasPorCanalData = {
-        labels: Object.keys(safeVentasPorCanal),
+        labels: Object.keys(ventasPorCanalConsolidado),
         datasets: [{
-            data: Object.values(safeVentasPorCanal).map((canal: { total: number; monto: number }) => canal.monto),
+            data: Object.values(ventasPorCanalConsolidado).map((canal: { total: number; monto: number }) => canal.monto),
             backgroundColor: [
                 'rgba(59, 130, 246, 0.8)',
                 'rgba(16, 185, 129, 0.8)',
@@ -240,6 +266,59 @@ export default function AdminDashboard({
             <Head title="Dashboard Administrativo" />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6">
+                {/* Resumen de Vencimientos */}
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-5">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{resumenVencimientos.total}</p>
+                            </div>
+                            <div className="text-3xl">📋</div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Préstamos Cliente</p>
+                                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{resumenVencimientos.prestamosCliente}</p>
+                            </div>
+                            <div className="text-3xl">📦</div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Préstamos Evento</p>
+                                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{resumenVencimientos.prestamosEvento}</p>
+                            </div>
+                            <div className="text-3xl">🎉</div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Préstamos Proveedor</p>
+                                <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{resumenVencimientos.prestamosProveedor}</p>
+                            </div>
+                            <div className="text-3xl">🏭</div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-green-700 dark:text-green-300">Cuentas por Cobrar</p>
+                                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{resumenVencimientos.cuentasPorCobrar}</p>
+                            </div>
+                            <div className="text-3xl">💰</div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Calendario de Vencimientos */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -275,109 +354,134 @@ export default function AdminDashboard({
                             >
                                 Siguiente →
                             </button>
+
+                            {/* Filtros Toggle Button */}
+                            <button
+                                onClick={() => setFiltrosExpandidos(!filtrosExpandidos)}
+                                className="ml-auto flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                    Filtros
+                                </span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                    {filtrosExpandidos ? '▼' : '▶'}
+                                </span>
+                            </button>
                         </div>
                     </div>
 
-                    <div className="grid gap-6 lg:grid-cols-4">
-                        <div className="lg:col-span-3">
-                            {loadingVencimientos ? (
-                                <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
-                                    <p className="text-gray-500 dark:text-gray-400">Cargando calendario...</p>
-                                </div>
-                            ) : (
-                                <CalendarioVencimientosGrid vencimientos={vencimientos} mes={mesCalendario} />
-                            )}
+                    {/* Filters - Expandable Section (shown first but can be hidden) */}
+                    {filtrosExpandidos && (
+                        <FiltrosVencimientos filtros={filtros} onFiltrosChange={handleFiltrosChange} />
+                    )}
+
+                    {/* Calendar */}
+                    {loadingVencimientos ? (
+                        <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+                            <p className="text-gray-500 dark:text-gray-400">Cargando calendario...</p>
                         </div>
-                        <div className="space-y-4">
-                            <FiltrosVencimientos filtros={filtros} onFiltrosChange={handleFiltrosChange} />
-                            <AlertasStock
-                                alertas={safeAlertasStock}
-                                loading={loading}
-                            />
-                        </div>
-                    </div>
+                    ) : (
+                        <CalendarioVencimientosGrid vencimientos={vencimientos} mes={mesCalendario} />
+                    )}
+
+                    {/* Alertas Stock - Always visible below calendar */}
+                    <AlertasStock
+                        alertas={safeAlertasStock}
+                        loading={loading}
+                    />
                 </div>
 
                 {/* Cuentas por Cobrar Vencidas */}
                 {totalCuentasVencidas > 0 && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-900/30 dark:bg-amber-950/20">
-                        <div className="mb-4 flex items-center justify-between">
+                        <button
+                            onClick={() => setMostrarTableVencidas(!mostrarTableVencidas)}
+                            className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
+                        >
                             <div className="flex items-center gap-2">
                                 <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                                 <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
                                     🚨 Cuentas por Cobrar Vencidas
                                 </h3>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                                    Total: {totalCuentasVencidas} cuenta{totalCuentasVencidas !== 1 ? 's' : ''}
-                                </p>
-                                <p className="text-lg font-bold text-amber-900 dark:text-amber-100">
-                                    Bs. {totalMontoVencido.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </p>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                                        Total: {totalCuentasVencidas} cuenta{totalCuentasVencidas !== 1 ? 's' : ''}
+                                    </p>
+                                    <p className="text-lg font-bold text-amber-900 dark:text-amber-100">
+                                        Bs. {totalMontoVencido.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
+                                </div>
+                                <span className="text-2xl text-amber-600 dark:text-amber-400">
+                                    {mostrarTableVencidas ? '▼' : '▶'}
+                                </span>
                             </div>
-                        </div>
+                        </button>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-amber-200 dark:border-amber-900/30">
-                                        <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
-                                            Cliente
-                                        </th>
-                                        <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
-                                            Referencia
-                                        </th>
-                                        <th className="px-3 py-2 text-right font-medium text-amber-800 dark:text-amber-200">
-                                            Saldo
-                                        </th>
-                                        <th className="px-3 py-2 text-center font-medium text-amber-800 dark:text-amber-200">
-                                            Días Vencido
-                                        </th>
-                                        <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
-                                            Fecha Vencimiento
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {cuentasVencidas.map((cuenta) => (
-                                        <tr
-                                            key={cuenta.id}
-                                            className="border-b border-amber-100 hover:bg-amber-100/50 dark:border-amber-900/20 dark:hover:bg-amber-900/10"
-                                        >
-                                            <td className="px-3 py-3 font-medium text-amber-900 dark:text-amber-100">
-                                                {cuenta.cliente_nombre}
-                                            </td>
-                                            <td className="px-3 py-3 text-amber-800 dark:text-amber-300">
-                                                {cuenta.referencia_documento}
-                                            </td>
-                                            <td className="px-3 py-3 text-right font-semibold text-amber-900 dark:text-amber-100">
-                                                Bs. {cuenta.saldo_pendiente.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
-                                            <td className="px-3 py-3 text-center">
-                                                <span className={`inline-block rounded px-2 py-1 text-xs font-bold ${cuenta.dias_vencido > 30
-                                                    ? 'bg-red-200 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                                                    : cuenta.dias_vencido > 15
-                                                        ? 'bg-orange-200 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
-                                                        : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
-                                                    }`}>
-                                                    {cuenta.dias_vencido} días
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-3 text-amber-700 dark:text-amber-300">
-                                                {cuenta.fecha_vencimiento}
-                                            </td>
+                        {mostrarTableVencidas && (
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-amber-200 dark:border-amber-900/30">
+                                            <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
+                                                Cliente
+                                            </th>
+                                            <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
+                                                Referencia
+                                            </th>
+                                            <th className="px-3 py-2 text-right font-medium text-amber-800 dark:text-amber-200">
+                                                Saldo
+                                            </th>
+                                            <th className="px-3 py-2 text-center font-medium text-amber-800 dark:text-amber-200">
+                                                Días Vencido
+                                            </th>
+                                            <th className="px-3 py-2 text-left font-medium text-amber-800 dark:text-amber-200">
+                                                Fecha Vencimiento
+                                            </th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {cuentasVencidas.map((cuenta) => (
+                                            <tr
+                                                key={cuenta.id}
+                                                className="border-b border-amber-100 hover:bg-amber-100/50 dark:border-amber-900/20 dark:hover:bg-amber-900/10"
+                                            >
+                                                <td className="px-3 py-3 font-medium text-amber-900 dark:text-amber-100">
+                                                    {cuenta.cliente_nombre}
+                                                </td>
+                                                <td className="px-3 py-3 text-amber-800 dark:text-amber-300">
+                                                    {cuenta.referencia_documento}
+                                                </td>
+                                                <td className="px-3 py-3 text-right font-semibold text-amber-900 dark:text-amber-100">
+                                                    Bs. {cuenta.saldo_pendiente.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-3 py-3 text-center">
+                                                    <span className={`inline-block rounded px-2 py-1 text-xs font-bold ${cuenta.dias_vencido > 30
+                                                        ? 'bg-red-200 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                                                        : cuenta.dias_vencido > 15
+                                                            ? 'bg-orange-200 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
+                                                            : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+                                                        }`}>
+                                                        {cuenta.dias_vencido} días
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-amber-700 dark:text-amber-300">
+                                                    {cuenta.fecha_vencimiento}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
 
-                        {cuentasVencidas.length < totalCuentasVencidas && (
-                            <div className="mt-4 text-center">
-                                <p className="text-xs text-amber-700 dark:text-amber-400">
-                                    Mostrando {cuentasVencidas.length} de {totalCuentasVencidas} cuentas. Ver todas en módulo de Cuentas por Cobrar.
-                                </p>
+                                {cuentasVencidas.length < totalCuentasVencidas && (
+                                    <div className="mt-4 text-center">
+                                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                                            Mostrando {cuentasVencidas.length} de {totalCuentasVencidas} cuentas. Ver todas en módulo de Cuentas por Cobrar.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

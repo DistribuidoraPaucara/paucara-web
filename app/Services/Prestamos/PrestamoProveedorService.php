@@ -549,11 +549,14 @@ class PrestamoProveedorService
 
                         // Procesar devolución en stock
                         if ($stockAntes) {
+                            // ✅ Separar buenas de dañadas: solo las buenas van a sin_liquido
+                            $cantidadBuenas = $cantidadDevuelta - $cantidadDañadaTotal;
+                            $totalDevuelto = $cantidadDevuelta;
                             $stockAntes->update([
                                 'cantidad_disponible' => $stockAntes->cantidad_disponible, // ✅ No cambia
-                                'cantidad_sin_liquido' => $stockAntes->cantidad_sin_liquido + $cantidadDevuelta,  // ✅ Devueltos llegan vacíos
-                                'cantidad_proveedor_acreedor' => max(0, $stockAntes->cantidad_proveedor_acreedor - $cantidadDevuelta),
-                                'cantidad_proveedor_dañada' => $stockAntes->cantidad_proveedor_dañada + $cantidadDañadaTotal,
+                                'cantidad_sin_liquido' => $stockAntes->cantidad_sin_liquido + $cantidadBuenas,  // ✅ Solo buenas llegan vacías
+                                'cantidad_proveedor_acreedor' => max(0, $stockAntes->cantidad_proveedor_acreedor - $totalDevuelto),  // ✅ Disminuye por todo devuelto
+                                'cantidad_proveedor_dañada' => $stockAntes->cantidad_proveedor_dañada + $cantidadDañadaTotal,  // ✅ Incrementa solo dañadas
                             ]);
                         }
 
@@ -569,7 +572,7 @@ class PrestamoProveedorService
                             'disponible_anterior' => $disponibleAntes,
                             'disponible_posterior' => $disponibleAntes,
                             'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
-                            'cantidad_sin_liquido_posterior' => $stockAntes->cantidad_sin_liquido,
+                            'cantidad_sin_liquido_posterior' => $sinLiquidoAntes + $cantidadBuenas,  // ✅ Solo buenas
                             'prestamo_cliente_anterior' => $prestamoClienteAntes,
                             'prestamo_cliente_posterior' => $stockAntes->cantidad_cliente_deudor,
                             'prestamo_evento_anterior' => $prestamoEventoAntes,
@@ -911,11 +914,12 @@ class PrestamoProveedorService
                     $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada ?? 0;
 
                     // Invertir cambios de stock (deshacer la devolución)
-                    // Inverso: cantidad_disponible no cambia, sin_liquido disminuye, acreedor aumenta
+                    // ✅ IMPORTANTE: Solo las BUENAS fueron sumadas a sin_liquido durante registrarDevolucion
+                    $cantidadBuenas = $cantidadDevuelta - $cantidadDañada;
                     $stock->update([
                         'cantidad_disponible' => $stock->cantidad_disponible, // ✅ No cambia
-                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadDevuelta), // ✅ Vuelven a estar en préstamo
-                        'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta, // Vuelve a estar acreedor
+                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadBuenas),  // ✅ Solo buenas regresan
+                        'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta,  // ✅ Todo lo devuelto vuelve a acreedor
                         'cantidad_proveedor_dañada' => max(0, $stock->cantidad_proveedor_dañada - $cantidadDañada),
                     ]);
 
@@ -932,7 +936,7 @@ class PrestamoProveedorService
                         'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                         'prestamo_proveedor_anterior' => $prestamoProveedorAntes,
                         'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
-                        'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
+                        'cantidad_sin_liquido_posterior' => $sinLiquidoAntes - $cantidadBuenas,  // ✅ Solo buenas se restan
                         'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                         'cantidad_proveedor_dañada_anterior' => $proveedorDañadaAntes,
                         'cantidad_proveedor_dañada_posterior' => $stock->cantidad_proveedor_dañada ?? 0,

@@ -22,7 +22,7 @@ class AdminController extends Controller
     public function dashboard(Request $request)
     {
         $user = Auth::user();
-        $periodo = $request->get('periodo', 'ultimos_30_dias');
+        $periodo = $request->get('periodo', 'mes_actual');
 
         // Obtener todas las métricas para el admin
         $metricas = $this->dashboardService->getMainMetrics($periodo);

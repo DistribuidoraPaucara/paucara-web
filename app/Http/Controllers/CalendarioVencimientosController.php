@@ -60,10 +60,10 @@ class CalendarioVencimientosController extends Controller
                     ->whereBetween('fecha_esperada_devolucion', [$fechaInicio, $fechaFin])
                     ->when($busqueda, fn($q) =>
                         $q->whereHas('cliente', fn($sq) =>
-                            $sq->where('nombre', 'like', "%{$busqueda}%")
+                            $sq->whereRaw('LOWER(nombre) like LOWER(?)', ["%{$busqueda}%"])
                         )
                     )
-                    ->when($estados, fn($q) => $q->whereIn('estado', $estados))
+                    ->when($estados, fn($q) => $q->whereRaw('LOWER(estado) IN (' . implode(',', array_fill(0, count($estados), 'LOWER(?)')) . ')', $estados), fn($q) => $q->whereRaw('LOWER(estado) != ?', ['cancelado']))
                     ->get()
                     ->map(fn($p) => [
                         'id' => $p->id,
@@ -87,10 +87,10 @@ class CalendarioVencimientosController extends Controller
                     ->with('cliente')
                     ->whereBetween(DB::raw("COALESCE(fecha_entrega, fecha_esperada_devolucion)"), [$fechaInicio, $fechaFin])
                     ->when($busqueda, fn($q) =>
-                        $q->where('nombre_evento', 'like', "%{$busqueda}%")
-                            ->orWhere('encargado_evento', 'like', "%{$busqueda}%")
+                        $q->whereRaw('LOWER(nombre_evento) like LOWER(?)', ["%{$busqueda}%"])
+                            ->orWhereRaw('LOWER(encargado_evento) like LOWER(?)', ["%{$busqueda}%"])
                     )
-                    ->when($estados, fn($q) => $q->whereIn('estado', $estados))
+                    ->when($estados, fn($q) => $q->whereRaw('LOWER(estado) IN (' . implode(',', array_fill(0, count($estados), 'LOWER(?)')) . ')', $estados), fn($q) => $q->whereRaw('LOWER(estado) != ?', ['cancelado']))
                     ->get()
                     ->map(fn($p) => [
                         'id' => $p->id,
@@ -115,10 +115,10 @@ class CalendarioVencimientosController extends Controller
                     ->whereBetween('fecha_esperada_devolucion', [$fechaInicio, $fechaFin])
                     ->when($busqueda, fn($q) =>
                         $q->whereHas('proveedor', fn($sq) =>
-                            $sq->where('nombre', 'like', "%{$busqueda}%")
+                            $sq->whereRaw('LOWER(nombre) like LOWER(?)', ["%{$busqueda}%"])
                         )
                     )
-                    ->when($estados, fn($q) => $q->whereIn('estado', $estados))
+                    ->when($estados, fn($q) => $q->whereRaw('LOWER(estado) IN (' . implode(',', array_fill(0, count($estados), 'LOWER(?)')) . ')', $estados), fn($q) => $q->whereRaw('LOWER(estado) != ?', ['cancelado']))
                     ->get()
                     ->map(fn($p) => [
                         'id' => $p->id,
@@ -143,10 +143,10 @@ class CalendarioVencimientosController extends Controller
                     ->whereBetween('fecha_vencimiento', [$fechaInicio, $fechaFin])
                     ->when($busqueda, fn($q) =>
                         $q->whereHas('cliente', fn($sq) =>
-                            $sq->where('nombre', 'like', "%{$busqueda}%")
+                            $sq->whereRaw('LOWER(nombre) like LOWER(?)', ["%{$busqueda}%"])
                         )
                     )
-                    ->when($estados, fn($q) => $q->whereIn('estado', $estados))
+                    ->when($estados, fn($q) => $q->whereRaw('LOWER(estado) IN (' . implode(',', array_fill(0, count($estados), 'LOWER(?)')) . ')', $estados), fn($q) => $q->whereRaw('LOWER(estado) != ?', ['anulado']))
                     ->get()
                     ->map(fn($c) => [
                         'id' => $c->id,
