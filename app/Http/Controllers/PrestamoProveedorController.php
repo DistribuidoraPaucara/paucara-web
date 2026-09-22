@@ -158,7 +158,7 @@ class PrestamoProveedorController extends Controller
                         'prestable.precios',
                         'prestable.condiciones',
                         'almacenes.almacen',
-                        'devolucionDetalles',
+                        'devolucionDetalles.devolucion',
                     ]);
                 },
                 'proveedor',

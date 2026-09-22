@@ -322,6 +322,7 @@ class PrestamoEventoController extends Controller
                 'detalles.prestable.precios',
                 'detalles.almacenes.almacen',
                 // ✅ CORREGIDO: Cargar devoluciones anteriores con sus detalles por almacén
+                'detalles.devolucionDetalles.devolucionEvento',
                 'detalles.devolucionDetalles.devolucionesAlmacenes.almacen',
                 'chofer',
                 'ventas',

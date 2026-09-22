@@ -156,7 +156,9 @@ export default function PrestamosProveedoresIndex() {
         const activos = prestamos.filter((p) => p.estado === 'ACTIVO').length;
         const unidadesPendientes = prestamos.reduce((sum, p) => {
             const totalPrestado = (p.detalles || []).reduce((s, d) => s + (Number(d.cantidad) || 0), 0);
-            const totalDevuelto = (p.devoluciones || []).reduce((s, d) => s + (Number(d.cantidad_devuelta) || 0), 0);
+            const totalDevuelto = (p.devoluciones || [])
+                .filter((d: any) => d?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                .reduce((s, d) => s + (Number(d.cantidad_devuelta) || 0), 0);
             return sum + Math.max(0, totalPrestado - totalDevuelto);
         }, 0);
         const deuda = prestamos.reduce((sum, p) => {
@@ -186,10 +188,12 @@ export default function PrestamosProveedoresIndex() {
             (prestamo.detalles || []).forEach((detalle: any) => {
                 const totalDetalle = Number(detalle.cantidad_prestada || 0);
                 const devueltoDetalle =
-                    detalle.devolucion_detalles?.reduce(
-                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                        0,
-                    ) || 0;
+                    (detalle.devolucion_detalles || [])
+                        .filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                        .reduce(
+                            (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                            0,
+                        ) || 0;
                 const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
                 if (detalle.prestable?.tipo === 'CANASTILLA') {
@@ -218,10 +222,12 @@ export default function PrestamosProveedoresIndex() {
         (prestamo.detalles || []).forEach((detalle: any) => {
             const totalDetalle = Number(detalle.cantidad_prestada || 0);
             const devueltoDetalle =
-                detalle.devolucion_detalles?.reduce(
-                    (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                    0,
-                ) || 0;
+                (detalle.devolucion_detalles || [])
+                    .filter((dev: any) => dev.devolucion?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                    .reduce(
+                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                        0,
+                    ) || 0;
             const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
             if (detalle.prestable?.tipo === 'CANASTILLA') {

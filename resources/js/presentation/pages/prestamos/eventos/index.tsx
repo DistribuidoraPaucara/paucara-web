@@ -165,10 +165,12 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                     prestamo.detalles.forEach((detalle: any, idx: number) => {
                         const totalPrestado = detalle.cantidad_prestada || 0;
                         const totalDevuelto =
-                            detalle.devolucion_detalles?.reduce(
-                                (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                                0,
-                            ) || 0;
+                            (detalle.devolucion_detalles || [])
+                                .filter((dev: any) => dev.devolucionEvento?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                                .reduce(
+                                    (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                                    0,
+                                ) || 0;
                         const falta = totalPrestado - totalDevuelto;
                         console.log(
                             `  Detalle ${idx + 1}: ${detalle.prestable?.nombre} | Prestado: ${totalPrestado} | Devuelto: ${totalDevuelto} | Falta: ${falta} | Estado: ${detalle.estado}`,
@@ -241,10 +243,12 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
             (prestamo.detalles || []).forEach((detalle: any) => {
                 const totalDetalle = Number(detalle.cantidad_prestada || 0);
                 const devueltoDetalle =
-                    detalle.devolucion_detalles?.reduce(
-                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                        0,
-                    ) || 0;
+                    (detalle.devolucion_detalles || [])
+                        .filter((dev: any) => dev.devolucionEvento?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                        .reduce(
+                            (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                            0,
+                        ) || 0;
                 const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
                 if (detalle.prestable?.tipo === 'CANASTILLA') {
@@ -273,10 +277,12 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
         (prestamo.detalles || []).forEach((detalle: any) => {
             const totalDetalle = Number(detalle.cantidad_prestada || 0);
             const devueltoDetalle =
-                detalle.devolucion_detalles?.reduce(
-                    (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                    0,
-                ) || 0;
+                (detalle.devolucion_detalles || [])
+                    .filter((dev: any) => dev.devolucionEvento?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                    .reduce(
+                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                        0,
+                    ) || 0;
             const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
             if (detalle.prestable?.tipo === 'CANASTILLA') {
