@@ -174,8 +174,9 @@ export function RegistrarDevolucionGenerico({
         const almacenesExistentes = devolucionesAlmacenes.get(detallePrestamo.id) || [];
 
         // ✅ NUEVO: Calcular cantidad PENDIENTE (no total)
+        // ✅ Backend envía devolucionDetalles (camelCase) en la relación
         const cantidadYaDevuelta =
-            detallePrestamo.devolucion_detalles?.reduce(
+            detallePrestamo.devolucionDetalles?.reduce(
                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
                 0,
             ) || 0;
@@ -1102,7 +1103,7 @@ export function RegistrarDevolucionGenerico({
                     (() => {
                         // ✅ Calcular cantidad PENDIENTE (para devoluciones parciales)
                         const cantidadYaDevuelta =
-                            detalleEnEdicion.devolucion_detalles?.reduce(
+                            detalleEnEdicion.devolucionDetalles?.reduce(
                                 (sum: number, dev: any) => sum + (dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0),
                                 0,
                             ) || 0;
