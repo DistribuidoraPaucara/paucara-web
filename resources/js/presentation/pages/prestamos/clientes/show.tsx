@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/compone
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Trash2, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface PrestamoClienteShow {
     id: number;
@@ -188,7 +188,8 @@ export default function PrestamosClientesShow() {
         );
     }
 
-    const resumen = calcularResumenPrestamo();
+    // ✅ Usar useMemo para recalcular solo cuando prestamo cambio
+    const resumen = useMemo(() => calcularResumenPrestamo(), [prestamo]);
 
     return (
         <AppLayout>
