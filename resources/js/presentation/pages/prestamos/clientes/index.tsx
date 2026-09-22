@@ -300,32 +300,36 @@ export default function PrestamosClientesIndex() {
             });
 
             // Contar devoluciones
-            (prestamo.devoluciones || []).forEach((devolucion) => {
-                (devolucion.detalles || []).forEach((detalleDevol) => {
-                    const cantidadDevuelta = Number(detalleDevol.cantidad_devuelta) || 0;
-                    const cantidadDañada = Number(detalleDevol.cantidad_dañada_total) || 0;
-                    totalItemsDevueltos += cantidadDevuelta;
-                    totalItemsDañados += cantidadDañada;
+            (prestamo.devoluciones || [])
+                .filter((devolucion: any) => devolucion?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                .forEach((devolucion) => {
+                    (devolucion.detalles || []).forEach((detalleDevol) => {
+                        const cantidadDevuelta = Number(detalleDevol.cantidad_devuelta) || 0;
+                        const cantidadDañada = Number(detalleDevol.cantidad_dañada_total) || 0;
+                        totalItemsDevueltos += cantidadDevuelta;
+                        totalItemsDañados += cantidadDañada;
 
-                    // ✅ CORREGIDO: Acceder al prestable a través de detallePrestamoCliente
-                    const prestableType = detalleDevol.detallePrestamoCliente?.prestable?.tipo;
-                    if (prestableType === 'CANASTILLA') {
-                        totalCanastillasDevueltas += cantidadDevuelta;
-                        totalCanastillasDañadas += cantidadDañada;
-                    } else if (prestableType === 'EMBASES') {
-                        totalEmbassesDevueltos += cantidadDevuelta;
-                        totalEmbasesDañados += cantidadDañada;
-                    }
+                        // ✅ CORREGIDO: Acceder al prestable a través de detallePrestamoCliente
+                        const prestableType = detalleDevol.detallePrestamoCliente?.prestable?.tipo;
+                        if (prestableType === 'CANASTILLA') {
+                            totalCanastillasDevueltas += cantidadDevuelta;
+                            totalCanastillasDañadas += cantidadDañada;
+                        } else if (prestableType === 'EMBASES') {
+                            totalEmbassesDevueltos += cantidadDevuelta;
+                            totalEmbasesDañados += cantidadDañada;
+                        }
+                    });
                 });
-            });
         });
 
         const pendienteDevolución = prestamos.reduce((sum, p) => {
             const totalPrestado = (p.detalles || []).reduce((s, d) => s + (Number(d.cantidad_prestada) || 0), 0);
-            const totalDevuelto = (p.devoluciones || []).reduce((s, d) => {
-                const detalles = d.detalles || [];
-                return s + detalles.reduce((sd, dd) => sd + (Number(dd.cantidad_devuelta) || 0), 0);
-            }, 0);
+            const totalDevuelto = (p.devoluciones || [])
+                .filter((d: any) => d?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                .reduce((s, d) => {
+                    const detalles = d.detalles || [];
+                    return s + detalles.reduce((sd, dd) => sd + (Number(dd.cantidad_devuelta) || 0), 0);
+                }, 0);
             return sum + Math.max(0, totalPrestado - totalDevuelto);
         }, 0);
 
@@ -389,10 +393,14 @@ export default function PrestamosClientesIndex() {
             (prestamo.detalles || []).forEach((detalle: any) => {
                 const totalDetalle = Number(detalle.cantidad_prestada || 0);
                 const devueltoDetalle =
-                    detalle.devolucion_detalles?.reduce(
-                        (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
-                        0,
-                    ) || 0;
+                    (prestamo.devoluciones || [])
+                        .filter((dev: any) => dev?.estado?.toUpperCase() !== 'ANULADA') // Filtrar ANULADAS
+                        .flatMap((dev: any) => dev.detalles || [])
+                        .filter((devDet: any) => devDet.prestamo_cliente_detalle_id === detalle.id)
+                        .reduce(
+                            (s: number, dev: any) => s + ((dev.cantidad_devuelta || 0) + (dev.cantidad_dañada_total || 0)),
+                            0,
+                        ) || 0;
                 const pendienteDetalle = Math.max(0, totalDetalle - devueltoDetalle);
 
                 if (detalle.prestable?.tipo === 'CANASTILLA') {
