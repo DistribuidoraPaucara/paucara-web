@@ -997,11 +997,12 @@ class PrestamoEventoService
 
                         // Invertir cambios de stock (deshacer la devolución)
                         // ✅ NO cambiar disponible (histórico)
-                        // ✅ DISMINUIR sin_liquido (inverso de incrementar)
-                        // ✅ INCREMENTAR evento_deudor (inverso de disminuir)
+                        // ✅ DISMINUIR sin_liquido (inverso de incrementar buenas)
+                        // ✅ DISMINUIR evento_dañada (inverso de incrementar dañadas)
+                        // ✅ INCREMENTAR evento_deudor (inverso de disminuir: regresa todo lo devuelto)
                         $stock->update([
                             'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantDevuelta),
-                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantDevuelta,
+                            'cantidad_evento_deudor' => $stock->cantidad_evento_deudor + $cantDevuelta + $cantDañada,
                             'cantidad_evento_dañada' => max(0, $stock->cantidad_evento_dañada - $cantDañada),
                         ]);
 

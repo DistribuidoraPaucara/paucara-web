@@ -914,13 +914,15 @@ class PrestamoProveedorService
                     $proveedorDañadaAntes = $stock->cantidad_proveedor_dañada ?? 0;
 
                     // Invertir cambios de stock (deshacer la devolución)
-                    // ✅ IMPORTANTE: Solo las BUENAS fueron sumadas a sin_liquido durante registrarDevolucion
-                    $cantidadBuenas = $cantidadDevuelta - $cantidadDañada;
+                    // ✅ Durante registrarDevolucion:
+                    //    - Solo BUENAS fueron sumadas a sin_liquido ($cantidadDevuelta)
+                    //    - Dañadas fueron sumadas a cantidad_proveedor_dañada ($cantidadDañada)
+                    //    - Todo fue restado de cantidad_proveedor_acreedor ($cantidadDevuelta + $cantidadDañada)
                     $stock->update([
                         'cantidad_disponible' => $stock->cantidad_disponible, // ✅ No cambia
-                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadBuenas),  // ✅ Solo buenas regresan
-                        'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta,  // ✅ Todo lo devuelto vuelve a acreedor
-                        'cantidad_proveedor_dañada' => max(0, $stock->cantidad_proveedor_dañada - $cantidadDañada),
+                        'cantidad_sin_liquido' => max(0, $stock->cantidad_sin_liquido - $cantidadDevuelta),  // ✅ Revertir buenas
+                        'cantidad_proveedor_acreedor' => $stock->cantidad_proveedor_acreedor + $cantidadDevuelta + $cantidadDañada,  // ✅ Todo lo devuelto regresa
+                        'cantidad_proveedor_dañada' => max(0, $stock->cantidad_proveedor_dañada - $cantidadDañada),  // ✅ Revertir dañadas
                     ]);
 
                     // Registrar movimiento INVERSO por anulación
