@@ -355,59 +355,32 @@ class PrestamoClienteService
                             $prestamoEventoPosterior = $stock->cantidad_evento_deudor ?? 0;
                             $prestamoProveedorPosterior = $stock->cantidad_proveedor_acreedor;
 
-                            if ($datos['es_venta']) {
-                                // Para ventas: disponible disminuye
-                                $this->movimientoService->registrarMovimiento([
-                                    'prestable_stock_id' => $stock->id,
-                                    'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
-                                    'usuario_id' => auth()->id(),
-                                    'tipo' => 'SALIDA',
-                                    'cantidad' => -$cantidadMovida,
-                                    'disponible_anterior' => $disponiblePosterior + $cantidadMovida,
-                                    'disponible_posterior' => $disponiblePosterior,
-                                    'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior,
-                                    'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
-                                    'prestamo_cliente_anterior' => $prestamoClientePosterior,
-                                    'prestamo_cliente_posterior' => $prestamoClientePosterior,
-                                    'prestamo_evento_anterior' => $prestamoEventoPosterior,
-                                    'prestamo_evento_posterior' => $prestamoEventoPosterior,
-                                    'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
-                                    'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
-                                    'categoria_afectada' => 'vendida',
-                                    'motivo' => 'Venta a cliente',
-                                    'numero_referencia' => $prestamo->id,
-                                    'referencia_tipo' => 'PRESTAMO_CLIENTE',
-                                    'referencia_id' => $prestamo->id,
-                                    'venta_id' => $datos['venta_id'] ?? null,
-                                    'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
-                                ]);
-                            } else {
-                                // Para préstamos: sin_liquido disminuye, cliente_deudor incrementa, disponible NO cambia
-                                $this->movimientoService->registrarMovimiento([
-                                    'prestable_stock_id' => $stock->id,
-                                    'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
-                                    'usuario_id' => auth()->id(),
-                                    'tipo' => 'CONSUMO_RESERVA',
-                                    'cantidad' => -$cantidadMovida,
-                                    'disponible_anterior' => $disponiblePosterior,
-                                    'disponible_posterior' => $disponiblePosterior,
-                                    'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior + $cantidadMovida,
-                                    'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
-                                    'prestamo_cliente_anterior' => $prestamoClientePosterior - $cantidadMovida,
-                                    'prestamo_cliente_posterior' => $prestamoClientePosterior,
-                                    'prestamo_evento_anterior' => $prestamoEventoPosterior,
-                                    'prestamo_evento_posterior' => $prestamoEventoPosterior,
-                                    'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
-                                    'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
-                                    'categoria_afectada' => 'prestamo_cliente',
-                                    'motivo' => 'Préstamo a cliente',
-                                    'numero_referencia' => $prestamo->id,
-                                    'referencia_tipo' => 'PRESTAMO_CLIENTE',
-                                    'referencia_id' => $prestamo->id,
-                                    'venta_id' => $datos['venta_id'] ?? null,
-                                    'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
-                                ]);
-                            }
+                            // ✅ CORREGIDO: Tanto venta como préstamo consumen sin_liquido e incrementan cliente_deudor
+                            // La venta ya hizo su consumo de disponible, aquí solo consumimos desde sin_liquido
+                            $this->movimientoService->registrarMovimiento([
+                                'prestable_stock_id' => $stock->id,
+                                'almacenes_prestables_id' => $detalleAlmacen['almacen_id'],
+                                'usuario_id' => auth()->id(),
+                                'tipo' => 'CONSUMO_RESERVA',
+                                'cantidad' => -$cantidadMovida,
+                                'disponible_anterior' => $disponiblePosterior,
+                                'disponible_posterior' => $disponiblePosterior,
+                                'cantidad_sin_liquido_anterior' => $sinLiquidoPosterior + $cantidadMovida,
+                                'cantidad_sin_liquido_posterior' => $sinLiquidoPosterior,
+                                'prestamo_cliente_anterior' => $prestamoClientePosterior - $cantidadMovida,
+                                'prestamo_cliente_posterior' => $prestamoClientePosterior,
+                                'prestamo_evento_anterior' => $prestamoEventoPosterior,
+                                'prestamo_evento_posterior' => $prestamoEventoPosterior,
+                                'prestamo_proveedor_anterior' => $prestamoProveedorPosterior,
+                                'prestamo_proveedor_posterior' => $prestamoProveedorPosterior,
+                                'categoria_afectada' => 'prestamo_cliente',
+                                'motivo' => 'Préstamo a cliente' . ($datos['es_venta'] ? ' (desde venta)' : ''),
+                                'numero_referencia' => $prestamo->id,
+                                'referencia_tipo' => 'PRESTAMO_CLIENTE',
+                                'referencia_id' => $prestamo->id,
+                                'venta_id' => $datos['venta_id'] ?? null,
+                                'tipo_prestamo' => $datos['tipo_prestamo'] ?? 'canastillas_embases',
+                            ]);
                         }
                     }
                 }
@@ -447,60 +420,35 @@ class PrestamoClienteService
                     ->where('almacenes_prestables_id', $almacenId)
                     ->firstOrFail();
 
-                if ($esVenta) {
-                    // Para ventas, validar cantidad_disponible
-                    if ((int) $stock->cantidad_disponible < $cantidad) {
-                        throw new \Exception("Stock insuficiente en el almacén. Disponible: {$stock->cantidad_disponible}, solicitado: {$cantidad}");
-                    }
-
-                    \Log::info('📦 VENTA - Stock ANTES', [
-                        'prestable_id' => $prestableId,
-                        'almacen_id' => $almacenId,
-                        'cantidad_disponible' => $stock->cantidad_disponible,
-                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido,
-                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor,
-                    ]);
-
-                    $stock->update([
-                        'cantidad_disponible' => $stock->cantidad_disponible - $cantidad,
-                    ]);
-
-                    \Log::info('📦 VENTA - Stock DESPUÉS', [
-                        'prestable_id' => $prestableId,
-                        'almacen_id' => $almacenId,
-                        'cantidad_disponible' => $stock->cantidad_disponible - $cantidad,
-                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido,
-                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor,
-                    ]);
-                } else {
-                    // ✅ MODIFICADO: Para préstamos a clientes, disminuir cantidad_sin_liquido
-                    // e incrementar cantidad_cliente_deudor
-                    if ((int) $stock->cantidad_sin_liquido < $cantidad) {
-                        throw new \Exception("Stock sin líquido insuficiente en el almacén. Disponible: {$stock->cantidad_sin_liquido}, solicitado: {$cantidad}");
-                    }
-
-                    \Log::info('🏦 PRÉSTAMO - Stock ANTES', [
-                        'prestable_id' => $prestableId,
-                        'almacen_id' => $almacenId,
-                        'cantidad_a_consumir' => $cantidad,
-                        'cantidad_disponible' => $stock->cantidad_disponible,
-                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido,
-                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor,
-                    ]);
-
-                    $stock->update([
-                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido - $cantidad,
-                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
-                    ]);
-
-                    \Log::info('🏦 PRÉSTAMO - Stock DESPUÉS', [
-                        'prestable_id' => $prestableId,
-                        'almacen_id' => $almacenId,
-                        'cantidad_disponible' => $stock->cantidad_disponible,
-                        'cantidad_sin_liquido' => $stock->cantidad_sin_liquido - $cantidad,
-                        'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
-                    ]);
+                // ✅ CORREGIDO: Tanto para venta como para préstamo, disminuir sin_liquido e incrementar cliente_deudor
+                // La venta YA decrementó disponible, ahora solo consumimos lo que vendimos
+                if ((int) $stock->cantidad_sin_liquido < $cantidad) {
+                    throw new \Exception("Stock sin líquido insuficiente en el almacén. Disponible: {$stock->cantidad_sin_liquido}, solicitado: {$cantidad}");
                 }
+
+                \Log::info('📦 CONSUMO STOCK - Stock ANTES', [
+                    'prestable_id' => $prestableId,
+                    'almacen_id' => $almacenId,
+                    'cantidad_a_consumir' => $cantidad,
+                    'es_venta' => $esVenta,
+                    'cantidad_disponible' => $stock->cantidad_disponible,
+                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido,
+                    'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor,
+                ]);
+
+                $stock->update([
+                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido - $cantidad,
+                    'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
+                ]);
+
+                \Log::info('📦 CONSUMO STOCK - Stock DESPUÉS', [
+                    'prestable_id' => $prestableId,
+                    'almacen_id' => $almacenId,
+                    'es_venta' => $esVenta,
+                    'cantidad_disponible' => $stock->cantidad_disponible,
+                    'cantidad_sin_liquido' => $stock->cantidad_sin_liquido - $cantidad,
+                    'cantidad_cliente_deudor' => $stock->cantidad_cliente_deudor + $cantidad,
+                ]);
 
                 $almacen = AlmacenPrestable::find($almacenId);
                 return [
