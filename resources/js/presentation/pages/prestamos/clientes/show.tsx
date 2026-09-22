@@ -148,7 +148,8 @@ export default function PrestamosClientesShow() {
         devolucionesActivas.forEach((dev: any) => {
             dev.detalles?.forEach((det: any) => {
                 if (det.detalle_prestamo_cliente?.id === detalleId) {
-                    total += (det.cantidad_devuelta || 0) + (det.cantidad_dañada_total || 0);
+                    // ✅ cantidad_dañada_total es información DENTRO de cantidad_devuelta, no suma adicional
+                    total += (det.cantidad_devuelta || 0);
                 }
             });
         });

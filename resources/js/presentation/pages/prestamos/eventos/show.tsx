@@ -136,7 +136,8 @@ export default function PrestamosEventosShow() {
         devolucionesActivas.forEach((dev: any) => {
             dev.detalles?.forEach((det: any) => {
                 if (det.prestamoEventoDetalle?.id === detalleId) {
-                    total += (det.cantidad_devuelta || 0) + (det.cantidad_dañada_total || 0);
+                    // ✅ cantidad_dañada_total es información DENTRO de cantidad_devuelta, no suma adicional
+                    total += (det.cantidad_devuelta || 0);
                 }
             });
         });
@@ -284,10 +285,10 @@ export default function PrestamosEventosShow() {
                 </div>
 
                 {/* TABS */}
-                <Tabs defaultValue="detalles" className="w-full">
+                <Tabs defaultValue="devoluciones" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="detalles">Artículos Prestados ({prestamo.detalles?.length || 0})</TabsTrigger>
                         <TabsTrigger value="devoluciones">Devoluciones ({prestamo.devoluciones?.length || 0})</TabsTrigger>
+                        <TabsTrigger value="detalles">Artículos Prestados ({prestamo.detalles?.length || 0})</TabsTrigger>
                     </TabsList>
 
                     {/* TAB: DETALLES */}
