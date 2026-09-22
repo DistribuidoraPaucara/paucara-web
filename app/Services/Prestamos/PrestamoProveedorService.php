@@ -793,14 +793,11 @@ class PrestamoProveedorService
                                 ->where('almacenes_prestables_id', $almacenDetalle->almacenes_prestables_id)
                                 ->firstOrFail();
 
-                            $disponibleAntes = $stock->cantidad_disponible;
-                            $sinLiquidoAntes = $stock->cantidad_sin_liquido;
                             $proveedorAcreedorAntes = $stock->cantidad_proveedor_acreedor;
 
-                            // Devolver (inverso de crear: incrementa sin_liquido, disminuye acreedor)
+                            // ✅ CORREGIDO: Préstamo a proveedor SOLO disminuye cantidad_proveedor_acreedor
+                            // (El proveedor nos presta a nosotros, no es una venta)
                             $stock->update([
-                                'cantidad_disponible' => $stock->cantidad_disponible, // ✅ No cambia
-                                'cantidad_sin_liquido' => $stock->cantidad_sin_liquido + $cantidadPendienteDelAlmacen,
                                 'cantidad_proveedor_acreedor' => max(0, $stock->cantidad_proveedor_acreedor - $cantidadPendienteDelAlmacen),
                             ]);
 
@@ -811,14 +808,10 @@ class PrestamoProveedorService
                                 'usuario_id' => Auth::id(),
                                 'tipo' => 'ENTRADA',
                                 'cantidad' => $cantidadPendienteDelAlmacen,
-                                'disponible_anterior' => $disponibleAntes,
-                                'cantidad_sin_liquido_anterior' => $sinLiquidoAntes,
                                 'prestamo_proveedor_anterior' => $proveedorAcreedorAntes,
-                                'disponible_posterior' => $disponibleAntes, // ✅ NO cambia
-                                'cantidad_sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                                 'prestamo_proveedor_posterior' => $stock->cantidad_proveedor_acreedor,
                                 'categoria_afectada' => 'prestamo_proveedor',
-                                'motivo' => 'Devolución por anulación de préstamo',
+                                'motivo' => 'Devolución por anulación de préstamo a proveedor',
                                 'numero_referencia' => $prestamo->id,
                                 'referencia_tipo' => 'PRESTAMO_PROVEEDOR_ANULADO',
                                 'referencia_id' => $prestamo->id,
@@ -831,10 +824,6 @@ class PrestamoProveedorService
                                 'detalle_id' => $detalle->id,
                                 'almacen_id' => $almacenDetalle->almacenes_prestables_id,
                                 'cantidad_anulada' => $cantidadPendienteDelAlmacen,
-                                'disponible_anterior' => $disponibleAntes,
-                                'disponible_posterior' => $disponibleAntes,
-                                'sin_liquido_anterior' => $sinLiquidoAntes,
-                                'sin_liquido_posterior' => $stock->cantidad_sin_liquido,
                                 'proveedor_acreedor_anterior' => $proveedorAcreedorAntes,
                                 'proveedor_acreedor_posterior' => $stock->cantidad_proveedor_acreedor,
                             ]);
