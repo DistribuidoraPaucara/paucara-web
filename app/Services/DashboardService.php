@@ -161,6 +161,7 @@ class DashboardService
         $productosConStockBajo = DB::table('stock_productos')
             ->join('productos', 'stock_productos.producto_id', '=', 'productos.id')
             ->where('productos.activo', true)
+            ->whereNull('stock_productos.deleted_at')
             ->select(
                 'productos.id as producto_id',
                 'productos.nombre as producto_nombre',
@@ -214,7 +215,9 @@ class DashboardService
                 $detallesAlmacen = DB::table('stock_productos')
                     ->join('almacenes', 'stock_productos.almacen_id', '=', 'almacenes.id')
                     ->where('stock_productos.producto_id', $item->producto_id)
+                    ->whereNull('stock_productos.deleted_at')
                     ->select(
+                        'stock_productos.almacen_id',
                         'almacenes.nombre as almacen_nombre',
                         DB::raw('SUM(stock_productos.cantidad) as cantidad_almacen')
                     )
