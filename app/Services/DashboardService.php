@@ -251,6 +251,97 @@ class DashboardService
     }
 
     /**
+     * Obtener TODOS los productos con stock bajo (sin límite de 5)
+     * Útil para páginas/modales que necesitan ver el listado completo
+     */
+    public function getAlertasStockCompleto(): array
+    {
+        // 1️⃣ Obtener consolidado: suma de todos los lotes por producto
+        $productosConStockBajo = DB::table('stock_productos')
+            ->join('productos', 'stock_productos.producto_id', '=', 'productos.id')
+            ->where('productos.activo', true)
+            ->whereNull('stock_productos.deleted_at')
+            ->select(
+                'productos.id as producto_id',
+                'productos.nombre as producto_nombre',
+                'productos.stock_minimo',
+                DB::raw('SUM(stock_productos.cantidad) as cantidad_total'),
+                DB::raw('COUNT(DISTINCT stock_productos.almacen_id) as cantidad_almacenes')
+            )
+            ->groupBy('productos.id', 'productos.nombre', 'productos.stock_minimo')
+            ->havingRaw('SUM(stock_productos.cantidad) <= GREATEST(productos.stock_minimo, 0)')
+            ->get();
+
+        // 2️⃣ Clasificar en BAJO y CRÍTICO
+        $stockBajo = collect();
+        $stockCritico = collect();
+
+        foreach ($productosConStockBajo as $item) {
+            $cantidadTotal = $item->cantidad_total;
+            $stockMinimo = $item->stock_minimo;
+
+            $esBajo = ($stockMinimo == 0 && $cantidadTotal > 0) ||
+                      ($stockMinimo > 0 && $cantidadTotal <= $stockMinimo);
+
+            if ($esBajo) {
+                $stockBajo->push($item);
+
+                $umbralCritico = $stockMinimo > 0 ? $stockMinimo * 0.5 : 0;
+
+                if ($stockMinimo > 0 && $cantidadTotal <= $umbralCritico) {
+                    $stockCritico->push($item);
+                }
+            }
+        }
+
+        // 3️⃣ Obtener detalles de almacenes para TODOS los productos (sin .take(5))
+        $productosAfectados = $stockBajo
+            ->sortBy(function ($item) {
+                $umbralCritico = $item->stock_minimo > 0 ? $item->stock_minimo * 0.5 : 0;
+                $esCritico = $item->stock_minimo > 0 && $item->cantidad_total <= $umbralCritico ? 0 : 1;
+                return [$esCritico, $item->cantidad_total];
+            })
+            // ✅ SIN .take(5) - retorna TODOS
+            ->map(function ($item) {
+                $detallesAlmacen = DB::table('stock_productos')
+                    ->join('almacenes', 'stock_productos.almacen_id', '=', 'almacenes.id')
+                    ->where('stock_productos.producto_id', $item->producto_id)
+                    ->whereNull('stock_productos.deleted_at')
+                    ->select(
+                        'stock_productos.almacen_id',
+                        'almacenes.nombre as almacen_nombre',
+                        DB::raw('SUM(stock_productos.cantidad) as cantidad_almacen')
+                    )
+                    ->groupBy('stock_productos.almacen_id', 'almacenes.nombre')
+                    ->orderByDesc('cantidad_almacen')
+                    ->get();
+
+                $almacenPrincipal = $detallesAlmacen->first();
+
+                return [
+                    'producto' => $item->producto_nombre,
+                    'almacen' => $almacenPrincipal?->almacen_nombre ?? 'Múltiples almacenes',
+                    'cantidad_actual' => $item->cantidad_total,
+                    'stock_minimo' => $item->stock_minimo,
+                    'cantidad_almacenes' => $item->cantidad_almacenes,
+                    'detalles_almacenes' => $detallesAlmacen->map(function ($da) {
+                        return [
+                            'almacen' => $da->almacen_nombre,
+                            'cantidad' => $da->cantidad_almacen,
+                        ];
+                    })->toArray(),
+                ];
+            })
+            ->values();
+
+        return [
+            'stock_bajo' => $stockBajo->count(),
+            'stock_critico' => $stockCritico->count(),
+            'productos_afectados' => $productosAfectados->toArray(),
+        ];
+    }
+
+    /**
      * Obtener distribución de ventas por canal
      */
     public function getVentasPorCanal(string $periodo = 'mes_actual'): array

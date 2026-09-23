@@ -19,6 +19,16 @@ class AdminController extends Controller
         private DashboardService $dashboardService
     ) {}
 
+    /**
+     * Obtener TODAS las alertas de stock (sin límite de 5)
+     */
+    public function alertasStockCompleto()
+    {
+        return response()->json(
+            $this->dashboardService->getAlertasStockCompleto()
+        );
+    }
+
     public function dashboard(Request $request)
     {
         $user = Auth::user();
