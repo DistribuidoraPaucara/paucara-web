@@ -166,8 +166,7 @@ class DashboardService
                 'productos.nombre as producto_nombre',
                 'productos.stock_minimo',
                 DB::raw('SUM(stock_productos.cantidad) as cantidad_total'),
-                DB::raw('COUNT(DISTINCT stock_productos.almacen_id) as cantidad_almacenes'),
-                DB::raw('GROUP_CONCAT(DISTINCT stock_productos.almacen_id) as almacen_ids')
+                DB::raw('COUNT(DISTINCT stock_productos.almacen_id) as cantidad_almacenes')
             )
             ->groupBy('productos.id', 'productos.nombre', 'productos.stock_minimo')
             ->havingRaw('SUM(stock_productos.cantidad) <= GREATEST(productos.stock_minimo, 0)')
