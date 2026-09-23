@@ -6,7 +6,7 @@ import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs';
-import { usePage } from '@inertiajs/react';
+import { usePage, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Trash2, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -240,11 +240,15 @@ export default function PrestamosClientesShow() {
                             <p className="text-lg font-bold">Bs {Number(prestamo.monto_garantia || 0).toFixed(2)}</p>
                         </div>
                         {prestamo.venta && (
-                            <div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">Venta Relacionada</p>
-                                <p className="font-bold text-blue-600 dark:text-blue-400">Venta #{prestamo.venta.numero}</p>
-                                <p className="text-sm">ID: {prestamo.venta.id}</p>
-                            </div>
+                            <Link href={`/ventas/${prestamo.venta.id}`} target="_blank" className="block hover:opacity-80 transition-opacity">
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">🛒 Venta Relacionada</p>
+                                    <p className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+                                        Venta #{prestamo.venta.numero}
+                                    </p>
+                                    <p className="text-sm text-gray-500">ID: {prestamo.venta.id}</p>
+                                </div>
+                            </Link>
                         )}
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
