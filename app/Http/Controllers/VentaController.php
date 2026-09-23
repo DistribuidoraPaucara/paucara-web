@@ -898,6 +898,8 @@ class VentaController extends Controller
                 'entrega.estadoEntrega', // ✅ Estado logístico de la entrega (relación separada si se necesita)
                 'confirmaciones.confirmadoPor', // ✅ NUEVO: Cargar usuario que confirmó cada entrega
                 'cuentaPorCobrar',                                 // ✅ NUEVO: Cargar cuenta por cobrar
+                'prestamoCliente',                                 // ✅ NUEVO (2026-09-23): Préstamos a clientes relacionados
+                'prestamoEvento',                                  // ✅ NUEVO (2026-09-23): Préstamos a eventos relacionados
             ])->findOrFail($id);
 
             // Si es API, retornar JSON con datos completos
@@ -1070,6 +1072,28 @@ class VentaController extends Controller
                             'created_at'            => $venta->cuentaPorCobrar->created_at,
                             'updated_at'            => $venta->cuentaPorCobrar->updated_at,
                         ] : null,
+                        // ✅ NUEVO (2026-09-23): Incluir préstamos a clientes relacionados
+                        'prestamos_cliente' => $venta->prestamoCliente ? $venta->prestamoCliente->map(fn($p) => [
+                            'id'                        => $p->id,
+                            'numero'                    => $p->numero,
+                            'venta_id'                  => $p->venta_id,
+                            'cliente_id'                => $p->cliente_id,
+                            'fecha_prestamo'            => $p->fecha_prestamo,
+                            'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
+                            'estado'                    => $p->estado,
+                            'observaciones'             => $p->observaciones,
+                        ])->toArray() : [],
+                        // ✅ NUEVO (2026-09-23): Incluir préstamos a eventos relacionados
+                        'prestamos_evento' => $venta->prestamoEvento ? $venta->prestamoEvento->map(fn($p) => [
+                            'id'                        => $p->id,
+                            'numero'                    => $p->numero,
+                            'venta_id'                  => $p->venta_id,
+                            'evento_id'                 => $p->evento_id,
+                            'fecha_prestamo'            => $p->fecha_prestamo,
+                            'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
+                            'estado'                    => $p->estado,
+                            'observaciones'             => $p->observaciones,
+                        ])->toArray() : [],
                     ],
                 ]);
             }
@@ -1221,6 +1245,27 @@ class VentaController extends Controller
                     'dias_vencido'          => $venta->cuentaPorCobrar->dias_vencido ?? 0,
                     'observaciones'         => $venta->cuentaPorCobrar->observaciones,
                 ] : null,
+                // ✅ NUEVO (2026-09-23): Incluir préstamos relacionados
+                'prestamos_cliente'             => $venta->prestamoCliente ? $venta->prestamoCliente->map(fn($p) => [
+                    'id'                        => $p->id,
+                    'numero'                    => $p->numero,
+                    'venta_id'                  => $p->venta_id,
+                    'cliente_id'                => $p->cliente_id,
+                    'fecha_prestamo'            => $p->fecha_prestamo,
+                    'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
+                    'estado'                    => $p->estado,
+                    'observaciones'             => $p->observaciones,
+                ])->toArray() : [],
+                'prestamos_evento'              => $venta->prestamoEvento ? $venta->prestamoEvento->map(fn($p) => [
+                    'id'                        => $p->id,
+                    'numero'                    => $p->numero,
+                    'venta_id'                  => $p->venta_id,
+                    'evento_id'                 => $p->evento_id,
+                    'fecha_prestamo'            => $p->fecha_prestamo,
+                    'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
+                    'estado'                    => $p->estado,
+                    'observaciones'             => $p->observaciones,
+                ])->toArray() : [],
                 'created_at'                    => $venta->created_at,
                 'updated_at'                    => $venta->updated_at,
             ];

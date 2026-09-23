@@ -420,6 +420,28 @@ export interface DireccionCliente extends BaseEntity {
     activa?: boolean;
 }
 
+export interface PrestamoClienteResumido extends BaseEntity {
+    id: Id;
+    numero: string;
+    venta_id: Id;
+    cliente_id: Id;
+    fecha_prestamo: string;
+    fecha_esperada_devolucion: string;
+    estado: string;
+    observaciones?: string;
+}
+
+export interface PrestamoEventoResumido extends BaseEntity {
+    id: Id;
+    numero: string;
+    venta_id: Id;
+    evento_id: Id;
+    fecha_prestamo: string;
+    fecha_esperada_devolucion: string;
+    estado: string;
+    observaciones?: string;
+}
+
 export interface VentaShow extends Venta {
     cliente: Cliente; // Obligatorio en show
     usuario: Usuario; // Obligatorio en show
@@ -429,6 +451,8 @@ export interface VentaShow extends Venta {
     tipo_pago?: TipoPago;
     direccion_cliente?: DireccionCliente;
     detalles_pago_venta?: DetallePagoVenta[]; // ✅ NUEVO: Detalles de pagos múltiples
+    prestamos_cliente?: PrestamoClienteResumido[]; // ✅ NUEVO (2026-09-23): Préstamos a clientes
+    prestamos_evento?: PrestamoEventoResumido[]; // ✅ NUEVO (2026-09-23): Préstamos a eventos
 }
 
 export interface VentaShowPageProps {

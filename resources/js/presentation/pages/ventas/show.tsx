@@ -751,6 +751,81 @@ export default function VentaShow() {
                         </div>
                     )}
 
+                    {/* ✅ NUEVO (2026-09-23): Sección de Préstamos Relacionados */}
+                    {(venta.prestamos_cliente?.length > 0 || venta.prestamos_evento?.length > 0) && (
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                            <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">🔗 Préstamos Relacionados</h2>
+
+                            <div className="space-y-4">
+                                {/* Préstamos a Clientes */}
+                                {venta.prestamos_cliente && venta.prestamos_cliente.length > 0 && (
+                                    <div>
+                                        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Préstamos a Clientes</h3>
+                                        <div className="space-y-2">
+                                            {venta.prestamos_cliente.map((prestamo) => (
+                                                <div key={`pc-${prestamo.id}`} className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/20">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-blue-900 dark:text-blue-200">#{prestamo.numero}</p>
+                                                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                            Cliente ID: {prestamo.cliente_id}
+                                                        </p>
+                                                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                            {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')} → {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                                                            prestamo.estado === 'ACTIVO'
+                                                                ? 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-100'
+                                                                : prestamo.estado === 'DEVUELTO'
+                                                                  ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100'
+                                                                  : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+                                                        }`}>
+                                                            {prestamo.estado}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Préstamos a Eventos */}
+                                {venta.prestamos_evento && venta.prestamos_evento.length > 0 && (
+                                    <div>
+                                        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Préstamos a Eventos</h3>
+                                        <div className="space-y-2">
+                                            {venta.prestamos_evento.map((prestamo) => (
+                                                <div key={`pe-${prestamo.id}`} className="flex items-center justify-between rounded-md border border-purple-100 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-purple-900 dark:text-purple-200">#{prestamo.numero}</p>
+                                                        <p className="text-xs text-purple-700 dark:text-purple-300">
+                                                            Evento ID: {prestamo.evento_id}
+                                                        </p>
+                                                        <p className="text-xs text-purple-700 dark:text-purple-300">
+                                                            {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')} → {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                                                            prestamo.estado === 'ACTIVO'
+                                                                ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-100'
+                                                                : prestamo.estado === 'DEVUELTO'
+                                                                  ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100'
+                                                                  : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+                                                        }`}>
+                                                            {prestamo.estado}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* ✅ NUEVO: Sección de Confirmación de Entrega EXPANDIDA */}
                     {confirmacionEntrega && (
                         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">

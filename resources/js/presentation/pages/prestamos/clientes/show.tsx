@@ -207,15 +207,15 @@ export default function PrestamosClientesShow() {
                         {prestamo.cliente?.nombre || prestamo.cliente?.razon_social || 'N/D'} {getEstadoBadge(prestamo.estado)}
                         <p className="text-xs text-gray-500">{new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}</p>
                     </h2>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-6 items-start">
                         <div>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Creado por</p>
                             <p className="text-lg font-bold">{prestamo.creador?.name || 'Sistema'}</p>
                             
-                            <p className="text-sm">
+                            {/* <p className="text-sm">
                                 <span className="text-gray-600 dark:text-gray-300">Devolución:</span>
                                 <span className="ml-2 font-medium">{new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}</span>
-                            </p>
+                            </p> */}
                         </div>
                         {prestamo.observaciones && (
                             <div>
@@ -244,7 +244,7 @@ export default function PrestamosClientesShow() {
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-300">🛒 Venta Relacionada</p>
                                     <p className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                                        Venta #{prestamo.venta.numero}
+                                        #{prestamo.venta.numero}
                                     </p>
                                     <p className="text-sm text-gray-500">ID: {prestamo.venta.id}</p>
                                 </div>
