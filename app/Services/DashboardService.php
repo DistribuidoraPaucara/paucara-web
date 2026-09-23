@@ -229,7 +229,6 @@ class DashboardService
 
                 return [
                     'id' => $item->producto_id,
-                    'sku' => $item->sku,
                     'producto' => $item->producto_nombre,
                     'almacen' => $almacenPrincipal?->almacen_nombre ?? 'Múltiples almacenes',
                     'cantidad_actual' => (int) $item->cantidad_total,
