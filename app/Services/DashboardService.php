@@ -148,32 +148,103 @@ class DashboardService
     }
 
     /**
-     * Obtener alertas de stock bajo
+     * Obtener alertas de stock bajo - CONSOLIDADO POR PRODUCTO
+     *
+     * Agrupa todos los lotes de cada producto y suma sus cantidades.
+     * - Si stock_minimo = 0: Considera BAJO cualquier cantidad > 0
+     * - Si stock_minimo > 0: Considera BAJO si total <= stock_minimo
+     * - Stock CRÍTICO: Si total <= stock_minimo * 0.5
      */
     public function getAlertasStock(): array
     {
-        $stockBajo = StockProducto::with(['producto', 'almacen'])
-            ->whereColumn('cantidad', '<=', DB::raw('productos.stock_minimo'))
+        // 1️⃣ Obtener consolidado: suma de todos los lotes por producto
+        $productosConStockBajo = DB::table('stock_productos')
             ->join('productos', 'stock_productos.producto_id', '=', 'productos.id')
             ->where('productos.activo', true)
-            ->select('stock_productos.*')
+            ->select(
+                'productos.id as producto_id',
+                'productos.nombre as producto_nombre',
+                'productos.stock_minimo',
+                DB::raw('SUM(stock_productos.cantidad) as cantidad_total'),
+                DB::raw('COUNT(DISTINCT stock_productos.almacen_id) as cantidad_almacenes'),
+                DB::raw('GROUP_CONCAT(DISTINCT stock_productos.almacen_id) as almacen_ids')
+            )
+            ->groupBy('productos.id', 'productos.nombre', 'productos.stock_minimo')
+            ->havingRaw('SUM(stock_productos.cantidad) <= GREATEST(productos.stock_minimo, 0)')
             ->get();
 
-        $stockCritico = $stockBajo->where('cantidad', '<=', function ($item) {
-            return $item->producto->stock_minimo * 0.5;
-        });
+        // 2️⃣ Clasificar en BAJO y CRÍTICO
+        $stockBajo = collect();
+        $stockCritico = collect();
+
+        foreach ($productosConStockBajo as $item) {
+            $cantidadTotal = $item->cantidad_total;
+            $stockMinimo = $item->stock_minimo;
+
+            // Lógica:
+            // - Si stock_minimo = 0: Cualquier cantidad es considerada "baja"
+            // - Si stock_minimo > 0: Solo si cantidad_total <= stock_minimo
+
+            // Verificar si es BAJO
+            $esBajo = ($stockMinimo == 0 && $cantidadTotal > 0) ||
+                      ($stockMinimo > 0 && $cantidadTotal <= $stockMinimo);
+
+            if ($esBajo) {
+                $stockBajo->push($item);
+
+                // Verificar si es CRÍTICO (50% del mínimo)
+                $umbralCritico = $stockMinimo > 0 ? $stockMinimo * 0.5 : 0;
+
+                if ($stockMinimo > 0 && $cantidadTotal <= $umbralCritico) {
+                    $stockCritico->push($item);
+                }
+            }
+        }
+
+        // 3️⃣ Obtener detalles de almacenes para los 5 productos más críticos
+        $productosAfectados = $stockBajo
+            ->sortBy(function ($item) {
+                // Priorizar críticos primero, luego por cantidad más baja
+                $umbralCritico = $item->stock_minimo > 0 ? $item->stock_minimo * 0.5 : 0;
+                $esCritico = $item->stock_minimo > 0 && $item->cantidad_total <= $umbralCritico ? 0 : 1;
+                return [$esCritico, $item->cantidad_total];
+            })
+            ->take(5)
+            ->map(function ($item) {
+                // Obtener desglose por almacén para este producto
+                $detallesAlmacen = DB::table('stock_productos')
+                    ->join('almacenes', 'stock_productos.almacen_id', '=', 'almacenes.id')
+                    ->where('stock_productos.producto_id', $item->producto_id)
+                    ->select(
+                        'almacenes.nombre as almacen_nombre',
+                        DB::raw('SUM(stock_productos.cantidad) as cantidad_almacen')
+                    )
+                    ->groupBy('stock_productos.almacen_id', 'almacenes.nombre')
+                    ->orderByDesc('cantidad_almacen')
+                    ->get();
+
+                $almacenPrincipal = $detallesAlmacen->first();
+
+                return [
+                    'producto' => $item->producto_nombre,
+                    'almacen' => $almacenPrincipal?->almacen_nombre ?? 'Múltiples almacenes',
+                    'cantidad_actual' => $item->cantidad_total,
+                    'stock_minimo' => $item->stock_minimo,
+                    'cantidad_almacenes' => $item->cantidad_almacenes,
+                    'detalles_almacenes' => $detallesAlmacen->map(function ($da) {
+                        return [
+                            'almacen' => $da->almacen_nombre,
+                            'cantidad' => $da->cantidad_almacen,
+                        ];
+                    })->toArray(),
+                ];
+            })
+            ->values();
 
         return [
             'stock_bajo' => $stockBajo->count(),
             'stock_critico' => $stockCritico->count(),
-            'productos_afectados' => $stockBajo->take(5)->map(function ($stock) {
-                return [
-                    'producto' => $stock->producto->nombre,
-                    'almacen' => $stock->almacen->nombre,
-                    'cantidad_actual' => $stock->cantidad,
-                    'stock_minimo' => $stock->producto->stock_minimo,
-                ];
-            }),
+            'productos_afectados' => $productosAfectados->toArray(),
         ];
     }
 

@@ -10,6 +10,11 @@ interface AlertasStockProps {
             almacen: string;
             cantidad_actual: number;
             stock_minimo: number;
+            cantidad_almacenes: number;
+            detalles_almacenes?: Array<{
+                almacen: string;
+                cantidad: number;
+            }>;
         }>;
     };
     loading?: boolean;
@@ -92,15 +97,19 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                                 <p className="font-medium text-neutral-900 dark:text-neutral-100">{producto.producto}</p>
                                                 <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 mt-1">
                                                     <Warehouse className="h-3 w-3" />
-                                                    <p>{producto.almacen}</p>
+                                                    <p>
+                                                        {producto.cantidad_almacenes && producto.cantidad_almacenes > 1
+                                                            ? `${producto.cantidad_almacenes} almacenes`
+                                                            : producto.almacen}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="border-t border-current border-opacity-10 pt-2">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between mb-2">
                                                 <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                    Stock: <span className="font-medium text-neutral-900 dark:text-neutral-100">{producto.cantidad_actual}</span> / {producto.stock_minimo}
+                                                    Stock Total: <span className="font-medium text-neutral-900 dark:text-neutral-100">{producto.cantidad_actual}</span> {producto.stock_minimo > 0 ? `/ ${producto.stock_minimo}` : '(sin mínimo)'}
                                                 </p>
                                                 <span
                                                     className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -110,6 +119,18 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                                     {esCritico ? 'Crítico' : 'Bajo'}
                                                 </span>
                                             </div>
+
+                                            {producto.detalles_almacenes && producto.detalles_almacenes.length > 1 && (
+                                                <div className="text-xs space-y-1 mt-2">
+                                                    <p className="font-medium text-neutral-700 dark:text-neutral-300">Desglose por almacén:</p>
+                                                    {producto.detalles_almacenes.map((detalle) => (
+                                                        <div key={detalle.almacen} className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                                                            <span>{detalle.almacen}:</span>
+                                                            <span className="font-medium">{detalle.cantidad} u.</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
