@@ -23,10 +23,12 @@ interface PrestamoClienteShow {
     estado: string;
     observaciones?: string;
     created_by?: number;
+    venta_id?: number;
     cliente?: any;
     almacen?: any;
     chofer?: any;
     vehiculo?: any;
+    venta?: any;
     creador?: any;
     ubicacion?: any;
     detalles?: any[];
@@ -132,6 +134,13 @@ export default function PrestamosClientesShow() {
             console.log('🏢 Almacén:', prestamo.almacen);
             console.log('👨‍✈️ Chofer:', prestamo.chofer);
             console.log('🚗 Vehículo:', prestamo.vehiculo);
+            console.log('🛒 Venta Relacionada:', prestamo.venta ? {
+                venta_id: prestamo.venta.id,
+                numero: prestamo.venta.numero,
+                total: prestamo.venta.total,
+                cliente: prestamo.venta.cliente?.nombre,
+                fecha: prestamo.venta.fecha,
+            } : 'No hay venta relacionada');
             console.groupEnd();
 
             setPrestamo(prestamo);
@@ -230,6 +239,13 @@ export default function PrestamosClientesShow() {
                             <p className="text-sm text-gray-600 dark:text-gray-300">Garantía Total</p>
                             <p className="text-lg font-bold">Bs {Number(prestamo.monto_garantia || 0).toFixed(2)}</p>
                         </div>
+                        {prestamo.venta && (
+                            <div>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">Venta Relacionada</p>
+                                <p className="font-bold text-blue-600 dark:text-blue-400">Venta #{prestamo.venta.numero}</p>
+                                <p className="text-sm">ID: {prestamo.venta.id}</p>
+                            </div>
+                        )}
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                         {prestamo.telefono_cliente_1 && (
