@@ -763,12 +763,19 @@ export default function VentaShow() {
                                         <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">👥 Préstamos a Clientes</h3>
                                         <div className="space-y-3">
                                             {venta.prestamos_cliente.map((prestamo) => (
-                                                <div key={`pc-${prestamo.id}`} className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-25 p-4 dark:border-blue-900/40 dark:from-blue-950/30 dark:to-blue-900/20">
+                                                <a
+                                                    key={`pc-${prestamo.id}`}
+                                                    href={`/prestamos/clientes/${prestamo.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-25 p-4 transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-900/40 dark:from-blue-950/30 dark:to-blue-900/20 dark:hover:border-blue-800"
+                                                >
                                                     <div className="mb-2 flex items-start justify-between">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <p className="font-semibold text-blue-900 dark:text-blue-100">PRC #{prestamo.numero}</p>
                                                                 <span className="text-xs text-blue-600 dark:text-blue-300">(ID: {prestamo.id})</span>
+                                                                <span className="text-xs text-blue-500">↗</span>
                                                             </div>
                                                             <p className="mt-1 text-sm font-medium text-blue-800 dark:text-blue-200">{prestamo.cliente_nombre}</p>
                                                         </div>
@@ -804,7 +811,7 @@ export default function VentaShow() {
                                                             <p className="text-xs text-blue-800 dark:text-blue-200">{prestamo.observaciones}</p>
                                                         </div>
                                                     )}
-                                                </div>
+                                                </a>
                                             ))}
                                         </div>
                                     </div>
@@ -816,12 +823,19 @@ export default function VentaShow() {
                                         <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 Préstamos a Eventos</h3>
                                         <div className="space-y-3">
                                             {venta.prestamos_evento.map((prestamo) => (
-                                                <div key={`pe-${prestamo.id}`} className="rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-25 p-4 dark:border-purple-900/40 dark:from-purple-950/30 dark:to-purple-900/20">
+                                                <a
+                                                    key={`pe-${prestamo.id}`}
+                                                    href={`/prestamos/eventos/${prestamo.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-25 p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-900/40 dark:from-purple-950/30 dark:to-purple-900/20 dark:hover:border-purple-800"
+                                                >
                                                     <div className="mb-2 flex items-start justify-between">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <p className="font-semibold text-purple-900 dark:text-purple-100">PRE #{prestamo.numero}</p>
                                                                 <span className="text-xs text-purple-600 dark:text-purple-300">(ID: {prestamo.id})</span>
+                                                                <span className="text-xs text-purple-500">↗</span>
                                                             </div>
                                                             <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">Evento ID: {prestamo.evento_id}</p>
                                                         </div>
@@ -857,7 +871,7 @@ export default function VentaShow() {
                                                             <p className="text-xs text-purple-800 dark:text-purple-200">{prestamo.observaciones}</p>
                                                         </div>
                                                     )}
-                                                </div>
+                                                </a>
                                             ))}
                                         </div>
                                     </div>
