@@ -425,6 +425,7 @@ export interface PrestamoClienteResumido extends BaseEntity {
     numero: string;
     venta_id: Id;
     cliente_id: Id;
+    cliente_nombre: string;
     fecha_prestamo: string;
     fecha_esperada_devolucion: string;
     estado: string;

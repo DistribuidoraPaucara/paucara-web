@@ -760,30 +760,50 @@ export default function VentaShow() {
                                 {/* Préstamos a Clientes */}
                                 {venta.prestamos_cliente && venta.prestamos_cliente.length > 0 && (
                                     <div>
-                                        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Préstamos a Clientes</h3>
-                                        <div className="space-y-2">
+                                        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">👥 Préstamos a Clientes</h3>
+                                        <div className="space-y-3">
                                             {venta.prestamos_cliente.map((prestamo) => (
-                                                <div key={`pc-${prestamo.id}`} className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/20">
-                                                    <div className="flex-1">
-                                                        <p className="font-medium text-blue-900 dark:text-blue-200">#{prestamo.numero}</p>
-                                                        <p className="text-xs text-blue-700 dark:text-blue-300">
-                                                            Cliente ID: {prestamo.cliente_id}
-                                                        </p>
-                                                        <p className="text-xs text-blue-700 dark:text-blue-300">
-                                                            {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')} → {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                                                <div key={`pc-${prestamo.id}`} className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-25 p-4 dark:border-blue-900/40 dark:from-blue-950/30 dark:to-blue-900/20">
+                                                    <div className="mb-2 flex items-start justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-semibold text-blue-900 dark:text-blue-100">PRC #{prestamo.numero}</p>
+                                                                <span className="text-xs text-blue-600 dark:text-blue-300">(ID: {prestamo.id})</span>
+                                                            </div>
+                                                            <p className="mt-1 text-sm font-medium text-blue-800 dark:text-blue-200">{prestamo.cliente_nombre}</p>
+                                                        </div>
+                                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                                             prestamo.estado === 'ACTIVO'
-                                                                ? 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-100'
+                                                                ? 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100'
                                                                 : prestamo.estado === 'DEVUELTO'
-                                                                  ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100'
-                                                                  : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+                                                                  ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
+                                                                  : prestamo.estado === 'VENCIDO'
+                                                                    ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
+                                                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                                                         }`}>
                                                             {prestamo.estado}
                                                         </span>
                                                     </div>
+                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                        <div>
+                                                            <p className="text-blue-600 dark:text-blue-400">📅 Creación</p>
+                                                            <p className="font-medium text-blue-900 dark:text-blue-100">
+                                                                {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-blue-600 dark:text-blue-400">⏰ Devolución Esperada</p>
+                                                            <p className="font-medium text-blue-900 dark:text-blue-100">
+                                                                {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {prestamo.observaciones && (
+                                                        <div className="mt-2 border-t border-blue-200 pt-2 dark:border-blue-900/40">
+                                                            <p className="text-xs text-blue-600 dark:text-blue-400">📝 Observaciones:</p>
+                                                            <p className="text-xs text-blue-800 dark:text-blue-200">{prestamo.observaciones}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -793,30 +813,50 @@ export default function VentaShow() {
                                 {/* Préstamos a Eventos */}
                                 {venta.prestamos_evento && venta.prestamos_evento.length > 0 && (
                                     <div>
-                                        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Préstamos a Eventos</h3>
-                                        <div className="space-y-2">
+                                        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 Préstamos a Eventos</h3>
+                                        <div className="space-y-3">
                                             {venta.prestamos_evento.map((prestamo) => (
-                                                <div key={`pe-${prestamo.id}`} className="flex items-center justify-between rounded-md border border-purple-100 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20">
-                                                    <div className="flex-1">
-                                                        <p className="font-medium text-purple-900 dark:text-purple-200">#{prestamo.numero}</p>
-                                                        <p className="text-xs text-purple-700 dark:text-purple-300">
-                                                            Evento ID: {prestamo.evento_id}
-                                                        </p>
-                                                        <p className="text-xs text-purple-700 dark:text-purple-300">
-                                                            {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')} → {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                                                <div key={`pe-${prestamo.id}`} className="rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-25 p-4 dark:border-purple-900/40 dark:from-purple-950/30 dark:to-purple-900/20">
+                                                    <div className="mb-2 flex items-start justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-semibold text-purple-900 dark:text-purple-100">PRE #{prestamo.numero}</p>
+                                                                <span className="text-xs text-purple-600 dark:text-purple-300">(ID: {prestamo.id})</span>
+                                                            </div>
+                                                            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">Evento ID: {prestamo.evento_id}</p>
+                                                        </div>
+                                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                                             prestamo.estado === 'ACTIVO'
-                                                                ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-100'
+                                                                ? 'bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100'
                                                                 : prestamo.estado === 'DEVUELTO'
-                                                                  ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100'
-                                                                  : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
+                                                                  ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
+                                                                  : prestamo.estado === 'VENCIDO'
+                                                                    ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
+                                                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                                                         }`}>
                                                             {prestamo.estado}
                                                         </span>
                                                     </div>
+                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                        <div>
+                                                            <p className="text-purple-600 dark:text-purple-400">📅 Creación</p>
+                                                            <p className="font-medium text-purple-900 dark:text-purple-100">
+                                                                {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-purple-600 dark:text-purple-400">⏰ Devolución Esperada</p>
+                                                            <p className="font-medium text-purple-900 dark:text-purple-100">
+                                                                {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {prestamo.observaciones && (
+                                                        <div className="mt-2 border-t border-purple-200 pt-2 dark:border-purple-900/40">
+                                                            <p className="text-xs text-purple-600 dark:text-purple-400">📝 Observaciones:</p>
+                                                            <p className="text-xs text-purple-800 dark:text-purple-200">{prestamo.observaciones}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

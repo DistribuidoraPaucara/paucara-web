@@ -898,7 +898,7 @@ class VentaController extends Controller
                 'entrega.estadoEntrega', // ✅ Estado logístico de la entrega (relación separada si se necesita)
                 'confirmaciones.confirmadoPor', // ✅ NUEVO: Cargar usuario que confirmó cada entrega
                 'cuentaPorCobrar',                                 // ✅ NUEVO: Cargar cuenta por cobrar
-                'prestamoCliente',                                 // ✅ NUEVO (2026-09-23): Préstamos a clientes relacionados
+                'prestamoCliente.cliente',                         // ✅ NUEVO (2026-09-23): Préstamos a clientes con cliente relacionado
                 'prestamoEvento',                                  // ✅ NUEVO (2026-09-23): Préstamos a eventos relacionados
             ])->findOrFail($id);
 
@@ -1078,6 +1078,7 @@ class VentaController extends Controller
                             'numero'                    => $p->numero,
                             'venta_id'                  => $p->venta_id,
                             'cliente_id'                => $p->cliente_id,
+                            'cliente_nombre'            => $p->cliente?->nombre ?? 'Sin cliente',
                             'fecha_prestamo'            => $p->fecha_prestamo,
                             'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
                             'estado'                    => $p->estado,
@@ -1251,6 +1252,7 @@ class VentaController extends Controller
                     'numero'                    => $p->numero,
                     'venta_id'                  => $p->venta_id,
                     'cliente_id'                => $p->cliente_id,
+                    'cliente_nombre'            => $p->cliente?->nombre ?? 'Sin cliente',
                     'fecha_prestamo'            => $p->fecha_prestamo,
                     'fecha_esperada_devolucion' => $p->fecha_esperada_devolucion,
                     'estado'                    => $p->estado,
