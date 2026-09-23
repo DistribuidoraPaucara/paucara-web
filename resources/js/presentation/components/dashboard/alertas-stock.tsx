@@ -23,6 +23,29 @@ interface AlertasStockProps {
 
 export function AlertasStock({ alertas, loading = false, className = '' }: AlertasStockProps) {
     const [mostrarDetalles, setMostrarDetalles] = useState(false);
+    const [mostrarTodos, setMostrarTodos] = useState(false);
+    const [productosCompletos, setProductosCompletos] = useState<any[]>([]);
+    const [cargandoCompleto, setCargandoCompleto] = useState(false);
+
+    const cargarProductosCompletos = async () => {
+        if (productosCompletos.length > 0) {
+            setMostrarTodos(!mostrarTodos);
+            return;
+        }
+
+        setCargandoCompleto(true);
+        try {
+            const response = await fetch('/admin/alertas-stock-completo');
+            const data = await response.json();
+            setProductosCompletos(data.productos_afectados || []);
+            setMostrarTodos(true);
+            console.log('✅ Alertas Stock Completo Cargadas:', data);
+        } catch (error) {
+            console.error('❌ Error cargando alertas completas:', error);
+        } finally {
+            setCargandoCompleto(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -45,35 +68,46 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
 
     return (
         <div className={`rounded-lg border border-sidebar-border/70 bg-sidebar p-6 dark:border-sidebar-border ${className}`}>
-            <button
-                onClick={() => setMostrarDetalles(!mostrarDetalles)}
-                className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
-            >
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Alertas de Stock</h3>
-                <div className="flex items-center gap-3">
-                    <div className="flex gap-2">
-                        {alertas.stock_critico > 0 && (
-                            <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                <AlertTriangle className="h-3 w-3" />
-                                {alertas.stock_critico} crítico
-                            </span>
-                        )}
-                        {alertas.stock_bajo > 0 && (
-                            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                <Package className="h-3 w-3" />
-                                {alertas.stock_bajo} bajo
-                            </span>
-                        )}
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={() => setMostrarDetalles(!mostrarDetalles)}
+                    className="flex-1 flex items-center justify-between hover:opacity-80 transition-opacity"
+                >
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Alertas de Stock</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="flex gap-2">
+                            {alertas.stock_critico > 0 && (
+                                <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {alertas.stock_critico} crítico
+                                </span>
+                            )}
+                            {alertas.stock_bajo > 0 && (
+                                <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                    <Package className="h-3 w-3" />
+                                    {alertas.stock_bajo} bajo
+                                </span>
+                            )}
+                        </div>
+                        <ChevronDown className={`h-5 w-5 text-neutral-500 dark:text-neutral-400 transition-transform ${mostrarDetalles ? 'rotate-180' : ''}`} />
                     </div>
-                    <ChevronDown className={`h-5 w-5 text-neutral-500 dark:text-neutral-400 transition-transform ${mostrarDetalles ? 'rotate-180' : ''}`} />
-                </div>
-            </button>
+                </button>
 
-            {mostrarDetalles && (
+                <button
+                    onClick={cargarProductosCompletos}
+                    disabled={cargandoCompleto}
+                    className="ml-2 px-3 py-1 rounded text-xs font-medium bg-neutral-200 text-neutral-800 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
+                    title={mostrarTodos ? 'Mostrar solo top 5' : 'Ver todos los productos con stock bajo'}
+                >
+                    {cargandoCompleto ? '⏳ Cargando...' : mostrarTodos ? 'Top 5' : `Ver todos (${alertas.stock_bajo + alertas.stock_critico})`}
+                </button>
+            </div>
+
+            {(mostrarDetalles || mostrarTodos) && (
                 <div className="mt-4">
-                    {alertas.productos_afectados && alertas.productos_afectados.length > 0 ? (
+                    {(mostrarTodos ? productosCompletos : alertas.productos_afectados) && (mostrarTodos ? productosCompletos : alertas.productos_afectados).length > 0 ? (
                         <div className="grid gap-3 sm:grid-cols-2">
-                            {alertas.productos_afectados.map((producto) => {
+                            {(mostrarTodos ? productosCompletos : alertas.productos_afectados).map((producto) => {
                                 const esCritico = producto.cantidad_actual <= producto.stock_minimo * 0.5;
 
                                 return (
@@ -123,7 +157,7 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                             {producto.detalles_almacenes && producto.detalles_almacenes.length > 1 && (
                                                 <div className="text-xs space-y-1 mt-2">
                                                     <p className="font-medium text-neutral-700 dark:text-neutral-300">Desglose por almacén:</p>
-                                                    {producto.detalles_almacenes.map((detalle) => (
+                                                    {producto.detalles_almacenes?.map((detalle) => (
                                                         <div key={detalle.almacen} className="flex justify-between text-neutral-600 dark:text-neutral-400">
                                                             <span>{detalle.almacen}:</span>
                                                             <span className="font-medium">{detalle.cantidad} u.</span>

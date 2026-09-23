@@ -153,6 +153,84 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dashboard.form = dashboardForm
 /**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+export const alertasStockCompleto = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: alertasStockCompleto.url(options),
+    method: 'get',
+})
+
+alertasStockCompleto.definition = {
+    methods: ["get","head"],
+    url: '/admin/alertas-stock-completo',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+alertasStockCompleto.url = (options?: RouteQueryOptions) => {
+    return alertasStockCompleto.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+alertasStockCompleto.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: alertasStockCompleto.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+alertasStockCompleto.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: alertasStockCompleto.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+    const alertasStockCompletoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: alertasStockCompleto.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+        alertasStockCompletoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: alertasStockCompleto.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AdminController::alertasStockCompleto
+ * @see app/Http/Controllers/AdminController.php:25
+ * @route '/admin/alertas-stock-completo'
+ */
+        alertasStockCompletoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: alertasStockCompleto.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    alertasStockCompleto.form = alertasStockCompletoForm
+/**
 * @see \App\Http\Controllers\CalendarioVencimientosController::calendarioVencimientos
  * @see app/Http/Controllers/CalendarioVencimientosController.php:28
  * @route '/admin/calendario-vencimientos'
@@ -237,6 +315,7 @@ reportesProductosDanados,
 bannersPublicitarios,
 categoriasCliente,
 dashboard,
+alertasStockCompleto,
 calendarioVencimientos,
 }
 
