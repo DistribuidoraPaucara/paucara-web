@@ -250,6 +250,14 @@ export default function PrestamosClientesShow() {
                                 </div>
                             </a>
                         )}
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">📅 Préstamo</p>
+                            <p className="font-medium">{new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">⏰ Devolución</p>
+                            <p className="font-medium">{new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}</p>
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                         {prestamo.telefono_cliente_1 && (
@@ -293,28 +301,6 @@ export default function PrestamosClientesShow() {
                         </div>)}
                     </div>
                 </Card>
-
-                {/* FECHAS DESTACADAS */}
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div className="rounded-lg border-2 border-purple-300 bg-purple-100 p-4 dark:border-purple-600 dark:bg-purple-900/30">
-                        <p className="text-xs font-medium text-purple-600 dark:text-purple-400">📅 Fecha de Préstamo</p>
-                        <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                            {new Date(prestamo.fecha_prestamo).toLocaleDateString('es-ES')}
-                        </p>
-                        <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
-                            {new Date(prestamo.fecha_prestamo).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                    </div>
-                    <div className="rounded-lg border-2 border-orange-300 bg-orange-100 p-4 dark:border-orange-600 dark:bg-orange-900/30">
-                        <p className="text-xs font-medium text-orange-600 dark:text-orange-400">⏰ Fecha Esperada de Devolución</p>
-                        <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                            {new Date(prestamo.fecha_esperada_devolucion).toLocaleDateString('es-ES')}
-                        </p>
-                        <p className="mt-1 text-xs text-orange-700 dark:text-orange-300">
-                            {Math.ceil((new Date(prestamo.fecha_esperada_devolucion).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} días
-                        </p>
-                    </div>
-                </div>
 
                 {/* RESUMEN DE PRÉSTAMO (KPIs) */}
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
