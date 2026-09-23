@@ -2157,6 +2157,9 @@ class VentaController extends Controller
         // ✅ NUEVO (2026-06-02): Cargar confirmaciones de entrega (necesarias para mostrar estado de entrega)
         $venta->load('confirmaciones.confirmadoPor', 'confirmaciones.tipoPago');
 
+        // ✅ NUEVO (2026-09-23): Cargar préstamos relacionados para mostrar en impresión
+        $venta->load('prestamoCliente', 'prestamoEvento');
+
         // 🔍 DEBUG: Loguear información de la venta antes de imprimir
         \Log::info('📋 [VentaController::imprimir] Datos de venta para descargar/stream', [
             'venta_id'        => $venta->id,

@@ -1,6 +1,6 @@
 @extends('impresion.layouts.base-ticket')
 
-@section('titulo', 'Folio #' . $documento->id)
+@section('titulo', 'Folios #' . $documento->id)
 
 @section('contenido')
 
@@ -177,6 +177,32 @@ $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
     @endif
 </div>
 @endif
+@endif
+
+{{-- ✅ NUEVO (2026-09-23): Mostrar préstamos asociados a la venta --}}
+@if(($documento->prestamoCliente && $documento->prestamoCliente->count() > 0) || ($documento->prestamoEvento && $documento->prestamoEvento->count() > 0))
+<div class="separador"></div>
+<div class="documento-info" style="font-size:12px; background-color: #f5f5f5; padding: 3px 5px; margin: 3px 0;">
+    <p style="margin: 2px 0; font-weight: bold;">PRÉSTAMOS ASOCIADOS</p>
+
+    @if($documento->prestamoCliente && $documento->prestamoCliente->count() > 0)
+    <p style="margin: 2px 0; font-size: 11px;"><strong>A Clientes:</strong></p>
+    @foreach($documento->prestamoCliente as $prestamo)
+    <p style="margin: 2px 0; font-size: 11px;">
+        • PRC #{{ $prestamo->numero }} (ID: {{ $prestamo->id }}) - {{ $prestamo->estado }}
+    </p>
+    @endforeach
+    @endif
+
+    @if($documento->prestamoEvento && $documento->prestamoEvento->count() > 0)
+    <p style="margin: 2px 0; font-size: 11px;"><strong>A Eventos:</strong></p>
+    @foreach($documento->prestamoEvento as $prestamo)
+    <p style="margin: 2px 0; font-size: 11px;">
+        • PRE #{{ $prestamo->numero }} (ID: {{ $prestamo->id }}) - {{ $prestamo->estado }}
+    </p>
+    @endforeach
+    @endif
+</div>
 @endif
 
 @endsection

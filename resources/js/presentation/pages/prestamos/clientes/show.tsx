@@ -244,9 +244,9 @@ export default function PrestamosClientesShow() {
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-300">🛒 Venta Relacionada</p>
                                     <p className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                                        #{prestamo.venta.numero}
+                                        #{prestamo.venta.id}
                                     </p>
-                                    <p className="text-sm text-gray-500">ID: {prestamo.venta.id}</p>
+                                    {/* <p className="text-sm text-gray-500">ID: {prestamo.venta.id}</p> */}
                                 </div>
                             </a>
                         )}
