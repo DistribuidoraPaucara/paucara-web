@@ -6,6 +6,8 @@ interface AlertasStockProps {
         stock_bajo: number;
         stock_critico: number;
         productos_afectados: Array<{
+            id?: number;
+            sku?: string;
             producto: string;
             almacen: string;
             cantidad_actual: number;
@@ -20,6 +22,11 @@ interface AlertasStockProps {
     loading?: boolean;
     className?: string;
 }
+
+const formatearCantidad = (cantidad: number | string): string => {
+    const num = typeof cantidad === 'string' ? parseFloat(cantidad) : cantidad;
+    return Number.isInteger(num) ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+};
 
 export function AlertasStock({ alertas, loading = false, className = '' }: AlertasStockProps) {
     const [mostrarDetalles, setMostrarDetalles] = useState(false);
@@ -128,8 +135,16 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                                 )}
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">{producto.producto}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium text-neutral-900 dark:text-neutral-100">{producto.producto}</p>
+                                                    {producto.sku && (
+                                                        <span className="text-xs px-2 py-0.5 rounded bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">
+                                                            {producto.sku}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                                                    {producto.id && <span>ID: {producto.id}</span>}
                                                     <Warehouse className="h-3 w-3" />
                                                     <p>
                                                         {producto.cantidad_almacenes && producto.cantidad_almacenes > 1
@@ -143,7 +158,7 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                         <div className="border-t border-current border-opacity-10 pt-2">
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                    Stock Total: <span className="font-medium text-neutral-900 dark:text-neutral-100">{producto.cantidad_actual}</span> {producto.stock_minimo > 0 ? `/ ${producto.stock_minimo}` : '(sin mínimo)'}
+                                                    Stock Total: <span className="font-medium text-neutral-900 dark:text-neutral-100">{formatearCantidad(producto.cantidad_actual)}</span> {producto.stock_minimo > 0 ? `/ ${producto.stock_minimo}` : '(sin mínimo)'}
                                                 </p>
                                                 <span
                                                     className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -160,7 +175,7 @@ export function AlertasStock({ alertas, loading = false, className = '' }: Alert
                                                     {producto.detalles_almacenes?.map((detalle) => (
                                                         <div key={detalle.almacen} className="flex justify-between text-neutral-600 dark:text-neutral-400">
                                                             <span>{detalle.almacen}:</span>
-                                                            <span className="font-medium">{detalle.cantidad} u.</span>
+                                                            <span className="font-medium">{formatearCantidad(detalle.cantidad)} u.</span>
                                                         </div>
                                                     ))}
                                                 </div>

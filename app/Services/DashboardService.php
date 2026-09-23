@@ -228,15 +228,17 @@ class DashboardService
                 $almacenPrincipal = $detallesAlmacen->first();
 
                 return [
+                    'id' => $item->producto_id,
+                    'sku' => $item->sku,
                     'producto' => $item->producto_nombre,
                     'almacen' => $almacenPrincipal?->almacen_nombre ?? 'Múltiples almacenes',
-                    'cantidad_actual' => $item->cantidad_total,
+                    'cantidad_actual' => (int) $item->cantidad_total,
                     'stock_minimo' => $item->stock_minimo,
                     'cantidad_almacenes' => $item->cantidad_almacenes,
                     'detalles_almacenes' => $detallesAlmacen->map(function ($da) {
                         return [
                             'almacen' => $da->almacen_nombre,
-                            'cantidad' => $da->cantidad_almacen,
+                            'cantidad' => (int) $da->cantidad_almacen,
                         ];
                     })->toArray(),
                 ];
@@ -263,12 +265,13 @@ class DashboardService
             ->whereNull('stock_productos.deleted_at')
             ->select(
                 'productos.id as producto_id',
+                'productos.sku',
                 'productos.nombre as producto_nombre',
                 'productos.stock_minimo',
                 DB::raw('SUM(stock_productos.cantidad) as cantidad_total'),
                 DB::raw('COUNT(DISTINCT stock_productos.almacen_id) as cantidad_almacenes')
             )
-            ->groupBy('productos.id', 'productos.nombre', 'productos.stock_minimo')
+            ->groupBy('productos.id', 'productos.sku', 'productos.nombre', 'productos.stock_minimo')
             ->havingRaw('SUM(stock_productos.cantidad) <= GREATEST(productos.stock_minimo, 0)')
             ->get();
 
@@ -319,15 +322,17 @@ class DashboardService
                 $almacenPrincipal = $detallesAlmacen->first();
 
                 return [
+                    'id' => $item->producto_id,
+                    'sku' => $item->sku,
                     'producto' => $item->producto_nombre,
                     'almacen' => $almacenPrincipal?->almacen_nombre ?? 'Múltiples almacenes',
-                    'cantidad_actual' => $item->cantidad_total,
+                    'cantidad_actual' => (int) $item->cantidad_total,
                     'stock_minimo' => $item->stock_minimo,
                     'cantidad_almacenes' => $item->cantidad_almacenes,
                     'detalles_almacenes' => $detallesAlmacen->map(function ($da) {
                         return [
                             'almacen' => $da->almacen_nombre,
-                            'cantidad' => $da->cantidad_almacen,
+                            'cantidad' => (int) $da->cantidad_almacen,
                         ];
                     })->toArray(),
                 ];
