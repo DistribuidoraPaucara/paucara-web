@@ -363,6 +363,22 @@ class Venta extends Model
     }
 
     /**
+     * ✅ NUEVO (2026-09-23): Préstamos a clientes relacionados a esta venta
+     */
+    public function prestamoCliente()
+    {
+        return $this->hasMany(PrestamoCliente::class, 'venta_id');
+    }
+
+    /**
+     * ✅ NUEVO (2026-09-23): Préstamos a eventos relacionados a esta venta
+     */
+    public function prestamoEvento()
+    {
+        return $this->hasMany(PrestamoEvento::class, 'venta_id');
+    }
+
+    /**
      * Métodos de Utilidad para Logística
      */
 
