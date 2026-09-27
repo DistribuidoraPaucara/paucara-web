@@ -7,6 +7,9 @@ use App\Services\ImpresionService;
 use App\Services\Prestamos\PrestamoEventoService;
 use App\Services\Prestamos\ValidacionPrestamosService;
 use App\Events\PrestamoEventoCreado;
+use App\Events\PrestamoEventoAnulado;
+use App\Events\DevolucionEventoRegistrada;
+use App\Events\DevolucionEventoAnulada;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -550,6 +553,9 @@ class PrestamoEventoController extends Controller
                 'detalles.devolucionesAlmacenes.almacen'
             ]);
 
+            // Disparar evento para notificaciones WebSocket
+            event(new DevolucionEventoRegistrada($devolución));
+
             return response()->json([
                 'success' => true,
                 'data' => $devolución,
@@ -598,6 +604,9 @@ class PrestamoEventoController extends Controller
             Log::info('✅ Préstamo a evento anulado correctamente', [
                 'prestamo_id' => $prestamoAnulado->id,
             ]);
+
+            // Disparar evento para notificaciones WebSocket
+            event(new PrestamoEventoAnulado($prestamoAnulado, $validated['razon_anulacion'] ?? null));
 
             return response()->json([
                 'success' => true,
@@ -654,6 +663,9 @@ class PrestamoEventoController extends Controller
                 'devolucion_id' => $devolucionAnulada->id,
             ]);
 
+            // Disparar evento para notificaciones WebSocket
+            event(new DevolucionEventoAnulada($devolucionAnulada, $validated['razon_anulacion']));
+
             return response()->json([
                 'success' => true,
                 'data' => $devolucionAnulada->load(['detalles.prestamoEventoDetalle.prestable', 'creador', 'anulador']),
@@ -691,16 +703,37 @@ class PrestamoEventoController extends Controller
                 'detalles.prestable.condiciones',
                 // ✅ CORREGIDO: Cargar almacenes con sus datos completos
                 'detalles.almacenes.almacen',
-                'detalles.devoluciones',
+                // ✅ FILTRO: Devoluciones de detalles solo NO anuladas (ANULADA, no ANULADO)
+                'detalles.devoluciones' => fn($q) => $q->whereHas('devolucion', fn($subQ) => $subQ->whereNotIn('estado', ['ANULADA', 'CANCELADA'])),
                 'cliente',
                 'chofer',
                 'almacen',
                 'ventas', // ✅ Relación many-to-many
+                // ✅ FILTRO: Solo devoluciones VÁLIDAS (no ANULADA, no CANCELADA)
+                'devoluciones' => fn($q) => $q->whereNotIn('estado', ['ANULADA', 'CANCELADA'])->orderByDesc('fecha_devolucion'),
                 'devoluciones.detalles.prestamoEventoDetalle.prestable',
                 'devoluciones.detalles.devolucionesAlmacenes.almacen',
                 // ✅ NUEVO: Cargar ubicacion con localidad para impresión
                 'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
                 'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+            ]);
+
+            // ✅ DEBUG: Mostrar información del préstamo
+            \Log::info('📋 [PrestamoEventoController::imprimir] Datos a imprimir', [
+                'prestamo_id' => $prestamo->id,
+                'cliente' => $prestamo->cliente->nombre ?? 'N/A',
+                'estado' => $prestamo->estado,
+                'cantidad_detalles' => $prestamo->detalles->count(),
+                'devoluciones_validas' => $prestamo->devoluciones->count(),
+                'detalles' => $prestamo->detalles->map(function($det) {
+                    return [
+                        'prestable' => $det->prestable->nombre ?? 'N/A',
+                        'cantidad_prestada' => $det->cantidad_prestada,
+                        'cantidad_devuelta_validas' => $det->devoluciones->sum('cantidad_devuelta'),
+                        'cantidad_dañada_validas' => $det->devoluciones->sum('cantidad_dañada_total'),
+                        'total_devolucion_detalles' => $det->devoluciones->count(),
+                    ];
+                })->toArray(),
             ]);
 
             // Generar PDF usando el tipo de documento "prestamo_evento"

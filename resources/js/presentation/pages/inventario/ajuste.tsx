@@ -11,7 +11,7 @@ import { Almacen } from '@/domain/entities/almacenes';
 import type { StockProducto } from '@/domain/entities/movimientos-inventario';
 import { Id, Pagination } from '@/domain/entities/shared';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { Printer } from 'lucide-react';
+import { Printer, MoreVertical, Trash2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -20,6 +20,13 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/presentation/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/presentation/components/ui/dropdown-menu';
 
 interface AjusteInventario {
     id: number;
@@ -662,15 +669,15 @@ export default function AjusteInventario() {
                                     onClick={() => router.visit('/inventario/ajuste-tabla')}
                                     className="transition-colors"
                                 >
-                                    📊 Ajuste por Tabla
+                                    ➕ Crear Ajuste
                                 </Button>
-                                <Button
+                                {/* <Button
                                     variant={vista === 'historico' ? 'default' : 'outline'}
                                     onClick={() => setVista('historico')}
                                     className="transition-colors"
                                 >
                                     📋 Histórico
-                                </Button>
+                                </Button> */}
                             </div>
                         </div>
 
@@ -1255,23 +1262,23 @@ export default function AjusteInventario() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>🔢 Número</TableHead>
+                                                    <TableHead>🔢Folio</TableHead>
                                                     <TableHead>🏪 Almacén</TableHead>
-                                                    <TableHead>👤 Usuario</TableHead>
+                                                    <TableHead>👤 Creador</TableHead>
                                                     <TableHead>📅 Fecha</TableHead>
                                                     <TableHead className="text-center">📦 Productos</TableHead>
                                                     <TableHead className="text-center">📥 Entradas</TableHead>
                                                     <TableHead className="text-center">📤 Salidas</TableHead>
                                                     <TableHead>📝 Observación</TableHead>
                                                     <TableHead className="text-center">📊 Estado</TableHead>
-                                                    <TableHead className="text-center">⚙️ Acciones</TableHead>
+                                                    <TableHead className="text-center">⚙️</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {ajustes_inventario.data.map((ajuste) => (
                                                     <TableRow key={ajuste.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                         <TableCell className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                                            {ajuste.numero}
+                                                            #{ajuste.id}
                                                         </TableCell>
                                                         <TableCell className="text-sm">
                                                             <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 font-medium">
@@ -1280,7 +1287,7 @@ export default function AjusteInventario() {
                                                         </TableCell>
                                                         <TableCell className="text-sm whitespace-nowrap">
                                                             <div className="font-medium text-gray-900 dark:text-gray-100">
-                                                                {ajuste.user?.name || 'Usuario desconocido'}
+                                                                {(ajuste.user?.name || 'Usuario desconocido').slice(0, 13)}
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm whitespace-nowrap">
@@ -1306,7 +1313,7 @@ export default function AjusteInventario() {
                                                         </TableCell>
                                                         <TableCell className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
                                                             <div className="truncate" title={ajuste.observacion || ''}>
-                                                                {ajuste.observacion || '(sin observación)'}
+                                                                {(ajuste.observacion || '(sin observación)').slice(0, 13)}
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-center">
@@ -1325,32 +1332,40 @@ export default function AjusteInventario() {
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <div className="flex gap-2 justify-center">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => handleAbrirImpresion(ajuste.id)}
-                                                                    className="gap-2"
-                                                                    title="Imprimir ajuste"
-                                                                >
-                                                                    <Printer className="h-4 w-4" />
-                                                                    <span className="hidden sm:inline">Imprimir</span>
-                                                                </Button>
-                                                                {ajuste.estado !== 'anulado' && hasRole('admin') && (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
                                                                     <Button
                                                                         size="sm"
-                                                                        variant="destructive"
-                                                                        onClick={() => setAjusteParaAnular(ajuste.id)}
-                                                                        className="gap-2"
-                                                                        title="Anular ajuste"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0"
+                                                                        title="Acciones"
                                                                     >
-                                                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                                        </svg>
-                                                                        <span className="hidden sm:inline">Anular</span>
+                                                                        <MoreVertical className="h-4 w-4" />
                                                                     </Button>
-                                                                )}
-                                                            </div>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-48">
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleAbrirImpresion(ajuste.id)}
+                                                                        className="flex items-center gap-2 cursor-pointer"
+                                                                    >
+                                                                        <Printer className="h-4 w-4" />
+                                                                        <span>Imprimir</span>
+                                                                    </DropdownMenuItem>
+                                                                    {ajuste.estado !== 'anulado' && hasRole('admin') && (
+                                                                        <>
+                                                                            <DropdownMenuSeparator />
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => setAjusteParaAnular(ajuste.id)}
+                                                                                variant="destructive"
+                                                                                className="flex items-center gap-2 cursor-pointer"
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                                <span>Anular</span>
+                                                                            </DropdownMenuItem>
+                                                                        </>
+                                                                    )}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}

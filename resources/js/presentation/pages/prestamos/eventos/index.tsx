@@ -2,6 +2,7 @@ import type { PrestamoEvento } from '@/domain/entities/prestamos';
 import { prestamoEventoService } from '@/infrastructure/services/prestamo-evento.service';
 import AppLayout from '@/layouts/app-layout';
 import DynamicSearchSelect from '@/presentation/components/form-sections/DynamicSearchSelect';
+import CalendarioVencimientos from '@/presentation/components/prestamos/CalendarioVencimientos';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
@@ -25,6 +26,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
     const [filtroEstado, setFiltroEstado] = useState<string>('');
     const [filtroId, setFiltroId] = useState<string>('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [vistaActual, setVistaActual] = useState<'calendario' | 'tabla'>('calendario');
 
     // Filtros con DynamicSearchSelect
     const [nombreEventoSearch, setNombreEventoSearch] = useState<string>('');
@@ -526,7 +528,40 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                     </Card>
                 )}
 
+                {/* Toggle de Vista */}
+                <div className="flex justify-end gap-2 mb-4">
+                    <Button
+                        variant={vistaActual === 'calendario' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('calendario')}
+                        className="gap-2"
+                    >
+                        📅 Calendario
+                    </Button>
+                    <Button
+                        variant={vistaActual === 'tabla' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('tabla')}
+                        className="gap-2"
+                    >
+                        📊 Tabla
+                    </Button>
+                </div>
+
+                {/* Calendario de Vencimientos */}
+                {vistaActual === 'calendario' && (
+                    <CalendarioVencimientos
+                        prestamos={prestamos}
+                        onFechaChange={(desde, hasta) => {
+                            setFiltroFechaDesde(desde);
+                            setFiltroFechaHasta(hasta);
+                            // Los filtros se aplican automáticamente
+                        }}
+                        tipo="evento"
+                        titulo="📅 Calendario de Devoluciones Esperadas"
+                    />
+                )}
+
                 {/* Tabla de Préstamos */}
+                {vistaActual === 'tabla' && (
                 <div className="overflow-x-auto border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 rounded-lg">
                     {loading ? (
                         <div className="p-8 text-center text-gray-500 dark:text-gray-400">Cargando préstamos...</div>
@@ -749,6 +784,7 @@ export default function PrestamosEventosIndex({ choferes = [], vehiculos = [] }:
                         </div>
                     )}
                 </div>
+                )}
 
                 <ToastContainer toasts={toasts} onClose={removeToast} />
 

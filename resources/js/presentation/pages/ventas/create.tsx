@@ -465,7 +465,7 @@ export default function VentaForm() {
         }
     }, []); // Solo ejecutar al montar el componente
 
-    // ✅ NUEVO (2026-08-24): Auto-seleccionar cliente GENERAL al montar si está disponible
+    // ✅ NUEVO (2026-08-24): Auto-seleccionar cliente GENERAL al montar O cuando se limpia el formulario
     useEffect(() => {
         if (isEditing) return; // No aplicar si estamos editando
         if (data.cliente_id && data.cliente_id !== 0) return; // No cambiar si ya hay uno seleccionado
@@ -477,7 +477,7 @@ export default function VentaForm() {
             setClienteDisplay(cliente_general.nombre + (cliente_general.nit ? ` (${cliente_general.nit})` : ''));
             setClienteSeleccionado(cliente_general as Cliente);
         }
-    }, []); // Solo ejecutar al montar
+    }, [data.cliente_id, cliente_general, isEditing]); // ✅ También cuando cliente_id se limpia
 
     // ✅ NUEVO (2026-08-28): Auto-actualizar tipo_precio_id de todos los productos cuando cambia el cliente
     useEffect(() => {

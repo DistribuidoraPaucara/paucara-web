@@ -13,8 +13,16 @@ class LoteVencimientoController extends Controller
     public function index(Request $request)
     {
         // Base query usando StockProducto (que tiene lotes y vencimientos actuales)
-        $query = StockProducto::with(['producto', 'almacen'])
+        $query = StockProducto::with(['producto.imagenes', 'producto.precios', 'almacen'])
             ->whereNotNull('lote')  // Solo mostrar registros con lote
+            ->where(function ($q) {
+                // Lotes con stock disponible O lotes vencidos (aunque estén vacíos)
+                $q->where('cantidad', '>', 0)
+                  ->orWhere(function ($subQ) {
+                      $subQ->whereNotNull('fecha_vencimiento')
+                           ->where('fecha_vencimiento', '<', now()->toDateString());
+                  });
+            })
             ->when($request->producto_id, function ($q) use ($request) {
                 $q->where('producto_id', $request->producto_id);
             })
@@ -39,6 +47,12 @@ class LoteVencimientoController extends Controller
             })
             ->when($request->almacen_id, function ($q) use ($request) {
                 $q->where('almacen_id', $request->almacen_id);
+            })
+            ->when($request->fecha_vencimiento_desde, function ($q) use ($request) {
+                $q->where('fecha_vencimiento', '>=', $request->fecha_vencimiento_desde);
+            })
+            ->when($request->fecha_vencimiento_hasta, function ($q) use ($request) {
+                $q->where('fecha_vencimiento', '<=', $request->fecha_vencimiento_hasta);
             });
 
         // Sorting
@@ -50,6 +64,23 @@ class LoteVencimientoController extends Controller
 
         // Transformar cada lote para agregar campos calculados
         $lotes = $lotesPaginados->through(function ($stock) {
+            // Obtener el precio de costo desde precios_producto (tipo COSTO)
+            $precioCosto = $stock->precio_costo; // Por defecto, usar el de stock_productos
+
+            if ($stock->producto) {
+                // Buscar el precio con tipo_precio.codigo = 'COSTO'
+                $precioCostoObj = \App\Models\PrecioProducto::where('producto_id', $stock->producto_id)
+                    ->whereHas('tipoPrecio', function ($q) {
+                        $q->where('codigo', 'COSTO');
+                    })
+                    ->where('activo', true)
+                    ->first();
+
+                if ($precioCostoObj) {
+                    $precioCosto = $precioCostoObj->precio;
+                }
+            }
+
             return [
                 'id' => $stock->id,
                 'producto' => $stock->producto,
@@ -59,11 +90,12 @@ class LoteVencimientoController extends Controller
                 'cantidad' => $stock->cantidad,
                 'cantidad_disponible' => $stock->cantidad_disponible,
                 'cantidad_reservada' => $stock->cantidad_reservada,
-                'precio_costo' => $stock->precio_costo,
-                'valor_total' => $stock->cantidad * ($stock->precio_costo ?? 0),
+                'precio_costo' => $precioCosto,
+                'valor_total' => $stock->cantidad * ($precioCosto ?? 0),
                 'dias_para_vencer' => $stock->diasParaVencer(),
                 'estado_vencimiento' => $this->determinarEstadoVencimiento($stock),
                 'esta_vencido' => $stock->estaVencido(),
+                'deleted_at' => $stock->deleted_at?->toDateTimeString(),
             ];
         });
 
@@ -95,7 +127,7 @@ class LoteVencimientoController extends Controller
 
         return Inertia::render('compras/lotes-vencimientos/index', [
             'lotes'        => $lotes,
-            'filtros'      => $request->only(['producto_id', 'estado_vencimiento', 'almacen_id', 'q']),
+            'filtros'      => $request->only(['producto_id', 'estado_vencimiento', 'almacen_id', 'q', 'fecha_vencimiento_desde', 'fecha_vencimiento_hasta']),
             'estadisticas' => $estadisticas,
             'productos'    => Producto::select('id', 'nombre')->orderBy('nombre')->get(),
             'almacenes'    => Almacen::select('id', 'nombre')->orderBy('nombre')->get(),
@@ -170,7 +202,9 @@ class LoteVencimientoController extends Controller
                 $q->whereNotNull('fecha_vencimiento')
                   ->where('fecha_vencimiento', '<', now()->toDateString());
             })
-            ->orderBy('id', 'asc')
+            ->orderBy('producto_id', 'asc')  // ✅ Agrupar por producto
+            ->orderBy('lote', 'asc')          // Luego por lote dentro del producto
+            ->orderBy('id', 'asc')            // Finalmente por ID
             ->get();
 
         // Contar duplicados

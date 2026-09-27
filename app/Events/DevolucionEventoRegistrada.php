@@ -2,24 +2,24 @@
 
 namespace App\Events;
 
-use App\Models\DevolucionEvento;
+use App\Models\DevolucionPrestamoEvento;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Evento que se dispara cuando se registra una devolución de préstamo a evento
- *
- * La notificación WebSocket se envía a través de SendDevolucionEventoRegisteredNotification listener
- */
 class DevolucionEventoRegistrada
 {
     use Dispatchable, SerializesModels;
 
-    public DevolucionEvento $devolucion;
+    public DevolucionPrestamoEvento $devolucion;
 
-    public function __construct(DevolucionEvento $devolucion)
+    public function __construct(DevolucionPrestamoEvento $devolucion)
     {
         $this->devolucion = $devolucion;
-        $this->devolucion->load(['prestamoEvento.cliente', 'prestamoEvento.chofer', 'detalles.prestamoEventoDetalle.prestable']);
+        $this->devolucion->load([
+            'prestamoEvento',
+            'prestamoEvento.creador',
+            'registradoPor',
+            'detalles.prestable'
+        ]);
     }
 }

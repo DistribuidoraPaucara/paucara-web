@@ -43,11 +43,11 @@
     <p><strong>Localidad:</strong> {{ $documento->cliente->localidad->nombre ?? 'Sin localidad' }}</p>
     @endif
     {{-- ✅ NUEVO: Mostrar dirección registrada en la venta --}}
-    {{-- @if($documento->direccionCliente)
+    <!-- @if($documento->direccionCliente)
     <p><strong>Dirección:</strong> {{ $documento->direccionCliente->direccion ?? 'Sin dirección' }}</p>
-    @endif --}}
-    @if($documento->direccionCliente)
-    <p style="center"><strong>Dir:</strong> {{ strtoupper($documento->direccionCliente->observaciones ?? 'Sin direccion') }}</p>
+    @endif -->
+    @if($documento->direccionCliente?->observaciones)
+    <p style="center"><strong>Dir:</strong> {{ strtoupper($documento->direccionCliente->observaciones) }}</p>
     @endif
     @php
     $preventista = null;
@@ -64,11 +64,11 @@
     <table style="width: 100%; border-collapse: collapse;">
         <tr>
             @if($documento->usuario)
-            <td style="width: 50%; padding: 2px 5px 2px 0;"><strong>Vendedor:</strong> {{ $documento->usuario->name }}</td>
+            <td style="width: 50%; padding: 2px 5px 2px 0;"><strong>Vendedor:</strong> {{ substr($documento->usuario->name, 0, 13) }}</td>
             @endif
             @if($preventista)
             <td style="width: 50%; padding: 2px 0;">
-                <p><strong>Prev.:</strong> {{ $preventista->name }}</p>
+                <p><strong>Prev.:</strong> {{ substr($preventista->name, 0, 13) }}</p>
             </td>
             @endif
         </tr>
@@ -118,10 +118,12 @@
 @endif -->
 
 {{-- ==================== INFORMACIÓN DE PAGO ==================== --}}
-<!-- <div class="center bold" style="font-size: 12px;">
-    Politica Pago: {{ $documento->politica_pago ?? 'CONTRA_ENTREGA' }}
+@if($documento->politica_pago === 'CREDITO')
+<div class="center bold" style="font-size: 12px;">
+    {{ $documento->politica_pago }}
 </div>
- -->
+@endif
+
 {{-- ✅ NUEVO: Tipo de Pago --}}
 
 <!-- <div class="center" style="margin-top: 5px; font-weight: bold; font-size: 13px;">
@@ -159,21 +161,38 @@ $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
 @if($ultimaConfirmacion)
 <div class="documento-info" style="font-size:12px; background-color: #f5f5f5; padding: 3px 5px; margin: 3px 0;">
     <p style="margin: 2px 0; font-weight: bold;">CONFIRMACIÓN DE ENTREGA</p>
-    @if($ultimaConfirmacion->tipo_entrega)
+    <!-- @if($ultimaConfirmacion->tipo_entrega)
     <p style="margin: 2px 0;"><strong>Tipo:</strong> {{ $ultimaConfirmacion->tipo_entrega === 'COMPLETA' ? 'Completa' : 'Con Novedad' }}</p>
-    @endif
-    @if($ultimaConfirmacion->tipo_confirmacion)
-    <p style="margin: 2px 0;"><strong>Estado:</strong> {{ ucfirst(str_replace('_', ' ', strtolower($ultimaConfirmacion->tipo_confirmacion))) }}</p>
-    @endif
-    @if($ultimaConfirmacion->total_dinero_recibido)
-    <p style="margin: 2px 0;"><strong>Dinero Recibido:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->total_dinero_recibido, 2) }}</p>
-    @endif
-    @if($ultimaConfirmacion->monto_pendiente)
-    <p style="margin: 2px 0;"><strong>Pendiente:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->monto_pendiente, 2) }}</p>
-    @endif
+    @endif -->
+    <table style="width: 100%; border-collapse: collapse; margin: 2px 0;">
+        <tr>
+            @if($ultimaConfirmacion->tipo_confirmacion)
+            <td style="width: 50%; padding: 2px 5px 2px 0; vertical-align: top;">
+                <p style="margin: 2px 0;"><strong>Estado:</strong> {{ ucfirst(str_replace('_', ' ', strtolower($ultimaConfirmacion->tipo_confirmacion))) }}</p>
+            </td>
+            @else
+            <td style="width: 50%; padding: 2px 5px 2px 0;"></td>
+            @endif
+            @if($ultimaConfirmacion->total_dinero_recibido)
+            <td style="width: 50%; padding: 2px 0; vertical-align: top;">
+                <p style="margin: 2px 0;"><strong>Recibido:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->total_dinero_recibido, 2) }}</p>
+            </td>
+            @else
+            <td style="width: 50%; padding: 2px 0;"></td>
+            @endif
+        </tr>
+       <!--  @if($ultimaConfirmacion->monto_pendiente)
+        <tr>
+            <td style="width: 50%; padding: 2px 5px 2px 0;">
+                <p style="margin: 2px 0;"><strong>Pendiente:</strong> {{ $documento->moneda->simbolo ?? 'Bs' }} {{ number_format($ultimaConfirmacion->monto_pendiente, 2) }}</p>
+            </td>
+            <td style="width: 50%; padding: 2px 0;"></td>
+        </tr>
+        @endif -->
+    </table>
     @if($ultimaConfirmacion->observaciones_logistica)
-    <p style="margin: 2px 0; font-size: 11px;"><strong>Observaciones:</strong></p>
-    <p style="margin: 2px 0; font-size: 12px; line-height: 1.2;">{{ $ultimaConfirmacion->observaciones_logistica }}</p>
+    <p style="margin: 2px 0; font-size: 11px;"><strong>Observaciones:</strong> {{ $ultimaConfirmacion->observaciones_logistica }}</p>
+    <!-- <p style="margin: 2px 0; font-size: 12px; line-height: 1.2;"></p> -->
     @endif
 </div>
 @endif
@@ -183,7 +202,7 @@ $ultimaConfirmacion = $documento->confirmaciones->sortByDesc('id')->first();
 @if(($documento->prestamoCliente && $documento->prestamoCliente->count() > 0) || ($documento->prestamoEvento && $documento->prestamoEvento->count() > 0))
 <div class="separador"></div>
 <div class="documento-info" style="font-size:12px; background-color: #f5f5f5; padding: 3px 5px; margin: 3px 0;">
-    <p style="margin: 2px 0; font-weight: bold;">PRÉSTAMOS ASOCIADOS</p>
+    <p style="margin: 2px 0; font-weight: bold;">PRÉSTAMOS ASOCIADO</p>
 
     @if($documento->prestamoCliente && $documento->prestamoCliente->count() > 0)
     <p style="margin: 2px 0; font-size: 11px;"><strong>A Clientes:</strong></p>

@@ -8,6 +8,7 @@ use App\Models\PrestamoProveedor;
 use App\Services\ImpresionService;
 use App\Services\Prestamos\PrestamoProveedorService;
 use App\Events\PrestamoProveedorCreado;
+use App\Events\PrestamoProveedorAnulado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -328,7 +329,15 @@ class PrestamoProveedorController extends Controller
             $accion  = $request->input('accion', 'download'); // download | stream
 
             // Cargar relaciones necesarias para la impresión
-            $prestamo->load(['detalles.prestable', 'detalles.devolucionDetalles', 'proveedor', 'compra', 'devoluciones.detalles',
+            $prestamo->load([
+                'detalles.prestable',
+                // ✅ FILTRO: Devoluciones de detalles solo NO anuladas (ANULADA, no ANULADO)
+                'detalles.devolucionDetalles' => fn($q) => $q->whereHas('devolucion', fn($subQ) => $subQ->whereNotIn('estado', ['ANULADA', 'CANCELADA'])),
+                'proveedor',
+                'compra',
+                // ✅ FILTRO: Solo devoluciones VÁLIDAS (no ANULADA, no CANCELADA)
+                'devoluciones' => fn($q) => $q->whereNotIn('estado', ['ANULADA', 'CANCELADA'])->orderByDesc('fecha_devolucion'),
+                'devoluciones.detalles',
                 // ✅ NUEVO: Cargar ubicacion con localidad para impresión
                 'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
                 'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
@@ -352,9 +361,19 @@ class PrestamoProveedorController extends Controller
             // Atributo dinámico para usar en las vistas de impresión
             $prestamo->setAttribute('almacen_impresion', $almacen);
 
-            // Monto cobrado por daños (acumulado de todas las devoluciones del préstamo)
+            // ✅ Monto cobrado por daños (solo de devoluciones VÁLIDAS - no anuladas)
             $montoCobradoDanioTotal = (float) ($prestamo->devoluciones?->sum('monto_cobrado_daño_total') ?? 0);
             $prestamo->setAttribute('monto_cobrado_danio_total_impresion', $montoCobradoDanioTotal);
+
+            // ✅ DEBUG: Mostrar información del préstamo
+            \Log::info('📋 [PrestamoProveedorController::imprimir] Datos a imprimir', [
+                'prestamo_id' => $prestamo->id,
+                'proveedor' => $prestamo->proveedor->nombre ?? 'N/A',
+                'estado' => $prestamo->estado,
+                'cantidad_detalles' => $prestamo->detalles->count(),
+                'devoluciones_validas' => $prestamo->devoluciones->count(),
+                'monto_cobrado_daño' => $montoCobradoDanioTotal,
+            ]);
 
             // Generar PDF usando el tipo de documento "prestamo_proveedor"
             $pdf = $this->impresionService->generarPDF('prestamo_proveedor', $prestamo, $formato);
@@ -416,6 +435,9 @@ class PrestamoProveedorController extends Controller
             Log::info('✅ Préstamo a proveedor anulado correctamente', [
                 'prestamo_id' => $prestamoAnulado->id,
             ]);
+
+            // Disparar evento para notificaciones WebSocket
+            event(new PrestamoProveedorAnulado($prestamoAnulado, $datosValidacion['razon_anulacion'] ?? null));
 
             return response()->json([
                 'success' => true,

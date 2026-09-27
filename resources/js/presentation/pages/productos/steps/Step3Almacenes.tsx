@@ -5,7 +5,7 @@ import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/presentation/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
 interface Option {
@@ -67,6 +67,20 @@ export function validarYAjustarAlmacenes(almacenes: any[]): { validos: any[]; aj
     });
 
     return { validos: almacenesAjustados, ajustes };
+}
+
+// Función para detectar si una fecha está vencida
+function isLoteVencido(fechaVencimiento: string | null | undefined): boolean {
+    if (!fechaVencimiento) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // Parsear fecha sin problemas de timezone
+    const [year, month, day] = fechaVencimiento.split('-').map(Number);
+    const fecha = new Date(year, month - 1, day);
+    fecha.setHours(0, 0, 0, 0);
+
+    return fecha < hoy;
 }
 
 export default function Step3Almacenes({
@@ -342,11 +356,17 @@ export default function Step3Almacenes({
                                                 <TooltipTrigger asChild>
                                                     <label htmlFor={`has-exp-${i}`} className="text-xs cursor-pointer flex items-center gap-1 hover:text-blue-600">
                                                         Vencimiento
-                                                        <HelpCircle size={11} className="text-gray-400" />
+                                                        {isLoteVencido(a.fecha_vencimiento) ? (
+                                                            <AlertTriangle size={11} className="text-red-500" />
+                                                        ) : (
+                                                            <HelpCircle size={11} className="text-gray-400" />
+                                                        )}
                                                     </label>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top">
-                                                    Fecha de vencimiento del lote (opcional)
+                                                    {isLoteVencido(a.fecha_vencimiento)
+                                                        ? 'Este lote está vencido'
+                                                        : 'Fecha de vencimiento del lote (opcional)'}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
@@ -355,7 +375,11 @@ export default function Step3Almacenes({
                                             value={a.fecha_vencimiento || ''}
                                             onChange={(e) => setAlmacen(i, 'fecha_vencimiento', e.target.value)}
                                             disabled={!a.fecha_vencimiento}
-                                            className="h-9 text-xs w-full dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:opacity-50 disabled:dark:bg-zinc-900"
+                                            className={`h-9 text-xs w-full dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:opacity-50 disabled:dark:bg-zinc-900 ${
+                                                isLoteVencido(a.fecha_vencimiento)
+                                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-700'
+                                                    : ''
+                                            }`}
                                         />
                                     </div>
 

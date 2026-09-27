@@ -221,8 +221,10 @@ class VentaDistribucionService
                 // 2. Obtener stocks disponibles con FIFO (vencimiento cercano primero)
                 // ✅ FIFO: ordenar por fecha_vencimiento ASC (vence primero), luego id (creado primero)
                 // ✅ NUEVO (2026-05-08): Para farmacias sin stock, permitir cantidad_disponible <= 0
+                // ✅ NUEVO (2026-09-23): Excluir lotes dados de baja (deleted_at != null)
                 $stockQuery = StockProducto::where('producto_id', $productoId)
-                    ->where('almacen_id', $almacenId);
+                    ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at');  // ← Excluir lotes dados de baja
 
                 // Solo filtrar por cantidad_disponible si NO es farmacia con venta sin stock
                 if (!$permitirSinStock) {
@@ -292,8 +294,10 @@ class VentaDistribucionService
                     ]);
 
                     // Recargar stocks para incluir el nuevo registro
+                    // ✅ NUEVO (2026-09-23): Excluir lotes dados de baja (deleted_at != null)
                     $stocks = StockProducto::where('producto_id', $productoId)
                         ->where('almacen_id', $almacenId)
+                        ->whereNull('deleted_at')  // ← Excluir lotes dados de baja
                         ->orderBy('fecha_vencimiento', 'asc')
                         ->orderBy('id', 'asc')
                         ->lockForUpdate()
@@ -708,6 +712,7 @@ class VentaDistribucionService
 
             $stockTotal = StockProducto::where('producto_id', $productoId)
                 ->where('almacen_id', $almacenId)
+                ->whereNull('deleted_at')  // ← Excluir lotes dados de baja
                 ->sum('cantidad_disponible');
 
             if ($stockTotal < $cantidadAValidar) {

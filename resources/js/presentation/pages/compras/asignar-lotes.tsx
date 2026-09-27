@@ -4,7 +4,7 @@ import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
 import { useState, useCallback } from 'react';
 import { NotificationService } from '@/infrastructure/services/notification.service';
-import { AlertCircle, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertCircle, Trash2, Plus, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/presentation/components/ui/alert';
 
 interface PageProps extends InertiaPageProps {
@@ -87,6 +87,24 @@ interface DetalleDistribuido {
 export default function AsignarLotes() {
   const { props } = usePage<PageProps>();
   const { compra, detalles, moneda } = props;
+
+  // Función para detectar si un lote está vencido
+  const isLoteVencido = (fechaVencimiento: string | null): boolean => {
+    if (!fechaVencimiento) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fecha = new Date(fechaVencimiento);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha < hoy;
+  };
+
+  // Obtener clase de color según si está vencido
+  const getLoteColorClass = (fechaVencimiento: string | null): string => {
+    if (isLoteVencido(fechaVencimiento)) {
+      return 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
+    }
+    return 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800';
+  };
 
   // ✅ DEBUG: Mostrar datos que llegan del backend
   console.log('=== DATOS DEL BACKEND ===');
@@ -823,7 +841,7 @@ export default function AsignarLotes() {
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">📦 STOCK ANTERIOR (ACTUALIZAR)</h4>
                   <div className="space-y-3">
                     {detalle.stock_registrados.map((stock) => (
-                      <div key={stock.id} className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+                      <div key={stock.id} className={`border p-4 rounded-lg ${getLoteColorClass(stock.fecha_vencimiento)}`}>
                         {/* Información del Lote - Collapsible */}
                         <div className="mb-3 pb-3 border-b border-green-200 dark:border-green-700">
                           <button
@@ -837,9 +855,14 @@ export default function AsignarLotes() {
                             }}
                             className="w-full flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-900/20 p-2 -mx-2 -my-2 rounded transition"
                           >
-                            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                              🏷️ Lote: <span className="text-green-700 dark:text-green-300 font-mono">{stock.lote || 'Sin lote'}</span>
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                🏷️ Lote: <span className={`font-mono ${isLoteVencido(stock.fecha_vencimiento) ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>{stock.lote || 'Sin lote'}</span>
+                              </p>
+                              {isLoteVencido(stock.fecha_vencimiento) && (
+                                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" title="Lote vencido" />
+                              )}
+                            </div>
                             {lotesExpandidos[`${detalle.id}-${stock.id}`] ? (
                               <ChevronUp className="w-4 h-4 text-green-700 dark:text-green-300" />
                             ) : (

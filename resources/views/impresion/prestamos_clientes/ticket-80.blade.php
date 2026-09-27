@@ -1,5 +1,5 @@
 @extends('impresion.layouts.base-ticket')
-@section('titulo', 'Prestamo Clientes Folio #' . $documento->id)
+@section('titulo', 'Folio #' . $documento->id)
 @section('contenido')
 @php
 // Determinar estado global del préstamo
@@ -20,6 +20,10 @@ $totalGarantiaDevuelta = 0;
 $totalExcedido = 0;
 if($documento->devoluciones && count($documento->devoluciones) > 0) {
         foreach($documento->devoluciones as $devolucion) {
+            // ✅ FILTRO: Ignorar devoluciones anuladas o canceladas (ANULADA, no ANULADO)
+            if (in_array($devolucion->estado, ['ANULADA', 'CANCELADA'])) {
+                continue;
+            }
             $totalDanoCobrado += $devolucion->monto_cobrado_daño_total ?? 0;
             $totalGarantiaDevuelta += $devolucion->monto_garantia_devuelta_total ?? 0;
             $totalExcedido += $devolucion->monto_excedido_garantia ?? 0;
@@ -156,8 +160,14 @@ if($documento->devoluciones && count($documento->devoluciones) > 0) {
             @foreach($documento->detalles as $detalle)
             @php
             $cantidadPrestada = $detalle->cantidad_prestada ?? 0;
-            $cantidadDevuelta = $detalle->devolucionDetalles->sum('cantidad_devuelta') ?? 0;
-            $cantidadDanada = $detalle->devolucionDetalles->sum('cantidad_dañada_total') ?? 0;
+
+            // ✅ FILTRO: Solo sumar devoluciones NO anuladas (ANULADA, no ANULADO)
+            $devolucionesValidas = $detalle->devolucionDetalles->filter(function($dev) {
+                return $dev->devolucion && !in_array($dev->devolucion->estado, ['ANULADA', 'CANCELADA']);
+            });
+
+            $cantidadDevuelta = $devolucionesValidas->sum('cantidad_devuelta') ?? 0;
+            $cantidadDanada = $devolucionesValidas->sum('cantidad_dañada_total') ?? 0;
             $cantidadPendiente = $cantidadPrestada - $cantidadDevuelta - $cantidadDanada;
             @endphp
             <tr style="border-bottom: 1px solid #ccc;">

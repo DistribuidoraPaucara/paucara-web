@@ -95,6 +95,14 @@ abstract class BaseWebSocketService
         try {
             $url = rtrim($this->wsUrl, '/') . '/' . ltrim($endpoint, '/');
 
+            Log::info('🔌 [BaseWebSocketService::send] ENVIANDO HTTP POST', [
+                'url'  => $url,
+                'endpoint' => $endpoint,
+                'user_ids' => $data['user_ids'] ?? [],
+                'roles' => $data['roles'] ?? [],
+                'event' => $data['event'] ?? 'UNKNOWN',
+            ]);
+
             if ($this->debug) {
                 Log::info('Enviando notificación WebSocket', [
                     'url'  => $url,
@@ -118,16 +126,15 @@ abstract class BaseWebSocketService
 
             $response = $request->post($url, $data);
 
-            Log::info('🔍 [BaseWebSocketService::send] POST response', [
-                'endpoint' => $endpoint,
-                'url' => $url,
-                'user_id_sent' => $data['user_id'] ?? 'NOT_SET',
-                'status' => $response->status(),
-                'successful' => $response->successful(),
-                'body' => $response->body(),
-            ]);
-
             if ($response->successful()) {
+                Log::info('✅ [BaseWebSocketService::send] HTTP POST exitoso', [
+                    'endpoint' => $endpoint,
+                    'url' => $url,
+                    'event' => $data['event'] ?? 'UNKNOWN',
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
                 if ($this->debug) {
                     Log::info('Notificación WebSocket enviada exitosamente', [
                         'endpoint' => $endpoint,
@@ -136,8 +143,10 @@ abstract class BaseWebSocketService
                 }
                 return true;
             } else {
-                Log::warning('❌ Error al enviar notificación WebSocket', [
+                Log::warning('❌ [BaseWebSocketService::send] HTTP POST FALLÓ', [
                     'endpoint' => $endpoint,
+                    'url' => $url,
+                    'event' => $data['event'] ?? 'UNKNOWN',
                     'status'   => $response->status(),
                     'body'     => $response->body(),
                 ]);

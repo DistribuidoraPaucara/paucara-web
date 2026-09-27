@@ -7,6 +7,8 @@ import { useAuth } from '@/application/hooks/use-auth';
 import { type BreadcrumbItem } from '@/types';
 import { type ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { StockNotificationListener } from '@/presentation/components/listeners/StockNotificationListener';
+import { PrestamoNotificationListener } from '@/presentation/components/listeners/PrestamoNotificationListener';
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -31,6 +33,10 @@ function AppLayoutContent({ children, breadcrumbs, ...props }: AppLayoutProps) {
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
             {children}
+            {/* ✅ Listener global para notificaciones de nuevo stock */}
+            <StockNotificationListener />
+            {/* ✅ NUEVO: Listener global para notificaciones de préstamos */}
+            <PrestamoNotificationListener />
             {/* React Hot Toast Container */}
             <Toaster
                 position="top-right"

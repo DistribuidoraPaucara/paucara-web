@@ -1,6 +1,7 @@
 import type { EstadoPrestamo, PrestamoProveedor } from '@/domain/entities/prestamos';
 import prestamoProveedorService from '@/infrastructure/services/prestamo-proveedor.service';
 import AppLayout from '@/layouts/app-layout';
+import CalendarioVencimientos from '@/presentation/components/prestamos/CalendarioVencimientos';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
@@ -33,6 +34,7 @@ export default function PrestamosProveedoresIndex() {
     const [anularData, setAnularData] = useState({
         razon_anulacion: '',
     });
+    const [vistaActual, setVistaActual] = useState<'calendario' | 'tabla'>('calendario');
     const [devolucionData, setDevolucionData] = useState({
         fecha_devolucion: new Date().toISOString().split('T')[0],
         monto_cobrado_daño_total: 0,
@@ -520,7 +522,38 @@ export default function PrestamosProveedoresIndex() {
                     )}
                 </div>
 
+                {/* Toggle de Vista */}
+                <div className="flex justify-end gap-2 mb-4">
+                    <Button
+                        variant={vistaActual === 'calendario' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('calendario')}
+                        className="gap-2"
+                    >
+                        📅 Calendario
+                    </Button>
+                    <Button
+                        variant={vistaActual === 'tabla' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('tabla')}
+                        className="gap-2"
+                    >
+                        📊 Tabla
+                    </Button>
+                </div>
+
+                {/* Calendario de Vencimientos */}
+                {vistaActual === 'calendario' && (
+                    <CalendarioVencimientos
+                        prestamos={prestamos}
+                        onFechaChange={(desde, hasta) => {
+                            // Los filtros de fecha se aplican automáticamente
+                        }}
+                        tipo="proveedor"
+                        titulo="📅 Calendario de Devoluciones Esperadas"
+                    />
+                )}
+
                 {/* Tabla de Préstamos */}
+                {vistaActual === 'tabla' && (
                 <div className="overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 rounded-lg">
                     {loading ? (
                         <div className="p-8 text-center text-gray-600 dark:text-gray-400">Cargando...</div>
@@ -724,6 +757,7 @@ export default function PrestamosProveedoresIndex() {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* Modal de Edición del Préstamo */}
                 {selectedPrestamoEdit && (

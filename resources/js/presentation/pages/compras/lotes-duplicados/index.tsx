@@ -2,7 +2,7 @@ import { Head, usePage, Link } from '@inertiajs/react';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
 import { useAuth } from '@/application/hooks/use-auth';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface Lote {
     id: number;
@@ -41,6 +41,7 @@ export default function LotesDuplicados() {
     const [mostrarSinVencimiento, setMostrarSinVencimiento] = useState(false);
     const [mostrarDadosDeBaja, setMostrarDadosDeBaja] = useState(false);
     const [mostrarVencidos, setMostrarVencidos] = useState(false);
+    const [soloMostrarDuplicados, setSoloMostrarDuplicados] = useState(false);
     const [modalAbierto, setModalAbierto] = useState(false);
     const [loteEnAccion, setLoteEnAccion] = useState<Lote | null>(null);
     const [cargando, setCargando] = useState(false);
@@ -75,6 +76,9 @@ export default function LotesDuplicados() {
         if (mostrarVencidos) {
             params.append('solo_vencidos', 'true');
         }
+        if (soloMostrarDuplicados) {
+            params.append('solo_duplicados', 'true');
+        }
 
         if (params.toString()) {
             url += '?' + params.toString();
@@ -87,7 +91,27 @@ export default function LotesDuplicados() {
         setMostrarSinVencimiento(false);
         setMostrarDadosDeBaja(false);
         setMostrarVencidos(false);
+        setSoloMostrarDuplicados(false);
         window.location.href = '/compras/lotes-vencimientos/duplicados';
+    };
+
+    // ✅ Agrupar lotes por producto
+    const agruparLotesPorProducto = () => {
+        const grupos: Record<number, Lote[]> = {};
+
+        props.lotes.forEach(lote => {
+            // Si filtro "solo duplicados" está activo, mostrar solo lotes duplicados
+            if (soloMostrarDuplicados && !lote.es_duplicado) {
+                return;
+            }
+
+            if (!grupos[lote.producto_id]) {
+                grupos[lote.producto_id] = [];
+            }
+            grupos[lote.producto_id].push(lote);
+        });
+
+        return grupos;
     };
 
     const abrirModal = (lote: Lote) => {
@@ -239,7 +263,7 @@ export default function LotesDuplicados() {
                         >
                             Buscar
                         </button>
-                        {(busqueda || mostrarSinVencimiento || mostrarVencidos || mostrarDadosDeBaja) && (
+                        {(busqueda || mostrarSinVencimiento || mostrarVencidos || mostrarDadosDeBaja || soloMostrarDuplicados) && (
                             <button
                                 type="button"
                                 onClick={handleClear}
@@ -258,7 +282,7 @@ export default function LotesDuplicados() {
                                 onChange={(e) => setMostrarSinVencimiento(e.target.checked)}
                                 className="w-4 h-4 rounded"
                             />
-                            <span>Mostrar solo lotes sin fecha de vencimiento</span>
+                            <span>Lotes sin fecha de vencimiento</span>
                         </label>
                         <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                             <input
@@ -267,7 +291,7 @@ export default function LotesDuplicados() {
                                 onChange={(e) => setMostrarVencidos(e.target.checked)}
                                 className="w-4 h-4 rounded"
                             />
-                            <span>Mostrar solo lotes vencidos</span>
+                            <span>Lotes vencidos</span>
                         </label>
                         <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                             <input
@@ -276,7 +300,16 @@ export default function LotesDuplicados() {
                                 onChange={(e) => setMostrarDadosDeBaja(e.target.checked)}
                                 className="w-4 h-4 rounded"
                             />
-                            <span>Mostrar solo lotes dados de baja</span>
+                            <span>Lotes dados de baja</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <input
+                                type="checkbox"
+                                checked={soloMostrarDuplicados}
+                                onChange={(e) => setSoloMostrarDuplicados(e.target.checked)}
+                                className="w-4 h-4 rounded"
+                            />
+                            <span>⚠️ Mostrar solo duplicados</span>
                         </label>
                     </div>
                 </form>
@@ -318,7 +351,34 @@ export default function LotesDuplicados() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {props.lotes.map((lote: any) => (
+                                {Object.entries(agruparLotesPorProducto()).map(([productoId, lotesPorProducto]: [string, Lote[]]) => (
+                                    <React.Fragment key={`grupo-${productoId}`}>
+                                        {/* Encabezado de grupo por producto */}
+                                        <tr className="bg-blue-100 dark:bg-blue-900">
+                                            <td colSpan={9} className="px-4 py-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-bold text-blue-900 dark:text-blue-100">
+                                                            📦 {lotesPorProducto[0]?.producto_nombre}
+                                                        </span>
+                                                        <span className="text-sm text-blue-700 dark:text-blue-300">
+                                                            ({lotesPorProducto.length} {lotesPorProducto.length === 1 ? 'lote' : 'lotes'})
+                                                        </span>
+                                                        {lotesPorProducto.some(l => l.es_duplicado) && (
+                                                            <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">
+                                                                ⚠️ {lotesPorProducto.filter(l => l.es_duplicado).length} DUPLICADO(S)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                                                        SKU: {lotesPorProducto[0]?.producto_sku}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {/* Lotes de este producto */}
+                                        {lotesPorProducto.map((lote: any) => (
                                     <tr
                                         key={lote.id}
                                         className={
@@ -447,6 +507,8 @@ export default function LotesDuplicados() {
                                             )}
                                         </td>
                                     </tr>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

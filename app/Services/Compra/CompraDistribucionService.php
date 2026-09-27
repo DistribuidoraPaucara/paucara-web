@@ -96,16 +96,20 @@ class CompraDistribucionService
 
                 // ✅ CORREGIDO (2026-03-28): Obtener totales GENERALES del producto ANTES de procesar lotes
                 // Esto incluye TODOS los lotes existentes, no solo los que se procesan en esta compra
+                // ✅ FILTRO: No incluir lotes dados de baja (deleted_at)
                 $cantidadTotalAnterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad');
 
                 $cantidadDisponibleAnterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad_disponible');
 
                 $cantidadReservadaAnterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad_reservada');
 
                 Log::debug('📊 [CompraDistribucionService] Totales ANTES del producto', [
@@ -133,8 +137,10 @@ class CompraDistribucionService
                     }
 
                     // Buscar o crear StockProducto para este lote específico
+                    // ✅ FILTRO: No usar lotes dados de baja (deleted_at)
                     $stockProducto = StockProducto::where('producto_id', $productoId)
                         ->where('almacen_id', $almacenId)
+                        ->whereNull('deleted_at')
                         ->where(function ($q) use ($lote) {
                             if ($lote) {
                                 $q->where('lote', $lote);
@@ -207,16 +213,20 @@ class CompraDistribucionService
                 }
 
                 // ✅ Obtener totales FINALES del producto DESPUÉS de procesar todos los lotes
+                // ✅ FILTRO: No incluir lotes dados de baja (deleted_at)
                 $cantidadTotalPosterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad');
 
                 $cantidadDisponiblePosterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad_disponible');
 
                 $cantidadReservadaPosterior_acumulada = StockProducto::where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
+                    ->whereNull('deleted_at')
                     ->sum('cantidad_reservada');
 
                 // ✅ CORREGIDO (2026-03-28): Pasar totales GENERALES correctos
@@ -327,17 +337,21 @@ class CompraDistribucionService
                         $almacenId = $stock->almacen_id;
 
                         // ✅ CORREGIDO (2026-04-05): Capturar totales del PRODUCTO en la PRIMERA iteración
+                        // ✅ FILTRO: No incluir lotes dados de baja (deleted_at)
                         if ($totalProductoAntes === null) {
                             $totalProductoAntes = (float) StockProducto::where('producto_id', $productoId)
                                 ->where('almacen_id', $almacenId)
+                                ->whereNull('deleted_at')
                                 ->sum('cantidad');
 
                             $totalDisponibleAntes = (float) StockProducto::where('producto_id', $productoId)
                                 ->where('almacen_id', $almacenId)
+                                ->whereNull('deleted_at')
                                 ->sum('cantidad_disponible');
 
                             $totalReservadoAntes = (float) StockProducto::where('producto_id', $productoId)
                                 ->where('almacen_id', $almacenId)
+                                ->whereNull('deleted_at')
                                 ->sum('cantidad_reservada');
                         }
 
@@ -374,16 +388,20 @@ class CompraDistribucionService
                     }
 
                     // ✅ CORREGIDO (2026-04-05): Capturar totales del PRODUCTO DESPUÉS
+                    // ✅ FILTRO: No incluir lotes dados de baja (deleted_at)
                     $totalProductoDespues = (float) StockProducto::where('producto_id', $productoId)
                         ->where('almacen_id', $almacenId)
+                        ->whereNull('deleted_at')
                         ->sum('cantidad');
 
                     $totalDisponibleDespues = (float) StockProducto::where('producto_id', $productoId)
                         ->where('almacen_id', $almacenId)
+                        ->whereNull('deleted_at')
                         ->sum('cantidad_disponible');
 
                     $totalReservadoDespues = (float) StockProducto::where('producto_id', $productoId)
                         ->where('almacen_id', $almacenId)
+                        ->whereNull('deleted_at')
                         ->sum('cantidad_reservada');
 
                     // Crear movimiento de reversión agrupado

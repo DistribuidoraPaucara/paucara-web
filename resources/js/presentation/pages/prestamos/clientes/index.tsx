@@ -2,6 +2,7 @@ import type { EstadoPrestamo, PrestamoCliente } from '@/domain/entities/prestamo
 import prestamoClienteService from '@/infrastructure/services/prestamo-cliente.service';
 import AppLayout from '@/layouts/app-layout';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import CalendarioVencimientos from '@/presentation/components/prestamos/CalendarioVencimientos';
 import { Button } from '@/presentation/components/ui/button';
 import { Card } from '@/presentation/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
@@ -60,6 +61,7 @@ export default function PrestamosClientesIndex() {
     const [filtroVencimientoDesde, setFiltroVencimientoDesde] = useState('');
     const [filtroVencimientoHasta, setFiltroVencimientoHasta] = useState('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [vistaActual, setVistaActual] = useState<'calendario' | 'tabla'>('calendario');
 
     const [devolucionData, setDevolucionData] = useState({
         fecha_devolucion: new Date().toISOString().split('T')[0],
@@ -723,7 +725,40 @@ export default function PrestamosClientesIndex() {
                     )}
                 </div>
 
+                {/* Toggle de Vista */}
+                <div className="flex justify-end gap-2 mb-4">
+                    <Button
+                        variant={vistaActual === 'calendario' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('calendario')}
+                        className="gap-2"
+                    >
+                        📅 Calendario
+                    </Button>
+                    <Button
+                        variant={vistaActual === 'tabla' ? 'default' : 'outline'}
+                        onClick={() => setVistaActual('tabla')}
+                        className="gap-2"
+                    >
+                        📊 Tabla
+                    </Button>
+                </div>
+
+                {/* Calendario de Vencimientos */}
+                {vistaActual === 'calendario' && (
+                    <CalendarioVencimientos
+                        prestamos={prestamos}
+                        onFechaChange={(desde, hasta) => {
+                            setFiltroVencimientoDesde(desde);
+                            setFiltroVencimientoHasta(hasta);
+                            // Los filtros se aplican automáticamente por el useEffect
+                        }}
+                        tipo="cliente"
+                        titulo="📅 Calendario de Devoluciones Esperadas"
+                    />
+                )}
+
                 {/* Tabla de Préstamos */}
+                {vistaActual === 'tabla' && (
                 <Card className="overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     {loading ? (
                         <div className="p-8 text-center text-gray-600 dark:text-gray-400">Cargando...</div>
@@ -1068,6 +1103,7 @@ export default function PrestamosClientesIndex() {
                         </div>
                     )}
                 </Card>
+                )}
 
                 {/* Modal de Edición del Préstamo */}
                 {selectedPrestamoEdit && (

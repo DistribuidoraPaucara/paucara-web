@@ -65,8 +65,7 @@ class PagoVentaService
     public function registrarPagos(Venta $venta, array $pagos): array
     {
         return DB::transaction(function () use ($venta, $pagos) {
-            // ✅ ACTUALIZADO (2026-05-03): Validar que la suma de pagos sea >= al total
-            // Permite pagos mayores (genera cambio/vuelto)
+            // ✅ VALIDAR: Suma de pagos debe ser >= total
             $totalPagos = array_sum(array_column($pagos, 'monto'));
 
             if ($totalPagos < $venta->total) {
@@ -78,61 +77,33 @@ class PagoVentaService
             // Calcular cambio si aplica
             $cambio = $totalPagos - $venta->total;
 
-            // ✅ NUEVO (2026-05-04): Escalar proporcionalmente los pagos
-            // Si el usuario paga 200 por una venta de 196, los pagos se escalan:
-            // - Efectivo 100 → 98
-            // - Transferencia 100 → 98
-            // - Vuelto 4 se registra en movimientos_caja como tipo VUELTO
-            $pagosEscalados = [];
-            if ($cambio > 0) {
-                $factorEscala = $venta->total / $totalPagos;
-
-                foreach ($pagos as $pago) {
-                    $pagosEscalados[] = [
-                        'tipo_pago_id' => $pago['tipo_pago_id'],
-                        'monto' => round($pago['monto'] * $factorEscala, 2),
-                        'monto_original' => $pago['monto'],
-                        'referencia' => $pago['referencia'] ?? null,
-                        'fecha_pago' => $pago['fecha_pago'] ?? now(),
-                        'comprobante' => $pago['comprobante'] ?? null,
-                        'observaciones' => $pago['observaciones'] ?? null,
-                    ];
-                }
-
-                \Log::info('🔄 [registrarPagos] Pagos escalados proporcionalmente', [
-                    'venta_id' => $venta->id,
-                    'venta_numero' => $venta->numero,
-                    'total_venta' => $venta->total,
-                    'total_pagado_original' => $totalPagos,
-                    'factor_escala' => $factorEscala,
-                    'cambio' => $cambio,
-                    'detalle' => $pagosEscalados,
-                ]);
-            } else {
-                // Sin vuelto, registrar pagos tal como vienen
-                foreach ($pagos as $pago) {
-                    $pagosEscalados[] = [
-                        'tipo_pago_id' => $pago['tipo_pago_id'],
-                        'monto' => $pago['monto'],
-                        'monto_original' => $pago['monto'],
-                        'referencia' => $pago['referencia'] ?? null,
-                        'fecha_pago' => $pago['fecha_pago'] ?? now(),
-                        'comprobante' => $pago['comprobante'] ?? null,
-                        'observaciones' => $pago['observaciones'] ?? null,
-                    ];
-                }
+            // ✅ NUEVO (2026-09-23): NO ESCALAR - Registrar pagos tal como vienen
+            // Ejemplo: Si paga 1000 por una venta de 800:
+            // - detalles_pago_venta: registro con 1000 (lo que REALMENTE recibió)
+            // - movimientos_caja: VENTA +1000, VUELTO -200
+            // - Neto en caja: 1000 - 200 = 800 ✅
+            $pagosARegistrar = [];
+            foreach ($pagos as $pago) {
+                $pagosARegistrar[] = [
+                    'tipo_pago_id' => $pago['tipo_pago_id'],
+                    'monto' => $pago['monto'],  // ✅ Sin escalar, lo real
+                    'referencia' => $pago['referencia'] ?? null,
+                    'fecha_pago' => $pago['fecha_pago'] ?? now(),
+                    'comprobante' => $pago['comprobante'] ?? null,
+                    'observaciones' => $pago['observaciones'] ?? null,
+                ];
             }
 
             // Limpiar pagos anteriores si existen
             $venta->detallesPagoVenta()->delete();
 
-            // Registrar nuevos pagos con montos escalados
+            // Registrar pagos SIN ESCALAR
             $detallesPago = [];
-            foreach ($pagosEscalados as $pago) {
+            foreach ($pagosARegistrar as $pago) {
                 $detallePago = DetallePagoVenta::create([
                     'venta_id' => $venta->id,
                     'tipo_pago_id' => $pago['tipo_pago_id'],
-                    'monto' => $pago['monto'],  // ✅ Monto escalado, no original
+                    'monto' => $pago['monto'],  // ✅ Lo que REALMENTE recibió
                     'referencia' => $pago['referencia'] ?? null,
                     'fecha_pago' => $pago['fecha_pago'] ?? now(),
                     'comprobante' => $pago['comprobante'] ?? null,
@@ -142,20 +113,30 @@ class PagoVentaService
                 $detallesPago[] = $detallePago;
             }
 
-            // ✅ ACTUALIZADO (2026-05-04): monto_pagado = total de la venta (dinero real que entra)
-            // El vuelto se resta en el listener como movimiento VUELTO
+            // ✅ Actualizar venta: monto_pagado = lo que REALMENTE entra
             $venta->update([
-                'monto_pagado' => $venta->total,  // Dinero real que entra por la venta
-                'monto_pendiente' => 0,  // No hay pendiente si pagó (igual o más que el total)
+                'monto_pagado' => $totalPagos,  // Lo que realmente pagó
+                'monto_pendiente' => 0,  // Sin pendiente
             ]);
 
-            // Log con información del cambio
-            \Log::info('✅ Pagos desglosados registrados (con escalado proporcional)', [
+            // ✅ NUEVO: Si hay cambio, registrar movimiento de VUELTO en caja
+            if ($cambio > 0) {
+                $this->registrarVueltoEnCaja($venta, $cambio);
+
+                \Log::info('✅ Cambio/Vuelto registrado como movimiento en caja', [
+                    'venta_id' => $venta->id,
+                    'venta_numero' => $venta->numero,
+                    'total_venta' => $venta->total,
+                    'total_pagado' => $totalPagos,
+                    'cambio' => $cambio,
+                ]);
+            }
+
+            \Log::info('✅ Pagos registrados (SIN ESCALAR)', [
                 'venta_id' => $venta->id,
                 'venta_numero' => $venta->numero,
                 'total_venta' => $venta->total,
-                'total_pagado_original' => $totalPagos,
-                'total_registrado_en_detalles' => array_sum(array_column($pagosEscalados, 'monto')),
+                'total_pagado_real' => $totalPagos,
                 'cambio' => $cambio,
                 'cantidad_formas_pago' => count($detallesPago),
             ]);
@@ -163,13 +144,75 @@ class PagoVentaService
             return [
                 'venta_id' => $venta->id,
                 'total_venta' => $venta->total,
-                'total_pagado_original' => $totalPagos,
-                'total_registrado' => array_sum(array_column($pagosEscalados, 'monto')),
+                'total_pagado' => $totalPagos,
                 'cambio' => $cambio,
                 'monto_pendiente' => 0,
                 'detalles_pago' => $detallesPago,
             ];
         });
+    }
+
+    /**
+     * ✅ NUEVO: Registrar movimiento de VUELTO en caja
+     * Cuando cliente paga más de lo que cuesta la venta
+     *
+     * Ejemplo: Venta 800, cliente paga 1000
+     * - MovimientoCaja: tipo_operacion='VUELTO', monto=-200 (salida)
+     */
+    private function registrarVueltoEnCaja(Venta $venta, float $cambio): void
+    {
+        try {
+            $tipoOperacionVuelto = \App\Models\TipoOperacionCaja::where('codigo', 'VUELTO')->first();
+
+            if (!$tipoOperacionVuelto) {
+                \Log::warning('⚠️ Tipo de operación VUELTO no existe en la BD', [
+                    'venta_id' => $venta->id,
+                ]);
+                return;
+            }
+
+            // ✅ Obtener caja abierta actual (sin cierre)
+            $cajaAbierta = \App\Models\AperturaCaja::where('user_id', auth()->id() ?? $venta->usuario_id)
+                ->whereDoesntHave('cierre')
+                ->orderByDesc('id')
+                ->first();
+
+            if (!$cajaAbierta) {
+                \Log::warning('⚠️ No hay caja abierta para registrar vuelto', [
+                    'venta_id' => $venta->id,
+                    'user_id' => auth()->id() ?? $venta->usuario_id,
+                ]);
+                return;
+            }
+
+            // ✅ Registrar movimiento VUELTO (negativo = salida)
+            \App\Models\MovimientoCaja::create([
+                'caja_id' => $cajaAbierta->caja_id,
+                'user_id' => auth()->id() ?? $venta->usuario_id,
+                'apertura_caja_id' => $cajaAbierta->id,
+                'fecha' => now(),
+                'monto' => -$cambio,  // Negativo porque es salida
+                'observaciones' => "Vuelto/Cambio por venta #{$venta->numero}",
+                'numero_documento' => $venta->numero,
+                'tipo_operacion_id' => $tipoOperacionVuelto->id,
+                'tipo_pago_id' => null,  // El vuelto no tiene tipo de pago específico
+                'venta_id' => $venta->id,
+            ]);
+
+            \Log::info('✅ Movimiento VUELTO registrado en caja', [
+                'venta_id' => $venta->id,
+                'venta_numero' => $venta->numero,
+                'monto_vuelto' => $cambio,
+                'apertura_caja_id' => $cajaAbierta->id,
+            ]);
+
+        } catch (\Exception $e) {
+            // Log pero no fallar la transacción
+            \Log::error('❌ Error al registrar vuelto en caja', [
+                'venta_id' => $venta->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function obtenerResumenPagos(Venta $venta): array

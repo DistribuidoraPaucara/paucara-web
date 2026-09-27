@@ -68,17 +68,35 @@ use App\Listeners\SendCreditoPagoRegistradoNotification;
 use App\Listeners\SendCreditoVencidoNotification;
 use App\Listeners\SendCreditoCriticoNotification;
 use App\Events\PrestamoClienteCreado;
+use App\Events\PrestamoClienteAnulado;
 use App\Events\PrestamoEventoCreado;
+use App\Events\PrestamoEventoAnulado;
 use App\Events\PrestamoProveedorCreado;
-use App\Events\DevolucionRegistrada;
+use App\Events\PrestamoProveedorAnulado;
+use App\Events\DevolucionClienteRegistrada;
+use App\Events\DevolucionClienteAnulada;
 use App\Events\DevolucionEventoRegistrada;
+use App\Events\DevolucionEventoAnulada;
 use App\Events\DevolucionProveedorRegistrada;
+use App\Events\DevolucionProveedorAnulada;
+use App\Events\DevolucionRegistrada;
 use App\Listeners\SendPrestamoClienteCreatedNotification;
+use App\Listeners\SendPrestamoClienteAnuladoNotification;
 use App\Listeners\SendPrestamoEventoCreatedNotification;
+use App\Listeners\SendPrestamoEventoAnuladoNotification;
 use App\Listeners\SendPrestamoProveedorCreatedNotification;
+use App\Listeners\SendPrestamoProveedorAnuladoNotification;
+use App\Listeners\SendDevolucionClienteRegistradaNotification;
+use App\Listeners\SendDevolucionClienteAnuladaNotification;
+use App\Listeners\SendDevolucionEventoRegistradaNotification;
+use App\Listeners\SendDevolucionEventoAnuladaNotification;
+use App\Listeners\SendDevolucionProveedorRegistradaNotification;
+use App\Listeners\SendDevolucionProveedorAnuladaNotification;
 use App\Listeners\SendDevolucionRegisteredNotification;
 use App\Listeners\SendDevolucionEventoRegisteredNotification;
 use App\Listeners\SendDevolucionProveedorRegisteredNotification;
+use App\Events\CompraCompletada;
+use App\Listeners\SendCompraCompletedNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 /**
@@ -287,16 +305,70 @@ class EventServiceProvider extends ServiceProvider
             SendPrestamoClienteCreatedNotification::class,
         ],
 
+        // ✅ NUEVO: Notificar cuando se anula un préstamo a cliente
+        // Listeners notifican a: usuario que anuló, creador, admins, cajeros, cliente
+        PrestamoClienteAnulado::class => [
+            SendPrestamoClienteAnuladoNotification::class,
+        ],
+
         // ✅ NUEVO: Notificar cuando se crea un préstamo a evento
         // Listeners notifican a: usuario creador, admins, cajeros, cliente eventos
         PrestamoEventoCreado::class => [
             SendPrestamoEventoCreatedNotification::class,
         ],
 
+        // ✅ NUEVO: Notificar cuando se anula un préstamo a evento
+        // Listeners notifican a: usuario que anuló, creador, admins, cajeros, cliente eventos
+        PrestamoEventoAnulado::class => [
+            SendPrestamoEventoAnuladoNotification::class,
+        ],
+
         // ✅ NUEVO: Notificar cuando se crea un préstamo a proveedor
         // Listeners notifican a: usuario creador, admins, cajeros, proveedor
         PrestamoProveedorCreado::class => [
             SendPrestamoProveedorCreatedNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se anula un préstamo a proveedor
+        // Listeners notifican a: usuario que anuló, creador, admins, cajeros, proveedor
+        PrestamoProveedorAnulado::class => [
+            SendPrestamoProveedorAnuladoNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se registra una devolución de préstamo a cliente
+        // Listeners notifican a: creador del préstamo, quien registró, admins, cajeros
+        DevolucionClienteRegistrada::class => [
+            SendDevolucionClienteRegistradaNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se anula una devolución de préstamo a cliente
+        // Listeners notifican a: creador del préstamo, quien anuló, admins, cajeros
+        DevolucionClienteAnulada::class => [
+            SendDevolucionClienteAnuladaNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se registra una devolución de préstamo a evento
+        // Listeners notifican a: creador del préstamo, quien registró, admins, cajeros
+        DevolucionEventoRegistrada::class => [
+            SendDevolucionEventoRegistradaNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se anula una devolución de préstamo a evento
+        // Listeners notifican a: creador del préstamo, quien anuló, admins, cajeros
+        DevolucionEventoAnulada::class => [
+            SendDevolucionEventoAnuladaNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se registra una devolución de préstamo a proveedor
+        // Listeners notifican a: creador del préstamo, quien registró, admins, cajeros
+        DevolucionProveedorRegistrada::class => [
+            SendDevolucionProveedorRegistradaNotification::class,
+        ],
+
+        // ✅ NUEVO: Notificar cuando se anula una devolución de préstamo a proveedor
+        // Listeners notifican a: creador del préstamo, quien anuló, admins, cajeros
+        DevolucionProveedorAnulada::class => [
+            SendDevolucionProveedorAnuladaNotification::class,
         ],
 
         // ✅ NUEVO: Notificar cuando se registra una devolución de préstamo
@@ -315,6 +387,16 @@ class EventServiceProvider extends ServiceProvider
         // Listeners notifican a: admins, cajeros, choferes
         DevolucionProveedorRegistrada::class => [
             SendDevolucionProveedorRegisteredNotification::class,
+        ],
+
+        // ══════════════════════════════════════════════════════════
+        // COMPRA EVENTS
+        // ══════════════════════════════════════════════════════════
+
+        // ✅ NUEVO: Notificar cuando se completa una compra (nuevo stock disponible)
+        // Listeners notifican a: admins, managers, cajeros
+        CompraCompletada::class => [
+            SendCompraCompletedNotification::class,
         ],
     ];
 

@@ -8,6 +8,9 @@ use App\Services\Prestamos\PrestableStockAdvancedService;
 use App\Services\Prestamos\PrestamoClienteService;
 use App\Services\Prestamos\ValidacionPrestamosService;
 use App\Events\PrestamoClienteCreado;
+use App\Events\PrestamoClienteAnulado;
+use App\Events\DevolucionClienteRegistrada;
+use App\Events\DevolucionClienteAnulada;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -506,6 +509,9 @@ class PrestamoClienteController extends Controller
                 'detalles.devolucionesAlmacenes.almacen'
             ]);
 
+            // Disparar evento para notificaciones WebSocket
+            event(new DevolucionClienteRegistrada($devolución));
+
             return response()->json([
                 'success' => true,
                 'data' => $devolución,
@@ -570,14 +576,43 @@ class PrestamoClienteController extends Controller
                 'detalles.prestable',
                 // ✅ CORREGIDO: Cargar almacenes con sus datos completos
                 'detalles.almacenes.almacen',
+                // ✅ FILTRO: Devoluciones de detalles solo NO anuladas (ANULADA, no ANULADO)
+                'detalles.devolucionDetalles' => fn($q) => $q->whereHas('devolucion', fn($subQ) => $subQ->whereNotIn('estado', ['ANULADA', 'CANCELADA'])),
                 'detalles.devoluciones.detallePrestamoCliente.prestable',
                 'cliente',
                 'chofer',
                 'venta',
-                'devoluciones',
+                // ✅ FILTRO: Solo devoluciones VÁLIDAS (no ANULADA, no CANCELADA)
+                'devoluciones' => fn($q) => $q->whereNotIn('estado', ['ANULADA', 'CANCELADA'])->orderByDesc('fecha_devolucion'),
                 // ✅ NUEVO: Cargar ubicacion con localidad para impresión
                 'ubicacion' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
                 'ubicaciones' => fn($q) => $q->with(['direccionCliente.localidad', 'localidad']),
+            ]);
+
+            // ✅ DEBUG: Mostrar información del préstamo
+            \Log::info('📋 [PrestamoClienteController::imprimir] Datos a imprimir', [
+                'prestamo_id' => $prestamo->id,
+                'cliente' => $prestamo->cliente->nombre ?? 'N/A',
+                'estado' => $prestamo->estado,
+                'cantidad_detalles' => $prestamo->detalles->count(),
+                'devoluciones_validas' => $prestamo->devoluciones->count(),
+                'detalles' => $prestamo->detalles->map(function($det) {
+                    return [
+                        'prestable' => $det->prestable->nombre ?? 'N/A',
+                        'cantidad_prestada' => $det->cantidad_prestada,
+                        'cantidad_devuelta_validas' => $det->devolucionDetalles->sum('cantidad_devuelta'),
+                        'cantidad_dañada_validas' => $det->devolucionDetalles->sum('cantidad_dañada_total'),
+                        'total_devolucion_detalles' => $det->devolucionDetalles->count(),
+                    ];
+                })->toArray(),
+                'devoluciones' => $prestamo->devoluciones->map(function($dev) {
+                    return [
+                        'id' => $dev->id,
+                        'estado' => $dev->estado,
+                        'monto_cobrado_daño' => $dev->monto_cobrado_daño_total ?? 0,
+                        'monto_garantia_devuelta' => $dev->monto_garantia_devuelta_total ?? 0,
+                    ];
+                })->toArray(),
             ]);
 
             // Generar PDF usando el tipo de documento "prestamo_cliente"
@@ -721,6 +756,9 @@ class PrestamoClienteController extends Controller
                 'prestamo_id' => $prestamoAnulado->id,
             ]);
 
+            // ✅ NUEVO: Disparar evento para notificar a múltiples canales
+            event(new PrestamoClienteAnulado($prestamoAnulado, $datosValidacion['razon_anulacion'] ?? null));
+
             return response()->json([
                 'success' => true,
                 'data' => $prestamoAnulado->load([
@@ -783,6 +821,9 @@ class PrestamoClienteController extends Controller
                 'prestamo_id' => $prestamo->id,
                 'devolucion_id' => $devolucionAnulada->id,
             ]);
+
+            // Disparar evento para notificaciones WebSocket
+            event(new DevolucionClienteAnulada($devolucionAnulada, $datosValidacion['razon_anulacion'] ?? null));
 
             return response()->json([
                 'success' => true,

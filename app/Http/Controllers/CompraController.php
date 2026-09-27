@@ -18,6 +18,7 @@ use App\Services\Compra\CompraDistribucionService;
 use App\Services\DetectarCambiosPrecioService;
 use App\Services\ExcelExportService;
 use App\Services\ImpresionService;
+use App\Events\CompraCompletada;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -642,6 +643,9 @@ class CompraController extends Controller
             }
 
             DB::commit();
+
+            // ✅ NUEVO: Disparar evento para notificar nuevo stock disponible
+            event(new CompraCompletada($compra));
 
             // ✅ NUEVO: Procesar prestables cuando se crea compra (entrada de stock al almacén)
             try {

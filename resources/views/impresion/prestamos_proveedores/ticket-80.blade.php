@@ -18,6 +18,10 @@ $totalGarantiaDevuelta = 0;
 $totalExcedido = 0;
 if($documento->devoluciones && count($documento->devoluciones) > 0) {
 foreach($documento->devoluciones as $devolucion) {
+// ✅ FILTRO: Ignorar devoluciones anuladas o canceladas (ANULADA, no ANULADO)
+if (in_array($devolucion->estado, ['ANULADA', 'CANCELADA'])) {
+    continue;
+}
 $totalDanoCobrado += $devolucion->monto_cobrado_daño_total ?? 0;
 $totalGarantiaDevuelta += $devolucion->monto_garantia_devuelta_total ?? 0;
 $totalExcedido += $devolucion->monto_excedido_garantia ?? 0;
