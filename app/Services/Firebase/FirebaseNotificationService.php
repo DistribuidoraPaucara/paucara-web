@@ -168,13 +168,28 @@ class FirebaseNotificationService
     protected function obtenerAccessToken(): string
     {
         try {
-            $credentialsPath = storage_path('firebase/' . basename($this->credentialsPath));
+            // ✅ NUEVO: Intentar desde variable de entorno primero (production en Railway)
+            $credentialsJson = config('firebase.credentials_json') ?? env('FIREBASE_SERVICE_ACCOUNT_JSON');
 
-            if (!file_exists($credentialsPath)) {
-                throw new \Exception("Archivo de credenciales no encontrado: {$credentialsPath}");
+            if ($credentialsJson) {
+                // Si está en base64, decodificar
+                $decoded = base64_decode($credentialsJson, true);
+                if ($decoded !== false) {
+                    $credentials = json_decode($decoded, true);
+                } else {
+                    // Si no es base64, asumir que es JSON directo
+                    $credentials = json_decode($credentialsJson, true);
+                }
+            } else {
+                // Fallback: leer desde archivo (development)
+                $credentialsPath = storage_path('firebase/' . basename($this->credentialsPath));
+
+                if (!file_exists($credentialsPath)) {
+                    throw new \Exception("Archivo de credenciales no encontrado: {$credentialsPath}");
+                }
+
+                $credentials = json_decode(file_get_contents($credentialsPath), true);
             }
-
-            $credentials = json_decode(file_get_contents($credentialsPath), true);
 
             $now = time();
             $expiration = $now + 3600; // 1 hora
