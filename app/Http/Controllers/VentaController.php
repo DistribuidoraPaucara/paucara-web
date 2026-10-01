@@ -222,7 +222,7 @@ class VentaController extends Controller
             $sortBy    = $request->input('sort_by', 'id');      // Campo por el que ordenar (default: id)
             $sortOrder = $request->input('sort_order', 'desc'); // Orden ascendente o descendente (default: desc)
 
-            // Extraer filtros del request (SIN parámetros de ordenamiento)
+            // Extraer filtros del request (INCLUIR parámetros de ordenamiento para impresión)
             $filtros = [
                 'id'                  => $request->input('id'),
                 'id_desde'            => $request->input('id_desde'), // ✅ NUEVO: Rango de ID desde
@@ -244,6 +244,9 @@ class VentaController extends Controller
                 'tipo_venta'          => $request->input('tipo_venta'),
                 'estado_pago'         => $request->input('estado_pago'),      // ✅ NUEVO: Para filtro de estado de pago
                 'estado_logistico'    => $request->input('estado_logistico'), // ✅ NUEVO: Para filtro de estado logístico
+                // ✅ NUEVO (2026-10-01): Incluir parámetros de ordenamiento en filtros para que se pasen a ImprimirVentasButton
+                'sort_by'             => $sortBy,
+                'sort_order'          => $sortOrder,
             ];
 
             // ✅ ACTUALIZADO (2026-08-24): Solo agregar fecha de HOY si NO hay NINGÚN filtro activo

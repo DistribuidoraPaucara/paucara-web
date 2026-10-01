@@ -85,26 +85,17 @@ class ImpresionVentasController extends Controller
 
             $vista = $vistaMap[$formato] ?? 'impresion.ventas.hoja-completa-ventas';
 
-            // ✅ ACTUALIZADO (2026-02-24): Aplicar ordenamiento dinámico según filtros
-            // Si los filtros incluyen sort_by y sort_order, usarlos; si no, usar DESC por ID
-            $sortBy = $filtros['sort_by'] ?? 'id';
-            $sortOrder = $filtros['sort_order'] ?? 'desc';
+            // ✅ IMPORTANTE: Las ventas YA VIENEN ORDENADAS del backend (StockApiController::prepararImpresionVentas)
+            // No aplicar ordenamiento aquí para evitar problemas de tipo de datos en PHP sorting
+            \Log::info('📋 [ImpresionVentasController::imprimir] Ventas recibidas de sesión', [
+                'cantidad' => $ventas->count(),
+                'sort_by' => $filtros['sort_by'] ?? 'id (default)',
+                'sort_order' => $filtros['sort_order'] ?? 'desc (default)',
+            ]);
 
-            // Validar campos permitidos para ordenamiento
-            $camposPermitidos = ['id', 'created_at', 'updated_at', 'fecha', 'numero', 'total', 'estado'];
-            $sortBy = in_array(strtolower($sortBy), $camposPermitidos) ? $sortBy : 'id';
-            $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'asc' : 'desc';
-
-            // Aplicar ordenamiento a la colección
-            if ($sortOrder === 'asc') {
-                $ventasOrdenadas = $ventas->sortBy($sortBy);
-            } else {
-                $ventasOrdenadas = $ventas->sortByDesc($sortBy);
-            }
-
-            // Renderizar vista HTML con las ventas
+            // Renderizar vista HTML con las ventas (SIN re-ordenar)
             $html = view($vista, [
-                'ventas' => $ventasOrdenadas,
+                'ventas' => $ventas,
                 'filtros' => $filtros,
                 'empresa' => $empresa,
             ])->render();
