@@ -524,7 +524,7 @@ update.patch = (args: { cliente: number | { id: number } } | [cliente: number | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:692
+ * @see app/Http/Controllers/ClienteController.php:757
  * @route '/clientes/{cliente}'
  */
 export const destroy = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -539,7 +539,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:692
+ * @see app/Http/Controllers/ClienteController.php:757
  * @route '/clientes/{cliente}'
  */
 destroy.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -572,7 +572,7 @@ destroy.url = (args: { cliente: number | { id: number } } | [cliente: number | {
 
 /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:692
+ * @see app/Http/Controllers/ClienteController.php:757
  * @route '/clientes/{cliente}'
  */
 destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -582,7 +582,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
 
     /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:692
+ * @see app/Http/Controllers/ClienteController.php:757
  * @route '/clientes/{cliente}'
  */
     const destroyForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -597,7 +597,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
 
             /**
 * @see \App\Http\Controllers\ClienteController::destroy
- * @see app/Http/Controllers/ClienteController.php:692
+ * @see app/Http/Controllers/ClienteController.php:757
  * @route '/clientes/{cliente}'
  */
         destroyForm.delete = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -612,7 +612,7 @@ destroy.delete = (args: { cliente: number | { id: number } } | [cliente: number 
     
     destroy.form = destroyForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
 export const credito = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -626,7 +626,7 @@ credito.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
 credito.url = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -658,7 +658,7 @@ credito.url = (args: { cliente: number | { id: number } } | [cliente: number | {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
 credito.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -666,7 +666,7 @@ credito.get = (args: { cliente: number | { id: number } } | [cliente: number | {
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
 credito.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -675,7 +675,7 @@ credito.head = (args: { cliente: number | { id: number } } | [cliente: number | 
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
     const creditoForm = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -684,7 +684,7 @@ credito.head = (args: { cliente: number | { id: number } } | [cliente: number | 
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
         creditoForm.get = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -692,7 +692,7 @@ credito.head = (args: { cliente: number | { id: number } } | [cliente: number | 
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:150
  * @route '/clientes/{cliente}/credito'
  */
         creditoForm.head = (args: { cliente: number | { id: number } } | [cliente: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

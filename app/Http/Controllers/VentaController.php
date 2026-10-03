@@ -2163,6 +2163,9 @@ class VentaController extends Controller
         // ✅ NUEVO (2026-09-23): Cargar préstamos relacionados para mostrar en impresión
         $venta->load('prestamoCliente', 'prestamoEvento');
 
+        // ✅ NUEVO (2026-10-02): Cargar dirección del cliente con su localidad para mostrar en impresión
+        $venta->load('direccionCliente.localidad');
+
         // 🔍 DEBUG: Loguear información de la venta antes de imprimir
         \Log::info('📋 [VentaController::imprimir] Datos de venta para descargar/stream', [
             'venta_id'        => $venta->id,

@@ -80,11 +80,19 @@ class LogisticaController extends Controller
             });
         }
 
-        // ✅ Filtro por localidad
+        // ✅ Filtro por localidad (primero busca en direccionSolicitada, fallback a cliente)
         if (request()->has('localidad_id') && request('localidad_id') !== '' && request('localidad_id') !== '0') {
             $localidadId = request('localidad_id');
-            $query->whereHas('cliente', function ($clienteQuery) use ($localidadId) {
-                $clienteQuery->where('localidad_id', $localidadId);
+            $query->where(function ($q) use ($localidadId) {
+                // Buscar en direccionSolicitada.localidad_id
+                $q->whereHas('direccionSolicitada', function ($dirQuery) use ($localidadId) {
+                    $dirQuery->where('localidad_id', $localidadId);
+                })
+                // O fallback a cliente.localidad_id si no tiene dirección solicitada
+                    ->orWhereDoesntHave('direccionSolicitada')
+                    ->whereHas('cliente', function ($clienteQuery) use ($localidadId) {
+                        $clienteQuery->where('localidad_id', $localidadId);
+                    });
             });
         }
 
@@ -263,8 +271,8 @@ class LogisticaController extends Controller
                     'id'                              => $proforma->id,
                     'numero'                          => $proforma->numero,
                     'cliente_nombre'                  => $proforma->cliente->nombre ?? 'N/A',
-                    'localidad_id'                    => $proforma->cliente->localidad_id,
-                    'localidad_nombre'                => $proforma->cliente->localidad->nombre ?? 'N/A',
+                    'localidad_id'                    => $proforma->direccionSolicitada?->localidad_id ?? $proforma->cliente->localidad_id,
+                    'localidad_nombre'                => $proforma->direccionSolicitada?->localidad->nombre ?? $proforma->cliente->localidad->nombre ?? 'N/A',
                     'total'                           => $proforma->subtotal,
                     'fecha'                           => $proforma->fecha,
                     'estado'                          => $proforma->estado,

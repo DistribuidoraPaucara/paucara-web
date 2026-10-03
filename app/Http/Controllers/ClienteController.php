@@ -196,7 +196,7 @@ class ClienteController extends Controller
                 $clientes->getCollection()->load(
                     'localidad',
                     'categorias',
-                    'direcciones',
+                    'direcciones.localidad',
                     'user',
                     'ventanasEntrega',
                     'cuentasPorCobrar'
@@ -305,7 +305,7 @@ class ClienteController extends Controller
             // Preparar respuesta según el tipo de request
             if ($this->isApiRequest()) {
                 $responseData = [
-                    'cliente' => $cliente->load(['direcciones', 'localidad', 'user', 'ventanasEntrega', 'categorias']),
+                    'cliente' => $cliente->load(['direcciones.localidad', 'localidad', 'user', 'ventanasEntrega', 'categorias']),
                 ];
                 if ($cliente->user) {
                     $responseData['usuario'] = $cliente->user;
@@ -332,7 +332,7 @@ class ClienteController extends Controller
             // ✅ Autorizar: Solo roles que pueden editar este cliente
             $this->authorize('update', $cliente);
 
-            $clienteData = $cliente->load(['localidad', 'direcciones', 'ventanasEntrega', 'user', 'categorias']);
+            $clienteData = $cliente->load(['localidad', 'direcciones.localidad', 'ventanasEntrega', 'user', 'categorias']);
             $localidadesData = Localidad::where('activo', true)
                 ->orderBy('nombre')
                 ->get(['id', 'nombre', 'codigo']);
@@ -629,26 +629,91 @@ class ClienteController extends Controller
                 $direccionesValidas = is_array($data['direcciones']) && count($data['direcciones']) > 0;
 
                 if ($direccionesValidas) {
-                    // ✅ SEGURIDAD: Solo eliminar si hay nuevas direcciones para reemplazar
-                    Log::info('🗑️ Eliminando direcciones antiguas para reemplazar con nuevas', [
-                        'cliente_id' => $cliente->id,
-                        'direcciones_nuevas' => count($data['direcciones']),
-                    ]);
-                    $cliente->direcciones()->delete();
+                    // ✅ NUEVO: Sincronizar direcciones (actualizar existentes, crear nuevas, eliminar antiguas)
+                    $idsRecibidos = [];
+                    $idsTemporales = []; // IDs creados por el frontend (Date.now())
 
-                    // Crear nuevas direcciones
                     foreach ($data['direcciones'] as $index => $direccionData) {
-                        Log::info("📍 Procesando dirección $index:", ['data' => $direccionData]);
+                        Log::info("📍 Procesando dirección $index:", [
+                            'data' => $direccionData,
+                            'tiene_localidad_id' => isset($direccionData['localidad_id']),
+                            'localidad_id_valor' => $direccionData['localidad_id'] ?? 'NULL',
+                        ]);
 
                         $direccionData['activa'] = $direccionData['activa'] ?? true;
-                        // Asignar localidad_id del cliente a la dirección
-                        $direccionData['localidad_id'] = $cliente->localidad_id;
-                        $createdDireccion              = $cliente->direcciones()->create($direccionData);
+                        $direccionId = $direccionData['id'] ?? null;
 
-                        Log::info("✅ Dirección creada:", [
-                            'id'            => $createdDireccion->id,
-                            'observaciones' => $createdDireccion->observaciones,
+                        // Detectar si es un ID temporal (creado por Date.now() en frontend)
+                        $esIdTemporal = $direccionId && $direccionId > 9999999999; // IDs temporales son muy grandes
+
+                        if ($direccionId && !$esIdTemporal) {
+                            // ✅ ACTUALIZAR: Dirección existente en BD
+                            $direccionExistente = $cliente->direcciones()->find($direccionId);
+                            if ($direccionExistente) {
+                                // Limpiar campos que no pertenecen al modelo DireccionCliente
+                                // (ej: 'localidad' que viene como relación, 'created_at', 'updated_at', etc)
+                                $camposPermitidos = [
+                                    'direccion', 'localidad_id', 'latitud', 'longitud',
+                                    'es_principal', 'activa', 'observaciones'
+                                ];
+                                $dataLimpia = [];
+                                foreach ($camposPermitidos as $campo) {
+                                    if (isset($direccionData[$campo])) {
+                                        $dataLimpia[$campo] = $direccionData[$campo];
+                                    }
+                                }
+
+                                Log::info("📝 Limpiando data para actualizar dirección:", [
+                                    'campos_en_original' => array_keys($direccionData),
+                                    'campos_permitidos' => $camposPermitidos,
+                                    'data_limpia' => $dataLimpia,
+                                ]);
+
+                                $direccionExistente->update($dataLimpia);
+
+                                Log::info("✅ Dirección actualizada:", [
+                                    'id' => $direccionId,
+                                    'localidad_id_anterior' => $direccionExistente->getOriginal('localidad_id'),
+                                    'localidad_id_nuevo' => $direccionExistente->fresh()->localidad_id,
+                                    'data_actualizada' => $dataLimpia,
+                                ]);
+                                $idsRecibidos[] = $direccionId;
+                            } else {
+                                Log::warning("⚠️ Dirección no encontrada para actualizar:", ['id' => $direccionId]);
+                            }
+                        } else {
+                            // ✅ CREAR: Dirección nueva - Limpiar data igual que en actualización
+                            $camposPermitidos = [
+                                'direccion', 'localidad_id', 'latitud', 'longitud',
+                                'es_principal', 'activa', 'observaciones'
+                            ];
+                            $dataLimpia = [];
+                            foreach ($camposPermitidos as $campo) {
+                                if (isset($direccionData[$campo])) {
+                                    $dataLimpia[$campo] = $direccionData[$campo];
+                                }
+                            }
+
+                            $direccionCreada = $cliente->direcciones()->create($dataLimpia);
+                            Log::info("✅ Dirección creada:", [
+                                'id' => $direccionCreada->id,
+                                'localidad_id' => $direccionCreada->localidad_id,
+                                'data_limpia_guardada' => $dataLimpia,
+                            ]);
+                            $idsRecibidos[] = $direccionCreada->id;
+                        }
+                    }
+
+                    // ✅ ELIMINAR: Direcciones antiguas que no vienen en la petición
+                    $direccionesAEliminar = $cliente->direcciones()
+                        ->whereNotIn('id', $idsRecibidos)
+                        ->pluck('id');
+
+                    if ($direccionesAEliminar->count() > 0) {
+                        Log::info("🗑️ Eliminando direcciones que ya no existen:", [
+                            'ids' => $direccionesAEliminar->toArray(),
                         ]);
+                        $cliente->direcciones()->whereIn('id', $direccionesAEliminar)->delete();
                     }
                 } else {
                     // ⚠️ ADVERTENCIA: Se intentó actualizar con direcciones vacías o inválidas

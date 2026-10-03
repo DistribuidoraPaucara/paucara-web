@@ -1,28 +1,39 @@
 import { Button } from '@/presentation/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
-import { MapIcon, MapPin, Satellite, Trash2, Edit2, Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { MapIcon, MapPin, Satellite, Trash2, Edit2, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import React from 'react';
 
 interface ClienteDireccion {
     id?: number;
+    cliente_id?: number;
+    localidad_id?: number | null;
     direccion?: string;
     observaciones?: string;
     latitud?: number;
     longitud?: number;
     es_principal?: boolean;
+    localidad?: { id: number; nombre: string; codigo: string } | null;
+}
+
+interface Localidad {
+    id: number;
+    nombre: string;
+    codigo: string;
 }
 
 interface ClienteDireccionesMapProps {
     direcciones: ClienteDireccion[];
     onDireccionesChange: (direcciones: ClienteDireccion[]) => void;
     disabled?: boolean;
+    localidades?: Localidad[];
 }
 
 export function ClienteDireccionesMap({
     direcciones: initialDirecciones,
     onDireccionesChange,
-    disabled = false
+    disabled = false,
+    localidades = []
 }: ClienteDireccionesMapProps) {
     const [direcciones, setDirecciones] = useState<ClienteDireccion[]>(initialDirecciones);
     const [tipoMapa, setTipoMapa] = useState<'osm' | 'satelite'>('osm');
@@ -31,6 +42,8 @@ export function ClienteDireccionesMap({
     const [formData, setFormData] = useState<ClienteDireccion>({});
     const [clickedCoords, setClickedCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Obtener ubicación actual del usuario
     useEffect(() => {
@@ -55,11 +68,17 @@ export function ClienteDireccionesMap({
 
     // Generar HTML del mapa
     const generateMapHTML = () => {
-        // Calcular center - usar ubicación actual, luego direcciones, luego defecto
+        // Calcular center - preferir dirección principal, luego promedio de todas, luego ubicación actual, luego defecto
         let centerLat = userLocation?.lat ?? -17.78629;
         let centerLng = userLocation?.lng ?? -63.18117;
 
-        if (direccionesValidas.length > 0) {
+        // Buscar dirección principal
+        const direccionPrincipal = direccionesValidas.find((d) => d.es_principal);
+        if (direccionPrincipal) {
+            centerLat = direccionPrincipal.latitud!;
+            centerLng = direccionPrincipal.longitud!;
+        } else if (direccionesValidas.length > 0) {
+            // Si no hay principal, promediar todas las direcciones
             centerLat = direccionesValidas.reduce((sum, d) => sum + d.latitud!, 0) / direccionesValidas.length;
             centerLng = direccionesValidas.reduce((sum, d) => sum + d.longitud!, 0) / direccionesValidas.length;
         }
@@ -154,6 +173,20 @@ export function ClienteDireccionesMap({
                                 parent.postMessage({ type: 'mapClick', data: msg }, '*');
                             });
 
+                            // Listener para centrar el mapa desde el componente padre
+                            window.addEventListener('message', function(e) {
+                                if (e.data.type === 'centerMap') {
+                                    console.log('🎯 Centrando mapa en:', e.data.lat, e.data.lng);
+                                    map.setView([e.data.lat, e.data.lng], 16);
+
+                                    // Mostrar popup con la ubicación
+                                    L.popup()
+                                        .setLatLng([e.data.lat, e.data.lng])
+                                        .setContent('📍 Ubicación seleccionada')
+                                        .openOn(map);
+                                }
+                            });
+
                         } catch (e) {
                             console.error('Error inicializando mapa:', e);
                             document.body.innerHTML = '<div style="padding: 20px; color: red;">Error al cargar el mapa: ' + e.message + '<\/div>';
@@ -171,7 +204,7 @@ export function ClienteDireccionesMap({
             const [lat, lng] = event.data.data.split('|').map((coord: string) => parseFloat(coord.split(':')[1]));
             setClickedCoords({ lat, lng });
             setEditingIndex(null);
-            setFormData({ latitud: lat, longitud: lng, es_principal: false });
+            setFormData({ latitud: lat, longitud: lng, es_principal: false, localidad_id: null });
             setShowFormModal(true);
         }
     };
@@ -181,22 +214,65 @@ export function ClienteDireccionesMap({
         return () => window.removeEventListener('message', handleMapMessage);
     }, []);
 
+    // Cerrar fullscreen con ESC
+    React.useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [isFullscreen]);
+
     const handleSaveDireccion = () => {
         if (!formData.latitud || !formData.longitud) {
             alert('Falta seleccionar ubicación en el mapa');
             return;
         }
 
+        // ✅ Reconstruir la relación localidad basada en localidad_id
+        const direccionConLocalidad = {
+            ...formData,
+            localidad: formData.localidad_id
+                ? localidades.find((loc) => loc.id === formData.localidad_id) || null
+                : null,
+        };
+
         let newDirecciones: ClienteDireccion[];
         if (editingIndex !== null) {
+            // ✅ EDITAR: Preservar ID y otros campos, actualizar solo los que cambiaron
+            const direccionOriginal = direcciones[editingIndex];
             newDirecciones = [...direcciones];
-            newDirecciones[editingIndex] = formData;
+            newDirecciones[editingIndex] = {
+                ...direccionOriginal,
+                ...direccionConLocalidad,
+                id: direccionOriginal.id, // Siempre preservar el ID original
+            };
+
+            console.log('📝 Editando dirección:', {
+                index: editingIndex,
+                id: direccionOriginal.id,
+                formData,
+                localidadAsociada: direccionConLocalidad.localidad,
+                resultado: newDirecciones[editingIndex],
+            });
         } else {
-            newDirecciones = [...direcciones, { id: Date.now(), ...formData }];
+            // ✅ CREAR: Nueva dirección con ID temporal
+            const nuevaDireccion = { id: Date.now(), ...direccionConLocalidad };
+            newDirecciones = [...direcciones, nuevaDireccion];
+
+            console.log('➕ Creando nueva dirección:', {
+                id: nuevaDireccion.id,
+                localidadAsociada: direccionConLocalidad.localidad,
+                formData,
+            });
         }
 
         setDirecciones(newDirecciones);
         onDireccionesChange(newDirecciones);
+
+        console.log('📤 Direcciones enviadas al formulario:', newDirecciones);
 
         setShowFormModal(false);
         setFormData({});
@@ -218,8 +294,20 @@ export function ClienteDireccionesMap({
         }
     };
 
+    const handleCentrarMapa = (direccion: ClienteDireccion) => {
+        if (!iframeRef.current || !direccion.latitud || !direccion.longitud) return;
+
+        iframeRef.current.contentWindow?.postMessage({
+            type: 'centerMap',
+            lat: direccion.latitud,
+            lng: direccion.longitud,
+        }, '*');
+    };
+
     return (
-        <div className="flex h-[500px] gap-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+        <div className={`flex gap-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 transition-all ${
+            isFullscreen ? 'fixed inset-0 h-screen w-screen z-50' : 'h-[500px]'
+        }`}>
             {/* Mapa */}
             <div className="flex-1 relative">
                 <div className="absolute top-3 left-3 z-10 flex gap-2">
@@ -245,8 +333,28 @@ export function ClienteDireccionesMap({
                     >
                         <Satellite className="h-4 w-4" /> Satélite
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className={`p-2 rounded text-sm flex items-center gap-1 transition-all ${
+                            isFullscreen
+                                ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                        }`}
+                        title={isFullscreen ? 'Contraer mapa' : 'Expandir a pantalla completa'}
+                    >
+                        {isFullscreen ? (
+                            <>
+                                <Minimize2 className="h-5 w-5" />
+                                <span className="text-xs font-semibold">ESC</span>
+                            </>
+                        ) : (
+                            <Maximize2 className="h-4 w-4" />
+                        )}
+                    </button>
                 </div>
                 <iframe
+                    ref={iframeRef}
                     key={tipoMapa}
                     srcDoc={generateMapHTML()}
                     className="w-full h-full border-0"
@@ -254,7 +362,8 @@ export function ClienteDireccionesMap({
                 />
             </div>
 
-            {/* Lista de direcciones */}
+            {/* Lista de direcciones - Ocultar en pantalla completa */}
+            {!isFullscreen && (
             <div className="w-80 flex flex-col border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <span className="text-sm font-semibold">Direcciones ({direcciones.length})</span>
@@ -262,7 +371,7 @@ export function ClienteDireccionesMap({
                         type="button"
                         onClick={() => {
                             setEditingIndex(null);
-                            setFormData({ es_principal: false });
+                            setFormData({ es_principal: false, localidad_id: null });
                             setShowFormModal(true);
                         }}
                         disabled={disabled}
@@ -286,14 +395,25 @@ export function ClienteDireccionesMap({
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-2">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                                                d.es_principal ? 'bg-blue-600' : 'bg-green-600'
-                                            }`}>
-                                                {idx + 1}
+                                            <div
+                                                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                                                    d.es_principal ? 'bg-blue-600' : 'bg-green-600'
+                                                }`}
+                                                title={`ID: ${d.id}`}
+                                            >
+                                                {d.id ? String(d.id).slice(-3) : idx + 1}
                                             </div>
                                             {d.es_principal && <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">⭐ Principal</span>}
                                         </div>
                                         <div className="flex gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCentrarMapa(d)}
+                                                className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
+                                                title="Centrar mapa en esta ubicación"
+                                            >
+                                                <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleEditDireccion(idx)}
@@ -316,10 +436,11 @@ export function ClienteDireccionesMap({
                                     </div>
                                     <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
                                         {/* <div className="font-medium">{d.direccion || 'Sin descripción'}</div> */}
+                                        {d.localidad && <div className="text-blue-600 dark:text-blue-400 font-medium">📍 {d.localidad.nombre}</div>}
                                         {d.observaciones && <div className="text-gray-500 italic">{d.observaciones}</div>}
                                         {d.latitud && d.longitud && (
                                             <div className="text-gray-400 text-xs">
-                                                📍 {d.latitud.toFixed(4)}, {d.longitud.toFixed(4)}
+                                                {d.latitud.toFixed(4)}, {d.longitud.toFixed(4)}
                                             </div>
                                         )}
                                     </div>
@@ -329,6 +450,7 @@ export function ClienteDireccionesMap({
                     )}
                 </div>
             </div>
+            )}
 
             {/* Modal para crear/editar dirección */}
             {showFormModal && (
@@ -345,6 +467,21 @@ export function ClienteDireccionesMap({
                                     📍 {formData.latitud.toFixed(4)}, {formData.longitud.toFixed(4)}
                                 </div>
                             )}
+                            <div>
+                                <label className="text-sm font-medium">Localidad</label>
+                                <select
+                                    value={formData.localidad_id ? String(formData.localidad_id) : ''}
+                                    onChange={(e) => setFormData({ ...formData, localidad_id: e.target.value ? Number(e.target.value) : null })}
+                                    className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm"
+                                >
+                                    <option value="">Seleccionar localidad</option>
+                                    {localidades.map((loc) => (
+                                        <option key={loc.id} value={String(loc.id)}>
+                                            {loc.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             {/* <div>
                                 <label className="text-sm font-medium">Descripción</label>
                                 <input

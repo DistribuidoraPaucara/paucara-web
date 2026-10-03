@@ -10,6 +10,8 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   HelpCircle,
   Image,
@@ -64,11 +66,28 @@ function TabsVertical<F extends BaseFormData>({
     extraData,
 }: TabsVerticalProps<F>) {
     const [activeTab, setActiveTab] = useState(sections[0]?.id || '');
+    const [isNavVisible, setIsNavVisible] = useState(true);
 
     return (
-        <div className="flex gap-8">
+        <div className="flex gap-4 relative">
+            {/* Toggle Button */}
+            <button
+                type="button"
+                onClick={() => setIsNavVisible(!isNavVisible)}
+                className="absolute -left-6 top-1/2 -translate-y-1/2 z-10 p-1 rounded-md bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition-colors"
+                title={isNavVisible ? 'Ocultar menú' : 'Mostrar menú'}
+            >
+                {isNavVisible ? (
+                    <ChevronLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                )}
+            </button>
+
             {/* Navigation - Vertical Tabs List */}
-            <div className="flex min-w-fit flex-col gap-2 rounded-lg border border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100 p-3 shadow-sm dark:border-neutral-700 dark:from-neutral-900 dark:to-neutral-800">
+            <div className={`flex min-w-fit flex-col gap-2 rounded-lg border border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100 p-3 shadow-sm dark:border-neutral-700 dark:from-neutral-900 dark:to-neutral-800 transition-all duration-300 ${
+                isNavVisible ? 'opacity-100 visible' : 'opacity-0 invisible w-0'
+            }`}>
                 {sections.map((section) => (
                     <button
                         key={section.id}

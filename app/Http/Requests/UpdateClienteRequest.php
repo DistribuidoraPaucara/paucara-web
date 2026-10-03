@@ -153,7 +153,10 @@ class UpdateClienteRequest extends FormRequest
 
             // Direcciones opcionales
             'direcciones'                    => 'sometimes|nullable|array',
+            'direcciones.*.id'               => 'nullable|integer',
+            'direcciones.*.cliente_id'       => 'nullable|integer',
             'direcciones.*.direccion'        => 'nullable|string|max:500',
+            'direcciones.*.localidad_id'     => 'nullable|exists:localidades,id',
             'direcciones.*.latitud'          => 'required_with:direcciones|numeric|between:-90,90',
             'direcciones.*.longitud'         => 'required_with:direcciones|numeric|between:-180,180',
             'direcciones.*.observaciones'    => 'nullable|string|max:1000',
@@ -215,6 +218,7 @@ class UpdateClienteRequest extends FormRequest
             'direcciones.array'                         => 'Las direcciones deben ser un arreglo.',
             'direcciones.*.direccion.string'            => 'La dirección debe ser texto.',
             'direcciones.*.direccion.max'               => 'La dirección no puede exceder 500 caracteres.',
+            'direcciones.*.localidad_id.exists'         => 'La localidad seleccionada no existe.',
             'direcciones.*.latitud.required_with'       => 'La latitud es obligatoria cuando se proporciona dirección.',
             'direcciones.*.latitud.numeric'             => 'La latitud debe ser un número.',
             'direcciones.*.latitud.between'             => 'La latitud debe estar entre -90 y 90.',

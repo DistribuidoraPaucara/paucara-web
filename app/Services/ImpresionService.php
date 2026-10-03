@@ -815,6 +815,7 @@ class ImpresionService
             'usuarioCreador',
             'usuarioAprobador',
             'moneda',
+            'direccionSolicitada.localidad', // ✅ NUEVO: Cargar dirección solicitada con localidad
         ]);
 
         return $this->generarPDF('proforma', $proforma, $formato, $opciones);

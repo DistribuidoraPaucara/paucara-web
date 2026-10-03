@@ -24,16 +24,15 @@
     @if($documento->cliente->nit)
     <p><strong>NIT/CI:</strong> {{ $documento->cliente->nit }}</p>
     @endif
-    {{-- ✅ NUEVO: Mostrar localidad del cliente --}}
-    @if($documento->cliente->localidad)
+    {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección del cliente --}}
+    @if($documento->direccionCliente?->localidad)
+    <p><strong>Localidad:</strong> {{ $documento->direccionCliente->localidad->nombre ?? 'Sin localidad' }}</p>
+    @elseif($documento->cliente->localidad)
     <p><strong>Localidad:</strong> {{ $documento->cliente->localidad->nombre ?? 'Sin localidad' }}</p>
     @endif
-    {{-- ✅ NUEVO: Mostrar dirección registrada en la venta --}}
-    {{-- @if($documento->direccionCliente)
-    <p><strong>Dirección:</strong> {{ $documento->direccionCliente->direccion ?? 'Sin dirección' }}</p>
-    @endif --}}
-    @if($documento->direccionCliente)
-    <p style="center"><strong>Dir:</strong> {{ $documento->direccionCliente->observaciones ?? 'Sin direccion' }}</p>
+    {{-- ✅ NUEVO: Mostrar observaciones de la dirección registrada en la venta --}}
+    @if($documento->direccionCliente?->observaciones)
+    <p style="center"><strong>Obs:</strong> {{ strtoupper($documento->direccionCliente->observaciones) }}</p>
     @endif
     @if($documento->usuario)
     <p><strong>Vendedor:</strong> {{ $documento->usuario->name }}</p>

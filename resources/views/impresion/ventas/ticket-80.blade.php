@@ -38,8 +38,11 @@
     @if($documento->cliente->nit)
     <p><strong>NIT/CI:</strong> {{ $documento->cliente->nit }}</p>
     @endif
-    {{-- ✅ NUEVO: Mostrar localidad del cliente --}}
-    @if($documento->cliente->localidad)
+    {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección específica del cliente --}}
+    @if($documento->direccionCliente?->localidad)
+    <p><strong>Localidad:</strong> {{ $documento->direccionCliente->localidad->nombre ?? 'Sin localidad' }}</p>
+    @elseif($documento->cliente->localidad)
+    {{-- Fallback a localidad general del cliente si no hay dirección con localidad --}}
     <p><strong>Localidad:</strong> {{ $documento->cliente->localidad->nombre ?? 'Sin localidad' }}</p>
     @endif
     {{-- ✅ NUEVO: Mostrar dirección registrada en la venta --}}

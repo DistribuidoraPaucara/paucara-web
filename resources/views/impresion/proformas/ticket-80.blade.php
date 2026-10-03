@@ -1,5 +1,5 @@
 @extends('impresion.layouts.base-ticket')
-@section('titulo', 'Proforma #' . $documento->id)
+@section('titulo', 'Pedido #' . $documento->id)
 
 @section('contenido')
 
@@ -19,8 +19,16 @@
     @if($documento->cliente?->nit_ci)
         <p style="margin: 2px 0;">NIT/CI: {{ $documento->cliente->nit_ci }}</p>
     @endif
-    @if($documento->cliente?->localidad)
+    {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección solicitada --}}
+    @if($documento->direccionSolicitada?->localidad)
+        <p style="margin: 2px 0;"><strong>Localidad: </strong> {{ $documento->direccionSolicitada->localidad->nombre }}</p>
+    @elseif($documento->cliente?->localidad)
+        {{-- Fallback a localidad general del cliente si no hay dirección solicitada --}}
         <p style="margin: 2px 0;"><strong>Localidad: </strong> {{ $documento->cliente->localidad->nombre }}</p>
+    @endif
+    {{-- ✅ NUEVO: Mostrar observaciones de la dirección solicitada --}}
+    @if($documento->direccionSolicitada?->observaciones)
+        <p style="margin: 2px 0; font-size: 12px;"><strong>Obs:</strong> {{ strtoupper($documento->direccionSolicitada->observaciones) }}</p>
     @endif
 </div>
 

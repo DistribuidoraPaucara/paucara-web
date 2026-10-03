@@ -27,9 +27,17 @@
                 @if($documento->cliente->nit_ci)
                     <p>NIT/CI: {{ $documento->cliente->nit_ci }}</p>
                 @endif
-                {{-- ✅ Localidad --}}
-                @if($documento->cliente->localidad)
+                {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección solicitada --}}
+                @if($documento->direccionSolicitada?->localidad)
+                    <p>📍 {{ $documento->direccionSolicitada->localidad->nombre }}</p>
+                @elseif($documento->cliente->localidad)
                     <p>📍 {{ $documento->cliente->localidad->nombre }}</p>
+                @endif
+                {{-- ✅ NUEVO: Mostrar observaciones de la dirección solicitada --}}
+                @if($documento->direccionSolicitada?->observaciones)
+                    <p style="margin-top: 5px; font-size: 12px; font-style: italic; color: #666;">
+                        <strong>Obs:</strong> {{ strtoupper($documento->direccionSolicitada->observaciones) }}
+                    </p>
                 @endif
             @endif
             <p style="margin-top: 10px;"><strong>Cód. Cliente:</strong> #{{ $documento->cliente->id ?? 'N/A' }}</p>

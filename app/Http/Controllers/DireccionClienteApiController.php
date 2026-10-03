@@ -103,6 +103,14 @@ class DireccionClienteApiController extends Controller
                 $cliente->direcciones()->where('id', '!=', $direccion->id)->update(['es_principal' => false]);
             }
 
+            // Debug log para verificar qué se está actualizando
+            Log::info('🔄 Actualizando dirección:', [
+                'direccion_id' => $direccion->id,
+                'cliente_id' => $cliente->id,
+                'data' => $data,
+                'localidad_id_en_data' => $data['localidad_id'] ?? 'NO ESTÁ EN DATA',
+            ]);
+
             $direccion->update($data);
 
             return ApiResponse::success(

@@ -38,12 +38,19 @@ export interface Cliente extends BaseEntity {
     } | null;
     direcciones?: Array<{
         id?: Id;
+        cliente_id?: Id;
+        localidad_id?: Id | null;
         direccion: string;
         latitud: number;
         longitud: number;
         observaciones?: string | null;
         es_principal?: boolean;
         activa?: boolean;
+        localidad?: {
+            id: Id;
+            nombre: string;
+            codigo: string;
+        } | null;
     }>;
     ventanas_entrega?: VentanaEntregaCliente[];
     user_id?: Id | null;
@@ -79,12 +86,19 @@ export interface ClienteFormData extends BaseFormData {
     // Direcciones anidadas del cliente
     direcciones?: Array<{
         id?: Id;
+        cliente_id?: Id;
+        localidad_id?: Id | null;
         direccion: string;
         latitud: number;
         longitud: number;
         observaciones?: string | null;
         es_principal?: boolean;
         activa?: boolean;
+        localidad?: {
+            id: Id;
+            nombre: string;
+            codigo: string;
+        } | null;
     }>;
     // Ventanas de entrega del cliente
     ventanas_entrega?: VentanaEntregaCliente[];

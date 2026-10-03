@@ -212,7 +212,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
 export const formatosDisponibles = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ formatosDisponibles.definition = {
 
 /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
 formatosDisponibles.url = (options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ formatosDisponibles.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
 formatosDisponibles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -245,7 +245,7 @@ formatosDisponibles.get = (options?: RouteQueryOptions): RouteDefinition<'get'> 
 })
 /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
 formatosDisponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -255,7 +255,7 @@ formatosDisponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'
 
     /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
     const formatosDisponiblesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -265,7 +265,7 @@ formatosDisponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'
 
             /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
         formatosDisponiblesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -274,7 +274,7 @@ formatosDisponibles.head = (options?: RouteQueryOptions): RouteDefinition<'head'
         })
             /**
 * @see \App\Http\Controllers\ProformaController::formatosDisponibles
- * @see app/Http/Controllers/ProformaController.php:1199
+ * @see app/Http/Controllers/ProformaController.php:1200
  * @route '/proformas/formatos-disponibles'
  */
         formatosDisponiblesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -392,7 +392,7 @@ edit.head = (args: { proforma: number | { id: number } } | [proforma: number | {
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
 export const imprimirFiltrado = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -407,7 +407,7 @@ imprimirFiltrado.definition = {
 
 /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
 imprimirFiltrado.url = (options?: RouteQueryOptions) => {
@@ -416,7 +416,7 @@ imprimirFiltrado.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
 imprimirFiltrado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -425,7 +425,7 @@ imprimirFiltrado.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => 
 })
 /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
 imprimirFiltrado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -435,7 +435,7 @@ imprimirFiltrado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
     /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
     const imprimirFiltradoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -445,7 +445,7 @@ imprimirFiltrado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
             /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
         imprimirFiltradoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -454,7 +454,7 @@ imprimirFiltrado.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
         })
             /**
 * @see \App\Http\Controllers\ProformaController::imprimirFiltrado
- * @see app/Http/Controllers/ProformaController.php:1281
+ * @see app/Http/Controllers/ProformaController.php:1282
  * @route '/proformas/imprimir-filtrado'
  */
         imprimirFiltradoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

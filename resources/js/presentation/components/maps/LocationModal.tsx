@@ -27,6 +27,12 @@ export interface DireccionData {
     localidad_id?: number | null;
 }
 
+interface Localidad {
+    id: number;
+    nombre: string;
+    codigo: string;
+}
+
 interface LocationModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -37,7 +43,7 @@ interface LocationModalProps {
     geocodedAddress?: string;
     existingData?: DireccionData | null;
     clienteId?: number | null; // Cliente ID para guardar en la BD
-    localidadId?: number | null; // Localidad ID del cliente
+    localidades?: Localidad[]; // Listado de localidades para selector
 }
 
 export default function LocationModal({
@@ -50,7 +56,7 @@ export default function LocationModal({
     geocodedAddress = '',
     existingData = null,
     clienteId = null,
-    localidadId = null,
+    localidades = [],
 }: LocationModalProps) {
     const [formData, setFormData] = useState<DireccionData>({
         direccion: geocodedAddress,
@@ -58,6 +64,7 @@ export default function LocationModal({
         longitud: longitude,
         observaciones: '',
         es_principal: false,
+        localidad_id: null,
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -79,7 +86,7 @@ export default function LocationModal({
         setErrors({});
     }, [existingData, geocodedAddress, latitude, longitude, isOpen]);
 
-    const handleChange = (field: keyof DireccionData, value: string | boolean) => {
+    const handleChange = (field: keyof DireccionData, value: string | boolean | number | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         // Limpiar error del campo cuando el usuario empieza a escribir
         if (errors[field]) {
@@ -127,7 +134,7 @@ export default function LocationModal({
             longitud: formData.longitud,
             observaciones: formData.observaciones,
             es_principal: formData.es_principal,
-            localidad_id: localidadId, // Usar la localidad del cliente
+            localidad_id: formData.localidad_id, // Usar solo la localidad seleccionada en el modal
         };
 
         // Determinar si es crear o actualizar
@@ -249,6 +256,26 @@ export default function LocationModal({
                             Referencias adicionales para facilitar la entrega
                         </p>
                     </div>
+
+                    {/* Localidad */}
+                    {localidades && localidades.length > 0 && (
+                        <div className="space-y-2">
+                            <Label htmlFor="localidad_id">Localidad</Label>
+                            <select
+                                id="localidad_id"
+                                value={formData.localidad_id ? String(formData.localidad_id) : ''}
+                                onChange={(e) => handleChange('localidad_id', e.target.value ? Number(e.target.value) : null)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm"
+                            >
+                                <option value="">Seleccionar localidad</option>
+                                {localidades.map((loc) => (
+                                    <option key={loc.id} value={String(loc.id)}>
+                                        {loc.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Es principal */}
                     <div className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/50">

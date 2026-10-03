@@ -128,7 +128,10 @@ class StoreClienteRequest extends FormRequest
 
             // Direcciones
             'direcciones'                    => 'nullable|array',
+            'direcciones.*.id'               => 'nullable|integer',
+            'direcciones.*.cliente_id'       => 'nullable|integer',
             'direcciones.*.direccion'        => 'nullable|string|max:500', // ✅ Opcional - usuario puede dejar en blanco
+            'direcciones.*.localidad_id'     => 'nullable|exists:localidades,id',
             'direcciones.*.latitud'          => 'required_with:direcciones|numeric|between:-90,90',
             'direcciones.*.longitud'         => 'required_with:direcciones|numeric|between:-180,180',
             'direcciones.*.observaciones'    => 'nullable|string|max:1000',

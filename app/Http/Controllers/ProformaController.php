@@ -1164,6 +1164,7 @@ class ProformaController extends Controller
                 'usuarioCreador',
                 'usuarioAprobador',
                 'moneda',
+                'direccionSolicitada.localidad', // ✅ NUEVO: Cargar dirección solicitada con localidad
             ]);
 
             // Retornar vista Blade directamente (sin PDF)

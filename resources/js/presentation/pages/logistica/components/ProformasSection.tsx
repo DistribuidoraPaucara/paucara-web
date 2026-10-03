@@ -1097,7 +1097,9 @@ export function ProformasSection({
                                             {String(proforma.usuario_creador_nombre)}
                                         </Badge>
                                     </td>
-                                    <td className="p-1 text-center text-xs">📍{String(proforma.localidad_nombre)}</td>
+                                    <td className="p-1 text-center text-xs" title={`ID: ${proforma.localidad_id} | Nombre: ${proforma.localidad_nombre}`}>
+                                        📍{String(proforma.localidad_nombre || 'N/A')}
+                                    </td>
                                     <td className="px-2 py-2 text-left text-xs">
                                         Bs {proforma.total.toLocaleString('es-BO', { maximumFractionDigits: 2 })}
                                     </td>

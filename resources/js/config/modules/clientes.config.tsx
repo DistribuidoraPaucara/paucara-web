@@ -435,18 +435,7 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
             prefix: '💰',
         },
         // 📍 SECCIÓN DE DIRECCIONES
-        {
-            key: 'localidad_id',
-            label: 'Localidad',
-            type: 'select',
-            required: true,
-            placeholder: 'Seleccione una localidad',
-            extraDataKey: 'localidades',
-            options: [], // Se cargarán dinámicamente
-            colSpan: 2,
-            section: 'Direcciones',
-            description: 'Selecciona la localidad donde reside el cliente',
-        },
+        // ✅ REMOVIDO: Selector global de localidad - Ahora cada dirección tiene su propia localidad
 
         // ✅ NUEVO: Botón para abrir modal de registro de dirección personal
         {
@@ -455,11 +444,11 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
             type: 'custom',
             colSpan: 1,
             section: 'Direcciones',
-            render: ({ value, onChange, disabled, formData }) => {
+            render: ({ value, onChange, disabled, formData, extraData }) => {
                 const [isModalOpen, setIsModalOpen] = React.useState(false);
                 const direcciones = Array.isArray(formData?.direcciones) ? formData.direcciones : [];
                 const clienteId = formData?.id || null;
-                const localidadId = formData?.localidad_id || null;
+                const localidades = extraData?.localidades || [];
 
                 return createElement(
                     'div',
@@ -496,8 +485,8 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
                                       latitude: -17.78629,
                                       longitude: -63.18117,
                                       geocodedAddress: '',
-                                      clienteId: clienteId, // ✨ Pasar cliente ID
-                                      localidadId: localidadId, // ✨ Pasar localidad ID
+                                      clienteId: clienteId,
+                                      localidades: localidades, // ✨ Pasar localidades para selector
                                       existingData: {
                                           direccion: '',
                                           latitud: -17.78629,
@@ -555,8 +544,9 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
             type: 'custom',
             fullWidth: true,
             section: 'Direcciones',
-            render: ({ value, onChange, disabled }) => {
+            render: ({ value, onChange, disabled, extraData }) => {
                 const addresses = Array.isArray(value) ? value : [];
+                const localidades = extraData?.localidades || [];
 
                 return createElement(ClienteDireccionesMap, {
                     direcciones: addresses,
@@ -564,6 +554,7 @@ export const clientesConfig: ModuleConfig<Cliente, ClienteFormData> = {
                         onChange(newAddresses);
                     },
                     disabled: Boolean(disabled),
+                    localidades: localidades,
                 });
             },
         },

@@ -53,6 +53,16 @@
     @if($documento->cliente->nit)
         <p>{{ $documento->cliente->nit }}</p>
     @endif
+    {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección --}}
+    @if($documento->direccionCliente?->localidad)
+        <p>📍 {{ $documento->direccionCliente->localidad->nombre }}</p>
+    @elseif($documento->cliente->localidad)
+        <p>📍 {{ $documento->cliente->localidad->nombre }}</p>
+    @endif
+    {{-- ✅ NUEVO: Mostrar observaciones de la dirección --}}
+    @if($documento->direccionCliente?->observaciones)
+        <p style="font-size: 5px; font-style: italic;">Obs: {{ strtoupper($documento->direccionCliente->observaciones) }}</p>
+    @endif
 </div>
 
 <div class="separador-simple"></div>

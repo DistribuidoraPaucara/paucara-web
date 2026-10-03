@@ -10,4 +10,16 @@
     @if($documento->cliente->email)
         <p><strong>Email:</strong> {{ $documento->cliente->email }}</p>
     @endif
+    {{-- ✅ ACTUALIZADO: Mostrar localidad de la dirección --}}
+    @if($documento->direccionCliente?->localidad)
+        <p><strong>📍 Localidad:</strong> {{ $documento->direccionCliente->localidad->nombre }}</p>
+    @elseif($documento->cliente->localidad)
+        <p><strong>📍 Localidad:</strong> {{ $documento->cliente->localidad->nombre }}</p>
+    @endif
+    {{-- ✅ NUEVO: Mostrar observaciones de la dirección --}}
+    @if($documento->direccionCliente?->observaciones)
+        <p style="font-size: 12px; font-style: italic; color: #666;">
+            <strong>Observaciones:</strong> {{ $documento->direccionCliente->observaciones }}
+        </p>
+    @endif
 </div>
