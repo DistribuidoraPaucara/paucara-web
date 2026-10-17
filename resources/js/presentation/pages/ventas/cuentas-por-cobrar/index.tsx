@@ -86,6 +86,8 @@ interface FiltrosCuentasPorCobrar {
     fecha_vencimiento_desde?: string;
     fecha_vencimiento_hasta?: string;
     solo_vencidas?: boolean;
+    sort?: string;
+    order?: 'asc' | 'desc';
     per_page?: string | number;
     page?: number;
 }
@@ -198,6 +200,16 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         { valor: 'PAGADO', etiqueta: 'Pagado' },
         { valor: 'PARCIAL', etiqueta: 'Parcial' },
         { valor: 'ANULADO', etiqueta: 'Anulado' },
+    ];
+
+    // ✅ NUEVO: Columnas por las que se puede ordenar (mismas que acepta el backend)
+    const camposOrdenables = [
+        { valor: 'id', etiqueta: 'ID' },
+        { valor: 'fecha_vencimiento', etiqueta: 'Fecha de vencimiento' },
+        { valor: 'created_at', etiqueta: 'Fecha de creación' },
+        { valor: 'monto_original', etiqueta: 'Monto original' },
+        { valor: 'saldo_pendiente', etiqueta: 'Saldo pendiente' },
+        { valor: 'estado', etiqueta: 'Estado' },
     ];
 
     // Validación defensiva para evitar errores si cuentasPorCobrar es undefined
@@ -822,6 +834,37 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 </span>
                             </div>
                         )} */}
+                    </div>
+
+                    {/* ✅ NUEVO: Ordenamiento de la tabla (también se aplica al reporte) */}
+                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
+                            <Select value={filtros.sort || 'id'} onValueChange={(value) => handleFiltroChange('sort', value)}>
+                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {camposOrdenables.map((campo) => (
+                                        <SelectItem key={campo.valor} value={campo.valor}>
+                                            {campo.etiqueta}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
+                            <Select value={filtros.order || 'desc'} onValueChange={(value) => handleFiltroChange('order', value)}>
+                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="asc">Ascendente (A → Z, menor → mayor)</SelectItem>
+                                    <SelectItem value="desc">Descendente (Z → A, mayor → menor)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="mt-2 flex justify-between gap-3">

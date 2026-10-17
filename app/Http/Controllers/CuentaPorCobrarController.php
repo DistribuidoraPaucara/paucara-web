@@ -24,12 +24,7 @@ class CuentaPorCobrarController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->consultaFiltrada($request);
-
-        // Sorting - ✅ ACTUALIZADO: Ordenar por ID descendente por defecto
-        $sortField = $request->get('sort', 'id');
-        $sortOrder = $request->get('order', 'desc');
-        $query->orderBy($sortField, $sortOrder);
+        $query = $this->aplicarOrden($this->consultaFiltrada($request), $request);
 
         // ✅ ACTUALIZADO: Permitir cambiar per_page vía parámetro (50 por defecto)
         $perPage = min((int)$request->get('per_page', 25), 500); // Máximo 500 para evitar sobrecarga
@@ -66,7 +61,7 @@ class CuentaPorCobrarController extends Controller
                     'total'        => $cuentas->total(),
                     'links'        => $cuentas->linkCollection()->toArray(),
                 ],
-                'filtros'            => $request->only(['estado', 'cliente_id', 'q', 'fecha_vencimiento_desde', 'fecha_vencimiento_hasta', 'solo_vencidas']),
+                'filtros'            => $request->only(['estado', 'cliente_id', 'q', 'fecha_vencimiento_desde', 'fecha_vencimiento_hasta', 'solo_vencidas', 'sort', 'order']),
                 'estadisticas'       => $estadisticas,
                 'datosParaFiltros'   => [
                     'clientes' => Cliente::select('id', 'nombre', 'codigo_cliente')->get(),
@@ -74,6 +69,20 @@ class CuentaPorCobrarController extends Controller
                 'tipos_pago'         => TipoPago::select('id', 'nombre', 'codigo')->where('codigo', '!=', 'CREDITO')->get(),
             ],
         ]);
+    }
+
+    /** Columnas por las que se puede ordenar la lista y el reporte */
+    private const CAMPOS_ORDENABLES = ['id', 'fecha_vencimiento', 'created_at', 'monto_original', 'saldo_pendiente', 'estado'];
+
+    /**
+     * ✅ NUEVO: Orden compartido por la lista y el reporte. Solo acepta columnas de la lista blanca.
+     */
+    private function aplicarOrden($query, Request $request)
+    {
+        $campo = in_array($request->get('sort'), self::CAMPOS_ORDENABLES, true) ? $request->get('sort') : 'id';
+        $direccion = strtolower((string) $request->get('order')) === 'asc' ? 'asc' : 'desc';
+
+        return $query->orderBy($campo, $direccion);
     }
 
     /**
@@ -134,10 +143,7 @@ class CuentaPorCobrarController extends Controller
      */
     public function reporte(Request $request)
     {
-        $cuentas = $this->consultaFiltrada($request)
-            ->with('venta.detalles.producto')
-            ->orderBy('fecha_vencimiento')
-            ->orderBy('id')
+        $cuentas = $this->aplicarOrden($this->consultaFiltrada($request)->with('venta.detalles.producto'), $request)
             ->get()
             ->map(function ($cuenta) {
                 $cuenta->dias_vencido = $cuenta->calcularDiasVencido();
