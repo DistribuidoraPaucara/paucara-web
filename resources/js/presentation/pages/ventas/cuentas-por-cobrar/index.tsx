@@ -241,6 +241,19 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         router.get('/ventas/cuentas-por-cobrar');
     };
 
+    // ✅ NUEVO: Abre el reporte PDF con los filtros ya aplicados en la lista
+    const generarReporte = () => {
+        // Incluye el texto de búsqueda escrito aunque todavía no se haya pulsado "Buscar"
+        const filtrosActivos = { ...filtros, q: searchInput.trim() };
+        const params = new URLSearchParams();
+        Object.entries(filtrosActivos).forEach(([clave, valor]) => {
+            if (valor !== undefined && valor !== null && valor !== '' && valor !== false) {
+                params.append(clave, String(valor));
+            }
+        });
+        window.open(`/ventas/cuentas-por-cobrar/reporte?${params.toString()}`, '_blank');
+    };
+
     const handleAbrirModalPago = (cuenta: CuentaPorCobrar) => {
         // Cargar cuentas del cliente ANTES de abrir el modal
         cargarCuentasDelCliente(cuenta.cliente_id);
@@ -815,9 +828,15 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                         <Button onClick={limpiarFiltros} variant="outline">
                             🔄 Limpiar Filtros
                         </Button>
-                        <Button onClick={handleBusqueda} className="bg-blue-600 px-8 text-white hover:bg-blue-700">
-                            🔍 Buscar
-                        </Button>
+                        <div className="flex gap-3">
+                            <Button onClick={generarReporte} variant="outline" className="flex items-center gap-2">
+                                <Printer className="h-4 w-4" />
+                                📄 Generar Reporte
+                            </Button>
+                            <Button onClick={handleBusqueda} className="bg-blue-600 px-8 text-white hover:bg-blue-700">
+                                🔍 Buscar
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -868,7 +887,16 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                             <td className="px-2 py-2 text-center">#{cuenta.id}</td>
                                             <td className="px-2 py-2 text-center">
                                                 <div className="text-sm text-gray-900 dark:text-white">
-                                                    {cuenta.venta && <p>#{cuenta.venta?.id}</p>}
+                                                    {cuenta.venta && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => router.visit(`/ventas/${cuenta.venta?.id}`)}
+                                                            className="font-medium text-blue-600 underline hover:text-blue-800 dark:text-blue-400"
+                                                            title="Ver venta"
+                                                        >
+                                                            #{cuenta.venta?.id}
+                                                        </button>
+                                                    )}
                                                     <p>{cuenta?.referencia_documento}</p>
                                                 </div>
                                             </td>

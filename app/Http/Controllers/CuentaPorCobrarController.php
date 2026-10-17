@@ -24,52 +24,7 @@ class CuentaPorCobrarController extends Controller
 
     public function index(Request $request)
     {
-        // ✅ CORREGIDO: Cargar cliente directamente + cliente de venta + usuario creador para mostrar ambos tipos
-        $query = CuentaPorCobrar::with(['cliente', 'venta.cliente', 'pagos.tipoPago', 'usuario'])
-            ->when($request->estado, function ($q) use ($request) {
-                // ✅ CORREGIDO (2026-03-30): Filtro case-insensitive para estado
-                $q->whereRaw('LOWER(estado) = ?', [strtolower($request->estado)]);
-            })
-            ->when($request->cliente_id, function ($q) use ($request) {
-                $q->where('cliente_id', $request->cliente_id);
-            })
-            ->when($request->q, function ($q) use ($request) {
-                $searchTerm = "%{$request->q}%";
-                // Si es un número, también buscar por ID exacto
-                $isNumeric = is_numeric($request->q);
-
-                $q->where(function ($subQ) use ($searchTerm, $isNumeric, $request) {
-                    $subQ
-                        // 1️⃣ PRIORIDAD 1: Buscar por ID de la cuenta (exacto, sin LIKE)
-                        ->when($isNumeric, function ($sq) use ($request) {
-                            $sq->orWhere('id', (int)$request->q);
-                        })
-                        // 2️⃣ PRIORIDAD 2: Buscar por ID de venta (si es numérico)
-                        ->when($isNumeric, function ($sq) use ($request) {
-                            $sq->orWhere('venta_id', (int)$request->q);
-                        })
-                        // 3️⃣ PRIORIDAD 3: Buscar por referencia_documento
-                        ->orWhere('referencia_documento', 'LIKE', $searchTerm)
-                        // 4️⃣ PRIORIDAD 4: Buscar por usuario creador
-                        ->orWhereHas('usuario', function ($userQ) use ($searchTerm) {
-                            $userQ->where('name', 'LIKE', $searchTerm)
-                                ->orWhere('email', 'LIKE', $searchTerm);
-                        })
-                        // 5️⃣ PRIORIDAD 5: Buscar por datos del cliente (nombre, código)
-                        ->orWhereHas('cliente', function ($clienteQ) use ($searchTerm) {
-                            $clienteQ->where('nombre', 'LIKE', $searchTerm)
-                                ->orWhere('codigo_cliente', 'LIKE', $searchTerm);
-                        });
-                });
-            })
-            ->when($request->fecha_vencimiento_desde && $request->fecha_vencimiento_hasta, function ($q) use ($request) {
-                $q->whereBetween('fecha_vencimiento', [$request->fecha_vencimiento_desde, $request->fecha_vencimiento_hasta]);
-            })
-            ->when($request->solo_vencidas, function ($q) {
-                $q->whereDate('fecha_vencimiento', '<', today())
-                    ->where('estado', '!=', 'PAGADO')
-                    ->where('saldo_pendiente', '>', 0);  // ✅ NUEVO: Excluir cuentas completamente pagadas
-            });
+        $query = $this->consultaFiltrada($request);
 
         // Sorting - ✅ ACTUALIZADO: Ordenar por ID descendente por defecto
         $sortField = $request->get('sort', 'id');
@@ -119,6 +74,95 @@ class CuentaPorCobrarController extends Controller
                 'tipos_pago'         => TipoPago::select('id', 'nombre', 'codigo')->where('codigo', '!=', 'CREDITO')->get(),
             ],
         ]);
+    }
+
+    /**
+     * ✅ NUEVO: Consulta de cuentas con filtros, compartida por la lista y el reporte PDF
+     */
+    private function consultaFiltrada(Request $request)
+    {
+        // ✅ CORREGIDO: Cargar cliente directamente + cliente de venta + usuario creador para mostrar ambos tipos
+        return CuentaPorCobrar::with(['cliente', 'venta.cliente', 'pagos.tipoPago', 'usuario'])
+            ->when($request->estado, function ($q) use ($request) {
+                // ✅ CORREGIDO (2026-03-30): Filtro case-insensitive para estado
+                $q->whereRaw('LOWER(estado) = ?', [strtolower($request->estado)]);
+            })
+            ->when($request->cliente_id, function ($q) use ($request) {
+                $q->where('cliente_id', $request->cliente_id);
+            })
+            ->when($request->q, function ($q) use ($request) {
+                $searchTerm = "%{$request->q}%";
+                // Si es un número, también buscar por ID exacto
+                $isNumeric = is_numeric($request->q);
+
+                $q->where(function ($subQ) use ($searchTerm, $isNumeric, $request) {
+                    $subQ
+                        // 1️⃣ PRIORIDAD 1: Buscar por ID de la cuenta (exacto, sin LIKE)
+                        ->when($isNumeric, function ($sq) use ($request) {
+                            $sq->orWhere('id', (int)$request->q);
+                        })
+                        // 2️⃣ PRIORIDAD 2: Buscar por ID de venta (si es numérico)
+                        ->when($isNumeric, function ($sq) use ($request) {
+                            $sq->orWhere('venta_id', (int)$request->q);
+                        })
+                        // 3️⃣ PRIORIDAD 3: Buscar por referencia_documento
+                        ->orWhere('referencia_documento', 'LIKE', $searchTerm)
+                        // 4️⃣ PRIORIDAD 4: Buscar por usuario creador
+                        ->orWhereHas('usuario', function ($userQ) use ($searchTerm) {
+                            $userQ->where('name', 'LIKE', $searchTerm)
+                                ->orWhere('email', 'LIKE', $searchTerm);
+                        })
+                        // 5️⃣ PRIORIDAD 5: Buscar por datos del cliente (nombre, código)
+                        ->orWhereHas('cliente', function ($clienteQ) use ($searchTerm) {
+                            $clienteQ->where('nombre', 'LIKE', $searchTerm)
+                                ->orWhere('codigo_cliente', 'LIKE', $searchTerm);
+                        });
+                });
+            })
+            ->when($request->fecha_vencimiento_desde && $request->fecha_vencimiento_hasta, function ($q) use ($request) {
+                $q->whereBetween('fecha_vencimiento', [$request->fecha_vencimiento_desde, $request->fecha_vencimiento_hasta]);
+            })
+            ->when($request->solo_vencidas, function ($q) {
+                $q->whereDate('fecha_vencimiento', '<', today())
+                    ->where('estado', '!=', 'PAGADO')
+                    ->where('saldo_pendiente', '>', 0);  // ✅ NUEVO: Excluir cuentas completamente pagadas
+            });
+    }
+
+    /**
+     * ✅ NUEVO: Reporte PDF de cuentas por cobrar con los mismos filtros de la lista (sin paginar)
+     */
+    public function reporte(Request $request)
+    {
+        $cuentas = $this->consultaFiltrada($request)
+            ->with('venta.detalles.producto')
+            ->orderBy('fecha_vencimiento')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($cuenta) {
+                $cuenta->dias_vencido = $cuenta->calcularDiasVencido();
+                return $cuenta;
+            });
+
+        $filtrosAplicados = [
+            'Estado'        => $request->estado ? strtoupper($request->estado) : 'Todos',
+            'Cliente'       => $request->cliente_id ? Cliente::find($request->cliente_id)?->nombre ?? 'Todos' : 'Todos',
+            'Búsqueda'      => $request->q ?: '—',
+            'Vencimiento'   => ($request->fecha_vencimiento_desde && $request->fecha_vencimiento_hasta)
+                ? \Carbon\Carbon::parse($request->fecha_vencimiento_desde)->format('d/m/Y') . ' al ' . \Carbon\Carbon::parse($request->fecha_vencimiento_hasta)->format('d/m/Y')
+                : 'Todas',
+            'Solo vencidas' => $request->boolean('solo_vencidas') ? 'Sí' : 'No',
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.reporte-cuentas-por-cobrar', [
+            'cuentas'           => $cuentas,
+            'filtrosAplicados'  => $filtrosAplicados,
+            'totalMonto'        => $cuentas->sum('monto_original'),
+            'totalSaldo'        => $cuentas->sum('saldo_pendiente'),
+            'fecha_generacion'  => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('cuentas-por-cobrar-' . now()->format('Y-m-d_H-i') . '.pdf');
     }
 
     public function show(CuentaPorCobrar $cuentaPorCobrar)

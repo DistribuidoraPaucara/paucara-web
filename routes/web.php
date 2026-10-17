@@ -483,6 +483,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
 
         // Gestión de Cuentas por Cobrar
         Route::get('cuentas-por-cobrar', [\App\Http\Controllers\CuentaPorCobrarController::class, 'index'])->name('cuentas-por-cobrar.index');
+        // ✅ NUEVO: Reporte PDF de cuentas por cobrar con los mismos filtros de la lista
+        Route::get('cuentas-por-cobrar/reporte', [\App\Http\Controllers\CuentaPorCobrarController::class, 'reporte'])->name('cuentas-por-cobrar.reporte');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/show', [\App\Http\Controllers\CuentaPorCobrarController::class, 'show'])->name('cuentas-por-cobrar.show');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimir'])->name('cuentas-por-cobrar.imprimir');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimirTicket80'])->name('cuentas-por-cobrar.imprimir-ticket-80');
